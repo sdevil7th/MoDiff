@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "templateId": "z_image_poster",
+  "templateLockHash": "tpl_68111f09",
+  "promptSettingsHash": "ps_c3330a2f",
+  "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+  "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+  "graphHash": "sha256:canonical-graph-v1:512f3c16ab008cba069c7fbb8d99533d7fd2f89a57a69259573087ce3f770c0c",
+  "proofLockHash": "sha256:live-proof-lock-v1:75c6b09d665497e951bcca19ed1f2e517ca88fdb74d95c43e5ddc1dc9c2e27e5",
+  "decodedMediaHash": "sha256:decoded-rgba:91cf4bc4e2aee822a7ce83c42070020d37b8c7d4d68360bfbf8c368c943a0ec4",
+  "modelSetHash": "sha256:model-set-v1:e77e0a81a3ae63a90119d48d1eca37948eb840c7b29eed6bc12ef674fba10738",
+  "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewStatus": "approved_exact",
+  "reviewer": "Codex visual review",
+  "reviewedAt": "2026-07-10T17:38:46.400Z",
+  "rubric": {
+    "taskAdherence": 5,
+    "artifactControl": 5,
+    "modalityQuality": 5,
+    "composition": 5,
+    "productCoherence": 4,
+    "materialAndLighting": 5
+  },
+  "summary": "Approved after prompt remediation: the result contains no typography or signage, preserves a large near-black upper layout zone, centers one luminous noodle bowl in the lower frame, and uses controlled magenta/green edge lighting, reflective steel, and coherent steam for a strong editorial artwork layer.",
+  "knownLimitations": [
+    "The bowl reads as clear glass more strongly than smoked glass.",
+    "The hovering distance is visually subtle because the bowl reflection and base remain close to the prep surface."
+  ]
+}

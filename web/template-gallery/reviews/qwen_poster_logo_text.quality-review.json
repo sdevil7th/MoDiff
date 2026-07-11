@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "templateId": "qwen_poster_logo_text",
+  "templateLockHash": "tpl_00675f55",
+  "promptSettingsHash": "ps_2830ecac",
+  "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+  "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+  "graphHash": "sha256:canonical-graph-v1:a4af5e68ee0b163283ad7f48fa639a81ba9da34870b9b394c7c0fa2643008768",
+  "proofLockHash": "sha256:live-proof-lock-v1:549c4b369ff9d75e6b6bae8ed112f38d42e12a8956d10acff934e4de135d0aad",
+  "decodedMediaHash": "sha256:decoded-rgba:5e7317aea8004cc299887a4bd16ba4997f97cc371c39462a3ae68263b8bf3651",
+  "modelSetHash": "sha256:model-set-v1:234b853531abfa715b3cffad1ae35ae84db5eb7559db178138a0d11d8b16b5ae",
+  "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewStatus": "approved_exact",
+  "reviewer": "Codex visual review",
+  "reviewedAt": "2026-07-10T18:07:59.752Z",
+  "rubric": {
+    "taskAdherence": 5,
+    "artifactControl": 4,
+    "modalityQuality": 5,
+    "composition": 5,
+    "productCoherence": 5,
+    "materialAndLighting": 5,
+    "typography": 5
+  },
+  "summary": "Approved as a compelling museum-poster example: ORBITAL TYPE LAB and JULY 18 - AUGUST 04 are exact and highly legible, the chrome O and yellow orbital paths form a strong focal system, and the black-ground grid, margins, hierarchy, and caption blocks read as intentional print design.",
+  "knownLimitations": [
+    "The micro-caption blocks behave as graphic texture and are not meaningful readable prose.",
+    "The chrome O uses concentric ridges rather than a completely smooth solid surface."
+  ]
+}

@@ -1,0 +1,1877 @@
+{
+  "schemaVersion": 1,
+  "format": "modiff.gallery.duplicate-provenance.v1",
+  "templateId": "qwen_poster_logo_text",
+  "run1": {
+    "schemaVersion": 1,
+    "format": "modiff.live-proof.provenance.v1",
+    "capturedAt": "2026-07-10T17:59:00.631Z",
+    "taskId": "ws-uk5PYnJ5k",
+    "proofLockHash": "sha256:live-proof-lock-v1:549c4b369ff9d75e6b6bae8ed112f38d42e12a8956d10acff934e4de135d0aad",
+    "graphHash": "sha256:canonical-graph-v1:a4af5e68ee0b163283ad7f48fa639a81ba9da34870b9b394c7c0fa2643008768",
+    "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+    "backendReportedRuntimeFingerprint": "sha256:27bc0088a34a752e55368e1a5682d0aa21cf82a081fa9fceef53f95755eeda09",
+    "backendSourceFingerprint": "sha256:backend-source-v1:1a5cd33510acc57f6343f81aed99ebfc030eace0f45c12a28dd06288d4708829",
+    "backendContractFingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+    "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "modelCommit": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "templateLockHash": "tpl_00675f55",
+    "templateRevisionHash": "sha256:template-revision-v1:eed37f8b3bb8cbfb7279bce0ffe092d8a2dfec47b1596f1f27c49fe9bced2d29",
+    "mediaHash": "sha256:decoded-rgba:5e7317aea8004cc299887a4bd16ba4997f97cc371c39462a3ae68263b8bf3651",
+    "mediaType": "image",
+    "width": 768,
+    "height": 1344,
+    "frames": null,
+    "durationSeconds": null,
+    "sampleRate": null,
+    "channels": null,
+    "template": {
+      "id": "qwen_poster_logo_text",
+      "promptSettingsHash": "ps_2830ecac",
+      "catalogTemplateLockHash": "tpl_c706280d",
+      "resolvedTemplateLockHash": "tpl_00675f55",
+      "revisionHash": "sha256:template-revision-v1:eed37f8b3bb8cbfb7279bce0ffe092d8a2dfec47b1596f1f27c49fe9bced2d29",
+      "lockedSettings": {
+        "attentionKwargsJson": "",
+        "audioCoverStrength": 0.5,
+        "audioDuration": 30,
+        "autoOffload": true,
+        "bpm": 0,
+        "conditioningScale": 1,
+        "controlVideo": "",
+        "dtype": "bfloat16",
+        "extensionDuration": 15,
+        "fps": 16,
+        "guidanceScale": 4,
+        "guidanceScale2": 0,
+        "height": 1344,
+        "keyscale": "C",
+        "layers": 4,
+        "lyrics": "",
+        "maskVideo": "",
+        "maxSequenceLength": 512,
+        "mode": "text_to_image",
+        "modelType": "QwenImageModularPipeline",
+        "negativePrompt": "wrong title text, duplicated words, broken kerning, random symbols, cluttered grid, illegible date, jagged chrome, print artifacts",
+        "numFrames": 81,
+        "offloadMode": "model_cpu",
+        "outpaintBottom": 0,
+        "outpaintFeather": 8,
+        "outpaintFillColor": "black",
+        "outpaintLeft": 256,
+        "outpaintOverlap": 24,
+        "outpaintRight": 256,
+        "outpaintTop": 0,
+        "outputType": "pil",
+        "prompt": "Design a print-ready museum poster for the fictional exhibition ORBITAL TYPE LAB. Use the exact title text \"ORBITAL TYPE LAB\" as the dominant centered logo mark, with a small readable date line \"JULY 18 - AUGUST 04\" and micro-caption blocks aligned to a strict grid. Visual subject: a chrome letter O hovering above a matte black floor, thin yellow orbital paths, sharp kerning, balanced margins, and premium graphic-design contrast.",
+        "quantizationMode": "none",
+        "randomSeed": false,
+        "referenceAudio": "",
+        "repaintingEnd": 10,
+        "repaintingStart": 0,
+        "resourceMode": "auto",
+        "seed": 5102,
+        "shift": 3,
+        "sourceAudio": "",
+        "sourceVideo": "",
+        "steps": 50,
+        "strength": 0.8,
+        "timesignature": "4/4",
+        "vocalLanguage": "en",
+        "width": 768
+      }
+    },
+    "graph": {
+      "schemaVersion": 1,
+      "hash": "sha256:canonical-graph-v1:a4af5e68ee0b163283ad7f48fa639a81ba9da34870b9b394c7c0fa2643008768",
+      "canonicalGraph": {
+        "deterministicMode": {
+          "enabled": true,
+          "promptSettingsHash": "ps_2830ecac",
+          "seed": 5102,
+          "strict": true,
+          "templateId": "qwen_poster_logo_text",
+          "templateLockHash": "tpl_c706280d"
+        },
+        "nodes": [
+          {
+            "action": "LoadPipeline",
+            "key": "modules.QwenImage.LoadPipeline#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "value": true
+              },
+              "bnb_4bit_compute_dtype": {
+                "value": "bfloat16"
+              },
+              "bnb_4bit_quant_type": {
+                "value": "nf4"
+              },
+              "bnb_4bit_use_double_quant": {
+                "value": true
+              },
+              "device": {
+                "value": "cuda:0"
+              },
+              "dtype": {
+                "value": "bfloat16"
+              },
+              "low_cpu_mem_usage": {},
+              "model_id": {
+                "display": "modelselect",
+                "value": {
+                  "source": "hub",
+                  "value": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
+                }
+              },
+              "offload_mode": {
+                "value": "model_cpu"
+              },
+              "quantization_mode": {
+                "value": "none"
+              },
+              "quantized_components": {
+                "display": "select",
+                "value": []
+              },
+              "revision": {}
+            }
+          },
+          {
+            "action": "Generate",
+            "key": "modules.QwenImage.Generate#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "value": 1344
+              },
+              "max_sequence_length": {
+                "value": 512
+              },
+              "negative_prompt": {
+                "display": "textarea",
+                "value": "wrong title text, duplicated words, broken kerning, random symbols, cluttered grid, illegible date, jagged chrome, print artifacts"
+              },
+              "num_inference_steps": {
+                "display": "slider",
+                "value": 50
+              },
+              "output_type": {
+                "value": "pil"
+              },
+              "pipeline": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.LoadPipeline#1",
+                "sourceKey": "pipeline"
+              },
+              "prompt": {
+                "display": "textarea",
+                "value": "Design a print-ready museum poster for the fictional exhibition ORBITAL TYPE LAB. Use the exact title text \"ORBITAL TYPE LAB\" as the dominant centered logo mark, with a small readable date line \"JULY 18 - AUGUST 04\" and micro-caption blocks aligned to a strict grid. Visual subject: a chrome letter O hovering above a matte black floor, thin yellow orbital paths, sharp kerning, balanced margins, and premium graphic-design contrast."
+              },
+              "seed": {
+                "value": 5102
+              },
+              "true_cfg_scale": {
+                "display": "slider",
+                "value": 4
+              },
+              "width": {
+                "value": 768
+              }
+            }
+          },
+          {
+            "action": "Preview",
+            "key": "modules.Image.Preview#1",
+            "module": "modules.Image",
+            "params": {
+              "device": {},
+              "export": {},
+              "image": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.Generate#1",
+                "sourceKey": "images"
+              },
+              "preview": {
+                "display": "ui_image",
+                "sourceKey": "output"
+              },
+              "vae": {
+                "display": "input"
+              }
+            }
+          }
+        ],
+        "paths": [
+          [
+            "modules.QwenImage.LoadPipeline#1",
+            "modules.QwenImage.Generate#1",
+            "modules.Image.Preview#1"
+          ]
+        ],
+        "schemaVersion": 1
+      },
+      "executionPlanHash": "sha256:execution-plan-v1:9b98110593ab24893cfe7c23c94af1917957d183f1908ed70bbded7b53ac7068",
+      "executionPlan": {
+        "autoOffload": true,
+        "autoResourceCandidateId": "qwen-t2i-prequantized-model-cpu",
+        "cudaIndex": 0,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "executionPath": "direct-qwen-image",
+        "modelFamily": "Qwen Image",
+        "modelRepo": "Qwen/Qwen-Image-2512",
+        "modelType": "QwenImageModularPipeline",
+        "offloadMode": "model_cpu",
+        "pipelineClass": null,
+        "quantizationMode": "none",
+        "quantizedComponents": [],
+        "resolvedArtifact": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedModelRepo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedResourceMode": "auto",
+        "resourceMode": "auto",
+        "source": "studio"
+      }
+    },
+    "model": {
+      "fingerprint": "sha256:535dd7dda54e6f80520eee058322a1ec7b02a6aee51683abb81d585d4e17f004",
+      "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "repoId": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+      "revisions": [
+        {
+          "hash": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+          "lastModified": 1783141419,
+          "size": 18667660240
+        }
+      ],
+      "selectedRevision": "f50b8c24fe21e9265509b15113b7cca82d0a4443"
+    },
+    "models": {
+      "count": 1,
+      "hash": "sha256:model-set-v1:234b853531abfa715b3cffad1ae35ae84db5eb7559db178138a0d11d8b16b5ae",
+      "revisionLock": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "commitLock": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "items": [
+        {
+          "fingerprint": "sha256:535dd7dda54e6f80520eee058322a1ec7b02a6aee51683abb81d585d4e17f004",
+          "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+          "repoId": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+          "revisions": [
+            {
+              "hash": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+              "lastModified": 1783141419,
+              "size": 18667660240
+            }
+          ],
+          "selectedRevision": "f50b8c24fe21e9265509b15113b7cca82d0a4443"
+        }
+      ]
+    },
+    "inputs": {
+      "count": 0,
+      "hash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "items": []
+    },
+    "runtime": {
+      "reportedFingerprint": "sha256:27bc0088a34a752e55368e1a5682d0aa21cf82a081fa9fceef53f95755eeda09",
+      "lockFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+      "payload": {
+        "dataDir": "<local-path>/data",
+        "packages": {
+          "accelerate": "1.13.0",
+          "bitsandbytes": "0.49.2",
+          "diffusers": "0.39.0.dev0",
+          "platform": "Windows-11-10.0.26200-SP0",
+          "python": "3.12.11",
+          "torch": "2.11.0+cu128",
+          "transformers": "5.10.1"
+        },
+        "torch": {
+          "cuda_available": true,
+          "cuda_device_capability": "8.9",
+          "cuda_device_count": 1,
+          "cuda_device_name": "NVIDIA GeForce RTX 4080",
+          "cuda_device_total_memory_bytes": 17170956288,
+          "cuda_memory_total_bytes": 17170956288,
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "cudnn_version": 91900,
+          "deterministic_algorithms": true
+        },
+        "workDir": "<local-path>/data"
+      },
+      "backendSource": {
+        "gitCommit": "<redacted-source-commit>",
+        "fingerprint": "sha256:backend-source-v1:1a5cd33510acc57f6343f81aed99ebfc030eace0f45c12a28dd06288d4708829",
+        "files": [
+          {
+            "path": "main.py",
+            "sha256": "9b5f35900b43de45b79f185b636e5f603e0fb7715dfd3d65dd8adfcb58b92518"
+          },
+          {
+            "path": "modiff/__init__.py",
+            "sha256": "e24665e005189b7f490d12c4f445a15e96dca9553d028a0656ec86d52d191aff"
+          },
+          {
+            "path": "modiff/auto_resource.py",
+            "sha256": "dc41c93ec15312af2805af1b7ebb6e2283a143bfbd766a3f3f89da385693061d"
+          },
+          {
+            "path": "modiff/client.py",
+            "sha256": "8127811d106482655cc44a217c2f18d53cb25f202810931d1cddb0f18dd2108e"
+          },
+          {
+            "path": "modiff/config.py",
+            "sha256": "483a8744e6b6a9d9650187866d24c002a1d246330f82997a2a2f4e67a520eded"
+          },
+          {
+            "path": "modiff/diffusers_offload.py",
+            "sha256": "68f0664eb610a8696e767c3956c074c52a0d8bfe9d89a4b52eed85fad0842154"
+          },
+          {
+            "path": "modiff/diffusers_profiles.py",
+            "sha256": "c11ae2c1ee5283398d52b6a6519d2e95ba9ba96616888883f87492d492663606"
+          },
+          {
+            "path": "modiff/hardware.py",
+            "sha256": "55d2e06fc7e4b45080a017566cd6e7eb0441379e93fe0076cdd30252a4720d40"
+          },
+          {
+            "path": "modiff/modelstore.py",
+            "sha256": "25ba12273535ca802a9f94271ddf778bc52f551f6bc175e9a692c55374aabb05"
+          },
+          {
+            "path": "modiff/NodeBase.py",
+            "sha256": "0aaea0445749e5c070e7534745ea9feee86e092ed502ed5fbb69365d27b3e717"
+          },
+          {
+            "path": "modiff/preflight.py",
+            "sha256": "7a637fa35e2b883093f2d63a4dc20822730a75e23c4b07ff19a8e2ebf40c5ed9"
+          },
+          {
+            "path": "modiff/server.py",
+            "sha256": "b3d0f5f4ba88c99a4b77de04619735b3898f49a358048d8a2b3b05eca8b304d1"
+          },
+          {
+            "path": "modules/__init__.py",
+            "sha256": "6471c25f6bf53fa64f260300be964f34edbcd33de4a2b1185053dbae050a7d7d"
+          },
+          {
+            "path": "modules/Audio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/Audio/main.py",
+            "sha256": "ee9ab99b523ef3e4a490070cddda86de89bc5a45b7eb4c28215693512081c24d"
+          },
+          {
+            "path": "modules/Color/__init__.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/Color/main.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/DiffusersAudio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/DiffusersAudio/main.py",
+            "sha256": "b1b82379c61f1c979ba27ca39113cfd4990c1c7417500a5b59b542b11021f90f"
+          },
+          {
+            "path": "modules/DiffusersImage/__init__.py",
+            "sha256": "6028b364b913ad0aecfc531f0024ebd4c157569b40847bba202e6fe1db8ce955"
+          },
+          {
+            "path": "modules/DiffusersImage/main.py",
+            "sha256": "bdaba167c74321ec60ff9ab3d31ed53a3f9a7cafaa3271be298e7e8976d40f7b"
+          },
+          {
+            "path": "modules/Experiments/__init__.py",
+            "sha256": "7bee5a40c0de9ca30b2373901a521744270b74f52b8d473e7bde559e724abeeb"
+          },
+          {
+            "path": "modules/Experiments/flux_layers.py",
+            "sha256": "f6a25b942c6328d37e0cd377611948167b3616d49bcd54d49a3ee02738344321"
+          },
+          {
+            "path": "modules/Experiments/FLUXKontext.py",
+            "sha256": "710359fb023073472cd11a244d01bcb518c1ba2666b98d7f34eadf0bb341eab5"
+          },
+          {
+            "path": "modules/Experiments/main.py",
+            "sha256": "1969bdeb620281109b2f9556dc872c4701dcdbe7d231eb01e385fc4fbc34e83b"
+          },
+          {
+            "path": "modules/Experiments/sd3_layers.py",
+            "sha256": "3052048c192437db10a5ecf2132df82b481b5126977318e2424c514c116800f9"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusion3.py",
+            "sha256": "e8d39e79934bd1a4994f588a240379721f22d40dede707967daa252d1c49326f"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusionXL.py",
+            "sha256": "083645de861c26f87dfb55b9adfed1efe4cad7fa8837b3ab718573925be82813"
+          },
+          {
+            "path": "modules/Experiments/t5_layers.py",
+            "sha256": "ea9c92befc8712493c5e49fafa5d24ad5f828a4beda6fa54b31349ef6a97450a"
+          },
+          {
+            "path": "modules/Experiments/utils.py",
+            "sha256": "0f17c18562ab3fb309daa6cfba2dc761edf4b0948ee5c249ce45f608e9d74045"
+          },
+          {
+            "path": "modules/Experiments/VAE.py",
+            "sha256": "a9bee4828803849561cd82832e70ed4097b738dfdb89c9d0242d1e17a86b3886"
+          },
+          {
+            "path": "modules/Image/__init__.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/Image/main.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/ImageFilters/__init__.py",
+            "sha256": "22c5cbf1c3c5e45a2d50914c8086e95c7984b73ef0d6a6d82b5b78772bdbd2e0"
+          },
+          {
+            "path": "modules/ImageFilters/main.py",
+            "sha256": "bc44426f4e391209db04f120866172d14abde76c8d18c5ae656beca580d00501"
+          },
+          {
+            "path": "modules/ModelArtifact/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/ModelArtifact/main.py",
+            "sha256": "d5d1f8f3dc144ad0edc374a086ca0125747a77132efd2b936e241cfee8513daf"
+          },
+          {
+            "path": "modules/ModularDiffusers/__init__.py",
+            "sha256": "21881c5ad4eee92ed9d6a5e70161faf4c54789c89d4805f357cfc4dfb1d5330c"
+          },
+          {
+            "path": "modules/ModularDiffusers/adapters.py",
+            "sha256": "5b65674145a146e711e864aef2f25b336b70e7bd0d0639330a518f8613dfec78"
+          },
+          {
+            "path": "modules/ModularDiffusers/controlnet.py",
+            "sha256": "0c1d26105a5bbe91d5df84ccc8b603b50a152a9e0e4bf99d6db9a3d983b6150f"
+          },
+          {
+            "path": "modules/ModularDiffusers/denoise.py",
+            "sha256": "e326d98f14ca72fb58cbaacb647fc160c0b855be54e9e7b0f5a0d42416a0a976"
+          },
+          {
+            "path": "modules/ModularDiffusers/dynamic_node.py",
+            "sha256": "0a18907cf185caa351a0cdca3cafa00095a8dd997a2a1b01424b109c1236c5eb"
+          },
+          {
+            "path": "modules/ModularDiffusers/embeddings.py",
+            "sha256": "a4578e39a52abafbe803106d80098ce462a262a5a029538ab79b9dcd62976362"
+          },
+          {
+            "path": "modules/ModularDiffusers/guiders.py",
+            "sha256": "0d8e7e97a48ea1e10b9e7ce96aecd46b47d5dd6ab7ce425783b9b8a0553e5ae5"
+          },
+          {
+            "path": "modules/ModularDiffusers/latents.py",
+            "sha256": "7c4022d693ea4b7bb13e2b4bd54a808d1eb7571955e9e380cdfc82ef7f47add7"
+          },
+          {
+            "path": "modules/ModularDiffusers/loaders.py",
+            "sha256": "055278156cd3f28a972f77a222a7ec2a1fe796273c36a5b90a4dd7e4227cac4d"
+          },
+          {
+            "path": "modules/ModularDiffusers/main.py",
+            "sha256": "79da0e2aa131c30e7f3e6628e71740ee8484d544437099753e3ca3d51a4a5a64"
+          },
+          {
+            "path": "modules/ModularDiffusers/modular_utils.py",
+            "sha256": "2ee40460825ae5f6d480aa58d2e16e741907dea161b2ed775245644813fbd59c"
+          },
+          {
+            "path": "modules/ModularDiffusers/schedulers.py",
+            "sha256": "c11aeef43a09d79ed35a5717cbb92b32a35df1347eb33e4599b998d39b1c73aa"
+          },
+          {
+            "path": "modules/ModularDiffusers/utils.py",
+            "sha256": "2f7da484a6a454a9a5f4b092f092ffc6880904d36f8b6c1cba641d2ce1cc169c"
+          },
+          {
+            "path": "modules/Primitive/__init__.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/Primitive/main.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/QwenImage/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/QwenImage/main.py",
+            "sha256": "965914f4af563f7bfbf83cf3edc0ef7d599fd34e93b84e30a33016315dd387cd"
+          },
+          {
+            "path": "modules/Segmentation/__init__.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Segmentation/main.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Spandrel/__init__.py",
+            "sha256": "6359b859c7ed519657cb721fe8f951c663d2b0df1e4baeb63d8b49a27918caad"
+          },
+          {
+            "path": "modules/Spandrel/main.py",
+            "sha256": "0e145829a258b5fa5c82b6e5a6a39a0d57b6238595987e9019c21147adbbe72f"
+          },
+          {
+            "path": "modules/Tensor/__init__.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Tensor/main.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Text/__init__.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Text/main.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Video/__init__.py",
+            "sha256": "a92846fe73ba4582c638d14c0da6a670285150c9e4e5355a5df7efccd4c21840"
+          },
+          {
+            "path": "modules/Video/main.py",
+            "sha256": "8660597145fd48c295b07e780dbe4e65e4e6c1219c8911ea6ad3ecb0725060cb"
+          },
+          {
+            "path": "modules/VideoColor/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoColor/main.py",
+            "sha256": "60b5b6fe50c0f7bfdb94b9e335951ca9505e487fa47fbeb5c99a8c248a2260b6"
+          },
+          {
+            "path": "modules/VideoConditioning/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoConditioning/main.py",
+            "sha256": "e6f0cad4c9fce9cfe8414b5cc7a55d5086fafd3538393eb48254202d7d4af8e3"
+          },
+          {
+            "path": "modules/WanVACE/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/WanVACE/main.py",
+            "sha256": "f0cf62402ff213e12fa96efa514f100a7eec6f981ab2e6f37036fed0c9fec17e"
+          },
+          {
+            "path": "pyproject.toml",
+            "sha256": "47180826e627c368c039c24fce5cd79a8221192407eeee0fc836d05a2b8345fa"
+          },
+          {
+            "path": "utils/huggingface.py",
+            "sha256": "4765870a4246f0f288147c5309caed351e80a0212206ef3cf9376cdb4f0eaf64"
+          },
+          {
+            "path": "utils/image.py",
+            "sha256": "9472a5bad33a4703c6a449cacd856bed3b1da6bdc23895863ea591dbdab922aa"
+          },
+          {
+            "path": "utils/memory_menager.py",
+            "sha256": "54cfc658c9d7123c9838e68e9eca79ac8f74a7125c2b868cb6ebcf6a8708a2a1"
+          },
+          {
+            "path": "utils/paths.py",
+            "sha256": "4573209caace186f8bcb40945bade14ddfccfd7a477b3fb9bbc0aa03720681a4"
+          },
+          {
+            "path": "utils/quantization.py",
+            "sha256": "026a27d71b0d2a8bbbf185e2e2fc704696f387acf8a0162c04c317d7824759bc"
+          },
+          {
+            "path": "utils/spline.py",
+            "sha256": "d0d5eeae7f1d3cecac3508b85b5308e691aaf3ff88d455b7cecc001fbe4e58d3"
+          },
+          {
+            "path": "utils/torch_utils.py",
+            "sha256": "124db00cfe3a86c3b589291270c2f840f46c3f370786b4c88babd3173de7f21f"
+          }
+        ]
+      },
+      "backendContract": {
+        "fingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+        "contracts": [
+          {
+            "action": "LoadPipeline",
+            "cache": false,
+            "key": "modules.QwenImage.LoadPipeline",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "default": true,
+                "type": "bool"
+              },
+              "bnb_4bit_compute_dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_quant_type": {
+                "default": "nf4",
+                "options": [
+                  "nf4",
+                  "fp4"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_use_double_quant": {
+                "default": true,
+                "type": "bool"
+              },
+              "device": {
+                "default": "cuda:0",
+                "options": [
+                  "cuda:0",
+                  "cpu:0"
+                ],
+                "type": "string"
+              },
+              "dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "low_cpu_mem_usage": {
+                "default": true,
+                "type": "bool"
+              },
+              "model_id": {
+                "display": "modelselect",
+                "fieldOptions": {
+                  "noValidation": true,
+                  "sources": [
+                    "hub",
+                    "local"
+                  ]
+                },
+                "type": "string"
+              },
+              "offload_mode": {
+                "default": "model_cpu",
+                "options": [
+                  "auto_cpu",
+                  "none",
+                  "model_cpu",
+                  "sequential_cpu",
+                  "group_cpu",
+                  "group_disk"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "output",
+                "type": "qwen_image_pipeline"
+              },
+              "quantization_mode": {
+                "default": "bnb_4bit",
+                "options": [
+                  "none",
+                  "bnb_4bit"
+                ],
+                "type": "string"
+              },
+              "quantized_components": {
+                "default": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "display": "select",
+                "fieldOptions": {
+                  "multiple": true
+                },
+                "options": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "type": "string"
+              },
+              "resolved_artifact": {
+                "display": "output",
+                "type": "string"
+              },
+              "revision": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Generate",
+            "cache": false,
+            "key": "modules.QwenImage.Generate",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "height_out": {
+                "display": "output",
+                "type": "int"
+              },
+              "images": {
+                "display": "output",
+                "type": "image"
+              },
+              "max_sequence_length": {
+                "default": 512,
+                "max": 2048,
+                "min": 1,
+                "type": "int"
+              },
+              "negative_prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "num_inference_steps": {
+                "default": 50,
+                "display": "slider",
+                "max": 100,
+                "min": 1,
+                "type": "int"
+              },
+              "output_type": {
+                "default": "pil",
+                "options": [
+                  "pil",
+                  "np",
+                  "pt"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "input",
+                "type": "qwen_image_pipeline"
+              },
+              "prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "seed": {
+                "default": 0,
+                "display": "random",
+                "max": 4294967295,
+                "min": 0,
+                "type": "int"
+              },
+              "true_cfg_scale": {
+                "default": 4,
+                "display": "slider",
+                "max": 20,
+                "min": 0,
+                "step": 0.1,
+                "type": "float"
+              },
+              "width": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "width_out": {
+                "display": "output",
+                "type": "int"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Preview",
+            "cache": false,
+            "key": "modules.Image.Preview",
+            "module": "modules.Image",
+            "params": {
+              "device": {
+                "default": "cuda:0",
+                "options": {
+                  "cpu:0": {
+                    "arch": "cpu",
+                    "index": 0,
+                    "label": [
+                      "cpu:0"
+                    ],
+                    "name": "CPU (0)",
+                    "total_memory": 0
+                  },
+                  "cuda:0": {
+                    "arch": "cuda",
+                    "index": 0,
+                    "label": [
+                      "cuda:0"
+                    ],
+                    "name": "NVIDIA GeForce RTX 4080 15.99GB (0)",
+                    "total_memory": 17170956288
+                  }
+                },
+                "type": "string"
+              },
+              "export": {
+                "default": "0",
+                "type": "str"
+              },
+              "filtered": {
+                "display": "output",
+                "type": "image"
+              },
+              "image": {
+                "display": "input",
+                "type": [
+                  "image",
+                  "latent"
+                ]
+              },
+              "output": {
+                "display": "output",
+                "type": "image"
+              },
+              "preview": {
+                "dataSource": "output",
+                "display": "ui_image",
+                "type": "url"
+              },
+              "vae": {
+                "display": "input",
+                "type": "pipeline"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "deterministic": {
+        "fingerprint": "sha256:deterministic-settings-v1:99922f06c86191d35fe80fce00158d8369768840cb68495b1cd7d36aa4e4feea",
+        "settings": {
+          "enabled": true,
+          "seed": 5102,
+          "settings": {
+            "allow_tf32": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": true,
+            "numpy_random": true,
+            "python_random": true,
+            "torch_cuda_manual_seed_all": true,
+            "torch_deterministic_algorithms": true,
+            "torch_manual_seed": true
+          },
+          "strict": true,
+          "warnings": []
+        }
+      }
+    },
+    "output": {
+      "count": 1,
+      "collectionHash": "sha256:decoded-output-collection-v1:74805cce03788202777f0de1cde87bccfd430ab6f0d0ddcd219699b92961b3e2",
+      "backendCollectionHash": null,
+      "items": [
+        {
+          "index": 0,
+          "mediaType": "image",
+          "width": 768,
+          "height": 1344,
+          "frames": null,
+          "durationSeconds": null,
+          "sampleRate": null,
+          "channels": null,
+          "byteSize": 221998,
+          "encodedSha256": "sha256:74d4a6f3f39abfca307ee45f16e4744bb4828eaa20b94a9519de7f9549295ebd",
+          "decodedSha256": "sha256:decoded-rgba:5e7317aea8004cc299887a4bd16ba4997f97cc371c39462a3ae68263b8bf3651",
+          "backendMediaHash": null
+        }
+      ]
+    },
+    "blockers": []
+  },
+  "run2": {
+    "schemaVersion": 1,
+    "format": "modiff.live-proof.provenance.v1",
+    "capturedAt": "2026-07-10T18:01:55.562Z",
+    "taskId": "lD0iEwwe_3vm",
+    "proofLockHash": "sha256:live-proof-lock-v1:549c4b369ff9d75e6b6bae8ed112f38d42e12a8956d10acff934e4de135d0aad",
+    "graphHash": "sha256:canonical-graph-v1:a4af5e68ee0b163283ad7f48fa639a81ba9da34870b9b394c7c0fa2643008768",
+    "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+    "backendReportedRuntimeFingerprint": "sha256:c9371cc831299c794ea164bf7a72256d4fb7dd3d454ea781338db20e6d0e6f45",
+    "backendSourceFingerprint": "sha256:backend-source-v1:1a5cd33510acc57f6343f81aed99ebfc030eace0f45c12a28dd06288d4708829",
+    "backendContractFingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+    "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "modelCommit": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "templateLockHash": "tpl_00675f55",
+    "templateRevisionHash": "sha256:template-revision-v1:eed37f8b3bb8cbfb7279bce0ffe092d8a2dfec47b1596f1f27c49fe9bced2d29",
+    "mediaHash": "sha256:decoded-rgba:5e7317aea8004cc299887a4bd16ba4997f97cc371c39462a3ae68263b8bf3651",
+    "mediaType": "image",
+    "width": 768,
+    "height": 1344,
+    "frames": null,
+    "durationSeconds": null,
+    "sampleRate": null,
+    "channels": null,
+    "template": {
+      "id": "qwen_poster_logo_text",
+      "promptSettingsHash": "ps_2830ecac",
+      "catalogTemplateLockHash": "tpl_c706280d",
+      "resolvedTemplateLockHash": "tpl_00675f55",
+      "revisionHash": "sha256:template-revision-v1:eed37f8b3bb8cbfb7279bce0ffe092d8a2dfec47b1596f1f27c49fe9bced2d29",
+      "lockedSettings": {
+        "attentionKwargsJson": "",
+        "audioCoverStrength": 0.5,
+        "audioDuration": 30,
+        "autoOffload": true,
+        "bpm": 0,
+        "conditioningScale": 1,
+        "controlVideo": "",
+        "dtype": "bfloat16",
+        "extensionDuration": 15,
+        "fps": 16,
+        "guidanceScale": 4,
+        "guidanceScale2": 0,
+        "height": 1344,
+        "keyscale": "C",
+        "layers": 4,
+        "lyrics": "",
+        "maskVideo": "",
+        "maxSequenceLength": 512,
+        "mode": "text_to_image",
+        "modelType": "QwenImageModularPipeline",
+        "negativePrompt": "wrong title text, duplicated words, broken kerning, random symbols, cluttered grid, illegible date, jagged chrome, print artifacts",
+        "numFrames": 81,
+        "offloadMode": "model_cpu",
+        "outpaintBottom": 0,
+        "outpaintFeather": 8,
+        "outpaintFillColor": "black",
+        "outpaintLeft": 256,
+        "outpaintOverlap": 24,
+        "outpaintRight": 256,
+        "outpaintTop": 0,
+        "outputType": "pil",
+        "prompt": "Design a print-ready museum poster for the fictional exhibition ORBITAL TYPE LAB. Use the exact title text \"ORBITAL TYPE LAB\" as the dominant centered logo mark, with a small readable date line \"JULY 18 - AUGUST 04\" and micro-caption blocks aligned to a strict grid. Visual subject: a chrome letter O hovering above a matte black floor, thin yellow orbital paths, sharp kerning, balanced margins, and premium graphic-design contrast.",
+        "quantizationMode": "none",
+        "randomSeed": false,
+        "referenceAudio": "",
+        "repaintingEnd": 10,
+        "repaintingStart": 0,
+        "resourceMode": "auto",
+        "seed": 5102,
+        "shift": 3,
+        "sourceAudio": "",
+        "sourceVideo": "",
+        "steps": 50,
+        "strength": 0.8,
+        "timesignature": "4/4",
+        "vocalLanguage": "en",
+        "width": 768
+      }
+    },
+    "graph": {
+      "schemaVersion": 1,
+      "hash": "sha256:canonical-graph-v1:a4af5e68ee0b163283ad7f48fa639a81ba9da34870b9b394c7c0fa2643008768",
+      "canonicalGraph": {
+        "deterministicMode": {
+          "enabled": true,
+          "promptSettingsHash": "ps_2830ecac",
+          "seed": 5102,
+          "strict": true,
+          "templateId": "qwen_poster_logo_text",
+          "templateLockHash": "tpl_c706280d"
+        },
+        "nodes": [
+          {
+            "action": "LoadPipeline",
+            "key": "modules.QwenImage.LoadPipeline#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "value": true
+              },
+              "bnb_4bit_compute_dtype": {
+                "value": "bfloat16"
+              },
+              "bnb_4bit_quant_type": {
+                "value": "nf4"
+              },
+              "bnb_4bit_use_double_quant": {
+                "value": true
+              },
+              "device": {
+                "value": "cuda:0"
+              },
+              "dtype": {
+                "value": "bfloat16"
+              },
+              "low_cpu_mem_usage": {},
+              "model_id": {
+                "display": "modelselect",
+                "value": {
+                  "source": "hub",
+                  "value": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
+                }
+              },
+              "offload_mode": {
+                "value": "model_cpu"
+              },
+              "quantization_mode": {
+                "value": "none"
+              },
+              "quantized_components": {
+                "display": "select",
+                "value": []
+              },
+              "revision": {}
+            }
+          },
+          {
+            "action": "Generate",
+            "key": "modules.QwenImage.Generate#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "value": 1344
+              },
+              "max_sequence_length": {
+                "value": 512
+              },
+              "negative_prompt": {
+                "display": "textarea",
+                "value": "wrong title text, duplicated words, broken kerning, random symbols, cluttered grid, illegible date, jagged chrome, print artifacts"
+              },
+              "num_inference_steps": {
+                "display": "slider",
+                "value": 50
+              },
+              "output_type": {
+                "value": "pil"
+              },
+              "pipeline": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.LoadPipeline#1",
+                "sourceKey": "pipeline"
+              },
+              "prompt": {
+                "display": "textarea",
+                "value": "Design a print-ready museum poster for the fictional exhibition ORBITAL TYPE LAB. Use the exact title text \"ORBITAL TYPE LAB\" as the dominant centered logo mark, with a small readable date line \"JULY 18 - AUGUST 04\" and micro-caption blocks aligned to a strict grid. Visual subject: a chrome letter O hovering above a matte black floor, thin yellow orbital paths, sharp kerning, balanced margins, and premium graphic-design contrast."
+              },
+              "seed": {
+                "value": 5102
+              },
+              "true_cfg_scale": {
+                "display": "slider",
+                "value": 4
+              },
+              "width": {
+                "value": 768
+              }
+            }
+          },
+          {
+            "action": "Preview",
+            "key": "modules.Image.Preview#1",
+            "module": "modules.Image",
+            "params": {
+              "device": {},
+              "export": {},
+              "image": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.Generate#1",
+                "sourceKey": "images"
+              },
+              "preview": {
+                "display": "ui_image",
+                "sourceKey": "output"
+              },
+              "vae": {
+                "display": "input"
+              }
+            }
+          }
+        ],
+        "paths": [
+          [
+            "modules.QwenImage.LoadPipeline#1",
+            "modules.QwenImage.Generate#1",
+            "modules.Image.Preview#1"
+          ]
+        ],
+        "schemaVersion": 1
+      },
+      "executionPlanHash": "sha256:execution-plan-v1:9b98110593ab24893cfe7c23c94af1917957d183f1908ed70bbded7b53ac7068",
+      "executionPlan": {
+        "autoOffload": true,
+        "autoResourceCandidateId": "qwen-t2i-prequantized-model-cpu",
+        "cudaIndex": 0,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "executionPath": "direct-qwen-image",
+        "modelFamily": "Qwen Image",
+        "modelRepo": "Qwen/Qwen-Image-2512",
+        "modelType": "QwenImageModularPipeline",
+        "offloadMode": "model_cpu",
+        "pipelineClass": null,
+        "quantizationMode": "none",
+        "quantizedComponents": [],
+        "resolvedArtifact": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedModelRepo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedResourceMode": "auto",
+        "resourceMode": "auto",
+        "source": "studio"
+      }
+    },
+    "model": {
+      "fingerprint": "sha256:535dd7dda54e6f80520eee058322a1ec7b02a6aee51683abb81d585d4e17f004",
+      "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "repoId": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+      "revisions": [
+        {
+          "hash": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+          "lastModified": 1783141419,
+          "size": 18667660240
+        }
+      ],
+      "selectedRevision": "f50b8c24fe21e9265509b15113b7cca82d0a4443"
+    },
+    "models": {
+      "count": 1,
+      "hash": "sha256:model-set-v1:234b853531abfa715b3cffad1ae35ae84db5eb7559db178138a0d11d8b16b5ae",
+      "revisionLock": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "commitLock": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "items": [
+        {
+          "fingerprint": "sha256:535dd7dda54e6f80520eee058322a1ec7b02a6aee51683abb81d585d4e17f004",
+          "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+          "repoId": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+          "revisions": [
+            {
+              "hash": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+              "lastModified": 1783141419,
+              "size": 18667660240
+            }
+          ],
+          "selectedRevision": "f50b8c24fe21e9265509b15113b7cca82d0a4443"
+        }
+      ]
+    },
+    "inputs": {
+      "count": 0,
+      "hash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "items": []
+    },
+    "runtime": {
+      "reportedFingerprint": "sha256:c9371cc831299c794ea164bf7a72256d4fb7dd3d454ea781338db20e6d0e6f45",
+      "lockFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+      "payload": {
+        "dataDir": "<local-path>/data",
+        "packages": {
+          "accelerate": "1.13.0",
+          "bitsandbytes": "0.49.2",
+          "diffusers": "0.39.0.dev0",
+          "platform": "Windows-11-10.0.26200-SP0",
+          "python": "3.12.11",
+          "torch": "2.11.0+cu128",
+          "transformers": "5.10.1"
+        },
+        "torch": {
+          "cuda_available": true,
+          "cuda_device_capability": "8.9",
+          "cuda_device_count": 1,
+          "cuda_device_name": "NVIDIA GeForce RTX 4080",
+          "cuda_device_total_memory_bytes": 17170956288,
+          "cuda_memory_total_bytes": 17170956288,
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "cudnn_version": 91900,
+          "deterministic_algorithms": true
+        },
+        "workDir": "<local-path>/data"
+      },
+      "backendSource": {
+        "gitCommit": "<redacted-source-commit>",
+        "fingerprint": "sha256:backend-source-v1:1a5cd33510acc57f6343f81aed99ebfc030eace0f45c12a28dd06288d4708829",
+        "files": [
+          {
+            "path": "main.py",
+            "sha256": "9b5f35900b43de45b79f185b636e5f603e0fb7715dfd3d65dd8adfcb58b92518"
+          },
+          {
+            "path": "modiff/__init__.py",
+            "sha256": "e24665e005189b7f490d12c4f445a15e96dca9553d028a0656ec86d52d191aff"
+          },
+          {
+            "path": "modiff/auto_resource.py",
+            "sha256": "dc41c93ec15312af2805af1b7ebb6e2283a143bfbd766a3f3f89da385693061d"
+          },
+          {
+            "path": "modiff/client.py",
+            "sha256": "8127811d106482655cc44a217c2f18d53cb25f202810931d1cddb0f18dd2108e"
+          },
+          {
+            "path": "modiff/config.py",
+            "sha256": "483a8744e6b6a9d9650187866d24c002a1d246330f82997a2a2f4e67a520eded"
+          },
+          {
+            "path": "modiff/diffusers_offload.py",
+            "sha256": "68f0664eb610a8696e767c3956c074c52a0d8bfe9d89a4b52eed85fad0842154"
+          },
+          {
+            "path": "modiff/diffusers_profiles.py",
+            "sha256": "c11ae2c1ee5283398d52b6a6519d2e95ba9ba96616888883f87492d492663606"
+          },
+          {
+            "path": "modiff/hardware.py",
+            "sha256": "55d2e06fc7e4b45080a017566cd6e7eb0441379e93fe0076cdd30252a4720d40"
+          },
+          {
+            "path": "modiff/modelstore.py",
+            "sha256": "25ba12273535ca802a9f94271ddf778bc52f551f6bc175e9a692c55374aabb05"
+          },
+          {
+            "path": "modiff/NodeBase.py",
+            "sha256": "0aaea0445749e5c070e7534745ea9feee86e092ed502ed5fbb69365d27b3e717"
+          },
+          {
+            "path": "modiff/preflight.py",
+            "sha256": "7a637fa35e2b883093f2d63a4dc20822730a75e23c4b07ff19a8e2ebf40c5ed9"
+          },
+          {
+            "path": "modiff/server.py",
+            "sha256": "b3d0f5f4ba88c99a4b77de04619735b3898f49a358048d8a2b3b05eca8b304d1"
+          },
+          {
+            "path": "modules/__init__.py",
+            "sha256": "6471c25f6bf53fa64f260300be964f34edbcd33de4a2b1185053dbae050a7d7d"
+          },
+          {
+            "path": "modules/Audio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/Audio/main.py",
+            "sha256": "ee9ab99b523ef3e4a490070cddda86de89bc5a45b7eb4c28215693512081c24d"
+          },
+          {
+            "path": "modules/Color/__init__.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/Color/main.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/DiffusersAudio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/DiffusersAudio/main.py",
+            "sha256": "b1b82379c61f1c979ba27ca39113cfd4990c1c7417500a5b59b542b11021f90f"
+          },
+          {
+            "path": "modules/DiffusersImage/__init__.py",
+            "sha256": "6028b364b913ad0aecfc531f0024ebd4c157569b40847bba202e6fe1db8ce955"
+          },
+          {
+            "path": "modules/DiffusersImage/main.py",
+            "sha256": "bdaba167c74321ec60ff9ab3d31ed53a3f9a7cafaa3271be298e7e8976d40f7b"
+          },
+          {
+            "path": "modules/Experiments/__init__.py",
+            "sha256": "7bee5a40c0de9ca30b2373901a521744270b74f52b8d473e7bde559e724abeeb"
+          },
+          {
+            "path": "modules/Experiments/flux_layers.py",
+            "sha256": "f6a25b942c6328d37e0cd377611948167b3616d49bcd54d49a3ee02738344321"
+          },
+          {
+            "path": "modules/Experiments/FLUXKontext.py",
+            "sha256": "710359fb023073472cd11a244d01bcb518c1ba2666b98d7f34eadf0bb341eab5"
+          },
+          {
+            "path": "modules/Experiments/main.py",
+            "sha256": "1969bdeb620281109b2f9556dc872c4701dcdbe7d231eb01e385fc4fbc34e83b"
+          },
+          {
+            "path": "modules/Experiments/sd3_layers.py",
+            "sha256": "3052048c192437db10a5ecf2132df82b481b5126977318e2424c514c116800f9"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusion3.py",
+            "sha256": "e8d39e79934bd1a4994f588a240379721f22d40dede707967daa252d1c49326f"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusionXL.py",
+            "sha256": "083645de861c26f87dfb55b9adfed1efe4cad7fa8837b3ab718573925be82813"
+          },
+          {
+            "path": "modules/Experiments/t5_layers.py",
+            "sha256": "ea9c92befc8712493c5e49fafa5d24ad5f828a4beda6fa54b31349ef6a97450a"
+          },
+          {
+            "path": "modules/Experiments/utils.py",
+            "sha256": "0f17c18562ab3fb309daa6cfba2dc761edf4b0948ee5c249ce45f608e9d74045"
+          },
+          {
+            "path": "modules/Experiments/VAE.py",
+            "sha256": "a9bee4828803849561cd82832e70ed4097b738dfdb89c9d0242d1e17a86b3886"
+          },
+          {
+            "path": "modules/Image/__init__.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/Image/main.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/ImageFilters/__init__.py",
+            "sha256": "22c5cbf1c3c5e45a2d50914c8086e95c7984b73ef0d6a6d82b5b78772bdbd2e0"
+          },
+          {
+            "path": "modules/ImageFilters/main.py",
+            "sha256": "bc44426f4e391209db04f120866172d14abde76c8d18c5ae656beca580d00501"
+          },
+          {
+            "path": "modules/ModelArtifact/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/ModelArtifact/main.py",
+            "sha256": "d5d1f8f3dc144ad0edc374a086ca0125747a77132efd2b936e241cfee8513daf"
+          },
+          {
+            "path": "modules/ModularDiffusers/__init__.py",
+            "sha256": "21881c5ad4eee92ed9d6a5e70161faf4c54789c89d4805f357cfc4dfb1d5330c"
+          },
+          {
+            "path": "modules/ModularDiffusers/adapters.py",
+            "sha256": "5b65674145a146e711e864aef2f25b336b70e7bd0d0639330a518f8613dfec78"
+          },
+          {
+            "path": "modules/ModularDiffusers/controlnet.py",
+            "sha256": "0c1d26105a5bbe91d5df84ccc8b603b50a152a9e0e4bf99d6db9a3d983b6150f"
+          },
+          {
+            "path": "modules/ModularDiffusers/denoise.py",
+            "sha256": "e326d98f14ca72fb58cbaacb647fc160c0b855be54e9e7b0f5a0d42416a0a976"
+          },
+          {
+            "path": "modules/ModularDiffusers/dynamic_node.py",
+            "sha256": "0a18907cf185caa351a0cdca3cafa00095a8dd997a2a1b01424b109c1236c5eb"
+          },
+          {
+            "path": "modules/ModularDiffusers/embeddings.py",
+            "sha256": "a4578e39a52abafbe803106d80098ce462a262a5a029538ab79b9dcd62976362"
+          },
+          {
+            "path": "modules/ModularDiffusers/guiders.py",
+            "sha256": "0d8e7e97a48ea1e10b9e7ce96aecd46b47d5dd6ab7ce425783b9b8a0553e5ae5"
+          },
+          {
+            "path": "modules/ModularDiffusers/latents.py",
+            "sha256": "7c4022d693ea4b7bb13e2b4bd54a808d1eb7571955e9e380cdfc82ef7f47add7"
+          },
+          {
+            "path": "modules/ModularDiffusers/loaders.py",
+            "sha256": "055278156cd3f28a972f77a222a7ec2a1fe796273c36a5b90a4dd7e4227cac4d"
+          },
+          {
+            "path": "modules/ModularDiffusers/main.py",
+            "sha256": "79da0e2aa131c30e7f3e6628e71740ee8484d544437099753e3ca3d51a4a5a64"
+          },
+          {
+            "path": "modules/ModularDiffusers/modular_utils.py",
+            "sha256": "2ee40460825ae5f6d480aa58d2e16e741907dea161b2ed775245644813fbd59c"
+          },
+          {
+            "path": "modules/ModularDiffusers/schedulers.py",
+            "sha256": "c11aeef43a09d79ed35a5717cbb92b32a35df1347eb33e4599b998d39b1c73aa"
+          },
+          {
+            "path": "modules/ModularDiffusers/utils.py",
+            "sha256": "2f7da484a6a454a9a5f4b092f092ffc6880904d36f8b6c1cba641d2ce1cc169c"
+          },
+          {
+            "path": "modules/Primitive/__init__.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/Primitive/main.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/QwenImage/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/QwenImage/main.py",
+            "sha256": "965914f4af563f7bfbf83cf3edc0ef7d599fd34e93b84e30a33016315dd387cd"
+          },
+          {
+            "path": "modules/Segmentation/__init__.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Segmentation/main.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Spandrel/__init__.py",
+            "sha256": "6359b859c7ed519657cb721fe8f951c663d2b0df1e4baeb63d8b49a27918caad"
+          },
+          {
+            "path": "modules/Spandrel/main.py",
+            "sha256": "0e145829a258b5fa5c82b6e5a6a39a0d57b6238595987e9019c21147adbbe72f"
+          },
+          {
+            "path": "modules/Tensor/__init__.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Tensor/main.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Text/__init__.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Text/main.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Video/__init__.py",
+            "sha256": "a92846fe73ba4582c638d14c0da6a670285150c9e4e5355a5df7efccd4c21840"
+          },
+          {
+            "path": "modules/Video/main.py",
+            "sha256": "8660597145fd48c295b07e780dbe4e65e4e6c1219c8911ea6ad3ecb0725060cb"
+          },
+          {
+            "path": "modules/VideoColor/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoColor/main.py",
+            "sha256": "60b5b6fe50c0f7bfdb94b9e335951ca9505e487fa47fbeb5c99a8c248a2260b6"
+          },
+          {
+            "path": "modules/VideoConditioning/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoConditioning/main.py",
+            "sha256": "e6f0cad4c9fce9cfe8414b5cc7a55d5086fafd3538393eb48254202d7d4af8e3"
+          },
+          {
+            "path": "modules/WanVACE/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/WanVACE/main.py",
+            "sha256": "f0cf62402ff213e12fa96efa514f100a7eec6f981ab2e6f37036fed0c9fec17e"
+          },
+          {
+            "path": "pyproject.toml",
+            "sha256": "47180826e627c368c039c24fce5cd79a8221192407eeee0fc836d05a2b8345fa"
+          },
+          {
+            "path": "utils/huggingface.py",
+            "sha256": "4765870a4246f0f288147c5309caed351e80a0212206ef3cf9376cdb4f0eaf64"
+          },
+          {
+            "path": "utils/image.py",
+            "sha256": "9472a5bad33a4703c6a449cacd856bed3b1da6bdc23895863ea591dbdab922aa"
+          },
+          {
+            "path": "utils/memory_menager.py",
+            "sha256": "54cfc658c9d7123c9838e68e9eca79ac8f74a7125c2b868cb6ebcf6a8708a2a1"
+          },
+          {
+            "path": "utils/paths.py",
+            "sha256": "4573209caace186f8bcb40945bade14ddfccfd7a477b3fb9bbc0aa03720681a4"
+          },
+          {
+            "path": "utils/quantization.py",
+            "sha256": "026a27d71b0d2a8bbbf185e2e2fc704696f387acf8a0162c04c317d7824759bc"
+          },
+          {
+            "path": "utils/spline.py",
+            "sha256": "d0d5eeae7f1d3cecac3508b85b5308e691aaf3ff88d455b7cecc001fbe4e58d3"
+          },
+          {
+            "path": "utils/torch_utils.py",
+            "sha256": "124db00cfe3a86c3b589291270c2f840f46c3f370786b4c88babd3173de7f21f"
+          }
+        ]
+      },
+      "backendContract": {
+        "fingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+        "contracts": [
+          {
+            "action": "LoadPipeline",
+            "cache": false,
+            "key": "modules.QwenImage.LoadPipeline",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "default": true,
+                "type": "bool"
+              },
+              "bnb_4bit_compute_dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_quant_type": {
+                "default": "nf4",
+                "options": [
+                  "nf4",
+                  "fp4"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_use_double_quant": {
+                "default": true,
+                "type": "bool"
+              },
+              "device": {
+                "default": "cuda:0",
+                "options": [
+                  "cuda:0",
+                  "cpu:0"
+                ],
+                "type": "string"
+              },
+              "dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "low_cpu_mem_usage": {
+                "default": true,
+                "type": "bool"
+              },
+              "model_id": {
+                "display": "modelselect",
+                "fieldOptions": {
+                  "noValidation": true,
+                  "sources": [
+                    "hub",
+                    "local"
+                  ]
+                },
+                "type": "string"
+              },
+              "offload_mode": {
+                "default": "model_cpu",
+                "options": [
+                  "auto_cpu",
+                  "none",
+                  "model_cpu",
+                  "sequential_cpu",
+                  "group_cpu",
+                  "group_disk"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "output",
+                "type": "qwen_image_pipeline"
+              },
+              "quantization_mode": {
+                "default": "bnb_4bit",
+                "options": [
+                  "none",
+                  "bnb_4bit"
+                ],
+                "type": "string"
+              },
+              "quantized_components": {
+                "default": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "display": "select",
+                "fieldOptions": {
+                  "multiple": true
+                },
+                "options": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "type": "string"
+              },
+              "resolved_artifact": {
+                "display": "output",
+                "type": "string"
+              },
+              "revision": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Generate",
+            "cache": false,
+            "key": "modules.QwenImage.Generate",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "height_out": {
+                "display": "output",
+                "type": "int"
+              },
+              "images": {
+                "display": "output",
+                "type": "image"
+              },
+              "max_sequence_length": {
+                "default": 512,
+                "max": 2048,
+                "min": 1,
+                "type": "int"
+              },
+              "negative_prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "num_inference_steps": {
+                "default": 50,
+                "display": "slider",
+                "max": 100,
+                "min": 1,
+                "type": "int"
+              },
+              "output_type": {
+                "default": "pil",
+                "options": [
+                  "pil",
+                  "np",
+                  "pt"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "input",
+                "type": "qwen_image_pipeline"
+              },
+              "prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "seed": {
+                "default": 0,
+                "display": "random",
+                "max": 4294967295,
+                "min": 0,
+                "type": "int"
+              },
+              "true_cfg_scale": {
+                "default": 4,
+                "display": "slider",
+                "max": 20,
+                "min": 0,
+                "step": 0.1,
+                "type": "float"
+              },
+              "width": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "width_out": {
+                "display": "output",
+                "type": "int"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Preview",
+            "cache": false,
+            "key": "modules.Image.Preview",
+            "module": "modules.Image",
+            "params": {
+              "device": {
+                "default": "cuda:0",
+                "options": {
+                  "cpu:0": {
+                    "arch": "cpu",
+                    "index": 0,
+                    "label": [
+                      "cpu:0"
+                    ],
+                    "name": "CPU (0)",
+                    "total_memory": 0
+                  },
+                  "cuda:0": {
+                    "arch": "cuda",
+                    "index": 0,
+                    "label": [
+                      "cuda:0"
+                    ],
+                    "name": "NVIDIA GeForce RTX 4080 15.99GB (0)",
+                    "total_memory": 17170956288
+                  }
+                },
+                "type": "string"
+              },
+              "export": {
+                "default": "0",
+                "type": "str"
+              },
+              "filtered": {
+                "display": "output",
+                "type": "image"
+              },
+              "image": {
+                "display": "input",
+                "type": [
+                  "image",
+                  "latent"
+                ]
+              },
+              "output": {
+                "display": "output",
+                "type": "image"
+              },
+              "preview": {
+                "dataSource": "output",
+                "display": "ui_image",
+                "type": "url"
+              },
+              "vae": {
+                "display": "input",
+                "type": "pipeline"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "deterministic": {
+        "fingerprint": "sha256:deterministic-settings-v1:99922f06c86191d35fe80fce00158d8369768840cb68495b1cd7d36aa4e4feea",
+        "settings": {
+          "enabled": true,
+          "seed": 5102,
+          "settings": {
+            "allow_tf32": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": true,
+            "numpy_random": true,
+            "python_random": true,
+            "torch_cuda_manual_seed_all": true,
+            "torch_deterministic_algorithms": true,
+            "torch_manual_seed": true
+          },
+          "strict": true,
+          "warnings": []
+        }
+      }
+    },
+    "output": {
+      "count": 1,
+      "collectionHash": "sha256:decoded-output-collection-v1:74805cce03788202777f0de1cde87bccfd430ab6f0d0ddcd219699b92961b3e2",
+      "backendCollectionHash": null,
+      "items": [
+        {
+          "index": 0,
+          "mediaType": "image",
+          "width": 768,
+          "height": 1344,
+          "frames": null,
+          "durationSeconds": null,
+          "sampleRate": null,
+          "channels": null,
+          "byteSize": 221998,
+          "encodedSha256": "sha256:74d4a6f3f39abfca307ee45f16e4744bb4828eaa20b94a9519de7f9549295ebd",
+          "decodedSha256": "sha256:decoded-rgba:5e7317aea8004cc299887a4bd16ba4997f97cc371c39462a3ae68263b8bf3651",
+          "backendMediaHash": null
+        }
+      ]
+    },
+    "blockers": []
+  },
+  "comparison": {
+    "matches": true,
+    "candidateExact": true,
+    "comparedFields": 25,
+    "mismatches": [],
+    "baselineBlockers": [],
+    "candidateBlockers": []
+  },
+  "redactions": {
+    "fingerprintsRemainOpaque": true,
+    "localPaths": true,
+    "note": "Hashes attest to the original capture; redacted payloads are not sufficient to recompute them.",
+    "sourceCommit": true
+  }
+}

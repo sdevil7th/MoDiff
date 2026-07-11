@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "templateId": "z_image_quick_concept",
+  "templateLockHash": "tpl_a03a83f2",
+  "promptSettingsHash": "ps_b58a20cf",
+  "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+  "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+  "graphHash": "sha256:canonical-graph-v1:aa50e24cc915631f22751acb01d48be00d91593e45d6484fa6ca54b0b05f3bfa",
+  "proofLockHash": "sha256:live-proof-lock-v1:887f964a98eef6ae1d0037f545933ac92aee2ffabba4e6e208d9a83f2fb7892b",
+  "decodedMediaHash": "sha256:decoded-rgba:7d1b0d6b08d59a8bb07503c380ab05ee5225fccb8e1e9b74e7da66a0a568fc46",
+  "modelSetHash": "sha256:model-set-v1:e77e0a81a3ae63a90119d48d1eca37948eb840c7b29eed6bc12ef674fba10738",
+  "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewStatus": "approved_exact",
+  "reviewer": "Codex visual review",
+  "reviewedAt": "2026-07-10T10:21:30.000Z",
+  "rubric": {
+    "taskAdherence": 4,
+    "artifactControl": 5,
+    "modalityQuality": 5,
+    "composition": 4,
+    "productCoherence": 4,
+    "materialAndLighting": 5
+  },
+  "summary": "Approved as a polished cinematic product-key-art example: the single rescue radio is coherent and grounded, wet graphite and brass materials separate cleanly, rain and blue-hour mountains establish the requested storm context, the cool-window and warm-amber lighting create depth, and the right side retains useful negative space.",
+  "knownLimitations": [
+    "The brass antenna is upright rather than visibly folded.",
+    "The amber status lamp reads as a large front searchlight, making the product feel slightly more like a hybrid radio-lantern than the compact indicator described in the brief.",
+    "The radio sits nearer the center than the requested left-two-thirds placement, although substantial right-side copy space remains."
+  ]
+}

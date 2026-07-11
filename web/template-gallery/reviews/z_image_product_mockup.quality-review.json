@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "templateId": "z_image_product_mockup",
+  "templateLockHash": "tpl_fb1f8c89",
+  "promptSettingsHash": "ps_b3bbd249",
+  "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+  "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+  "graphHash": "sha256:canonical-graph-v1:62c8b424fc47abedbcc893c684522f42b33ac67e09a463f3bfb04380e1e95fca",
+  "proofLockHash": "sha256:live-proof-lock-v1:b24fbd756841c75c7f706ec2a9536d047b655375363527150a4a28a41ef55c8e",
+  "decodedMediaHash": "sha256:decoded-rgba:93da2f0c186db8dff697855e0a0264f09750f1e79ab17d891f2be0705d9c0119",
+  "modelSetHash": "sha256:model-set-v1:e77e0a81a3ae63a90119d48d1eca37948eb840c7b29eed6bc12ef674fba10738",
+  "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewStatus": "approved_exact",
+  "reviewer": "Codex visual review",
+  "reviewedAt": "2026-07-10T17:38:46.400Z",
+  "rubric": {
+    "taskAdherence": 5,
+    "artifactControl": 5,
+    "modalityQuality": 5,
+    "composition": 5,
+    "productCoherence": 5,
+    "materialAndLighting": 5
+  },
+  "summary": "Approved as a polished launch photograph: one coherent ivory-and-brass appliance is grounded on the requested slate counter, exactly three capsules form a restrained foreground diagonal, the 85 mm-style perspective and shallow cafe background read naturally, and soft window light plus a warm brass rim produce premium editorial depth.",
+  "knownLimitations": [
+    "The recessed indicator reads as a small dark opening on the lid rather than a visibly illuminated status point.",
+    "A small LumaPod Brew product mark is present even though the brief did not explicitly require visible branding."
+  ]
+}

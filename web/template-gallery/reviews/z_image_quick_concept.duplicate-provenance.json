@@ -1,0 +1,1885 @@
+{
+  "schemaVersion": 1,
+  "format": "modiff.gallery.duplicate-provenance.v1",
+  "templateId": "z_image_quick_concept",
+  "run1": {
+    "schemaVersion": 1,
+    "format": "modiff.live-proof.provenance.v1",
+    "capturedAt": "2026-07-10T10:18:57.784Z",
+    "taskId": "SEmbNNzDxXJH",
+    "proofLockHash": "sha256:live-proof-lock-v1:887f964a98eef6ae1d0037f545933ac92aee2ffabba4e6e208d9a83f2fb7892b",
+    "graphHash": "sha256:canonical-graph-v1:aa50e24cc915631f22751acb01d48be00d91593e45d6484fa6ca54b0b05f3bfa",
+    "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+    "backendReportedRuntimeFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+    "backendSourceFingerprint": "sha256:backend-source-v1:2e2c2376a6ee097ea4b200f889e3f904db24666c4c3be500a16aaad3ff21c831",
+    "backendContractFingerprint": "sha256:backend-contract-v1:c5469fd532f0781003b105ead0f89737cf40b6ee46553a6aa7a99d6d3662f064",
+    "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+    "modelCommit": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+    "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "templateLockHash": "tpl_a03a83f2",
+    "templateRevisionHash": "sha256:template-revision-v1:b11d89ca1d3aea347893054aa6fea42a4ca5a80d4a69e40d794537bba0fd4dc1",
+    "mediaHash": "sha256:decoded-rgba:7d1b0d6b08d59a8bb07503c380ab05ee5225fccb8e1e9b74e7da66a0a568fc46",
+    "width": 1024,
+    "height": 1024,
+    "template": {
+      "id": "z_image_quick_concept",
+      "promptSettingsHash": "ps_b58a20cf",
+      "catalogTemplateLockHash": "tpl_668374ba",
+      "resolvedTemplateLockHash": "tpl_a03a83f2",
+      "revisionHash": "sha256:template-revision-v1:b11d89ca1d3aea347893054aa6fea42a4ca5a80d4a69e40d794537bba0fd4dc1",
+      "lockedSettings": {
+        "attentionKwargsJson": "",
+        "audioCoverStrength": 0.5,
+        "audioDuration": 30,
+        "autoOffload": true,
+        "bpm": 0,
+        "conditioningScale": 1,
+        "controlVideo": "",
+        "dtype": "bfloat16",
+        "extensionDuration": 15,
+        "fps": 16,
+        "guidanceScale": 1,
+        "guidanceScale2": 0,
+        "height": 1024,
+        "keyscale": "C",
+        "layers": 4,
+        "lyrics": "",
+        "maskVideo": "",
+        "maxSequenceLength": 512,
+        "mode": "text_to_image",
+        "modelType": "ZImageModularPipeline",
+        "negativePrompt": "extra radios, duplicated controls, warped knobs, bent antenna, floating product, muddy silhouette, flat plastic material, noisy rain texture, blown amber light, unreadable markings, generic stock-photo staging, soft focus",
+        "numFrames": 81,
+        "offloadMode": "model_cpu",
+        "outpaintBottom": 0,
+        "outpaintFeather": 8,
+        "outpaintFillColor": "black",
+        "outpaintLeft": 256,
+        "outpaintOverlap": 24,
+        "outpaintRight": 256,
+        "outpaintTop": 0,
+        "outputType": "pil",
+        "prompt": "Creative objective: design a cinematic key-art frame for Solace Beacon, a compact solar-powered field radio used by mountain rescue crews during a night storm. Product design: one rugged wet-graphite radio with a folded brass antenna, knurled weather-sealed controls, a warm amber status lamp, fine rain beads, believable gasket seams, and a clear functional silhouette. Composition and camera: low tabletop three-quarter hero view, 50 mm lens, product filling the left two-thirds of frame, sharp focus on the controls, shallow falloff toward distant rescue lights, and quiet negative space on the right. Environment and light: scratched lookout table beside a rain-streaked window, cold blue-hour mountains outside, soft cool window key, weak warm cabin fill, narrow amber rim reflection, realistic contact shadow, restrained film grain, no typography.",
+        "quantizationMode": "none",
+        "randomSeed": false,
+        "referenceAudio": "",
+        "repaintingEnd": 10,
+        "repaintingStart": 0,
+        "resourceMode": "auto",
+        "seed": 4201,
+        "shift": 3,
+        "sourceAudio": "",
+        "sourceVideo": "",
+        "steps": 8,
+        "strength": 0.8,
+        "timesignature": "4/4",
+        "vocalLanguage": "en",
+        "width": 1024
+      }
+    },
+    "graph": {
+      "schemaVersion": 1,
+      "hash": "sha256:canonical-graph-v1:aa50e24cc915631f22751acb01d48be00d91593e45d6484fa6ca54b0b05f3bfa",
+      "canonicalGraph": {
+        "deterministicMode": {
+          "enabled": true,
+          "promptSettingsHash": "ps_b58a20cf",
+          "seed": 4201,
+          "strict": true,
+          "templateId": "z_image_quick_concept",
+          "templateLockHash": "tpl_668374ba"
+        },
+        "nodes": [
+          {
+            "action": "LoadPipeline",
+            "key": "modules.DiffusersImage.LoadPipeline#1",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "auto_offload": {
+                "value": true
+              },
+              "device": {
+                "value": "cuda:0"
+              },
+              "dtype": {
+                "value": "bfloat16"
+              },
+              "enable_vae_slicing": {},
+              "enable_vae_tiling": {},
+              "low_cpu_mem_usage": {},
+              "model_id": {
+                "display": "modelselect",
+                "value": {
+                  "source": "hub",
+                  "value": "Tongyi-MAI/Z-Image-Turbo"
+                }
+              },
+              "offload_mode": {
+                "value": "model_cpu"
+              },
+              "pipeline_class": {
+                "value": "ZImagePipeline"
+              },
+              "quantization_mode": {
+                "value": "none"
+              },
+              "quantized_components": {
+                "display": "select",
+                "value": []
+              },
+              "revision": {}
+            }
+          },
+          {
+            "action": "Generate",
+            "key": "modules.DiffusersImage.Generate#1",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "guidance_scale": {
+                "display": "slider",
+                "value": 1
+              },
+              "height": {
+                "value": 1024
+              },
+              "max_sequence_length": {
+                "value": 512
+              },
+              "negative_prompt": {
+                "display": "textarea",
+                "value": "extra radios, duplicated controls, warped knobs, bent antenna, floating product, muddy silhouette, flat plastic material, noisy rain texture, blown amber light, unreadable markings, generic stock-photo staging, soft focus"
+              },
+              "num_inference_steps": {
+                "display": "slider",
+                "value": 8
+              },
+              "output_type": {
+                "value": "pil"
+              },
+              "pipeline": {
+                "display": "input",
+                "sourceId": "modules.DiffusersImage.LoadPipeline#1",
+                "sourceKey": "pipeline"
+              },
+              "prompt": {
+                "display": "textarea",
+                "value": "Creative objective: design a cinematic key-art frame for Solace Beacon, a compact solar-powered field radio used by mountain rescue crews during a night storm. Product design: one rugged wet-graphite radio with a folded brass antenna, knurled weather-sealed controls, a warm amber status lamp, fine rain beads, believable gasket seams, and a clear functional silhouette. Composition and camera: low tabletop three-quarter hero view, 50 mm lens, product filling the left two-thirds of frame, sharp focus on the controls, shallow falloff toward distant rescue lights, and quiet negative space on the right. Environment and light: scratched lookout table beside a rain-streaked window, cold blue-hour mountains outside, soft cool window key, weak warm cabin fill, narrow amber rim reflection, realistic contact shadow, restrained film grain, no typography."
+              },
+              "seed": {
+                "value": 4201
+              },
+              "strength": {
+                "display": "slider",
+                "value": 0.8
+              },
+              "width": {
+                "value": 1024
+              }
+            }
+          },
+          {
+            "action": "Preview",
+            "key": "modules.Image.Preview#1",
+            "module": "modules.Image",
+            "params": {
+              "device": {},
+              "export": {},
+              "image": {
+                "display": "input",
+                "sourceId": "modules.DiffusersImage.Generate#1",
+                "sourceKey": "images"
+              },
+              "preview": {
+                "display": "ui_image",
+                "sourceKey": "output"
+              },
+              "vae": {
+                "display": "input"
+              }
+            }
+          }
+        ],
+        "paths": [
+          [
+            "modules.DiffusersImage.LoadPipeline#1",
+            "modules.DiffusersImage.Generate#1",
+            "modules.Image.Preview#1"
+          ]
+        ],
+        "schemaVersion": 1
+      },
+      "executionPlanHash": "sha256:execution-plan-v1:1ec1320c7db018abe7710a0e37e3881dcc5a956311a49973554ffb406266c258",
+      "executionPlan": {
+        "autoOffload": true,
+        "autoResourceCandidateId": "ZImageModularPipeline-text_to_image-native-bf16",
+        "autoResourceProofStatus": "declared_safe",
+        "cudaIndex": 0,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "executionPath": "modular-diffusers",
+        "modelFamily": "Z-Image",
+        "modelRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "modelType": "ZImageModularPipeline",
+        "offloadMode": "model_cpu",
+        "pipelineClass": null,
+        "quantizationMode": "none",
+        "quantizedComponents": [],
+        "resolvedArtifact": "Tongyi-MAI/Z-Image-Turbo",
+        "resolvedModelRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "resolvedResourceMode": "auto",
+        "resourceMode": "auto",
+        "source": "studio"
+      }
+    },
+    "model": {
+      "fingerprint": "sha256:f24e45f2aa886fbb6f51ed6062d0789620ebafdade9f12aa1ae6b113466cbd1d",
+      "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "repoId": "Tongyi-MAI/Z-Image-Turbo",
+      "revisions": [
+        {
+          "hash": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "lastModified": 1780644803,
+          "size": 32899667397
+        }
+      ],
+      "selectedRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6"
+    },
+    "models": {
+      "count": 1,
+      "hash": "sha256:model-set-v1:e77e0a81a3ae63a90119d48d1eca37948eb840c7b29eed6bc12ef674fba10738",
+      "revisionLock": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "commitLock": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "items": [
+        {
+          "fingerprint": "sha256:f24e45f2aa886fbb6f51ed6062d0789620ebafdade9f12aa1ae6b113466cbd1d",
+          "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "repoId": "Tongyi-MAI/Z-Image-Turbo",
+          "revisions": [
+            {
+              "hash": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+              "lastModified": 1780644803,
+              "size": 32899667397
+            }
+          ],
+          "selectedRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6"
+        }
+      ]
+    },
+    "inputs": {
+      "count": 0,
+      "hash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "items": []
+    },
+    "runtime": {
+      "reportedFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+      "lockFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+      "payload": {
+        "dataDir": "<local-path>/data",
+        "packages": {
+          "accelerate": "1.13.0",
+          "bitsandbytes": "0.49.2",
+          "diffusers": "0.39.0.dev0",
+          "platform": "Windows-11-10.0.26200-SP0",
+          "python": "3.12.11",
+          "torch": "2.11.0+cu128",
+          "transformers": "5.10.1"
+        },
+        "torch": {
+          "cuda_available": true,
+          "cuda_device_capability": "8.9",
+          "cuda_device_count": 1,
+          "cuda_device_name": "NVIDIA GeForce RTX 4080",
+          "cuda_device_total_memory_bytes": 17170956288,
+          "cuda_memory_total_bytes": 17170956288,
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "cudnn_version": 91900,
+          "deterministic_algorithms": true
+        },
+        "workDir": "<local-path>/data"
+      },
+      "backendSource": {
+        "gitCommit": "<redacted-source-commit>",
+        "fingerprint": "sha256:backend-source-v1:2e2c2376a6ee097ea4b200f889e3f904db24666c4c3be500a16aaad3ff21c831",
+        "files": [
+          {
+            "path": "main.py",
+            "sha256": "9b5f35900b43de45b79f185b636e5f603e0fb7715dfd3d65dd8adfcb58b92518"
+          },
+          {
+            "path": "modiff/__init__.py",
+            "sha256": "e24665e005189b7f490d12c4f445a15e96dca9553d028a0656ec86d52d191aff"
+          },
+          {
+            "path": "modiff/auto_resource.py",
+            "sha256": "91722334d09b89c4e0ebddeb96a28d1ca5125b93c0457ed567ddef8f7bcee2bb"
+          },
+          {
+            "path": "modiff/client.py",
+            "sha256": "8127811d106482655cc44a217c2f18d53cb25f202810931d1cddb0f18dd2108e"
+          },
+          {
+            "path": "modiff/config.py",
+            "sha256": "483a8744e6b6a9d9650187866d24c002a1d246330f82997a2a2f4e67a520eded"
+          },
+          {
+            "path": "modiff/diffusers_offload.py",
+            "sha256": "3c7db15f4f811dee9c0d29636280ebbe0e2a0f2add316922a21c2e66646d72e4"
+          },
+          {
+            "path": "modiff/diffusers_profiles.py",
+            "sha256": "c11ae2c1ee5283398d52b6a6519d2e95ba9ba96616888883f87492d492663606"
+          },
+          {
+            "path": "modiff/hardware.py",
+            "sha256": "55d2e06fc7e4b45080a017566cd6e7eb0441379e93fe0076cdd30252a4720d40"
+          },
+          {
+            "path": "modiff/modelstore.py",
+            "sha256": "25ba12273535ca802a9f94271ddf778bc52f551f6bc175e9a692c55374aabb05"
+          },
+          {
+            "path": "modiff/NodeBase.py",
+            "sha256": "b0e7e2f6dd24da0fb12d36ad2d54843f7eb691412c5473b9bd1f78a09276b070"
+          },
+          {
+            "path": "modiff/preflight.py",
+            "sha256": "7a637fa35e2b883093f2d63a4dc20822730a75e23c4b07ff19a8e2ebf40c5ed9"
+          },
+          {
+            "path": "modiff/server.py",
+            "sha256": "b3d0f5f4ba88c99a4b77de04619735b3898f49a358048d8a2b3b05eca8b304d1"
+          },
+          {
+            "path": "modules/__init__.py",
+            "sha256": "6471c25f6bf53fa64f260300be964f34edbcd33de4a2b1185053dbae050a7d7d"
+          },
+          {
+            "path": "modules/Audio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/Audio/main.py",
+            "sha256": "ee9ab99b523ef3e4a490070cddda86de89bc5a45b7eb4c28215693512081c24d"
+          },
+          {
+            "path": "modules/Color/__init__.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/Color/main.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/DiffusersAudio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/DiffusersAudio/main.py",
+            "sha256": "1084472ffed9fd2b14db64d9e61735572956e31ab3dfebe2b66cc10a8cf1c94f"
+          },
+          {
+            "path": "modules/DiffusersImage/__init__.py",
+            "sha256": "6028b364b913ad0aecfc531f0024ebd4c157569b40847bba202e6fe1db8ce955"
+          },
+          {
+            "path": "modules/DiffusersImage/main.py",
+            "sha256": "bdaba167c74321ec60ff9ab3d31ed53a3f9a7cafaa3271be298e7e8976d40f7b"
+          },
+          {
+            "path": "modules/Experiments/__init__.py",
+            "sha256": "7bee5a40c0de9ca30b2373901a521744270b74f52b8d473e7bde559e724abeeb"
+          },
+          {
+            "path": "modules/Experiments/flux_layers.py",
+            "sha256": "f6a25b942c6328d37e0cd377611948167b3616d49bcd54d49a3ee02738344321"
+          },
+          {
+            "path": "modules/Experiments/FLUXKontext.py",
+            "sha256": "710359fb023073472cd11a244d01bcb518c1ba2666b98d7f34eadf0bb341eab5"
+          },
+          {
+            "path": "modules/Experiments/main.py",
+            "sha256": "1969bdeb620281109b2f9556dc872c4701dcdbe7d231eb01e385fc4fbc34e83b"
+          },
+          {
+            "path": "modules/Experiments/sd3_layers.py",
+            "sha256": "3052048c192437db10a5ecf2132df82b481b5126977318e2424c514c116800f9"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusion3.py",
+            "sha256": "e8d39e79934bd1a4994f588a240379721f22d40dede707967daa252d1c49326f"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusionXL.py",
+            "sha256": "083645de861c26f87dfb55b9adfed1efe4cad7fa8837b3ab718573925be82813"
+          },
+          {
+            "path": "modules/Experiments/t5_layers.py",
+            "sha256": "ea9c92befc8712493c5e49fafa5d24ad5f828a4beda6fa54b31349ef6a97450a"
+          },
+          {
+            "path": "modules/Experiments/utils.py",
+            "sha256": "0f17c18562ab3fb309daa6cfba2dc761edf4b0948ee5c249ce45f608e9d74045"
+          },
+          {
+            "path": "modules/Experiments/VAE.py",
+            "sha256": "a9bee4828803849561cd82832e70ed4097b738dfdb89c9d0242d1e17a86b3886"
+          },
+          {
+            "path": "modules/Image/__init__.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/Image/main.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/ImageFilters/__init__.py",
+            "sha256": "22c5cbf1c3c5e45a2d50914c8086e95c7984b73ef0d6a6d82b5b78772bdbd2e0"
+          },
+          {
+            "path": "modules/ImageFilters/main.py",
+            "sha256": "bc44426f4e391209db04f120866172d14abde76c8d18c5ae656beca580d00501"
+          },
+          {
+            "path": "modules/ModelArtifact/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/ModelArtifact/main.py",
+            "sha256": "d5d1f8f3dc144ad0edc374a086ca0125747a77132efd2b936e241cfee8513daf"
+          },
+          {
+            "path": "modules/ModularDiffusers/__init__.py",
+            "sha256": "21881c5ad4eee92ed9d6a5e70161faf4c54789c89d4805f357cfc4dfb1d5330c"
+          },
+          {
+            "path": "modules/ModularDiffusers/adapters.py",
+            "sha256": "5b65674145a146e711e864aef2f25b336b70e7bd0d0639330a518f8613dfec78"
+          },
+          {
+            "path": "modules/ModularDiffusers/controlnet.py",
+            "sha256": "0c1d26105a5bbe91d5df84ccc8b603b50a152a9e0e4bf99d6db9a3d983b6150f"
+          },
+          {
+            "path": "modules/ModularDiffusers/denoise.py",
+            "sha256": "e326d98f14ca72fb58cbaacb647fc160c0b855be54e9e7b0f5a0d42416a0a976"
+          },
+          {
+            "path": "modules/ModularDiffusers/dynamic_node.py",
+            "sha256": "0a18907cf185caa351a0cdca3cafa00095a8dd997a2a1b01424b109c1236c5eb"
+          },
+          {
+            "path": "modules/ModularDiffusers/embeddings.py",
+            "sha256": "a4578e39a52abafbe803106d80098ce462a262a5a029538ab79b9dcd62976362"
+          },
+          {
+            "path": "modules/ModularDiffusers/guiders.py",
+            "sha256": "0d8e7e97a48ea1e10b9e7ce96aecd46b47d5dd6ab7ce425783b9b8a0553e5ae5"
+          },
+          {
+            "path": "modules/ModularDiffusers/latents.py",
+            "sha256": "7c4022d693ea4b7bb13e2b4bd54a808d1eb7571955e9e380cdfc82ef7f47add7"
+          },
+          {
+            "path": "modules/ModularDiffusers/loaders.py",
+            "sha256": "055278156cd3f28a972f77a222a7ec2a1fe796273c36a5b90a4dd7e4227cac4d"
+          },
+          {
+            "path": "modules/ModularDiffusers/main.py",
+            "sha256": "79da0e2aa131c30e7f3e6628e71740ee8484d544437099753e3ca3d51a4a5a64"
+          },
+          {
+            "path": "modules/ModularDiffusers/modular_utils.py",
+            "sha256": "2ee40460825ae5f6d480aa58d2e16e741907dea161b2ed775245644813fbd59c"
+          },
+          {
+            "path": "modules/ModularDiffusers/schedulers.py",
+            "sha256": "c11aeef43a09d79ed35a5717cbb92b32a35df1347eb33e4599b998d39b1c73aa"
+          },
+          {
+            "path": "modules/ModularDiffusers/utils.py",
+            "sha256": "2f7da484a6a454a9a5f4b092f092ffc6880904d36f8b6c1cba641d2ce1cc169c"
+          },
+          {
+            "path": "modules/Primitive/__init__.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/Primitive/main.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/QwenImage/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/QwenImage/main.py",
+            "sha256": "965914f4af563f7bfbf83cf3edc0ef7d599fd34e93b84e30a33016315dd387cd"
+          },
+          {
+            "path": "modules/Segmentation/__init__.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Segmentation/main.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Spandrel/__init__.py",
+            "sha256": "6359b859c7ed519657cb721fe8f951c663d2b0df1e4baeb63d8b49a27918caad"
+          },
+          {
+            "path": "modules/Spandrel/main.py",
+            "sha256": "0e145829a258b5fa5c82b6e5a6a39a0d57b6238595987e9019c21147adbbe72f"
+          },
+          {
+            "path": "modules/Tensor/__init__.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Tensor/main.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Text/__init__.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Text/main.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Video/__init__.py",
+            "sha256": "a92846fe73ba4582c638d14c0da6a670285150c9e4e5355a5df7efccd4c21840"
+          },
+          {
+            "path": "modules/Video/main.py",
+            "sha256": "8660597145fd48c295b07e780dbe4e65e4e6c1219c8911ea6ad3ecb0725060cb"
+          },
+          {
+            "path": "modules/VideoColor/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoColor/main.py",
+            "sha256": "60b5b6fe50c0f7bfdb94b9e335951ca9505e487fa47fbeb5c99a8c248a2260b6"
+          },
+          {
+            "path": "modules/VideoConditioning/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoConditioning/main.py",
+            "sha256": "e6f0cad4c9fce9cfe8414b5cc7a55d5086fafd3538393eb48254202d7d4af8e3"
+          },
+          {
+            "path": "modules/WanVACE/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/WanVACE/main.py",
+            "sha256": "0be251e948f464073763227860cdfba8308890a9fd6e44777aba8b6607be98be"
+          },
+          {
+            "path": "pyproject.toml",
+            "sha256": "47180826e627c368c039c24fce5cd79a8221192407eeee0fc836d05a2b8345fa"
+          },
+          {
+            "path": "utils/huggingface.py",
+            "sha256": "4765870a4246f0f288147c5309caed351e80a0212206ef3cf9376cdb4f0eaf64"
+          },
+          {
+            "path": "utils/image.py",
+            "sha256": "9472a5bad33a4703c6a449cacd856bed3b1da6bdc23895863ea591dbdab922aa"
+          },
+          {
+            "path": "utils/memory_menager.py",
+            "sha256": "54cfc658c9d7123c9838e68e9eca79ac8f74a7125c2b868cb6ebcf6a8708a2a1"
+          },
+          {
+            "path": "utils/paths.py",
+            "sha256": "4573209caace186f8bcb40945bade14ddfccfd7a477b3fb9bbc0aa03720681a4"
+          },
+          {
+            "path": "utils/quantization.py",
+            "sha256": "026a27d71b0d2a8bbbf185e2e2fc704696f387acf8a0162c04c317d7824759bc"
+          },
+          {
+            "path": "utils/spline.py",
+            "sha256": "d0d5eeae7f1d3cecac3508b85b5308e691aaf3ff88d455b7cecc001fbe4e58d3"
+          },
+          {
+            "path": "utils/torch_utils.py",
+            "sha256": "124db00cfe3a86c3b589291270c2f840f46c3f370786b4c88babd3173de7f21f"
+          }
+        ]
+      },
+      "backendContract": {
+        "fingerprint": "sha256:backend-contract-v1:c5469fd532f0781003b105ead0f89737cf40b6ee46553a6aa7a99d6d3662f064",
+        "contracts": [
+          {
+            "action": "LoadPipeline",
+            "cache": false,
+            "key": "modules.DiffusersImage.LoadPipeline",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "auto_offload": {
+                "default": true,
+                "type": "bool"
+              },
+              "device": {
+                "default": "cuda:0",
+                "options": [
+                  "cuda:0",
+                  "cpu:0"
+                ],
+                "type": "string"
+              },
+              "dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "enable_vae_slicing": {
+                "default": true,
+                "type": "bool"
+              },
+              "enable_vae_tiling": {
+                "default": true,
+                "type": "bool"
+              },
+              "low_cpu_mem_usage": {
+                "default": true,
+                "type": "bool"
+              },
+              "model_id": {
+                "display": "modelselect",
+                "fieldOptions": {
+                  "noValidation": true,
+                  "sources": [
+                    "hub",
+                    "local"
+                  ]
+                },
+                "type": "string"
+              },
+              "offload_mode": {
+                "default": "model_cpu",
+                "options": [
+                  "auto_cpu",
+                  "none",
+                  "model_cpu",
+                  "sequential_cpu",
+                  "group_cpu",
+                  "group_disk"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "output",
+                "type": "image_diffusion_pipeline"
+              },
+              "pipeline_class": {
+                "default": "FluxPipeline",
+                "fieldOptions": {
+                  "noValidation": true
+                },
+                "options": [
+                  "FluxPipeline",
+                  "FluxImg2ImgPipeline",
+                  "FluxInpaintPipeline",
+                  "FluxFillPipeline",
+                  "FluxControlPipeline",
+                  "FluxControlNetPipeline",
+                  "FluxKontextPipeline"
+                ],
+                "type": "string"
+              },
+              "quantization_mode": {
+                "default": "none",
+                "options": [
+                  "none",
+                  "bnb_4bit",
+                  "bnb_8bit",
+                  "quanto_float8",
+                  "torchao_float8"
+                ],
+                "type": "string"
+              },
+              "quantized_components": {
+                "default": [],
+                "display": "select",
+                "fieldOptions": {
+                  "multiple": true
+                },
+                "options": [
+                  "transformer",
+                  "text_encoder",
+                  "text_encoder_2",
+                  "vae"
+                ],
+                "type": "string"
+              },
+              "resolved_artifact": {
+                "display": "output",
+                "type": "string"
+              },
+              "revision": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Generate",
+            "cache": false,
+            "key": "modules.DiffusersImage.Generate",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "guidance_scale": {
+                "default": 0,
+                "display": "slider",
+                "max": 20,
+                "min": 0,
+                "step": 0.1,
+                "type": "float"
+              },
+              "height": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "height_out": {
+                "display": "output",
+                "type": "int"
+              },
+              "images": {
+                "display": "output",
+                "type": "image"
+              },
+              "max_sequence_length": {
+                "default": 256,
+                "max": 2048,
+                "min": 1,
+                "type": "int"
+              },
+              "negative_prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "num_inference_steps": {
+                "default": 4,
+                "display": "slider",
+                "max": 100,
+                "min": 1,
+                "type": "int"
+              },
+              "output_type": {
+                "default": "pil",
+                "options": [
+                  "pil",
+                  "np",
+                  "pt"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "input",
+                "type": "image_diffusion_pipeline"
+              },
+              "prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "seed": {
+                "default": 0,
+                "display": "random",
+                "max": 4294967295,
+                "min": 0,
+                "type": "int"
+              },
+              "strength": {
+                "default": 0.8,
+                "display": "slider",
+                "max": 1,
+                "min": 0,
+                "step": 0.01,
+                "type": "float"
+              },
+              "width": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "width_out": {
+                "display": "output",
+                "type": "int"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Preview",
+            "cache": false,
+            "key": "modules.Image.Preview",
+            "module": "modules.Image",
+            "params": {
+              "device": {
+                "default": "cuda:0",
+                "options": {
+                  "cpu:0": {
+                    "arch": "cpu",
+                    "index": 0,
+                    "label": [
+                      "cpu:0"
+                    ],
+                    "name": "CPU (0)",
+                    "total_memory": 0
+                  },
+                  "cuda:0": {
+                    "arch": "cuda",
+                    "index": 0,
+                    "label": [
+                      "cuda:0"
+                    ],
+                    "name": "NVIDIA GeForce RTX 4080 15.99GB (0)",
+                    "total_memory": 17170956288
+                  }
+                },
+                "type": "string"
+              },
+              "export": {
+                "default": "0",
+                "type": "str"
+              },
+              "filtered": {
+                "display": "output",
+                "type": "image"
+              },
+              "image": {
+                "display": "input",
+                "type": [
+                  "image",
+                  "latent"
+                ]
+              },
+              "output": {
+                "display": "output",
+                "type": "image"
+              },
+              "preview": {
+                "dataSource": "output",
+                "display": "ui_image",
+                "type": "url"
+              },
+              "vae": {
+                "display": "input",
+                "type": "pipeline"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "deterministic": {
+        "fingerprint": "sha256:deterministic-settings-v1:702ad0f37a59a7cef737a400e8302d820d4408c7c62360ba125c85254fefc48f",
+        "settings": {
+          "enabled": true,
+          "seed": 4201,
+          "settings": {
+            "allow_tf32": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": true,
+            "numpy_random": true,
+            "python_random": true,
+            "torch_cuda_manual_seed_all": true,
+            "torch_deterministic_algorithms": true,
+            "torch_manual_seed": true
+          },
+          "strict": true,
+          "warnings": []
+        }
+      }
+    },
+    "output": {
+      "count": 1,
+      "collectionHash": "sha256:decoded-output-collection-v1:6e391c87417f8fe1e51c022585148294a96f1c9d5274169cbd16fca26dbdb405",
+      "backendCollectionHash": "sha256:collection:56dabbb1ba00f05d695d58c1fdabfa1c981b62e0aff839a458e8f93890de78ab",
+      "items": [
+        {
+          "index": 0,
+          "width": 1024,
+          "height": 1024,
+          "byteSize": 228938,
+          "encodedSha256": "sha256:166d15e5a92ee6443649a686dfc688a72d01e0f78831f743eb9feaf9af6a4360",
+          "decodedSha256": "sha256:decoded-rgba:7d1b0d6b08d59a8bb07503c380ab05ee5225fccb8e1e9b74e7da66a0a568fc46",
+          "backendMediaHash": "sha256:bytes:166d15e5a92ee6443649a686dfc688a72d01e0f78831f743eb9feaf9af6a4360"
+        }
+      ]
+    },
+    "blockers": []
+  },
+  "run2": {
+    "schemaVersion": 1,
+    "format": "modiff.live-proof.provenance.v1",
+    "capturedAt": "2026-07-10T10:20:43.307Z",
+    "taskId": "sZKoKuPnW-2p",
+    "proofLockHash": "sha256:live-proof-lock-v1:887f964a98eef6ae1d0037f545933ac92aee2ffabba4e6e208d9a83f2fb7892b",
+    "graphHash": "sha256:canonical-graph-v1:aa50e24cc915631f22751acb01d48be00d91593e45d6484fa6ca54b0b05f3bfa",
+    "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+    "backendReportedRuntimeFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+    "backendSourceFingerprint": "sha256:backend-source-v1:2e2c2376a6ee097ea4b200f889e3f904db24666c4c3be500a16aaad3ff21c831",
+    "backendContractFingerprint": "sha256:backend-contract-v1:c5469fd532f0781003b105ead0f89737cf40b6ee46553a6aa7a99d6d3662f064",
+    "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+    "modelCommit": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+    "inputArtifactsHash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "templateLockHash": "tpl_a03a83f2",
+    "templateRevisionHash": "sha256:template-revision-v1:b11d89ca1d3aea347893054aa6fea42a4ca5a80d4a69e40d794537bba0fd4dc1",
+    "mediaHash": "sha256:decoded-rgba:7d1b0d6b08d59a8bb07503c380ab05ee5225fccb8e1e9b74e7da66a0a568fc46",
+    "width": 1024,
+    "height": 1024,
+    "template": {
+      "id": "z_image_quick_concept",
+      "promptSettingsHash": "ps_b58a20cf",
+      "catalogTemplateLockHash": "tpl_668374ba",
+      "resolvedTemplateLockHash": "tpl_a03a83f2",
+      "revisionHash": "sha256:template-revision-v1:b11d89ca1d3aea347893054aa6fea42a4ca5a80d4a69e40d794537bba0fd4dc1",
+      "lockedSettings": {
+        "attentionKwargsJson": "",
+        "audioCoverStrength": 0.5,
+        "audioDuration": 30,
+        "autoOffload": true,
+        "bpm": 0,
+        "conditioningScale": 1,
+        "controlVideo": "",
+        "dtype": "bfloat16",
+        "extensionDuration": 15,
+        "fps": 16,
+        "guidanceScale": 1,
+        "guidanceScale2": 0,
+        "height": 1024,
+        "keyscale": "C",
+        "layers": 4,
+        "lyrics": "",
+        "maskVideo": "",
+        "maxSequenceLength": 512,
+        "mode": "text_to_image",
+        "modelType": "ZImageModularPipeline",
+        "negativePrompt": "extra radios, duplicated controls, warped knobs, bent antenna, floating product, muddy silhouette, flat plastic material, noisy rain texture, blown amber light, unreadable markings, generic stock-photo staging, soft focus",
+        "numFrames": 81,
+        "offloadMode": "model_cpu",
+        "outpaintBottom": 0,
+        "outpaintFeather": 8,
+        "outpaintFillColor": "black",
+        "outpaintLeft": 256,
+        "outpaintOverlap": 24,
+        "outpaintRight": 256,
+        "outpaintTop": 0,
+        "outputType": "pil",
+        "prompt": "Creative objective: design a cinematic key-art frame for Solace Beacon, a compact solar-powered field radio used by mountain rescue crews during a night storm. Product design: one rugged wet-graphite radio with a folded brass antenna, knurled weather-sealed controls, a warm amber status lamp, fine rain beads, believable gasket seams, and a clear functional silhouette. Composition and camera: low tabletop three-quarter hero view, 50 mm lens, product filling the left two-thirds of frame, sharp focus on the controls, shallow falloff toward distant rescue lights, and quiet negative space on the right. Environment and light: scratched lookout table beside a rain-streaked window, cold blue-hour mountains outside, soft cool window key, weak warm cabin fill, narrow amber rim reflection, realistic contact shadow, restrained film grain, no typography.",
+        "quantizationMode": "none",
+        "randomSeed": false,
+        "referenceAudio": "",
+        "repaintingEnd": 10,
+        "repaintingStart": 0,
+        "resourceMode": "auto",
+        "seed": 4201,
+        "shift": 3,
+        "sourceAudio": "",
+        "sourceVideo": "",
+        "steps": 8,
+        "strength": 0.8,
+        "timesignature": "4/4",
+        "vocalLanguage": "en",
+        "width": 1024
+      }
+    },
+    "graph": {
+      "schemaVersion": 1,
+      "hash": "sha256:canonical-graph-v1:aa50e24cc915631f22751acb01d48be00d91593e45d6484fa6ca54b0b05f3bfa",
+      "canonicalGraph": {
+        "deterministicMode": {
+          "enabled": true,
+          "promptSettingsHash": "ps_b58a20cf",
+          "seed": 4201,
+          "strict": true,
+          "templateId": "z_image_quick_concept",
+          "templateLockHash": "tpl_668374ba"
+        },
+        "nodes": [
+          {
+            "action": "LoadPipeline",
+            "key": "modules.DiffusersImage.LoadPipeline#1",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "auto_offload": {
+                "value": true
+              },
+              "device": {
+                "value": "cuda:0"
+              },
+              "dtype": {
+                "value": "bfloat16"
+              },
+              "enable_vae_slicing": {},
+              "enable_vae_tiling": {},
+              "low_cpu_mem_usage": {},
+              "model_id": {
+                "display": "modelselect",
+                "value": {
+                  "source": "hub",
+                  "value": "Tongyi-MAI/Z-Image-Turbo"
+                }
+              },
+              "offload_mode": {
+                "value": "model_cpu"
+              },
+              "pipeline_class": {
+                "value": "ZImagePipeline"
+              },
+              "quantization_mode": {
+                "value": "none"
+              },
+              "quantized_components": {
+                "display": "select",
+                "value": []
+              },
+              "revision": {}
+            }
+          },
+          {
+            "action": "Generate",
+            "key": "modules.DiffusersImage.Generate#1",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "guidance_scale": {
+                "display": "slider",
+                "value": 1
+              },
+              "height": {
+                "value": 1024
+              },
+              "max_sequence_length": {
+                "value": 512
+              },
+              "negative_prompt": {
+                "display": "textarea",
+                "value": "extra radios, duplicated controls, warped knobs, bent antenna, floating product, muddy silhouette, flat plastic material, noisy rain texture, blown amber light, unreadable markings, generic stock-photo staging, soft focus"
+              },
+              "num_inference_steps": {
+                "display": "slider",
+                "value": 8
+              },
+              "output_type": {
+                "value": "pil"
+              },
+              "pipeline": {
+                "display": "input",
+                "sourceId": "modules.DiffusersImage.LoadPipeline#1",
+                "sourceKey": "pipeline"
+              },
+              "prompt": {
+                "display": "textarea",
+                "value": "Creative objective: design a cinematic key-art frame for Solace Beacon, a compact solar-powered field radio used by mountain rescue crews during a night storm. Product design: one rugged wet-graphite radio with a folded brass antenna, knurled weather-sealed controls, a warm amber status lamp, fine rain beads, believable gasket seams, and a clear functional silhouette. Composition and camera: low tabletop three-quarter hero view, 50 mm lens, product filling the left two-thirds of frame, sharp focus on the controls, shallow falloff toward distant rescue lights, and quiet negative space on the right. Environment and light: scratched lookout table beside a rain-streaked window, cold blue-hour mountains outside, soft cool window key, weak warm cabin fill, narrow amber rim reflection, realistic contact shadow, restrained film grain, no typography."
+              },
+              "seed": {
+                "value": 4201
+              },
+              "strength": {
+                "display": "slider",
+                "value": 0.8
+              },
+              "width": {
+                "value": 1024
+              }
+            }
+          },
+          {
+            "action": "Preview",
+            "key": "modules.Image.Preview#1",
+            "module": "modules.Image",
+            "params": {
+              "device": {},
+              "export": {},
+              "image": {
+                "display": "input",
+                "sourceId": "modules.DiffusersImage.Generate#1",
+                "sourceKey": "images"
+              },
+              "preview": {
+                "display": "ui_image",
+                "sourceKey": "output"
+              },
+              "vae": {
+                "display": "input"
+              }
+            }
+          }
+        ],
+        "paths": [
+          [
+            "modules.DiffusersImage.LoadPipeline#1",
+            "modules.DiffusersImage.Generate#1",
+            "modules.Image.Preview#1"
+          ]
+        ],
+        "schemaVersion": 1
+      },
+      "executionPlanHash": "sha256:execution-plan-v1:1ec1320c7db018abe7710a0e37e3881dcc5a956311a49973554ffb406266c258",
+      "executionPlan": {
+        "autoOffload": true,
+        "autoResourceCandidateId": "ZImageModularPipeline-text_to_image-native-bf16",
+        "autoResourceProofStatus": "declared_safe",
+        "cudaIndex": 0,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "executionPath": "modular-diffusers",
+        "modelFamily": "Z-Image",
+        "modelRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "modelType": "ZImageModularPipeline",
+        "offloadMode": "model_cpu",
+        "pipelineClass": null,
+        "quantizationMode": "none",
+        "quantizedComponents": [],
+        "resolvedArtifact": "Tongyi-MAI/Z-Image-Turbo",
+        "resolvedModelRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "resolvedResourceMode": "auto",
+        "resourceMode": "auto",
+        "source": "studio"
+      }
+    },
+    "model": {
+      "fingerprint": "sha256:f24e45f2aa886fbb6f51ed6062d0789620ebafdade9f12aa1ae6b113466cbd1d",
+      "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "repoId": "Tongyi-MAI/Z-Image-Turbo",
+      "revisions": [
+        {
+          "hash": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "lastModified": 1780644803,
+          "size": 32899667397
+        }
+      ],
+      "selectedRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6"
+    },
+    "models": {
+      "count": 1,
+      "hash": "sha256:model-set-v1:e77e0a81a3ae63a90119d48d1eca37948eb840c7b29eed6bc12ef674fba10738",
+      "revisionLock": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "commitLock": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "items": [
+        {
+          "fingerprint": "sha256:f24e45f2aa886fbb6f51ed6062d0789620ebafdade9f12aa1ae6b113466cbd1d",
+          "modelRevision": "Tongyi-MAI/Z-Image-Turbo@f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "repoId": "Tongyi-MAI/Z-Image-Turbo",
+          "revisions": [
+            {
+              "hash": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+              "lastModified": 1780644803,
+              "size": 32899667397
+            }
+          ],
+          "selectedRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6"
+        }
+      ]
+    },
+    "inputs": {
+      "count": 0,
+      "hash": "sha256:input-artifacts-v1:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "items": []
+    },
+    "runtime": {
+      "reportedFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+      "lockFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+      "payload": {
+        "dataDir": "<local-path>/data",
+        "packages": {
+          "accelerate": "1.13.0",
+          "bitsandbytes": "0.49.2",
+          "diffusers": "0.39.0.dev0",
+          "platform": "Windows-11-10.0.26200-SP0",
+          "python": "3.12.11",
+          "torch": "2.11.0+cu128",
+          "transformers": "5.10.1"
+        },
+        "torch": {
+          "cuda_available": true,
+          "cuda_device_capability": "8.9",
+          "cuda_device_count": 1,
+          "cuda_device_name": "NVIDIA GeForce RTX 4080",
+          "cuda_device_total_memory_bytes": 17170956288,
+          "cuda_memory_total_bytes": 17170956288,
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "cudnn_version": 91900,
+          "deterministic_algorithms": true
+        },
+        "workDir": "<local-path>/data"
+      },
+      "backendSource": {
+        "gitCommit": "<redacted-source-commit>",
+        "fingerprint": "sha256:backend-source-v1:2e2c2376a6ee097ea4b200f889e3f904db24666c4c3be500a16aaad3ff21c831",
+        "files": [
+          {
+            "path": "main.py",
+            "sha256": "9b5f35900b43de45b79f185b636e5f603e0fb7715dfd3d65dd8adfcb58b92518"
+          },
+          {
+            "path": "modiff/__init__.py",
+            "sha256": "e24665e005189b7f490d12c4f445a15e96dca9553d028a0656ec86d52d191aff"
+          },
+          {
+            "path": "modiff/auto_resource.py",
+            "sha256": "91722334d09b89c4e0ebddeb96a28d1ca5125b93c0457ed567ddef8f7bcee2bb"
+          },
+          {
+            "path": "modiff/client.py",
+            "sha256": "8127811d106482655cc44a217c2f18d53cb25f202810931d1cddb0f18dd2108e"
+          },
+          {
+            "path": "modiff/config.py",
+            "sha256": "483a8744e6b6a9d9650187866d24c002a1d246330f82997a2a2f4e67a520eded"
+          },
+          {
+            "path": "modiff/diffusers_offload.py",
+            "sha256": "3c7db15f4f811dee9c0d29636280ebbe0e2a0f2add316922a21c2e66646d72e4"
+          },
+          {
+            "path": "modiff/diffusers_profiles.py",
+            "sha256": "c11ae2c1ee5283398d52b6a6519d2e95ba9ba96616888883f87492d492663606"
+          },
+          {
+            "path": "modiff/hardware.py",
+            "sha256": "55d2e06fc7e4b45080a017566cd6e7eb0441379e93fe0076cdd30252a4720d40"
+          },
+          {
+            "path": "modiff/modelstore.py",
+            "sha256": "25ba12273535ca802a9f94271ddf778bc52f551f6bc175e9a692c55374aabb05"
+          },
+          {
+            "path": "modiff/NodeBase.py",
+            "sha256": "b0e7e2f6dd24da0fb12d36ad2d54843f7eb691412c5473b9bd1f78a09276b070"
+          },
+          {
+            "path": "modiff/preflight.py",
+            "sha256": "7a637fa35e2b883093f2d63a4dc20822730a75e23c4b07ff19a8e2ebf40c5ed9"
+          },
+          {
+            "path": "modiff/server.py",
+            "sha256": "b3d0f5f4ba88c99a4b77de04619735b3898f49a358048d8a2b3b05eca8b304d1"
+          },
+          {
+            "path": "modules/__init__.py",
+            "sha256": "6471c25f6bf53fa64f260300be964f34edbcd33de4a2b1185053dbae050a7d7d"
+          },
+          {
+            "path": "modules/Audio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/Audio/main.py",
+            "sha256": "ee9ab99b523ef3e4a490070cddda86de89bc5a45b7eb4c28215693512081c24d"
+          },
+          {
+            "path": "modules/Color/__init__.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/Color/main.py",
+            "sha256": "50206d69a2837707cee767589665dbf70f55fb7a6dea594f10ee3aed0254163c"
+          },
+          {
+            "path": "modules/DiffusersAudio/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/DiffusersAudio/main.py",
+            "sha256": "1084472ffed9fd2b14db64d9e61735572956e31ab3dfebe2b66cc10a8cf1c94f"
+          },
+          {
+            "path": "modules/DiffusersImage/__init__.py",
+            "sha256": "6028b364b913ad0aecfc531f0024ebd4c157569b40847bba202e6fe1db8ce955"
+          },
+          {
+            "path": "modules/DiffusersImage/main.py",
+            "sha256": "bdaba167c74321ec60ff9ab3d31ed53a3f9a7cafaa3271be298e7e8976d40f7b"
+          },
+          {
+            "path": "modules/Experiments/__init__.py",
+            "sha256": "7bee5a40c0de9ca30b2373901a521744270b74f52b8d473e7bde559e724abeeb"
+          },
+          {
+            "path": "modules/Experiments/flux_layers.py",
+            "sha256": "f6a25b942c6328d37e0cd377611948167b3616d49bcd54d49a3ee02738344321"
+          },
+          {
+            "path": "modules/Experiments/FLUXKontext.py",
+            "sha256": "710359fb023073472cd11a244d01bcb518c1ba2666b98d7f34eadf0bb341eab5"
+          },
+          {
+            "path": "modules/Experiments/main.py",
+            "sha256": "1969bdeb620281109b2f9556dc872c4701dcdbe7d231eb01e385fc4fbc34e83b"
+          },
+          {
+            "path": "modules/Experiments/sd3_layers.py",
+            "sha256": "3052048c192437db10a5ecf2132df82b481b5126977318e2424c514c116800f9"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusion3.py",
+            "sha256": "e8d39e79934bd1a4994f588a240379721f22d40dede707967daa252d1c49326f"
+          },
+          {
+            "path": "modules/Experiments/StableDiffusionXL.py",
+            "sha256": "083645de861c26f87dfb55b9adfed1efe4cad7fa8837b3ab718573925be82813"
+          },
+          {
+            "path": "modules/Experiments/t5_layers.py",
+            "sha256": "ea9c92befc8712493c5e49fafa5d24ad5f828a4beda6fa54b31349ef6a97450a"
+          },
+          {
+            "path": "modules/Experiments/utils.py",
+            "sha256": "0f17c18562ab3fb309daa6cfba2dc761edf4b0948ee5c249ce45f608e9d74045"
+          },
+          {
+            "path": "modules/Experiments/VAE.py",
+            "sha256": "a9bee4828803849561cd82832e70ed4097b738dfdb89c9d0242d1e17a86b3886"
+          },
+          {
+            "path": "modules/Image/__init__.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/Image/main.py",
+            "sha256": "0b08c6297f9db95192812a6a7cccfb42dfbb0a059f0de42d188fac05cb97311a"
+          },
+          {
+            "path": "modules/ImageFilters/__init__.py",
+            "sha256": "22c5cbf1c3c5e45a2d50914c8086e95c7984b73ef0d6a6d82b5b78772bdbd2e0"
+          },
+          {
+            "path": "modules/ImageFilters/main.py",
+            "sha256": "bc44426f4e391209db04f120866172d14abde76c8d18c5ae656beca580d00501"
+          },
+          {
+            "path": "modules/ModelArtifact/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/ModelArtifact/main.py",
+            "sha256": "d5d1f8f3dc144ad0edc374a086ca0125747a77132efd2b936e241cfee8513daf"
+          },
+          {
+            "path": "modules/ModularDiffusers/__init__.py",
+            "sha256": "21881c5ad4eee92ed9d6a5e70161faf4c54789c89d4805f357cfc4dfb1d5330c"
+          },
+          {
+            "path": "modules/ModularDiffusers/adapters.py",
+            "sha256": "5b65674145a146e711e864aef2f25b336b70e7bd0d0639330a518f8613dfec78"
+          },
+          {
+            "path": "modules/ModularDiffusers/controlnet.py",
+            "sha256": "0c1d26105a5bbe91d5df84ccc8b603b50a152a9e0e4bf99d6db9a3d983b6150f"
+          },
+          {
+            "path": "modules/ModularDiffusers/denoise.py",
+            "sha256": "e326d98f14ca72fb58cbaacb647fc160c0b855be54e9e7b0f5a0d42416a0a976"
+          },
+          {
+            "path": "modules/ModularDiffusers/dynamic_node.py",
+            "sha256": "0a18907cf185caa351a0cdca3cafa00095a8dd997a2a1b01424b109c1236c5eb"
+          },
+          {
+            "path": "modules/ModularDiffusers/embeddings.py",
+            "sha256": "a4578e39a52abafbe803106d80098ce462a262a5a029538ab79b9dcd62976362"
+          },
+          {
+            "path": "modules/ModularDiffusers/guiders.py",
+            "sha256": "0d8e7e97a48ea1e10b9e7ce96aecd46b47d5dd6ab7ce425783b9b8a0553e5ae5"
+          },
+          {
+            "path": "modules/ModularDiffusers/latents.py",
+            "sha256": "7c4022d693ea4b7bb13e2b4bd54a808d1eb7571955e9e380cdfc82ef7f47add7"
+          },
+          {
+            "path": "modules/ModularDiffusers/loaders.py",
+            "sha256": "055278156cd3f28a972f77a222a7ec2a1fe796273c36a5b90a4dd7e4227cac4d"
+          },
+          {
+            "path": "modules/ModularDiffusers/main.py",
+            "sha256": "79da0e2aa131c30e7f3e6628e71740ee8484d544437099753e3ca3d51a4a5a64"
+          },
+          {
+            "path": "modules/ModularDiffusers/modular_utils.py",
+            "sha256": "2ee40460825ae5f6d480aa58d2e16e741907dea161b2ed775245644813fbd59c"
+          },
+          {
+            "path": "modules/ModularDiffusers/schedulers.py",
+            "sha256": "c11aeef43a09d79ed35a5717cbb92b32a35df1347eb33e4599b998d39b1c73aa"
+          },
+          {
+            "path": "modules/ModularDiffusers/utils.py",
+            "sha256": "2f7da484a6a454a9a5f4b092f092ffc6880904d36f8b6c1cba641d2ce1cc169c"
+          },
+          {
+            "path": "modules/Primitive/__init__.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/Primitive/main.py",
+            "sha256": "c483f9df5aaa7e77a591139956d828861be2d83e62f1f9771e561d4115456336"
+          },
+          {
+            "path": "modules/QwenImage/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/QwenImage/main.py",
+            "sha256": "965914f4af563f7bfbf83cf3edc0ef7d599fd34e93b84e30a33016315dd387cd"
+          },
+          {
+            "path": "modules/Segmentation/__init__.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Segmentation/main.py",
+            "sha256": "b45d488b8546ca2ba0feb12bf02856fef0f98a6f464d91ddb2ea733beb3814ef"
+          },
+          {
+            "path": "modules/Spandrel/__init__.py",
+            "sha256": "6359b859c7ed519657cb721fe8f951c663d2b0df1e4baeb63d8b49a27918caad"
+          },
+          {
+            "path": "modules/Spandrel/main.py",
+            "sha256": "0e145829a258b5fa5c82b6e5a6a39a0d57b6238595987e9019c21147adbbe72f"
+          },
+          {
+            "path": "modules/Tensor/__init__.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Tensor/main.py",
+            "sha256": "9280a01499386f2a99ea428dd204f85380d067ed2d4436102a7c06a5410261ba"
+          },
+          {
+            "path": "modules/Text/__init__.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Text/main.py",
+            "sha256": "88d6846fdb60e2c4ed8d13b993c1158b16a516593aae03701bb3943f7499c1a8"
+          },
+          {
+            "path": "modules/Video/__init__.py",
+            "sha256": "a92846fe73ba4582c638d14c0da6a670285150c9e4e5355a5df7efccd4c21840"
+          },
+          {
+            "path": "modules/Video/main.py",
+            "sha256": "8660597145fd48c295b07e780dbe4e65e4e6c1219c8911ea6ad3ecb0725060cb"
+          },
+          {
+            "path": "modules/VideoColor/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoColor/main.py",
+            "sha256": "60b5b6fe50c0f7bfdb94b9e335951ca9505e487fa47fbeb5c99a8c248a2260b6"
+          },
+          {
+            "path": "modules/VideoConditioning/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/VideoConditioning/main.py",
+            "sha256": "e6f0cad4c9fce9cfe8414b5cc7a55d5086fafd3538393eb48254202d7d4af8e3"
+          },
+          {
+            "path": "modules/WanVACE/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/WanVACE/main.py",
+            "sha256": "0be251e948f464073763227860cdfba8308890a9fd6e44777aba8b6607be98be"
+          },
+          {
+            "path": "pyproject.toml",
+            "sha256": "47180826e627c368c039c24fce5cd79a8221192407eeee0fc836d05a2b8345fa"
+          },
+          {
+            "path": "utils/huggingface.py",
+            "sha256": "4765870a4246f0f288147c5309caed351e80a0212206ef3cf9376cdb4f0eaf64"
+          },
+          {
+            "path": "utils/image.py",
+            "sha256": "9472a5bad33a4703c6a449cacd856bed3b1da6bdc23895863ea591dbdab922aa"
+          },
+          {
+            "path": "utils/memory_menager.py",
+            "sha256": "54cfc658c9d7123c9838e68e9eca79ac8f74a7125c2b868cb6ebcf6a8708a2a1"
+          },
+          {
+            "path": "utils/paths.py",
+            "sha256": "4573209caace186f8bcb40945bade14ddfccfd7a477b3fb9bbc0aa03720681a4"
+          },
+          {
+            "path": "utils/quantization.py",
+            "sha256": "026a27d71b0d2a8bbbf185e2e2fc704696f387acf8a0162c04c317d7824759bc"
+          },
+          {
+            "path": "utils/spline.py",
+            "sha256": "d0d5eeae7f1d3cecac3508b85b5308e691aaf3ff88d455b7cecc001fbe4e58d3"
+          },
+          {
+            "path": "utils/torch_utils.py",
+            "sha256": "124db00cfe3a86c3b589291270c2f840f46c3f370786b4c88babd3173de7f21f"
+          }
+        ]
+      },
+      "backendContract": {
+        "fingerprint": "sha256:backend-contract-v1:c5469fd532f0781003b105ead0f89737cf40b6ee46553a6aa7a99d6d3662f064",
+        "contracts": [
+          {
+            "action": "LoadPipeline",
+            "cache": false,
+            "key": "modules.DiffusersImage.LoadPipeline",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "auto_offload": {
+                "default": true,
+                "type": "bool"
+              },
+              "device": {
+                "default": "cuda:0",
+                "options": [
+                  "cuda:0",
+                  "cpu:0"
+                ],
+                "type": "string"
+              },
+              "dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "enable_vae_slicing": {
+                "default": true,
+                "type": "bool"
+              },
+              "enable_vae_tiling": {
+                "default": true,
+                "type": "bool"
+              },
+              "low_cpu_mem_usage": {
+                "default": true,
+                "type": "bool"
+              },
+              "model_id": {
+                "display": "modelselect",
+                "fieldOptions": {
+                  "noValidation": true,
+                  "sources": [
+                    "hub",
+                    "local"
+                  ]
+                },
+                "type": "string"
+              },
+              "offload_mode": {
+                "default": "model_cpu",
+                "options": [
+                  "auto_cpu",
+                  "none",
+                  "model_cpu",
+                  "sequential_cpu",
+                  "group_cpu",
+                  "group_disk"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "output",
+                "type": "image_diffusion_pipeline"
+              },
+              "pipeline_class": {
+                "default": "FluxPipeline",
+                "fieldOptions": {
+                  "noValidation": true
+                },
+                "options": [
+                  "FluxPipeline",
+                  "FluxImg2ImgPipeline",
+                  "FluxInpaintPipeline",
+                  "FluxFillPipeline",
+                  "FluxControlPipeline",
+                  "FluxControlNetPipeline",
+                  "FluxKontextPipeline"
+                ],
+                "type": "string"
+              },
+              "quantization_mode": {
+                "default": "none",
+                "options": [
+                  "none",
+                  "bnb_4bit",
+                  "bnb_8bit",
+                  "quanto_float8",
+                  "torchao_float8"
+                ],
+                "type": "string"
+              },
+              "quantized_components": {
+                "default": [],
+                "display": "select",
+                "fieldOptions": {
+                  "multiple": true
+                },
+                "options": [
+                  "transformer",
+                  "text_encoder",
+                  "text_encoder_2",
+                  "vae"
+                ],
+                "type": "string"
+              },
+              "resolved_artifact": {
+                "display": "output",
+                "type": "string"
+              },
+              "revision": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Generate",
+            "cache": false,
+            "key": "modules.DiffusersImage.Generate",
+            "module": "modules.DiffusersImage",
+            "params": {
+              "guidance_scale": {
+                "default": 0,
+                "display": "slider",
+                "max": 20,
+                "min": 0,
+                "step": 0.1,
+                "type": "float"
+              },
+              "height": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "height_out": {
+                "display": "output",
+                "type": "int"
+              },
+              "images": {
+                "display": "output",
+                "type": "image"
+              },
+              "max_sequence_length": {
+                "default": 256,
+                "max": 2048,
+                "min": 1,
+                "type": "int"
+              },
+              "negative_prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "num_inference_steps": {
+                "default": 4,
+                "display": "slider",
+                "max": 100,
+                "min": 1,
+                "type": "int"
+              },
+              "output_type": {
+                "default": "pil",
+                "options": [
+                  "pil",
+                  "np",
+                  "pt"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "input",
+                "type": "image_diffusion_pipeline"
+              },
+              "prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "seed": {
+                "default": 0,
+                "display": "random",
+                "max": 4294967295,
+                "min": 0,
+                "type": "int"
+              },
+              "strength": {
+                "default": 0.8,
+                "display": "slider",
+                "max": 1,
+                "min": 0,
+                "step": 0.01,
+                "type": "float"
+              },
+              "width": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "width_out": {
+                "display": "output",
+                "type": "int"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Preview",
+            "cache": false,
+            "key": "modules.Image.Preview",
+            "module": "modules.Image",
+            "params": {
+              "device": {
+                "default": "cuda:0",
+                "options": {
+                  "cpu:0": {
+                    "arch": "cpu",
+                    "index": 0,
+                    "label": [
+                      "cpu:0"
+                    ],
+                    "name": "CPU (0)",
+                    "total_memory": 0
+                  },
+                  "cuda:0": {
+                    "arch": "cuda",
+                    "index": 0,
+                    "label": [
+                      "cuda:0"
+                    ],
+                    "name": "NVIDIA GeForce RTX 4080 15.99GB (0)",
+                    "total_memory": 17170956288
+                  }
+                },
+                "type": "string"
+              },
+              "export": {
+                "default": "0",
+                "type": "str"
+              },
+              "filtered": {
+                "display": "output",
+                "type": "image"
+              },
+              "image": {
+                "display": "input",
+                "type": [
+                  "image",
+                  "latent"
+                ]
+              },
+              "output": {
+                "display": "output",
+                "type": "image"
+              },
+              "preview": {
+                "dataSource": "output",
+                "display": "ui_image",
+                "type": "url"
+              },
+              "vae": {
+                "display": "input",
+                "type": "pipeline"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "deterministic": {
+        "fingerprint": "sha256:deterministic-settings-v1:702ad0f37a59a7cef737a400e8302d820d4408c7c62360ba125c85254fefc48f",
+        "settings": {
+          "enabled": true,
+          "seed": 4201,
+          "settings": {
+            "allow_tf32": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": true,
+            "numpy_random": true,
+            "python_random": true,
+            "torch_cuda_manual_seed_all": true,
+            "torch_deterministic_algorithms": true,
+            "torch_manual_seed": true
+          },
+          "strict": true,
+          "warnings": []
+        }
+      }
+    },
+    "output": {
+      "count": 1,
+      "collectionHash": "sha256:decoded-output-collection-v1:6e391c87417f8fe1e51c022585148294a96f1c9d5274169cbd16fca26dbdb405",
+      "backendCollectionHash": "sha256:collection:56dabbb1ba00f05d695d58c1fdabfa1c981b62e0aff839a458e8f93890de78ab",
+      "items": [
+        {
+          "index": 0,
+          "width": 1024,
+          "height": 1024,
+          "byteSize": 228938,
+          "encodedSha256": "sha256:166d15e5a92ee6443649a686dfc688a72d01e0f78831f743eb9feaf9af6a4360",
+          "decodedSha256": "sha256:decoded-rgba:7d1b0d6b08d59a8bb07503c380ab05ee5225fccb8e1e9b74e7da66a0a568fc46",
+          "backendMediaHash": "sha256:bytes:166d15e5a92ee6443649a686dfc688a72d01e0f78831f743eb9feaf9af6a4360"
+        }
+      ]
+    },
+    "blockers": []
+  },
+  "comparison": {
+    "matches": true,
+    "candidateExact": true,
+    "comparedFields": 25,
+    "mismatches": [],
+    "baselineBlockers": [],
+    "candidateBlockers": []
+  },
+  "redactions": {
+    "fingerprintsRemainOpaque": true,
+    "localPaths": true,
+    "note": "Hashes attest to the original capture; redacted payloads are not sufficient to recompute them.",
+    "sourceCommit": true
+  }
+}

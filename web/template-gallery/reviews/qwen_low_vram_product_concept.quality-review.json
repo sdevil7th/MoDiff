@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "templateId": "qwen_low_vram_product_concept",
+  "templateLockHash": "tpl_7ca06b6f",
+  "promptSettingsHash": "ps_2eeea545",
+  "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+  "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+  "graphHash": "sha256:canonical-graph-v1:e9bfab5b9adad6dddcd1df3847bc47ec29cfc963d5d0b73b072c9f289466af93",
+  "proofLockHash": "sha256:live-proof-lock-v1:bc052774cd44153201d5060bbe21e1f733397d311308d22ff889ad75b7f29236",
+  "decodedMediaHash": "sha256:decoded-rgba:58dc65c707135280d7325c485938cb838d6f374905e903b54032183905f891c9",
+  "reviewStatus": "approved_exact",
+  "reviewer": "Codex visual review",
+  "reviewedAt": "2026-07-10T09:15:00.000Z",
+  "rubric": {
+    "taskAdherence": 4,
+    "artifactControl": 4,
+    "modalityQuality": 4,
+    "composition": 5,
+    "productCoherence": 4,
+    "materialAndLighting": 4,
+    "typography": 5
+  },
+  "summary": "Approved as a polished product-campaign example: the humidifier is coherent and grounded, the requested MICA DROP label is readable, materials and water remain distinct, lighting has believable depth, and the left-third composition preserves useful editorial copy space.",
+  "knownLimitations": [
+    "The brass power button is visibly larger than the brief's eight-millimeter target.",
+    "The mist outlet reads as a central recessed opening rather than a narrowly defined annular slot."
+  ]
+}

@@ -1,0 +1,1357 @@
+{
+  "schemaVersion": 1,
+  "format": "modiff.gallery.duplicate-provenance.v1",
+  "templateId": "qwen_low_vram_poster_layout",
+  "run1": {
+    "schemaVersion": 1,
+    "format": "modiff.live-proof.provenance.v1",
+    "capturedAt": "2026-07-10T09:32:51.042Z",
+    "taskId": "gDoYgIKHRG6Q",
+    "proofLockHash": "sha256:live-proof-lock-v1:ab5f53a6ee0a1894a99a265d7e233eb038c4ff78014e78a8df459a64d5d2e619",
+    "graphHash": "sha256:canonical-graph-v1:90c5e445e5645941dbbcaa28bf18c42dcde2b484856d236542683aa3f7eab196",
+    "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+    "backendReportedRuntimeFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+    "backendSourceFingerprint": "sha256:backend-source-v1:fe9b1284cdb2626b860263633d61ede3bb75c21431207fd29d662703ebf24d7f",
+    "backendContractFingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+    "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "modelCommit": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "templateLockHash": "tpl_8f3e03ad",
+    "templateRevisionHash": "sha256:template-revision-v1:688859ea2fc7ea314de1a488cad307c86d12124d064934cfc4dd72d5aaf852cd",
+    "mediaHash": "sha256:decoded-rgba:97c2d2ee47570852da14d39d5ab09331021f5e9fc4965578d17f7d4c68e348ea",
+    "width": 1024,
+    "height": 1024,
+    "template": {
+      "id": "qwen_low_vram_poster_layout",
+      "promptSettingsHash": "ps_85f9326f",
+      "catalogTemplateLockHash": "tpl_e28515fb",
+      "resolvedTemplateLockHash": "tpl_8f3e03ad",
+      "revisionHash": "sha256:template-revision-v1:688859ea2fc7ea314de1a488cad307c86d12124d064934cfc4dd72d5aaf852cd",
+      "lockedSettings": {
+        "attentionKwargsJson": "",
+        "audioCoverStrength": 0.5,
+        "audioDuration": 30,
+        "autoOffload": true,
+        "bpm": 0,
+        "conditioningScale": 1,
+        "controlVideo": "",
+        "dtype": "bfloat16",
+        "extensionDuration": 15,
+        "fps": 16,
+        "guidanceScale": 4,
+        "guidanceScale2": 0,
+        "height": 1024,
+        "keyscale": "C",
+        "layers": 4,
+        "lyrics": "",
+        "maskVideo": "",
+        "maxSequenceLength": 512,
+        "mode": "text_to_image",
+        "modelType": "QwenImageModularPipeline",
+        "negativePrompt": "wrong headline, unreadable subtitle, extra random text, warped speaker cone, cluttered poster, messy grid, jagged letters, blur",
+        "numFrames": 81,
+        "offloadMode": "model_cpu",
+        "outpaintBottom": 0,
+        "outpaintFeather": 8,
+        "outpaintFillColor": "black",
+        "outpaintLeft": 256,
+        "outpaintOverlap": 24,
+        "outpaintRight": 256,
+        "outpaintTop": 0,
+        "outputType": "pil",
+        "prompt": "Design a minimal event poster for the fictional workshop \"QUIET SIGNALS\". Render the exact headline \"QUIET SIGNALS\" large and readable, with a small subtitle \"SOUND DESIGN LAB\" and a simple date line \"SEPT 14\". Visual motif: one matte white speaker cone drawn as a clean architectural object, black ink grid, one muted yellow accent bar, generous margins, precise alignment, and a print-design finish at square format.",
+        "quantizationMode": "none",
+        "randomSeed": false,
+        "referenceAudio": "",
+        "repaintingEnd": 10,
+        "repaintingStart": 0,
+        "resourceMode": "auto",
+        "seed": 5113,
+        "shift": 3,
+        "sourceAudio": "",
+        "sourceVideo": "",
+        "steps": 50,
+        "strength": 0.8,
+        "timesignature": "4/4",
+        "vocalLanguage": "en",
+        "width": 1024
+      }
+    },
+    "graph": {
+      "schemaVersion": 1,
+      "hash": "sha256:canonical-graph-v1:90c5e445e5645941dbbcaa28bf18c42dcde2b484856d236542683aa3f7eab196",
+      "canonicalGraph": {
+        "deterministicMode": {
+          "enabled": true,
+          "promptSettingsHash": "ps_85f9326f",
+          "seed": 5113,
+          "strict": true,
+          "templateId": "qwen_low_vram_poster_layout",
+          "templateLockHash": "tpl_e28515fb"
+        },
+        "nodes": [
+          {
+            "action": "LoadPipeline",
+            "key": "modules.QwenImage.LoadPipeline#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "value": true
+              },
+              "bnb_4bit_compute_dtype": {
+                "value": "bfloat16"
+              },
+              "bnb_4bit_quant_type": {
+                "value": "nf4"
+              },
+              "bnb_4bit_use_double_quant": {
+                "value": true
+              },
+              "device": {
+                "value": "cuda:0"
+              },
+              "dtype": {
+                "value": "bfloat16"
+              },
+              "low_cpu_mem_usage": {},
+              "model_id": {
+                "display": "modelselect",
+                "value": {
+                  "source": "hub",
+                  "value": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
+                }
+              },
+              "offload_mode": {
+                "value": "model_cpu"
+              },
+              "quantization_mode": {
+                "value": "none"
+              },
+              "quantized_components": {
+                "display": "select",
+                "value": []
+              },
+              "revision": {}
+            }
+          },
+          {
+            "action": "Generate",
+            "key": "modules.QwenImage.Generate#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "value": 1024
+              },
+              "max_sequence_length": {
+                "value": 512
+              },
+              "negative_prompt": {
+                "display": "textarea",
+                "value": "wrong headline, unreadable subtitle, extra random text, warped speaker cone, cluttered poster, messy grid, jagged letters, blur"
+              },
+              "num_inference_steps": {
+                "display": "slider",
+                "value": 50
+              },
+              "output_type": {
+                "value": "pil"
+              },
+              "pipeline": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.LoadPipeline#1",
+                "sourceKey": "pipeline"
+              },
+              "prompt": {
+                "display": "textarea",
+                "value": "Design a minimal event poster for the fictional workshop \"QUIET SIGNALS\". Render the exact headline \"QUIET SIGNALS\" large and readable, with a small subtitle \"SOUND DESIGN LAB\" and a simple date line \"SEPT 14\". Visual motif: one matte white speaker cone drawn as a clean architectural object, black ink grid, one muted yellow accent bar, generous margins, precise alignment, and a print-design finish at square format."
+              },
+              "seed": {
+                "value": 5113
+              },
+              "true_cfg_scale": {
+                "display": "slider",
+                "value": 4
+              },
+              "width": {
+                "value": 1024
+              }
+            }
+          },
+          {
+            "action": "Preview",
+            "key": "modules.Image.Preview#1",
+            "module": "modules.Image",
+            "params": {
+              "device": {},
+              "export": {},
+              "image": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.Generate#1",
+                "sourceKey": "images"
+              },
+              "preview": {
+                "display": "ui_image",
+                "sourceKey": "output"
+              },
+              "vae": {
+                "display": "input"
+              }
+            }
+          }
+        ],
+        "paths": [
+          [
+            "modules.QwenImage.LoadPipeline#1",
+            "modules.QwenImage.Generate#1",
+            "modules.Image.Preview#1"
+          ]
+        ],
+        "schemaVersion": 1
+      },
+      "executionPlanHash": "sha256:execution-plan-v1:e27d6fdd21e0d4cbbda959da0b5f7a2853676c85635ee5e7e38f72951d1a5bb7",
+      "executionPlan": {
+        "autoOffload": true,
+        "autoResourceCandidateId": "qwen-t2i-prequantized-model-cpu",
+        "autoResourceProofStatus": "declared_safe",
+        "cudaIndex": 0,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "executionPath": "direct-qwen-image",
+        "modelFamily": "Qwen Image",
+        "modelRepo": "Qwen/Qwen-Image-2512",
+        "modelType": "QwenImageModularPipeline",
+        "offloadMode": "model_cpu",
+        "pipelineClass": null,
+        "quantizationMode": "none",
+        "quantizedComponents": [],
+        "resolvedArtifact": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedModelRepo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedResourceMode": "auto",
+        "resourceMode": "auto",
+        "source": "studio"
+      }
+    },
+    "model": {
+      "repoId": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+      "selectedRevision": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "fingerprint": "sha256:535dd7dda54e6f80520eee058322a1ec7b02a6aee51683abb81d585d4e17f004",
+      "revisions": [
+        {
+          "hash": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+          "size": 18667660240,
+          "lastModified": 1783141419
+        }
+      ]
+    },
+    "runtime": {
+      "reportedFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+      "lockFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+      "payload": {
+        "dataDir": "<local-path>/data",
+        "packages": {
+          "accelerate": "1.13.0",
+          "bitsandbytes": "0.49.2",
+          "diffusers": "0.39.0.dev0",
+          "platform": "Windows-11-10.0.26200-SP0",
+          "python": "3.12.11",
+          "torch": "2.11.0+cu128",
+          "transformers": "5.10.1"
+        },
+        "torch": {
+          "cuda_available": true,
+          "cuda_device_capability": "8.9",
+          "cuda_device_count": 1,
+          "cuda_device_name": "NVIDIA GeForce RTX 4080",
+          "cuda_device_total_memory_bytes": 17170956288,
+          "cuda_memory_total_bytes": 17170956288,
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "cudnn_version": 91900,
+          "deterministic_algorithms": true
+        },
+        "workDir": "<local-path>/data"
+      },
+      "backendSource": {
+        "gitCommit": "<redacted-source-commit>",
+        "fingerprint": "sha256:backend-source-v1:fe9b1284cdb2626b860263633d61ede3bb75c21431207fd29d662703ebf24d7f",
+        "files": [
+          {
+            "path": "main.py",
+            "sha256": "9b5f35900b43de45b79f185b636e5f603e0fb7715dfd3d65dd8adfcb58b92518"
+          },
+          {
+            "path": "modiff/__init__.py",
+            "sha256": "e24665e005189b7f490d12c4f445a15e96dca9553d028a0656ec86d52d191aff"
+          },
+          {
+            "path": "modiff/auto_resource.py",
+            "sha256": "91722334d09b89c4e0ebddeb96a28d1ca5125b93c0457ed567ddef8f7bcee2bb"
+          },
+          {
+            "path": "modiff/client.py",
+            "sha256": "8127811d106482655cc44a217c2f18d53cb25f202810931d1cddb0f18dd2108e"
+          },
+          {
+            "path": "modiff/config.py",
+            "sha256": "483a8744e6b6a9d9650187866d24c002a1d246330f82997a2a2f4e67a520eded"
+          },
+          {
+            "path": "modiff/diffusers_offload.py",
+            "sha256": "3c7db15f4f811dee9c0d29636280ebbe0e2a0f2add316922a21c2e66646d72e4"
+          },
+          {
+            "path": "modiff/diffusers_profiles.py",
+            "sha256": "c11ae2c1ee5283398d52b6a6519d2e95ba9ba96616888883f87492d492663606"
+          },
+          {
+            "path": "modiff/hardware.py",
+            "sha256": "55d2e06fc7e4b45080a017566cd6e7eb0441379e93fe0076cdd30252a4720d40"
+          },
+          {
+            "path": "modiff/modelstore.py",
+            "sha256": "25ba12273535ca802a9f94271ddf778bc52f551f6bc175e9a692c55374aabb05"
+          },
+          {
+            "path": "modiff/NodeBase.py",
+            "sha256": "b0e7e2f6dd24da0fb12d36ad2d54843f7eb691412c5473b9bd1f78a09276b070"
+          },
+          {
+            "path": "modiff/preflight.py",
+            "sha256": "7a637fa35e2b883093f2d63a4dc20822730a75e23c4b07ff19a8e2ebf40c5ed9"
+          },
+          {
+            "path": "modiff/server.py",
+            "sha256": "b3d0f5f4ba88c99a4b77de04619735b3898f49a358048d8a2b3b05eca8b304d1"
+          },
+          {
+            "path": "modules/QwenImage/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/QwenImage/main.py",
+            "sha256": "965914f4af563f7bfbf83cf3edc0ef7d599fd34e93b84e30a33016315dd387cd"
+          },
+          {
+            "path": "pyproject.toml",
+            "sha256": "47180826e627c368c039c24fce5cd79a8221192407eeee0fc836d05a2b8345fa"
+          },
+          {
+            "path": "utils/huggingface.py",
+            "sha256": "4765870a4246f0f288147c5309caed351e80a0212206ef3cf9376cdb4f0eaf64"
+          },
+          {
+            "path": "utils/image.py",
+            "sha256": "9472a5bad33a4703c6a449cacd856bed3b1da6bdc23895863ea591dbdab922aa"
+          },
+          {
+            "path": "utils/memory_menager.py",
+            "sha256": "54cfc658c9d7123c9838e68e9eca79ac8f74a7125c2b868cb6ebcf6a8708a2a1"
+          },
+          {
+            "path": "utils/paths.py",
+            "sha256": "4573209caace186f8bcb40945bade14ddfccfd7a477b3fb9bbc0aa03720681a4"
+          },
+          {
+            "path": "utils/quantization.py",
+            "sha256": "026a27d71b0d2a8bbbf185e2e2fc704696f387acf8a0162c04c317d7824759bc"
+          },
+          {
+            "path": "utils/spline.py",
+            "sha256": "d0d5eeae7f1d3cecac3508b85b5308e691aaf3ff88d455b7cecc001fbe4e58d3"
+          },
+          {
+            "path": "utils/torch_utils.py",
+            "sha256": "124db00cfe3a86c3b589291270c2f840f46c3f370786b4c88babd3173de7f21f"
+          }
+        ]
+      },
+      "backendContract": {
+        "fingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+        "contracts": [
+          {
+            "action": "LoadPipeline",
+            "cache": false,
+            "key": "modules.QwenImage.LoadPipeline",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "default": true,
+                "type": "bool"
+              },
+              "bnb_4bit_compute_dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_quant_type": {
+                "default": "nf4",
+                "options": [
+                  "nf4",
+                  "fp4"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_use_double_quant": {
+                "default": true,
+                "type": "bool"
+              },
+              "device": {
+                "default": "cuda:0",
+                "options": [
+                  "cuda:0",
+                  "cpu:0"
+                ],
+                "type": "string"
+              },
+              "dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "low_cpu_mem_usage": {
+                "default": true,
+                "type": "bool"
+              },
+              "model_id": {
+                "display": "modelselect",
+                "fieldOptions": {
+                  "noValidation": true,
+                  "sources": [
+                    "hub",
+                    "local"
+                  ]
+                },
+                "type": "string"
+              },
+              "offload_mode": {
+                "default": "model_cpu",
+                "options": [
+                  "auto_cpu",
+                  "none",
+                  "model_cpu",
+                  "sequential_cpu",
+                  "group_cpu",
+                  "group_disk"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "output",
+                "type": "qwen_image_pipeline"
+              },
+              "quantization_mode": {
+                "default": "bnb_4bit",
+                "options": [
+                  "none",
+                  "bnb_4bit"
+                ],
+                "type": "string"
+              },
+              "quantized_components": {
+                "default": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "display": "select",
+                "fieldOptions": {
+                  "multiple": true
+                },
+                "options": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "type": "string"
+              },
+              "resolved_artifact": {
+                "display": "output",
+                "type": "string"
+              },
+              "revision": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Generate",
+            "cache": false,
+            "key": "modules.QwenImage.Generate",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "height_out": {
+                "display": "output",
+                "type": "int"
+              },
+              "images": {
+                "display": "output",
+                "type": "image"
+              },
+              "max_sequence_length": {
+                "default": 512,
+                "max": 2048,
+                "min": 1,
+                "type": "int"
+              },
+              "negative_prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "num_inference_steps": {
+                "default": 50,
+                "display": "slider",
+                "max": 100,
+                "min": 1,
+                "type": "int"
+              },
+              "output_type": {
+                "default": "pil",
+                "options": [
+                  "pil",
+                  "np",
+                  "pt"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "input",
+                "type": "qwen_image_pipeline"
+              },
+              "prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "seed": {
+                "default": 0,
+                "display": "random",
+                "max": 4294967295,
+                "min": 0,
+                "type": "int"
+              },
+              "true_cfg_scale": {
+                "default": 4,
+                "display": "slider",
+                "max": 20,
+                "min": 0,
+                "step": 0.1,
+                "type": "float"
+              },
+              "width": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "width_out": {
+                "display": "output",
+                "type": "int"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Preview",
+            "cache": false,
+            "key": "modules.Image.Preview",
+            "module": "modules.Image",
+            "params": {
+              "device": {
+                "default": "cuda:0",
+                "options": {
+                  "cpu:0": {
+                    "arch": "cpu",
+                    "index": 0,
+                    "label": [
+                      "cpu:0"
+                    ],
+                    "name": "CPU (0)",
+                    "total_memory": 0
+                  },
+                  "cuda:0": {
+                    "arch": "cuda",
+                    "index": 0,
+                    "label": [
+                      "cuda:0"
+                    ],
+                    "name": "NVIDIA GeForce RTX 4080 15.99GB (0)",
+                    "total_memory": 17170956288
+                  }
+                },
+                "type": "string"
+              },
+              "export": {
+                "default": "0",
+                "type": "str"
+              },
+              "filtered": {
+                "display": "output",
+                "type": "image"
+              },
+              "image": {
+                "display": "input",
+                "type": [
+                  "image",
+                  "latent"
+                ]
+              },
+              "output": {
+                "display": "output",
+                "type": "image"
+              },
+              "preview": {
+                "dataSource": "output",
+                "display": "ui_image",
+                "type": "url"
+              },
+              "vae": {
+                "display": "input",
+                "type": "pipeline"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "deterministic": {
+        "fingerprint": "sha256:deterministic-settings-v1:5968a36b33675516f5c21b5da6d4dacbfbe113487836d80259e700ce10538f0d",
+        "settings": {
+          "enabled": true,
+          "seed": 5113,
+          "settings": {
+            "allow_tf32": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": true,
+            "numpy_random": true,
+            "python_random": true,
+            "torch_cuda_manual_seed_all": true,
+            "torch_deterministic_algorithms": true,
+            "torch_manual_seed": true
+          },
+          "strict": true,
+          "warnings": []
+        }
+      }
+    },
+    "output": {
+      "count": 1,
+      "collectionHash": "sha256:decoded-output-collection-v1:233cb1febe74b0231fb3def68c281700d594ed2a72e234e0512777925eb809b7",
+      "backendCollectionHash": "sha256:collection:f7a7be1f48d11c76b151e46c2c5d0c2d130f487c72f642f0e07473387cdb83e8",
+      "items": [
+        {
+          "index": 0,
+          "width": 1024,
+          "height": 1024,
+          "byteSize": 125204,
+          "encodedSha256": "sha256:9d7310acdc19051eedd003c432ef27ebe384408f8c8c5f2ed82daae16582b523",
+          "decodedSha256": "sha256:decoded-rgba:97c2d2ee47570852da14d39d5ab09331021f5e9fc4965578d17f7d4c68e348ea",
+          "backendMediaHash": "sha256:bytes:9d7310acdc19051eedd003c432ef27ebe384408f8c8c5f2ed82daae16582b523"
+        }
+      ]
+    },
+    "blockers": []
+  },
+  "run2": {
+    "schemaVersion": 1,
+    "format": "modiff.live-proof.provenance.v1",
+    "capturedAt": "2026-07-10T09:36:12.830Z",
+    "taskId": "g14ZhraV6xYu",
+    "proofLockHash": "sha256:live-proof-lock-v1:ab5f53a6ee0a1894a99a265d7e233eb038c4ff78014e78a8df459a64d5d2e619",
+    "graphHash": "sha256:canonical-graph-v1:90c5e445e5645941dbbcaa28bf18c42dcde2b484856d236542683aa3f7eab196",
+    "runtimeFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+    "backendReportedRuntimeFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+    "backendSourceFingerprint": "sha256:backend-source-v1:fe9b1284cdb2626b860263633d61ede3bb75c21431207fd29d662703ebf24d7f",
+    "backendContractFingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+    "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "modelCommit": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+    "templateLockHash": "tpl_8f3e03ad",
+    "templateRevisionHash": "sha256:template-revision-v1:688859ea2fc7ea314de1a488cad307c86d12124d064934cfc4dd72d5aaf852cd",
+    "mediaHash": "sha256:decoded-rgba:97c2d2ee47570852da14d39d5ab09331021f5e9fc4965578d17f7d4c68e348ea",
+    "width": 1024,
+    "height": 1024,
+    "template": {
+      "id": "qwen_low_vram_poster_layout",
+      "promptSettingsHash": "ps_85f9326f",
+      "catalogTemplateLockHash": "tpl_e28515fb",
+      "resolvedTemplateLockHash": "tpl_8f3e03ad",
+      "revisionHash": "sha256:template-revision-v1:688859ea2fc7ea314de1a488cad307c86d12124d064934cfc4dd72d5aaf852cd",
+      "lockedSettings": {
+        "attentionKwargsJson": "",
+        "audioCoverStrength": 0.5,
+        "audioDuration": 30,
+        "autoOffload": true,
+        "bpm": 0,
+        "conditioningScale": 1,
+        "controlVideo": "",
+        "dtype": "bfloat16",
+        "extensionDuration": 15,
+        "fps": 16,
+        "guidanceScale": 4,
+        "guidanceScale2": 0,
+        "height": 1024,
+        "keyscale": "C",
+        "layers": 4,
+        "lyrics": "",
+        "maskVideo": "",
+        "maxSequenceLength": 512,
+        "mode": "text_to_image",
+        "modelType": "QwenImageModularPipeline",
+        "negativePrompt": "wrong headline, unreadable subtitle, extra random text, warped speaker cone, cluttered poster, messy grid, jagged letters, blur",
+        "numFrames": 81,
+        "offloadMode": "model_cpu",
+        "outpaintBottom": 0,
+        "outpaintFeather": 8,
+        "outpaintFillColor": "black",
+        "outpaintLeft": 256,
+        "outpaintOverlap": 24,
+        "outpaintRight": 256,
+        "outpaintTop": 0,
+        "outputType": "pil",
+        "prompt": "Design a minimal event poster for the fictional workshop \"QUIET SIGNALS\". Render the exact headline \"QUIET SIGNALS\" large and readable, with a small subtitle \"SOUND DESIGN LAB\" and a simple date line \"SEPT 14\". Visual motif: one matte white speaker cone drawn as a clean architectural object, black ink grid, one muted yellow accent bar, generous margins, precise alignment, and a print-design finish at square format.",
+        "quantizationMode": "none",
+        "randomSeed": false,
+        "referenceAudio": "",
+        "repaintingEnd": 10,
+        "repaintingStart": 0,
+        "resourceMode": "auto",
+        "seed": 5113,
+        "shift": 3,
+        "sourceAudio": "",
+        "sourceVideo": "",
+        "steps": 50,
+        "strength": 0.8,
+        "timesignature": "4/4",
+        "vocalLanguage": "en",
+        "width": 1024
+      }
+    },
+    "graph": {
+      "schemaVersion": 1,
+      "hash": "sha256:canonical-graph-v1:90c5e445e5645941dbbcaa28bf18c42dcde2b484856d236542683aa3f7eab196",
+      "canonicalGraph": {
+        "deterministicMode": {
+          "enabled": true,
+          "promptSettingsHash": "ps_85f9326f",
+          "seed": 5113,
+          "strict": true,
+          "templateId": "qwen_low_vram_poster_layout",
+          "templateLockHash": "tpl_e28515fb"
+        },
+        "nodes": [
+          {
+            "action": "LoadPipeline",
+            "key": "modules.QwenImage.LoadPipeline#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "value": true
+              },
+              "bnb_4bit_compute_dtype": {
+                "value": "bfloat16"
+              },
+              "bnb_4bit_quant_type": {
+                "value": "nf4"
+              },
+              "bnb_4bit_use_double_quant": {
+                "value": true
+              },
+              "device": {
+                "value": "cuda:0"
+              },
+              "dtype": {
+                "value": "bfloat16"
+              },
+              "low_cpu_mem_usage": {},
+              "model_id": {
+                "display": "modelselect",
+                "value": {
+                  "source": "hub",
+                  "value": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
+                }
+              },
+              "offload_mode": {
+                "value": "model_cpu"
+              },
+              "quantization_mode": {
+                "value": "none"
+              },
+              "quantized_components": {
+                "display": "select",
+                "value": []
+              },
+              "revision": {}
+            }
+          },
+          {
+            "action": "Generate",
+            "key": "modules.QwenImage.Generate#1",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "value": 1024
+              },
+              "max_sequence_length": {
+                "value": 512
+              },
+              "negative_prompt": {
+                "display": "textarea",
+                "value": "wrong headline, unreadable subtitle, extra random text, warped speaker cone, cluttered poster, messy grid, jagged letters, blur"
+              },
+              "num_inference_steps": {
+                "display": "slider",
+                "value": 50
+              },
+              "output_type": {
+                "value": "pil"
+              },
+              "pipeline": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.LoadPipeline#1",
+                "sourceKey": "pipeline"
+              },
+              "prompt": {
+                "display": "textarea",
+                "value": "Design a minimal event poster for the fictional workshop \"QUIET SIGNALS\". Render the exact headline \"QUIET SIGNALS\" large and readable, with a small subtitle \"SOUND DESIGN LAB\" and a simple date line \"SEPT 14\". Visual motif: one matte white speaker cone drawn as a clean architectural object, black ink grid, one muted yellow accent bar, generous margins, precise alignment, and a print-design finish at square format."
+              },
+              "seed": {
+                "value": 5113
+              },
+              "true_cfg_scale": {
+                "display": "slider",
+                "value": 4
+              },
+              "width": {
+                "value": 1024
+              }
+            }
+          },
+          {
+            "action": "Preview",
+            "key": "modules.Image.Preview#1",
+            "module": "modules.Image",
+            "params": {
+              "device": {},
+              "export": {},
+              "image": {
+                "display": "input",
+                "sourceId": "modules.QwenImage.Generate#1",
+                "sourceKey": "images"
+              },
+              "preview": {
+                "display": "ui_image",
+                "sourceKey": "output"
+              },
+              "vae": {
+                "display": "input"
+              }
+            }
+          }
+        ],
+        "paths": [
+          [
+            "modules.QwenImage.LoadPipeline#1",
+            "modules.QwenImage.Generate#1",
+            "modules.Image.Preview#1"
+          ]
+        ],
+        "schemaVersion": 1
+      },
+      "executionPlanHash": "sha256:execution-plan-v1:e27d6fdd21e0d4cbbda959da0b5f7a2853676c85635ee5e7e38f72951d1a5bb7",
+      "executionPlan": {
+        "autoOffload": true,
+        "autoResourceCandidateId": "qwen-t2i-prequantized-model-cpu",
+        "autoResourceProofStatus": "declared_safe",
+        "cudaIndex": 0,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "executionPath": "direct-qwen-image",
+        "modelFamily": "Qwen Image",
+        "modelRepo": "Qwen/Qwen-Image-2512",
+        "modelType": "QwenImageModularPipeline",
+        "offloadMode": "model_cpu",
+        "pipelineClass": null,
+        "quantizationMode": "none",
+        "quantizedComponents": [],
+        "resolvedArtifact": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedModelRepo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+        "resolvedResourceMode": "auto",
+        "resourceMode": "auto",
+        "source": "studio"
+      }
+    },
+    "model": {
+      "repoId": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+      "selectedRevision": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "modelRevision": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit@f50b8c24fe21e9265509b15113b7cca82d0a4443",
+      "fingerprint": "sha256:535dd7dda54e6f80520eee058322a1ec7b02a6aee51683abb81d585d4e17f004",
+      "revisions": [
+        {
+          "hash": "f50b8c24fe21e9265509b15113b7cca82d0a4443",
+          "size": 18667660240,
+          "lastModified": 1783141419
+        }
+      ]
+    },
+    "runtime": {
+      "reportedFingerprint": "sha256:a6f878bef8d5558d7554ceab3bb899d7aabd72e46e744d3ab486cdc1759bf27a",
+      "lockFingerprint": "sha256:stable-runtime-v1:f151c87411b429ff3b4045806837ad9f4c11f805c7a97edc3111495c97c077e7",
+      "payload": {
+        "dataDir": "<local-path>/data",
+        "packages": {
+          "accelerate": "1.13.0",
+          "bitsandbytes": "0.49.2",
+          "diffusers": "0.39.0.dev0",
+          "platform": "Windows-11-10.0.26200-SP0",
+          "python": "3.12.11",
+          "torch": "2.11.0+cu128",
+          "transformers": "5.10.1"
+        },
+        "torch": {
+          "cuda_available": true,
+          "cuda_device_capability": "8.9",
+          "cuda_device_count": 1,
+          "cuda_device_name": "NVIDIA GeForce RTX 4080",
+          "cuda_device_total_memory_bytes": 17170956288,
+          "cuda_memory_total_bytes": 17170956288,
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "cudnn_version": 91900,
+          "deterministic_algorithms": true
+        },
+        "workDir": "<local-path>/data"
+      },
+      "backendSource": {
+        "gitCommit": "<redacted-source-commit>",
+        "fingerprint": "sha256:backend-source-v1:fe9b1284cdb2626b860263633d61ede3bb75c21431207fd29d662703ebf24d7f",
+        "files": [
+          {
+            "path": "main.py",
+            "sha256": "9b5f35900b43de45b79f185b636e5f603e0fb7715dfd3d65dd8adfcb58b92518"
+          },
+          {
+            "path": "modiff/__init__.py",
+            "sha256": "e24665e005189b7f490d12c4f445a15e96dca9553d028a0656ec86d52d191aff"
+          },
+          {
+            "path": "modiff/auto_resource.py",
+            "sha256": "91722334d09b89c4e0ebddeb96a28d1ca5125b93c0457ed567ddef8f7bcee2bb"
+          },
+          {
+            "path": "modiff/client.py",
+            "sha256": "8127811d106482655cc44a217c2f18d53cb25f202810931d1cddb0f18dd2108e"
+          },
+          {
+            "path": "modiff/config.py",
+            "sha256": "483a8744e6b6a9d9650187866d24c002a1d246330f82997a2a2f4e67a520eded"
+          },
+          {
+            "path": "modiff/diffusers_offload.py",
+            "sha256": "3c7db15f4f811dee9c0d29636280ebbe0e2a0f2add316922a21c2e66646d72e4"
+          },
+          {
+            "path": "modiff/diffusers_profiles.py",
+            "sha256": "c11ae2c1ee5283398d52b6a6519d2e95ba9ba96616888883f87492d492663606"
+          },
+          {
+            "path": "modiff/hardware.py",
+            "sha256": "55d2e06fc7e4b45080a017566cd6e7eb0441379e93fe0076cdd30252a4720d40"
+          },
+          {
+            "path": "modiff/modelstore.py",
+            "sha256": "25ba12273535ca802a9f94271ddf778bc52f551f6bc175e9a692c55374aabb05"
+          },
+          {
+            "path": "modiff/NodeBase.py",
+            "sha256": "b0e7e2f6dd24da0fb12d36ad2d54843f7eb691412c5473b9bd1f78a09276b070"
+          },
+          {
+            "path": "modiff/preflight.py",
+            "sha256": "7a637fa35e2b883093f2d63a4dc20822730a75e23c4b07ff19a8e2ebf40c5ed9"
+          },
+          {
+            "path": "modiff/server.py",
+            "sha256": "b3d0f5f4ba88c99a4b77de04619735b3898f49a358048d8a2b3b05eca8b304d1"
+          },
+          {
+            "path": "modules/QwenImage/__init__.py",
+            "sha256": "f03e5af282a0a9de960354549222829f897f3d57a6b72b9c93142eb74bc31d73"
+          },
+          {
+            "path": "modules/QwenImage/main.py",
+            "sha256": "965914f4af563f7bfbf83cf3edc0ef7d599fd34e93b84e30a33016315dd387cd"
+          },
+          {
+            "path": "pyproject.toml",
+            "sha256": "47180826e627c368c039c24fce5cd79a8221192407eeee0fc836d05a2b8345fa"
+          },
+          {
+            "path": "utils/huggingface.py",
+            "sha256": "4765870a4246f0f288147c5309caed351e80a0212206ef3cf9376cdb4f0eaf64"
+          },
+          {
+            "path": "utils/image.py",
+            "sha256": "9472a5bad33a4703c6a449cacd856bed3b1da6bdc23895863ea591dbdab922aa"
+          },
+          {
+            "path": "utils/memory_menager.py",
+            "sha256": "54cfc658c9d7123c9838e68e9eca79ac8f74a7125c2b868cb6ebcf6a8708a2a1"
+          },
+          {
+            "path": "utils/paths.py",
+            "sha256": "4573209caace186f8bcb40945bade14ddfccfd7a477b3fb9bbc0aa03720681a4"
+          },
+          {
+            "path": "utils/quantization.py",
+            "sha256": "026a27d71b0d2a8bbbf185e2e2fc704696f387acf8a0162c04c317d7824759bc"
+          },
+          {
+            "path": "utils/spline.py",
+            "sha256": "d0d5eeae7f1d3cecac3508b85b5308e691aaf3ff88d455b7cecc001fbe4e58d3"
+          },
+          {
+            "path": "utils/torch_utils.py",
+            "sha256": "124db00cfe3a86c3b589291270c2f840f46c3f370786b4c88babd3173de7f21f"
+          }
+        ]
+      },
+      "backendContract": {
+        "fingerprint": "sha256:backend-contract-v1:c8cd3954102677d2228e9783d53ac17d15efd965ef9ccdf0e36cc6601c93b7ba",
+        "contracts": [
+          {
+            "action": "LoadPipeline",
+            "cache": false,
+            "key": "modules.QwenImage.LoadPipeline",
+            "module": "modules.QwenImage",
+            "params": {
+              "auto_offload": {
+                "default": true,
+                "type": "bool"
+              },
+              "bnb_4bit_compute_dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_quant_type": {
+                "default": "nf4",
+                "options": [
+                  "nf4",
+                  "fp4"
+                ],
+                "type": "string"
+              },
+              "bnb_4bit_use_double_quant": {
+                "default": true,
+                "type": "bool"
+              },
+              "device": {
+                "default": "cuda:0",
+                "options": [
+                  "cuda:0",
+                  "cpu:0"
+                ],
+                "type": "string"
+              },
+              "dtype": {
+                "default": "bfloat16",
+                "options": [
+                  "float32",
+                  "float16",
+                  "bfloat16"
+                ],
+                "type": "string"
+              },
+              "low_cpu_mem_usage": {
+                "default": true,
+                "type": "bool"
+              },
+              "model_id": {
+                "display": "modelselect",
+                "fieldOptions": {
+                  "noValidation": true,
+                  "sources": [
+                    "hub",
+                    "local"
+                  ]
+                },
+                "type": "string"
+              },
+              "offload_mode": {
+                "default": "model_cpu",
+                "options": [
+                  "auto_cpu",
+                  "none",
+                  "model_cpu",
+                  "sequential_cpu",
+                  "group_cpu",
+                  "group_disk"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "output",
+                "type": "qwen_image_pipeline"
+              },
+              "quantization_mode": {
+                "default": "bnb_4bit",
+                "options": [
+                  "none",
+                  "bnb_4bit"
+                ],
+                "type": "string"
+              },
+              "quantized_components": {
+                "default": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "display": "select",
+                "fieldOptions": {
+                  "multiple": true
+                },
+                "options": [
+                  "transformer",
+                  "text_encoder"
+                ],
+                "type": "string"
+              },
+              "resolved_artifact": {
+                "display": "output",
+                "type": "string"
+              },
+              "revision": {
+                "default": "",
+                "type": "string"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Generate",
+            "cache": false,
+            "key": "modules.QwenImage.Generate",
+            "module": "modules.QwenImage",
+            "params": {
+              "height": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "height_out": {
+                "display": "output",
+                "type": "int"
+              },
+              "images": {
+                "display": "output",
+                "type": "image"
+              },
+              "max_sequence_length": {
+                "default": 512,
+                "max": 2048,
+                "min": 1,
+                "type": "int"
+              },
+              "negative_prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "num_inference_steps": {
+                "default": 50,
+                "display": "slider",
+                "max": 100,
+                "min": 1,
+                "type": "int"
+              },
+              "output_type": {
+                "default": "pil",
+                "options": [
+                  "pil",
+                  "np",
+                  "pt"
+                ],
+                "type": "string"
+              },
+              "pipeline": {
+                "display": "input",
+                "type": "qwen_image_pipeline"
+              },
+              "prompt": {
+                "default": "",
+                "display": "textarea",
+                "type": "text"
+              },
+              "seed": {
+                "default": 0,
+                "display": "random",
+                "max": 4294967295,
+                "min": 0,
+                "type": "int"
+              },
+              "true_cfg_scale": {
+                "default": 4,
+                "display": "slider",
+                "max": 20,
+                "min": 0,
+                "step": 0.1,
+                "type": "float"
+              },
+              "width": {
+                "default": 1024,
+                "max": 2048,
+                "min": 16,
+                "step": 16,
+                "type": "int"
+              },
+              "width_out": {
+                "display": "output",
+                "type": "int"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          },
+          {
+            "action": "Preview",
+            "cache": false,
+            "key": "modules.Image.Preview",
+            "module": "modules.Image",
+            "params": {
+              "device": {
+                "default": "cuda:0",
+                "options": {
+                  "cpu:0": {
+                    "arch": "cpu",
+                    "index": 0,
+                    "label": [
+                      "cpu:0"
+                    ],
+                    "name": "CPU (0)",
+                    "total_memory": 0
+                  },
+                  "cuda:0": {
+                    "arch": "cuda",
+                    "index": 0,
+                    "label": [
+                      "cuda:0"
+                    ],
+                    "name": "NVIDIA GeForce RTX 4080 15.99GB (0)",
+                    "total_memory": 17170956288
+                  }
+                },
+                "type": "string"
+              },
+              "export": {
+                "default": "0",
+                "type": "str"
+              },
+              "filtered": {
+                "display": "output",
+                "type": "image"
+              },
+              "image": {
+                "display": "input",
+                "type": [
+                  "image",
+                  "latent"
+                ]
+              },
+              "output": {
+                "display": "output",
+                "type": "image"
+              },
+              "preview": {
+                "dataSource": "output",
+                "display": "ui_image",
+                "type": "url"
+              },
+              "vae": {
+                "display": "input",
+                "type": "pipeline"
+              }
+            },
+            "skipParamsCheck": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "deterministic": {
+        "fingerprint": "sha256:deterministic-settings-v1:5968a36b33675516f5c21b5da6d4dacbfbe113487836d80259e700ce10538f0d",
+        "settings": {
+          "enabled": true,
+          "seed": 5113,
+          "settings": {
+            "allow_tf32": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": true,
+            "numpy_random": true,
+            "python_random": true,
+            "torch_cuda_manual_seed_all": true,
+            "torch_deterministic_algorithms": true,
+            "torch_manual_seed": true
+          },
+          "strict": true,
+          "warnings": []
+        }
+      }
+    },
+    "output": {
+      "count": 1,
+      "collectionHash": "sha256:decoded-output-collection-v1:233cb1febe74b0231fb3def68c281700d594ed2a72e234e0512777925eb809b7",
+      "backendCollectionHash": "sha256:collection:f7a7be1f48d11c76b151e46c2c5d0c2d130f487c72f642f0e07473387cdb83e8",
+      "items": [
+        {
+          "index": 0,
+          "width": 1024,
+          "height": 1024,
+          "byteSize": 125204,
+          "encodedSha256": "sha256:9d7310acdc19051eedd003c432ef27ebe384408f8c8c5f2ed82daae16582b523",
+          "decodedSha256": "sha256:decoded-rgba:97c2d2ee47570852da14d39d5ab09331021f5e9fc4965578d17f7d4c68e348ea",
+          "backendMediaHash": "sha256:bytes:9d7310acdc19051eedd003c432ef27ebe384408f8c8c5f2ed82daae16582b523"
+        }
+      ]
+    },
+    "blockers": []
+  },
+  "comparison": {
+    "matches": true,
+    "candidateExact": true,
+    "comparedFields": 21,
+    "mismatches": [],
+    "baselineBlockers": [],
+    "candidateBlockers": []
+  },
+  "redactions": {
+    "fingerprintsRemainOpaque": true,
+    "localPaths": true,
+    "note": "Hashes attest to the original capture; redacted payloads are not sufficient to recompute them.",
+    "sourceCommit": true
+  }
+}

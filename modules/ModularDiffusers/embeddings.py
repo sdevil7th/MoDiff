@@ -1,0 +1,346 @@
+import importlib
+import logging
+
+from diffusers import ComponentSpec
+
+from modiff.NodeBase import NodeBase
+
+from . import MESSAGE_DURATION, components
+from .modular_utils import DummyCustomPipeline, pipeline_class_to_modiff_node_config
+from .utils import collect_model_ids
+
+
+logger = logging.getLogger("modiff")
+
+PROMPT_EMBEDDING_FIELDS = [
+    "prompt_embeds",
+    "prompt_embeds_mask",
+    "negative_prompt_embeds",
+    "negative_prompt_embeds_mask",
+]
+
+MISSING_EMBEDDINGS_MESSAGE = (
+    "Prompt embeddings are missing from Encode Prompt. "
+    "Update or recreate the Studio graph after the model fields finish refreshing."
+)
+
+
+def _state_get(state, key, default=None):
+    if hasattr(state, "get"):
+        return state.get(key, default)
+    values = getattr(state, "values", None)
+    if isinstance(values, dict):
+        return values.get(key, default)
+    if isinstance(state, dict):
+        return state.get(key, default)
+    return getattr(state, key, default)
+
+
+def extract_prompt_embeddings(state):
+    embeddings = {}
+    if hasattr(state, "get_by_kwargs"):
+        try:
+            embeddings = state.get_by_kwargs("denoiser_input_fields") or {}
+        except KeyError:
+            embeddings = {}
+
+    if embeddings:
+        return embeddings
+
+    fallback = {
+        field: _state_get(state, field)
+        for field in PROMPT_EMBEDDING_FIELDS
+    }
+    fallback = {
+        field: value
+        for field, value in fallback.items()
+        if value is not None
+    }
+    if fallback:
+        return fallback
+
+    raise KeyError("embeddings")
+
+
+class EncodePrompt(NodeBase):
+    label = "Encode Prompt"
+    category = "embedding"
+    resizable = True
+    skipParamsCheck = True
+    node_type = "text_encoder"
+    params = {
+        "text_encoders": {
+            "label": "Text Encoders *",
+            "type": "diffusers_auto_models",
+            "display": "input",
+            "onSignal": "update_node",
+        },
+    }
+
+    def update_node(self, values, ref):
+        node_params = {}
+        model_type = self.get_signal_value("text_encoders")
+
+        if self._model_type == model_type:
+            return None
+
+        if model_type is None or model_type == "" or model_type == "DummyCustomPipeline":
+            self._pipeline_class = DummyCustomPipeline
+        else:
+            diffusers_module = importlib.import_module("diffusers")
+            self._pipeline_class = getattr(diffusers_module, model_type)
+
+        self._model_type = model_type
+
+        _, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
+        # not support this node type
+        if node_config is None:
+            self.send_node_definition(node_params)
+            return
+
+        node_params_to_update = node_config["params"]
+        node_params_to_update.pop("text_encoders", None)
+
+        node_params.update(**node_params_to_update)
+        # YiYi TODO: can we perserve the current user values in the UI for "string"/"float"/"int" params?
+        self.send_node_definition(node_params)
+
+    def __init__(self, node_id=None):
+        super().__init__(node_id)
+        self._model_type = ""
+        self._pipeline_class = None
+
+    def execute(self, **kwargs):
+        kwargs = dict(kwargs)
+        # 1. Get node config
+        blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
+
+        # 2. create pipeline
+        repo_id = None
+        if (te := kwargs.get("text_encoders")) and "repo_id" in te:
+            repo_id = te["repo_id"]
+
+        if repo_id is None:
+            self.notify(
+                "You have to connect the text encoder(s)",
+                variant="error",
+                persist=False,
+                autoHideDuration=MESSAGE_DURATION,
+            )
+            return None
+
+        self._pipeline = blocks.init_pipeline(repo_id, components_manager=components)
+
+        # YiYi Notes: take an extra step to cast the params to the correct type.
+        # Preserve the graph compatibility cast until the upstream schema exposes exact types.
+        for param_name, param_config in node_config["params"].items():
+            if param_name in kwargs and kwargs[param_name] is not None:
+                param_type = param_config.get("type", None)
+                if param_type == "float":
+                    kwargs[param_name] = float(kwargs[param_name])
+                elif param_type == "int":
+                    kwargs[param_name] = int(kwargs[param_name])
+
+        # 3. update components
+        expected_component_names = blocks.component_names
+        model_input_names = node_config["model_input_names"]
+        model_ids = collect_model_ids(
+            kwargs, target_key_names=model_input_names, target_model_names=expected_component_names
+        )
+
+        if model_ids:
+            components_to_update = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
+            if components_to_update:
+                self._pipeline.update_components(**components_to_update)
+
+        # 4. compile a dict of runtime inputs from kwargs based on node_config["input_names"]
+        node_kwargs = {}
+        input_names = node_config["input_names"]
+        for name in input_names:
+            if name not in kwargs:
+                continue
+            value = kwargs.get(name)
+
+            # if a dict is passed and is not an pipeline input, we unpack and process its contents
+            # e.g. `embeddings` from text_encoder node
+            if isinstance(value, dict) and name not in blocks.input_names:
+                for k, v in value.items():
+                    if k in blocks.input_names:
+                        node_kwargs[k] = v
+                    else:
+                        expected_inputs = "\n  - ".join(blocks.input_names)
+                        logger.warning(
+                            f"Input '{name}:{k}' is not expected by {self.node_type} blocks.\n"
+                            f"Expected inputs:\n  - {expected_inputs} \n"
+                            f"Blocks: {blocks}"
+                        )
+            # pass the value as it is to the pipeline
+            elif name in blocks.input_names:
+                node_kwargs[name] = value
+            else:
+                expected_inputs = "\n  - ".join(blocks.input_names)
+                logger.warning(
+                    f"Input '{name}' is not expected by {self.node_type} blocks.\n"
+                    f"Expected inputs:\n  - {expected_inputs} \n"
+                    f"Blocks: {blocks}"
+                )
+
+        # 5. run the pipeline,
+        try:
+            node_output_state = self._pipeline(**node_kwargs)
+        except ValueError as e:
+            self.notify(str(e), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
+            return None
+
+        # 6. prepare the outputs dict based on node_config["output_names"]
+        output_names = node_config["output_names"].copy()
+        outputs = {}
+        for name in output_names:
+            if name == "doc":
+                outputs["doc"] = self._pipeline.blocks.doc
+            elif name == "embeddings":
+                try:
+                    outputs["embeddings"] = extract_prompt_embeddings(node_output_state)
+                except KeyError:
+                    self.notify(
+                        MISSING_EMBEDDINGS_MESSAGE,
+                        variant="error",
+                        persist=False,
+                        autoHideDuration=MESSAGE_DURATION,
+                    )
+                    return None
+            else:
+                outputs[name] = node_output_state.get(name)
+        return outputs
+
+
+class ImageEmbeddings(NodeBase):
+    label = "Image Embeddings"
+    category = "embedding"
+    resizable = True
+    skipParamsCheck = True
+    node_type = "image_encoder"
+    params = {
+        "image_encoder": {
+            "label": "Image Encoder *",
+            "display": "input",
+            "type": "diffusers_auto_model",
+            "onSignal": "update_node",
+        },
+    }
+
+    def __init__(self, node_id=None):
+        super().__init__(node_id)
+        self._model_type = ""
+        self._pipeline_class = None
+
+    def update_node(self, values, ref):
+        node_params = {}
+        model_type = self.get_signal_value("image_encoder")
+
+        if self._model_type == model_type:
+            return None
+
+        if model_type is None or model_type == "" or model_type == "DummyCustomPipeline":
+            self._pipeline_class = DummyCustomPipeline
+        else:
+            diffusers_module = importlib.import_module("diffusers")
+            self._pipeline_class = getattr(diffusers_module, model_type)
+
+        self._model_type = model_type
+
+        _, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
+
+        if node_config is None:
+            self.send_node_definition(node_params)
+            return
+
+        node_params_to_update = node_config["params"]
+        node_params_to_update.pop("image_encoder", None)
+        node_params.update(**node_params_to_update)
+        self.send_node_definition(node_params)
+
+    def execute(self, **kwargs):
+        kwargs = dict(kwargs)
+
+        # 1. Get node config
+        blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
+
+        # 2. Create pipeline
+        repo_id = None
+        if (image_encoder := kwargs.get("image_encoder")) and "repo_id" in image_encoder:
+            repo_id = image_encoder["repo_id"]
+
+        if repo_id is None:
+            self.notify(
+                "You have to connect the image encoder",
+                variant="error",
+                persist=False,
+                autoHideDuration=MESSAGE_DURATION,
+            )
+            return None
+
+        self._pipeline = blocks.init_pipeline(repo_id, components_manager=components)
+
+        # 3. Cast parameters to the types expected by the modular pipeline.
+        for param_name, param_config in node_config["params"].items():
+            if param_name in kwargs and kwargs[param_name] is not None:
+                param_type = param_config.get("type", None)
+                if param_type == "float":
+                    kwargs[param_name] = float(kwargs[param_name])
+                elif param_type == "int":
+                    kwargs[param_name] = int(kwargs[param_name])
+
+        # 4. Update components
+        expected_component_names = blocks.component_names
+        model_input_names = node_config["model_input_names"]
+        model_ids = collect_model_ids(
+            kwargs,
+            target_key_names=model_input_names,
+            target_model_names=expected_component_names,
+        )
+
+        # TODO: quick hack to load the image processor
+        spec = ComponentSpec(name="image_processor", repo=repo_id, subfolder="image_processor", variant="")
+        comp = spec.load()
+        comp_id = components.add("image_processor", comp, collection=self.node_id)
+        model_ids.append(comp_id)
+
+        if model_ids:
+            components_to_update = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
+            if components_to_update:
+                self._pipeline.update_components(**components_to_update)
+
+        # 5. Compile runtime inputs from kwargs based on node_config["input_names"]
+        node_kwargs = {}
+        input_names = node_config["input_names"]
+
+        for name in input_names:
+            if name not in kwargs:
+                continue
+            value = kwargs.get(name)
+
+            if isinstance(value, dict) and name not in blocks.input_names:
+                for k, v in value.items():
+                    if k in blocks.input_names:
+                        node_kwargs[k] = v
+            elif name in blocks.input_names:
+                node_kwargs[name] = value
+
+        # 6. Run the pipeline
+        try:
+            node_output_state = self._pipeline(**node_kwargs)
+        except ValueError as e:
+            self.notify(str(e), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
+            return None
+
+        # 7. Prepare outputs based on node_config["output_names"]
+        output_names = node_config["output_names"].copy()
+        outputs = {}
+        for name in output_names:
+            if name == "doc":
+                outputs["doc"] = self._pipeline.blocks.doc
+            else:
+                outputs[name] = node_output_state.get(name)
+
+        return outputs
