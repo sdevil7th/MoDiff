@@ -12,7 +12,7 @@
 
 ## Compatibility, Security, And Proof
 
-- [ ] Existing graph, HTTP, WebSocket, storage, and `mellon` import compatibility is preserved or the migration is described.
+- [ ] Current graph, HTTP, WebSocket, storage, and Python package contracts are preserved or deliberately migrated with tests.
 - [ ] Client-facing changes include the matching MoDiff-client change and bundled-client update plan.
 - [ ] File access, custom code, model loading, tokens, origins, and request-size implications were reviewed where relevant.
 - [ ] Unit/contract, registry, live backend, accelerator, and real model-generation evidence are reported separately.

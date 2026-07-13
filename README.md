@@ -25,7 +25,6 @@ Some nodes require optional packages, specific model repositories, substantial a
 | Path           | Purpose                                                                                                              |
 | -------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `modiff/`      | Canonical backend package.                                                                                           |
-| `mellon/`      | Thin compatibility shims for older imports and automation. New code should use `modiff.*`.                           |
 | `modules/`     | Built-in node implementations and registry metadata.                                                                 |
 | `custom/`      | Locally installed custom Python modules; ignored except for repository placeholders.                                 |
 | `data/graphs/` | Curated graph examples that are safe to version.                                                                     |
@@ -176,7 +175,7 @@ Run preflight before investigating model-specific failures:
 uv run python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
-The report checks Python, required imports, CUDA/MPS/CPU discovery, cache and data paths, and port state without importing the full node registry. The older `python -m mellon.preflight` command remains a compatibility entrypoint.
+The report checks Python, required imports, CUDA/MPS/CPU discovery, cache and data paths, and port state without importing the full node registry.
 
 Useful local endpoints include:
 
@@ -188,11 +187,9 @@ Useful local endpoints include:
 
 See [docs/api-reference.md](docs/api-reference.md) for route groups and trust implications. These routes are designed for the bundled same-origin client and are not an authenticated public web API.
 
-## Modular Diffusers and compatibility
+## Modular Diffusers
 
-The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). It relies on experimental upstream APIs and intentionally retains external identifiers such as `MellonPipelineConfig`, `MellonParam`, and `diffusers.modular_pipelines.mellon_node_utils` where upstream compatibility requires them.
-
-The physical `mellon` package is also retained as a thin import shim. New implementation belongs in `modiff`; compatibility policy and removal criteria are documented in [docs/modiff-backend-namespace.md](docs/modiff-backend-namespace.md).
+The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). MoDiff owns the pipeline configuration schema used by its dynamic node contracts while relying on upstream Diffusers for model and pipeline execution.
 
 ## Updating
 

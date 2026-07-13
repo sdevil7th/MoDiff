@@ -13,7 +13,7 @@ MoDiff integrates the experimental [Diffusers Modular Pipelines](https://hugging
 - **Hub-backed blocks:** supported repositories can provide Modular Diffusers configuration/code used to construct a node interface.
 - **Resource controls:** loaders expose supported quantization and offload modes, subject to package, model, and hardware compatibility.
 
-Upstream APIs still use identifiers such as `MellonPipelineConfig`, `MellonParam`, and `mellon_node_utils`. Those names are external compatibility surfaces, not the active MoDiff product namespace. See [the namespace policy](../../docs/modiff-backend-namespace.md).
+MoDiff owns the pipeline configuration schema that supplies dynamic node fields and defaults. Upstream Diffusers remains responsible for model components and Modular Pipeline execution.
 
 ## Setup
 
@@ -87,12 +87,13 @@ Only nodes connected to the submitted graph path execute, but shared component s
 
 MoDiff can load compatible custom blocks from the Hugging Face Hub. This is a trust-sensitive feature:
 
+Custom block repositories must publish MoDiff's current `modiff_pipeline_config.json` schema. The loader does not fall
+back to earlier extension schemas or filenames.
+
 1. Review the repository, owner, dependencies, license, and exact commit.
 2. Prefer immutable revisions rather than a moving branch.
 3. Enable `trust_remote_code` only when the repository requires it and you accept that its Python executes with backend-process permissions.
 4. Test on a dedicated local environment without sensitive files in `work_dir`.
-
-The example repository ID `diffusers/gemini-prompt-expander-mellon` intentionally retains an external legacy name. If available and compatible, it can generate a prompt-expansion block that feeds the prompt encoder. Its name should not be mechanically rewritten unless the Hub repository itself moves.
 
 [Watch the custom prompt block demo (MP4)](https://github.com/user-attachments/assets/d68bc8c1-1b1c-478a-b94b-1e498c60a4fc)
 

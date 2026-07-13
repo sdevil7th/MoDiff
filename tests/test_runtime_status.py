@@ -205,11 +205,20 @@ class PreflightHardwareTests(unittest.TestCase):
         self.assertEqual(report["hardware"], snapshot)
         self.assertEqual(torch_status["cuda_device_name"], "Mock CUDA")
         self.assertTrue(torch_status["cuda_available"])
+        self.assertEqual(
+            report["namespace"],
+            {
+                "productName": "MoDiff",
+                "canonicalPackage": "modiff",
+                "canonicalPreflightCommand": "python -m modiff.preflight",
+            },
+        )
 
         output = io.StringIO()
         with redirect_stdout(output):
             preflight.print_human(report)
         self.assertIn("Torch: unit-test CUDA available (Mock CUDA); MPS not available", output.getvalue())
+        self.assertIn("Namespace: use python -m modiff.preflight", output.getvalue())
 
 
 if __name__ == "__main__":

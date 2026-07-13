@@ -1,7 +1,7 @@
 import logging
 
 from diffusers import ModularPipeline
-from diffusers.modular_pipelines.mellon_node_utils import MellonPipelineConfig
+from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import (
@@ -68,7 +68,6 @@ class DynamicBlockNode(NodeBase):
             "options": {
                 "": "",
                 "YiYiXu/FLUX.2-klein-4B-modular": "FLUX.2-klein-4B",
-                "diffusers/gemini-prompt-expander-mellon": "Gemini Prompt Expander",
             },
             "fieldOptions": {"noValidation": True},
         },
@@ -100,7 +99,7 @@ class DynamicBlockNode(NodeBase):
         super().__del__()
 
     def _get_custom_config(self, repo_id):
-        custom_config = MellonPipelineConfig.load(repo_id)
+        custom_config = PipelineConfig.load(repo_id)
         return custom_config
 
     def update_node(self, values, ref):

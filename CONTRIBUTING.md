@@ -2,7 +2,7 @@
 
 MoDiff is an experimental local backend with a separately maintained frontend bundle. Contributions should preserve the local-only security boundary, existing graph/API compatibility, and reproducible dependency state.
 
-Before starting, read [SECURITY.md](SECURITY.md) and [docs/modiff-backend-namespace.md](docs/modiff-backend-namespace.md).
+Before starting, read [SECURITY.md](SECURITY.md) and the relevant guide in [docs/README.md](docs/README.md).
 
 ## Development setup
 
@@ -23,8 +23,8 @@ Do not commit `config.ini`, `.env` files, model caches, generated outputs, local
 
 ## Backend conventions
 
-- Put canonical backend implementation in `modiff/`. Keep `mellon/` limited to thin compatibility wrappers.
-- Preserve existing HTTP/WebSocket field names and legacy graph fallbacks unless a deliberate migration includes client changes and compatibility tests.
+- Put backend framework implementation in `modiff/` and built-in node implementations in `modules/`.
+- Preserve current HTTP/WebSocket and graph-storage contracts unless a deliberate migration includes client changes and contract tests.
 - Keep hardware probes non-fatal and retain CPU fallback when CUDA or MPS discovery fails.
 - Treat file access, custom-module installation, remote code, token handling, and mutating routes as security-sensitive changes.
 - Avoid importing the full model registry from lightweight diagnostics such as preflight.

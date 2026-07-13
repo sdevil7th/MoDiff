@@ -3,7 +3,8 @@ import threading
 from typing import Any, Dict, Optional
 
 from diffusers import Flux2KleinModularPipeline
-from diffusers.modular_pipelines.mellon_node_utils import MellonParam, MellonPipelineConfig
+from .pipeline_schema import MoDiffParam as PipelineParam
+from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 
 logger = logging.getLogger("modiff")
@@ -11,19 +12,19 @@ logger = logging.getLogger("modiff")
 SDXL_NODE_SPECS = {
     "controlnet": {
         "inputs": [
-            MellonParam.control_image(),
-            MellonParam.controlnet_conditioning_scale(),
-            MellonParam.control_guidance_start(),
-            MellonParam.control_guidance_end(),
-            MellonParam.height(),
-            MellonParam.width(),
+            PipelineParam.control_image(),
+            PipelineParam.controlnet_conditioning_scale(),
+            PipelineParam.control_guidance_start(),
+            PipelineParam.control_guidance_end(),
+            PipelineParam.height(),
+            PipelineParam.width(),
         ],
         "model_inputs": [
-            MellonParam.controlnet(),
+            PipelineParam.controlnet(),
         ],
         "outputs": [
-            MellonParam.controlnet_bundle(display="output"),
-            MellonParam.doc(),
+            PipelineParam.controlnet_bundle(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["control_image"],
         "required_model_inputs": ["controlnet"],
@@ -31,27 +32,27 @@ SDXL_NODE_SPECS = {
     },
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(),
-            MellonParam.height(),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(),
-            MellonParam.guidance_scale(),
-            MellonParam.image_latents_with_strength(),
-            MellonParam.strength(),
-            MellonParam.controlnet_bundle(display="input"),
-            MellonParam.ip_adapter(),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(),
+            PipelineParam.guidance_scale(),
+            PipelineParam.image_latents_with_strength(),
+            PipelineParam.strength(),
+            PipelineParam.controlnet_bundle(display="input"),
+            PipelineParam.ip_adapter(),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
-            MellonParam.controlnet_bundle(display="input"),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
+            PipelineParam.controlnet_bundle(display="input"),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.latents_preview(),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.latents_preview(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -59,14 +60,14 @@ SDXL_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -74,15 +75,15 @@ SDXL_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -90,14 +91,14 @@ SDXL_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -105,7 +106,7 @@ SDXL_NODE_SPECS = {
     },
 }
 
-SDXL_PIPELINE_CONFIG = MellonPipelineConfig(
+SDXL_PIPELINE_CONFIG = PipelineConfig(
     node_specs=SDXL_NODE_SPECS,
     label="Stable Diffusion XL",
     default_repo="stabilityai/stable-diffusion-xl-base-1.0",
@@ -120,20 +121,20 @@ SDXL_PIPELINE_CONFIG = MellonPipelineConfig(
 QWEN_IMAGE_NODE_SPECS = {
     "controlnet": {
         "inputs": [
-            MellonParam.control_image(),
-            MellonParam.controlnet_conditioning_scale(),
-            MellonParam.control_guidance_start(),
-            MellonParam.control_guidance_end(),
-            MellonParam.height(),
-            MellonParam.width(),
+            PipelineParam.control_image(),
+            PipelineParam.controlnet_conditioning_scale(),
+            PipelineParam.control_guidance_start(),
+            PipelineParam.control_guidance_end(),
+            PipelineParam.height(),
+            PipelineParam.width(),
         ],
         "model_inputs": [
-            MellonParam.controlnet(),
-            MellonParam.vae(),
+            PipelineParam.controlnet(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.controlnet_bundle(display="output"),
-            MellonParam.doc(),
+            PipelineParam.controlnet_bundle(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["control_image"],
         "required_model_inputs": ["controlnet", "vae"],
@@ -141,25 +142,25 @@ QWEN_IMAGE_NODE_SPECS = {
     },
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(),
-            MellonParam.height(),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(50),
-            MellonParam.guidance_scale(4.5),
-            MellonParam.image_latents_with_strength(),
-            MellonParam.strength(),
-            MellonParam.controlnet_bundle(display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(50),
+            PipelineParam.guidance_scale(4.5),
+            PipelineParam.image_latents_with_strength(),
+            PipelineParam.strength(),
+            PipelineParam.controlnet_bundle(display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
-            MellonParam.controlnet_bundle(display="input"),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
+            PipelineParam.controlnet_bundle(display="input"),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -167,14 +168,14 @@ QWEN_IMAGE_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -182,15 +183,15 @@ QWEN_IMAGE_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -198,14 +199,14 @@ QWEN_IMAGE_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -213,7 +214,7 @@ QWEN_IMAGE_NODE_SPECS = {
     },
 }
 
-QWEN_IMAGE_PIPELINE_CONFIG = MellonPipelineConfig(
+QWEN_IMAGE_PIPELINE_CONFIG = PipelineConfig(
     node_specs=QWEN_IMAGE_NODE_SPECS,
     label="Qwen-Image-2512",
     default_repo="Qwen/Qwen-Image-2512",
@@ -229,20 +230,20 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(40),
-            MellonParam.guidance_scale(4.0),
-            MellonParam.image_latents(display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(40),
+            PipelineParam.guidance_scale(4.0),
+            PipelineParam.image_latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings", "image_latents"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -250,14 +251,14 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -265,16 +266,16 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
-            MellonParam.image(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt", "image"],
         "required_model_inputs": ["text_encoders"],
@@ -282,14 +283,14 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -297,7 +298,7 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     },
 }
 
-QWEN_IMAGE_EDIT_PIPELINE_CONFIG = MellonPipelineConfig(
+QWEN_IMAGE_EDIT_PIPELINE_CONFIG = PipelineConfig(
     node_specs=QWEN_IMAGE_EDIT_NODE_SPECS,
     label="Qwen-Image-Edit",
     default_repo="Qwen/Qwen-Image-Edit",
@@ -313,20 +314,20 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(40),
-            MellonParam.guidance_scale(4.0),
-            MellonParam.image_latents(display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(40),
+            PipelineParam.guidance_scale(4.0),
+            PipelineParam.image_latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings", "image_latents"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -334,14 +335,14 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -349,16 +350,16 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
-            MellonParam.image(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt", "image"],
         "required_model_inputs": ["text_encoders"],
@@ -366,14 +367,14 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -381,7 +382,7 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
     },
 }
 
-QWEN_IMAGE_EDIT_PLUS_PIPELINE_CONFIG = MellonPipelineConfig(
+QWEN_IMAGE_EDIT_PLUS_PIPELINE_CONFIG = PipelineConfig(
     node_specs=QWEN_IMAGE_EDIT_PLUS_NODE_SPECS,
     label="Qwen-Image-Edit-2511",
     default_repo="Qwen/Qwen-Image-Edit-2511",
@@ -396,21 +397,21 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(50),
-            MellonParam.guidance_scale(4.0),
-            MellonParam.layers(4),
-            MellonParam.image_latents(display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(50),
+            PipelineParam.guidance_scale(4.0),
+            PipelineParam.layers(4),
+            PipelineParam.image_latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings", "image_latents"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -418,14 +419,14 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -433,16 +434,16 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
-            MellonParam.image(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt", "image"],
         "required_model_inputs": ["text_encoders"],
@@ -450,14 +451,14 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -465,7 +466,7 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
     },
 }
 
-QWEN_IMAGE_LAYERED_PIPELINE_CONFIG = MellonPipelineConfig(
+QWEN_IMAGE_LAYERED_PIPELINE_CONFIG = PipelineConfig(
     node_specs=QWEN_IMAGE_LAYERED_NODE_SPECS,
     label="Qwen-Image-Layered",
     default_repo="Qwen/Qwen-Image-Layered",
@@ -480,23 +481,23 @@ FLUX_NODE_SPECS = {
     "controlnet": None,  # Not yet supported in Modular
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(),
-            MellonParam.height(),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(28),
-            MellonParam.guidance_scale(3.5),
-            MellonParam.image_latents_with_strength(),
-            MellonParam.strength(),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(28),
+            PipelineParam.guidance_scale(3.5),
+            PipelineParam.image_latents_with_strength(),
+            PipelineParam.strength(),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -504,14 +505,14 @@ FLUX_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -519,15 +520,15 @@ FLUX_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
+            PipelineParam.prompt(),
             # No negative_prompt - pipeline does not support this
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -535,14 +536,14 @@ FLUX_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -550,7 +551,7 @@ FLUX_NODE_SPECS = {
     },
 }
 
-FLUX_PIPELINE_CONFIG = MellonPipelineConfig(
+FLUX_PIPELINE_CONFIG = PipelineConfig(
     node_specs=FLUX_NODE_SPECS,
     label="Flux",
     default_repo="black-forest-labs/FLUX.1-dev",
@@ -566,20 +567,20 @@ FLUX_KONTEXT_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(28),
-            MellonParam.guidance_scale(2.5),
-            MellonParam.image_latents(display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(28),
+            PipelineParam.guidance_scale(2.5),
+            PipelineParam.image_latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings", "image_latents"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -587,14 +588,14 @@ FLUX_KONTEXT_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -602,15 +603,15 @@ FLUX_KONTEXT_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
+            PipelineParam.prompt(),
             # No negative_prompt
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -618,14 +619,14 @@ FLUX_KONTEXT_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -633,7 +634,7 @@ FLUX_KONTEXT_NODE_SPECS = {
     },
 }
 
-FLUX_KONTEXT_PIPELINE_CONFIG = MellonPipelineConfig(
+FLUX_KONTEXT_PIPELINE_CONFIG = PipelineConfig(
     node_specs=FLUX_KONTEXT_NODE_SPECS,
     label="Flux Kontext",
     default_repo="black-forest-labs/FLUX.1-Kontext-dev",
@@ -648,22 +649,22 @@ FLUX_2_KLEIN_DISTILLED_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(),
-            MellonParam.height(),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(4),
-            MellonParam.guidance_scale(1.0),
-            MellonParam.image_latents(display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(4),
+            PipelineParam.guidance_scale(1.0),
+            PipelineParam.image_latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -671,14 +672,14 @@ FLUX_2_KLEIN_DISTILLED_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -686,14 +687,14 @@ FLUX_2_KLEIN_DISTILLED_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
+            PipelineParam.prompt(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -701,14 +702,14 @@ FLUX_2_KLEIN_DISTILLED_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -716,7 +717,7 @@ FLUX_2_KLEIN_DISTILLED_NODE_SPECS = {
     },
 }
 
-FLUX_2_KLEIN_DISTILLED_PIPELINE_CONFIG = MellonPipelineConfig(
+FLUX_2_KLEIN_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
     node_specs=FLUX_2_KLEIN_DISTILLED_NODE_SPECS,
     label="Flux 2 Klein Distilled",
     default_repo="black-forest-labs/FLUX.2-klein-4B",
@@ -732,23 +733,23 @@ Z_IMAGE_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(),
-            MellonParam.height(),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(9),
-            MellonParam.guidance_scale(1.0),
-            MellonParam.image_latents_with_strength(),
-            MellonParam.strength(),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(9),
+            PipelineParam.guidance_scale(1.0),
+            PipelineParam.image_latents_with_strength(),
+            PipelineParam.strength(),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.guider(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -756,14 +757,14 @@ Z_IMAGE_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.image_latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -771,15 +772,15 @@ Z_IMAGE_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
+            PipelineParam.prompt(),
             # No negative_prompt - pipeline does not support this
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -787,14 +788,14 @@ Z_IMAGE_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
+            PipelineParam.latents(display="input"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.images(),
-            MellonParam.doc(),
+            PipelineParam.images(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -802,7 +803,7 @@ Z_IMAGE_NODE_SPECS = {
     },
 }
 
-Z_IMAGE_PIPELINE_CONFIG = MellonPipelineConfig(
+Z_IMAGE_PIPELINE_CONFIG = PipelineConfig(
     node_specs=Z_IMAGE_NODE_SPECS,
     label="Z-Image",
     default_repo="Tongyi-MAI/Z-Image-Turbo",
@@ -817,21 +818,21 @@ WAN_T2V_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(832),
-            MellonParam.height(480),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(50),
-            MellonParam.guidance_scale(5.0),
-            MellonParam.num_frames(81),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(832),
+            PipelineParam.height(480),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(50),
+            PipelineParam.guidance_scale(5.0),
+            PipelineParam.num_frames(81),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -839,15 +840,15 @@ WAN_T2V_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -855,15 +856,15 @@ WAN_T2V_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
-            MellonParam.output_type(default="pil"),
+            PipelineParam.latents(display="input"),
+            PipelineParam.output_type(default="pil"),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.videos(),
-            MellonParam.doc(),
+            PipelineParam.videos(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -871,7 +872,7 @@ WAN_T2V_NODE_SPECS = {
     },
 }
 
-WAN_T2V_PIPELINE_CONFIG = MellonPipelineConfig(
+WAN_T2V_PIPELINE_CONFIG = PipelineConfig(
     node_specs=WAN_T2V_NODE_SPECS,
     label="WAN2 T2V",
     default_repo="Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
@@ -882,23 +883,23 @@ WAN_I2V_NODE_SPECS = {
     "controlnet": None,
     "denoise": {
         "inputs": [
-            MellonParam.embeddings(display="input"),
-            MellonParam.width(832),
-            MellonParam.height(480),
-            MellonParam.seed(),
-            MellonParam.num_inference_steps(50),
-            MellonParam.guidance_scale(5.0),
-            MellonParam.num_frames(81),
-            MellonParam.image_embeds(display="input"),
-            MellonParam(name="image_condition_latents", label="Image Latents", type="latents", display="input"),
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(832),
+            PipelineParam.height(480),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(50),
+            PipelineParam.guidance_scale(5.0),
+            PipelineParam.num_frames(81),
+            PipelineParam.image_embeds(display="input"),
+            PipelineParam(name="image_condition_latents", label="Image Latents", type="latents", display="input"),
         ],
         "model_inputs": [
-            MellonParam.unet(),
-            MellonParam.scheduler(),
+            PipelineParam.unet(),
+            PipelineParam.scheduler(),
         ],
         "outputs": [
-            MellonParam.latents(display="output"),
-            MellonParam.doc(),
+            PipelineParam.latents(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings", "image_embeds", "image_condition_latents"],
         "required_model_inputs": ["unet", "scheduler"],
@@ -906,14 +907,14 @@ WAN_I2V_NODE_SPECS = {
     },
     "vae_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam(name="image_condition_latents", label="Image Latents", type="latents", display="output"),
-            MellonParam.doc(),
+            PipelineParam(name="image_condition_latents", label="Image Latents", type="latents", display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["vae"],
@@ -921,14 +922,14 @@ WAN_I2V_NODE_SPECS = {
     },
     "image_encoder": {
         "inputs": [
-            MellonParam.image(),
+            PipelineParam.image(),
         ],
         "model_inputs": [
-            MellonParam.image_encoder(),
+            PipelineParam.image_encoder(),
         ],
         "outputs": [
-            MellonParam.image_embeds(display="output"),
-            MellonParam.doc(),
+            PipelineParam.image_embeds(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["image"],
         "required_model_inputs": ["image_encoder"],
@@ -936,15 +937,15 @@ WAN_I2V_NODE_SPECS = {
     },
     "text_encoder": {
         "inputs": [
-            MellonParam.prompt(),
-            MellonParam.negative_prompt(),
+            PipelineParam.prompt(),
+            PipelineParam.negative_prompt(),
         ],
         "model_inputs": [
-            MellonParam.text_encoders(),
+            PipelineParam.text_encoders(),
         ],
         "outputs": [
-            MellonParam.embeddings(display="output"),
-            MellonParam.doc(),
+            PipelineParam.embeddings(display="output"),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["prompt"],
         "required_model_inputs": ["text_encoders"],
@@ -952,17 +953,17 @@ WAN_I2V_NODE_SPECS = {
     },
     "decoder": {
         "inputs": [
-            MellonParam.latents(display="input"),
-            MellonParam(
+            PipelineParam.latents(display="input"),
+            PipelineParam(
                 name="output_type", label="Output Type", type="dropdown", options=["np", "pil"], default="pil"
             ),
         ],
         "model_inputs": [
-            MellonParam.vae(),
+            PipelineParam.vae(),
         ],
         "outputs": [
-            MellonParam.videos(),
-            MellonParam.doc(),
+            PipelineParam.videos(),
+            PipelineParam.doc(),
         ],
         "required_inputs": ["latents"],
         "required_model_inputs": ["vae"],
@@ -970,7 +971,7 @@ WAN_I2V_NODE_SPECS = {
     },
 }
 
-WAN_I2V_PIPELINE_CONFIG = MellonPipelineConfig(
+WAN_I2V_PIPELINE_CONFIG = PipelineConfig(
     node_specs=WAN_I2V_NODE_SPECS,
     label="WAN2 I2V",
     default_repo="Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
@@ -989,7 +990,7 @@ class DummyCustomPipeline:
         return ModularPipeline.from_pretrained(cls.repo_id, trust_remote_code=True)
 
 
-DUMMY_CUSTOM_PIPELINE_CONFIG = MellonPipelineConfig(
+DUMMY_CUSTOM_PIPELINE_CONFIG = PipelineConfig(
     node_specs={}, label="Custom", default_repo="", default_dtype="bfloat16"
 )
 
@@ -999,23 +1000,23 @@ class ModiffPipelineRegistry:
     """Registry mapping pipeline class to its config, including label, default_repo, default_dtype, and node_params."""
 
     def __init__(self):
-        self._registry: Dict[type, MellonPipelineConfig] = {}
+        self._registry: Dict[type, PipelineConfig] = {}
         self._initialized = False
         # Lock to prevent concurrent initialization races
         self._init_lock = threading.Lock()
 
-    def register(self, pipeline_cls: type, config: MellonPipelineConfig):
+    def register(self, pipeline_cls: type, config: PipelineConfig):
         """Register a pipeline class with its config."""
         self._registry[pipeline_cls] = config
 
-    def get(self, pipeline_cls: type) -> Optional[MellonPipelineConfig]:
+    def get(self, pipeline_cls: type) -> Optional[PipelineConfig]:
         # Ensure only one thread/coroutine initializes the registry
         with self._init_lock:
             if not self._initialized:
                 _initialize_registry(self)
         return self._registry.get(pipeline_cls, None)
 
-    def get_all(self) -> Dict[type, MellonPipelineConfig]:
+    def get_all(self) -> Dict[type, PipelineConfig]:
         # Ensure only one thread/coroutine initializes the registry
         with self._init_lock:
             if not self._initialized:

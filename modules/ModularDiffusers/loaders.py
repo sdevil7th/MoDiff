@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import torch
 from diffusers import ComponentSpec, ModularPipeline
-from diffusers.modular_pipelines.mellon_node_utils import MellonPipelineConfig
+from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import (
@@ -913,7 +913,7 @@ class ModelsLoader(NodeBase):
 
         if model_type == "DummyCustomPipeline":
             # update node param
-            custom_config = MellonPipelineConfig.load(real_repo_id)
+            custom_config = PipelineConfig.load(real_repo_id)
             custom_config.label = "Custom"
 
             # update repo_id for DummyCustomPipeline

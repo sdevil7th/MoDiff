@@ -24,42 +24,25 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
         self.assertFalse(deep_equal(left, right))
 
     def test_direct_node_base_imports_preserve_complete_module_registry(self):
-        import_orders = {
-            "canonical_first": (
-                "from modiff.NodeBase import NodeBase\n"
-                "from mellon.NodeBase import NodeBase as LegacyNodeBase"
-            ),
-            "legacy_first": (
-                "from mellon.NodeBase import NodeBase as LegacyNodeBase\n"
-                "from modiff.NodeBase import NodeBase"
-            ),
-        }
-
-        for name, imports in import_orders.items():
-            with self.subTest(order=name):
-                script = f"""
+        script = """
 import json
-{imports}
+from modiff.NodeBase import NodeBase
 import modules
-print(json.dumps({{
-    "same_class": NodeBase is LegacyNodeBase,
+print(json.dumps({
     "module_count": len(modules.MODULE_MAP),
     "node_count": modules.total_nodes,
-}}))
+}))
 """
-                result = subprocess.run(
-                    [sys.executable, "-c", script],
-                    cwd=Path(__file__).resolve().parents[1],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                self.assertEqual(result.returncode, 0, result.stderr)
-                payload = json.loads(result.stdout.strip().splitlines()[-1])
-                self.assertEqual(
-                    payload,
-                    {"same_class": True, "module_count": 19, "node_count": 83},
-                )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=Path(__file__).resolve().parents[1],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout.strip().splitlines()[-1])
+        self.assertEqual(payload, {"module_count": 19, "node_count": 83})
 
 
 if __name__ == "__main__":

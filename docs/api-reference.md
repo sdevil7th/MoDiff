@@ -86,4 +86,4 @@ Uploads are written under configured data subdirectories. Studio outputs, blocks
 
 ## Compatibility
 
-Stable product routes such as `/graph`, `/queue`, `/studio_outputs`, and `/workflows/share` should remain compatible with the separate MoDiff-client repository. The older Python `mellon` namespace and external upstream symbols are covered by [modiff-backend-namespace.md](modiff-backend-namespace.md); they are not alternate HTTP route prefixes.
+Stable product routes such as `/graph`, `/queue`, `/studio_outputs`, and `/workflows/share` should remain compatible with the separate MoDiff-client repository. Python integrations should use the `modiff` package, and backend routes do not use a package-name prefix.

@@ -468,8 +468,8 @@ class NodeBase:
             raise ValueError("WebSocket session not available for this node.")
 
         result = server.get_signal_value(self.node_id, field, self._sid, timeout=timeout)
-        if isinstance(result, dict) and ('__MODIFF_ERROR' in result or '__MELLON_ERROR' in result):
-            raise ValueError(result.get('__MODIFF_ERROR') or result.get('__MELLON_ERROR'))
+        if isinstance(result, dict) and '__MODIFF_ERROR' in result:
+            raise ValueError(result['__MODIFF_ERROR'])
 
         return result
 

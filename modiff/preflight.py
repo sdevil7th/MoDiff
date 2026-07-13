@@ -52,7 +52,6 @@ PACKAGE_CHECKS = {
 }
 
 CANONICAL_ENTRYPOINT = "python -m modiff.preflight"
-LEGACY_ENTRYPOINT = "python -m mellon.preflight"
 
 
 def setup_guidance(root):
@@ -70,7 +69,6 @@ def setup_guidance(root):
             "Use uv run main.py after uv sync, or python main.py after activating a pip-managed environment.",
             "On Apple Silicon macOS, use the apple-silicon profile so torch resolves from normal PyPI/MPS-capable wheels.",
             "CUDA acceleration extras are intended for Linux/Windows GPU installs and are not part of the macOS setup path.",
-            "The mellon package and entrypoints are compatibility shims during the MoDiff namespace migration.",
         ],
     }
 
@@ -227,10 +225,7 @@ def build_report(args):
         "namespace": {
             "productName": "MoDiff",
             "canonicalPackage": "modiff",
-            "legacyPackage": "mellon",
             "canonicalPreflightCommand": CANONICAL_ENTRYPOINT,
-            "legacyPreflightCommand": LEGACY_ENTRYPOINT,
-            "legacyEntrypointSupported": True,
         },
         "setup": setup_guidance(root),
         "checkedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -289,11 +284,7 @@ def print_human(report):
         print(f"- Preferred: {preferred_command}")
         print(f"- Pip fallback: {pip_command}")
         print(f"- Recheck: {report['namespace']['canonicalPreflightCommand']} --check-port {report['server']['port']}")
-    print(
-        "Namespace: use "
-        f"{report['namespace']['canonicalPreflightCommand']} "
-        f"(legacy {report['namespace']['legacyPreflightCommand']} remains supported)"
-    )
+    print(f"Namespace: use {report['namespace']['canonicalPreflightCommand']}")
 
 
 def main():

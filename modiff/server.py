@@ -1086,7 +1086,6 @@ class WebServer:
                         terminal_status = "failed"
                         traceback_text = (
                             getattr(e, 'modiff_traceback', None)
-                            or getattr(e, 'mellon_traceback', None)
                             or traceback.format_exc()
                         )
                         logger.error(f"Error occurred in {traceback_text}")
@@ -1095,8 +1094,8 @@ class WebServer:
                             e,
                             task_id=task_id,
                             sid=self.current_task["sid"] if self.current_task else None,
-                            node_id=getattr(e, 'modiff_node_id', None) or getattr(e, 'mellon_node_id', None),
-                            node_name=getattr(e, 'modiff_node_name', None) or getattr(e, 'mellon_node_name', None),
+                            node_id=getattr(e, 'modiff_node_id', None),
+                            node_name=getattr(e, 'modiff_node_name', None),
                             traceback_text=traceback_text,
                         )
                         self._record_auto_resource_failure(e, {
@@ -1545,21 +1544,6 @@ class WebServer:
         file_path = Path(file)
         if not file_path.is_absolute():
             file_path = Path(self.work_dir) / file_path
-
-        if not file_path.exists():
-            legacy_graph_root = Path(self.data_dir) / 'graphs' / 'mellon'
-            modiff_graph_root = Path(self.data_dir) / 'graphs' / 'modiff'
-            try:
-                legacy_graph_relative_path = file_path.resolve(strict=False).relative_to(
-                    legacy_graph_root.resolve(strict=False)
-                )
-            except ValueError:
-                legacy_graph_relative_path = None
-
-            if legacy_graph_relative_path is not None:
-                migrated_file_path = modiff_graph_root / legacy_graph_relative_path
-                if migrated_file_path.exists():
-                    file_path = migrated_file_path
 
         if not file_path.exists():
             return web.json_response({"error": f"The file {file} does not exist."}, status=404)
@@ -2234,21 +2218,6 @@ class WebServer:
         file_path = Path(unquote(str(file)))
         if not file_path.is_absolute():
             file_path = Path(self.work_dir) / file_path
-
-        if not file_path.exists():
-            legacy_graph_root = Path(self.data_dir) / 'graphs' / 'mellon'
-            modiff_graph_root = Path(self.data_dir) / 'graphs' / 'modiff'
-            try:
-                legacy_graph_relative_path = file_path.resolve(strict=False).relative_to(
-                    legacy_graph_root.resolve(strict=False)
-                )
-            except ValueError:
-                legacy_graph_relative_path = None
-
-            if legacy_graph_relative_path is not None:
-                migrated_file_path = modiff_graph_root / legacy_graph_relative_path
-                if migrated_file_path.exists():
-                    file_path = migrated_file_path
 
         if not file_path.exists():
             return None
@@ -3770,8 +3739,8 @@ class WebServer:
                     'category': classification.get('category'),
                     'errorCode': classification.get('error_code'),
                     'error': str(e) or type(e).__name__,
-                    'node': getattr(e, 'modiff_node_id', None) or getattr(e, 'mellon_node_id', None),
-                    'nodeName': getattr(e, 'modiff_node_name', None) or getattr(e, 'mellon_node_name', None),
+                    'node': getattr(e, 'modiff_node_id', None),
+                    'nodeName': getattr(e, 'modiff_node_name', None),
                     'loaderDiagnostics': self._loader_diagnostics_snapshot(),
                     'nextRetryPlan': self._sanitize_retry_plan_for_hints(retry_plans[next_retry_plan_index]),
                 })
@@ -3854,8 +3823,6 @@ class WebServer:
             setattr(error, 'modiff_node_name', 'Unknown upstream node')
             setattr(error, 'modiff_target_node_id', target_node_id)
             setattr(error, 'modiff_target_node_name', target_node_name)
-            setattr(error, 'mellon_target_node_id', target_node_id)
-            setattr(error, 'mellon_target_node_name', target_node_name)
             raise error
 
         output = getattr(source_node, 'output', None)
@@ -3871,8 +3838,6 @@ class WebServer:
             setattr(error, 'modiff_node_name', source_name)
             setattr(error, 'modiff_target_node_id', target_node_id)
             setattr(error, 'modiff_target_node_name', target_node_name)
-            setattr(error, 'mellon_target_node_id', target_node_id)
-            setattr(error, 'mellon_target_node_name', target_node_name)
             raise error
 
         return output[source_key]
@@ -3970,9 +3935,6 @@ class WebServer:
             setattr(e, 'modiff_node_id', id)
             setattr(e, 'modiff_node_name', f"{module}.{action}")
             setattr(e, 'modiff_traceback', traceback_text)
-            setattr(e, 'mellon_node_id', id)
-            setattr(e, 'mellon_node_name', f"{module}.{action}")
-            setattr(e, 'mellon_traceback', traceback_text)
             self.queue_message({
                 "type": "node_error",
                 **self._exception_payload(
