@@ -16,12 +16,6 @@ from utils import huggingface  # noqa: E402
 
 
 class HuggingFaceDownloadProgressTests(unittest.TestCase):
-    def symlink_or_skip(self, link: Path, target: Path):
-        try:
-            link.symlink_to(target)
-        except OSError as exc:
-            self.skipTest(f"Symlinks are unavailable: {exc}")
-
     def test_repo_exists_wrapper_delegates_to_hugging_face_hub(self):
         with patch.object(huggingface, "hf_repo_exists", return_value=True) as upstream, patch.object(
             huggingface.CONFIG,
@@ -359,21 +353,24 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             snapshot = repo / "snapshots" / "revision"
             blobs.mkdir(parents=True)
             snapshot.mkdir(parents=True)
-            valid_blob = blobs / "valid-hash"
-            invalid_blob = blobs / "invalid-hash"
-            valid_blob.write_bytes(b"v" * 8)
+            valid_content = b"v" * 8
+            valid_hash = hashlib.sha256(valid_content).hexdigest()
+            invalid_hash = hashlib.sha256(b"expected").hexdigest()
+            valid_blob = blobs / valid_hash
+            invalid_blob = blobs / invalid_hash
+            valid_blob.write_bytes(valid_content)
             invalid_blob.write_bytes(b"x" * 3)
-            self.symlink_or_skip(snapshot / "valid.bin", valid_blob)
-            self.symlink_or_skip(snapshot / "invalid.bin", invalid_blob)
-            (blobs / "valid-hash.old.incomplete").write_bytes(b"redundant")
+            (snapshot / "valid.bin").write_bytes(valid_blob.read_bytes())
+            (snapshot / "invalid.bin").write_bytes(invalid_blob.read_bytes())
+            (blobs / f"{valid_hash}.old.incomplete").write_bytes(b"redundant")
             resumable = blobs / "missing-hash.session.incomplete"
             resumable.write_bytes(b"partial")
             zero_partial = blobs / "zero-hash.session.incomplete"
             zero_partial.write_bytes(b"")
             plan = {
                 "files": [
-                    {"name": "valid.bin", "size": 8},
-                    {"name": "invalid.bin", "size": 8},
+                    {"name": "valid.bin", "size": 8, "blob_hash": valid_hash},
+                    {"name": "invalid.bin", "size": 8, "blob_hash": invalid_hash},
                 ]
             }
 
@@ -387,7 +384,7 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             self.assertTrue(result["removed"])
 
             removed = huggingface._cleanup_redundant_incomplete_files("unit/repair", temp_dir)
-            self.assertFalse((blobs / "valid-hash.old.incomplete").exists())
+            self.assertFalse((blobs / f"{valid_hash}.old.incomplete").exists())
             self.assertTrue(resumable.exists())
             self.assertEqual(removed, [])
 
@@ -400,16 +397,18 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             blobs.mkdir(parents=True)
             requested.mkdir(parents=True)
             unrelated.mkdir(parents=True)
-            requested_blob = blobs / "requested-bad"
-            unrelated_blob = blobs / "unrelated"
+            requested_hash = hashlib.sha256(b"expected-request").hexdigest()
+            unrelated_hash = hashlib.sha256(b"unrelated-target").hexdigest()
+            requested_blob = blobs / requested_hash
+            unrelated_blob = blobs / unrelated_hash
             requested_blob.write_bytes(b"bad")
             unrelated_blob.write_bytes(b"also-bad")
-            self.symlink_or_skip(requested / "model.bin", requested_blob)
-            self.symlink_or_skip(unrelated / "model.bin", unrelated_blob)
+            (requested / "model.bin").write_bytes(requested_blob.read_bytes())
+            (unrelated / "model.bin").write_bytes(unrelated_blob.read_bytes())
             plan = {
                 "revision": "release",
                 "snapshot_commit": "requested-commit",
-                "files": [{"name": "model.bin", "size": 16}],
+                "files": [{"name": "model.bin", "size": 16, "blob_hash": requested_hash}],
             }
 
             result = huggingface._prepare_snapshot_repair("unit/multi-repair", temp_dir, plan)
@@ -432,8 +431,7 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             final_blob = blobs / blob_hash
             partial = blobs / f"{blob_hash}.session.incomplete"
             partial.write_bytes(content)
-            self.symlink_or_skip(snapshot / "model.bin", final_blob)
-            plan = {"files": [{"name": "model.bin", "size": len(content)}]}
+            plan = {"files": [{"name": "model.bin", "size": len(content), "blob_hash": blob_hash}]}
 
             result = huggingface._prepare_snapshot_repair("unit/promote", temp_dir, plan)
 
@@ -453,13 +451,42 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             partial = blobs / f"{blob_hash}.session.incomplete"
             partial.write_bytes(b"corrupt! content")
             self.assertEqual(partial.stat().st_size, len(expected_content))
-            self.symlink_or_skip(snapshot / "model.bin", blobs / blob_hash)
-            plan = {"files": [{"name": "model.bin", "size": len(expected_content)}]}
+            plan = {
+                "files": [{"name": "model.bin", "size": len(expected_content), "blob_hash": blob_hash}]
+            }
 
             result = huggingface._prepare_snapshot_repair("unit/invalid-partial", temp_dir, plan)
 
             self.assertFalse(partial.exists())
             self.assertIn(f"blobs/{partial.name}", result["removed"])
+
+    def test_partial_repair_reports_portable_cache_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = Path(temp_dir) / "models--unit--portable-paths"
+            blobs = repo / "blobs"
+            snapshot = repo / "snapshots" / "revision"
+            blobs.mkdir(parents=True)
+            snapshot.mkdir(parents=True)
+
+            valid_content = b"verified"
+            valid_hash = hashlib.sha256(valid_content).hexdigest()
+            (blobs / f"{valid_hash}.session.incomplete").write_bytes(valid_content)
+
+            expected_content = b"expected"
+            invalid_hash = hashlib.sha256(expected_content).hexdigest()
+            invalid_partial = blobs / f"{invalid_hash}.session.incomplete"
+            invalid_partial.write_bytes(b"corrupt!")
+            plan = {
+                "files": [
+                    {"name": "valid.bin", "size": len(valid_content), "blob_hash": valid_hash},
+                    {"name": "invalid.bin", "size": len(expected_content), "blob_hash": invalid_hash},
+                ]
+            }
+
+            result = huggingface._promote_verified_complete_partials(repo, snapshot, plan)
+
+        self.assertEqual(result["promoted"], [f"blobs/{valid_hash}"])
+        self.assertEqual(result["invalidated"], [f"blobs/{invalid_partial.name}"])
 
     def test_repair_uses_automatic_resume_without_forcing_valid_blob_downloads(self):
         plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}

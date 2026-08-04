@@ -76,21 +76,26 @@ class PathIdentifierTests(unittest.TestCase):
                         resolve_managed_path_identifier(identifier, work_root=work, data_root=data)
                     )
 
-    def test_data_identifier_rejects_symlink_escape(self):
+    def test_data_identifier_rejects_resolved_link_escape(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             data = root / "data"
             external = root / "external"
             data.mkdir()
             external.mkdir()
-            (external / "secret.png").write_bytes(b"secret")
-            try:
-                (data / "linked").symlink_to(external, target_is_directory=True)
-            except OSError as exc:
-                self.skipTest(f"Symlinks are unavailable: {exc}")
+            secret = external / "secret.png"
+            secret.write_bytes(b"secret")
+            escaped_candidate = data / "linked" / "secret.png"
+            original_resolve = Path.resolve
 
-            with self.assertRaisesRegex(ValueError, "escapes"):
-                resolve_data_path_identifier("@data/linked/secret.png", data)
+            def resolve_with_escape(path, strict=False):
+                if path == escaped_candidate:
+                    return secret
+                return original_resolve(path, strict=strict)
+
+            with patch.object(Path, "resolve", resolve_with_escape):
+                with self.assertRaisesRegex(ValueError, "escapes"):
+                    resolve_data_path_identifier("@data/linked/secret.png", data)
 
     def test_media_loader_consumers_resolve_server_issued_identifier(self):
         from modules.Audio.main import _resolve_file

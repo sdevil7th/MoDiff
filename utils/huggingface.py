@@ -773,6 +773,7 @@ def _prepare_snapshot_repair(repo_id: str, cache_dir: str | None, plan: dict | N
         for expected in _plan_validation_files(plan):
             name = expected.get('name') if isinstance(expected, dict) else None
             expected_size = expected.get('size') if isinstance(expected, dict) else None
+            expected_hash = str(expected.get('blob_hash') or '').lower() if isinstance(expected, dict) else ''
             if not name or not isinstance(expected_size, int) or expected_size < 0:
                 continue
             snapshot_file = snapshot_dir / str(name)
@@ -785,14 +786,21 @@ def _prepare_snapshot_repair(repo_id: str, cache_dir: str | None, plan: dict | N
             if actual_size == expected_size:
                 continue
             try:
-                target = snapshot_file.resolve(strict=False) if snapshot_file.is_symlink() else snapshot_file
-                target_relative = target.relative_to(blobs_root)
+                if re.fullmatch(r'[a-f0-9]{64}', expected_hash):
+                    target = blobs_root / expected_hash
+                    target_relative = Path(expected_hash)
+                elif snapshot_file.is_symlink():
+                    target = snapshot_file.resolve(strict=False)
+                    target_relative = target.relative_to(blobs_root)
+                else:
+                    target = None
+                    target_relative = None
             except (OSError, RuntimeError, ValueError):
                 target = None
                 target_relative = None
             try:
                 snapshot_file.unlink()
-                removed.append(str(snapshot_file.relative_to(repo_path)))
+                removed.append(snapshot_file.relative_to(repo_path).as_posix())
             except OSError:
                 continue
             if target is None or target_relative is None:
@@ -800,7 +808,7 @@ def _prepare_snapshot_repair(repo_id: str, cache_dir: str | None, plan: dict | N
             try:
                 if target.is_file() and target.stat().st_size != expected_size:
                     target.unlink()
-                    removed.append(str(Path('blobs') / target_relative))
+                    removed.append((Path('blobs') / target_relative).as_posix())
             except OSError:
                 pass
 
@@ -811,7 +819,7 @@ def _prepare_snapshot_repair(repo_id: str, cache_dir: str | None, plan: dict | N
                 if partial.stat().st_size != 0:
                     continue
                 partial.unlink()
-                removed.append(str(partial.relative_to(repo_path)))
+                removed.append(partial.relative_to(repo_path).as_posix())
         except OSError:
             pass
     partial_repair = _promote_verified_complete_partials(repo_path, snapshot_dir, plan)
@@ -855,10 +863,10 @@ def _promote_verified_complete_partials(repo_path: Path, snapshot_dir: Path | No
                     digest.update(chunk)
             if digest.hexdigest() != blob_hash:
                 partial.unlink()
-                invalidated.append(str(partial.relative_to(repo_path)))
+                invalidated.append(partial.relative_to(repo_path).as_posix())
                 continue
             partial.replace(final_blob)
-            promoted.append(str(final_blob.relative_to(repo_path)))
+            promoted.append(final_blob.relative_to(repo_path).as_posix())
         except OSError:
             continue
     return {'promoted': promoted, 'invalidated': invalidated}
@@ -878,7 +886,7 @@ def _cleanup_redundant_incomplete_files(repo_id: str, cache_dir: str | None):
             if not final_blob.is_file() or final_blob.stat().st_size <= 0:
                 continue
             partial.unlink()
-            removed.append(str(partial.relative_to(repo_path)))
+            removed.append(partial.relative_to(repo_path).as_posix())
     except OSError:
         pass
     return removed

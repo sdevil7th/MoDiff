@@ -142,16 +142,19 @@ class WorkspaceFileRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stream_response.status, 403)
         self.assertIn("outside", json.loads(preview_response.text)["error"])
 
-    async def test_file_routes_reject_symlink_escapes(self):
-        link = self.workspace / "linked-secret"
-        try:
-            link.symlink_to(self.sibling, target_is_directory=True)
-        except OSError as exc:
-            self.skipTest(f"Symlinks are unavailable: {exc}")
+    async def test_file_routes_reject_resolved_link_escapes(self):
+        escaped_candidate = self.workspace / "linked-secret" / "secret.png"
+        original_resolve = Path.resolve
 
-        response = await self.server.stream(
-            SimpleNamespace(query={"file": "linked-secret/secret.png"})
-        )
+        def resolve_with_escape(path, strict=False):
+            if path == escaped_candidate:
+                return self.secret
+            return original_resolve(path, strict=strict)
+
+        with patch.object(Path, "resolve", resolve_with_escape):
+            response = await self.server.stream(
+                SimpleNamespace(query={"file": "linked-secret/secret.png"})
+            )
 
         self.assertEqual(response.status, 403)
 
