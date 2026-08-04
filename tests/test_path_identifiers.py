@@ -85,11 +85,10 @@ class PathIdentifierTests(unittest.TestCase):
             external.mkdir()
             secret = external / "secret.png"
             secret.write_bytes(b"secret")
-            escaped_candidate = data / "linked" / "secret.png"
             original_resolve = Path.resolve
 
             def resolve_with_escape(path, strict=False):
-                if path == escaped_candidate:
+                if path.name == "secret.png" and path.parent.name == "linked":
                     return secret
                 return original_resolve(path, strict=strict)
 

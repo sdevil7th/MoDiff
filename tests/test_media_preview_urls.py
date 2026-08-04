@@ -143,11 +143,10 @@ class WorkspaceFileRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("outside", json.loads(preview_response.text)["error"])
 
     async def test_file_routes_reject_resolved_link_escapes(self):
-        escaped_candidate = self.workspace / "linked-secret" / "secret.png"
         original_resolve = Path.resolve
 
         def resolve_with_escape(path, strict=False):
-            if path == escaped_candidate:
+            if path.name == "secret.png" and path.parent.name == "linked-secret":
                 return self.secret
             return original_resolve(path, strict=strict)
 
