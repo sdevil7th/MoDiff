@@ -3,6 +3,7 @@ import sys
 import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -17,16 +18,31 @@ def _raise(message):
     raise RuntimeError(message)
 
 
-def _fake_torch(*, cuda, mps_backend=None, mps_runtime=None):
+def _fake_torch(*, cuda, xpu=None, mps_backend=None, mps_runtime=None, cuda_version=None, hip_version=None):
     return types.SimpleNamespace(
         __version__="test-torch",
+        version=types.SimpleNamespace(cuda=cuda_version, hip=hip_version),
         cuda=cuda,
+        xpu=xpu,
         backends=types.SimpleNamespace(mps=mps_backend),
         mps=mps_runtime,
     )
 
 
 class HardwareSnapshotTests(unittest.TestCase):
+    def test_torch_build_backend_versions_are_reported(self):
+        snapshot = get_hardware_snapshot(
+            torch_module=_fake_torch(
+                cuda=types.SimpleNamespace(is_available=lambda: False),
+                mps_backend=types.SimpleNamespace(is_built=lambda: False, is_available=lambda: False),
+                cuda_version=None,
+                hip_version="7.2.0",
+            )
+        )
+
+        self.assertIsNone(snapshot["torch"]["cuda_version"])
+        self.assertEqual(snapshot["torch"]["hip_version"], "7.2.0")
+
     def test_torch_unavailable_returns_cpu_fallback(self):
         snapshot = get_hardware_snapshot(torch_module=None)
 
@@ -155,6 +171,95 @@ class HardwareSnapshotTests(unittest.TestCase):
         self.assertEqual(snapshot["devices"][0]["type"], "mps")
         self.assertEqual(snapshot["default_device"], "mps:0")
 
+    def test_intel_xpu_is_a_first_class_accelerator(self):
+        class FakeXpu:
+            def is_available(self):
+                return True
+
+            def device_count(self):
+                return 1
+
+            def get_device_name(self, _index):
+                return "Mock Intel Arc"
+
+            def get_device_properties(self, _index):
+                return types.SimpleNamespace(total_memory=16 * GIB)
+
+            def mem_get_info(self, _index):
+                return 12 * GIB, 16 * GIB
+
+            def memory_allocated(self, _index):
+                return 2 * GIB
+
+            def memory_reserved(self, _index):
+                return 3 * GIB
+
+        with patch(
+            "modiff.hardware.system_memory_snapshot",
+            return_value={
+                "source": "unit-test",
+                "total_bytes": 64 * GIB,
+                "free_bytes": 32 * GIB,
+                "available_bytes": 32 * GIB,
+                "page_file_total_bytes": 0,
+                "page_file_available_bytes": 0,
+            },
+        ):
+            snapshot = get_hardware_snapshot(
+                torch_module=_fake_torch(
+                    cuda=types.SimpleNamespace(is_available=lambda: False),
+                    xpu=FakeXpu(),
+                    mps_backend=types.SimpleNamespace(is_built=lambda: False, is_available=lambda: False),
+                )
+            )
+
+        self.assertTrue(snapshot["torch"]["xpu_available"])
+        self.assertEqual(snapshot["torch"]["xpu_device_count"], 1)
+        self.assertEqual([item["device"] for item in snapshot["devices"]], ["xpu:0", "cpu:0"])
+        self.assertEqual(snapshot["default_device"], "xpu:0")
+        self.assertEqual(snapshot["devices"][0]["vram_free"], 12 * GIB)
+
+    def test_rocm_apu_uses_local_vram_for_planning_instead_of_the_gtt_aperture(self):
+        class FakeRocm:
+            def is_available(self):
+                return True
+
+            def device_count(self):
+                return 1
+
+            def get_device_name(self, _index):
+                return "AMD Radeon(TM) Graphics"
+
+            def get_device_properties(self, _index):
+                return types.SimpleNamespace(total_memory=96 * GIB, gcnArchName="gfx1151:sramecc-")
+
+            def mem_get_info(self, _index):
+                return 80 * GIB, 96 * GIB
+
+            def memory_allocated(self, _index):
+                return 1 * GIB
+
+            def memory_reserved(self, _index):
+                return 2 * GIB
+
+        regions = [{"vram_total": 2 * GIB, "vram_used": GIB, "gtt_total": 96 * GIB, "gtt_used": 4 * GIB}]
+        with patch("modiff.hardware._linux_amd_memory_regions", return_value=regions):
+            snapshot = get_hardware_snapshot(
+                torch_module=_fake_torch(
+                    cuda=FakeRocm(),
+                    mps_backend=types.SimpleNamespace(is_built=lambda: False, is_available=lambda: False),
+                    hip_version="7.2.0",
+                )
+            )
+
+        device = snapshot["devices"][0]
+        self.assertEqual(device["backend"], "rocm")
+        self.assertEqual(device["memory_kind"], "shared")
+        self.assertEqual(device["planning_memory_total"], 2 * GIB)
+        self.assertEqual(device["vram_total"], 2 * GIB)
+        self.assertEqual(device["torch_vram_total"], 96 * GIB)
+        self.assertEqual(device["shared_memory_total"], 96 * GIB)
+
     def test_snapshot_schema_has_stable_system_and_devices_shape(self):
         snapshot = get_hardware_snapshot(torch_module=None)
 
@@ -168,6 +273,8 @@ class HardwareSnapshotTests(unittest.TestCase):
             {
                 "os",
                 "os_name",
+                "platform",
+                "architecture",
                 "python_version",
                 "python_executable",
                 "pytorch_version",
@@ -188,6 +295,17 @@ class HardwareSnapshotTests(unittest.TestCase):
                 "index",
                 "device",
                 "name",
+                "vendor",
+                "backend",
+                "architecture",
+                "compute_capability",
+                "memory_kind",
+                "dedicated_memory_total",
+                "dedicated_memory_free",
+                "shared_memory_total",
+                "shared_memory_free",
+                "planning_memory_total",
+                "planning_memory_free",
                 "vram_total",
                 "vram_free",
                 "torch_vram_total",

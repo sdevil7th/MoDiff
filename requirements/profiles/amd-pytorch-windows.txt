@@ -1,0 +1,2 @@
+# AMD Windows wheels must be updated only with a release-qualified direct source.
+-e .

@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import importlib
 import inspect
 import logging
@@ -6,13 +7,17 @@ from copy import deepcopy
 from typing import Any, List, Tuple
 
 import torch
-from diffusers import ComponentsManager
-from diffusers.modular_pipelines import BlockState, InputParam, LoopSequentialPipelineBlocks, ModularPipelineBlocks
+from diffusers import BaseGuidance, ComponentsManager
+from diffusers.modular_pipelines import BlockState, LoopSequentialPipelineBlocks, ModularPipelineBlocks
 
 from modiff.NodeBase import NodeBase
 
 from . import MESSAGE_DURATION, components
-from .modular_utils import DummyCustomPipeline, pipeline_class_to_modiff_node_config
+from .modular_utils import (
+    DummyCustomPipeline,
+    pipeline_class_from_runtime_inputs,
+    pipeline_class_to_modiff_node_config,
+)
 from .utils import collect_model_ids
 
 
@@ -108,9 +113,6 @@ def insert_preview_block(blocks, callback):
     insert_preview_block_recursive(blocks, "root", preview_block)
 
 
-# SIGNAL_DATA = get_model_type_signal_data()
-
-
 class Denoise(NodeBase):
     label = "Denoise"
     category = "sampler"
@@ -122,6 +124,7 @@ class Denoise(NodeBase):
             "label": "Denoise Model *",
             "display": "input",
             "type": "diffusers_auto_model",
+            "required": True,
             "onSignal": [
                 "update_node",
                 {"action": "signal", "target": "guider"},
@@ -162,8 +165,27 @@ class Denoise(NodeBase):
         self._model_type = ""
         self._pipeline_class = None
 
+    def _raise_if_interrupted(self):
+        if self._interrupt:
+            raise InterruptedError("Execution interrupted by the user.")
+
+    def _publish_initial_denoise_progress(self, num_inference_steps: int):
+        if num_inference_steps <= 0:
+            return
+        self.progress(
+            0,
+            phase="denoising",
+            message=f"Denoising 0/{num_inference_steps}",
+            current_step=0,
+            total_steps=num_inference_steps,
+            elapsed_seconds=0.0,
+            average_step_seconds=None,
+            eta_seconds=None,
+        )
+
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
 
         if not ((unet := kwargs.get("unet")) and isinstance(unet, dict)):
             self.notify(
@@ -195,6 +217,13 @@ class Denoise(NodeBase):
         progress_started_at = time.monotonic()
 
         def preview_callback(_latents, step_index: int, scheduler_order: int):
+            # Modular pipelines do not expose the standard Diffusers
+            # ``callback_on_step_end`` contract used by NodeBase.pipe_callback.
+            # This block runs at the denoise step boundary, so it is the safe
+            # place to honor an app stop request without interrupting a GPU
+            # kernel and poisoning the accelerator context.
+            self._raise_if_interrupted()
+
             if num_inference_steps <= 0 or (step_index + 1) % scheduler_order != 0:
                 return
             current_step = min(num_inference_steps, (step_index + 1) // scheduler_order)
@@ -217,7 +246,6 @@ class Denoise(NodeBase):
         insert_preview_block(runtime_blocks, preview_callback)
         self._pipeline = runtime_blocks.init_pipeline(repo_id, components_manager=components)
 
-        # YiYi Notes: take an extra step to cast the params to the correct type.
         # Preserve the graph compatibility cast until the upstream schema exposes exact types.
         for param_name, param_config in node_config["params"].items():
             if param_name in kwargs and kwargs[param_name] is not None:
@@ -236,10 +264,31 @@ class Denoise(NodeBase):
             target_model_names=expected_component_names,
         )
 
+        component_updates = {}
+        explicit_guider = kwargs.get("guider")
+        if explicit_guider is not None:
+            if not isinstance(explicit_guider, BaseGuidance):
+                guider_type = f"{type(explicit_guider).__module__}.{type(explicit_guider).__qualname__}"
+                raise TypeError(
+                    "Connected guider must be a Diffusers BaseGuidance instance; "
+                    f"received {guider_type}."
+                )
+            if "guider" not in self._pipeline.component_names:
+                raise ValueError(
+                    f"{type(self._pipeline).__name__} does not expose a 'guider' component, "
+                    "so the connected Diffusers guider cannot be installed."
+                )
+
         if model_ids:
-            components_to_update = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
-            if components_to_update:
-                self._pipeline.update_components(**components_to_update)
+            managed_components = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
+            if managed_components:
+                component_updates.update(managed_components)
+
+        if explicit_guider is not None:
+            component_updates["guider"] = explicit_guider
+
+        if component_updates:
+            self._pipeline.update_components(**component_updates)
 
         device = self._pipeline._execution_device
 
@@ -260,7 +309,7 @@ class Denoise(NodeBase):
             # special case #2: passed `guidance_scale` but pipeline does not accept it
             # -> potentially create a new guider if pipeline support it
             elif name == "guidance_scale" and "guidance_scale" not in blocks.input_names:
-                if "guider" in self._pipeline.component_names and "guider" not in components_to_update:
+                if "guider" in self._pipeline.component_names and "guider" not in component_updates:
                     guider_spec = self._pipeline.get_component_spec("guider")
                     guider = guider_spec.create(guidance_scale=value)
                     self._pipeline.update_components(guider=guider)
@@ -308,6 +357,8 @@ class Denoise(NodeBase):
         # 6. run the pipeline and update the outputs dict with the pipeline outputs
         transformer = getattr(self._pipeline, "transformer", None)
         signature_state = restore_wrapped_forward_signature(transformer) if transformer is not None else None
+        self._active_pipeline = self._pipeline
+        self._publish_initial_denoise_progress(num_inference_steps)
         try:
             node_outputs = self._pipeline(**node_kwargs, output=output_names)
         except ValueError as e:
@@ -338,6 +389,7 @@ class Denoise(NodeBase):
             self.notify(str(e), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
             raise
         finally:
+            self._active_pipeline = None
             reset_wrapped_forward_signature(signature_state)
 
         outputs.update(node_outputs)

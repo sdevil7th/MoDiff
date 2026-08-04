@@ -1,6 +1,7 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 
 from modiff.NodeBase import NodeBase
-from PIL import Image, ImageOps
+from PIL import ImageOps
 
 class Invert(NodeBase):
     """

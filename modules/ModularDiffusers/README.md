@@ -1,3 +1,5 @@
+<!-- Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff. -->
+
 # Modular Diffusers in MoDiff
 
 MoDiff integrates the experimental [Diffusers Modular Pipelines](https://huggingface.co/docs/diffusers/main/en/modular_diffusers/overview) APIs with its node graph. A small set of dynamic nodes can expose different model pipelines without creating a separate hardcoded node class for every model family.
@@ -13,21 +15,26 @@ MoDiff integrates the experimental [Diffusers Modular Pipelines](https://hugging
 - **Hub-backed blocks:** supported repositories can provide Modular Diffusers configuration/code used to construct a node interface.
 - **Resource controls:** loaders expose supported quantization and offload modes, subject to package, model, and hardware compatibility.
 
-Upstream APIs still use identifiers such as `MellonPipelineConfig`, `MellonParam`, and `mellon_node_utils`. Those names are external compatibility surfaces, not the active MoDiff product namespace. See [the namespace policy](../../docs/modiff-backend-namespace.md).
+MoDiff adapts Diffusers' Mellon node-metadata helper to supply MoDiff dynamic fields and configuration names; the
+derivation is recorded in `pipeline_schema.py` and `THIRD_PARTY_NOTICES.md`. Upstream Diffusers remains responsible
+for model components and Modular Pipeline execution.
 
 ## Setup
 
 Install and validate the backend from the repository root:
 
 ```bash
-uv sync --frozen
-uv run python -m modiff.preflight --json --check-port 8088 --fail-on-error
-uv run python main.py
+./install.sh --accelerator auto
+./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+./run.sh
 ```
+
+On Windows, use `install.ps1`, `.venv\Scripts\python.exe`, and `run.ps1` as shown in the root quick start. The
+managed installer owns the executable Torch profile; `uv sync` and `uv run` are intentionally unsupported.
 
 Open <http://127.0.0.1:8088>. Keep the server on loopback; it has no authentication or remote-code sandbox.
 
-Optional quantization, Nunchaku, or other acceleration paths require the matching extras described in the [root README](../../README.md#installation-profiles).
+Optional quantization, Nunchaku, or other acceleration paths require the matching profiles described in the [root README](../../README.md#managed-installation-profiles).
 
 ## Start with a bundled graph
 
@@ -73,7 +80,7 @@ Component reuse depends on compatible pipeline contracts and current cache state
 
 `Dynamic Block` combines a compatible Modular Diffusers block configuration into one graph node. Enter a supported repository ID, load its definition, inspect the generated fields, and connect any required shared components or media inputs.
 
-For example, repositories such as `YiYiXu/FLUX.2-klein-4B-modular` have been used to demonstrate a compact prompt-to-image block. Repository availability and code can change; pin/review the intended revision before trusting it.
+The shipped example uses `diffusers/FLUX.2-klein-4B-modular` at the immutable revision recorded in `data/model-artifact-catalog.json`. Repository availability and code can change; custom repositories still require an explicitly reviewed 40-character commit revision.
 
 Dynamic blocks are not arbitrary no-code plugins. They must expose a structure understood by the current Diffusers/MoDiff integration, may require remote Python code, and can fail when upstream APIs or model files change.
 
@@ -87,12 +94,13 @@ Only nodes connected to the submitted graph path execute, but shared component s
 
 MoDiff can load compatible custom blocks from the Hugging Face Hub. This is a trust-sensitive feature:
 
+Custom block repositories must publish MoDiff's current `modiff_pipeline_config.json` schema. The loader does not fall
+back to earlier extension schemas or filenames.
+
 1. Review the repository, owner, dependencies, license, and exact commit.
-2. Prefer immutable revisions rather than a moving branch.
+2. Enter the reviewed 40-character commit revision; moving branches and tags are rejected.
 3. Enable `trust_remote_code` only when the repository requires it and you accept that its Python executes with backend-process permissions.
 4. Test on a dedicated local environment without sensitive files in `work_dir`.
-
-The example repository ID `diffusers/gemini-prompt-expander-mellon` intentionally retains an external legacy name. If available and compatible, it can generate a prompt-expansion block that feeds the prompt encoder. Its name should not be mechanically rewritten unless the Hub repository itself moves.
 
 [Watch the custom prompt block demo (MP4)](https://github.com/user-attachments/assets/d68bc8c1-1b1c-478a-b94b-1e498c60a4fc)
 

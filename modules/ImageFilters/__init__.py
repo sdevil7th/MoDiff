@@ -1,4 +1,5 @@
-from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE, CPU_DEVICE
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
+from utils.torch_utils import DEVICE_LIST, CPU_DEVICE
 
 MODULE_MAP = {
     "Canny": {

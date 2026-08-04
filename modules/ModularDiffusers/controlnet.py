@@ -1,10 +1,15 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import importlib
 import logging
 
 from modiff.NodeBase import NodeBase
 
 from . import components
-from .modular_utils import DummyCustomPipeline, pipeline_class_to_modiff_node_config
+from .modular_utils import (
+    DummyCustomPipeline,
+    pipeline_class_from_runtime_inputs,
+    pipeline_class_to_modiff_node_config,
+)
 from .utils import collect_model_ids
 
 
@@ -177,7 +182,6 @@ class Controlnet(NodeBase):
         self._pipeline_class = None
 
     def update_node(self, values, ref):
-
         node_params = {
             "model_type": {
                 "label": "Model Type",
@@ -235,6 +239,7 @@ class Controlnet(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
 
         # 1. Get node config
         blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
@@ -243,7 +248,7 @@ class Controlnet(NodeBase):
             return
 
         # 2. Cast parameters to the types expected by the modular pipeline.
-        # YiYi notes: should fix and remove in the future
+        # Preserve the graph compatibility cast until the upstream schema exposes exact types.
         for param_name, param_config in node_config["params"].items():
             if param_name in kwargs and kwargs[param_name] is not None:
                 param_type = param_config.get("type", None)
@@ -300,7 +305,6 @@ class Controlnet(NodeBase):
             elif name in kwargs and kwargs[name] is not None:
                 controlnet_inputs.update({name: kwargs.pop(name)})
 
-        # YiYi TODO: list controlnet as required/static model input for controlnet node
         controlnet_out = {
             "controlnet": kwargs.get("controlnet"),
             **controlnet_inputs,

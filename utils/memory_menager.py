@@ -1,10 +1,66 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 logger = logging.getLogger('modiff')
 import torch
 import gc
 import time
 import nanoid
+import os
 from utils.torch_utils import DEFAULT_DEVICE
+
+GIB = 1024 ** 3
+
+
+def _tensor_bytes(tensor):
+    try:
+        return int(tensor.numel()) * int(tensor.element_size())
+    except Exception:
+        return 0
+
+
+def _model_size_bytes(model):
+    """Count unique parameter/buffer storage across modules or pipelines."""
+    seen_tensors = set()
+    seen_modules = set()
+    total = 0
+    candidates = [model]
+    components = getattr(model, 'components', None)
+    if isinstance(components, dict):
+        candidates.extend(components.values())
+    for candidate in candidates:
+        if not isinstance(candidate, torch.nn.Module) or id(candidate) in seen_modules:
+            continue
+        seen_modules.add(id(candidate))
+        for tensor in [*candidate.parameters(recurse=True), *candidate.buffers(recurse=True)]:
+            identity = id(tensor)
+            if identity not in seen_tensors:
+                seen_tensors.add(identity)
+                total += _tensor_bytes(tensor)
+    return total
+
+
+def _model_device(model):
+    direct = getattr(model, 'device', None)
+    if direct is not None:
+        return str(direct)
+    candidates = [model]
+    components = getattr(model, 'components', None)
+    if isinstance(components, dict):
+        candidates.extend(components.values())
+    for candidate in candidates:
+        if isinstance(candidate, torch.nn.Module):
+            try:
+                return str(next(candidate.parameters()).device)
+            except (StopIteration, AttributeError):
+                continue
+    return 'cpu'
+
+
+def _accelerator_reserve_bytes(total_bytes):
+    os_reserve = (600 if os.name == 'nt' else 400) * 1024 ** 2
+    if os.name == 'nt' and total_bytes > 15 * GIB:
+        os_reserve += 100 * 1024 ** 2
+    return int(0.8 * GIB) + os_reserve
 
 def memory_flush():
     gc.collect()
@@ -43,6 +99,9 @@ def memory_flush():
 class MemoryManager:
     def __init__(self):
         self.cache = {}
+        self.policy = str(os.environ.get('MODIFF_MODEL_CACHE_POLICY') or 'lru').strip().lower()
+        if self.policy not in {'lru', 'no_cache', 'high_ram'}:
+            self.policy = 'lru'
 
     def add(self, model, priority=1) -> str:
         if hasattr(model, '_mm_id'):
@@ -57,8 +116,9 @@ class MemoryManager:
             'model': model,
             'priority': priority,
             'last_used': time.time(),
-            #'size': 0
+            'size': _model_size_bytes(model),
         }
+        self._evict_system_ram_pressure(exclude_ids=[model_id])
         return model_id
 
     def remove(self, model):
@@ -84,6 +144,7 @@ class MemoryManager:
 
         if model is not None:
             self.cache[model_id]['model'] = model
+            self.cache[model_id]['size'] = _model_size_bytes(model)
         if priority is not None:
             self.cache[model_id]['priority'] = priority
 
@@ -97,13 +158,13 @@ class MemoryManager:
 
         return self.cache[model_id]['model']
 
-    def load_model(self, model, device, exclude=[]):
+    def load_model(self, model, device, exclude=None):
         model_id = model if isinstance(model, str) else model._mm_id if hasattr(model, '_mm_id') else None
         if model_id is None or model_id not in self.cache:
             return None
 
         exclude_ids = []
-        for v in exclude:
+        for v in (exclude or []):
             k = v if isinstance(v, str) else v._mm_id if hasattr(v, '_mm_id') else None
             if k and k in self.cache:
                 exclude_ids.append(k)
@@ -112,22 +173,31 @@ class MemoryManager:
         self.cache[model_id]['last_used'] = time.time()
         x = self.cache[model_id]['model']
 
-        if str(x.device) == str(device):
+        if _model_device(x) == str(device):
             return x
 
         cache_priority = self._get_unload_candidates(device, exclude_ids)
 
         memory_flush()
 
-        # First we try to unload models based on the size if we have set it
-        # memory_required = self.cache[model_id]['size']
-        # memory_available = torch.cuda.mem_get_info()[0] if 'cuda' in device else 0
-        # if memory_available > 0 and memory_required > memory_available and all(v['size'] > 0 for v in self.cache.values()):
-        #     while memory_required > memory_available and cache_priority:
-        #         k = cache_priority.pop(0)[3]
-        #         logger.debug(f"Unloading model {k} to free memory. Memory available: {memory_available}, memory required: {memory_required}")
-        #         self.unload_model(k)
-        #         memory_available = torch.cuda.mem_get_info()[0]
+        # Proactively evict by actual parameter bytes before relying on an OOM.
+        if str(device).startswith('cuda'):
+            try:
+                index = torch.device(device).index or 0
+                free_bytes, total_bytes = torch.cuda.mem_get_info(index)
+                required = int(self.cache[model_id].get('size') or 0) + _accelerator_reserve_bytes(total_bytes)
+                while required > free_bytes and cache_priority:
+                    candidate_id = cache_priority.pop(0)[2]
+                    logger.debug(
+                        "Evicting model %s before load: %d bytes free, %d bytes required",
+                        candidate_id,
+                        free_bytes,
+                        required,
+                    )
+                    self.unload_model(candidate_id)
+                    free_bytes, _ = torch.cuda.mem_get_info(index)
+            except Exception:
+                logger.debug("Could not apply proactive accelerator eviction", exc_info=True)
 
         while True:
             try:
@@ -165,29 +235,36 @@ class MemoryManager:
     def unload_all(self, device=None):
         device = device if device else DEFAULT_DEVICE
         for k, v in self.cache.items():
-            if str(v['model'].device) == str(device):
+            if _model_device(v['model']) == str(device):
                 self.unload_model(k)
 
     def clear(self):
         cleared = len(self.cache)
-        for model_id in list(self.cache.keys()):
-            try:
-                self.remove(model_id)
-            except Exception:
-                logger.debug(f"Failed to remove cached model {model_id}", exc_info=True)
-                self.cache.pop(model_id, None)
+        # Cleanup is discarding these objects, not keeping CPU-resident copies.
+        # Calling pipeline.to('cpu') here can transiently materialize an entire
+        # Accelerate-offloaded model in system RAM while its GPU allocation is
+        # still live. On unified-memory ROCm hosts that peak can OOM the server
+        # during a model-family switch. Drop every manager-owned reference
+        # atomically, let object destruction release hooks/storage, then flush
+        # allocator caches once.
+        records = list(self.cache.values())
+        self.cache.clear()
+        for record in records:
+            record['model'] = None
+        del records
         memory_flush()
         return cleared
 
-    def exec(self, func, device, models=[], exclude=[], args=None, kwargs=None, inference_mode=True):
+    def exec(self, func, device, models=None, exclude=None, args=None, kwargs=None, inference_mode=True):
         exclude_ids = []
-        for v in exclude:
+        for v in (exclude or []):
             k = v if isinstance(v, str) else v._mm_id if hasattr(v, '_mm_id') else None
             if k and k in self.cache:
                 exclude_ids.append(k)
 
         # auto load the models, add them to the exclude list
-        for v in models:
+        active_models = list(models or [])
+        for v in active_models:
             k = v if isinstance(v, str) else v._mm_id if hasattr(v, '_mm_id') else None
             if k and k in self.cache:
                 exclude_ids.append(k)
@@ -199,29 +276,35 @@ class MemoryManager:
         args = args or []
         kwargs = kwargs or {}
 
-        while True:
-            try:
-                if inference_mode:
-                    with torch.inference_mode():
+        try:
+            while True:
+                try:
+                    if inference_mode:
+                        with torch.inference_mode():
+                            return func(*args, **kwargs)
+                    else:
                         return func(*args, **kwargs)
-                else:
-                    return func(*args, **kwargs)
-            except torch.cuda.OutOfMemoryError as e:
-                # If we're out of memory, we need to unload a model.
-                if not cache_priority:
-                    # If there are no more models to unload, we have failed.
-                    logger.error(f"OOM during exec. No models left to unload to free memory.")
+                except torch.cuda.OutOfMemoryError as e:
+                    # If we're out of memory, we need to unload a model.
+                    if not cache_priority:
+                        # If there are no more models to unload, we have failed.
+                        logger.error("OOM during exec. No models left to unload to free memory.")
+                        raise e
+
+                    # Unload the lowest-priority model.
+                    k = cache_priority.pop(0)[2]
+                    logger.debug(f"OOM during exec. Unloading model '{k}' to free VRAM.")
+                    self.unload_model(k)
+                except Exception as e:
+                    logger.error(f"An unexpected error occurred during exec: {e}")
                     raise e
+        finally:
+            if self.policy == 'no_cache':
+                for active in active_models:
+                    self.unload_model(active)
+            self._evict_system_ram_pressure(exclude_ids=exclude_ids)
 
-                # Unload the lowest-priority model.
-                k = cache_priority.pop(0)[2]
-                logger.debug(f"OOM during exec. Unloading model '{k}' to free VRAM.")
-                self.unload_model(k)
-            except Exception as e:
-                logger.error(f"An unexpected error occurred during exec: {e}")
-                raise e
-
-    def _get_unload_candidates(self, device, exclude_ids=[]):
+    def _get_unload_candidates(self, device, exclude_ids=None):
         """
         Gets a sorted list of models that are candidates for unloading from a device.
         The list is sorted by priority and last-used time, so the first element
@@ -230,11 +313,43 @@ class MemoryManager:
         cache_priority = []
         for k, v in self.cache.items():
             # Check if the model is on the target device and not in the exclude list
-            if str(v['model'].device) == str(device) and k not in exclude_ids:
+            if _model_device(v['model']) == str(device) and k not in (exclude_ids or []):
                 cache_priority.append((v['priority'], v['last_used'], k))
 
         # Sort by priority then last_used to find the best unload candidate
         cache_priority.sort(key=lambda x: (x[0], x[1]))
         return cache_priority
+
+    def _evict_system_ram_pressure(self, exclude_ids=None):
+        if self.policy == 'high_ram':
+            return []
+        try:
+            from modiff.hardware import system_memory_snapshot
+
+            memory = system_memory_snapshot()
+            available = memory.get('available_bytes')
+            total = memory.get('total_bytes')
+            floor = max(4 * GIB, int(total * 0.1)) if isinstance(total, int) else 4 * GIB
+            if not isinstance(available, int) or available >= floor:
+                return []
+        except Exception:
+            return []
+        excluded = set(exclude_ids or [])
+        candidates = sorted(
+            (
+                (record['priority'], record['last_used'], model_id)
+                for model_id, record in self.cache.items()
+                if model_id not in excluded and _model_device(record['model']).startswith('cpu')
+            ),
+            key=lambda item: (item[0], item[1]),
+        )
+        evicted = []
+        while candidates and available < floor:
+            model_id = candidates.pop(0)[2]
+            self.remove(model_id)
+            evicted.append(model_id)
+            memory = system_memory_snapshot()
+            available = int(memory.get('available_bytes') or 0)
+        return evicted
 
 memory_manager = MemoryManager()

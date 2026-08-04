@@ -89,6 +89,33 @@ class StudioBlockPersistenceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status, 400)
         self.assertTrue(response_json(response)["error"])
 
+    async def test_nested_block_definition_is_rejected(self):
+        server = await self.make_server()
+        response = await server.studio_blocks_post(
+            FakeRequest(
+                {
+                    "id": "nested",
+                    "name": "Nested",
+                    "version": 1,
+                    "nodes": [
+                        {
+                            "id": "child-block",
+                            "type": "block",
+                            "data": {"type": "block", "params": {}, "userBlockId": "existing"},
+                            "position": {"x": 0, "y": 0},
+                        }
+                    ],
+                    "edges": [],
+                    "inputs": [],
+                    "outputs": [],
+                    "exposedParams": [],
+                }
+            )
+        )
+
+        self.assertEqual(response.status, 400)
+        self.assertIn("Nested user blocks", response_json(response)["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible MoDiff backend or runtime defect.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include Hugging Face tokens, private media, personal paths, or exploit details. Report security issues through the private process in `SECURITY.md`.
+  - type: checkboxes
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing issues and tested the current supported branch.
+          required: true
+        - label: This is not a security vulnerability or a request for help with an unsupported third-party runtime.
+          required: true
+  - type: textarea
+    attributes:
+      label: Problem
+      description: Explain what is wrong and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Minimal reproduction
+      description: Provide the smallest graph, command, or code sample that reproduces the issue without private data.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Include the MoDiff commit, OS, Python version, accelerator profile, and sanitized preflight output.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Sanitized logs
+      description: Include the shortest relevant traceback. Remove tokens, URLs with credentials, media, prompts, and local paths.
+      render: text

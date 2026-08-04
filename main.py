@@ -1,6 +1,19 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
+
 import os
 
+from modiff.optimization_packages import activate_runtime_overlay
+
+# Optional accelerator packages are staged and validated out-of-process. Make
+# only the explicitly activated environment visible, before importing Torch or
+# any MoDiff module that can transitively import it.
+activate_runtime_overlay()
+
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+# Diffusers reads this once while its modules are imported. Configure it before
+# the worker imports any node packages so large sharded pipelines can load
+# their weight files concurrently. An explicit deployment setting still wins.
+os.environ.setdefault("HF_ENABLE_PARALLEL_LOADING", "YES")
 
 from modiff.config import CONFIG, ColorCodes
 
@@ -15,13 +28,13 @@ if CONFIG.hf.get("cache_dir"):
 import logging
 import asyncio
 import signal
+import subprocess
 import sys
+from pathlib import Path
 
 logger = logging.getLogger('modiff')
 
-from modules import MODULE_MAP
-from modiff.modelstore import modelstore
-from modiff.server import server
+SUPERVISED_RESTART_EXIT_CODE = 75
 
 
 def handle_loop_exception(loop, context):
@@ -42,14 +55,11 @@ def handle_loop_exception(loop, context):
     loop.default_exception_handler(context)
 
 
-# welcome message
-logger.info(f"""{ColorCodes.BLUE}
-╭──────────────────────╮
-│  Welcome to MoDiff!  │
-╰──────────────────────╯
-Speak Friend and Enter: {CONFIG.server['scheme']}://{CONFIG.server['ip']}:{CONFIG.server['port']}""")
+async def worker_main():
+    # Import heavyweight model/runtime modules only inside the replaceable
+    # worker. The small parent supervisor must never own accelerator state.
+    from modiff.server import server
 
-async def main():
     await server.run()
     try:
         await asyncio.Future()
@@ -60,12 +70,18 @@ async def main():
         await server.cleanup()
 
 
-if __name__ == "__main__":
+def run_worker():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.set_exception_handler(handle_loop_exception)
 
-    main_task = loop.create_task(main())
+    logger.info(f"""{ColorCodes.BLUE}
+╭──────────────────────╮
+│  Welcome to MoDiff!  │
+╰──────────────────────╯
+Speak Friend and Enter: {CONFIG.server['scheme']}://{CONFIG.server['ip']}:{CONFIG.server['port']}""")
+
+    main_task = loop.create_task(worker_main())
 
     try:
         for sig in (signal.SIGINT, signal.SIGTERM):
@@ -79,3 +95,64 @@ if __name__ == "__main__":
     finally:
         loop.close()
         logger.info(f"{ColorCodes.BLUE}Namárië!")
+
+
+def run_supervisor():
+    from modiff.supervisor_control import SupervisorController, SupervisorControlServer
+
+    worker = None
+    shutting_down = False
+    control_port = int(os.environ.get("MODIFF_SUPERVISOR_CONTROL_PORT", str(int(CONFIG.server["port"]) + 1)))
+    requested_control_host = str(os.environ.get("MODIFF_SUPERVISOR_CONTROL_HOST", "127.0.0.1"))
+    if requested_control_host not in {"127.0.0.1", "localhost"}:
+        logger.warning(
+            "Ignoring non-loopback supervisor control host %s; privileged control is local-only.",
+            requested_control_host,
+        )
+    control_host = "127.0.0.1"
+    queue_state_path = Path(CONFIG.paths["data"]) / "runtime" / "supervisor-queue.json"
+    controller = SupervisorController(queue_state_path)
+    control_server = SupervisorControlServer(controller, control_host, control_port)
+    control_server.start()
+    logger.info(
+        "Supervisor control plane listening at http://%s:%s",
+        control_host,
+        control_port,
+    )
+
+    def forward_signal(signum, _frame):
+        nonlocal shutting_down
+        shutting_down = True
+        controller.set_shutting_down()
+        if worker is not None and worker.poll() is None:
+            worker.send_signal(signum)
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, forward_signal)
+
+    try:
+        while True:
+            worker_env = os.environ.copy()
+            worker_env["MODIFF_WORKER_SUPERVISED"] = "1"
+            worker_env["MODIFF_SUPERVISOR_QUEUE_STATE"] = str(queue_state_path)
+            worker = subprocess.Popen([sys.executable, os.path.abspath(__file__), "--worker"], env=worker_env)
+            controller.set_worker(worker)
+            return_code = worker.wait()
+            restart_requested = controller.consume_restart_request()
+            controller.set_worker(None)
+            if shutting_down:
+                return return_code
+            if return_code == SUPERVISED_RESTART_EXIT_CODE or restart_requested:
+                logger.warning("Replacing the backend worker after a forced run cancellation.")
+                continue
+            return return_code
+    finally:
+        controller.set_shutting_down()
+        control_server.close()
+
+
+if __name__ == "__main__":
+    if "--worker" in sys.argv:
+        run_worker()
+    else:
+        raise SystemExit(run_supervisor())

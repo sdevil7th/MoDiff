@@ -1,8 +1,8 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from modiff.NodeBase import NodeBase
-from modiff.config import CONFIG
+from modiff.path_identifiers import resolve_runtime_input_path
 from pathlib import Path
 import logging
-from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE
 from utils.paths import parse_filename
 
 logger = logging.getLogger('modiff')
@@ -44,16 +44,15 @@ class Load(NodeBase):
     def execute(self, **kwargs):
         import imageio
         from PIL import Image
-        file = kwargs["file"]
-        file = Path(file[0] if isinstance(file, list) else file)
+        file_value = kwargs["file"]
+        file_value = file_value[0] if isinstance(file_value, list) and file_value else file_value
+        if not file_value:
+            raise ValueError("Load Video needs an existing video file.")
+        file = resolve_runtime_input_path(file_value)
         logger.debug(f"Loading video from file: {file}")
 
-        if file is None or file == "":
-            file = ""
-        if not Path(file).is_absolute():
-            file = Path(CONFIG.paths['work_dir']) / file
-        if not Path(file).exists():
-            file = ""
+        if not file.is_file():
+            raise ValueError("Load Video needs an existing video file.")
 
         images = []
         reader = imageio.get_reader(str(file), 'ffmpeg')
@@ -164,7 +163,7 @@ class Export(NodeBase):
             width, height, frame_count = 0, 0, 0
 
             if isinstance(video_data, str):
-                reader = imageio.get_reader(video_data)
+                reader = imageio.get_reader(str(resolve_runtime_input_path(video_data)))
                 meta = reader.get_meta_data()
                 width, height = meta.get('size', (0, 0))
                 try:
@@ -219,3 +218,1146 @@ class Export(NodeBase):
             "height": height,
             "frames": frames,
         }
+
+
+def _pil_frames(value):
+    """Normalize any supported in-memory video value to RGB PIL frames."""
+    import numpy as np
+    from PIL import Image
+    try:
+        import torch
+    except ImportError:  # pragma: no cover - torch is part of the runtime
+        torch = None
+
+    if value is None or (isinstance(value, str) and not value):
+        return []
+    if isinstance(value, dict) and (value.get("path") or value.get("file")):
+        value = value.get("path") or value.get("file")
+    if isinstance(value, str):
+        import imageio
+        reader = imageio.get_reader(str(resolve_runtime_input_path(value)), "ffmpeg")
+        try:
+            return [Image.fromarray(frame).convert("RGB") for frame in reader]
+        finally:
+            reader.close()
+    if torch is not None and isinstance(value, torch.Tensor):
+        tensor = value.detach().float().cpu()
+        if tensor.ndim == 5:
+            tensor = tensor.squeeze(0)
+        value = [tensor[index] for index in range(tensor.shape[0])] if tensor.ndim == 4 else [tensor]
+    if isinstance(value, np.ndarray) and value.ndim == 4:
+        value = list(value)
+    if not isinstance(value, list):
+        value = [value]
+
+    frames = []
+    for frame in value:
+        if isinstance(frame, Image.Image):
+            frames.append(frame.convert("RGB"))
+            continue
+        if torch is not None and isinstance(frame, torch.Tensor):
+            frame = frame.detach().float().cpu()
+            if frame.ndim == 4:
+                frame = frame.squeeze(0)
+            if frame.ndim == 3 and frame.shape[0] in (1, 3, 4):
+                frame = frame.permute(1, 2, 0)
+            frame = frame.numpy()
+        array = np.asarray(frame)
+        if array.dtype.kind == "f":
+            array = np.clip(array, 0, 1) * 255
+        if array.ndim == 3 and array.shape[0] in (1, 3, 4):
+            array = np.moveaxis(array, 0, -1)
+        frames.append(Image.fromarray(array.astype(np.uint8)).convert("RGB"))
+    return frames
+
+
+class MaskedComposite(NodeBase):
+    """Composite generated video only inside a white mask sequence."""
+
+    label = "Masked Video Composite"
+    category = "Video"
+    resizable = True
+    params = {
+        "source": {"label": "Source Video", "display": "input", "type": ["video", "str"]},
+        "generated": {"label": "Generated Video", "display": "input", "type": ["video", "str"]},
+        "mask": {"label": "White Generate Mask", "display": "input", "type": ["video", "image"]},
+        "feather": {"label": "Edge Feather", "type": "float", "default": 0.0, "min": 0, "max": 128, "step": 1},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from PIL import Image, ImageFilter
+
+        source = _pil_frames(kwargs.get("source"))
+        generated = _pil_frames(kwargs.get("generated"))
+        masks = _pil_frames(kwargs.get("mask"))
+        if not source or not generated or not masks:
+            raise ValueError("Masked Video Composite needs source, generated, and mask frames.")
+        if len(source) != len(generated):
+            raise ValueError(
+                f"Masked Video Composite frame mismatch: source has {len(source)} frames and generated has "
+                f"{len(generated)}."
+            )
+        if len(masks) == 1:
+            masks = masks * len(source)
+        elif len(masks) != len(source):
+            raise ValueError(
+                f"Masked Video Composite mask mismatch: expected 1 or {len(source)} masks; received {len(masks)}."
+            )
+
+        feather = max(0.0, float(kwargs.get("feather") or 0.0))
+        output = []
+        for source_frame, generated_frame, mask_frame in zip(source, generated, masks):
+            size = source_frame.size
+            if generated_frame.size != size:
+                generated_frame = generated_frame.resize(size, Image.Resampling.LANCZOS)
+            mask_image = mask_frame.convert("L")
+            if mask_image.size != size:
+                mask_image = mask_image.resize(size, Image.Resampling.LANCZOS)
+            if feather > 0:
+                mask_image = mask_image.filter(ImageFilter.GaussianBlur(radius=feather))
+            output.append(Image.composite(generated_frame, source_frame, mask_image))
+        return {"output": output, "frames": len(output)}
+
+
+class TemporalCleanPlate(NodeBase):
+    """Build a person-free plate sequence by interpolating two clean frames."""
+
+    label = "Temporal Clean Plate"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video", "str"]},
+        "start_index": {"label": "Clean Start Frame", "type": "int", "default": 0, "min": -100000},
+        "end_index": {"label": "Clean End Frame", "type": "int", "default": -1, "min": -100000},
+        "easing": {"label": "Interpolation", "type": "string", "options": ["smoothstep", "linear"], "default": "smoothstep"},
+        "output": {"label": "Plate Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from PIL import Image
+
+        frames = _pil_frames(kwargs.get("video"))
+        if not frames:
+            raise ValueError("Temporal Clean Plate needs a non-empty video.")
+
+        def normalize_index(value, fallback):
+            index = int(value if value is not None else fallback)
+            if index < 0:
+                index += len(frames)
+            return max(0, min(len(frames) - 1, index))
+
+        start_index = normalize_index(kwargs.get("start_index"), 0)
+        end_index = normalize_index(kwargs.get("end_index"), len(frames) - 1)
+        start = frames[start_index]
+        end = frames[end_index]
+        if end.size != start.size:
+            end = end.resize(start.size, Image.Resampling.LANCZOS)
+        easing = str(kwargs.get("easing") or "smoothstep")
+        output = []
+        denominator = max(1, len(frames) - 1)
+        for index in range(len(frames)):
+            alpha = index / denominator
+            if easing == "smoothstep":
+                alpha = alpha * alpha * (3.0 - 2.0 * alpha)
+            elif easing != "linear":
+                raise ValueError(f"Unsupported clean-plate interpolation {easing!r}.")
+            output.append(Image.blend(start, end, alpha))
+        return {"output": output, "frames": len(output)}
+
+
+class ExtendCleanPlate(NodeBase):
+    """Copy a clean background strip into a neighboring occluded region."""
+
+    label = "Extend Video Clean Plate"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {"label": "Plate Video", "display": "input", "type": ["video", "str"]},
+        "boundary_x": {"label": "Clean Boundary X", "type": "int", "default": 535, "min": 1, "max": 16384},
+        "extend_left": {"label": "Extend Left", "type": "int", "default": 20, "min": 1, "max": 2048},
+        "mode": {"label": "Extension", "type": "string", "options": ["copy", "mirror"], "default": "copy"},
+        "top": {"label": "Top", "type": "int", "default": 0, "min": 0, "max": 16384},
+        "bottom": {"label": "Bottom", "type": "int", "default": 230, "min": 1, "max": 16384},
+        "output": {"label": "Extended Plate", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from PIL import Image
+
+        frames = _pil_frames(kwargs.get("video"))
+        if not frames:
+            raise ValueError("Extend Video Clean Plate needs a non-empty video.")
+        boundary = int(kwargs.get("boundary_x", 535))
+        extend = int(kwargs.get("extend_left", 20))
+        top = int(kwargs.get("top", 0))
+        bottom = int(kwargs.get("bottom", 230))
+        mode = str(kwargs.get("mode") or "copy")
+        if mode not in {"copy", "mirror"}:
+            raise ValueError(f"Unsupported clean-plate extension {mode!r}.")
+        output = []
+        for frame in frames:
+            width, height = frame.size
+            if not 0 < boundary < width:
+                raise ValueError(f"Clean boundary X must be inside the frame; received {boundary} for width {width}.")
+            actual_extend = min(extend, boundary, width - boundary)
+            actual_top = max(0, min(height - 1, top))
+            actual_bottom = max(actual_top + 1, min(height, bottom))
+            result = frame.copy()
+            clean_strip = frame.crop((boundary, actual_top, boundary + actual_extend, actual_bottom))
+            if mode == "mirror":
+                clean_strip = clean_strip.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            result.paste(clean_strip, (boundary - actual_extend, actual_top))
+            output.append(result)
+        return {"output": output, "frames": len(output)}
+
+
+class Compose(NodeBase):
+    """Compose two to six model-agnostic clips into one continuous timeline."""
+
+    label = "Compose Video"
+    category = "Video"
+    resizable = True
+    params = {
+        # Keep these explicit: MoDiff's static AST registry intentionally does
+        # not execute dict comprehensions while discovering node contracts.
+        "clip_1": {"label": "Clip 1", "display": "input", "type": ["video_collection", "video", "str"], "required": True},
+        "clip_2": {"label": "Clip 2", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
+        "clip_3": {"label": "Clip 3", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
+        "clip_4": {"label": "Clip 4", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
+        "clip_5": {"label": "Clip 5", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
+        "clip_6": {"label": "Clip 6", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
+        "transition_seconds": {"label": "Crossfade", "type": "float", "default": 0.35, "min": 0, "max": 2, "step": 0.05},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 1, "max": 120, "step": 0.01},
+        "video": {"display": "output", "type": "video"},
+        "frames": {"display": "output", "type": "int"},
+        "duration_seconds": {"display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        from PIL import Image
+        clips = []
+        for index in range(1, 7):
+            value = kwargs.get(f"clip_{index}")
+            if isinstance(value, list) and value and isinstance(value[0], list):
+                clips.extend(_pil_frames(item) for item in value)
+            else:
+                clips.append(_pil_frames(value))
+        clips = [clip for clip in clips if clip]
+        if not clips:
+            raise ValueError("Compose Video needs at least one non-empty clip.")
+        fps = float(kwargs.get("fps") or 16)
+        fade_frames = max(0, int(round(float(kwargs.get("transition_seconds") or 0) * fps)))
+        target_size = clips[0][0].size
+        clips = [[frame.resize(target_size, Image.Resampling.LANCZOS) if frame.size != target_size else frame for frame in clip] for clip in clips]
+        output = list(clips[0])
+        for clip in clips[1:]:
+            overlap = min(fade_frames, len(output), len(clip))
+            if overlap:
+                start = len(output) - overlap
+                for index in range(overlap):
+                    alpha = (index + 1) / (overlap + 1)
+                    output[start + index] = Image.blend(output[start + index], clip[index], alpha)
+            output.extend(clip[overlap:])
+        return {"video": output, "frames": len(output), "duration_seconds": len(output) / fps}
+
+
+class LyricOverlay(NodeBase):
+    """Render an authored LRC timeline over any video model's frames."""
+
+    label = "Timed Lyric Overlay"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {"display": "input", "type": ["video", "str"]},
+        "lrc": {"label": "Timed Lyrics (LRC)", "display": "textarea", "type": "text", "default": ""},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 1, "max": 120, "step": 0.01},
+        "font_size": {"label": "Font Size", "type": "int", "default": 42, "min": 12, "max": 160},
+        "bottom_margin": {"label": "Bottom Margin", "type": "int", "default": 54, "min": 0, "max": 400},
+        "output": {"display": "output", "type": "video"},
+    }
+
+    @staticmethod
+    def _timeline(text):
+        import re
+        entries = []
+        for line in str(text or "").splitlines():
+            match = re.match(r"\s*\[(\d+):(\d+(?:\.\d+)?)\]\s*(.+?)\s*$", line)
+            if match:
+                entries.append((int(match.group(1)) * 60 + float(match.group(2)), match.group(3)))
+        return sorted(entries)
+
+    def execute(self, **kwargs):
+        from PIL import ImageDraw, ImageFont
+        frames = _pil_frames(kwargs.get("video"))
+        timeline = self._timeline(kwargs.get("lrc"))
+        if not frames or not timeline:
+            raise ValueError("Timed Lyric Overlay needs video frames and at least one [mm:ss] lyric line.")
+        fps = float(kwargs.get("fps") or 16)
+        font_size = int(kwargs.get("font_size") or 42)
+        margin = int(kwargs.get("bottom_margin") or 54)
+        try:
+            font = ImageFont.truetype("DejaVuSans-Bold.ttf", font_size)
+        except OSError:
+            font = ImageFont.load_default()
+        output = []
+        for frame_index, source in enumerate(frames):
+            timestamp = frame_index / fps
+            active = next((text for start, text in reversed(timeline) if start <= timestamp), "")
+            frame = source.copy()
+            if active:
+                draw = ImageDraw.Draw(frame)
+                box = draw.textbbox((0, 0), active, font=font, stroke_width=2)
+                x = max(16, (frame.width - (box[2] - box[0])) // 2)
+                y = max(16, frame.height - margin - (box[3] - box[1]))
+                draw.text((x, y), active, font=font, fill="white", stroke_width=3, stroke_fill="black")
+            output.append(frame)
+        return {"output": output}
+
+
+class ExportWithAudio(NodeBase):
+    """Export composed frames with generated or loaded audio in one MP4."""
+
+    label = "Export Video with Audio"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {"display": "input", "type": ["video", "str"]},
+        "audio": {"display": "input", "type": ["audio", "str"]},
+        "filename": {"label": "File", "type": "str", "default": "{PATH:videos}/MoDiff_{HASH:6}.mp4"},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 1, "max": 120, "step": 0.01},
+        "quality": {"display": "slider", "type": "int", "min": 1, "max": 10, "default": 8},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "file": {"type": "video", "display": "output"},
+        "frames": {"display": "output", "type": "int"},
+        "duration_seconds": {"display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        import imageio
+        import numpy as np
+        import subprocess
+        from scipy.io import wavfile
+        from imageio_ffmpeg import get_ffmpeg_exe
+
+        frames = _pil_frames(kwargs.get("video"))
+        if not frames:
+            raise ValueError("Export Video with Audio needs non-empty video frames.")
+        fps = float(kwargs.get("fps") or 16)
+        destination = Path(parse_filename(kwargs.get("filename") or "{PATH:videos}/MoDiff_{HASH:6}.mp4"))
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        silent_path = destination.with_suffix(".silent.mp4")
+        audio_path = destination.with_suffix(".audio.wav")
+
+        audio = kwargs.get("audio")
+        if isinstance(audio, str):
+            audio_path = resolve_runtime_input_path(audio)
+        else:
+            data = audio.get("samples", audio.get("audio")) if isinstance(audio, dict) else audio
+            sample_rate = int(audio.get("sample_rate", 48000)) if isinstance(audio, dict) else 48000
+            samples = np.asarray(data, dtype=np.float32)
+            while samples.ndim > 2:
+                samples = samples[0]
+            if samples.ndim == 2 and samples.shape[0] <= 8 and samples.shape[1] > samples.shape[0]:
+                samples = samples.T
+            wavfile.write(audio_path, sample_rate, (np.clip(samples, -1, 1) * 32767).astype(np.int16))
+
+        writer = imageio.get_writer(silent_path, fps=fps, quality=int(kwargs.get("quality") or 8), codec="libx264")
+        try:
+            for frame in frames:
+                writer.append_data(np.asarray(frame))
+        finally:
+            writer.close()
+        subprocess.run(
+            [get_ffmpeg_exe(), "-y", "-v", "error", "-i", str(silent_path), "-i", str(audio_path),
+             "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-shortest", str(destination)],
+            check=True,
+        )
+        silent_path.unlink(missing_ok=True)
+        if audio_path.parent == destination.parent and audio_path.name.endswith(".audio.wav"):
+            audio_path.unlink(missing_ok=True)
+        return {"file": str(destination), "frames": len(frames), "duration_seconds": len(frames) / fps}
+
+
+def _video_collection(value):
+    """Normalize a collection of clips without confusing one clip with many."""
+    if value in (None, ""):
+        return []
+    if isinstance(value, tuple):
+        value = list(value)
+    if not isinstance(value, list):
+        return [_pil_frames(value)]
+    if not value:
+        return []
+    if isinstance(value[0], list):
+        return [_pil_frames(item) for item in value if item]
+    if isinstance(value[0], str) and len(value) > 1:
+        return [_pil_frames(item) for item in value if item]
+    return [_pil_frames(value)]
+
+
+def _parse_numbers(value, *, cast=float):
+    if value in (None, ""):
+        return []
+    if isinstance(value, str):
+        values = value.replace("\n", ",").split(",")
+    elif isinstance(value, (list, tuple, set)):
+        values = value
+    else:
+        values = [value]
+    return [cast(item) for item in values if str(item).strip()]
+
+
+def _concatenate_clips(clips, *, transition_frames=0):
+    from PIL import Image
+
+    clips = [list(clip) for clip in clips if clip]
+    if not clips:
+        return []
+    target_size = clips[0][0].size
+    normalized = [
+        [frame.resize(target_size, Image.Resampling.LANCZOS) if frame.size != target_size else frame for frame in clip]
+        for clip in clips
+    ]
+    output = list(normalized[0])
+    for clip in normalized[1:]:
+        overlap = min(max(0, int(transition_frames)), len(output), len(clip))
+        if overlap:
+            start = len(output) - overlap
+            for index in range(overlap):
+                alpha = (index + 1) / (overlap + 1)
+                output[start + index] = Image.blend(output[start + index], clip[index], alpha)
+        output.extend(clip[overlap:])
+    return output
+
+
+class FrameExtract(NodeBase):
+    """Extract ordered frames by boundary, index, timecode, or interval."""
+
+    label = "Extract Video Frames"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video_asset", "video", "str"]},
+        "mode": {
+            "label": "Selection",
+            "type": "string",
+            "options": ["first", "last", "first_last", "indices", "timecodes", "every_n"],
+            "default": "first_last",
+        },
+        "indices": {"label": "Frame Indices", "type": "string", "default": "0,-1"},
+        "timecodes": {"label": "Times (seconds)", "type": "string", "default": "0"},
+        "every_n": {"label": "Every N Frames", "type": "int", "default": 16, "min": 1},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 0.01},
+        "frames": {"label": "Frames", "display": "output", "type": "image"},
+        "selected_indices": {"label": "Indices", "display": "output", "type": "collection"},
+        "timestamps": {"label": "Timestamps", "display": "output", "type": "collection"},
+    }
+
+    def execute(self, **kwargs):
+        value = kwargs.get("video")
+        file_asset = None
+        if (isinstance(value, dict) and (value.get("path") or value.get("file"))) or isinstance(value, str):
+            from modiff.media_assets import coerce_video_asset
+
+            file_asset = coerce_video_asset(value)
+            frame_count = int(file_asset["frame_count"])
+        else:
+            frames = _pil_frames(value)
+            frame_count = len(frames)
+        if frame_count < 1:
+            raise ValueError("Extract Video Frames needs a non-empty video.")
+        mode = str(kwargs.get("mode") or "first_last")
+        if mode == "first":
+            indices = [0]
+        elif mode == "last":
+            indices = [frame_count - 1]
+        elif mode == "first_last":
+            indices = [0, frame_count - 1]
+        elif mode == "indices":
+            indices = _parse_numbers(kwargs.get("indices"), cast=int)
+        elif mode == "timecodes":
+            fps = float(kwargs.get("fps") or 16)
+            indices = [round(value * fps) for value in _parse_numbers(kwargs.get("timecodes"), cast=float)]
+        elif mode == "every_n":
+            step = max(1, int(kwargs.get("every_n") or 1))
+            indices = list(range(0, frame_count, step))
+        else:
+            raise ValueError(f"Unsupported frame selection mode {mode!r}.")
+        normalized = []
+        for index in indices:
+            index = int(index)
+            if index < 0:
+                index += frame_count
+            if 0 <= index < frame_count and index not in normalized:
+                normalized.append(index)
+        if not normalized:
+            raise ValueError("The requested frame selection is outside this video.")
+        fps = float(file_asset["fps"] if file_asset and file_asset.get("fps") else kwargs.get("fps") or 16)
+        if file_asset:
+            import imageio.v2 as imageio
+            from PIL import Image
+
+            reader = imageio.get_reader(file_asset["path"], "ffmpeg")
+            try:
+                selected_frames = [Image.fromarray(reader.get_data(index)).convert("RGB") for index in normalized]
+            finally:
+                reader.close()
+        else:
+            selected_frames = [frames[index] for index in normalized]
+        return {
+            "frames": selected_frames,
+            "selected_indices": normalized,
+            "timestamps": [index / fps for index in normalized],
+        }
+
+
+class Trim(NodeBase):
+    """Trim a video by frame range or seconds."""
+
+    label = "Trim Video"
+    category = "Video"
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video", "str"]},
+        "range_mode": {"label": "Range", "type": "string", "options": ["frames", "seconds"], "default": "seconds"},
+        "start": {"label": "Start", "type": "float", "default": 0, "min": 0},
+        "end": {"label": "End (0 = end)", "type": "float", "default": 0, "min": 0},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 0.01},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        frames = _pil_frames(kwargs.get("video"))
+        fps = float(kwargs.get("fps") or 16)
+        scale = fps if kwargs.get("range_mode") == "seconds" else 1
+        start = max(0, int(round(float(kwargs.get("start") or 0) * scale)))
+        end_value = float(kwargs.get("end") or 0)
+        end = int(round(end_value * scale)) if end_value > 0 else len(frames)
+        if end < start:
+            raise ValueError("Trim Video end must not be before start.")
+        output = frames[start:min(end, len(frames))]
+        return {"output": output, "frames": len(output), "duration_seconds": len(output) / fps}
+
+
+class Concatenate(NodeBase):
+    """Concatenate an arbitrary ordered clip collection with optional crossfades."""
+
+    label = "Concatenate Videos"
+    category = "Video"
+    params = {
+        "clips": {"label": "Clips", "display": "input", "type": ["video_collection", "collection", "video"]},
+        "transition_seconds": {"label": "Crossfade", "type": "float", "default": 0, "min": 0},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 0.01},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        clips = _video_collection(kwargs.get("clips"))
+        if not clips:
+            raise ValueError("Concatenate Videos needs at least one clip.")
+        fps = float(kwargs.get("fps") or 16)
+        transition = round(max(0.0, float(kwargs.get("transition_seconds") or 0)) * fps)
+        output = _concatenate_clips(clips, transition_frames=transition)
+        return {"output": output, "frames": len(output), "duration_seconds": len(output) / fps}
+
+
+class StackTile(NodeBase):
+    """Arrange a collection of videos into a synchronized video wall."""
+
+    label = "Stack / Tile Videos"
+    category = "Video"
+    params = {
+        "videos": {"label": "Videos", "display": "input", "type": ["video_collection", "collection"]},
+        "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1},
+        "sync": {"label": "Length", "type": "string", "options": ["shortest", "longest_hold"], "default": "longest_hold"},
+        "gap": {"label": "Gap", "type": "int", "default": 0, "min": 0},
+        "background": {"label": "Background", "type": "string", "default": "black"},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from math import ceil
+        from PIL import Image, ImageColor
+
+        clips = _video_collection(kwargs.get("videos"))
+        if not clips:
+            raise ValueError("Stack / Tile Videos needs at least one clip.")
+        width, height = clips[0][0].size
+        columns = max(1, int(kwargs.get("columns") or 1))
+        rows = ceil(len(clips) / columns)
+        gap = max(0, int(kwargs.get("gap") or 0))
+        count = min(map(len, clips)) if kwargs.get("sync") == "shortest" else max(map(len, clips))
+        output = []
+        for frame_index in range(count):
+            canvas = Image.new(
+                "RGB",
+                (columns * width + max(0, columns - 1) * gap, rows * height + max(0, rows - 1) * gap),
+                ImageColor.getrgb(str(kwargs.get("background") or "black")),
+            )
+            for clip_index, clip in enumerate(clips):
+                source = clip[min(frame_index, len(clip) - 1)]
+                if source.size != (width, height):
+                    source = source.resize((width, height), Image.Resampling.LANCZOS)
+                left = (clip_index % columns) * (width + gap)
+                top = (clip_index // columns) * (height + gap)
+                canvas.paste(source, (left, top))
+            output.append(canvas)
+        return {"output": output, "frames": len(output)}
+
+
+class Reverse(NodeBase):
+    """Reverse frame order, optionally excluding duplicate endpoints for looping."""
+
+    label = "Reverse Video"
+    category = "Video"
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video", "str"]},
+        "exclude_endpoints": {"label": "Exclude Endpoints", "type": "bool", "default": False},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+    }
+
+    def execute(self, **kwargs):
+        frames = _pil_frames(kwargs.get("video"))
+        output = list(reversed(frames[1:-1] if kwargs.get("exclude_endpoints") and len(frames) > 2 else frames))
+        return {"output": output}
+
+
+class Crossfade(NodeBase):
+    """Join two clips with a frame-accurate crossfade."""
+
+    label = "Crossfade Videos"
+    category = "Video"
+    params = {
+        "first": {"label": "First", "display": "input", "type": ["video", "str"]},
+        "second": {"label": "Second", "display": "input", "type": ["video", "str"]},
+        "duration_seconds": {"label": "Duration", "type": "float", "default": 0.35, "min": 0},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 0.01},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        fps = float(kwargs.get("fps") or 16)
+        output = _concatenate_clips(
+            [_pil_frames(kwargs.get("first")), _pil_frames(kwargs.get("second"))],
+            transition_frames=round(max(0.0, float(kwargs.get("duration_seconds") or 0)) * fps),
+        )
+        if not output:
+            raise ValueError("Crossfade Videos needs two non-empty clips.")
+        return {"output": output, "frames": len(output)}
+
+
+class FirstLastSegmentBuilder(NodeBase):
+    """Turn ordered keyframes into deterministic first/last-frame generation jobs."""
+
+    label = "Build First / Last Segments"
+    category = "Video"
+    params = {
+        "keyframes": {"label": "Keyframes", "display": "input", "type": "image"},
+        "prompts": {"label": "Segment Prompts", "display": "textarea", "type": "text", "default": "[]"},
+        "settings": {"label": "Shared Settings (JSON)", "display": "textarea", "type": "text", "default": "{}"},
+        "jobs": {"label": "Segment Jobs", "display": "output", "type": "collection"},
+        "count": {"label": "Segments", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        import json
+
+        keyframes = kwargs.get("keyframes")
+        keyframes = keyframes if isinstance(keyframes, list) else [keyframes] if keyframes is not None else []
+        if len(keyframes) < 2:
+            raise ValueError("Build First / Last Segments needs at least two keyframes.")
+        raw_prompts = kwargs.get("prompts")
+        if isinstance(raw_prompts, str):
+            text = raw_prompts.strip()
+            if text.startswith("["):
+                prompts = json.loads(text)
+            else:
+                prompts = text.splitlines()
+        else:
+            prompts = list(raw_prompts or [])
+        settings = kwargs.get("settings")
+        settings = json.loads(settings or "{}") if isinstance(settings, str) else dict(settings or {})
+        if not isinstance(settings, dict):
+            raise ValueError("Shared Settings must be a JSON object.")
+        jobs = []
+        for index in range(len(keyframes) - 1):
+            jobs.append(
+                {
+                    "index": index,
+                    "first_frame": keyframes[index],
+                    "last_frame": keyframes[index + 1],
+                    "prompt": str(prompts[index]) if index < len(prompts) else "",
+                    "settings": dict(settings),
+                }
+            )
+        return {"jobs": jobs, "count": len(jobs)}
+
+
+class KeyframeChain(NodeBase):
+    """Assemble clips collected from a loop over first/last-frame segment jobs."""
+
+    label = "Assemble Keyframe Chain"
+    category = "Video"
+    params = {
+        "clips": {"label": "Generated Clips", "display": "input", "type": ["video_collection", "collection"]},
+        "boundary": {"label": "Boundary", "type": "string", "options": ["keep", "drop_duplicate", "crossfade"], "default": "drop_duplicate"},
+        "crossfade_seconds": {"label": "Crossfade", "type": "float", "default": 0.2, "min": 0},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 0.01},
+        "output": {"label": "Video", "display": "output", "type": "video"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        clips = _video_collection(kwargs.get("clips"))
+        if not clips:
+            raise ValueError("Assemble Keyframe Chain needs generated clips.")
+        boundary = str(kwargs.get("boundary") or "drop_duplicate")
+        if boundary == "drop_duplicate":
+            clips = [clips[0], *[clip[1:] if len(clip) > 1 else [] for clip in clips[1:]]]
+            transition = 0
+        elif boundary == "crossfade":
+            transition = round(float(kwargs.get("crossfade_seconds") or 0) * float(kwargs.get("fps") or 16))
+        elif boundary == "keep":
+            transition = 0
+        else:
+            raise ValueError(f"Unsupported keyframe boundary policy {boundary!r}.")
+        output = _concatenate_clips(clips, transition_frames=transition)
+        return {"output": output, "frames": len(output)}
+
+
+class ExportAsset(NodeBase):
+    """Stream video frames to a retained file-backed asset."""
+
+    label = "Export Retained Video Asset"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video_asset", "video", "str"]},
+        "fps": {"label": "FPS", "type": "float", "default": 16, "min": 1, "max": 120},
+        "quality": {"label": "Quality", "type": "int", "default": 8, "min": 1, "max": 10},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        import imageio
+        import numpy as np
+        from modiff.media_assets import (
+            allocate_video_path,
+            coerce_video_asset,
+            current_task_id,
+            register_derived_video_asset,
+            register_video_asset,
+            run_ffmpeg,
+        )
+
+        video = kwargs.get("video")
+        task_id = current_task_id()
+        asset_id, destination = allocate_video_path(task_id=task_id)
+        fps = float(kwargs.get("fps") or 16)
+        if isinstance(video, (str, dict)):
+            source = coerce_video_asset(video)
+            quality = int(kwargs.get("quality") or 8)
+            run_ffmpeg(
+                [
+                    "-i", source["path"],
+                    "-map", "0:v:0", "-map", "0:a?",
+                    "-vf", f"fps={fps}",
+                    "-c:v", "libx264", "-crf", str(max(12, 32 - quality * 2)),
+                    "-c:a", "aac", "-movflags", "+faststart",
+                ],
+                destination,
+            )
+            asset = register_derived_video_asset(
+                destination,
+                asset_id=asset_id,
+                task_id=task_id,
+                source_assets=[source],
+                operation="retain",
+                pinned=bool(kwargs.get("pin", False)),
+            )
+            return {"asset": asset, "file": str(destination), "duration_seconds": asset["duration_seconds"]}
+
+        frames = _pil_frames(video)
+        if not frames:
+            raise ValueError("Export Retained Video Asset needs non-empty video frames.")
+        writer = imageio.get_writer(
+            destination,
+            fps=fps,
+            quality=int(kwargs.get("quality") or 8),
+            codec="libx264",
+        )
+        try:
+            for index, frame in enumerate(frames):
+                writer.append_data(np.asarray(frame.convert("RGB")))
+                if index % max(1, len(frames) // 100) == 0:
+                    self.progress(index / len(frames), phase="encoding", message="Writing retained video")
+        finally:
+            writer.close()
+        width, height = frames[0].size
+        asset = register_video_asset(
+            destination,
+            asset_id=asset_id,
+            task_id=task_id,
+            width=width,
+            height=height,
+            fps=fps,
+            frame_count=len(frames),
+            temporary=True,
+            pinned=bool(kwargs.get("pin", False)),
+        )
+        return {"asset": asset, "file": str(destination), "duration_seconds": asset["duration_seconds"]}
+
+
+def _file_asset_collection(value):
+    from modiff.media_assets import coerce_video_asset
+
+    values = list(value) if isinstance(value, (list, tuple)) else [value]
+    assets = [coerce_video_asset(item) for item in values if item not in (None, "")]
+    if not assets:
+        raise ValueError("At least one retained video asset or file path is required.")
+    return assets
+
+
+def _video_filter(asset, label, *, width, height, fps, duration=None):
+    # `xfade` rejects inputs whose filter-link frame rate is unspecified.  The
+    # source MP4 can be perfectly CFR while a preceding `xfade` link still
+    # reports 1/0, so normalize both the rate and time base explicitly.
+    fps_text = f"{float(fps):.12g}"
+    expression = (
+        f"[{label}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,"
+        f"settb=expr=1/{fps_text},setpts=PTS-STARTPTS,fps={fps_text}"
+    )
+    if duration is not None:
+        expression += f",tpad=stop_mode=clone:stop_duration={max(0.0, duration)}"
+    return expression
+
+
+def _derived_asset_result(destination, asset_id, sources, operation, *, pin=False):
+    from modiff.media_assets import current_task_id, register_derived_video_asset
+
+    asset = register_derived_video_asset(
+        destination,
+        asset_id=asset_id,
+        task_id=current_task_id(),
+        source_assets=sources,
+        operation=operation,
+        pinned=pin,
+    )
+    return {
+        "asset": asset,
+        "file": str(destination),
+        "duration_seconds": asset["duration_seconds"],
+        "frames": asset["frame_count"],
+    }
+
+
+class TrimAsset(NodeBase):
+    """Trim a retained video without loading its full frame sequence into memory."""
+
+    label = "Trim Retained Video"
+    category = "Video"
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video_asset", "str"]},
+        "start_seconds": {"label": "Start", "type": "float", "default": 0, "min": 0},
+        "end_seconds": {"label": "End (0 = end)", "type": "float", "default": 0, "min": 0},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+
+        source = _file_asset_collection(kwargs.get("video"))[0]
+        start = max(0.0, float(kwargs.get("start_seconds") or 0))
+        end = float(kwargs.get("end_seconds") or 0)
+        if end and end <= start:
+            raise ValueError("Trim Retained Video end must be after start.")
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        args = ["-ss", str(start)]
+        if end:
+            args += ["-to", str(end)]
+        args += [
+            "-i", source["path"], "-map", "0:v:0", "-map", "0:a?",
+            "-c:v", "libx264", "-crf", "18", "-c:a", "aac", "-movflags", "+faststart",
+        ]
+        run_ffmpeg(args, destination)
+        return _derived_asset_result(destination, asset_id, [source], "trim", pin=bool(kwargs.get("pin")))
+
+
+class ConcatenateAssets(NodeBase):
+    """Join retained videos through FFmpeg with bounded process memory."""
+
+    label = "Join Retained Videos"
+    category = "Video"
+    params = {
+        "clips": {"label": "Clips", "display": "input", "type": ["video_asset_collection", "collection"]},
+        "transition_seconds": {"label": "Crossfade", "type": "float", "default": 0, "min": 0, "max": 5},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+
+        sources = _file_asset_collection(kwargs.get("clips"))
+        first = sources[0]
+        width, height = int(first["width"]), int(first["height"])
+        fps = float(first["fps"] or 16)
+        transition = max(0.0, float(kwargs.get("transition_seconds") or 0))
+        filters = [_video_filter(source, index, width=width, height=height, fps=fps) + f"[v{index}]" for index, source in enumerate(sources)]
+        if len(sources) == 1:
+            filters.append("[v0]null[outv]")
+        elif transition <= 0:
+            filters.append("".join(f"[v{index}]" for index in range(len(sources))) + f"concat=n={len(sources)}:v=1:a=0[outv]")
+        else:
+            previous = "v0"
+            elapsed = float(first["duration_seconds"])
+            fps_text = f"{fps:.12g}"
+            for index, source in enumerate(sources[1:], 1):
+                usable = min(transition, max(0.001, elapsed - 1 / fps), max(0.001, float(source["duration_seconds"]) - 1 / fps))
+                output = "outv" if index == len(sources) - 1 else f"x{index}"
+                raw_output = f"raw_{output}"
+                offset = max(0.0, elapsed - usable)
+                filters.append(
+                    f"[{previous}][v{index}]xfade=transition=fade:duration={usable}:offset={offset}[{raw_output}]"
+                )
+                # FFmpeg 7 can drop the negotiated frame-rate metadata from an
+                # xfade output. Reassert it before feeding that link into the
+                # next xfade; otherwise a chain of three or more clips fails
+                # with `current rate of 1/0 is invalid`.
+                filters.append(
+                    f"[{raw_output}]settb=expr=1/{fps_text},setpts=PTS-STARTPTS,fps={fps_text}[{output}]"
+                )
+                previous = output
+                elapsed += float(source["duration_seconds"]) - usable
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        inputs = [part for source in sources for part in ("-i", source["path"])]
+        run_ffmpeg(
+            inputs
+            + [
+                "-filter_complex", ";".join(filters), "-map", "[outv]",
+                "-r", str(fps), "-an", "-c:v", "libx264", "-crf", "18", "-movflags", "+faststart",
+            ],
+            destination,
+        )
+        return _derived_asset_result(destination, asset_id, sources, "concatenate", pin=bool(kwargs.get("pin")))
+
+
+class StackTileAssets(NodeBase):
+    """Build a synchronized retained-video wall without Python frame materialization."""
+
+    label = "Tile Retained Videos"
+    category = "Video"
+    params = {
+        "videos": {"label": "Videos", "display": "input", "type": ["video_asset_collection", "collection"]},
+        "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1},
+        "sync": {"label": "Length", "type": "string", "options": ["shortest", "longest_hold"], "default": "longest_hold"},
+        "gap": {"label": "Gap", "type": "int", "default": 0, "min": 0},
+        "background": {"label": "Background", "type": "string", "default": "black"},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+
+        sources = _file_asset_collection(kwargs.get("videos"))
+        first = sources[0]
+        width, height, fps = int(first["width"]), int(first["height"]), float(first["fps"] or 16)
+        columns = max(1, int(kwargs.get("columns") or 1))
+        gap = max(0, int(kwargs.get("gap") or 0))
+        durations = [float(source["duration_seconds"]) for source in sources]
+        output_duration = min(durations) if kwargs.get("sync") == "shortest" else max(durations)
+        filters = []
+        for index, source in enumerate(sources):
+            hold = output_duration - float(source["duration_seconds"]) if kwargs.get("sync") != "shortest" else None
+            filters.append(_video_filter(source, index, width=width, height=height, fps=fps, duration=hold) + f"[v{index}]")
+        layout = "|".join(f"{index % columns * (width + gap)}_{index // columns * (height + gap)}" for index in range(len(sources)))
+        filters.append("".join(f"[v{index}]" for index in range(len(sources))) + f"xstack=inputs={len(sources)}:layout={layout}:fill={kwargs.get('background') or 'black'}[outv]")
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        inputs = [part for source in sources for part in ("-i", source["path"])]
+        run_ffmpeg(
+            inputs
+            + [
+                "-filter_complex", ";".join(filters), "-map", "[outv]",
+                "-r", str(fps), "-t", str(output_duration),
+                "-an", "-c:v", "libx264", "-crf", "18", "-movflags", "+faststart",
+            ],
+            destination,
+        )
+        return _derived_asset_result(destination, asset_id, sources, "tile", pin=bool(kwargs.get("pin")))
+
+
+class ReverseAsset(NodeBase):
+    """Reverse a retained clip on disk; audio can be remuxed after visual editing."""
+
+    label = "Reverse Retained Video"
+    category = "Video"
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video_asset", "str"]},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+
+        source = _file_asset_collection(kwargs.get("video"))[0]
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        run_ffmpeg(["-i", source["path"], "-vf", "reverse", "-an", "-c:v", "libx264", "-crf", "18", "-movflags", "+faststart"], destination)
+        return _derived_asset_result(destination, asset_id, [source], "reverse", pin=bool(kwargs.get("pin")))
+
+
+class CrossfadeAssets(NodeBase):
+    """Crossfade two retained clips through the same scalable join implementation."""
+
+    label = "Crossfade Retained Videos"
+    category = "Video"
+    params = {
+        "first": {"label": "First", "display": "input", "type": ["video_asset", "str"]},
+        "second": {"label": "Second", "display": "input", "type": ["video_asset", "str"]},
+        "duration_seconds": {"label": "Duration", "type": "float", "default": 0.35, "min": 0, "max": 5},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds_output": {"label": "Output Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        result = ConcatenateAssets().execute(
+            clips=[kwargs.get("first"), kwargs.get("second")],
+            transition_seconds=kwargs.get("duration_seconds"),
+            pin=kwargs.get("pin"),
+        )
+        result["duration_seconds_output"] = result.pop("duration_seconds")
+        return result
+
+
+class MuxAudioAsset(NodeBase):
+    """Attach loaded or generated audio to a retained video without decoding its frames."""
+
+    label = "Add Audio to Retained Video"
+    category = "Video"
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video_asset", "str"]},
+        "audio": {"label": "Audio", "display": "input", "type": ["audio", "str"]},
+        "fit": {"label": "Duration", "type": "string", "options": ["match_video", "shortest"], "default": "match_video"},
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        import numpy as np
+        from scipy.io import wavfile
+        from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+
+        source = _file_asset_collection(kwargs.get("video"))[0]
+        audio = kwargs.get("audio")
+        temporary_audio = None
+        if isinstance(audio, str):
+            audio_path = resolve_runtime_input_path(audio).resolve()
+        elif isinstance(audio, dict) and (audio.get("path") or audio.get("file")):
+            audio_path = resolve_runtime_input_path(str(audio.get("path") or audio.get("file"))).resolve()
+        else:
+            samples = audio.get("samples", audio.get("audio")) if isinstance(audio, dict) else audio
+            if samples is None:
+                raise ValueError("Add Audio to Retained Video needs loaded or generated audio.")
+            sample_rate = int(audio.get("sample_rate") or 48000) if isinstance(audio, dict) else 48000
+            array = np.asarray(samples, dtype=np.float32)
+            while array.ndim > 2:
+                array = array[0]
+            if array.ndim == 2 and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
+                array = array.T
+            temporary_audio = Path(source["path"]).with_name(f".{Path(source['path']).stem}-audio.wav")
+            wavfile.write(temporary_audio, sample_rate, (np.clip(array, -1, 1) * 32767).astype(np.int16))
+            audio_path = temporary_audio
+        if not audio_path.is_file():
+            raise FileNotFoundError(f"Audio file does not exist: {audio_path}")
+
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        args = [
+            "-i", source["path"], "-i", str(audio_path),
+            "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k",
+        ]
+        if kwargs.get("fit") == "shortest":
+            args.append("-shortest")
+        else:
+            args += ["-af", "apad", "-t", str(source["duration_seconds"])]
+        args += ["-movflags", "+faststart"]
+        try:
+            run_ffmpeg(args, destination)
+        finally:
+            if temporary_audio is not None:
+                temporary_audio.unlink(missing_ok=True)
+        return _derived_asset_result(destination, asset_id, [source], "mux_audio", pin=bool(kwargs.get("pin")))
+
+
+class CleanupAssets(NodeBase):
+    """Remove retained temporary media with pinned-asset protection."""
+
+    label = "Clean Temporary Media"
+    category = "Video"
+    params = {
+        "scope": {"label": "Scope", "type": "string", "options": ["current_run", "older_than", "all_unpinned"], "default": "current_run"},
+        "older_than_hours": {"label": "Older Than Hours", "type": "float", "default": 24, "min": 0},
+        "report": {"label": "Cleanup Report", "display": "output", "type": "string"},
+        "removed_count": {"label": "Removed", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        import json
+        from modiff.media_assets import cleanup_media_assets
+
+        scope = str(kwargs.get("scope") or "current_run")
+        task_id = None
+        older = None
+        if scope == "current_run":
+            try:
+                from modiff.server import server
+                task_id = (server.current_task or {}).get("task_id")
+            except Exception:
+                task_id = None
+            if not task_id:
+                raise ValueError("Current-run cleanup is only available while a task identity is active.")
+        elif scope == "older_than":
+            older = float(kwargs.get("older_than_hours") or 0) * 3600
+        elif scope != "all_unpinned":
+            raise ValueError(f"Unsupported temporary media cleanup scope {scope!r}.")
+        report = cleanup_media_assets(task_id=task_id, older_than_seconds=older)
+        return {"report": json.dumps(report, sort_keys=True), "removed_count": len(report["removed"])}

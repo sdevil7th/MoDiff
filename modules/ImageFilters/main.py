@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from modiff.NodeBase import NodeBase
 from utils.torch_utils import ImageToTensor, TensorToImage
 
@@ -127,7 +128,6 @@ class AdaptiveSharpening(NodeBase):
     @staticmethod
     def sharpen(image, sharpness):
         import torch
-        import torch.nn.functional as F
 
         epsilon = 1e-5
 

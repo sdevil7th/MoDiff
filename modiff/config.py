@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import configparser
 import logging
 import os
@@ -46,7 +47,10 @@ class Config:
             'secure': cfg.getboolean('server', 'secure', fallback=False),
             'certfile': cfg.get('server', 'ssl_cert', fallback=None),
             'keyfile': cfg.get('server', 'ssl_key', fallback=None),
-            'client_max_size': cfg.getint('server', 'client_max_size', fallback=1024**4),
+            # Keep the default aligned with config.example.ini.  The previous
+            # 1 TiB fallback effectively disabled aiohttp's request-body guard
+            # and allowed a single client to exhaust process memory or disk.
+            'client_max_size': cfg.getint('server', 'client_max_size', fallback=1024**3),
         }
         if self.server['certfile'] and self.server['keyfile']:
             if not os.path.exists(self.server['certfile']):

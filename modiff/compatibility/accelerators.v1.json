@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "revision": "2026.08.04-topology-xpu-contract",
+  "validated_at": "2026-08-04",
+  "python": "3.12.*",
+  "profiles": {
+    "nvidia-cuda": {
+      "os": ["linux", "windows"], "architectures": ["x86_64"], "tier": "supported",
+      "torch": "2.8.0", "torchvision": "0.23.0", "torchaudio": "2.8.0", "cuda": "12.8", "rocm": null,
+      "index": "https://download.pytorch.org/whl/cu128", "requirements": "requirements/profiles/nvidia-cuda.txt",
+      "required": [], "prohibited": ["amd-rocm-linux", "amd-pytorch-windows"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "nvidia-cuda", "fp16", "cuda-extension"],
+      "proof": "release-ci-and-live-nvidia", "sources": ["https://pytorch.org/get-started/locally/"]
+    },
+    "amd-rocm-linux": {
+      "os": ["linux"], "architectures": ["x86_64"], "tier": "conditional",
+      "torch": "2.9.1+rocm7.2.0", "torchvision": "0.24.0+rocm7.2.0", "torchaudio": "2.9.0+rocm7.2.0", "triton": "3.5.1+rocm7.2.0", "cuda": null, "rocm": "7.2",
+      "index": "https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/", "requirements": "requirements/profiles/amd-rocm-linux.txt",
+      "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "amd-rocm", "fp16", "unified-memory"],
+      "device_families": ["gfx1150", "gfx1151"],
+      "qualified_os_versions": ["24.04.3"], "experimental_os_versions": ["26.04"], "minimum_kernel": "6.14.1018",
+      "wheel_hashes": {
+        "torch": "199ba10a8b8b5a7eef64985bf87a41f0f4b28d49b1b861aa2768f6c5314c9b86",
+        "torchvision": "071667fd26e9af4e05127eabc572015d1f629e318096abc854b6c946f346359b",
+        "torchaudio": "cf78fd7774ca6187254a63051d07c46ab1f4bbd5a47e64b8d372d3c58e52979a",
+        "triton": "73d435248c3a207fec6f5a7a2aba631c7079a61230ce4aaa8cde02e800024b47"
+      },
+      "proof": "amd-qualified-stack-awaiting-modiff-model-proof", "sources": ["https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/compatibility/compatibilityryz/native_linux/native_linux_compatibility.html", "https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/install/installryz/native_linux/install-pytorch.html"]
+    },
+    "amd-pytorch-windows": {
+      "os": ["windows"], "architectures": ["x86_64"], "tier": "conditional",
+      "torch": "2.9.1+rocm7.2.1", "torchvision": "0.24.1+rocm7.2.1", "torchaudio": "2.9.1+rocm7.2.1", "cuda": null, "rocm": "7.2.1",
+      "index": null, "requirements": "requirements/profiles/amd-pytorch-windows.txt",
+      "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "amd-rocm", "fp16"],
+      "device_families": ["gfx1100", "gfx1101", "gfx1150", "gfx1151", "gfx1200", "gfx1201"],
+      "qualified_os_versions": ["11"],
+      "proof": "official-pytorch-distribution-awaiting-modiff-model-proof",
+      "sources": ["https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/windows/windows_compatibility.html", "https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installryz/windows/install-pytorch.html"]
+    },
+    "intel-xpu": {
+      "os": ["linux", "windows"], "architectures": ["x86_64"], "tier": "preview",
+      "torch": "2.12.1", "torchvision": "0.27.1", "torchaudio": null, "cuda": null, "rocm": null,
+      "index": "https://download.pytorch.org/whl/xpu", "requirements": "requirements/profiles/intel-xpu.txt",
+      "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "intel-xpu", "fp16", "bf16", "integrated-memory"],
+      "device_families": ["alchemist", "battlemage", "meteor-lake", "arrow-lake", "lunar-lake", "panther-lake", "ponte-vecchio"],
+      "proof": "official-pytorch-xpu-prototype-awaiting-modiff-model-proof",
+      "sources": ["https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html"]
+    },
+    "apple-mps": {
+      "os": ["macos"], "architectures": ["arm64"], "tier": "supported",
+      "torch": "2.8.0", "torchvision": "0.23.0", "torchaudio": "2.8.0", "cuda": null, "rocm": null,
+      "index": "https://pypi.org/simple", "requirements": "requirements/profiles/apple-mps.txt",
+      "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "apple-mps", "fp16", "unified-memory"],
+      "proof": "release-ci-and-live-apple", "sources": ["https://pytorch.org/docs/stable/notes/mps.html"]
+    },
+    "cpu": {
+      "os": ["linux", "windows", "macos"], "architectures": ["x86_64", "arm64"], "tier": "supported",
+      "torch": "2.8.0", "torchvision": "0.23.0", "torchaudio": "2.8.0", "cuda": null, "rocm": null,
+      "index": "https://download.pytorch.org/whl/cpu", "requirements": "requirements/profiles/cpu.txt",
+      "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float32", "capabilities": [], "proof": "hosted-ci", "sources": ["https://pytorch.org/get-started/locally/"]
+    }
+  }
+}

@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 import ast
 from os import scandir, path
@@ -8,9 +9,9 @@ logger = logging.getLogger('modiff')
 logger.info("Loading modules...")
 
 # preload common functions
-from utils.huggingface import local_files_only, get_local_model_ids
-from utils.torch_utils import str_to_dtype, DEVICE_LIST, DEFAULT_DEVICE, CPU_DEVICE, IS_CUDA
-from modiff.modelstore import modelstore
+from utils.huggingface import local_files_only, get_local_model_ids  # noqa: F401 - AST registry preloads
+from utils.torch_utils import str_to_dtype, DEVICE_LIST, DEFAULT_DEVICE, CPU_DEVICE, IS_CUDA  # noqa: F401 - AST registry preloads
+from modiff.modelstore import modelstore  # noqa: F401 - AST registry preload
 
 MODULE_MAP = {}
 
@@ -48,19 +49,6 @@ def safe_eval_ast_node_recursive(node: ast.AST, module_obj: ModuleType) -> Any:
         # If it's a tuple, recursively evaluate its elements
         elif isinstance(node, ast.Tuple):
             return tuple(safe_eval_ast_node_recursive(item, module_obj) for item in node.elts)
-        # If it's a list comprehension, evaluate it
-        elif isinstance(node, ast.ListComp):
-            try:
-                expr = ast.Expression(body=node)
-                ast.fix_missing_locations(expr)
-
-                # Compile the expression and then evaluate it in the context of the module
-                code = compile(expr, filename="<ast>", mode="eval")
-                return eval(code, module_obj.__dict__)
-            except Exception as e:
-                logger.error(f"Error evaluating list comprehension in module '{module_obj.__name__}': {e}", exc_info=True)
-                return ast.unparse(node) # Fallback to string on error
-
         # If it's a name (e.g., a variable or function name), try to resolve it.
         elif isinstance(node, ast.Name):
             try:

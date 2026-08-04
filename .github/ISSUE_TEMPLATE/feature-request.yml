@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a focused change within MoDiff's Hugging Face Diffusers runtime boundary.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    attributes:
+      label: Motivation
+      description: Describe the user problem before describing an implementation.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed user experience
+      description: Show how a user would invoke and understand the feature.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Diffusers support
+      description: Link the relevant official Diffusers or Modular Diffusers API/model documentation and explain how the proposal stays inside that execution boundary.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alternatives and compatibility
+      description: Note existing MoDiff patterns, graph/API compatibility, dependencies, hardware needs, and migration concerns.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Validation plan
+      description: List focused unit, contract, integration, documentation, and live-model checks as applicable.
+    validations:
+      required: true

@@ -12,20 +12,28 @@ from modiff.auto_resource import (  # noqa: E402
     AUTO_MODEL_REQUIREMENTS,
     FLUX_KONTEXT_NVFP4_REPO,
     QWEN_IMAGE_EDIT_PREQUANTIZED_REPO,
+    QWEN_IMAGE_LAYERED_REPO,
     READY_PROOF_STATUSES,
     WAN_VACE_REPO,
+    Z_IMAGE_REPO,
+    _candidate_history_signature,
+    _requirements_missing_for_dict,
     _requirements_missing,
+    _runtime_key,
+    _validate_snapshot_shards,
+    auto_resource_history_key,
     build_auto_resource_plan,
     record_auto_resource_failure,
     record_auto_resource_success,
 )
 from modiff.diffusers_profiles import (  # noqa: E402
     ACE_STEP_REPO,
-    FLUX_KONTEXT_REPO,
     FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO,
+    LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
+    WAN_T2V_1_3B_REPO,
 )
 from modiff.auto_resource import FLUX_DEV_FP8_REPO  # noqa: E402
 
@@ -34,6 +42,12 @@ GIB = 1024**3
 
 
 class AutoResourcePlanTests(unittest.TestCase):
+    def test_resource_history_uses_stable_resource_fingerprint(self):
+        self.assertEqual(
+            _runtime_key({"fingerprint": "execution", "resourceFingerprint": "resource"}),
+            "resource",
+        )
+
     def _qwen_payload(self):
         return {
             "form": {
@@ -62,14 +76,27 @@ class AutoResourcePlanTests(unittest.TestCase):
             },
         }
 
-    def _hardware(self, *, vram_gib=16, free_gib=14, system_ram_gib=32, disk_free_gib=128):
+    def _hardware(
+        self,
+        *,
+        vram_gib=16,
+        free_gib=14,
+        system_ram_gib=32,
+        disk_free_gib=128,
+        platform="linux",
+        architecture="x86_64",
+        capability=None,
+    ):
         return {
             "runtimeFingerprint": "unit-test-runtime",
+            "platform": platform,
+            "architecture": architecture,
             "accelerator": {
                 "kind": "cuda",
                 "name": "Mock CUDA",
                 "totalBytes": vram_gib * GIB,
                 "freeBytes": free_gib * GIB,
+                "capability": capability,
                 "band": "unit-test",
             },
             "systemMemory": {
@@ -84,6 +111,33 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "freeBytes": disk_free_gib * GIB,
             },
         }
+
+    def _shared_rocm_hardware(
+        self,
+        *,
+        dedicated_gib=2,
+        accessible_gib=96,
+        system_ram_gib=128,
+        disk_free_gib=256,
+    ):
+        hardware = self._hardware(
+            vram_gib=dedicated_gib,
+            free_gib=max(0, dedicated_gib - 0.25),
+            system_ram_gib=system_ram_gib,
+            disk_free_gib=disk_free_gib,
+        )
+        hardware["accelerator"].update(
+            {
+                "backend": "rocm",
+                "vendor": "amd",
+                "memoryKind": "shared",
+                "dedicatedTotalBytes": dedicated_gib * GIB,
+                "sharedTotalBytes": accessible_gib * GIB,
+                "accessibleTotalBytes": accessible_gib * GIB,
+                "band": "shared_memory",
+            }
+        )
+        return hardware
 
     def _normalized_mps_runtime(self):
         return {
@@ -174,6 +228,18 @@ class AutoResourcePlanTests(unittest.TestCase):
         blobs.mkdir(parents=True, exist_ok=True)
         (blobs / "unit.incomplete").write_bytes(b"partial")
 
+    def test_standalone_pth_snapshot_is_a_complete_app_managed_artifact(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            snapshot = Path(temp_dir) / "snapshot"
+            snapshot.mkdir()
+            (snapshot / "RealESRGAN_x4plus.pth").write_bytes(b"unit-test")
+
+            status = _validate_snapshot_shards(snapshot)
+
+        self.assertTrue(status["complete"])
+        self.assertEqual(status["missingFiles"], [])
+        self.assertIn("direct weight files", status["reason"])
+
     def _write_incomplete_index_snapshot(self, cache_dir, repo, revision="unit"):
         snapshot = self._repo_cache_path(cache_dir, repo) / "snapshots" / revision
         (snapshot / "text_encoder").mkdir(parents=True, exist_ok=True)
@@ -261,6 +327,41 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertNotIn("probe", selected)
         self.assertFalse(selected["requiresLocalProbe"])
         self.assertEqual(plan["readiness"], "ready")
+        self.assertEqual(plan["schemaVersion"], 2)
+        self.assertEqual(plan["compatibility"]["state"], "ready")
+        self.assertEqual(plan["compatibility"]["source"], "backend_auto_planner")
+
+    def test_constrained_auto_selects_only_compatible_recipe_and_explains_every_rejection(self):
+        plan = self._plan(
+            self._qwen_payload(),
+            runtime=self._runtime(vram_gib=16, free_gib=14),
+            repos=[QWEN_IMAGE_2512_REPO, QWEN_IMAGE_2512_PREQUANTIZED_REPO],
+            hardware=self._hardware(vram_gib=16, free_gib=14, system_ram_gib=32),
+        )
+
+        selected = plan["selectedCandidate"]
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(selected["resolvedArtifact"], QWEN_IMAGE_2512_PREQUANTIZED_REPO)
+        self.assertIn(selected["proof"]["status"], READY_PROOF_STATUSES)
+        self.assertTrue(selected["installed"])
+        self.assertTrue(selected["artifactStatus"]["complete"])
+        self.assertEqual(selected["offloadMode"], "model_cpu")
+        self.assertFalse(selected["requirementsMissing"])
+
+        rejected = [
+            candidate
+            for candidate in plan["candidates"]
+            if candidate["id"] != selected["id"] and candidate["proof"]["status"] not in READY_PROOF_STATUSES
+        ]
+        self.assertTrue(rejected)
+        for candidate in rejected:
+            explanation = (
+                candidate.get("skipReason")
+                or (candidate.get("proof") or {}).get("message")
+                or "; ".join(candidate.get("requirementsMissing") or [])
+                or "; ".join(candidate.get("knownBadReasons") or [])
+            )
+            self.assertTrue(explanation, candidate["id"])
 
     def test_wan_uses_minimum_for_admission_and_keeps_recommended_metadata(self):
         plan = self._plan(
@@ -276,6 +377,66 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["requirements"]["recommended"]["systemRamBytes"], 32 * GIB)
         self.assertEqual(selected["resolvedArtifact"], WAN_VACE_REPO)
         self.assertIn("hardwareSnapshot", plan)
+
+    def test_wan_high_memory_auto_avoids_unnecessary_cpu_offload(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "WanVACEPipeline",
+                    "mode": "text_to_video",
+                    "offloadMode": "model_cpu",
+                }
+            },
+            runtime=self._runtime(vram_gib=48, free_gib=44),
+            repos=[WAN_VACE_REPO],
+            hardware=self._hardware(vram_gib=48, free_gib=44, system_ram_gib=64),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
+
+    def test_wan_preservation_modes_use_strength_capable_video_to_video_pipeline(self):
+        for mode in ("video_to_video", "video_color_edit"):
+            with self.subTest(mode=mode):
+                plan = self._plan(
+                    {"form": {"modelType": "WanVideoPipeline", "mode": mode}},
+                    runtime=self._runtime(vram_gib=24, free_gib=22),
+                    repos=[WAN_VACE_REPO, WAN_T2V_1_3B_REPO],
+                    hardware=self._hardware(vram_gib=24, free_gib=22, system_ram_gib=48),
+                )
+
+                self.assertEqual(plan["status"], "ready")
+                selected = plan["selectedCandidate"]
+                self.assertEqual(selected["resolvedArtifact"], WAN_T2V_1_3B_REPO)
+                self.assertEqual(selected["pipelineClass"], "WanVideoToVideoPipeline")
+                self.assertEqual(selected["executionPath"], "direct-diffusers-video")
+
+    def test_base_wan_text_generation_uses_the_registered_wan_pipeline(self):
+        plan = self._plan(
+            {"form": {"modelType": "WanVideoPipeline", "mode": "text_to_video"}},
+            runtime=self._runtime(vram_gib=24, free_gib=22),
+            repos=[WAN_T2V_1_3B_REPO],
+            hardware=self._hardware(vram_gib=24, free_gib=22, system_ram_gib=48),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["selectedCandidate"]["pipelineClass"], "WanPipeline")
+
+    def test_ltx_uses_generic_video_execution_path_and_offload(self):
+        plan = self._plan(
+            {"form": {"modelType": "LTXVideoPipeline", "mode": "text_to_video"}},
+            runtime=self._runtime(vram_gib=24, free_gib=21),
+            repos=[LTX_VIDEO_REPO],
+            hardware=self._hardware(vram_gib=24, free_gib=21, system_ram_gib=48),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        selected = plan["selectedCandidate"]
+        self.assertEqual(selected["executionPath"], "direct-diffusers-video")
+        self.assertEqual(selected["pipelineClass"], "LTXConditionPipeline")
+        self.assertEqual(selected["generation"]["numFrames"], 81)
+        self.assertEqual(selected["generation"]["steps"], 8)
+        self.assertEqual(selected["generation"]["guidanceScale"], 1.0)
 
     def test_nominal_capacity_tiers_allow_small_reported_total_shortfalls(self):
         hardware = self._hardware(vram_gib=15.99, free_gib=14, system_ram_gib=31.8)
@@ -299,6 +460,39 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(plan["status"], "needs_setup")
         self.assertEqual(plan["selectedInstallTarget"]["repo"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
         self.assertEqual(plan["candidates"][0]["resolvedArtifact"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
+        self.assertEqual(plan["compatibility"]["state"], "needs_model")
+        self.assertEqual(plan["compatibility"]["action"]["repo"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
+
+    def test_qwen_edit_community_artifact_requires_explicit_workflow_confirmation(self):
+        hardware = self._hardware(vram_gib=15.99, free_gib=14, system_ram_gib=31.8)
+        unconfirmed = self._plan(
+            {"form": {"modelType": "QwenImageEditModularPipeline", "mode": "edit_image"}},
+            runtime=self._runtime(vram_gib=15.99, free_gib=14),
+            repos=[QWEN_IMAGE_EDIT_PREQUANTIZED_REPO],
+            hardware=hardware,
+        )
+        candidate = next(
+            item for item in unconfirmed["candidates"]
+            if item["resolvedArtifact"] == QWEN_IMAGE_EDIT_PREQUANTIZED_REPO
+        )
+        self.assertIsNone(unconfirmed["selectedCandidate"])
+        self.assertEqual(candidate["proof"]["status"], "manual_only")
+        self.assertEqual(candidate["healthBadge"], "Community option")
+
+        confirmed = self._plan(
+            {
+                "form": {
+                    "modelType": "QwenImageEditModularPipeline",
+                    "mode": "edit_image",
+                    "confirmedCommunityArtifact": QWEN_IMAGE_EDIT_PREQUANTIZED_REPO,
+                }
+            },
+            runtime=self._runtime(vram_gib=15.99, free_gib=14),
+            repos=[QWEN_IMAGE_EDIT_PREQUANTIZED_REPO],
+            hardware=hardware,
+        )
+        self.assertEqual(confirmed["selectedCandidate"]["resolvedArtifact"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
+        self.assertEqual(confirmed["selectedCandidate"]["proof"]["source"], "user_community_confirmation")
 
     def test_normalized_runtime_mps_snapshot_satisfies_cuda_or_mps(self):
         plan = self._plan(
@@ -335,6 +529,31 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(plan["hardware"]["accelerator"]["kind"], "mps")
         self.assertIsNone(plan["hardware"]["accelerator"]["totalBytes"])
 
+    def test_z_image_auto_uses_intel_xpu_without_cuda_offload_hooks(self):
+        hardware = self._hardware(vram_gib=12, free_gib=10, system_ram_gib=32, platform="windows")
+        hardware["accelerator"].update(
+            {
+                "kind": "xpu",
+                "backend": "xpu",
+                "vendor": "intel",
+                "name": "Intel Arc Graphics",
+                "memoryKind": "shared",
+            }
+        )
+        plan = self._plan(
+            {"form": {"modelType": "ZImageModularPipeline", "mode": "text_to_image"}},
+            repos=[Z_IMAGE_REPO],
+            hardware=hardware,
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["compatibility"]["state"], "ready")
+        self.assertNotIn("Not suitable", plan["compatibility"]["summary"])
+        selected = plan["selectedCandidate"]
+        self.assertEqual(selected["offloadMode"], "none")
+        self.assertFalse(selected["autoOffload"])
+        self.assertIsNone(selected["deviceMap"])
+
     def test_qwen_official_bf16_is_not_auto_ready_on_constrained_cuda_without_prequantized_artifact(self):
         plan = self._plan(
             self._qwen_payload(),
@@ -345,7 +564,7 @@ class AutoResourcePlanTests(unittest.TestCase):
 
         self.assertEqual(plan["status"], "needs_setup")
         self.assertIsNone(plan["selectedCandidate"])
-        official = next(candidate for candidate in plan["candidates"] if candidate["artifact"] == QWEN_IMAGE_2512_REPO)
+        official = next(candidate for candidate in plan["candidates"] if candidate["id"] == "qwen-t2i-official-bf16-native")
         self.assertEqual(official["proof"]["status"], "skipped")
         self.assertTrue(any("GPU memory" in item for item in official["requirementsMissing"]))
 
@@ -363,6 +582,89 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["qualityTier"], "official-bf16-native-quality")
         self.assertEqual(selected["generation"]["width"], 1328)
         self.assertEqual(selected["generation"]["height"], 1328)
+
+    def test_qwen_native_candidate_preserves_requested_portrait_dimensions(self):
+        payload = self._qwen_payload()
+        payload["form"].update({"width": 768, "height": 1344})
+        plan = self._plan(
+            payload,
+            runtime=self._runtime(vram_gib=98, free_gib=96),
+            repos=[QWEN_IMAGE_2512_REPO],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        selected = plan["selectedCandidate"]
+        self.assertEqual(selected["id"], "qwen-t2i-official-bf16-native")
+        self.assertEqual(selected["generation"]["width"], 768)
+        self.assertEqual(selected["generation"]["height"], 1344)
+
+    def test_qwen_official_bf16_stays_on_device_when_vram_has_headroom(self):
+        plan = self._plan(
+            self._qwen_payload(),
+            runtime=self._runtime(vram_gib=98, free_gib=96),
+            repos=[QWEN_IMAGE_2512_REPO],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["selectedCandidate"]["resolvedArtifact"], QWEN_IMAGE_2512_REPO)
+        self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
+        self.assertEqual(plan["selectedCandidate"]["deviceMap"], "cuda")
+
+    def test_declared_qwen_edit_plus_profile_uses_generic_full_residency_metadata(self):
+        repo = "Qwen/Qwen-Image-Edit-2511"
+        plan = self._plan(
+            {"form": {"modelType": "QwenImageEditPlusModularPipeline", "mode": "edit_image", "offloadMode": "model_cpu"}},
+            runtime=self._runtime(vram_gib=98, free_gib=96),
+            repos=[repo],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["selectedCandidate"]["resolvedArtifact"], repo)
+        self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
+        self.assertEqual(plan["selectedCandidate"]["deviceMap"], "cuda")
+
+    def test_qwen_control_uses_native_residency_on_98_gib(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "QwenImageModularPipeline",
+                    "mode": "control_image",
+                    "offloadMode": "none",
+                }
+            },
+            runtime=self._runtime(vram_gib=98, free_gib=96),
+            repos=[QWEN_IMAGE_2512_REPO],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        selected = plan["selectedCandidate"]
+        self.assertEqual(selected["resolvedArtifact"], QWEN_IMAGE_2512_REPO)
+        self.assertEqual(selected["offloadMode"], "none")
+        self.assertEqual(selected["deviceMap"], "cuda")
+
+    def test_qwen_control_lower_memory_runtime_keeps_model_cpu_offload(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "QwenImageModularPipeline",
+                    "mode": "control_image",
+                    "offloadMode": "model_cpu",
+                }
+            },
+            runtime=self._runtime(vram_gib=64, free_gib=60),
+            repos=[QWEN_IMAGE_2512_REPO],
+            hardware=self._hardware(vram_gib=64, free_gib=60, system_ram_gib=96),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["compatibility"]["state"], "ready")
+        self.assertNotIn("Not suitable", plan["compatibility"]["summary"])
+        selected = plan["selectedCandidate"]
+        self.assertEqual(selected["offloadMode"], "model_cpu")
+        self.assertIsNone(selected["deviceMap"])
 
     def test_auto_plan_does_not_use_planned_or_probe_statuses(self):
         plan = self._plan(
@@ -394,7 +696,7 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertTrue(any("incomplete" in item.lower() for item in prequantized["requirementsMissing"]))
         self.assertIn("text_encoder/model-00001-of-00002.safetensors", prequantized["artifactStatus"]["missingFiles"])
 
-    def test_ace_audio_auto_candidate_uses_diffusers_audio_path_and_offload(self):
+    def test_ace_audio_auto_candidate_uses_direct_cuda_load_on_16gb(self):
         plan = self._plan(
             {"form": {"modelType": "AceStepAudioPipeline", "mode": "text_to_audio", "audioDuration": 30}},
             runtime=self._runtime(vram_gib=16, free_gib=14),
@@ -407,12 +709,166 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["executionPath"], "direct-diffusers-audio")
         self.assertEqual(selected["pipelineClass"], "AceStepPipeline")
         self.assertEqual(selected["resolvedArtifact"], ACE_STEP_REPO)
-        self.assertIn(selected["offloadMode"], {"model_cpu", "sequential_cpu", "group_cpu", "group_disk"})
+        self.assertEqual(selected["offloadMode"], "none")
+        self.assertEqual(selected["deviceMap"], "cuda")
         self.assertEqual(selected["generation"]["audioDuration"], 30)
         self.assertEqual(selected["generation"]["steps"], 8)
         self.assertEqual(selected["generation"]["guidanceScale"], 1)
         self.assertEqual(selected["generation"]["shift"], 3)
         self.assertIn(selected["proof"]["status"], READY_PROOF_STATUSES)
+        self.assertEqual(selected["requirements"]["coldLoadTarget"]["maxSeconds"], 120)
+        self.assertEqual(AUTO_MODEL_REQUIREMENTS["AceStepAudioPipeline"]["coldLoadTarget"], {
+            "deviceName": "NVIDIA GeForce RTX 4080",
+            "maxSeconds": 120,
+            "recipe": {
+                "dtype": "bfloat16",
+                "offloadMode": "none",
+                "deviceMap": "cuda",
+            },
+        })
+
+    def test_ace_audio_shared_rocm_uses_proven_offload_capacity_instead_of_local_vram(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "AceStepAudioPipeline",
+                    "mode": "audio_continuation",
+                    "audioDuration": 75,
+                    "extensionDuration": 15,
+                }
+            },
+            repos=[ACE_STEP_REPO],
+            hardware=self._shared_rocm_hardware(),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        selected = plan["selectedCandidate"]
+        self.assertEqual(selected["offloadMode"], "model_cpu")
+        self.assertIsNone(selected["deviceMap"])
+        self.assertEqual(selected["generation"]["audioDuration"], 75)
+        self.assertEqual(selected["generation"]["extensionDuration"], 15)
+        self.assertNotIn("GPU memory requires", " ".join(selected["requirementsMissing"]))
+
+    def test_every_offloaded_auto_profile_uses_shared_accessible_capacity_but_not_for_full_residency(self):
+        hardware = self._shared_rocm_hardware(accessible_gib=128, system_ram_gib=128, disk_free_gib=512)
+        checked = []
+        for key, requirements in AUTO_MODEL_REQUIREMENTS.items():
+            supported = requirements.get("supportedOffloadModes") or []
+            offload_mode = next((mode for mode in supported if mode != "none"), None)
+            minimum = requirements.get("minimum")
+            if not offload_mode or not isinstance(minimum, dict):
+                continue
+            with self.subTest(profile=key, offload_mode=offload_mode):
+                missing = _requirements_missing_for_dict(hardware, minimum, offload_mode=offload_mode)
+                self.assertFalse(any(item.startswith("GPU memory requires") for item in missing), missing)
+                full_residency_missing = _requirements_missing_for_dict(hardware, minimum, offload_mode="none")
+                if int(minimum.get("vramBytes") or 0) > 2 * GIB:
+                    self.assertTrue(
+                        any(item.startswith("GPU memory requires") for item in full_residency_missing),
+                        full_residency_missing,
+                    )
+            checked.append(key)
+
+        self.assertEqual(set(checked), set(AUTO_MODEL_REQUIREMENTS))
+
+    def test_exact_local_success_can_override_a_stale_static_vram_floor_when_observed_peaks_fit(self):
+        with tempfile.TemporaryDirectory() as data_dir:
+            hardware = self._hardware(vram_gib=2, free_gib=1.5, system_ram_gib=32, disk_free_gib=128)
+            payload = {
+                "form": {
+                    "modelType": "AceStepAudioPipeline",
+                    "mode": "audio_continuation",
+                    "audioDuration": 75,
+                    "extensionDuration": 15,
+                }
+            }
+            blocked = self._plan(
+                payload,
+                repos=[ACE_STEP_REPO],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+            self.assertEqual(blocked["status"], "needs_setup")
+            candidate = blocked["candidates"][0]
+            record_auto_resource_success(
+                data_dir,
+                runtime_fingerprint={"resourceFingerprint": hardware["runtimeFingerprint"]},
+                runtime_hints={"resourceMode": "auto", "autoResourcePlan": candidate},
+                measurement={
+                    "peakAllocatedBytes": int(0.5 * GIB),
+                    "peakReservedBytes": int(0.9 * GIB),
+                    "processRssBytes": 14 * GIB,
+                    "backend": "rocm",
+                    "device": "cuda:0",
+                },
+            )
+
+            proven = self._plan(
+                payload,
+                repos=[ACE_STEP_REPO],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+
+        self.assertEqual(proven["status"], "ready")
+        self.assertEqual(proven["selectedCandidate"]["proof"]["status"], "live_proven")
+        self.assertEqual(proven["selectedCandidate"]["requirementsMissing"], [])
+
+    def test_every_declared_high_memory_profile_can_disable_unnecessary_offload(self):
+        cases = {
+            "ZImageModularPipeline": "text_to_image",
+            "LTXVideoPipeline": "text_to_video",
+            "AceStepAudioPipeline": "text_to_audio",
+            "FluxSchnellPipeline": "text_to_image",
+            "FluxDevPipeline": "text_to_image",
+            "Flux2KleinPipeline": "text_to_image",
+            "FluxKreaPipeline": "text_to_image",
+            "FluxKontextPipeline": "edit_image",
+            "FluxFillPipeline": "inpaint",
+            "FluxDepthPipeline": "control_image",
+            "FluxCannyPipeline": "control_image",
+            "FluxReduxPipeline": "edit_image",
+        }
+        for model_type, mode in cases.items():
+            with self.subTest(model_type=model_type):
+                requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+                self.assertIn("none", requirements["supportedOffloadModes"])
+                self.assertTrue(requirements.get("fullResidency"))
+                plan = self._plan(
+                    {
+                        "form": {
+                            "modelType": model_type,
+                            "mode": mode,
+                            "offloadMode": "model_cpu",
+                        }
+                    },
+                    runtime=self._runtime(vram_gib=98, free_gib=96),
+                    repos=[requirements["defaultRepo"]],
+                    hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+                )
+                self.assertEqual(plan["status"], "ready")
+                self.assertEqual(plan["selectedCandidate"]["resolvedArtifact"], requirements["defaultRepo"])
+                self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
+                self.assertEqual(plan["selectedCandidate"]["deviceMap"], "cuda")
+
+    def test_generic_auto_ignores_a_stale_expert_no_offload_value_on_constrained_hardware(self):
+        requirements = AUTO_MODEL_REQUIREMENTS["AceStepAudioPipeline"]
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "AceStepAudioPipeline",
+                    "mode": "text_to_audio",
+                    "offloadMode": "none",
+                }
+            },
+            runtime=self._runtime(vram_gib=12, free_gib=10),
+            repos=[requirements["defaultRepo"]],
+            hardware=self._hardware(vram_gib=12, free_gib=10, system_ram_gib=32),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["selectedCandidate"]["offloadMode"], "model_cpu")
+        self.assertIsNone(plan["selectedCandidate"]["deviceMap"])
 
     def test_flux_schnell_is_auto_ready_on_16gb_cuda_when_installed(self):
         plan = self._plan(
@@ -444,9 +900,11 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(candidate["resolvedArtifact"], FLUX_DEV_FP8_REPO)
         self.assertEqual(candidate["installTarget"]["repo"], FLUX_DEV_FP8_REPO)
         self.assertEqual(candidate["installTarget"]["actionLabel"], "Install quantized artifact")
-        self.assertEqual(candidate["quantizationMode"], "quanto_float8")
+        self.assertEqual(candidate["quantizationMode"], "none")
+        self.assertEqual(candidate["loadedQuantization"], "fp8")
+        self.assertEqual(candidate["artifactResolution"]["resolved"]["format"], "fp8")
 
-    def test_flux_kontext_on_16gb_targets_nvfp4_artifact_for_install(self):
+    def test_flux_kontext_nvfp4_is_blocked_without_blackwell(self):
         plan = self._plan(
             {"form": {"modelType": "FluxKontextPipeline", "mode": "edit_image"}},
             runtime=self._runtime(vram_gib=16, free_gib=14),
@@ -455,12 +913,30 @@ class AutoResourcePlanTests(unittest.TestCase):
         )
 
         self.assertEqual(plan["status"], "needs_setup")
-        self.assertEqual(plan["selectedInstallTarget"]["repo"], FLUX_KONTEXT_NVFP4_REPO)
+        self.assertIsNone(plan["selectedInstallTarget"])
         candidate = next(item for item in plan["candidates"] if item["resolvedArtifact"] == FLUX_KONTEXT_NVFP4_REPO)
-        self.assertEqual(candidate["quantizationMode"], "torchao_float8")
-        self.assertEqual(candidate["healthBadge"], "Needs setup")
+        self.assertEqual(candidate["quantizationMode"], "none")
+        self.assertEqual(candidate["loadedQuantization"], "nvfp4")
+        self.assertEqual(candidate["healthBadge"], "Not suitable locally")
+        self.assertIn("Blackwell", candidate["skipReason"])
 
-    def test_flux_krea_has_guarded_on_load_quantized_candidate(self):
+    def test_flux_kontext_nvfp4_can_be_offered_on_blackwell_linux(self):
+        plan = self._plan(
+            {"form": {"modelType": "FluxKontextPipeline", "mode": "edit_image"}},
+            runtime=self._runtime(vram_gib=16, free_gib=14),
+            repos=[],
+            hardware=self._hardware(
+                vram_gib=16,
+                free_gib=14,
+                system_ram_gib=32,
+                platform="linux",
+                capability=(10, 0),
+            ),
+        )
+
+        self.assertEqual(plan["selectedInstallTarget"]["repo"], FLUX_KONTEXT_NVFP4_REPO)
+
+    def test_flux_krea_does_not_runtime_quantize_in_auto(self):
         plan = self._plan(
             {"form": {"modelType": "FluxKreaPipeline", "mode": "text_to_image"}},
             runtime=self._runtime(vram_gib=16, free_gib=14),
@@ -468,12 +944,23 @@ class AutoResourcePlanTests(unittest.TestCase):
             hardware=self._hardware(vram_gib=16, free_gib=14, system_ram_gib=32),
         )
 
+        self.assertEqual(plan["status"], "needs_setup")
+        self.assertIsNone(plan["selectedCandidate"])
+        self.assertFalse(any(candidate["quantizationMode"] != "none" for candidate in plan["candidates"]))
+
+    def test_qwen_layered_on_high_memory_prefers_native_bf16_without_offload(self):
+        plan = self._plan(
+            {"form": {"modelType": "QwenImageLayeredModularPipeline", "mode": "layer_decomposition"}},
+            runtime=self._runtime(vram_gib=100, free_gib=94),
+            repos=[QWEN_IMAGE_LAYERED_REPO],
+            hardware=self._hardware(vram_gib=100, free_gib=94, system_ram_gib=96),
+        )
+
         self.assertEqual(plan["status"], "ready")
         selected = plan["selectedCandidate"]
-        self.assertEqual(selected["resolvedArtifact"], FLUX_KREA_REPO)
-        self.assertEqual(selected["qualityTier"], "on-load-quantized-guarded")
-        self.assertEqual(selected["quantizationMode"], "quanto_float8")
-        self.assertIn(selected["proof"]["status"], READY_PROOF_STATUSES)
+        self.assertEqual(selected["qualityTier"], "native-bf16-high-memory")
+        self.assertEqual(selected["quantizationMode"], "none")
+        self.assertEqual(selected["offloadMode"], "none")
 
     def test_corrupt_wrong_size_and_active_artifact_requires_repair(self):
         plan = self._plan(
@@ -532,6 +1019,12 @@ class AutoResourcePlanTests(unittest.TestCase):
                 data_dir,
                 runtime_fingerprint=self._runtime(vram_gib=16, free_gib=14),
                 runtime_hints=runtime_hints,
+                measurement={
+                    "elapsedSeconds": 12.5,
+                    "backend": "cuda",
+                    "device": "cuda:0",
+                    "peakAllocatedBytes": 7 * GIB,
+                },
             )
             live_plan = self._plan(
                 {"form": {"modelType": "FluxSchnellPipeline", "mode": "text_to_image"}},
@@ -542,6 +1035,190 @@ class AutoResourcePlanTests(unittest.TestCase):
             )
             self.assertEqual(live_plan["status"], "ready")
             self.assertEqual(live_plan["selectedCandidate"]["proof"]["status"], "live_proven")
+            history = live_plan["selectedCandidate"]["successHistory"]
+            self.assertEqual(history["lastMeasurement"]["elapsedSeconds"], 12.5)
+            self.assertEqual(history["maxObservedPeakAllocatedBytes"], 7 * GIB)
+
+    def test_auto_history_key_is_workload_shape_specific(self):
+        base = {
+            "modelType": "LTXVideoPipeline",
+            "mode": "text_to_video",
+            "artifact": LTX_VIDEO_REPO,
+            "dtype": "bfloat16",
+            "offloadMode": "model_cpu",
+            "generation": {"width": 768, "height": 512, "numFrames": 49, "steps": 30},
+        }
+        runtime = self._runtime(vram_gib=16, free_gib=14)
+        longer = {**base, "generation": {**base["generation"], "numFrames": 97}}
+
+        self.assertNotEqual(
+            auto_resource_history_key(base, runtime_fingerprint=runtime),
+            auto_resource_history_key(longer, runtime_fingerprint=runtime),
+        )
+
+    def test_auto_history_keys_use_media_specific_workloads(self):
+        runtime = self._runtime()
+        audio = {
+            "modelType": "AceStepAudioPipeline",
+            "mode": "audio_continuation",
+            "artifact": ACE_STEP_REPO,
+            "dtype": "bfloat16",
+            "offloadMode": "model_cpu",
+            "generation": {
+                "width": 1024,
+                "height": 1024,
+                "numFrames": 81,
+                "audioDuration": 75,
+                "extensionDuration": 15,
+                "steps": 8,
+            },
+        }
+        audio_without_video_fields = {
+            **audio,
+            "generation": {
+                "audioDuration": 75,
+                "extensionDuration": 15,
+                "steps": 8,
+            },
+        }
+        shorter_audio = {
+            **audio_without_video_fields,
+            "generation": {**audio_without_video_fields["generation"], "extensionDuration": 10},
+        }
+        image = {
+            "modelType": "ZImageModularPipeline",
+            "mode": "text_to_image",
+            "artifact": Z_IMAGE_REPO,
+            "dtype": "bfloat16",
+            "offloadMode": "none",
+            "generation": {"width": 1024, "height": 1024, "numFrames": 81, "audioDuration": 75, "steps": 8},
+        }
+        image_without_other_media = {
+            **image,
+            "generation": {"width": 1024, "height": 1024, "steps": 8},
+        }
+
+        self.assertEqual(
+            auto_resource_history_key(audio, runtime_fingerprint=runtime),
+            auto_resource_history_key(audio_without_video_fields, runtime_fingerprint=runtime),
+        )
+        self.assertNotEqual(
+            auto_resource_history_key(audio_without_video_fields, runtime_fingerprint=runtime),
+            auto_resource_history_key(shorter_audio, runtime_fingerprint=runtime),
+        )
+        self.assertEqual(
+            auto_resource_history_key(image, runtime_fingerprint=runtime),
+            auto_resource_history_key(image_without_other_media, runtime_fingerprint=runtime),
+        )
+
+    def test_legacy_audio_receipt_with_irrelevant_video_fields_is_reused_only_for_matching_audio(self):
+        with tempfile.TemporaryDirectory() as data_dir:
+            hardware = self._shared_rocm_hardware()
+            payload = {
+                "form": {
+                    "modelType": "AceStepAudioPipeline",
+                    "mode": "audio_continuation",
+                    "audioDuration": 75,
+                    "extensionDuration": 15,
+                }
+            }
+            baseline = self._plan(
+                payload,
+                repos=[ACE_STEP_REPO],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+            candidate = baseline["selectedCandidate"]
+            legacy_candidate = json.loads(json.dumps(candidate))
+            legacy_candidate["generation"].pop("extensionDuration", None)
+            legacy_candidate["generation"]["numFrames"] = 81
+            legacy_signature = {
+                **{
+                    key: value
+                    for key, value in _candidate_history_signature(
+                        legacy_candidate,
+                        hardware=hardware,
+                    ).items()
+                    if key != "workload"
+                },
+                "workload": {"width": 1024, "height": 1024, "numFrames": 81, "steps": 8},
+            }
+            history_path = Path(data_dir) / "auto_resource" / "history.json"
+            history_path.parent.mkdir(parents=True, exist_ok=True)
+            history_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "entries": {
+                            "legacy-audio": {
+                                "key": "legacy-audio",
+                                "signature": legacy_signature,
+                                "candidate": legacy_candidate,
+                                "successCount": 1,
+                                "lastSuccessAt": 100,
+                                "lastStatus": "live_proven",
+                                "lastMeasurement": {
+                                    "peakReservedBytes": int(0.9 * GIB),
+                                    "processRssBytes": 14 * GIB,
+                                },
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            migrated = self._plan(
+                payload,
+                repos=[ACE_STEP_REPO],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+            different_duration = self._plan(
+                {
+                    "form": {
+                        "modelType": "AceStepAudioPipeline",
+                        "mode": "audio_continuation",
+                        "audioDuration": 60,
+                        "extensionDuration": 15,
+                    }
+                },
+                repos=[ACE_STEP_REPO],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+
+        self.assertEqual(migrated["selectedCandidate"]["proof"]["status"], "live_proven")
+        self.assertEqual(migrated["selectedCandidate"]["compatibleHistoryKey"], "legacy-audio")
+        self.assertNotEqual(different_duration["selectedCandidate"]["proof"]["status"], "live_proven")
+
+    def test_auto_history_key_is_exact_optimization_recipe_specific(self):
+        runtime = self._runtime()
+        base = {
+            "modelType": "ZImageModularPipeline",
+            "mode": "text_to_image",
+            "resolvedArtifact": Z_IMAGE_REPO,
+            "dtype": "bfloat16",
+            "offloadMode": "none",
+            "attentionBackend": "auto",
+            "regionalCompile": False,
+            "denoiserCache": "none",
+            "channelsLast": False,
+            "layerwiseCasting": False,
+        }
+        baseline = auto_resource_history_key(base, runtime_fingerprint=runtime)
+        for field, value in (
+            ("attentionBackend", "flash"),
+            ("regionalCompile", True),
+            ("denoiserCache", "first_block"),
+            ("channelsLast", True),
+            ("layerwiseCasting", True),
+        ):
+            self.assertNotEqual(
+                baseline,
+                auto_resource_history_key({**base, field: value}, runtime_fingerprint=runtime),
+                field,
+            )
 
     def test_each_current_studio_model_has_requirements_metadata(self):
         expected = {
@@ -552,9 +1229,13 @@ class AutoResourcePlanTests(unittest.TestCase):
             "QwenImageEditPlusModularPipeline",
             "QwenImageLayeredModularPipeline",
             "WanVACEPipeline",
+            "WanVideoPipeline",
+            "WanVideoPipeline:text_to_video",
+            "LTXVideoPipeline",
             "AceStepAudioPipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
+            "Flux2KleinPipeline",
             "FluxKreaPipeline",
             "FluxKontextPipeline",
             "FluxFillPipeline",
@@ -562,12 +1243,42 @@ class AutoResourcePlanTests(unittest.TestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
         }
-        self.assertTrue(expected.issubset(set(AUTO_MODEL_REQUIREMENTS)))
+        self.assertEqual(expected, set(AUTO_MODEL_REQUIREMENTS))
         for key in expected:
             entry = AUTO_MODEL_REQUIREMENTS[key]
             self.assertTrue(entry.get("defaultRepo") or entry.get("manualOnlyReason"), key)
             if entry.get("manualOnlyReason"):
                 self.assertIn("Auto", entry["manualOnlyReason"])
+
+    def test_resource_planner_accepts_supported_ram_vram_os_matrix(self):
+        ram_tiers = (8, 16, 32, 64, 96)
+        vram_tiers = (None, 8, 16, 24, 32, 48, 96)
+        platforms = ("windows", "linux", "macos")
+        for platform_name in platforms:
+            for ram_gib in ram_tiers:
+                for vram_gib in vram_tiers:
+                    with self.subTest(platform=platform_name, ram=ram_gib, vram=vram_gib):
+                        hardware = self._hardware(
+                            vram_gib=vram_gib or 0,
+                            free_gib=max(0, (vram_gib or 0) - 1),
+                            system_ram_gib=ram_gib,
+                            platform=platform_name,
+                            architecture="arm64" if platform_name == "macos" else "x86_64",
+                        )
+                        if vram_gib is None:
+                            hardware["accelerator"].update({
+                                "kind": "mps" if platform_name == "macos" else "cpu",
+                                "totalBytes": None,
+                                "freeBytes": None,
+                            })
+                        plan = self._plan(
+                            {"form": {"modelType": "ZImageModularPipeline", "mode": "text_to_image"}},
+                            hardware=hardware,
+                        )
+                        self.assertFalse(plan["error"])
+                        self.assertTrue(plan["candidates"])
+                        self.assertEqual(plan["hardware"]["platform"], platform_name)
+                        self.assertTrue(all(candidate["quantizationMode"] == "none" for candidate in plan["candidates"]))
 
 
 if __name__ == "__main__":

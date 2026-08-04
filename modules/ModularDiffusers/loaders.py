@@ -1,10 +1,12 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 import traceback
 from collections.abc import Mapping
 
 import torch
 from diffusers import ComponentSpec, ModularPipeline
-from diffusers.modular_pipelines.mellon_node_utils import MellonPipelineConfig
+from diffusers.utils import logging as diffusers_logging
+from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import (
@@ -15,9 +17,11 @@ from modiff.diffusers_offload import (
     OFFLOAD_MODE_NONE,
     apply_component_group_offload,
     apply_model_offload,
+    configure_components_manager_offload,
     normalize_offload_mode,
     offload_mode_param,
 )
+from modiff.model_artifact_catalog import resolve_model_revision
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 from . import MESSAGE_DURATION, MODULAR_REGISTRY, components
@@ -26,6 +30,8 @@ from .modular_utils import (
     DummyCustomPipeline,
     get_all_model_types,
     get_model_type_metadata,
+    pin_modular_component_revisions,
+    require_immutable_hub_revision,
 )
 
 
@@ -58,6 +64,13 @@ def component_quant_config_summary(config):
     return {name: quant_config_to_info(value) for name, value in config.items()}
 
 
+def should_incrementally_group_offload(*, use_group_offload, quant_config):
+    """Select the low-peak loader path from component capabilities, not a pipeline name."""
+    return bool(
+        use_group_offload and quant_config and QWEN_LOW_RESOURCE_COMPONENTS.intersection(set(quant_config.keys()))
+    )
+
+
 def safe_diagnostic_value(value):
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
@@ -77,7 +90,11 @@ class RequiredComponentLoadError(RuntimeError):
         self.quantization = safe_diagnostic_value(quantization)
         self.original_error = original_error
         self.traceback_text = traceback_text
-        quantized_components = ", ".join(sorted(self.quantization.keys())) if isinstance(self.quantization, dict) else str(self.quantization)
+        quantized_components = (
+            ", ".join(sorted(self.quantization.keys()))
+            if isinstance(self.quantization, dict)
+            else str(self.quantization)
+        )
         super().__init__(
             f"Required Diffusers component '{component_name}' failed to load for {model_id} "
             f"(dtype={self.dtype}, offload={self.offload_mode}, quantized={quantized_components or 'none'}): "
@@ -95,6 +112,164 @@ def component_load_kwargs_for(name, kwargs):
         elif "default" in value:
             component_load_kwargs[key] = value["default"]
     return component_load_kwargs
+
+
+def place_pipeline_components(pipeline, device, progress_callback=None):
+    """Place resident model components one at a time with truthful progress.
+
+    Diffusers' pipeline-level ``to`` call iterates these same modules but gives
+    callers no indication which multi-gigabyte component is being copied. On
+    unified-memory accelerators an individual copy can take minutes, so retain
+    the normal module placement semantics while exposing the component name.
+    """
+
+    resident_components = [
+        (name, component) for name, component in pipeline.components.items() if isinstance(component, torch.nn.Module)
+    ]
+    total = len(resident_components)
+    for index, (name, component) in enumerate(resident_components, start=1):
+        if progress_callback:
+            progress_callback(name, index, total)
+        component.to(device)
+    return [name for name, _component in resident_components]
+
+
+def component_reuse_compatible(
+    component,
+    *,
+    dtype,
+    requested_quantization,
+    offload_mode,
+    device,
+    node_id=None,
+):
+    """Return whether a shared component matches the complete runtime policy."""
+
+    if not isinstance(component, torch.nn.Module):
+        return True
+
+    component_dtype = getattr(component, "dtype", None)
+    if component_dtype is None:
+        try:
+            component_dtype = next(component.parameters()).dtype
+        except StopIteration:
+            component_dtype = None
+    if component_dtype != dtype:
+        return False
+
+    existing_quantizer = getattr(component, "hf_quantizer", None)
+    if requested_quantization is None:
+        if existing_quantizer is not None:
+            return False
+    elif existing_quantizer is None:
+        return False
+    else:
+        existing_config = getattr(existing_quantizer, "quantization_config", None)
+        existing_info = quant_config_to_info(existing_config) if existing_config is not None else None
+        if existing_info != quant_config_to_info(requested_quantization):
+            return False
+
+    target_device = str(torch.device(device))
+    recorded_mode = getattr(component, "_modiff_offload_mode", None)
+    recorded_device = getattr(component, "_modiff_execution_device", None)
+    if recorded_mode is not None or recorded_device is not None:
+        if recorded_mode != offload_mode or recorded_device != target_device:
+            return False
+        if offload_mode == OFFLOAD_MODE_GROUP_DISK:
+            recorded_node_id = getattr(component, "_modiff_offload_node_id", None)
+            if node_id is None or recorded_node_id != str(node_id):
+                return False
+        return True
+
+    # Legacy resident components have no explicit policy metadata. Their
+    # current device is enough to prove compatibility only for a hook-free
+    # resident run; never infer compatibility for an offloaded component.
+    if offload_mode != OFFLOAD_MODE_NONE:
+        return False
+    try:
+        component_device = torch.device(component.device)
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        try:
+            component_device = next(component.parameters()).device
+        except StopIteration:
+            return False
+    return component_device == torch.device(device)
+
+
+def reusable_component_ids(
+    manager,
+    *,
+    name,
+    load_id,
+    dtype,
+    requested_quantization,
+    offload_mode,
+    device,
+    node_id=None,
+):
+    """Find deterministic, name-scoped shared components safe for this run."""
+
+    if not load_id or load_id == "null":
+        return []
+    compatible_ids = []
+    for component_id in sorted(manager._lookup_ids(name=name, load_id=load_id)):
+        component = manager.get_one(component_id=component_id)
+        if component_reuse_compatible(
+            component,
+            dtype=dtype,
+            requested_quantization=requested_quantization,
+            offload_mode=offload_mode,
+            device=device,
+            node_id=node_id,
+        ):
+            compatible_ids.append(component_id)
+    return compatible_ids
+
+
+def record_pipeline_component_runtime_policy(pipeline, *, offload_mode, device, node_id=None):
+    """Annotate model components after their placement/hooks have been applied."""
+
+    try:
+        pipeline_components = pipeline.components
+    except (AttributeError, RuntimeError):
+        pipeline_components = {}
+    for component in pipeline_components.values():
+        if not isinstance(component, torch.nn.Module):
+            continue
+        component._modiff_offload_mode = offload_mode
+        component._modiff_execution_device = str(torch.device(device))
+        component._modiff_offload_node_id = str(node_id) if offload_mode == OFFLOAD_MODE_GROUP_DISK else None
+
+
+def reusable_standalone_component(
+    manager,
+    *,
+    name,
+    load_id,
+    dtype,
+    offload_mode,
+    device,
+    node_id=None,
+):
+    """Return a compatible resident standalone model, if one already exists."""
+
+    if not load_id or load_id == "null":
+        return None
+    for component_id in sorted(manager._lookup_ids(name=name, load_id=load_id)):
+        component = manager.get_one(component_id=component_id)
+        if not isinstance(component, torch.nn.Module):
+            continue
+        if component_reuse_compatible(
+            component,
+            dtype=dtype,
+            requested_quantization=None,
+            offload_mode=offload_mode,
+            device=device,
+            node_id=node_id,
+        ):
+            return component_id, component
+
+    return None
 
 
 def load_components_strict(
@@ -133,7 +308,15 @@ def load_components_strict(
             raise RuntimeError(f"Required Diffusers component specs are missing: {', '.join(missing)}")
         logger.warning("Unknown components will be ignored: %s", unknown_names)
 
-    for name in components_to_load:
+    # Keep an explicit outer component bar around individually loaded modular
+    # components. Nested Diffusers/Transformers shard and weight bars then
+    # inherit the component rank, while a component with a silent placement
+    # phase still leaves a truthful "which component" status in the queue.
+    for name in diffusers_logging.tqdm(
+        components_to_load,
+        desc="Loading model components",
+        disable=True,
+    ):
         spec = pipeline._component_specs[name]
         load_kwargs = component_load_kwargs_for(name, component_load_kwargs)
         if (
@@ -144,7 +327,9 @@ def load_components_strict(
             load_kwargs.pop("trust_remote_code", None)
 
         if not spec.pretrained_model_name_or_path:
-            diagnostics.setdefault("components_skipped", []).append({"name": name, "reason": "no pretrained model path"})
+            diagnostics.setdefault("components_skipped", []).append(
+                {"name": name, "reason": "no pretrained model path"}
+            )
             continue
 
         try:
@@ -257,6 +442,30 @@ def update_lora_adapters(lora_node, lora_list):
         lora_node.set_adapters(list(scales.keys()), list(scales.values()))
 
 
+def apply_lora_scheduler_override(pipeline, lora_list):
+    """Apply one explicit scheduler contract supplied by distilled LoRAs."""
+    if not isinstance(lora_list, list):
+        lora_list = [lora_list]
+    overrides = [
+        (item.get("scheduler_class"), item.get("scheduler_config") or {})
+        for item in lora_list
+        if item.get("scheduler_class")
+    ]
+    if not overrides:
+        return None
+    if any(override != overrides[0] for override in overrides[1:]):
+        raise ValueError("Connected LoRAs declare incompatible scheduler contracts.")
+
+    scheduler_class_name, scheduler_config = overrides[0]
+    scheduler_class = getattr(__import__("diffusers", fromlist=[scheduler_class_name]), scheduler_class_name)
+    current_scheduler = getattr(pipeline, "scheduler", None)
+    if current_scheduler is None:
+        raise ValueError("The selected LoRA requires a scheduler, but the pipeline does not expose one.")
+    scheduler = scheduler_class.from_config(current_scheduler.config, **scheduler_config)
+    pipeline.update_components(scheduler=scheduler)
+    return scheduler
+
+
 class QuantizationConfigNode(NodeBase):
     label = "Quantization Config"
     category = "loader"
@@ -366,28 +575,18 @@ class QuantizationConfigNode(NodeBase):
             import torch.nn as nn
             from accelerate import init_empty_weights
             from diffusers import AutoModel
-            from diffusers.pipelines.pipeline_loading_utils import ALL_IMPORTABLE_CLASSES, get_class_obj_and_candidates
 
             config = AutoModel.load_config(model_id, subfolder=subfolder)
 
             if "_class_name" not in config:
                 raise ValueError(f"Config at {model_id}/{subfolder} doesn't contain '_class_name'")
 
-            orig_class_name = config["_class_name"]
-
-            model_cls, _ = get_class_obj_and_candidates(
-                library_name="diffusers",
-                class_name=orig_class_name,
-                importable_classes=ALL_IMPORTABLE_CLASSES,
-                pipelines=None,
-                is_pipeline_module=False,
-            )
-
-            if model_cls is None:
-                raise ValueError(f"Could not find model class: {orig_class_name}")
-
             with init_empty_weights():
-                model = model_cls.from_config(config)
+                # AutoModel is the public model boundary. Reaching into the
+                # standard-pipeline loader internals from a Modular adapter
+                # couples the two pipeline systems and breaks the upstream
+                # separation contract.
+                model = AutoModel.from_config(config)
 
             # Get all Linear layer names
             linear_layers = [name for name, module in model.named_modules() if isinstance(module, nn.Linear)]
@@ -583,6 +782,12 @@ class AutoModelLoader(NodeBase):
         "subfolder": {"label": "Subfolder", "type": "string", "value": ""},
         "variant": {"type": "string", "value": "", "options": ["", "fp16", "bf16"]},
         "trust_remote_code": {"label": "Trust Remote Code", "type": "boolean", "value": False},
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "value": "",
+            "description": "Required 40-character commit hash when Trust Remote Code is enabled.",
+        },
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": True},
         "offload_mode": offload_mode_param(),
@@ -613,19 +818,9 @@ class AutoModelLoader(NodeBase):
             filters = ["ControlNetModel", "QwenImageControlNetModel", "FluxControlNetModel"]
             self.set_field_params("subfolder", {"value": ""})
 
-        default_values = {
-            "": "",
-            "unet": "stabilityai/stable-diffusion-xl-base-1.0",
-            "transformer": "black-forest-labs/FLUX.1-dev",
-            "vae": "stabilityai/stable-diffusion-xl-base-1.0",
-            "controlnet": "diffusers/controlnet-depth-sdxl-1.0",
-        }
-
         self.set_field_params(
             "model_id",
             {
-                "default": {"source": "hub", "value": default_values[model_type]},
-                "value": {"source": "hub", "value": default_values[model_type]},
                 "fieldOptions": {
                     "filter": {
                         "hub": {"className": filters},
@@ -645,6 +840,7 @@ class AutoModelLoader(NodeBase):
         offload_mode=OFFLOAD_MODE_MODEL_CPU,
         variant=None,
         subfolder=None,
+        revision=None,
     ):
         logger.debug(f"AutoModelLoader ({self.node_id}) received parameters:")
         logger.debug(f"  model_type: '{model_type}'")
@@ -657,9 +853,16 @@ class AutoModelLoader(NodeBase):
         logger.debug(f"  auto_offload: '{auto_offload}'")
         logger.debug(f"  offload_mode: '{offload_mode}'")
 
+        supported_model_types = {"unet", "transformer", "vae", "controlnet"}
+        if model_type not in supported_model_types:
+            raise ValueError(
+                "AutoModelLoader requires a component type of unet, transformer, vae, or controlnet; "
+                f"received {model_type!r}. Rebuild or repair the managed graph before loading model weights."
+            )
+
         if isinstance(model_id, dict):
             real_model_id = model_id.get("value", model_id)
-            _source = model_id.get("source", "hub")  # TODO: do something when is local?
+            _source = model_id.get("source", "hub")
         else:
             real_model_id = ""
 
@@ -672,26 +875,77 @@ class AutoModelLoader(NodeBase):
             )
             return None
 
+        revision = resolve_model_revision(real_model_id, revision, source=_source)
+        revision = require_immutable_hub_revision(
+            real_model_id,
+            revision,
+            required=bool(trust_remote_code),
+        )
+
         # Normalize parameters
         variant = None if variant == "" else variant
         subfolder = None if subfolder == "" else subfolder
 
-        spec = ComponentSpec(name=model_type, repo=real_model_id, subfolder=subfolder, variant=variant)
-        model = spec.load(torch_dtype=dtype, trust_remote_code=trust_remote_code)
-        normalized_offload_mode = normalize_offload_mode(offload_mode, auto_offload=bool(auto_offload))
-        offload_result = apply_model_offload(
-            model,
-            component_name=model_type,
-            mode=normalized_offload_mode,
+        normalized_offload_mode = normalize_offload_mode(
+            offload_mode,
+            auto_offload=bool(auto_offload),
+            device=device,
+        )
+        spec = ComponentSpec(
+            name=model_type,
+            repo=real_model_id,
+            subfolder=subfolder,
+            variant=variant,
+            revision=revision,
+        )
+        reusable = reusable_standalone_component(
+            components,
+            name=model_type,
+            load_id=spec.load_id,
+            dtype=dtype,
+            offload_mode=normalized_offload_mode,
             device=device,
             node_id=self.node_id,
-            scope="modular-auto-model",
         )
+        if reusable:
+            _existing_id, model = reusable
+            self.progress(
+                99,
+                phase="loading",
+                message=f"Reusing resident {model_type} from {real_model_id}",
+            )
+            offload_result = None
+        else:
+            self.progress(
+                0,
+                phase="loading",
+                message=f"Loading {model_type} weights from {real_model_id}",
+            )
+            with self.diffusers_loading_progress():
+                model = spec.load(torch_dtype=dtype, trust_remote_code=trust_remote_code)
+            self.progress(
+                99,
+                phase="component_placement",
+                message=f"Placing {model_type} on {device}; this one-time accelerator copy can take several minutes",
+            )
+            offload_result = apply_model_offload(
+                model,
+                component_name=model_type,
+                mode=normalized_offload_mode,
+                device=device,
+                node_id=self.node_id,
+                scope="modular-auto-model",
+            )
+            model._modiff_offload_mode = normalized_offload_mode
+            model._modiff_execution_device = str(torch.device(device))
+            model._modiff_offload_node_id = (
+                str(self.node_id) if normalized_offload_mode == OFFLOAD_MODE_GROUP_DISK else None
+            )
         logger.debug(
             " AutoModelLoader: applied %s via %s to %s",
-            offload_result.mode,
-            offload_result.method,
-            offload_result.components,
+            offload_result.mode if offload_result else normalized_offload_mode,
+            offload_result.method if offload_result else "resident_reuse",
+            offload_result.components if offload_result else [model_type],
         )
         comp_id = components.add(model_type, model, collection=self.node_id)
         logger.debug(f" AutoModelLoader: comp_id added: {comp_id}")
@@ -699,6 +953,8 @@ class AutoModelLoader(NodeBase):
 
         model = components.get_model_info(comp_id)
         model["repo_id"] = real_model_id
+        model["revision"] = revision
+        model["trust_remote_code"] = bool(trust_remote_code)
 
         return {"model": model}
 
@@ -745,8 +1001,16 @@ class ModelsLoader(NodeBase):
         },
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
         "trust_remote_code": {"label": "Trust Remote Code", "type": "boolean", "value": False},
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "value": "",
+            "description": "Required 40-character commit hash for custom or trusted remote code.",
+        },
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": True},
-        "offload_mode": offload_mode_param(modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]),
+        "offload_mode": offload_mode_param(
+            modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
+        ),
         "unet": {"label": "Denoise Model", "display": "input", "type": "diffusers_auto_model"},
         "vae": {"label": "VAE", "display": "input", "type": "diffusers_auto_model"},
         "lora_list": {"label": "Lora", "display": "input", "type": "custom_lora"},
@@ -780,19 +1044,15 @@ class ModelsLoader(NodeBase):
         metadata = get_model_type_metadata(model_type)
 
         if metadata:
-            default_repo = metadata["default_repo"]
             default_dtype = metadata["default_dtype"]
         else:
             # Fallback for empty or unknown model types
-            default_repo = ""
             default_dtype = "float16"
-        filters = [model_type]  # YiYi Notes: 1:1 between model_type <-> modular pipeline class
+        filters = [model_type]  # Model types map one-to-one to modular pipeline classes.
 
         self.set_field_params(
             "repo_id",
             {
-                "default": {"source": "hub", "value": default_repo},
-                "value": {"source": "hub", "value": default_repo},
                 "fieldOptions": {
                     "filter": {"hub": {"className": filters}},
                 },
@@ -813,9 +1073,14 @@ class ModelsLoader(NodeBase):
         auto_offload=True,
         offload_mode=OFFLOAD_MODE_MODEL_CPU,
         quant_config=None,
+        revision=None,
     ):
         requested_offload_mode = offload_mode
-        offload_mode = normalize_offload_mode(offload_mode, auto_offload=auto_offload)
+        offload_mode = normalize_offload_mode(
+            offload_mode,
+            auto_offload=auto_offload,
+            device=device,
+        )
         self._loader_diagnostics = {
             "node_id": self.node_id,
             "loader": "ModelsLoader",
@@ -839,7 +1104,12 @@ class ModelsLoader(NodeBase):
                 "components": [],
             },
         }
-        if offload_mode not in [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]:
+        if offload_mode not in [
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ]:
             self.notify(
                 f"Modular Diffusers ModelsLoader does not support {offload_mode} offload.",
                 variant="error",
@@ -871,7 +1141,6 @@ class ModelsLoader(NodeBase):
             - model_type: {model_type}
         """)
 
-        # TODO: add custom text encoders (depending on architecture)
         components_to_update = {}
 
         if unet:
@@ -885,7 +1154,7 @@ class ModelsLoader(NodeBase):
 
         if isinstance(repo_id, dict):
             real_repo_id = repo_id.get("value", repo_id)
-            _source = repo_id.get("source", "hub")  # TODO: do something when is local?
+            _source = repo_id.get("source", "hub")
         else:
             real_repo_id = ""
 
@@ -898,31 +1167,53 @@ class ModelsLoader(NodeBase):
             )
             return None
         self._loader_diagnostics["repo_id"] = real_repo_id
+        revision = resolve_model_revision(
+            real_repo_id,
+            revision,
+            model_type=model_type,
+            source=_source,
+        )
+        revision = require_immutable_hub_revision(
+            real_repo_id,
+            revision,
+            required=bool(trust_remote_code) or model_type == "DummyCustomPipeline",
+        )
+        self._loader_diagnostics["revision"] = revision
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
-        if offload_mode == OFFLOAD_MODE_MODEL_CPU:
-            if not components._auto_offload_enabled or components._auto_offload_device != device:
-                components.enable_auto_cpu_offload(device=device)
-        elif components._auto_offload_enabled:
-            components.disable_auto_cpu_offload()
+        configure_components_manager_offload(components, mode=offload_mode, device=device)
 
         self.loader = ModularPipeline.from_pretrained(
-            real_repo_id, components_manager=components, collection=self.node_id, trust_remote_code=trust_remote_code
+            real_repo_id,
+            components_manager=components,
+            collection=self.node_id,
+            trust_remote_code=trust_remote_code,
+            revision=revision,
+            local_files_only=True,
+        )
+        self._loader_diagnostics["component_revision_pins"] = pin_modular_component_revisions(
+            self.loader,
+            real_repo_id,
+            revision,
         )
 
         if model_type == "DummyCustomPipeline":
             # update node param
-            custom_config = MellonPipelineConfig.load(real_repo_id)
+            custom_config = PipelineConfig.load(real_repo_id, revision=revision, local_files_only=True)
             custom_config.label = "Custom"
 
             # update repo_id for DummyCustomPipeline
             DummyCustomPipeline.repo_id = real_repo_id
+            DummyCustomPipeline.revision = revision
+            DummyCustomPipeline.trust_remote_code = bool(trust_remote_code)
             # register DummyCustomPipeline to MODULAR_REGISTRY
             MODULAR_REGISTRY.register(DummyCustomPipeline, custom_config)
 
         else:
             DummyCustomPipeline.repo_id = None
+            DummyCustomPipeline.revision = None
+            DummyCustomPipeline.trust_remote_code = False
             MODULAR_REGISTRY.register(DummyCustomPipeline, DUMMY_CUSTOM_PIPELINE_CONFIG)
 
         ALL_COMPONENTS = self.loader.pretrained_component_names
@@ -939,38 +1230,19 @@ class ModelsLoader(NodeBase):
         for comp_name in components_to_load:
             comp_spec = self.loader.get_component_spec(comp_name)
             if comp_spec.load_id != "null":
-                comp_with_same_load_id = components._lookup_ids(load_id=comp_spec.load_id)
-                # for components with same load_id, e.g. repo/subfolder/variant/revison
-                # if we can find one with same dtype and quantization config, we reuse it
-                # otherwise, we reload it
-                comp_ids_to_reuse = []
-                for comp_id in comp_with_same_load_id:
-                    comp = components.get_one(component_id=comp_id)
-                    if isinstance(comp, torch.nn.Module):
-                        comp_dtype = comp.dtype
-
-                        # Check if quantization config matches
-                        existing_quant = getattr(comp, "hf_quantizer", None)
-                        requested_quant = quant_config.get(comp_name) if quant_config else None
-
-                        quant_matches = True
-                        if requested_quant is not None:
-                            if existing_quant is None:
-                                quant_matches = False
-                            else:
-                                # Compare configs
-                                existing_config = getattr(existing_quant, "quantization_config", None)
-                                existing_dict = quant_config_to_info(existing_config) if existing_config is not None else None
-                                requested_dict = quant_config_to_info(requested_quant)
-                                quant_matches = existing_dict == requested_dict
-                        elif existing_quant is not None:
-                            quant_matches = False
-
-                        if comp_dtype == dtype and quant_matches:
-                            comp_ids_to_reuse.append(comp_id)
-                    else:
-                        # always reuse non-nn.Module components, e.g. scheduler, tokenizer, etc.
-                        comp_ids_to_reuse.append(comp_id)
+                # Reuse requires the same model identity, dtype, quantization,
+                # execution device, and offload policy. In particular, never
+                # carry a group-offload hook into a differently configured run.
+                comp_ids_to_reuse = reusable_component_ids(
+                    components,
+                    name=comp_name,
+                    load_id=comp_spec.load_id,
+                    dtype=dtype,
+                    requested_quantization=quant_config.get(comp_name) if quant_config else None,
+                    offload_mode=offload_mode,
+                    device=device,
+                    node_id=self.node_id,
+                )
 
                 if not comp_ids_to_reuse:
                     components_to_reload.append(comp_name)
@@ -988,33 +1260,34 @@ class ModelsLoader(NodeBase):
         self._loader_diagnostics["required_components"] = sorted(required_components)
         self._loader_diagnostics["components_to_load"] = list(components_to_reload)
 
-        incremental_qwen_group_offload = (
-            model_type == "QwenImageModularPipeline"
-            and use_group_offload
-            and bool(quant_config)
-            and bool(QWEN_LOW_RESOURCE_COMPONENTS.intersection(set(quant_config.keys())))
-        )
-        load_components_strict(
-            self.loader,
-            names=components_to_reload,
-            required_names=required_components,
-            model_id=real_repo_id,
-            dtype=dtype,
-            offload_mode=offload_mode,
+        incremental_group_offload = should_incrementally_group_offload(
+            use_group_offload=use_group_offload,
             quant_config=quant_config,
-            diagnostics=self._loader_diagnostics,
-            component_load_kwargs={
-                "torch_dtype": dtype,
-                "trust_remote_code": trust_remote_code,
-                "quantization_config": quant_config,
-            },
-            incremental_group_offload={
-                "device": device,
-                "mode": offload_mode,
-                "node_id": self.node_id,
-                "scope": "modular-diffusers",
-            } if incremental_qwen_group_offload else None,
         )
+        with self.diffusers_loading_progress():
+            load_components_strict(
+                self.loader,
+                names=components_to_reload,
+                required_names=required_components,
+                model_id=real_repo_id,
+                dtype=dtype,
+                offload_mode=offload_mode,
+                quant_config=quant_config,
+                diagnostics=self._loader_diagnostics,
+                component_load_kwargs={
+                    "torch_dtype": dtype,
+                    "trust_remote_code": trust_remote_code,
+                    "quantization_config": quant_config,
+                },
+                incremental_group_offload={
+                    "device": device,
+                    "mode": offload_mode,
+                    "node_id": self.node_id,
+                    "scope": "modular-diffusers",
+                }
+                if incremental_group_offload
+                else None,
+            )
         self.loader.update_components(**components_to_update)
 
         if use_group_offload:
@@ -1029,30 +1302,58 @@ class ModelsLoader(NodeBase):
                 )
                 if not offload_result.applied:
                     raise RuntimeError("No compatible Modular Diffusers component was available to offload.")
-                self._loader_diagnostics["offload"].update({
-                    "mode": offload_result.mode,
-                    "method": offload_result.method,
-                    "components": sorted(set(self._loader_diagnostics["offload"].get("components", []) + offload_result.components)),
-                    "disk_path": offload_result.disk_path,
-                    "detail": offload_result.detail,
-                })
+                self._loader_diagnostics["offload"].update(
+                    {
+                        "mode": offload_result.mode,
+                        "method": offload_result.method,
+                        "components": sorted(
+                            set(self._loader_diagnostics["offload"].get("components", []) + offload_result.components)
+                        ),
+                        "disk_path": offload_result.disk_path,
+                        "detail": offload_result.detail,
+                    }
+                )
                 logger.debug(f" ModelsLoader: applied {offload_mode} to {offload_result.components}")
             except RuntimeError as exc:
                 self.notify(str(exc), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
                 raise
         elif offload_mode == "none":
-            self.loader.to(device)
-            self._loader_diagnostics["offload"].update({
-                "mode": offload_mode,
-                "method": "to_device",
-                "components": [],
-            })
+            resident_modules = place_pipeline_components(
+                self.loader,
+                device,
+                progress_callback=lambda name, index, total: self.progress(
+                    99,
+                    phase="component_placement",
+                    message=(
+                        f"Placing {name} on {device} ({index}/{total}); "
+                        "this one-time accelerator copy can take several minutes"
+                    ),
+                    current_step=index,
+                    total_steps=total,
+                ),
+            )
+            self._loader_diagnostics["offload"].update(
+                {
+                    "mode": offload_mode,
+                    "method": "to_device",
+                    "components": resident_modules,
+                }
+            )
         elif offload_mode == OFFLOAD_MODE_MODEL_CPU:
-            self._loader_diagnostics["offload"].update({
-                "mode": offload_mode,
-                "method": "components_manager_auto_cpu_offload",
-                "components": [],
-            })
+            self._loader_diagnostics["offload"].update(
+                {
+                    "mode": offload_mode,
+                    "method": "components_manager_auto_cpu_offload",
+                    "components": [],
+                }
+            )
+
+        record_pipeline_component_runtime_policy(
+            self.loader,
+            offload_mode=offload_mode,
+            device=device,
+            node_id=self.node_id,
+        )
 
         print(f" ModelsLoader: reloaded components: {components_to_reload}")
         print(f" ModelsLoader: updated components: {components_to_update.keys()}")
@@ -1061,6 +1362,7 @@ class ModelsLoader(NodeBase):
             self.loader.unload_lora_weights()
         if lora_list:
             update_lora_adapters(self.loader, lora_list)
+            apply_lora_scheduler_override(self.loader, lora_list)
 
         # Construct loaded_components at the end after all modifications
         try:
@@ -1085,17 +1387,23 @@ class ModelsLoader(NodeBase):
                 persist=False,
                 autoHideDuration=MESSAGE_DURATION,
             )
-            self._loader_diagnostics.setdefault("components_failed", []).append({
-                "name": "component_info",
-                "required": True,
-                "error": str(e),
-            })
+            self._loader_diagnostics.setdefault("components_failed", []).append(
+                {
+                    "name": "component_info",
+                    "required": True,
+                    "error": str(e),
+                }
+            )
             raise RuntimeError(f"ModelsLoader could not retrieve required component info: {e}") from e
 
-        # add repo_id to all models info dicts
+        # Make every connected output self-describing. Runtime cleanup may
+        # recreate downstream nodes without replaying their dynamic UI signal.
         for k, v in loaded_components.items():
-            if v is not None:
+            if isinstance(v, dict):
                 v["repo_id"] = real_repo_id
+                v["model_type"] = model_type
+                v["revision"] = revision
+                v["trust_remote_code"] = bool(trust_remote_code)
 
         logger.debug(f" ModelsLoader: Final component_manager state: {components}")
 

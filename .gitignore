@@ -11,6 +11,10 @@ config.ini
 artifacts/
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
+
+# Installer-managed downloads, toolchains, journals, and diagnostics.
+.modiff/
 
 custom/*
 !custom/.gitkeep
@@ -18,18 +22,31 @@ custom/*
 #!custom/Example/**
 
 data/*
+!data/model-artifact-catalog.json
 !data/graphs/
+!data/workflow-library-manifest.json
 data/graphs/*
 !data/graphs/modiff/
 !data/graphs/modiff/**
 !data/graphs/modular_diffusers/
 !data/graphs/modular_diffusers/**
+!data/graphs/studio/
+!data/graphs/studio/**
+!data/graphs/experimental/
+!data/graphs/experimental/**
 #!data/.gitkeep
 
 web/user/*
 !web/user/ExampleField.js
 
+# The client resolves Gallery bytes from a pinned public Hugging Face Dataset.
+# Offline snapshots are local caches and must not be mirrored into source Git.
+web/template-gallery/
+
 .venv
+.venv.next/
+.venv.previous/
+.venv.failed/
 venv
 .cursorrules
 __pycache__

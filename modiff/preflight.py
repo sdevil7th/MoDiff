@@ -11,13 +11,13 @@ import sys
 import time
 
 from modiff.hardware import get_hardware_snapshot, legacy_torch_status
+from modiff.runtime_profile import runtime_profile
 
 
 PACKAGE_CHECKS = {
     "required": [
         ("aiohttp", "aiohttp"),
         ("aiohttp_cors", "aiohttp-cors"),
-        ("aiofiles", "aiofiles"),
         ("nanoid", "nanoid"),
         ("torch", "torch"),
         ("diffusers", "diffusers"),
@@ -44,33 +44,44 @@ PACKAGE_CHECKS = {
         ("xformers", "xformers"),
         ("av", "av"),
         ("spandrel", "spandrel"),
-        ("transparent_background", "transparent-background"),
-        ("rembg", "rembg"),
         ("nunchaku", "nunchaku"),
         ("torchao", "torchao"),
     ],
 }
 
 CANONICAL_ENTRYPOINT = "python -m modiff.preflight"
-LEGACY_ENTRYPOINT = "python -m mellon.preflight"
+
+# These APIs are part of MoDiff's pinned Diffusers contract rather than
+# optional feature detection.  Treating an older release wheel as healthy can
+# otherwise let the app start successfully and fail only after a long model
+# load, as happened with ACE-Step LoRA workflows.
+REQUIRED_RUNTIME_APIS = {
+    "diffusers": (
+        ("AceStepPipeline", "load_lora_weights"),
+        ("AceStepPipeline", "set_adapters"),
+        ("AceStepPipeline", "unload_lora_weights"),
+    ),
+}
 
 
 def setup_guidance(root):
     return {
-        "preferredCommand": "uv sync",
-        "macosCommand": "uv sync --extra apple-silicon",
-        "cudaCommand": "uv sync --extra cuda",
-        "pipCommand": "python -m pip install -U -r requirements.txt",
-        "pipMacosCommand": "python -m pip install -U -r requirements_macos.txt",
-        "pipExtrasCommand": "python -m pip install -U -r requirements_extras.txt",
-        "pipQuantCommand": "python -m pip install -U -r requirements_quant.txt",
+        "preferredCommand": "./install.sh",
+        "macosCommand": "./install.sh --accelerator mps",
+        "cudaCommand": "./install.sh --accelerator nvidia",
+        "intelCommand": "./install.sh --accelerator intel",
+        "windowsCommand": r".\install.ps1 -Accelerator auto",
+        "repairCommand": (
+            r".\install.ps1 -Accelerator auto -Repair"
+            if os.name == "nt"
+            else "./install.sh --accelerator auto --repair"
+        ),
         "projectRoot": str(root),
         "notes": [
             "Run commands from the project root.",
-            "Use uv run main.py after uv sync, or python main.py after activating a pip-managed environment.",
-            "On Apple Silicon macOS, use the apple-silicon profile so torch resolves from normal PyPI/MPS-capable wheels.",
-            "CUDA acceleration extras are intended for Linux/Windows GPU installs and are not part of the macOS setup path.",
-            "The mellon package and entrypoints are compatibility shims during the MoDiff namespace migration.",
+            "Use the managed installer so PyTorch matches the selected accelerator profile.",
+            "Do not run a generic dependency sync inside a managed accelerator environment.",
+            "Use ./install.sh --repair (or install.ps1 --repair on Windows) when the installed profile no longer matches the host.",
         ],
     }
 
@@ -168,6 +179,19 @@ def package_status(module_name, distribution_name, import_check=True):
         status["available"] = True
         status["import_ms"] = round((time.perf_counter() - started) * 1000)
         status["version"] = getattr(module, "__version__", status.get("version"))
+        missing_apis = []
+        for owner_name, attribute_name in REQUIRED_RUNTIME_APIS.get(module_name, ()):
+            owner = getattr(module, owner_name, None)
+            if owner is None or not callable(getattr(owner, attribute_name, None)):
+                missing_apis.append(f"{owner_name}.{attribute_name}")
+        if missing_apis:
+            status["available"] = False
+            status["contractMissing"] = missing_apis
+            status["error"] = (
+                "Installed package does not satisfy MoDiff's pinned runtime contract: "
+                + ", ".join(missing_apis)
+                + ". Repair the managed environment before starting MoDiff."
+            )
     except Exception as error:
         status["error"] = str(error)
 
@@ -198,6 +222,7 @@ def build_report(args):
                 missing_required_distributions.append(distribution_name)
 
     hardware = get_hardware_snapshot(data_dir, refresh=True)
+    profile = runtime_profile(hardware, venv=Path(sys.prefix))
     torch_status = next((item for item in packages["required"] if item["module"] == "torch"), None)
     if torch_status is not None:
         torch_status.update(legacy_torch_status(hardware))
@@ -219,6 +244,11 @@ def build_report(args):
         issues.append("MoDiff requires Python 3.12 or newer.")
     if missing_required:
         issues.append(f"Missing required packages: {', '.join(missing_required)}")
+    issues.extend(
+        issue["message"]
+        for issue in profile.get("issues", [])
+        if issue.get("severity") == "error" and issue.get("message")
+    )
 
     return {
         "error": bool(issues),
@@ -227,10 +257,7 @@ def build_report(args):
         "namespace": {
             "productName": "MoDiff",
             "canonicalPackage": "modiff",
-            "legacyPackage": "mellon",
             "canonicalPreflightCommand": CANONICAL_ENTRYPOINT,
-            "legacyPreflightCommand": LEGACY_ENTRYPOINT,
-            "legacyEntrypointSupported": True,
         },
         "setup": setup_guidance(root),
         "checkedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -256,6 +283,7 @@ def build_report(args):
         "paths": paths,
         "packages": packages,
         "hardware": hardware,
+        "runtimeProfile": profile,
         "missingRequiredPackages": missing_required,
         "missingRequiredDistributions": missing_required_distributions,
     }
@@ -270,30 +298,29 @@ def print_human(report):
     torch = next((item for item in report["packages"]["required"] if item["module"] == "torch"), None)
     if torch:
         cuda = "available" if torch.get("cuda_available") else "not available"
+        xpu = "available" if torch.get("xpu_available") else "not available"
         mps = "available" if torch.get("mps_available") else "not available"
         device = f" ({torch.get('cuda_device_name')})" if torch.get("cuda_device_name") else ""
-        print(f"Torch: {torch.get('version', 'unknown')} CUDA {cuda}{device}; MPS {mps}")
+        print(f"Torch: {torch.get('version', 'unknown')} CUDA {cuda}{device}; XPU {xpu}; MPS {mps}")
+    runtime_profile_status = report.get("runtimeProfile", {})
+    print(f"Runtime profile: {runtime_profile_status.get('status', 'unknown')}")
     if report["issues"]:
         print("Issues:")
         for issue in report["issues"]:
             print(f"- {issue}")
-    if report["missingRequiredPackages"]:
+    if report["missingRequiredPackages"] or runtime_profile_status.get("repair_required"):
         setup = report["setup"]
         if sys.platform == "darwin":
             preferred_command = setup["macosCommand"]
-            pip_command = setup["pipMacosCommand"]
+        elif os.name == "nt":
+            preferred_command = setup["windowsCommand"]
         else:
             preferred_command = setup["preferredCommand"]
-            pip_command = setup["pipCommand"]
         print("Install guidance:")
         print(f"- Preferred: {preferred_command}")
-        print(f"- Pip fallback: {pip_command}")
+        print(f"- Repair: {runtime_profile_status.get('repair_command') or setup['repairCommand']}")
         print(f"- Recheck: {report['namespace']['canonicalPreflightCommand']} --check-port {report['server']['port']}")
-    print(
-        "Namespace: use "
-        f"{report['namespace']['canonicalPreflightCommand']} "
-        f"(legacy {report['namespace']['legacyPreflightCommand']} remains supported)"
-    )
+    print(f"Namespace: use {report['namespace']['canonicalPreflightCommand']}")
 
 
 def main():
