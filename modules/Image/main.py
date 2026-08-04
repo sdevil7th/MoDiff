@@ -1,15 +1,49 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from modiff.NodeBase import NodeBase
-from PIL import Image
+from PIL import Image, ImageColor, ImageOps
 from modiff.config import CONFIG
-from pathlib import Path
+from modiff.path_identifiers import resolve_runtime_input_path
 import logging
 from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE
 from utils.paths import parse_filename
 import hashlib
 import json
-import nanoid
 
 logger = logging.getLogger('modiff')
+
+
+def unpack_packed_latents(latents, height, width, vae_scale_factor):
+    """Unpack FLUX-style latent patches for direct VAE previews."""
+
+    batch_size, _num_patches, channels = latents.shape
+    height = 2 * (int(height) // int(vae_scale_factor * 2))
+    width = 2 * (int(width) // int(vae_scale_factor * 2))
+    latents = latents.view(batch_size, height // 2, width // 2, channels // 4, 2, 2)
+    latents = latents.permute(0, 3, 1, 4, 2, 5)
+    return latents.reshape(batch_size, channels // 4, height, width)
+
+
+def decode_vae_latents(model, latents, size=None):
+    """Decode standard or packed image latents without an experimental dependency."""
+
+    from utils.torch_utils import TensorToImage
+
+    if hasattr(model, 'post_quant_conv') and hasattr(model.post_quant_conv, 'parameters'):
+        latents = latents.to(dtype=next(iter(model.post_quant_conv.parameters())).dtype)
+    else:
+        latents = latents.to(dtype=model.dtype)
+    if size is not None:
+        latents = unpack_packed_latents(
+            latents,
+            size[0],
+            size[1],
+            2 ** (len(model.config.block_out_channels) - 1),
+        )
+    shift_factor = getattr(model.config, 'shift_factor', 0) or 0
+    latents = (latents / model.config.scaling_factor) + shift_factor
+    images = model.decode(latents.to(model.device), return_dict=False)[0]
+    images = images / 2 + 0.5
+    return TensorToImage(images.to('cpu').detach().clone())
 
 def collapse_single(values):
     return values[0] if len(values) == 1 else values
@@ -73,20 +107,18 @@ class Load(NodeBase):
 
             try:
                 if f.startswith("http://") or f.startswith("https://"):
-                    import requests
-                    from io import BytesIO
-                    response = requests.get(f)
-                    response.raise_for_status()
-                    content = response.content
-                    image = Image.open(BytesIO(content))
+                    from modiff.media_import import import_web_media
+
+                    imported = import_web_media(f)
+                    content = imported.read_bytes()
+                    image = ImageOps.exif_transpose(Image.open(imported))
                     source_hash = hashlib.sha256(content).hexdigest()
                 else:
-                    if not Path(f).is_absolute():
-                        f = Path(CONFIG.paths['work_dir']) / f
-                    if not Path(f).exists():
+                    f = resolve_runtime_input_path(f)
+                    if not f.exists():
                         continue
-                    content = Path(f).read_bytes()
-                    image = Image.open(f)
+                    content = f.read_bytes()
+                    image = ImageOps.exif_transpose(Image.open(f))
                     source_hash = hashlib.sha256(content).hexdigest()
 
                 image.load()
@@ -174,7 +206,6 @@ class Save(NodeBase):
 
     def execute(self, **kwargs):
         from pathlib import Path
-        from PIL import Image
 
         image = kwargs.get("image")
         if not isinstance(image, list):
@@ -268,18 +299,20 @@ class Preview(NodeBase):
 
         # if image is an Image or an array of Images, pass it to the preview
         if not (isinstance(image, Image.Image) or (isinstance(image, list) and len(image) > 0 and isinstance(image[0], Image.Image))):
-            from modules.Experiments.VAE import VAEDecode
             pipeline = kwargs["vae"]
             device = kwargs["device"]
             if pipeline is None:
                 logger.error("VAE is required to decode latents")
-                return {"output": None}
+                return {"output": None, "filtered": None}
             pipeline = pipeline.vae if hasattr(pipeline, 'vae') else pipeline
-            vae = VAEDecode()
             if isinstance(image, list) or isinstance(image, tuple):
-                output = self.mm_exec(lambda: vae.decode(pipeline, image[0], image[1]), device, models=[pipeline])
+                output = self.mm_exec(
+                    lambda: decode_vae_latents(pipeline, image[0], image[1]),
+                    device,
+                    models=[pipeline],
+                )
             else:
-                output = self.mm_exec(lambda: vae.decode(pipeline, image), device, models=[pipeline])
+                output = self.mm_exec(lambda: decode_vae_latents(pipeline, image), device, models=[pipeline])
 
         filtered = output
         if export != "":
@@ -511,3 +544,92 @@ class Merge(NodeBase):
             output.append(blended)
 
         return {"output": output}
+
+
+class ImageGrid(NodeBase):
+    label = "Image Grid"
+    category = "image"
+    resizable = True
+    params = {
+        "images": {"label": "Images", "display": "input", "type": "image"},
+        "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1, "max": 100},
+        "cell_width": {"label": "Cell Width (0 = auto)", "type": "int", "default": 0, "min": 0},
+        "cell_height": {"label": "Cell Height (0 = auto)", "type": "int", "default": 0, "min": 0},
+        "gap": {"label": "Gap", "type": "int", "default": 8, "min": 0, "max": 256},
+        "background": {"label": "Background", "type": "string", "default": "#111111"},
+        "fit": {"label": "Fit", "type": "string", "options": ["contain", "cover", "stretch"], "default": "contain"},
+        "grid": {"label": "Grid", "display": "output", "type": "image"},
+        "rows": {"label": "Rows", "display": "output", "type": "int"},
+        "column_count": {"label": "Columns", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        images = kwargs.get("images")
+        images = images if isinstance(images, (list, tuple)) else [images]
+        images = [image for image in images if isinstance(image, Image.Image)]
+        if not images:
+            raise ValueError("Image Grid needs at least one image.")
+        columns = max(1, min(len(images), int(kwargs.get("columns") or 1)))
+        rows = (len(images) + columns - 1) // columns
+        cell_width = int(kwargs.get("cell_width") or 0) or max(image.width for image in images)
+        cell_height = int(kwargs.get("cell_height") or 0) or max(image.height for image in images)
+        gap = max(0, int(kwargs.get("gap") or 0))
+        try:
+            background = ImageColor.getcolor(str(kwargs.get("background") or "#111111"), "RGBA")
+        except ValueError as exc:
+            raise ValueError("Image Grid background must be a CSS color such as #111111.") from exc
+        canvas = Image.new(
+            "RGBA",
+            (columns * cell_width + (columns - 1) * gap, rows * cell_height + (rows - 1) * gap),
+            background,
+        )
+        fit = str(kwargs.get("fit") or "contain")
+        for index, image in enumerate(images):
+            source = image.convert("RGBA")
+            if fit == "stretch":
+                tile = source.resize((cell_width, cell_height), Image.Resampling.LANCZOS)
+            elif fit == "cover":
+                tile = ImageOps.fit(source, (cell_width, cell_height), method=Image.Resampling.LANCZOS)
+            else:
+                tile = ImageOps.contain(source, (cell_width, cell_height), method=Image.Resampling.LANCZOS)
+            column = index % columns
+            row = index // columns
+            x = column * (cell_width + gap) + (cell_width - tile.width) // 2
+            y = row * (cell_height + gap) + (cell_height - tile.height) // 2
+            canvas.alpha_composite(tile, (x, y))
+        return {"grid": canvas, "rows": rows, "column_count": columns}
+
+
+class SplitImageGrid(NodeBase):
+    label = "Split Image Grid"
+    category = "image"
+    params = {
+        "image": {"label": "Grid", "display": "input", "type": "image"},
+        "rows": {"label": "Rows", "type": "int", "default": 2, "min": 1, "max": 100},
+        "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1, "max": 100},
+        "gap": {"label": "Gap", "type": "int", "default": 0, "min": 0, "max": 256},
+        "images": {"label": "Images", "display": "output", "type": "image"},
+    }
+
+    def execute(self, **kwargs):
+        image = kwargs.get("image")
+        if isinstance(image, list):
+            image = image[0] if image else None
+        if not isinstance(image, Image.Image):
+            raise ValueError("Split Image Grid needs one image.")
+        rows = max(1, int(kwargs.get("rows") or 1))
+        columns = max(1, int(kwargs.get("columns") or 1))
+        gap = max(0, int(kwargs.get("gap") or 0))
+        content_width = image.width - gap * (columns - 1)
+        content_height = image.height - gap * (rows - 1)
+        if content_width < columns or content_height < rows:
+            raise ValueError("Grid rows, columns, and gap leave no crop area.")
+        cell_width = content_width // columns
+        cell_height = content_height // rows
+        output = []
+        for row in range(rows):
+            for column in range(columns):
+                left = column * (cell_width + gap)
+                top = row * (cell_height + gap)
+                output.append(image.crop((left, top, left + cell_width, top + cell_height)))
+        return {"images": output}

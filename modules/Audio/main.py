@@ -1,13 +1,35 @@
 import logging
+import json
+import re
+import subprocess
+import tempfile
 from pathlib import Path
 
 import numpy as np
 
 from modiff.NodeBase import NodeBase
 from modiff.config import CONFIG
+from modiff.path_identifiers import resolve_runtime_input_path
 from utils.paths import parse_filename
 
 logger = logging.getLogger("modiff")
+AUDIO_SAMPLE_RATE_OPTIONS = {
+    "44100": "44.1 kHz",
+    "48000": "48 kHz",
+    "88200": "88.2 kHz",
+    "96000": "96 kHz",
+}
+
+
+def _pcm_to_float32(array):
+    if array.dtype.kind == "u":
+        midpoint = float(np.iinfo(array.dtype).max + 1) / 2.0
+        return (array.astype(np.float32) - midpoint) / midpoint
+    if array.dtype.kind == "i":
+        limits = np.iinfo(array.dtype)
+        scale = float(max(abs(int(limits.min)), abs(int(limits.max))))
+        return array.astype(np.float32) / scale
+    return array.astype(np.float32, copy=False)
 
 
 def _resolve_file(value):
@@ -15,10 +37,7 @@ def _resolve_file(value):
     file = str(file or "")
     if not file:
         return None
-    path = Path(file)
-    if not path.is_absolute():
-        path = Path(CONFIG.paths["work_dir"]) / path
-    return path
+    return resolve_runtime_input_path(file)
 
 
 def _collapse_single(values):
@@ -41,12 +60,9 @@ def _audio_to_numpy(audio):
     if isinstance(data, torch.Tensor):
         array = data.detach().float().cpu().numpy()
     elif isinstance(data, np.ndarray):
-        if data.dtype.kind in ("i", "u"):
-            array = data.astype(np.float32) / float(np.iinfo(data.dtype).max)
-        else:
-            array = data.astype(np.float32, copy=False)
+        array = _pcm_to_float32(data)
     elif isinstance(data, str):
-        loaded = _read_wav(Path(data))
+        loaded = _read_wav(resolve_runtime_input_path(data))
         return loaded["samples"], loaded["sample_rate"]
     else:
         array = np.asarray(data, dtype=np.float32)
@@ -65,11 +81,7 @@ def _read_wav(path):
 
     sample_rate, data = wavfile.read(path)
     array = np.asarray(data)
-    if array.dtype.kind in ("i", "u"):
-        max_value = np.iinfo(array.dtype).max
-        array = array.astype(np.float32) / float(max_value)
-    else:
-        array = array.astype(np.float32)
+    array = _pcm_to_float32(array)
     if array.ndim == 1:
         channels = 1
     else:
@@ -94,6 +106,152 @@ def _write_wav(path, samples, sample_rate):
         array = array[:, 0]
     pcm = (array * 32767.0).astype(np.int16)
     wavfile.write(path, int(sample_rate), pcm)
+
+
+def _loudnorm_filter(target_lufs, target_lra, target_peak_dbfs):
+    options = [
+        f"I={float(target_lufs):.2f}",
+        f"LRA={float(target_lra):.2f}",
+        f"TP={float(target_peak_dbfs):.2f}",
+    ]
+    options.append("print_format=json")
+    return "loudnorm=" + ":".join(options)
+
+
+def _parse_loudnorm_measurement(stderr):
+    matches = re.findall(r"\{\s*\"input_i\".*?\}", stderr, flags=re.DOTALL)
+    if not matches:
+        raise RuntimeError("FFmpeg did not return a loudness measurement.")
+    payload = json.loads(matches[-1])
+    required = ("input_i", "input_lra", "input_tp", "input_thresh", "target_offset")
+    measurement = {}
+    for key in required:
+        value = float(payload[key])
+        if not np.isfinite(value):
+            raise ValueError("Audio is silent or too short to measure loudness.")
+        measurement[key] = value
+    return measurement
+
+
+def _measure_loudness(samples, sample_rate, target_lufs=-16.0, target_lra=7.0, target_peak_dbfs=-1.0):
+    from imageio_ffmpeg import get_ffmpeg_exe
+
+    with tempfile.TemporaryDirectory(prefix="modiff-audio-loudness-") as temporary_dir:
+        source_path = Path(temporary_dir) / "source.wav"
+        _write_wav(source_path, samples, sample_rate)
+        result = subprocess.run(
+            [
+                get_ffmpeg_exe(),
+                "-hide_banner",
+                "-nostdin",
+                "-i",
+                str(source_path),
+                "-af",
+                _loudnorm_filter(target_lufs, target_lra, target_peak_dbfs),
+                "-f",
+                "null",
+                "-",
+            ],
+            check=False,
+            capture_output=True,
+        )
+    stderr = result.stderr.decode("utf-8", errors="replace")
+    if result.returncode != 0:
+        raise RuntimeError(f"FFmpeg loudness analysis failed: {stderr.strip() or 'unknown error'}")
+    return _parse_loudnorm_measurement(stderr)
+
+
+def _atempo_factors(tempo_ratio):
+    """Split a tempo ratio into conservative FFmpeg atempo stages."""
+
+    ratio = float(tempo_ratio)
+    if not np.isfinite(ratio) or ratio <= 0:
+        raise ValueError("Audio tempo ratio must be a finite positive number.")
+
+    factors = []
+    while ratio > 2.0:
+        factors.append(2.0)
+        ratio /= 2.0
+    while ratio < 0.5:
+        factors.append(0.5)
+        ratio /= 0.5
+    if not factors or abs(ratio - 1.0) > 1e-9:
+        factors.append(ratio)
+    return factors
+
+
+def _run_pitch_preserving_stretch(samples, sample_rate, tempo_ratio):
+    """Time-stretch audio through FFmpeg while preserving its pitch."""
+
+    from imageio_ffmpeg import get_ffmpeg_exe
+
+    rubberband_filter = (
+        f"rubberband=tempo={tempo_ratio:.15f}:pitch=1:"
+        "transients=crisp:detector=compound:phase=laminar:window=standard:"
+        "smoothing=on:formant=preserved:pitchq=quality:channels=together"
+    )
+    atempo_filter = ",".join(f"atempo={factor:.15f}" for factor in _atempo_factors(tempo_ratio))
+
+    with tempfile.TemporaryDirectory(prefix="modiff-audio-fit-") as temporary_dir:
+        temporary_root = Path(temporary_dir)
+        source_path = temporary_root / "source.wav"
+        output_path = temporary_root / "stretched.wav"
+        _write_wav(source_path, samples, sample_rate)
+
+        command_prefix = [
+            get_ffmpeg_exe(),
+            "-y",
+            "-v",
+            "error",
+            "-i",
+            str(source_path),
+            "-map",
+            "0:a:0",
+        ]
+        command_suffix = [
+            "-ar",
+            str(sample_rate),
+            "-c:a",
+            "pcm_s16le",
+            "-f",
+            "wav",
+            str(output_path),
+        ]
+        errors = []
+        for engine, audio_filter in (("rubberband", rubberband_filter), ("atempo", atempo_filter)):
+            output_path.unlink(missing_ok=True)
+            command = [*command_prefix, "-af", audio_filter, *command_suffix]
+            result = subprocess.run(command, check=False, capture_output=True)
+            if result.returncode == 0 and output_path.is_file():
+                loaded = _read_wav(output_path)
+                return loaded["samples"], engine
+            errors.append(result.stderr.decode("utf-8", errors="replace").strip())
+            if engine == "rubberband":
+                logger.warning("FFmpeg rubberband filter is unavailable; using the atempo fallback.")
+
+    detail = next((error for error in reversed(errors) if error), "unknown FFmpeg error")
+    raise RuntimeError(f"Pitch-preserving audio fit failed: {detail}")
+
+
+def _apply_half_cosine_fades(samples, sample_rate, fade_in_seconds, fade_out_seconds, content_start, content_end):
+    output = np.asarray(samples, dtype=np.float32).copy()
+    content_start = max(0, min(int(content_start), output.shape[0]))
+    content_end = max(content_start, min(int(content_end), output.shape[0]))
+    content_frames = content_end - content_start
+
+    fade_in_frames = min(content_frames, round(max(0.0, float(fade_in_seconds)) * sample_rate))
+    if fade_in_frames > 0:
+        phase = np.arange(fade_in_frames, dtype=np.float64) / max(1, fade_in_frames - 1)
+        gain = np.sin((np.pi / 2) * phase).astype(np.float32)
+        output[content_start : content_start + fade_in_frames] *= gain[:, None]
+
+    fade_out_frames = min(content_frames, round(max(0.0, float(fade_out_seconds)) * sample_rate))
+    if fade_out_frames > 0:
+        phase = np.arange(fade_out_frames, dtype=np.float64) / max(1, fade_out_frames - 1)
+        gain = np.cos((np.pi / 2) * phase).astype(np.float32)
+        output[content_end - fade_out_frames : content_end] *= gain[:, None]
+
+    return output
 
 
 class Load(NodeBase):
@@ -125,7 +283,9 @@ class Load(NodeBase):
         if path is None or not path.exists():
             raise ValueError("Load Audio needs an existing audio file.")
         if path.suffix.lower() != ".wav":
-            raise ValueError("Load Audio currently supports WAV files. Convert source audio to WAV before loading.")
+            from modiff.media_import import audio_as_wav
+
+            path = audio_as_wav(path)
 
         loaded = _read_wav(path)
         return {
@@ -187,6 +347,327 @@ class TrimPad(NodeBase):
         return {"output": output, "sample_rate": output["sample_rate"], "duration": output["duration_seconds"]}
 
 
+class FitDuration(NodeBase):
+    """Fit a source window to an exact timeline without changing pitch."""
+
+    label = "Fit Audio Duration"
+    category = "Audio"
+    resizable = True
+    params = {
+        "audio": {"label": "Audio", "display": "input", "type": ["audio", "str"]},
+        "source_start_seconds": {"label": "Source Start", "type": "float", "default": 0.0, "min": 0, "step": 0.001},
+        "source_duration_seconds": {
+            "label": "Source Duration",
+            "type": "float",
+            "default": 0.0,
+            "min": 0,
+            "step": 0.001,
+        },
+        "target_duration_seconds": {
+            "label": "Target Duration",
+            "type": "float",
+            "default": 5.0,
+            "min": 0.001,
+            "step": 0.001,
+        },
+        "delay_seconds": {"label": "Delay", "type": "float", "default": 0.0, "step": 0.001},
+        "target_sample_rate": {"label": "Target SR", "type": "int", "default": 48000, "min": 8000, "max": 192000},
+        "fade_in_seconds": {"label": "Fade In", "type": "float", "default": 0.0, "min": 0, "step": 0.001},
+        "fade_out_seconds": {"label": "Fade Out", "type": "float", "default": 0.0, "min": 0, "step": 0.001},
+        "output": {"label": "Audio", "display": "output", "type": "audio"},
+        "sample_rate": {"label": "Sample Rate", "display": "output", "type": "int"},
+        "duration": {"label": "Duration", "display": "output", "type": "float"},
+        "tempo_ratio": {"label": "Tempo Ratio", "display": "output", "type": "float"},
+        "stretch_engine": {"label": "Stretch Engine", "display": "output", "type": "str"},
+    }
+
+    def execute(self, **kwargs):
+        from math import gcd
+
+        from scipy.signal import resample_poly
+
+        if kwargs.get("audio") is None:
+            raise ValueError("Fit Audio Duration needs audio input.")
+
+        samples, sample_rate = _audio_to_numpy(kwargs.get("audio"))
+        target_sample_rate = int(kwargs.get("target_sample_rate") or sample_rate)
+        if target_sample_rate < 8000 or target_sample_rate > 192000:
+            raise ValueError("Target sample rate must be between 8000 and 192000 Hz.")
+        if target_sample_rate != sample_rate:
+            divisor = gcd(sample_rate, target_sample_rate)
+            samples = resample_poly(
+                samples,
+                target_sample_rate // divisor,
+                sample_rate // divisor,
+                axis=0,
+            ).astype(np.float32)
+            sample_rate = target_sample_rate
+
+        source_start = max(0, round(float(kwargs.get("source_start_seconds") or 0) * sample_rate))
+        if source_start >= samples.shape[0]:
+            raise ValueError("Source start is outside the input audio.")
+
+        source_duration_seconds = float(kwargs.get("source_duration_seconds") or 0)
+        if source_duration_seconds > 0:
+            source_frames = max(1, round(source_duration_seconds * sample_rate))
+            source_end = source_start + source_frames
+            selected = samples[source_start : min(source_end, samples.shape[0])]
+            if selected.shape[0] < source_frames:
+                padding = np.zeros((source_frames - selected.shape[0], selected.shape[1]), dtype=np.float32)
+                selected = np.concatenate([selected, padding], axis=0)
+        else:
+            selected = samples[source_start:]
+            source_frames = selected.shape[0]
+
+        target_duration_seconds = float(kwargs.get("target_duration_seconds") or 0)
+        if not np.isfinite(target_duration_seconds) or target_duration_seconds <= 0:
+            raise ValueError("Target duration must be a finite positive number.")
+        target_frames = max(1, round(target_duration_seconds * sample_rate))
+        tempo_ratio = source_frames / target_frames
+
+        if source_frames == target_frames:
+            fitted = selected.astype(np.float32, copy=True)
+            stretch_engine = "none"
+        else:
+            fitted, stretch_engine = _run_pitch_preserving_stretch(selected, sample_rate, tempo_ratio)
+
+        if fitted.ndim == 1:
+            fitted = fitted[:, None]
+        if fitted.shape[0] < target_frames:
+            padding = np.zeros((target_frames - fitted.shape[0], fitted.shape[1]), dtype=np.float32)
+            fitted = np.concatenate([fitted, padding], axis=0)
+        else:
+            fitted = fitted[:target_frames]
+
+        delay_frames = round(float(kwargs.get("delay_seconds") or 0) * sample_rate)
+        shifted = np.zeros((target_frames, fitted.shape[1]), dtype=np.float32)
+        if delay_frames >= 0:
+            retained_frames = max(0, target_frames - delay_frames)
+            if retained_frames > 0:
+                shifted[delay_frames : delay_frames + retained_frames] = fitted[:retained_frames]
+            content_start = min(delay_frames, target_frames)
+            content_end = target_frames
+        else:
+            source_offset = min(-delay_frames, target_frames)
+            retained_frames = target_frames - source_offset
+            if retained_frames > 0:
+                shifted[:retained_frames] = fitted[source_offset:]
+            content_start = 0
+            content_end = retained_frames
+
+        shifted = _apply_half_cosine_fades(
+            shifted,
+            sample_rate,
+            kwargs.get("fade_in_seconds") or 0,
+            kwargs.get("fade_out_seconds") or 0,
+            content_start,
+            content_end,
+        )
+        shifted = np.clip(shifted, -1.0, 1.0)
+        output = {
+            "samples": shifted,
+            "sample_rate": int(sample_rate),
+            "channels": int(shifted.shape[1]),
+            "duration_seconds": target_frames / sample_rate,
+        }
+        return {
+            "output": output,
+            "sample_rate": output["sample_rate"],
+            "duration": output["duration_seconds"],
+            "tempo_ratio": float(tempo_ratio),
+            "stretch_engine": stretch_engine,
+        }
+
+
+class MatchLoudness(NodeBase):
+    """Match generated audio to a reference window without changing its dynamics."""
+
+    label = "Match Audio Loudness"
+    category = "Audio"
+    resizable = True
+    params = {
+        "audio": {"label": "Audio", "display": "input", "type": ["audio", "str"]},
+        "reference": {"label": "Reference", "display": "input", "type": ["audio", "str"]},
+        "reference_window_seconds": {
+            "label": "Reference Tail",
+            "type": "float",
+            "default": 15.0,
+            "min": 0,
+            "step": 0.1,
+        },
+        "target_peak_dbfs": {
+            "label": "Peak Ceiling",
+            "type": "float",
+            "default": -1.0,
+            "min": -9.0,
+            "max": 0.0,
+            "step": 0.1,
+        },
+        "max_adjustment_db": {
+            "label": "Max Adjustment",
+            "type": "float",
+            "default": 12.0,
+            "min": 0.0,
+            "max": 30.0,
+            "step": 0.5,
+        },
+        "output": {"label": "Audio", "display": "output", "type": "audio"},
+        "reference_lufs": {"label": "Reference LUFS", "display": "output", "type": "float"},
+        "input_lufs": {"label": "Input LUFS", "display": "output", "type": "float"},
+        "output_lufs": {"label": "Output LUFS", "display": "output", "type": "float"},
+        "adjustment_db": {"label": "Adjustment", "display": "output", "type": "float"},
+        "true_peak_dbfs": {"label": "True Peak", "display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        if kwargs.get("audio") is None:
+            raise ValueError("Match Audio Loudness needs generated audio.")
+        if kwargs.get("reference") is None:
+            raise ValueError("Match Audio Loudness needs reference audio.")
+
+        samples, sample_rate = _audio_to_numpy(kwargs.get("audio"))
+        reference, reference_sample_rate = _audio_to_numpy(kwargs.get("reference"))
+        window_seconds = max(0.0, float(kwargs.get("reference_window_seconds") or 0))
+        if window_seconds > 0:
+            window_frames = max(1, round(window_seconds * reference_sample_rate))
+            reference = reference[-window_frames:]
+
+        target_peak_dbfs = min(0.0, max(-9.0, float(kwargs.get("target_peak_dbfs") or -1.0)))
+        max_adjustment_db = min(30.0, max(0.0, float(kwargs.get("max_adjustment_db") or 0.0)))
+        reference_measurement = _measure_loudness(
+            reference,
+            reference_sample_rate,
+            target_peak_dbfs=target_peak_dbfs,
+        )
+        reference_lufs = min(-5.0, max(-70.0, reference_measurement["input_i"]))
+        input_measurement = _measure_loudness(
+            samples,
+            sample_rate,
+            target_lufs=reference_lufs,
+            target_peak_dbfs=target_peak_dbfs,
+        )
+        original_input_lufs = input_measurement["input_i"]
+        requested_gain_db = min(
+            max_adjustment_db,
+            max(-max_adjustment_db, reference_lufs - original_input_lufs),
+        )
+        # Continuation matching must not behave like an automatic gain
+        # controller. FFmpeg's dynamic loudnorm mode can apply very different
+        # gain to consecutive phrases (and audibly pump quiet endings). Apply
+        # one constant gain to every sample instead, capped so the measured
+        # true peak remains below the requested ceiling.
+        peak_limited_gain_db = target_peak_dbfs - input_measurement["input_tp"]
+        applied_gain_db = min(requested_gain_db, peak_limited_gain_db)
+        matched = samples * (10.0 ** (applied_gain_db / 20.0))
+        if matched.ndim == 1:
+            matched = matched[:, None]
+        matched = np.clip(matched, -1.0, 1.0)
+        output_measurement = _measure_loudness(
+            matched,
+            sample_rate,
+            target_lufs=reference_lufs,
+            target_peak_dbfs=target_peak_dbfs,
+        )
+        output = {
+            "samples": matched,
+            "sample_rate": int(sample_rate),
+            "channels": int(matched.shape[1] if matched.ndim == 2 else 1),
+            "duration_seconds": float(matched.shape[0] / sample_rate) if sample_rate else 0.0,
+        }
+        return {
+            "output": output,
+            "reference_lufs": float(reference_lufs),
+            "input_lufs": float(original_input_lufs),
+            "output_lufs": float(output_measurement["input_i"]),
+            "adjustment_db": float(output_measurement["input_i"] - original_input_lufs),
+            "true_peak_dbfs": float(output_measurement["input_tp"]),
+        }
+
+
+class Join(NodeBase):
+    """Append a continuation to its source while preserving exact duration."""
+
+    label = "Join Audio"
+    category = "Audio"
+    resizable = True
+    params = {
+        "source": {"label": "Source", "display": "input", "type": ["audio", "str"]},
+        "continuation": {"label": "Continuation", "display": "input", "type": ["audio", "str"]},
+        "boundary_fade_seconds": {
+            "label": "Boundary Fade",
+            "type": "float",
+            "default": 0.01,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.001,
+        },
+        "output": {"label": "Audio", "display": "output", "type": "audio"},
+        "sample_rate": {"label": "Sample Rate", "display": "output", "type": "int"},
+        "duration": {"label": "Duration", "display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        from math import gcd
+
+        from scipy.signal import resample_poly
+
+        if kwargs.get("source") is None:
+            raise ValueError("Join Audio needs source audio.")
+        if kwargs.get("continuation") is None:
+            raise ValueError("Join Audio needs continuation audio.")
+
+        source, sample_rate = _audio_to_numpy(kwargs.get("source"))
+        continuation, continuation_sample_rate = _audio_to_numpy(kwargs.get("continuation"))
+        if continuation_sample_rate != sample_rate:
+            divisor = gcd(sample_rate, continuation_sample_rate)
+            continuation = resample_poly(
+                continuation,
+                sample_rate // divisor,
+                continuation_sample_rate // divisor,
+                axis=0,
+            ).astype(np.float32)
+
+        source_channels = source.shape[1]
+        continuation_channels = continuation.shape[1]
+        if source_channels != continuation_channels:
+            if source_channels == 1:
+                source = np.repeat(source, continuation_channels, axis=1)
+            elif continuation_channels == 1:
+                continuation = np.repeat(continuation, source_channels, axis=1)
+            else:
+                raise ValueError(
+                    f"Join Audio cannot combine {source_channels}-channel source "
+                    f"with {continuation_channels}-channel continuation."
+                )
+
+        fade_frames = min(
+            source.shape[0],
+            continuation.shape[0],
+            round(max(0.0, float(kwargs.get("boundary_fade_seconds") or 0)) * sample_rate),
+        )
+        if fade_frames > 0:
+            phase = np.arange(fade_frames, dtype=np.float64) / max(1, fade_frames - 1)
+            source_fade = np.cos((np.pi / 2) * phase).astype(np.float32)
+            continuation_fade = np.sin((np.pi / 2) * phase).astype(np.float32)
+            source = source.copy()
+            continuation = continuation.copy()
+            source[-fade_frames:] *= source_fade[:, None]
+            continuation[:fade_frames] *= continuation_fade[:, None]
+
+        joined = np.concatenate([source, continuation], axis=0)
+        output = {
+            "samples": np.clip(joined, -1.0, 1.0),
+            "sample_rate": int(sample_rate),
+            "channels": int(joined.shape[1]),
+            "duration_seconds": float(joined.shape[0] / sample_rate) if sample_rate else 0.0,
+        }
+        return {
+            "output": output,
+            "sample_rate": output["sample_rate"],
+            "duration": output["duration_seconds"],
+        }
+
+
 class Export(NodeBase):
     """Save audio to a WAV file and expose a preview."""
 
@@ -200,18 +681,38 @@ class Export(NodeBase):
             "type": "str",
             "default": "{PATH:audio}/MoDiff_{HASH:6}.wav",
         },
-        "sample_rate": {"label": "Sample Rate", "type": "int", "default": 48000, "min": 8000, "max": 192000},
+        "sample_rate": {
+            "label": "Export Sample Rate",
+            "type": "int",
+            "default": 48000,
+            "options": AUDIO_SAMPLE_RATE_OPTIONS,
+        },
         "preview": {"display": "ui_audio", "type": "url", "dataSource": "file"},
         "file": {"label": "File", "display": "output", "type": "audio"},
         "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
     }
 
     def execute(self, **kwargs):
+        from math import gcd
+
+        from scipy.signal import resample_poly
+
         audio = kwargs.get("audio")
         if audio is None:
             raise ValueError("Export Audio needs audio input.")
         samples, detected_sample_rate = _audio_to_numpy(audio)
         sample_rate = int(kwargs.get("sample_rate") or detected_sample_rate or 48000)
+        if sample_rate not in {int(value) for value in AUDIO_SAMPLE_RATE_OPTIONS}:
+            supported = ", ".join(AUDIO_SAMPLE_RATE_OPTIONS.values())
+            raise ValueError(f"Export sample rate must be one of: {supported}.")
+        if sample_rate != detected_sample_rate:
+            divisor = gcd(detected_sample_rate, sample_rate)
+            samples = resample_poly(
+                samples,
+                sample_rate // divisor,
+                detected_sample_rate // divisor,
+                axis=0,
+            ).astype(np.float32)
 
         parsed_filename = Path(parse_filename(kwargs.get("filename") or "{PATH:audio}/MoDiff_{HASH:6}.wav"))
         if not parsed_filename.is_absolute():

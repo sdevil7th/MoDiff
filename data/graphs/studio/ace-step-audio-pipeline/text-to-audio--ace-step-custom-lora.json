@@ -1,0 +1,1775 @@
+{
+  "edges": [
+    {
+      "className": "category-audio",
+      "data": {
+        "connectionType": "audio"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#F472B6",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "audio",
+      "style": {
+        "stroke": "#F472B6"
+      },
+      "target": "node-01",
+      "targetHandle": "audio",
+      "type": "default"
+    },
+    {
+      "className": "category-audio_diffusion_pipeline",
+      "data": {
+        "connectionType": "audio_diffusion_pipeline"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#E879F9",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "pipeline",
+      "style": {
+        "stroke": "#E879F9"
+      },
+      "target": "node-06",
+      "targetHandle": "pipeline",
+      "type": "default"
+    },
+    {
+      "className": "category-quantization_config",
+      "data": {
+        "connectionType": "quantization_config"
+      },
+      "edgeType": "default",
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "#FDE68A",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "quantization_config",
+      "style": {
+        "stroke": "#FDE68A"
+      },
+      "target": "node-05",
+      "targetHandle": "quantization_config",
+      "type": "default"
+    },
+    {
+      "className": "category-diffusers_execution_recipe",
+      "data": {
+        "connectionType": "diffusers_execution_recipe"
+      },
+      "edgeType": "default",
+      "id": "edge-04",
+      "markerEnd": {
+        "color": "#C4B5FD",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-05",
+      "sourceHandle": "execution_recipe",
+      "style": {
+        "stroke": "#C4B5FD"
+      },
+      "target": "node-03",
+      "targetHandle": "execution_recipe",
+      "type": "default"
+    },
+    {
+      "className": "category-audio_diffusion_pipeline",
+      "data": {
+        "connectionType": "audio_diffusion_pipeline"
+      },
+      "edgeType": "default",
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "#E879F9",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-06",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#E879F9"
+      },
+      "target": "node-02",
+      "targetHandle": "pipeline",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "a1f413a91149e83d1b28bb991e43609343bdf30f2b06b5bb811ece78a0db2704",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Export",
+        "cache": false,
+        "category": "Audio",
+        "description": "Save audio to a WAV file and expose a preview.",
+        "label": "Export Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "audio": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Audio",
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "file": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "audio"
+          },
+          "filename": {
+            "default": "{PATH:audio}/MoDiff_{HASH:6}.wav",
+            "label": "File",
+            "type": "str"
+          },
+          "preview": {
+            "dataSource": "file",
+            "display": "ui_audio",
+            "type": "url"
+          },
+          "sample_rate": {
+            "default": 48000,
+            "label": "Export Sample Rate",
+            "options": {
+              "44100": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "44.1 kHz",
+                "schemaVersion": 1,
+                "value": "44100"
+              },
+              "48000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "48 kHz",
+                "schemaVersion": 1,
+                "value": "48000"
+              },
+              "88200": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "88.2 kHz",
+                "schemaVersion": 1,
+                "value": "88200"
+              },
+              "96000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "96 kHz",
+                "schemaVersion": 1,
+                "value": "96000"
+              }
+            },
+            "type": "int",
+            "value": 48000
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "audioExport",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 2200,
+        "y": 187
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Generate",
+        "cache": false,
+        "category": "Diffusers Audio",
+        "description": "Generate audio with a Diffusers audio pipeline.",
+        "label": "Diffusers.GenerateAudio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersAudio",
+        "params": {
+          "audio": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Audio",
+            "type": "audio"
+          },
+          "audio_cover_strength": {
+            "default": 0.85,
+            "display": "slider",
+            "label": "Cover Strength",
+            "max": 1,
+            "min": 0,
+            "step": 0.01,
+            "type": "float",
+            "value": 0.5
+          },
+          "audio_duration": {
+            "default": 30,
+            "label": "Duration",
+            "max": 240,
+            "min": 1,
+            "step": 0.5,
+            "type": "float",
+            "value": 20
+          },
+          "bpm": {
+            "default": 0,
+            "label": "BPM",
+            "max": 400,
+            "min": 0,
+            "type": "int",
+            "value": 92
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "extension_duration": {
+            "default": 15,
+            "label": "Extension",
+            "max": 180,
+            "min": 1,
+            "step": 0.5,
+            "type": "float",
+            "value": 15
+          },
+          "guidance_scale": {
+            "default": 1,
+            "description": "XL Turbo is guidance-distilled; values above 1 are ignored by the Diffusers pipeline.",
+            "display": "slider",
+            "label": "Guidance",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 1
+          },
+          "keyscale": {
+            "default": "",
+            "label": "Key",
+            "type": "string",
+            "value": "A minor"
+          },
+          "lora_scale": {
+            "default": 1,
+            "description": "Per-generation ACE-Step LoRA multiplier from Diffusers attention_kwargs.",
+            "display": "slider",
+            "label": "LoRA call strength",
+            "max": 2,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "lyrics": {
+            "default": "",
+            "display": "textarea",
+            "label": "Lyrics",
+            "type": "text",
+            "value": "[instrumental]"
+          },
+          "negative_prompt": {
+            "default": "",
+            "display": "textarea",
+            "label": "Negative Prompt",
+            "type": "text",
+            "value": ""
+          },
+          "num_inference_steps": {
+            "default": 8,
+            "description": "ACE-Step v1.5 XL Turbo is designed for 8 denoising steps.",
+            "display": "slider",
+            "label": "Steps",
+            "max": 100,
+            "min": 1,
+            "type": "int",
+            "value": 8
+          },
+          "num_waveforms": {
+            "default": 1,
+            "label": "Variations",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "pipeline": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Pipeline",
+            "required": true,
+            "type": "audio_diffusion_pipeline"
+          },
+          "prompt": {
+            "default": "",
+            "display": "textarea",
+            "label": "Prompt",
+            "type": "text",
+            "value": "Original cinematic folk song shaped by the selected personal style adapter, intimate lead vocal, fingerpicked acoustic guitar, bowed strings entering in the chorus, restrained hand percussion, clear verse and chorus structure, natural performance timing, detailed balanced mix."
+          },
+          "reference_audio": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Reference Audio",
+            "required": false,
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "repainting_end": {
+            "default": 0,
+            "label": "Repaint End",
+            "min": 0,
+            "step": 0.01,
+            "type": "float",
+            "value": 10
+          },
+          "repainting_start": {
+            "default": 0,
+            "label": "Repaint Start",
+            "min": 0,
+            "step": 0.01,
+            "type": "float",
+            "value": 0
+          },
+          "return_continuation_tail": {
+            "default": true,
+            "label": "Return Tail Only",
+            "type": "bool",
+            "value": false
+          },
+          "sample_rate": {
+            "default": 48000,
+            "label": "Sample Rate",
+            "options": {
+              "44100": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "44.1 kHz",
+                "schemaVersion": 1,
+                "value": "44100"
+              },
+              "48000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "48 kHz",
+                "schemaVersion": 1,
+                "value": "48000"
+              },
+              "88200": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "88.2 kHz",
+                "schemaVersion": 1,
+                "value": "88200"
+              },
+              "96000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "96 kHz",
+                "schemaVersion": 1,
+                "value": "96000"
+              }
+            },
+            "type": "int",
+            "value": 48000
+          },
+          "sample_rate_out": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Sample Rate",
+            "type": "int"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 8451
+            }
+          },
+          "shift": {
+            "default": 3,
+            "display": "slider",
+            "label": "Shift",
+            "max": 10,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 3
+          },
+          "source_audio": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Source Audio",
+            "required": false,
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "stable_audio_guidance": {
+            "default": 7,
+            "label": "Stable Audio Guidance",
+            "max": 20,
+            "min": 0,
+            "type": "float"
+          },
+          "stable_audio_steps": {
+            "default": 100,
+            "label": "Stable Audio Steps",
+            "max": 300,
+            "min": 1,
+            "type": "int"
+          },
+          "task_type": {
+            "default": "text2music",
+            "label": "Task",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text2music",
+                "schemaVersion": 1,
+                "value": "text2music"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cover",
+                "schemaVersion": 1,
+                "value": "cover"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "repaint",
+                "schemaVersion": 1,
+                "value": "repaint"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "continuation",
+                "schemaVersion": 1,
+                "value": "continuation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "extract",
+                "schemaVersion": 1,
+                "value": "extract"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "lego",
+                "schemaVersion": 1,
+                "value": "lego"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "complete",
+                "schemaVersion": 1,
+                "value": "complete"
+              }
+            ],
+            "type": "string",
+            "value": "text2music"
+          },
+          "timesignature": {
+            "default": "4",
+            "label": "Time",
+            "type": "string",
+            "value": "4/4"
+          },
+          "vocal_language": {
+            "default": "en",
+            "label": "Language",
+            "type": "string",
+            "value": "en"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "audioGenerate",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-02",
+      "position": {
+        "x": 1760,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "LoadPipeline",
+        "cache": false,
+        "category": "Diffusers Audio",
+        "description": "Load a generic Diffusers audio pipeline.",
+        "label": "Diffusers.LoadPipeline",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersAudio",
+        "params": {
+          "auto_offload": {
+            "default": true,
+            "label": "Auto offload",
+            "type": "bool",
+            "value": false
+          },
+          "device": {
+            "default": "cuda:0",
+            "label": "Device",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              }
+            ],
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "dtype": {
+            "default": "bfloat16",
+            "label": "DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "type": "string",
+            "value": "bfloat16"
+          },
+          "enable_vae_tiling": {
+            "default": true,
+            "label": "VAE tiling",
+            "type": "bool"
+          },
+          "execution_recipe": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Execution Recipe",
+            "type": "diffusers_execution_recipe"
+          },
+          "low_cpu_mem_usage": {
+            "default": true,
+            "label": "Low CPU memory",
+            "type": "bool"
+          },
+          "mode": {
+            "default": "text_to_audio",
+            "label": "Mode",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_to_audio",
+                "schemaVersion": 1,
+                "value": "text_to_audio"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_variation",
+                "schemaVersion": 1,
+                "value": "audio_variation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_continuation",
+                "schemaVersion": 1,
+                "value": "audio_continuation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_repaint",
+                "schemaVersion": 1,
+                "value": "audio_repaint"
+              }
+            ],
+            "type": "string",
+            "value": "text_to_audio"
+          },
+          "model_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Model",
+            "type": "string",
+            "value": {
+              "source": "hub",
+              "value": "Runware/acestep-v15-turbo-diffusers"
+            }
+          },
+          "offload_mode": {
+            "default": "model_cpu",
+            "label": "Offload Mode",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto_cpu",
+                "schemaVersion": 1,
+                "value": "auto_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "model_cpu",
+                "schemaVersion": 1,
+                "value": "model_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "sequential_cpu",
+                "schemaVersion": 1,
+                "value": "sequential_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_cpu",
+                "schemaVersion": 1,
+                "value": "group_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_disk",
+                "schemaVersion": 1,
+                "value": "group_disk"
+              }
+            ],
+            "type": "string",
+            "value": "none"
+          },
+          "pipeline": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Pipeline",
+            "type": "audio_diffusion_pipeline"
+          },
+          "pipeline_class": {
+            "default": "AceStepPipeline",
+            "label": "Pipeline Class",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AceStepPipeline",
+                "schemaVersion": 1,
+                "value": "AceStepPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableAudioPipeline",
+                "schemaVersion": 1,
+                "value": "StableAudioPipeline"
+              }
+            ],
+            "type": "string",
+            "value": "AceStepPipeline"
+          },
+          "resolved_artifact": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Resolved Artifact",
+            "type": "string"
+          },
+          "revision": {
+            "default": "",
+            "label": "Revision",
+            "type": "string",
+            "value": "be23effe449c5957947f3020fd63bee23c64abe4"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "audioPipeline",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-03",
+      "position": {
+        "x": 880,
+        "y": 89
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "PipelineQuantizationConfigV2",
+        "cache": false,
+        "category": "Diffusers Runtime",
+        "description": "Create a component-selective Diffusers quantization configuration.",
+        "label": "Pipeline Quantization Config V2",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersRuntime",
+        "params": {
+          "backend": {
+            "default": "none",
+            "label": "Backend",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "installationState": "unavailable",
+                "label": "bnb_4bit",
+                "schemaVersion": 1,
+                "value": "bnb_4bit"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "installationState": "unavailable",
+                "label": "bnb_8bit",
+                "schemaVersion": 1,
+                "value": "bnb_8bit"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
+                "label": "quanto_float8",
+                "schemaVersion": 1,
+                "value": "quanto_float8"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
+                "label": "quanto_int8",
+                "schemaVersion": 1,
+                "value": "quanto_int8"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "installationState": "unavailable",
+                "label": "torchao_float8",
+                "schemaVersion": 1,
+                "value": "torchao_float8"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO package is not installed",
+                "installationState": "unavailable",
+                "label": "torchao_int8_weight_only",
+                "schemaVersion": 1,
+                "value": "torchao_int8_weight_only"
+              }
+            ],
+            "type": "string",
+            "value": "none"
+          },
+          "component_overrides": {
+            "default": "{}",
+            "display": "textarea",
+            "label": "Per-component Overrides (JSON)",
+            "type": "text"
+          },
+          "components": {
+            "default": [
+              "transformer"
+            ],
+            "display": "select",
+            "fieldOptions": {
+              "multiple": true
+            },
+            "label": "Components",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "transformer",
+                "schemaVersion": 1,
+                "value": "transformer"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "transformer_2",
+                "schemaVersion": 1,
+                "value": "transformer_2"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_encoder",
+                "schemaVersion": 1,
+                "value": "text_encoder"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_encoder_2",
+                "schemaVersion": 1,
+                "value": "text_encoder_2"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "vae",
+                "schemaVersion": 1,
+                "value": "vae"
+              }
+            ],
+            "type": "string",
+            "value": []
+          },
+          "dtype": {
+            "default": "bfloat16",
+            "label": "Compute DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "type": "string",
+            "value": "bfloat16"
+          },
+          "excluded_modules": {
+            "default": "",
+            "description": "Comma-separated module paths or patterns to keep in their original precision.",
+            "display": "textarea",
+            "label": "Preserve Modules",
+            "type": "text"
+          },
+          "quantization_config": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Quant Config",
+            "type": "quantization_config"
+          },
+          "summary": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Summary",
+            "type": "string"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "diffusersQuantization",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-04",
+      "position": {
+        "x": 0,
+        "y": 173
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "DiffusersExecutionRecipe",
+        "cache": false,
+        "category": "Diffusers Runtime",
+        "description": "Combine load-time and runtime choices into one reusable pipeline recipe.",
+        "label": "Diffusers Execution Recipe",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersRuntime",
+        "params": {
+          "attention_backend": {
+            "default": "auto",
+            "label": "Attention Backend",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto",
+                "schemaVersion": 1,
+                "value": "auto"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "_native_flash",
+                "schemaVersion": 1,
+                "value": "_native_flash"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "_native_efficient",
+                "schemaVersion": 1,
+                "value": "_native_efficient"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "_native_math",
+                "schemaVersion": 1,
+                "value": "_native_math"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires NVIDIA CUDA",
+                "installationState": "unavailable",
+                "label": "_native_cudnn",
+                "schemaVersion": 1,
+                "value": "_native_cudnn"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "flex",
+                "schemaVersion": 1,
+                "value": "flex"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "flash-attn package is not installed",
+                "installationState": "unavailable",
+                "label": "flash",
+                "schemaVersion": 1,
+                "value": "flash"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
+                "label": "flash_hub",
+                "schemaVersion": 1,
+                "value": "flash_hub"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires flash-attn",
+                "installationState": "unavailable",
+                "label": "flash_varlen",
+                "schemaVersion": 1,
+                "value": "flash_varlen"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
+                "label": "flash_varlen_hub",
+                "schemaVersion": 1,
+                "value": "flash_varlen_hub"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels and NVIDIA compute capability 9.0 or newer",
+                "installationState": "unavailable",
+                "label": "flash_4_hub",
+                "schemaVersion": 1,
+                "value": "flash_4_hub"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
+                "installationState": "unavailable",
+                "label": "_flash_3",
+                "schemaVersion": 1,
+                "value": "_flash_3"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
+                "installationState": "unavailable",
+                "label": "_flash_varlen_3",
+                "schemaVersion": 1,
+                "value": "_flash_varlen_3"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
+                "installationState": "unavailable",
+                "label": "_flash_3_hub",
+                "schemaVersion": 1,
+                "value": "_flash_3_hub"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
+                "installationState": "unavailable",
+                "label": "_flash_3_varlen_hub",
+                "schemaVersion": 1,
+                "value": "_flash_3_varlen_hub"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "AITER package is not installed",
+                "installationState": "unavailable",
+                "label": "aiter",
+                "schemaVersion": 1,
+                "value": "aiter"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "SageAttention package is not installed",
+                "installationState": "unavailable",
+                "label": "sage",
+                "schemaVersion": 1,
+                "value": "sage"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
+                "label": "sage_hub",
+                "schemaVersion": 1,
+                "value": "sage_hub"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires SageAttention",
+                "installationState": "unavailable",
+                "label": "sage_varlen",
+                "schemaVersion": 1,
+                "value": "sage_varlen"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
+                "installationState": "unavailable",
+                "label": "xformers",
+                "schemaVersion": 1,
+                "value": "xformers"
+              }
+            ],
+            "type": "string",
+            "value": "auto"
+          },
+          "attention_components": {
+            "default": "",
+            "label": "Attention Components",
+            "type": "string",
+            "value": ""
+          },
+          "cache_options": {
+            "default": "{}",
+            "display": "textarea",
+            "label": "Cache Options (JSON)",
+            "type": "text"
+          },
+          "cache_threshold": {
+            "default": 0.05,
+            "label": "Cache Threshold",
+            "min": 0,
+            "type": "float"
+          },
+          "channels_last": {
+            "default": false,
+            "label": "Channels Last",
+            "type": "bool",
+            "value": false
+          },
+          "channels_last_components": {
+            "default": "unet,vae",
+            "label": "Channels Last Components",
+            "type": "string"
+          },
+          "compile_backend": {
+            "default": "inductor",
+            "label": "Compile Backend",
+            "type": "string"
+          },
+          "compile_components": {
+            "default": "transformer",
+            "label": "Compile Components",
+            "type": "string"
+          },
+          "compile_dynamic": {
+            "default": false,
+            "label": "Compile Dynamic Shapes",
+            "type": "bool"
+          },
+          "compile_fullgraph": {
+            "default": false,
+            "label": "Compile Full Graph",
+            "type": "bool"
+          },
+          "compile_mode": {
+            "default": "default",
+            "label": "Compile Mode",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "default",
+                "schemaVersion": 1,
+                "value": "default"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "reduce-overhead",
+                "schemaVersion": 1,
+                "value": "reduce-overhead"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "max-autotune",
+                "schemaVersion": 1,
+                "value": "max-autotune"
+              }
+            ],
+            "type": "string"
+          },
+          "denoiser_cache": {
+            "default": "none",
+            "label": "Denoiser Cache",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "first_block",
+                "schemaVersion": 1,
+                "value": "first_block"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "magcache",
+                "schemaVersion": 1,
+                "value": "magcache"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "taylorseer",
+                "schemaVersion": 1,
+                "value": "taylorseer"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "pab",
+                "schemaVersion": 1,
+                "value": "pab"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "fastercache",
+                "schemaVersion": 1,
+                "value": "fastercache"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_kv",
+                "schemaVersion": 1,
+                "value": "text_kv"
+              }
+            ],
+            "type": "string",
+            "value": "none"
+          },
+          "device": {
+            "default": "cuda:0",
+            "label": "Execution Device",
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "device_map": {
+            "default": "none",
+            "label": "Device Placement",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda",
+                "schemaVersion": 1,
+                "value": "cuda"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto",
+                "schemaVersion": 1,
+                "value": "auto"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "balanced",
+                "schemaVersion": 1,
+                "value": "balanced"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "balanced_low_0",
+                "schemaVersion": 1,
+                "value": "balanced_low_0"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "manual",
+                "schemaVersion": 1,
+                "value": "manual"
+              }
+            ],
+            "type": "string",
+            "value": "none"
+          },
+          "device_map_overrides": {
+            "default": "{}",
+            "description": "Used only with manual placement, for example {\"transformer\": 0, \"text_encoder_2\": \"cpu\"}.",
+            "display": "textarea",
+            "label": "Manual Device Map (JSON)",
+            "type": "text"
+          },
+          "execution_recipe": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Execution Recipe",
+            "type": "diffusers_execution_recipe"
+          },
+          "layerwise_casting": {
+            "default": false,
+            "label": "Layerwise Casting",
+            "type": "bool",
+            "value": false
+          },
+          "layerwise_casting_components": {
+            "default": "transformer",
+            "label": "Layerwise Casting Components",
+            "type": "string"
+          },
+          "layerwise_compute_dtype": {
+            "default": "bfloat16",
+            "label": "Layerwise Compute DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              }
+            ],
+            "type": "string"
+          },
+          "layerwise_storage_dtype": {
+            "default": "float8_e4m3fn",
+            "label": "Layerwise Storage DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float8_e4m3fn",
+                "schemaVersion": 1,
+                "value": "float8_e4m3fn"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float8_e5m2",
+                "schemaVersion": 1,
+                "value": "float8_e5m2"
+              }
+            ],
+            "type": "string"
+          },
+          "max_memory": {
+            "default": "{}",
+            "description": "Optional device limits, for example {\"0\": \"16GiB\", \"cpu\": \"48GiB\"}.",
+            "display": "textarea",
+            "label": "Max Memory (JSON)",
+            "type": "text"
+          },
+          "offload_mode": {
+            "default": "none",
+            "label": "Runtime Offload",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "model_cpu",
+                "schemaVersion": 1,
+                "value": "model_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "sequential_cpu",
+                "schemaVersion": 1,
+                "value": "sequential_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_cpu",
+                "schemaVersion": 1,
+                "value": "group_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_disk",
+                "schemaVersion": 1,
+                "value": "group_disk"
+              }
+            ],
+            "type": "string",
+            "value": "none"
+          },
+          "quantization_config": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Quant Config",
+            "type": "quantization_config"
+          },
+          "regional_compile": {
+            "default": false,
+            "label": "Regional Compile",
+            "type": "bool",
+            "value": false
+          },
+          "summary": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Summary",
+            "type": "string"
+          },
+          "vae_slicing": {
+            "default": true,
+            "label": "VAE Slicing",
+            "type": "bool",
+            "value": true
+          },
+          "vae_tiling": {
+            "default": true,
+            "label": "VAE Tiling",
+            "type": "bool",
+            "value": true
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "diffusersRecipe",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-05",
+      "position": {
+        "x": 440,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "LoadAdapter",
+        "cache": false,
+        "category": "Diffusers Audio",
+        "description": "Load an ACE-Step LoRA from MoDiff's managed cache or a local folder.",
+        "label": "Load Diffusers Audio LoRA",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersAudio",
+        "params": {
+          "adapter_name": {
+            "default": "audio_style",
+            "label": "Adapter name",
+            "type": "string",
+            "value": "my_style"
+          },
+          "adapter_path": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "LoRA",
+            "type": "string",
+            "value": {
+              "source": "local",
+              "value": "loras/ace-step/my-style"
+            }
+          },
+          "expected_sha256": {
+            "default": "",
+            "label": "Expected SHA-256",
+            "type": "string"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Pipeline",
+            "type": "audio_diffusion_pipeline"
+          },
+          "pipeline": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Pipeline",
+            "required": true,
+            "type": "audio_diffusion_pipeline"
+          },
+          "replace_existing": {
+            "default": true,
+            "label": "Replace existing adapters",
+            "type": "bool",
+            "value": true
+          },
+          "scale": {
+            "default": 0.7,
+            "display": "slider",
+            "label": "Strength",
+            "max": 2,
+            "min": 0,
+            "step": 0.05,
+            "type": "float",
+            "value": 0.7
+          },
+          "weight_name": {
+            "default": "adapter_model.safetensors",
+            "label": "Weight name",
+            "type": "string",
+            "value": "adapter_model.safetensors"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "loraAdapter",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-06",
+      "position": {
+        "x": 1320,
+        "y": 159
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 84,
+    "y": 52.70798403193612,
+    "zoom": 0.4219560878243513
+  }
+}

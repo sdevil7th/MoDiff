@@ -13,7 +13,7 @@ Do not expose MoDiff directly to an untrusted LAN, the public internet, a shared
 MoDiff is designed to execute Python and model code:
 
 - Custom-module installation can clone a Git repository or copy a local directory into `custom/`, then import it into the live registry.
-- Enabling `trust_remote_code`, and custom Modular Diffusers block paths that require remote code, can execute Python supplied by a model repository.
+- Enabling `trust_remote_code`, and custom Modular Diffusers block paths that require remote code, can execute Python supplied by a model repository. MoDiff requires an exact 40-character commit revision for these remote custom paths; do not weaken that check to accept moving branches or tags.
 - Model deserialization and optional native/CUDA packages have their own supply-chain and memory-safety risks.
 - Workflows can allocate substantial CPU, RAM, accelerator memory, disk, and network bandwidth.
 
@@ -36,7 +36,9 @@ Generated media, prompts, graph snapshots, Studio output history, reusable block
 
 ## Network behavior
 
-Depending on the workflow, MoDiff can connect to Hugging Face, Git hosts, model-defined URLs, and other user-supplied sources. Use host firewall and egress controls when running untrusted or sensitive workloads. Offline mode reduces Hugging Face resolution but does not turn arbitrary installed code into a sandbox.
+Depending on the workflow, MoDiff can connect to Hugging Face, Git hosts, model-defined URLs, and other user-supplied sources. Backend-managed web-media import rejects credentials and non-public address resolutions, validates every redirect, disables environment proxies for graph-controlled URLs, and connects to the validated numeric address to resist DNS rebinding. Installed Python/model code and specialized downloaders still have process-level network access. Use host firewall and egress controls when running untrusted or sensitive workloads. Offline mode reduces Hugging Face resolution but does not turn arbitrary installed code into a sandbox.
+
+The main HTTP server defaults to a 1 GiB request cap, workflow-share preview copies are capped at 256 MiB, and every HTTP request requires a loopback request Host (`localhost` or a literal loopback address) and loopback peer. Browser requests that supply an Origin must use a loopback HTTP(S) Origin; originless native clients and ordinary browser navigations are accepted only from loopback. The supervisor control plane is loopback-only. WebSocket upgrades also require a loopback destination and peer. Browser WebSockets must provide a loopback `http` or `https` Origin; native clients without an `Origin` header are accepted only over a loopback connection. Initial WebSocket history contains compact task receipts, while completed workflow snapshots remain available lazily through `/runs/{task_id}`. These controls resist ordinary cross-site requests, read-side data exposure, and DNS-rebinding hostnames, but they do not add authentication or make a non-loopback deployment supported.
 
 ## Reporting a vulnerability
 

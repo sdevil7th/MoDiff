@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import importlib
 import logging
 
@@ -6,7 +7,11 @@ from diffusers import ComponentSpec
 from modiff.NodeBase import NodeBase
 
 from . import MESSAGE_DURATION, components
-from .modular_utils import DummyCustomPipeline, pipeline_class_to_modiff_node_config
+from .modular_utils import (
+    DummyCustomPipeline,
+    pipeline_class_from_runtime_inputs,
+    pipeline_class_to_modiff_node_config,
+)
 from .utils import collect_model_ids
 
 
@@ -47,15 +52,8 @@ def extract_prompt_embeddings(state):
     if embeddings:
         return embeddings
 
-    fallback = {
-        field: _state_get(state, field)
-        for field in PROMPT_EMBEDDING_FIELDS
-    }
-    fallback = {
-        field: value
-        for field, value in fallback.items()
-        if value is not None
-    }
+    fallback = {field: _state_get(state, field) for field in PROMPT_EMBEDDING_FIELDS}
+    fallback = {field: value for field, value in fallback.items() if value is not None}
     if fallback:
         return fallback
 
@@ -102,7 +100,7 @@ class EncodePrompt(NodeBase):
         node_params_to_update.pop("text_encoders", None)
 
         node_params.update(**node_params_to_update)
-        # YiYi TODO: can we perserve the current user values in the UI for "string"/"float"/"int" params?
+        # The client merges this refreshed definition with the current field values.
         self.send_node_definition(node_params)
 
     def __init__(self, node_id=None):
@@ -112,6 +110,7 @@ class EncodePrompt(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
         # 1. Get node config
         blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
 
@@ -131,7 +130,6 @@ class EncodePrompt(NodeBase):
 
         self._pipeline = blocks.init_pipeline(repo_id, components_manager=components)
 
-        # YiYi Notes: take an extra step to cast the params to the correct type.
         # Preserve the graph compatibility cast until the upstream schema exposes exact types.
         for param_name, param_config in node_config["params"].items():
             if param_name in kwargs and kwargs[param_name] is not None:
@@ -262,14 +260,17 @@ class ImageEmbeddings(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
 
         # 1. Get node config
         blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
 
         # 2. Create pipeline
         repo_id = None
+        revision = None
         if (image_encoder := kwargs.get("image_encoder")) and "repo_id" in image_encoder:
             repo_id = image_encoder["repo_id"]
+            revision = image_encoder.get("revision")
 
         if repo_id is None:
             self.notify(
@@ -300,9 +301,17 @@ class ImageEmbeddings(NodeBase):
             target_model_names=expected_component_names,
         )
 
-        # TODO: quick hack to load the image processor
-        spec = ComponentSpec(name="image_processor", repo=repo_id, subfolder="image_processor", variant="")
-        comp = spec.load()
+        # The image encoder contract does not currently expose its processor as
+        # a model input, so load the matching Diffusers component explicitly.
+        # Network writes remain owned by the app's download flow.
+        spec = ComponentSpec(
+            name="image_processor",
+            repo=repo_id,
+            subfolder="image_processor",
+            variant="",
+            revision=revision,
+        )
+        comp = spec.load(local_files_only=True)
         comp_id = components.add("image_processor", comp, collection=self.node_id)
         model_ids.append(comp_id)
 

@@ -1,0 +1,217 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-07-18T15:24:00+05:30",
+  "selectionPolicy": {
+    "popularityMayChangeAutoSelection": false,
+    "communityRequiresConfirmation": true,
+    "unpinnedRevisionMayBeAutoSelected": false
+  },
+  "artifactDefaults": {
+    "revision": null,
+    "license": "inherit-from-source-model",
+    "supportedPlatforms": ["windows", "linux", "macos"],
+    "supportedArchitectures": ["x86_64", "amd64", "arm64", "aarch64"],
+    "supportedBackends": ["cuda", "rocm", "mps", "directml", "cpu"],
+    "resourceRequirements": {"source": "studio-profile-and-live-component-inventory"},
+    "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
+  },
+  "repositoryPins": [
+    {"repo": "diffusers/FLUX.2-klein-4B-modular", "revision": "62ac375aa5308588f111fcd12115f5c54a8b1f4f", "license": "not-declared", "purpose": "reviewed-dynamic-modular-block", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "lllyasviel/FramePackI2V_HY", "revision": "86cef4396041b6002c957852daac4c91aaa47c79", "license": "not-declared", "purpose": "framepack-transformer", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "hunyuanvideo-community/HunyuanVideo", "revision": "e8c2aaa66fe3742a32c11a6766aecbf07c56e773", "license": "not-declared", "purpose": "framepack-base-components", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "lllyasviel/flux_redux_bfl", "revision": "45b801affc54ff2af4e5daf1b282e0921901db87", "license": "not-declared", "purpose": "framepack-vision-components", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Runware/acestep-v15-turbo-diffusers", "revision": "be23effe449c5957947f3020fd63bee23c64abe4", "license": "not-declared", "purpose": "shipped-ace-step-lora-base", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "stabilityai/stable-audio-open-1.0", "revision": "f21265c1e2710b3bd2386596943f0007f55f802e", "license": "other", "purpose": "built-in-diffusers-audio-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "stabilityai/stable-diffusion-xl-base-1.0", "revision": "462165984030d82259a11f4367a4eed129e94a7b", "license": "openrail++", "purpose": "built-in-modular-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", "revision": "b184e23a8a16b20f108f727c902e769e873ffc73", "license": "apache-2.0", "purpose": "built-in-modular-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Wan-AI/Wan2.2-T2V-A14B-Diffusers", "revision": "5be7df9619b54f4e2667b2755bc6a756675b5cd7", "license": "apache-2.0", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Wan-AI/Wan2.2-Animate-14B-Diffusers", "revision": "6f4df10861c758af86ac3c979aacc1bf5c03eff0", "license": "apache-2.0", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Lightricks/LTX-2", "revision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a", "license": "other", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Lightricks/LTX-Video", "revision": "8984fa25007f376c1a299016d0957a37a2f797bb", "license": "other", "purpose": "verified-diffusers-fallback", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "fuliucansheng/FLUX.1-Canny-dev-diffusers", "revision": "24df2ba1c46a8c735589cc8f81302678797c9821", "license": "other", "purpose": "verified-diffusers-repair-source", "verifiedAt": "2026-08-03T14:34:36+05:30"}
+  ],
+  "models": [
+    {
+      "modelType": "ZImageModularPipeline",
+      "baseRepo": "Tongyi-MAI/Z-Image-Turbo",
+      "baseRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "T5B/Z-Image-Turbo-FP8", "revision": "e523072dbf1bcc797fcd1908d331a4905e278ab8", "license": "apache-2.0", "format": "fp8", "bits": 8, "components": ["transformer"], "provenance": "community", "trust": "community", "downloads": 66354, "likes": 172}
+      ]
+    },
+    {
+      "modelType": "QwenImageModularPipeline",
+      "baseRepo": "Qwen/Qwen-Image-2512",
+      "baseRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit", "revision": "f50b8c24fe21e9265509b15113b7cca82d0a4443", "license": "apache-2.0", "format": "diffusers-bnb", "bits": 4, "components": ["transformer", "text_encoder"], "provenance": "community", "trust": "modiff_qualified", "downloads": 975, "likes": 16}
+      ]
+    },
+    {
+      "modelType": "QwenImageEditModularPipeline",
+      "baseRepo": "Qwen/Qwen-Image-Edit",
+      "baseRevision": "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "ovedrive/qwen-image-edit-4bit", "revision": "f1895ae1de2ce005a4c96576a900778ec99899de", "license": "apache-2.0", "format": "diffusers-bnb", "bits": 4, "components": ["transformer", "text_encoder"], "provenance": "community", "trust": "community", "downloads": 664, "likes": 37}
+      ]
+    },
+    {
+      "modelType": "QwenImageEditPlusModularPipeline",
+      "baseRepo": "Qwen/Qwen-Image-Edit-2511",
+      "baseRevision": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "unsloth/Qwen-Image-Edit-2511-GGUF", "revision": "0d33d9692b4b26212297240d87b0d4719aa4fd06", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 181156, "likes": 535},
+        {"repo": "1038lab/Qwen-Image-Edit-2511-FP8", "revision": "f0487a2fd231fbf91b5267650cde228aeb4441b4", "license": "apache-2.0", "format": "fp8", "bits": 8, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 21317, "likes": 50}
+      ]
+    },
+    {
+      "modelType": "QwenImageLayeredModularPipeline",
+      "baseRepo": "Qwen/Qwen-Image-Layered",
+      "baseRevision": "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "unsloth/Qwen-Image-Layered-GGUF", "revision": "762a51bed1f76aec1d8fc9546ca9f705454393fa", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 11829, "likes": 59}
+      ]
+    },
+    {
+      "modelType": "WanVACEPipeline",
+      "baseRepo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+      "baseRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "samuelchristlie/Wan2.1-VACE-1.3B-GGUF", "revision": "839f67aa27bb81ce7f0dc6005132d32df64e14df", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "community", "downloads": 888, "likes": 13}
+      ]
+    },
+    {
+      "modelType": "WanVideoPipeline",
+      "baseRepo": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+      "baseRevision": "0fad780a534b6463e45facd96134c9f345acfa5b",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "samuelchristlie/Wan2.1-T2V-1.3B-GGUF", "revision": "5a512b15fc35d1b67a074cfe55a591be9e9ef9b5", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 4288, "likes": 24}
+      ]
+    },
+    {
+      "modelType": "WanImageToVideoPipeline",
+      "baseRepo": "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+      "baseRevision": "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "QuantStack/Wan2.2-I2V-A14B-GGUF", "revision": "6c6717459277b9cd1f72579d78a0fd62a79e57dc", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 336115, "likes": 368}
+      ]
+    },
+    {
+      "modelType": "WanTI2VPipeline",
+      "baseRepo": "Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+      "baseRevision": "b8fff7315c768468a5333511427288870b2e9635",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "QuantStack/Wan2.2-TI2V-5B-GGUF", "revision": "57437632ddd08bdcbd1508c866aa22e126ed51d2", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 29508, "likes": 206}
+      ]
+    },
+    {
+      "modelType": "LTXVideoPipeline",
+      "baseRepo": "Lightricks/LTX-Video-0.9.8-13B-distilled",
+      "baseRevision": "7c64400e1861cc0d7b98d570a1926d5408ec60cd",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "QuantStack/LTXV-13B-0.9.8-distilled-GGUF", "revision": "78b86e5a8fb04a3867296a35b83bf1d5c62927c4", "license": "other", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "community", "downloads": 1149, "likes": 24}
+      ]
+    },
+    {
+      "modelType": "AceStepAudioPipeline",
+      "baseRepo": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+      "baseRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+      "baseLicense": "mit",
+      "artifacts": [
+        {"repo": "Serveurperso/ACE-Step-1.5-GGUF", "revision": "9b3707625776cc4cf775e9b12ab82f9fe48335ff", "license": "mit", "format": "gguf", "bits": 5, "components": ["language_model"], "provenance": "community", "trust": "popular_unverified", "downloads": 43025, "likes": 80}
+      ]
+    },
+    {
+      "modelType": "FluxSchnellPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-schnell",
+      "baseRevision": "741f7c3ce8b383c54771c7003378a50191e9efe9",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "city96/FLUX.1-schnell-gguf", "revision": "f495746ed9c5efcf4661f53ef05401dceadc17d2", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 69959, "likes": 343}
+      ]
+    },
+    {
+      "modelType": "FluxDevPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-dev",
+      "baseRevision": "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "black-forest-labs/FLUX.1-dev-FP8", "revision": "2fcc6a7ddee78972c8834226b37a09cebff1b6de", "license": "other", "format": "fp8", "bits": 8, "components": ["transformer", "text_encoder_2"], "provenance": "official", "trust": "official", "downloads": 0, "likes": 77}
+      ]
+    },
+    {
+      "modelType": "FluxKreaPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-Krea-dev",
+      "baseRevision": "8162a9c7b05a641be098422bf2fcf335615c2f28",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "QuantStack/FLUX.1-Krea-dev-GGUF", "revision": "b17b5df266ee23dcdea70e027173002aac36a1c8", "license": "other", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 8586, "likes": 141}
+      ]
+    },
+    {
+      "modelType": "FluxKontextPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-Kontext-dev",
+      "baseRevision": "24e9dedc4ef646698dc8eb4e18ae2cec3c9fea0d",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "black-forest-labs/FLUX.1-Kontext-dev-NVFP4", "revision": "7e9dee453a3454251216a394697a6dcea44f54f8", "license": "other", "format": "nvfp4", "bits": 4, "components": ["transformer", "text_encoder_2"], "provenance": "official", "trust": "official", "downloads": 126, "likes": 10}
+      ]
+    },
+    {
+      "modelType": "FluxFillPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-Fill-dev",
+      "baseRevision": "358293da0354175698b67ec8299acf928313a78a",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "YarvixPA/FLUX.1-Fill-dev-GGUF", "revision": "78b83f1da140a4dcd6466580516544e1f6effe3e", "license": "other", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 38458, "likes": 147}
+      ]
+    },
+    {
+      "modelType": "FluxDepthPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-Depth-dev",
+      "baseRevision": "fb5e9b1bae41b8c8adcea4ea2a87b74dd298f07a",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "SporkySporkness/FLUX.1-Depth-dev-GGUF", "revision": "2a77cd34e8bcb690b3ffce71d3a3239590614ee7", "license": "other", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "community", "downloads": 217, "likes": 25}
+      ]
+    },
+    {
+      "modelType": "FluxCannyPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-Canny-dev",
+      "baseRevision": "27c3d8bdc17509b47cf4fd9ba25ab1c7508a69a2",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "SporkySporkness/FLUX.1-Canny-dev-GGUF", "revision": "584725aadc00e380550eb984f57f66ecb49d10d1", "license": "other", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "community", "downloads": 375, "likes": 14}
+      ]
+    },
+    {
+      "modelType": "FluxReduxPipeline",
+      "baseRepo": "black-forest-labs/FLUX.1-Redux-dev",
+      "baseRevision": "c95859fbf7703ca4d6824b4da4407d7cd0434f81",
+      "baseLicense": "other",
+      "artifacts": [
+        {"repo": "second-state/FLUX.1-Redux-dev-GGUF", "revision": "c7e36ea59a409eaa553b9744b53aa350099d5d51", "license": "other", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "community", "downloads": 225, "likes": 14}
+      ]
+    },
+    {
+      "modelType": "Flux2KleinPipeline",
+      "baseRepo": "black-forest-labs/FLUX.2-klein-4B",
+      "baseRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+      "baseLicense": "apache-2.0",
+      "artifacts": [
+        {"repo": "black-forest-labs/FLUX.2-klein-4b-fp8", "revision": "5b4408e59397a4a37ccb46afe426d8ed86379441", "license": "apache-2.0", "format": "fp8", "bits": 8, "components": ["transformer"], "provenance": "official", "trust": "official", "downloads": 86722, "likes": 54},
+        {"repo": "unsloth/FLUX.2-klein-4B-GGUF", "revision": "0084d1df98e2e2137fe776d55170bc4792ec1d66", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 153603, "likes": 182}
+      ]
+    }
+  ]
+}

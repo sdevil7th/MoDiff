@@ -1,13 +1,189 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 logger = logging.getLogger('modiff')
-from modiff.config import CONFIG
+from contextlib import contextmanager
+from contextvars import ContextVar
 from modiff.modelstore import modelstore
 from utils.memory_menager import memory_manager
 import numpy as np
 import torch
 import sys
+import threading
 import time
-from huggingface_hub.utils import LocalEntryNotFoundError
+
+_DIFFUSERS_PROGRESS_PATCH_LOCK = threading.RLock()
+_DIFFUSERS_PROGRESS_STACK = threading.local()
+_NODE_MESSAGE_IDENTITY = ContextVar("modiff_node_message_identity", default=None)
+
+
+@contextmanager
+def node_message_context(identity=None):
+    """Bind workflow ownership to dynamic node messages in this invocation.
+
+    Field actions may run concurrently with the serialized graph worker. A
+    context variable keeps their browser/workflow identity local to the
+    executor invocation instead of reading an unrelated global current task.
+    """
+
+    normalized = dict(identity) if isinstance(identity, dict) else {}
+    token = _NODE_MESSAGE_IDENTITY.set(normalized)
+    try:
+        yield
+    finally:
+        _NODE_MESSAGE_IDENTITY.reset(token)
+
+
+def _node_message_identity():
+    explicit = _NODE_MESSAGE_IDENTITY.get()
+    if explicit is not None:
+        return dict(explicit)
+
+    current_server = _server()
+    describe = getattr(current_server, "_current_dynamic_message_identity_payload", None)
+    return dict(describe()) if callable(describe) else {}
+
+
+def _loading_progress_stack():
+    stack = getattr(_DIFFUSERS_PROGRESS_STACK, "value", None)
+    if stack is None:
+        stack = []
+        _DIFFUSERS_PROGRESS_STACK.value = stack
+    return stack
+
+
+def _loading_item_label(item):
+    if isinstance(item, tuple) and item and isinstance(item[0], str):
+        return item[0]
+    if isinstance(item, str):
+        return item
+    return None
+
+
+class _StructuredLoadingProgress:
+    """Proxy a Hugging Face tqdm bar into MoDiff's structured node progress."""
+
+    def __init__(self, bar, report, description=None, total=None):
+        self._bar = bar
+        self._report = report
+        self._description = str(description or getattr(bar, "desc", "") or "").strip().rstrip(".")
+        self._total = total if isinstance(total, (int, float)) and total > 0 else getattr(bar, "total", None)
+        self._manual_current = int(getattr(bar, "n", 0) or 0)
+        self._last_report_at = 0.0
+        self._last_report_progress = None
+
+    def __getattr__(self, name):
+        return getattr(self._bar, name)
+
+    def _emit(self, current, *, item=None, starting=False):
+        total = self._total
+        if not isinstance(total, (int, float)) or total <= 0:
+            return
+        current = max(0, min(float(current), float(total)))
+        stack = _loading_progress_stack()
+        parent = stack[-1] if stack else None
+        if parent and parent.get("total"):
+            parent_total = float(parent["total"])
+            parent_index = float(parent.get("index") or 1)
+            ratio = ((parent_index - 1) + current / float(total)) / parent_total
+        else:
+            ratio = current / float(total)
+        progress = min(99, max(0, int(round(ratio * 100))))
+        step = max(0, min(int(current), int(total)))
+        item_label = _loading_item_label(item)
+        if starting and item_label and "component" in self._description.lower():
+            component_scope = "pipeline" if "pipeline component" in self._description.lower() else "model"
+            message = f"Loading {component_scope} component {int(current) + 1}/{int(total)}: {item_label}"
+            step = min(int(total), int(current) + 1)
+        else:
+            label = self._description or "Loading"
+            message = f"{label} {step}/{int(total)}"
+        now = time.monotonic()
+        if (
+            not starting
+            and step not in (0, int(total))
+            and progress == self._last_report_progress
+            and now - self._last_report_at < 0.25
+        ):
+            return
+        description = self._description.lower()
+        component = item_label if starting and item_label and "component" in description else None
+        shard_current = step if "shard" in description else None
+        shard_total = int(total) if "shard" in description else None
+        try:
+            try:
+                self._report(
+                    progress,
+                    message,
+                    step,
+                    int(total),
+                    component=component,
+                    shard_current=shard_current,
+                    shard_total=shard_total,
+                )
+            except TypeError as error:
+                # Preserve the established four-argument extension callback
+                # while MoDiff's reporter consumes the richer metadata.
+                if "unexpected keyword argument" not in str(error):
+                    raise
+                self._report(progress, message, step, int(total))
+            self._last_report_at = now
+            self._last_report_progress = progress
+        except Exception as error:
+            logger.debug("Could not publish structured loader progress: %s", error)
+
+    def __iter__(self):
+        index = 0
+        for item in self._bar:
+            index += 1
+            context = {"index": index, "total": self._total, "description": self._description}
+            self._emit(index - 1, item=item, starting=True)
+            stack = _loading_progress_stack()
+            stack.append(context)
+            completed = False
+            try:
+                yield item
+                completed = True
+            finally:
+                if stack and stack[-1] is context:
+                    stack.pop()
+                elif context in stack:
+                    stack.remove(context)
+            if completed:
+                self._emit(index, item=item)
+
+    def __enter__(self):
+        self._bar.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        result = self._bar.__exit__(exc_type, exc_value, traceback)
+        if exc_type is None:
+            bar_current = int(getattr(self._bar, "n", 0) or 0)
+            self._manual_current = max(self._manual_current, bar_current)
+            self._emit(self._manual_current)
+        return result
+
+    def close(self):
+        result = self._bar.close()
+        # Some Hugging Face loaders advance the underlying tqdm counter
+        # directly and only finalize it while closing the bar. Publish that
+        # terminal value instead of leaving the queue/node snapshot at N-1/N
+        # throughout the following silent model-placement work.
+        bar_current = int(getattr(self._bar, "n", 0) or 0)
+        self._manual_current = max(self._manual_current, bar_current)
+        self._emit(self._manual_current)
+        return result
+
+    def update(self, amount=1):
+        previous = self._manual_current
+        result = self._bar.update(amount)
+        bar_current = int(getattr(self._bar, "n", 0) or 0)
+        # Disabled tqdm bars intentionally leave ``n`` unchanged. Structured
+        # progress must still advance when terminal rendering is disabled.
+        self._manual_current = max(previous + int(amount or 0), bar_current)
+        self._emit(self._manual_current)
+        return result
+
 
 def _server():
     from modiff.server import server
@@ -128,6 +304,10 @@ def recursive_type_cast(value, ttype, key):
 
 class NodeBase:
     CALLBACK = 'execute'
+    # Subclasses may list validated inputs that affect how a resident object is
+    # used but not how it is constructed. Changes to these values should update
+    # the node's current parameters without discarding expensive cached output.
+    cache_ignored_params = frozenset()
 
     def __init__(self, node_id=None):
         self.node_id = node_id
@@ -141,6 +321,7 @@ class NodeBase:
 
         self._sid = None
         self._has_changed = False
+        self._cache_invalidated = False
         self._execution_time = { 'last': None, 'min': None, 'max': None }
         self._memory_usage = { 'last': None, 'min': None, 'max': None }
         self._mm_models = []
@@ -148,6 +329,17 @@ class NodeBase:
         self._progress_started_at = None
         self._progress_last_at = None
         self._skip_params_check = _module_map()[self.module_name][self.class_name].get('skipParamsCheck', False)
+
+    def invalidate_cache(self):
+        """Force the next graph invocation to execute this node.
+
+        Connected nodes can receive the same mutable pipeline object across
+        graph runs even when an upstream adapter node changed that object in
+        place.  Object equality cannot represent that provenance, so the graph
+        executor uses this one-shot invalidation signal when a source node
+        actually re-executed.
+        """
+        self._cache_invalidated = True
 
     def __call__(self, **kwargs):
         self._interrupt = False
@@ -180,12 +372,23 @@ class NodeBase:
                 if 'options' in self.default_params[key] and not self.default_params[key].get('fieldOptions', {}).get('noValidation', False):
                     options = self.default_params[key]['options']
                     value_list = [value] if not isinstance(value, list) else value
+                    option_type = self.default_params[key].get('type')
+                    if isinstance(option_type, list):
+                        option_type = option_type[0] if option_type else None
+
+                    def matches_option(candidate, option):
+                        if deep_equal(candidate, option):
+                            return True
+                        if not isinstance(option_type, str):
+                            return False
+                        return deep_equal(candidate, recursive_type_cast(option, option_type, key))
+
                     if isinstance(options, list):
-                        if any(v not in options for v in value_list):
+                        if any(not any(matches_option(v, option) for option in options) for v in value_list):
                             params[key] = []
                             #raise ValueError(f"Module {self.module_name}.{self.class_name}: Invalid value for {key}: {value} (options: {options})")
                     elif isinstance(options, dict):
-                        if any(v not in options.keys() for v in value_list):
+                        if any(not any(matches_option(v, option) for option in options) for v in value_list):
                             params[key] = {}
                             #raise ValueError(f"Module {self.module_name}.{self.class_name}: Invalid value for {key}: {value} (options: {options})")
                     else:
@@ -217,8 +420,23 @@ class NodeBase:
 
         self._has_changed = False # flag to know if the node has changed since the last execution
 
-        # if any of the values has changed or self.output is empty, we need to execute the node
-        if (not deep_equal(self.params, params)) or any(v is None for v in self.output.values()):
+        ignored_cache_params = set(getattr(self, 'cache_ignored_params', ()) or ())
+        previous_cache_params = {
+            key: value for key, value in self.params.items() if key not in ignored_cache_params
+        }
+        current_cache_params = {
+            key: value for key, value in params.items() if key not in ignored_cache_params
+        }
+
+        # If any load-relevant value changed, or output is empty, execute the
+        # node. Validated passthrough inputs are still recorded below so
+        # diagnostics reflect the current graph invocation.
+        if (
+            self._cache_invalidated
+            or (not deep_equal(previous_cache_params, current_cache_params))
+            or any(v is None for v in self.output.values())
+        ):
+            self._cache_invalidated = False
             self._has_changed = True
             self.params = params
             self.output = {k: None for k in self.output}
@@ -260,6 +478,8 @@ class NodeBase:
                     "type": "local_cache_update",
                     "node": self.node_id,
                 }, self._sid)
+        else:
+            self.params = params
 
         return self.output
 
@@ -274,46 +494,33 @@ class NodeBase:
             # Python is shutting down or import system is unavailable
             pass
 
-        del self.params, self.output
-
-    def graceful_model_loader(self, callback, model_id, config, local_files_only=True):
-        output = None
-        online_status = CONFIG.hf['online_status']
-        if online_status == 'Online':
-            local_files_only = False
-
-        if hasattr(callback, 'from_pretrained'):
-            callback = callback.from_pretrained
-
-        try:
-            if model_id is None:
-                output = callback(**config, local_files_only=local_files_only)
-            else:
-                output = callback(model_id, **config, local_files_only=local_files_only)
-
-        except (LocalEntryNotFoundError, OSError) as e:
-            if not local_files_only:
-                raise e
-
-            if online_status == 'Offline':
-                logger.error(f"Model {model_id} is not available in offline mode. Consider changing online_status to 'Auto' or 'Online' in the config.ini file.")
-                raise
-
-            logger.info(f"Model {model_id} not found locally, attempting to download...")
-            output = self.graceful_model_loader(callback, model_id, config, local_files_only=False)
-            modelstore.update_hf()
-        except Exception as e:
-            logger.error(f"Error loading {model_id}: {e}")
-            raise
-
-        return output
+        # Partially constructed nodes can reach ``__del__`` when their
+        # constructor raises (for example, a guarded optional model loader).
+        # Cleanup must never emit a secondary exception that hides the useful
+        # construction error.
+        self.__dict__.pop("params", None)
+        self.__dict__.pop("output", None)
 
     def pipe_callback(self, pipe, step_index, timestep, callback_kwargs):
         if not self.node_id:
-            return
+            return callback_kwargs
 
         if self._interrupt:
             pipe._interrupt = True
+            # Some Diffusers loops inspect `_interrupt` before invoking the
+            # callback, which can start another multi-minute step. Raising at
+            # this completed-step boundary gives the worker an immediate,
+            # cleanly classified interruption and preserves normal cleanup.
+            raise InterruptedError("Execution interrupted by the user after the current model step.")
+
+        current_task = _server().current_task or {}
+        runtime_limit = (current_task.get('runtimeHints') or {}).get('maxRuntimeSeconds')
+        started_at = current_task.get('started_at')
+        if runtime_limit and started_at and time.time() - float(started_at) >= float(runtime_limit):
+            pipe._interrupt = True
+            raise TimeoutError(
+                f"Execution reached the configured {int(runtime_limit)} second runtime limit after the current model step."
+            )
 
         if hasattr(pipe, '_cfg_cutoff_step') and pipe._cfg_cutoff_step is not None:
             cutoff_step = int(pipe._num_timesteps * pipe._cfg_cutoff_step)
@@ -325,12 +532,18 @@ class NodeBase:
                     callback_kwargs['pooled_prompt_embeds'] = callback_kwargs['pooled_prompt_embeds'][-1:]
 
         now = time.time()
-        if self._progress_started_at is None or step_index == 0:
+        if self._progress_started_at is None:
             self._progress_started_at = now
         elapsed = max(0.0, now - self._progress_started_at)
         completed_steps = step_index + 1
         total_steps = int(pipe._num_timesteps)
-        average_step_seconds = elapsed / completed_steps if completed_steps > 0 else None
+        # The timer starts at the first completed-step callback, so at step 0
+        # there is not yet a measured interval. From step 1 onward, divide by
+        # the number of intervals since that boundary (step_index), not by the
+        # total completed-step count. Dividing by completed_steps made the
+        # first useful long-video ETA exactly half of the observed runtime.
+        measured_intervals = step_index
+        average_step_seconds = elapsed / measured_intervals if measured_intervals > 0 else None
         eta_seconds = average_step_seconds * max(0, total_steps - completed_steps) if average_step_seconds is not None else None
         self._progress_last_at = now
         progress = int(completed_steps / total_steps * 100)
@@ -369,6 +582,108 @@ class NodeBase:
 
         _server().queue_message(message, self._sid)
 
+    @contextmanager
+    def diffusers_loading_progress(self):
+        """Publish Diffusers/Transformers loading as normal node progress.
+
+        Pipeline loading exposes these stages only through the libraries' tqdm
+        facades. Patch both facades for one loader call, preserving the terminal
+        bars while forwarding nested component, checkpoint-shard, and weight
+        counts to the queue, websocket, graph node, and activity notification.
+        """
+
+        if not self.node_id:
+            yield
+            return
+        try:
+            from diffusers.utils import logging as diffusers_logging
+        except Exception:
+            yield
+            return
+        progress_facades = [diffusers_logging]
+        try:
+            from transformers.utils import logging as transformers_logging
+
+            if transformers_logging is not diffusers_logging:
+                progress_facades.append(transformers_logging)
+            # Transformers 5 copies the tqdm function into this module at
+            # import time, so patching only the logging facade does not reach
+            # its per-weight loader bar.
+            from transformers import core_model_loading
+
+            progress_facades.append(core_model_loading)
+        except Exception:
+            pass
+        progress_facades = [
+            facade
+            for index, facade in enumerate(progress_facades)
+            if callable(getattr(facade, "tqdm", None)) and facade not in progress_facades[:index]
+        ]
+
+        with _DIFFUSERS_PROGRESS_PATCH_LOCK:
+            owner_thread_id = threading.get_ident()
+            originals = [(facade, facade.tqdm) for facade in progress_facades]
+            last_reported_progress = -1
+
+            def report(
+                progress,
+                message,
+                current,
+                total,
+                *,
+                component=None,
+                shard_current=None,
+                shard_total=None,
+            ):
+                nonlocal last_reported_progress
+                # A component can expose more than one sequential nested bar
+                # (for example checkpoint shards followed by Transformers
+                # weights). Never make the node/notification bar move backward.
+                progress = max(last_reported_progress, progress)
+                last_reported_progress = progress
+                normalized_message = str(message or "").lower()
+                if shard_total is not None or "shard" in normalized_message or "weight" in normalized_message:
+                    phase = "shard_loading"
+                elif component is not None or "component" in normalized_message:
+                    phase = "component_loading"
+                else:
+                    phase = "loading"
+                self.progress(
+                    progress,
+                    phase=phase,
+                    message=message,
+                    current_step=current,
+                    total_steps=total,
+                    component=component,
+                    shard_current=shard_current,
+                    shard_total=shard_total,
+                )
+
+            def structured_tqdm_factory(original_tqdm):
+                def structured_tqdm(*args, **kwargs):
+                    bar = original_tqdm(*args, **kwargs)
+                    # These facades are module-global. A concurrent model
+                    # download on another thread must retain its own progress
+                    # channel rather than being attributed to this graph node.
+                    if threading.get_ident() != owner_thread_id:
+                        return bar
+                    return _StructuredLoadingProgress(
+                        bar,
+                        report,
+                        description=kwargs.get("desc"),
+                        total=kwargs.get("total"),
+                    )
+
+                return structured_tqdm
+
+            for facade, original_tqdm in originals:
+                facade.tqdm = structured_tqdm_factory(original_tqdm)
+            try:
+                yield
+            finally:
+                for facade, original_tqdm in reversed(originals):
+                    facade.tqdm = original_tqdm
+
     def progress(
         self,
         progress: int,
@@ -380,6 +695,9 @@ class NodeBase:
         elapsed_seconds: float | None = None,
         average_step_seconds: float | None = None,
         eta_seconds: float | None = None,
+        component: str | None = None,
+        shard_current: int | None = None,
+        shard_total: int | None = None,
     ):
         if not self._sid or not self.node_id:
             return
@@ -414,50 +732,73 @@ class NodeBase:
             payload["average_step_seconds"] = average_step_seconds
         if eta_seconds is not None:
             payload["eta_seconds"] = eta_seconds
+        if component:
+            payload["component"] = component
+        if shard_current is not None:
+            payload["shard_current"] = shard_current
+        if shard_total is not None:
+            payload["shard_total"] = shard_total
+        payload["last_heartbeat_at"] = time.time()
 
         payload = _server().record_node_progress(payload)
-        _server().queue_message(payload, self._sid)
+        _server().queue_message(payload)
+
+    def _queue_dynamic_node_message(self, message):
+        if not self._sid or not self.node_id:
+            return
+
+        identity = _node_message_identity()
+        target_sid = identity.get("sid") or self._sid
+        payload = {
+            **message,
+            **identity,
+            "sid": target_sid,
+        }
+        _server().queue_message(payload, target_sid)
 
     def send_node_definition(self, params):
         if not self._sid or not self.node_id:
             return
 
-        _server().queue_message({
+        current_server = _server()
+        describe = getattr(current_server, "describe_node_params", None)
+        public_params = describe(params) if callable(describe) else params
+        self._queue_dynamic_node_message({
             "type": "node_definition",
             "node": self.node_id,
-            "params": params,
-        }, self._sid)
+            "params": public_params,
+        })
 
     def set_field_visibility(self, fields: dict):
         if not self._sid or not self.node_id:
             return
 
-        _server().queue_message({
+        self._queue_dynamic_node_message({
             "type": "set_field_visibility",
             "node": self.node_id,
             "fields": fields,
-        }, self._sid)
+        })
 
     def set_field_value(self, field: dict):
         if not self._sid or not self.node_id:
             return
 
-        _server().queue_message({
+        self._queue_dynamic_node_message({
             "type": "set_field_value",
             "node": self.node_id,
             "fields": field,
-        }, self._sid)
+        })
 
     def set_field_params(self, field: str, params: dict):
         if not self._sid or not self.node_id:
             return
 
-        _server().queue_message({
+        self._queue_dynamic_node_message({
             "type": "set_field_params",
             "node": self.node_id,
             "field": field,
             "params": params,
-        }, self._sid)
+        })
 
     def get_signal_value(self, field: str, timeout: int = 5):
         if not self._sid or not self.node_id:
@@ -484,7 +825,7 @@ class NodeBase:
             "variant": variant,
             "persist": persist,
             "autoHideDuration": autoHideDuration,
-        }, self._sid)
+        })
 
 
     """
@@ -532,9 +873,9 @@ class NodeBase:
 
         return memory_manager.load_model(model, device)
 
-    def mm_exec(self, func, device, models=[], exclude=[], args=None, kwargs=None):
+    def mm_exec(self, func, device, models=None, exclude=None, args=None, kwargs=None):
         if self.node_id is None:
-            return func(*args, **kwargs)
+            return func(*(args or ()), **(kwargs or {}))
 
         return memory_manager.exec(func, device, models, exclude, args, kwargs)
 

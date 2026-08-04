@@ -1,5 +1,8 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import importlib
+import json
 import logging
+import time
 
 import torch
 from PIL import Image
@@ -7,11 +10,74 @@ from PIL import Image
 from modiff.NodeBase import NodeBase
 
 from . import MESSAGE_DURATION, components
-from .modular_utils import DummyCustomPipeline, pipeline_class_to_modiff_node_config
+from .modular_utils import (
+    DummyCustomPipeline,
+    pipeline_class_from_runtime_inputs,
+    pipeline_class_to_modiff_node_config,
+)
 from .utils import collect_model_ids
 
 
 logger = logging.getLogger("modiff")
+
+
+def sanitized_tensor_summary(value):
+    """Return JSON-safe tensor metadata without retaining or serializing data."""
+    if isinstance(value, torch.Tensor):
+        return {
+            "shape": list(value.shape),
+            "dtype": str(value.dtype).replace("torch.", ""),
+            "device": str(value.device),
+        }
+    if isinstance(value, dict):
+        for item in value.values():
+            summary = sanitized_tensor_summary(item)
+            if summary:
+                return summary
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            summary = sanitized_tensor_summary(item)
+            if summary:
+                return summary
+    return None
+
+
+def flatten_pil_images(value):
+    """Flatten nested Diffusers image batches without changing non-image outputs."""
+    if isinstance(value, Image.Image):
+        return [value]
+    if isinstance(value, (list, tuple)):
+        images = []
+        for item in value:
+            flattened = flatten_pil_images(item)
+            if flattened is None:
+                return None
+            images.extend(flattened)
+        return images
+    return None
+
+
+def prepare_image_for_vae_pipeline(image, pipeline_class):
+    """Apply pipeline-specific source-channel contracts before VAE encoding.
+
+    Qwen Image Layered's VAE is trained for RGBA input (`in_channels=4`) and
+    the upstream Diffusers example explicitly converts source media to RGBA.
+    MoDiff's shared image loader normally returns RGB PIL images, so preserving
+    that generic value here would fail only after the expensive model load.
+    Keep the adaptation at the VAE boundary and leave every other pipeline
+    unchanged.
+    """
+
+    pipeline_name = getattr(pipeline_class, "__name__", "")
+    if pipeline_name not in {"QwenImageLayeredModularPipeline", "QwenImageLayeredPipeline"}:
+        return image
+    if isinstance(image, Image.Image):
+        return image if image.mode == "RGBA" else image.convert("RGBA")
+    if isinstance(image, list):
+        return [prepare_image_for_vae_pipeline(item, pipeline_class) for item in image]
+    if isinstance(image, tuple):
+        return tuple(prepare_image_for_vae_pipeline(item, pipeline_class) for item in image)
+    return image
 
 
 # YiYi Notes: this is not working for qwen/flux as latents needs to be unpacked first
@@ -94,6 +160,7 @@ class DecodeLatents(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
 
         # 1. Get node config
         blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
@@ -168,7 +235,12 @@ class DecodeLatents(NodeBase):
             if name == "doc":
                 outputs["doc"] = self._pipeline.blocks.doc
             else:
-                outputs[name] = node_output_state.get(name)
+                value = node_output_state.get(name)
+                if name == "images":
+                    flattened = flatten_pil_images(value)
+                    if flattened is not None:
+                        value = flattened[0] if len(flattened) == 1 else flattened
+                outputs[name] = value
 
         return outputs
 
@@ -181,6 +253,19 @@ class ImageEncode(NodeBase):
     node_type = "vae_encoder"
     params = {
         "vae": {"label": "VAE *", "display": "input", "type": "diffusers_auto_model", "onSignal": "update_node"},
+        "encode_summary_data": {
+            "label": "Encode summary",
+            "display": "output",
+            "type": "str",
+            "hidden": True,
+        },
+        "encode_summary": {
+            "label": "Encode summary",
+            "display": "ui_text",
+            "type": "text",
+            "dataSource": "encode_summary_data",
+            "hidden": True,
+        },
     }
 
     def __init__(self, node_id=None):
@@ -215,7 +300,17 @@ class ImageEncode(NodeBase):
         self.send_node_definition(node_params)
 
     def execute(self, **kwargs):
+        encode_started_at = time.perf_counter()
+        self.progress(
+            0,
+            phase="encoding",
+            message="Encoding source image into latent representation",
+            current_step=0,
+            total_steps=1,
+            elapsed_seconds=0.0,
+        )
         kwargs = dict(kwargs)
+        self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
 
         # 1. Get node config
         blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
@@ -275,12 +370,15 @@ class ImageEncode(NodeBase):
             elif name in blocks.input_names:
                 node_kwargs[name] = value
 
+        if "image" in node_kwargs:
+            node_kwargs["image"] = prepare_image_for_vae_pipeline(node_kwargs["image"], self._pipeline_class)
+
         # 6. Run the pipeline
         try:
             node_output_state = self._pipeline(**node_kwargs)
         except ValueError as e:
             self.notify(str(e), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
-            return None
+            raise
 
         # 7. Prepare outputs based on node_config["output_names"]
         output_names = node_config["output_names"].copy()
@@ -290,5 +388,27 @@ class ImageEncode(NodeBase):
                 outputs["doc"] = self._pipeline.blocks.doc
             else:
                 outputs[name] = node_output_state.get(name)
+
+        tensor_summary = None
+        for name in output_names:
+            tensor_summary = sanitized_tensor_summary(outputs.get(name))
+            if tensor_summary:
+                break
+        elapsed_seconds = round(max(0.0, time.perf_counter() - encode_started_at), 4)
+        outputs["encode_summary_data"] = json.dumps({
+            "schemaVersion": 1,
+            "status": "encoded",
+            "updatedAt": time.time(),
+            "elapsedSeconds": elapsed_seconds,
+            **(tensor_summary or {}),
+        }, separators=(",", ":"))
+        self.progress(
+            100,
+            phase="encoding",
+            message="Encoded source image",
+            current_step=1,
+            total_steps=1,
+            elapsed_seconds=elapsed_seconds,
+        )
 
         return outputs

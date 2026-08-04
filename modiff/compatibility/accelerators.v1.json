@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "revision": "2026.07.12-rocm72",
-  "validated_at": "2026-07-12",
+  "revision": "2026.08.04-topology-xpu-contract",
+  "validated_at": "2026-08-04",
   "python": "3.12.*",
   "profiles": {
     "nvidia-cuda": {
@@ -29,12 +29,25 @@
       "proof": "amd-qualified-stack-awaiting-modiff-model-proof", "sources": ["https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/compatibility/compatibilityryz/native_linux/native_linux_compatibility.html", "https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/install/installryz/native_linux/install-pytorch.html"]
     },
     "amd-pytorch-windows": {
-      "os": ["windows"], "architectures": ["x86_64"], "tier": "preview",
-      "torch": "2.8.0", "torchvision": "0.23.0", "torchaudio": "2.8.0", "cuda": null, "rocm": "windows-distribution",
+      "os": ["windows"], "architectures": ["x86_64"], "tier": "conditional",
+      "torch": "2.9.1+rocm7.2.1", "torchvision": "0.24.1+rocm7.2.1", "torchaudio": "2.9.1+rocm7.2.1", "cuda": null, "rocm": "7.2.1",
       "index": null, "requirements": "requirements/profiles/amd-pytorch-windows.txt",
       "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
       "default_dtype": "float16", "capabilities": ["torch-gpu", "amd-rocm", "fp16"],
-      "device_families": [], "proof": "manifest-fixtures-only", "sources": ["https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/windows/windows_compatibility.html"]
+      "device_families": ["gfx1100", "gfx1101", "gfx1150", "gfx1151", "gfx1200", "gfx1201"],
+      "qualified_os_versions": ["11"],
+      "proof": "official-pytorch-distribution-awaiting-modiff-model-proof",
+      "sources": ["https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/windows/windows_compatibility.html", "https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installryz/windows/install-pytorch.html"]
+    },
+    "intel-xpu": {
+      "os": ["linux", "windows"], "architectures": ["x86_64"], "tier": "preview",
+      "torch": "2.12.1", "torchvision": "0.27.1", "torchaudio": null, "cuda": null, "rocm": null,
+      "index": "https://download.pytorch.org/whl/xpu", "requirements": "requirements/profiles/intel-xpu.txt",
+      "required": [], "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "intel-xpu", "fp16", "bf16", "integrated-memory"],
+      "device_families": ["alchemist", "battlemage", "meteor-lake", "arrow-lake", "lunar-lake", "panther-lake", "ponte-vecchio"],
+      "proof": "official-pytorch-xpu-prototype-awaiting-modiff-model-proof",
+      "sources": ["https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html"]
     },
     "apple-mps": {
       "os": ["macos"], "architectures": ["arm64"], "tier": "supported",

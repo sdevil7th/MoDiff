@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 import urllib.request
 import zipfile
@@ -23,7 +24,14 @@ try:
 except ImportError:  # Windows does not provide the POSIX group database.
     grp = None
 
-from modiff.runtime_profile import load_manifest, lock_digest, normalized_arch, normalized_os
+from modiff.runtime_profile import (
+    RUNTIME_CONTRACT_SCHEMA,
+    load_manifest,
+    lock_digest,
+    normalized_arch,
+    normalized_os,
+    runtime_contract_paths,
+)
 from modiff.setup_catalog import CATALOG, PHASES, enrich_issue
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +42,7 @@ PROFILE_STATE = VENV / "modiff-profile.json"
 MANAGED_ROOT = ROOT / ".modiff"
 JOURNAL_PATH = MANAGED_ROOT / "install-state.json"
 DIAGNOSTICS_DIR = MANAGED_ROOT / "diagnostics"
+WEB_ROOT = ROOT / "web"
 
 TOOL_ARCHIVES = {
     ("linux", "x86_64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-x86_64-unknown-linux-gnu.tar.gz", "6426a73c3837e6e2483ee344cbc00f36394d179afcba6183cb77437e67db4af0"),
@@ -61,9 +70,13 @@ def _write_journal(**updates: Any) -> dict[str, Any]:
     MANAGED_ROOT.mkdir(exist_ok=True)
     journal = _read_journal()
     journal.update(updates)
+    if journal.get("status") in {"running", "complete"}:
+        journal.pop("failure", None)
     journal.setdefault("schema_version", 1)
     journal["updated_at"] = _now()
-    JOURNAL_PATH.write_text(json.dumps(journal, indent=2) + "\n", encoding="utf-8")
+    temporary = JOURNAL_PATH.with_suffix(JOURNAL_PATH.suffix + ".tmp")
+    temporary.write_text(json.dumps(journal, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(JOURNAL_PATH)
     return journal
 
 
@@ -131,6 +144,16 @@ def _rocm_environment() -> dict[str, str]:
     return environment
 
 
+def _drm_vendor_ids() -> set[str]:
+    vendors = set()
+    for path in Path("/sys/class/drm").glob("card*/device/vendor"):
+        try:
+            vendors.add(path.read_text(encoding="utf-8").strip().lower())
+        except OSError:
+            continue
+    return vendors
+
+
 def detect_host() -> dict[str, Any]:
     """Detect candidates without importing Torch and separate presence from usability."""
     os_name = normalized_os()
@@ -141,7 +164,31 @@ def detect_host() -> dict[str, Any]:
     nvidia_usable = bool(nvidia_result and nvidia_result["returncode"] == 0 and "GPU" in nvidia_result["stdout"])
 
     lspci = _command(["lspci", "-nn"]) if shutil.which("lspci") else {"stdout": ""}
-    amd_candidate = "1002:" in lspci["stdout"].lower() or "advanced micro devices" in lspci["stdout"].lower()
+    display_text = lspci["stdout"].lower()
+    if os_name == "windows":
+        powershell = shutil.which("powershell") or shutil.which("pwsh")
+        if powershell:
+            display_probe = _command([
+                powershell,
+                "-NoProfile",
+                "-Command",
+                "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name",
+            ])
+            display_text = f"{display_text}\n{display_probe['stdout'].lower()}"
+    drm_vendors = _drm_vendor_ids()
+    amd_candidate = bool(
+        "0x1002" in drm_vendors
+        or "1002:" in display_text
+        or "advanced micro devices" in display_text
+        or "amd radeon" in display_text
+    )
+    intel_candidate = bool(
+        "0x8086" in drm_vendors
+        or (
+            ("8086:" in display_text or "intel" in display_text)
+            and any(marker in display_text for marker in ("vga", "display", "graphics", "arc", "video"))
+        )
+    )
     rocminfo = _command(["rocminfo"], timeout=15) if shutil.which("rocminfo") else None
     rocm_text = f"{rocminfo['stdout']}\n{rocminfo['stderr']}" if rocminfo else ""
     architectures = sorted(set(re.findall(r"\bgfx\d+[a-z0-9]*\b", rocm_text.lower())))
@@ -160,7 +207,12 @@ def detect_host() -> dict[str, Any]:
         and "render" in groups
     )
     apple = os_name == "macos" and normalized_arch() == "arm64"
-    candidates = (["nvidia"] if nvidia_usable else []) + (["amd"] if amd_candidate else []) + (["mps"] if apple else [])
+    candidates = (
+        (["nvidia"] if nvidia_usable else [])
+        + (["amd"] if amd_candidate else [])
+        + (["intel"] if intel_candidate else [])
+        + (["mps"] if apple else [])
+    )
     return {
         "os": os_name,
         "os_id": os_release.get("ID"),
@@ -174,6 +226,7 @@ def detect_host() -> dict[str, Any]:
         "amd_candidate": amd_candidate,
         "amd_usable": amd_usable,
         "amd_architectures": architectures,
+        "intel_xpu_candidate": intel_candidate,
         "kfd_present": kfd.exists(),
         "kfd_accessible": kfd.exists() and os.access(kfd, os.R_OK | os.W_OK),
         "render_nodes": render_nodes,
@@ -185,7 +238,7 @@ def detect_host() -> dict[str, Any]:
 
 
 def resolve_profile(accelerator: str, host: dict[str, Any], *, allow_experimental: bool = False, non_interactive: bool = False) -> str:
-    aliases = {"nvidia": "nvidia-cuda", "mps": "apple-mps"}
+    aliases = {"nvidia": "nvidia-cuda", "intel": "intel-xpu", "mps": "apple-mps"}
     if accelerator not in {"auto", "amd", "cpu", *aliases}:
         raise ValueError(f"Unknown accelerator: {accelerator}")
     if accelerator != "auto":
@@ -204,6 +257,8 @@ def resolve_profile(accelerator: str, host: dict[str, Any], *, allow_experimenta
         if experimental and non_interactive and not allow_experimental:
             return "cpu"
         return "amd-pytorch-windows" if host["os"] == "windows" else "amd-rocm-linux"
+    if host.get("intel_xpu_candidate"):
+        return "intel-xpu"
     if host.get("mps_candidate"):
         return "apple-mps"
     return "cpu"
@@ -285,16 +340,33 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         issues.extend(amd_issues)
         if tier == "experimental" and not args.allow_experimental:
             issues.append(_issue("experimental-opt-in-required", "Ubuntu 26.04 AMD setup requires --allow-experimental."))
+    elif profile == "amd-pytorch-windows":
+        tier = "conditional"
+        issues.append(_issue(
+            "amd-windows-install-review-required",
+            "AMD now publishes PyTorch for selected Windows 11 Radeon and Ryzen devices, but MoDiff has not pinned the complete Windows SDK wheel set yet. Use the official AMD installation guide, then run repair/validation before model execution.",
+            blocking=True,
+        ))
     requirement = ROOT / spec["requirements"]
     if not requirement.is_file():
         issues.append(_issue("profile-lock-missing", f"Profile requirements are missing: {requirement}"))
+    if host["os"] == "windows":
+        cpu_fallback_command = r".\install.ps1 -Accelerator cpu"
+        resume_command = r".\install.ps1 -Accelerator auto -Resume"
+        if tier == "experimental":
+            resume_command += " -AllowExperimental"
+    else:
+        cpu_fallback_command = "./install.sh --accelerator cpu"
+        resume_command = "./install.sh --accelerator auto --resume"
+        if tier == "experimental":
+            resume_command += " --allow-experimental"
     steps = [
         {"id": "detect", "title": "Detect hardware and operating system", "phase": "detect", "status": "complete", "automatic": True},
         {"id": "resolve-profile", "title": f"Select {profile}", "phase": "plan", "status": "complete", "automatic": True},
         *[{**issue, "phase": "system-preparation"} for issue in issues],
         {"id": "toolchain", "title": "Prepare required app-local toolchains", "phase": "toolchain", "status": "pending", "automatic": True},
         {"id": "backend", "title": "Install the staged backend environment", "phase": "backend", "status": "pending", "automatic": True},
-        {"id": "client", "title": "Install and build the sibling client", "phase": "client", "status": "skipped" if getattr(args, "backend_only", False) else "pending", "automatic": True},
+        {"id": "client", "title": "Install the client and verified local Gallery", "phase": "client", "status": "skipped" if getattr(args, "backend_only", False) else "pending", "automatic": True},
         {"id": "validation", "title": "Verify packages and execute a device tensor", "phase": "validation", "status": "pending", "automatic": True},
         {"id": "complete", "title": "Finish setup", "phase": "complete", "status": "pending", "automatic": True},
     ]
@@ -309,8 +381,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "steps": steps,
         "phases": PHASES,
         "downloads": {"accelerator_bytes_approx": 2_000_000_000 if profile == "amd-rocm-linux" else None},
-        "cpu_fallback_command": "./install.sh --accelerator cpu",
-        "resume_command": "./install.sh --resume" + (" --allow-experimental" if tier == "experimental" else ""),
+        "cpu_fallback_command": cpu_fallback_command,
+        "resume_command": resume_command,
         "execution_ready": not any(issue["blocking"] for issue in issues),
     }
 
@@ -364,7 +436,7 @@ def _render_plan(plan: dict[str, Any]) -> None:
         print("Download: approximately 2 GB for the accelerator runtime")
     print("\nSetup checklist:")
     for index, step in enumerate(plan["steps"], 1):
-        marker = {"complete": "✓", "blocked": "!", "warning": "!", "skipped": "-"}.get(step.get("status"), "·")
+        marker = {"complete": "x", "blocked": "!", "warning": "!", "skipped": "-"}.get(step.get("status"), " ")
         print(f" {index}. [{marker}] {step['title']}")
         if step.get("status") in {"blocked", "warning"}:
             print(f"      {step.get('explanation') or step.get('message')}")
@@ -392,11 +464,29 @@ def _ensure_venv(uv: str, target: Path) -> Path:
     return python
 
 
+def _archive_member_destination(destination: Path, member_name: str) -> Path:
+    """Resolve an archive member while rejecting absolute and escaping paths."""
+
+    normalized = member_name.replace("\\", "/")
+    if normalized.startswith("/") or re.match(r"^[A-Za-z]:", normalized):
+        raise RuntimeError(f"Unsafe absolute path in tool archive: {member_name}")
+    member_path = Path(normalized)
+    if any(part == ".." for part in member_path.parts):
+        raise RuntimeError(f"Unsafe parent path in tool archive: {member_name}")
+    root = destination.resolve()
+    target = (root / member_path).resolve()
+    if target != root and root not in target.parents:
+        raise RuntimeError(f"Tool archive path escapes its destination: {member_name}")
+    return target
+
+
 def _download_tool(name: str) -> Path:
     key = (normalized_os(), normalized_arch(), name)
     if key not in TOOL_ARCHIVES:
         raise RuntimeError(f"No app-local {name} archive is pinned for {key[0]}/{key[1]}")
     url, expected_hash = TOOL_ARCHIVES[key]
+    if not url.startswith("https://"):
+        raise RuntimeError(f"Pinned {name} archive must use HTTPS")
     downloads = MANAGED_ROOT / "downloads"
     tools = MANAGED_ROOT / "tools"
     downloads.mkdir(parents=True, exist_ok=True)
@@ -419,12 +509,13 @@ def _download_tool(name: str) -> Path:
     destination.mkdir(parents=True)
     if zipfile.is_zipfile(archive):
         with zipfile.ZipFile(archive) as bundle:
-            bundle.extractall(destination)
+            for member in bundle.infolist():
+                _archive_member_destination(destination, member.filename)
+                bundle.extract(member, destination)
     else:
         with tarfile.open(archive) as bundle:
             for member in bundle.getmembers():
-                if member.name.startswith("/") or ".." in Path(member.name).parts:
-                    raise RuntimeError(f"Unsafe path in {name} archive")
+                _archive_member_destination(destination, member.name)
             bundle.extractall(destination, filter="data")
     return destination
 
@@ -496,42 +587,248 @@ def _client_path() -> Path | None:
     return next((path for path in candidates if (path / "package-lock.json").is_file()), None)
 
 
-def _install_client(*, backend_only: bool) -> dict[str, Any]:
+def _npm_command(toolchains: dict[str, str], *arguments: str) -> list[str]:
+    """Run npm without asking ``subprocess`` to execute a Windows batch file."""
+
+    npm = Path(toolchains["npm"])
+    if npm.suffix.lower() != ".cmd":
+        return [str(npm), *arguments]
+    npm_cli = npm.parent / "node_modules" / "npm" / "bin" / "npm-cli.js"
+    if not npm_cli.is_file():
+        raise RuntimeError(f"The managed Node archive is missing npm-cli.js at {npm_cli}")
+    return [toolchains["node"], str(npm_cli), *arguments]
+
+
+def _mirror_client_dist(client: Path, web_root: Path | None = None) -> Path:
+    """Atomically replace the bundled UI while retaining local user assets."""
+
+    source = (Path(client) / "dist").resolve()
+    destination = (web_root or WEB_ROOT).resolve()
+    if not (source / "index.html").is_file():
+        raise RuntimeError(f"Client build did not produce {source / 'index.html'}")
+
+    staging = destination.with_name(f".{destination.name}.next")
+    previous = destination.with_name(f".{destination.name}.previous")
+    for temporary in (staging, previous):
+        if temporary.exists():
+            shutil.rmtree(temporary)
+    shutil.copytree(source, staging)
+    user_assets = destination / "user"
+    if user_assets.is_dir():
+        shutil.copytree(user_assets, staging / "user", dirs_exist_ok=True)
+
+    if destination.exists():
+        destination.rename(previous)
+    try:
+        staging.rename(destination)
+    except Exception:
+        if previous.exists() and not destination.exists():
+            previous.rename(destination)
+        raise
+    if previous.exists():
+        shutil.rmtree(previous)
+    return destination
+
+
+def _template_asset_source(client: Path) -> dict[str, Any]:
+    source_path = client / "src" / "studio" / "templateAssetSource.json"
+    try:
+        source = json.loads(source_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(f"Could not read the client Template Gallery source: {source_path}") from exc
+    if not isinstance(source, dict) or source.get("mode") not in {"local", "huggingface"}:
+        raise RuntimeError(f"Invalid client Template Gallery source: {source_path}")
+    return source
+
+
+def _run_client_step(
+    command: list[str], *, client: Path, environment: dict[str, str], log_name: str
+) -> None:
+    result = subprocess.run(
+        command,
+        cwd=client,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    (DIAGNOSTICS_DIR / log_name).write_text(
+        result.stdout + result.stderr, encoding="utf-8"
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Client setup failed during {' '.join(command[1:])}; see {DIAGNOSTICS_DIR / log_name}"
+        )
+
+
+def _build_client_with_installed_gallery(
+    client: Path,
+    *,
+    python: Path,
+    toolchains: dict[str, str],
+    environment: dict[str, str],
+) -> dict[str, Any]:
+    """Build a local Gallery bundle, downloading the immutable set if needed."""
+
+    source = _template_asset_source(client)
+    asset_script = client / "scripts" / "template-gallery-assets.py"
+    if not asset_script.is_file():
+        raise RuntimeError(f"Client Template Gallery installer is missing: {asset_script}")
+
+    public_root = client / "public"
+    gallery_root = public_root / "template-gallery"
+    build_environment = environment.copy()
+    build_environment["VITE_MODIFF_TEMPLATE_ASSET_MODE"] = "local"
+
+    if source["mode"] == "local":
+        print("Verifying local Template Gallery assets...", file=sys.stderr)
+        _run_client_step(
+            [str(python), str(asset_script), "verify"],
+            client=client,
+            environment=environment,
+            log_name="template-gallery-verify.log",
+        )
+        print("Building the bundled MoDiff client...", file=sys.stderr)
+        _run_client_step(
+            _npm_command(toolchains, "run", "build"),
+            client=client,
+            environment=build_environment,
+            log_name="npm-build.log",
+        )
+        return {"source": "local", "asset_mode": "local"}
+
+    MANAGED_ROOT.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix="modiff-template-gallery-", dir=MANAGED_ROOT
+    ) as temporary:
+        download_root = Path(temporary) / "download"
+        print("Downloading and verifying the Template Gallery assets...", file=sys.stderr)
+        _run_client_step(
+            [
+                str(python),
+                str(asset_script),
+                "download",
+                "--destination",
+                str(download_root),
+            ],
+            client=client,
+            environment=environment,
+            log_name="template-gallery-download.log",
+        )
+        downloaded_gallery = download_root / "template-gallery"
+        if not downloaded_gallery.is_dir():
+            raise RuntimeError("The verified Template Gallery download is missing its asset directory")
+
+        # Keep the authoring checkout outside Vite's publicDir while building;
+        # anything beneath public/ is copied verbatim into dist, including dot
+        # directories and permission-dependent local preview files.
+        backup = client / ".template-gallery.install-backup"
+        if backup.exists():
+            raise RuntimeError(f"A stale Template Gallery install backup exists: {backup}")
+        public_root.mkdir(parents=True, exist_ok=True)
+        had_original = gallery_root.exists()
+        if had_original:
+            gallery_root.rename(backup)
+        try:
+            downloaded_gallery.rename(gallery_root)
+            print("Building the bundled MoDiff client with local Gallery assets...", file=sys.stderr)
+            _run_client_step(
+                _npm_command(toolchains, "run", "build"),
+                client=client,
+                environment=build_environment,
+                log_name="npm-build.log",
+            )
+        finally:
+            if gallery_root.exists():
+                shutil.rmtree(gallery_root)
+            if had_original and backup.exists():
+                backup.rename(gallery_root)
+        return {
+            "source": "huggingface",
+            "asset_mode": "local",
+            "repo_id": source.get("repoId"),
+            "revision": source.get("revision"),
+            "asset_set_id": source.get("assetSetId"),
+        }
+
+
+def _install_client(*, backend_only: bool, python: Path | None = None) -> dict[str, Any]:
     if backend_only:
         return {"status": "skipped", "reason": "--backend-only"}
     client = _client_path()
     if not client:
-        return {"status": "skipped", "reason": "sibling client not found"}
+        raise RuntimeError(
+            f"Sibling MoDiff-client checkout not found. Clone it as {ROOT.parent / 'MoDiff-client'} "
+            "or rerun with --backend-only to install only the backend."
+        )
     toolchains = _ensure_node()
+    managed_python = python or VENV / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not managed_python.is_file():
+        raise RuntimeError(f"The managed Python environment is missing: {managed_python}")
     DIAGNOSTICS_DIR.mkdir(parents=True, exist_ok=True)
     environment = os.environ.copy()
     environment["PATH"] = str(Path(toolchains["node"]).parent) + os.pathsep + environment.get("PATH", "")
-    for command, log_name in (([toolchains["npm"], "ci"], "npm-ci.log"), ([toolchains["npm"], "run", "build"], "npm-build.log")):
-        result = subprocess.run(command, cwd=client, env=environment, capture_output=True, text=True, check=False)
-        (DIAGNOSTICS_DIR / log_name).write_text(result.stdout + result.stderr, encoding="utf-8")
-        if result.returncode != 0:
-            raise RuntimeError(f"Client setup failed during {' '.join(command[1:])}; see {DIAGNOSTICS_DIR / log_name}")
-    return {"status": "complete", "path": str(client), "node": toolchains["node_version"]}
+    print("Installing locked client dependencies...", file=sys.stderr)
+    _run_client_step(
+        _npm_command(toolchains, "ci"),
+        client=client,
+        environment=environment,
+        log_name="npm-ci.log",
+    )
+    gallery = _build_client_with_installed_gallery(
+        client,
+        python=managed_python,
+        toolchains=toolchains,
+        environment=environment,
+    )
+    mirrored = _mirror_client_dist(client)
+    return {
+        "status": "complete",
+        "path": str(client),
+        "node": toolchains["node_version"],
+        "web": str(mirrored),
+        "template_gallery": gallery,
+    }
 
 
 def _smoke_script(profile: str) -> str:
-    expected = {"amd-rocm-linux": "rocm", "nvidia-cuda": "cuda", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
+    expected = {"amd-rocm-linux": "rocm", "amd-pytorch-windows": "rocm", "nvidia-cuda": "cuda", "intel-xpu": "xpu", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
     return f"""
 import json, torch
-backend = 'rocm' if torch.version.hip else ('cuda' if torch.version.cuda else ('mps' if torch.backends.mps.is_built() else 'cpu'))
+backend = 'rocm' if torch.version.hip else ('cuda' if torch.version.cuda else ('xpu' if hasattr(torch, 'xpu') and torch.xpu.is_available() else ('mps' if torch.backends.mps.is_built() else 'cpu')))
 assert backend == {expected!r}, (backend, {expected!r})
-device = 'cuda:0' if backend in ('cuda', 'rocm') else ('mps:0' if backend == 'mps' else 'cpu:0')
-assert device == 'cpu:0' or (torch.cuda.is_available() if device.startswith('cuda') else torch.backends.mps.is_available())
-dtype = torch.float16 if backend in ('cuda', 'rocm', 'mps') else torch.float32
+device = 'cuda:0' if backend in ('cuda', 'rocm') else ('xpu:0' if backend == 'xpu' else ('mps:0' if backend == 'mps' else 'cpu:0'))
+assert device == 'cpu:0' or (torch.cuda.is_available() if device.startswith('cuda') else (torch.xpu.is_available() if device.startswith('xpu') else torch.backends.mps.is_available()))
+dtype = torch.float16 if backend in ('cuda', 'rocm', 'xpu', 'mps') else torch.float32
 x = torch.tensor([1.0, 2.0], device=device, dtype=dtype)
 y = x * 2 + 1
 assert y.cpu().float().tolist() == [3.0, 5.0]
 if backend in ('cuda', 'rocm'): torch.cuda.synchronize()
+elif backend == 'xpu': torch.xpu.synchronize()
 elif backend == 'mps': torch.mps.synchronize()
 del x, y
 if backend in ('cuda', 'rocm'): torch.cuda.empty_cache()
+elif backend == 'xpu': torch.xpu.empty_cache()
 elif backend == 'mps': torch.mps.empty_cache()
 print(json.dumps({{'backend': backend, 'device': device, 'torch': torch.__version__, 'hip': torch.version.hip, 'cuda': torch.version.cuda}}))
+"""
+
+
+def _profile_package_script(profile: str) -> str:
+    """Return an isolated validation script for profile package policy."""
+    specification = load_manifest()["profiles"][profile]
+    required = specification.get("required", [])
+    prohibited = specification.get("prohibited", [])
+    return f"""
+import importlib.metadata, json
+normalize = lambda value: value.lower().replace('_', '-').replace('.', '-')
+installed = {{normalize(item.metadata['Name']) for item in importlib.metadata.distributions() if item.metadata['Name']}}
+required = {{normalize(item) for item in {required!r}}}
+prohibited = {{normalize(item) for item in {prohibited!r}}}
+missing = sorted(required - installed)
+unexpected = sorted(prohibited & installed)
+assert not missing and not unexpected, json.dumps({{'missing': missing, 'prohibited_installed': unexpected}})
+print(json.dumps({{'required_present': sorted(required), 'prohibited_absent': sorted(prohibited)}}))
 """
 
 
@@ -613,8 +910,15 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
         _write_journal(status="failed", current_phase="validation", failure=smoke["stderr"].strip() or smoke["stdout"].strip(),
                        rollback={"performed": False, "reason": "staged environment was never promoted"}, next_action=plan["resume_command"])
         raise RuntimeError(f"Device tensor smoke failed: {smoke['stderr'].strip() or smoke['stdout'].strip()}")
+    package_policy = _command([str(python), "-c", _profile_package_script(plan["profile"])], timeout=60)
+    if package_policy["returncode"] != 0:
+        detail = package_policy["stderr"].strip() or package_policy["stdout"].strip()
+        _write_journal(status="failed", current_phase="validation", failure=detail,
+                       rollback={"performed": False, "reason": "staged environment was never promoted"}, next_action=plan["resume_command"])
+        raise RuntimeError(f"Profile package policy failed: {detail}")
     _run([uv, "pip", "check", "--python", str(python)])
     requirement = Path(plan["requirements"])
+    runtime_contract = runtime_contract_paths(requirement)
     smoke_result = json.loads(smoke["stdout"].strip().splitlines()[-1])
     state = {
         "schema_version": 1,
@@ -622,7 +926,16 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
         "support_tier": plan["support_tier"],
         "manifest_revision": plan["manifest_revision"],
         "requirements": requirement.name,
-        "lock_digest": lock_digest(requirement),
+        "runtime_contract_schema": RUNTIME_CONTRACT_SCHEMA,
+        "lock_digest": lock_digest(
+            requirement,
+            contract_paths=runtime_contract,
+            profile=plan["profile"],
+        ),
+        "runtime_contract_files": [
+            str(path.resolve().relative_to(ROOT.resolve()))
+            for path in runtime_contract
+        ] + [f"modiff/compatibility/accelerators.v1.json#profiles/{plan['profile']}"],
         "host": {key: plan["host"].get(key) for key in ("os", "os_version", "architecture", "kernel", "amd_architectures")},
         "smoke": smoke_result,
     }
@@ -639,11 +952,12 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
     _record_phase("backend", detail={"promoted": True, "previous_environment": PREVIOUS_VENV.exists()})
 
     _record_phase("client", status="running")
-    client_result = _install_client(backend_only=args.backend_only)
+    client_result = _install_client(backend_only=args.backend_only, python=promoted_python)
     _record_phase("client", status=client_result["status"], detail=client_result)
     _record_phase("complete")
+    launch_command = ".\\run.ps1" if os.name == "nt" else "./run.sh"
     _write_journal(status="complete", current_phase="complete", completed_phases=PHASES,
-                   rollback={"performed": rolled_back}, next_action="./run.sh", application_url="http://127.0.0.1:8088")
+                   rollback={"performed": rolled_back}, next_action=launch_command, application_url="http://127.0.0.1:8088")
     plan["state"] = state
     plan["client"] = client_result
     plan["status"] = "complete"
@@ -654,7 +968,7 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("--accelerator", default="auto", choices=["auto", "nvidia", "amd", "mps", "cpu"])
+    result.add_argument("--accelerator", default="auto", choices=["auto", "nvidia", "amd", "intel", "mps", "cpu"])
     result.add_argument("--dry-run", action="store_true")
     result.add_argument("--non-interactive", action="store_true")
     result.add_argument("--repair", action="store_true")
@@ -696,9 +1010,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.json:
             print(json.dumps(result, indent=2))
         elif result.get("status") == "complete":
-            print("\n✓ MoDiff installation complete")
+            print("\nMoDiff installation complete")
             print(f"  Profile: {result['profile']} ({result['support_tier']})")
-            print(f"  Start:   ./run.sh")
+            print(f"  Start:   {'.\\run.ps1' if os.name == 'nt' else './run.sh'}")
             print(f"  Open:    {result['application_url']}")
         return 0 if result.get("status") in {"complete", "reboot-required"} else 2
     except Exception as exc:

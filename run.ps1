@@ -10,7 +10,8 @@ if ($profile.profile -eq "amd-rocm-linux") {
   if (!$env:HIP_PATH) { $env:HIP_PATH = "/opt/rocm" }
   $env:LD_LIBRARY_PATH = "/opt/rocm/lib" + $(if ($env:LD_LIBRARY_PATH) { ":$env:LD_LIBRARY_PATH" } else { "" })
 }
-& $python -c 'from modiff.hardware import get_hardware_snapshot; from modiff.runtime_profile import runtime_profile; import sys; sys.exit(0 if runtime_profile(get_hardware_snapshot(refresh=True))["execution_ready"] else 2)'
+$preflightCode = "from modiff.hardware import get_hardware_snapshot; from modiff.runtime_profile import runtime_profile; import sys; sys.exit(0 if runtime_profile(get_hardware_snapshot(refresh=True))['execution_ready'] else 2)"
+& $python -c $preflightCode
 if ($LASTEXITCODE -ne 0) { throw "Managed runtime profile is not execution-ready. Run .\install.ps1 -Accelerator auto -Repair -SystemCheck -Json." }
 & $python main.py @args
 exit $LASTEXITCODE

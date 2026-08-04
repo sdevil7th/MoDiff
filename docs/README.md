@@ -6,10 +6,14 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 
 | Goal                                                                        | Guide                                                                            |
 | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Install, configure, launch, or update MoDiff                                | [Project README](../README.md) and [`config.example.ini`](../config.example.ini) |
+| Install, verify, run a first workflow, configure, or update MoDiff           | [Project README](../README.md) and [`config.example.ini`](../config.example.ini) |
 | Understand HTTP and WebSocket surfaces                                      | [API reference](api-reference.md)                                                |
-| Diagnose startup, ports, devices, downloads, media, or stale UI             | [Troubleshooting](troubleshooting.md)                                            |
+| Diagnose startup, ports, slow/stalled runs, devices, downloads, or media    | [Troubleshooting](troubleshooting.md)                                            |
+| Compare the qualified accelerator profiles and their proof levels           | [Runtime support matrix](runtime-support-matrix.md)                              |
+| Review optional attention, quantization, and compilation capabilities        | [Optional runtime optimizations](optional-runtime-optimizations.md)              |
 | Build Modular Diffusers graphs and understand experimental compatibility    | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                 |
+| Review the Hugging Face-derived engineering and runtime requirements        | [Hugging Face engineering alignment](hugging-face-standards.md)                  |
+| Review inherited source baselines and per-file modification notices         | [Source provenance map](source-provenance.md)                                    |
 | Contribute code, nodes, dependencies, or client-facing changes              | [Contributing](../CONTRIBUTING.md)                                               |
 | Understand the local-only trust boundary or report a vulnerability          | [Security policy](../SECURITY.md)                                                |
 | Understand expected conduct in project spaces                               | [Code of conduct](../CODE_OF_CONDUCT.md)                                         |

@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 
 from diffusers import LayerSkipConfig, SmoothedEnergyGuidanceConfig
@@ -15,34 +16,15 @@ LAYER_CONFIG_MAPPING = {
     "SmoothedEnergyGuidance": "seg_guidance_config",
 }
 
-# TODO: not sure if these defaults make sense and it would be more complex with each model
-DEFAULT_CONFIGS = {
-    "SkipLayerGuidance": {
-        "skip_layer_config": LayerSkipConfig(
-            indices=[0],
-            fqn="mid_block.attentions.0.transformer_blocks",
-            dropout=1.0,
-            skip_attention=False,
-            skip_attention_scores=True,
-            skip_ff=False,
-        )
-    },
-    "AutoGuidance": {
-        "auto_guidance_config": LayerSkipConfig(
-            indices=[0],
-            fqn="mid_block.attentions.0.transformer_blocks",
-            dropout=1.0,
-            skip_attention=False,
-            skip_attention_scores=True,
-            skip_ff=False,
-        )
-    },
-    "SmoothedEnergyGuidance": {
-        "seg_guidance_config": SmoothedEnergyGuidanceConfig(
-            indices=[0],
-            fqn="mid_block.attentions.0.transformer_blocks",
-        )
-    },
+GUIDER_OPTIONS = {
+    "ClassifierFreeGuidance": "Classifier Free Guidance",
+    "SkipLayerGuidance": "Skip Layer Guidance",
+    "AdaptiveProjectedGuidance": "Adaptive Projected Guidance",
+    "ClassifierFreeZeroStarGuidance": "Classifier Free Zero Star Guidance",
+    "AutoGuidance": "Auto Guidance",
+    "SmoothedEnergyGuidance": "Smoothed Energy Guidance",
+    "TangentialClassifierFreeGuidance": "Tangential Classifier Free Guidance",
+    "FrequencyDecoupledGuidance": "Frequency Decoupled Guidance",
 }
 
 GUIDER_CONFIGS = {
@@ -103,7 +85,8 @@ GUIDER_CONFIGS = {
             "type": "float",
             "value": 1.0,
             "min": 0.0,
-            "max": 10.0,
+            "max": 1.0,
+            "step": 0.01,
         }
     },
 }
@@ -119,16 +102,7 @@ class Guider(NodeBase):
             "label": "Guider",
             "fieldOptions": {"loading": True},
             "type": "string",
-            "options": {
-                "ClassifierFreeGuidance": "Classifier Free Guidance",
-                "SkipLayerGuidance": "Skip Layer Guidance",
-                "AdaptiveProjectedGuidance": "Adaptive Projected Guidance",
-                "ClassifierFreeZeroStarGuidance": "Classifier Free Zero Star Guidance",
-                "AutoGuidance": "Auto Guidance",
-                "SmoothedEnergyGuidance": "Smoothed Energy Guidance",
-                "TangentialClassifierFreeGuidance": "Tangential Classifier Free Guidance",
-                "FrequencyDecoupledGuidance": "Frequency Decoupled Guidance",
-            },
+            "options": GUIDER_OPTIONS,
             "value": "ClassifierFreeGuidance",
             "onChange": [
                 "updateNode",
@@ -213,34 +187,73 @@ class Guider(NodeBase):
 
         logger.debug(f" - guider options: {guider_options}")
 
+        if guider not in GUIDER_OPTIONS:
+            raise ValueError(f"Unsupported Diffusers guider: {guider!r}.")
+
         guider_cls = getattr(__import__("diffusers", fromlist=[guider]), guider)
 
         configs = {}
 
         if guider in LAYER_CONFIG_MAPPING:
-            if layers_config is None:
-                configs[guider] = DEFAULT_CONFIGS.get(guider, {})
-            else:
-                config_arg_name = LAYER_CONFIG_MAPPING[guider]
+            if layers_config is None or layers_config == []:
+                raise ValueError(
+                    f"{guider} requires a non-empty Layers connection. "
+                    "Select a transformer-block stack and at least one layer index."
+                )
+            config_arg_name = LAYER_CONFIG_MAPPING[guider]
 
-                if isinstance(layers_config, list):
-                    layer_configs = []
+            if isinstance(layers_config, dict):
+                layers_config = [layers_config]
 
-                    for config_dict in layers_config:
-                        if guider == "SmoothedEnergyGuidance":
-                            layer_config = SmoothedEnergyGuidanceConfig(
-                                indices=config_dict["indices"], fqn=config_dict["fqn"]
+            if isinstance(layers_config, list):
+                layer_configs = []
+
+                for config_dict in layers_config:
+                    if not isinstance(config_dict, dict):
+                        expected_type = (
+                            SmoothedEnergyGuidanceConfig if guider == "SmoothedEnergyGuidance" else LayerSkipConfig
+                        )
+                        if not isinstance(config_dict, expected_type):
+                            raise TypeError(
+                                f"{guider} layer entries must be mappings or {expected_type.__name__} instances."
                             )
-                        else:
-                            layer_config = LayerSkipConfig(**config_dict)
+                        layer_configs.append(config_dict)
+                        continue
 
-                        layer_configs.append(layer_config)
+                    indices = config_dict.get("indices")
+                    fqn = config_dict.get("fqn")
+                    if (
+                        not isinstance(indices, list)
+                        or not indices
+                        or any(isinstance(index, bool) or not isinstance(index, int) or index < 0 for index in indices)
+                    ):
+                        raise ValueError(f"{guider} layer indices must be a non-empty list of non-negative integers.")
+                    if not isinstance(fqn, str) or not fqn or fqn != fqn.strip():
+                        raise ValueError(f"{guider} requires a non-empty layer FQN without surrounding whitespace.")
 
-                    configs[guider] = {config_arg_name: layer_configs}
-                else:
-                    configs[guider] = {config_arg_name: layers_config}
+                    if guider == "SmoothedEnergyGuidance":
+                        layer_config = SmoothedEnergyGuidanceConfig(indices=indices, fqn=fqn)
+                    else:
+                        layer_config = LayerSkipConfig(**config_dict)
+
+                    layer_configs.append(layer_config)
+
+                configs[guider] = {config_arg_name: layer_configs}
+            else:
+                expected_type = SmoothedEnergyGuidanceConfig if guider == "SmoothedEnergyGuidance" else LayerSkipConfig
+                if not isinstance(layers_config, expected_type):
+                    raise TypeError(
+                        f"{guider} Layers input must be a mapping, list, or {expected_type.__name__} instance."
+                    )
+                configs[guider] = {config_arg_name: layers_config}
 
         options = {**guider_options}
+
+        if guider == "FrequencyDecoupledGuidance" and "guidance_scale" in options:
+            # The upstream constructor intentionally accepts one scale per
+            # frequency level under the plural ``guidance_scales`` name. Keep
+            # MoDiff's existing single-value control as a one-level list.
+            options["guidance_scales"] = [options.pop("guidance_scale")]
 
         if guider in configs:
             options.update(configs[guider])
@@ -306,16 +319,24 @@ class Layers(NodeBase):
 
             config = kwargs.get(block, {})
 
-            indices_str = config.get("indices", "")
-            indices = []
-            if indices_str.strip():
-                indices = [int(x.strip()) for x in indices_str.split(",")]
-            else:
+            if not isinstance(block, str) or not block or block != block.strip():
+                raise ValueError("Layer block names must be non-empty FQNs without surrounding whitespace.")
+            if not isinstance(config, dict):
+                raise TypeError(f"Layer configuration for {block!r} must be a mapping.")
+
+            indices_str = str(config.get("indices", ""))
+            try:
+                indices = [int(value.strip()) for value in indices_str.split(",") if value.strip()]
+            except ValueError as error:
+                raise ValueError(f"Layer indices for {block!r} must be comma-separated integers.") from error
+            if not indices:
                 indices = [0]
+            if any(index < 0 for index in indices):
+                raise ValueError(f"Layer indices for {block!r} must be non-negative.")
 
             layer_config = {
                 "indices": indices,
-                "fqn": f"{block}.transformer_blocks",
+                "fqn": block,
                 "dropout": config.get("dropout", 1.0),
                 "skip_attention": config.get("skip_attention", False),
                 "skip_attention_scores": config.get("skip_attention_scores", False),

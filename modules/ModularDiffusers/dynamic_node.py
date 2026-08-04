@@ -1,3 +1,4 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 
 from diffusers import ModularPipeline
@@ -11,13 +12,17 @@ from modiff.diffusers_offload import (
     OFFLOAD_MODE_MODEL_CPU,
     OFFLOAD_MODE_NONE,
     apply_component_group_offload,
+    configure_components_manager_offload,
     normalize_offload_mode,
     offload_mode_param,
 )
+from modiff.model_artifact_catalog import resolve_model_revision
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 from . import MESSAGE_DURATION, components
+from .loaders import record_pipeline_component_runtime_policy, reusable_component_ids
 from .utils import collect_model_ids
+from .modular_utils import pin_modular_component_revisions, require_immutable_hub_revision
 
 
 logger = logging.getLogger("modiff")
@@ -47,16 +52,18 @@ class DynamicBlockNode(NodeBase):
         if not self._sid or not self.node_id:
             return
 
+        current_server = _server()
+        describe = getattr(current_server, "describe_node_params", None)
         message = {
             "type": "node_definition",
             "node": self.node_id,
-            "params": params,
+            "params": describe(params) if callable(describe) else params,
         }
         if label:
             message["label"] = label
         if header_color:
             message["style"] = {"headerColor": header_color}
-        _server().queue_message(message, self._sid)
+        current_server.queue_message(message, self._sid)
 
     params = {
         "repo_id": {
@@ -67,7 +74,7 @@ class DynamicBlockNode(NodeBase):
             "value": "",
             "options": {
                 "": "",
-                "YiYiXu/FLUX.2-klein-4B-modular": "FLUX.2-klein-4B",
+                "diffusers/FLUX.2-klein-4B-modular": "FLUX.2-klein-4B",
             },
             "fieldOptions": {"noValidation": True},
         },
@@ -81,6 +88,12 @@ class DynamicBlockNode(NodeBase):
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": False},
         "offload_mode": offload_mode_param(modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]),
         "trust_remote_code": {"label": "Trust Remote Code", "type": "boolean", "value": False},
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "value": "",
+            "description": "Required immutable 40-character Hugging Face commit hash.",
+        },
         "doc": {
             "label": "Doc",
             "type": "string",
@@ -98,8 +111,10 @@ class DynamicBlockNode(NodeBase):
             components.remove_from_collection(comp_id, self.node_id)
         super().__del__()
 
-    def _get_custom_config(self, repo_id):
-        custom_config = PipelineConfig.load(repo_id)
+    def _get_custom_config(self, repo_id, revision=None):
+        revision = resolve_model_revision(repo_id, revision)
+        revision = require_immutable_hub_revision(repo_id, revision, required=True)
+        custom_config = PipelineConfig.load(repo_id, revision=revision)
         return custom_config
 
     def update_node(self, values, ref):
@@ -108,7 +123,8 @@ class DynamicBlockNode(NodeBase):
             return
 
         repo_id = values.get("repo_id", "")
-        custom_config = self._get_custom_config(repo_id)
+        revision = values.get("revision")
+        custom_config = self._get_custom_config(repo_id, revision)
         node_config = custom_config.node_params["custom"]
 
         custom_params = node_config["params"]
@@ -126,8 +142,19 @@ class DynamicBlockNode(NodeBase):
             header_color=node_color,
         )
 
-    def execute(self, repo_id, device, auto_offload, trust_remote_code, offload_mode=OFFLOAD_MODE_MODEL_CPU, **kwargs):
-        offload_mode = normalize_offload_mode(offload_mode, auto_offload=auto_offload)
+    def execute(
+        self,
+        repo_id,
+        device,
+        auto_offload,
+        trust_remote_code,
+        offload_mode=OFFLOAD_MODE_MODEL_CPU,
+        revision=None,
+        **kwargs,
+    ):
+        revision = resolve_model_revision(repo_id, revision)
+        revision = require_immutable_hub_revision(repo_id, revision, required=True)
+        offload_mode = normalize_offload_mode(offload_mode, auto_offload=auto_offload, device=device)
         if offload_mode not in [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]:
             self.notify(
                 f"Dynamic Modular Diffusers blocks do not support {offload_mode} offload.",
@@ -145,7 +172,12 @@ class DynamicBlockNode(NodeBase):
 
         try:
             pipeline = ModularPipeline.from_pretrained(
-                repo_id, trust_remote_code, components_manager=components, collection=self.node_id
+                repo_id,
+                trust_remote_code=bool(trust_remote_code),
+                revision=revision,
+                components_manager=components,
+                collection=self.node_id,
+                local_files_only=True,
             )
         except ValueError as e:
             self.notify(f"{str(e)}", variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
@@ -159,8 +191,10 @@ class DynamicBlockNode(NodeBase):
             )
             raise e
 
+        pin_modular_component_revisions(pipeline, repo_id, revision)
+
         # Load config to get input/output names and dtype
-        custom_config = self._get_custom_config(repo_id)
+        custom_config = self._get_custom_config(repo_id, revision)
         node_config = custom_config.node_params["custom"]
 
         # Get dtype from config
@@ -171,11 +205,9 @@ class DynamicBlockNode(NodeBase):
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
-        # Enable component-manager offload before component load when requested.
-        if offload_mode == OFFLOAD_MODE_MODEL_CPU and (not components._auto_offload_enabled or components._auto_offload_device != device):
-            components.enable_auto_cpu_offload(device=device)
-        elif components._auto_offload_enabled:
-            components.disable_auto_cpu_offload()
+        # Configure component-manager residency before component load. CPU and
+        # MPS execution deliberately bypass accelerator offload hooks.
+        configure_components_manager_offload(components, mode=offload_mode, device=device)
 
         # Cast parameters to the types expected by the modular pipeline.
         for param_name, param_config in node_config["params"].items():
@@ -207,10 +239,19 @@ class DynamicBlockNode(NodeBase):
                 continue  # Already provided externally
 
             comp_spec = pipeline.get_component_spec(comp_name)
-            comp_with_same_load_id = components._lookup_ids(load_id=comp_spec.load_id)
-            if comp_with_same_load_id:
+            comp_ids_to_reuse = reusable_component_ids(
+                components,
+                name=comp_name,
+                load_id=comp_spec.load_id,
+                dtype=torch_dtype,
+                requested_quantization=None,
+                offload_mode=offload_mode,
+                device=device,
+                node_id=self.node_id,
+            )
+            if comp_ids_to_reuse:
                 # Reuse existing component
-                comp_id = list(comp_with_same_load_id)[0]
+                comp_id = comp_ids_to_reuse[0]
                 components_update_dict[comp_name] = components.get_one(component_id=comp_id)
             else:
                 components_to_load.append(comp_name)
@@ -236,6 +277,13 @@ class DynamicBlockNode(NodeBase):
                 raise
         elif offload_mode == "none":
             pipeline.to(device)
+
+        record_pipeline_component_runtime_policy(
+            pipeline,
+            offload_mode=offload_mode,
+            device=device,
+            node_id=self.node_id,
+        )
 
         # Build inputs dict
         inputs_dict = {}

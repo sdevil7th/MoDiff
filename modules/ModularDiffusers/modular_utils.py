@@ -1,13 +1,70 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
+import re
 import threading
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from diffusers import Flux2KleinModularPipeline
+from modiff.model_artifact_catalog import resolve_model_revision
 from .pipeline_schema import MoDiffParam as PipelineParam
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 
 logger = logging.getLogger("modiff")
+
+IMMUTABLE_HUB_REVISION = re.compile(r"^[0-9a-fA-F]{40}$")
+
+
+def require_immutable_hub_revision(repo_id, revision, *, required: bool):
+    """Require a commit hash before loading a trust-sensitive Hub repository."""
+
+    repository = str(repo_id or "").strip()
+    normalized_revision = str(revision or "").strip() or None
+    if not repository or Path(repository).expanduser().exists():
+        return normalized_revision
+    if required and not (normalized_revision and IMMUTABLE_HUB_REVISION.fullmatch(normalized_revision)):
+        raise ValueError(
+            "Remote Modular Diffusers repositories require an immutable 40-character Hugging Face commit revision. "
+            "Review the repository contents, copy its commit hash into Revision, and retry."
+        )
+    return normalized_revision
+
+
+def pin_modular_component_revisions(pipeline, primary_repo, primary_revision):
+    """Attach resolved Hub revisions to the component specs a modular config creates.
+
+    Upstream ``ModularPipeline.from_pretrained`` uses ``revision`` to fetch the
+    pipeline configuration, but the current experimental API does not copy it
+    into the component specs built from that configuration. Without this pass,
+    ``load_components`` can still follow an auxiliary repository's moving
+    default branch even though the graph and top-level config were pinned.
+    Unknown remote auxiliaries fail before any component spec is mutated.
+    """
+
+    primary = str(primary_repo or "").strip()
+    resolved_specs = []
+    for name, spec in (getattr(pipeline, "_component_specs", None) or {}).items():
+        repository = getattr(spec, "pretrained_model_name_or_path", None)
+        if not isinstance(repository, str) or not repository.strip():
+            continue
+        if primary and repository.lower() == primary.lower():
+            revision = primary_revision
+            if not revision:
+                continue
+        else:
+            revision = resolve_model_revision(repository, getattr(spec, "revision", None))
+            revision = require_immutable_hub_revision(repository, revision, required=True)
+            if not revision:
+                continue
+        resolved_specs.append((str(name), spec, revision))
+
+    applied = {}
+    for name, spec, revision in resolved_specs:
+        spec.revision = revision
+        applied[name] = revision
+    return applied
+
 
 SDXL_NODE_SPECS = {
     "controlnet": {
@@ -983,16 +1040,103 @@ class DummyCustomPipeline:
     """Placeholder class used as registry key for custom pipelines."""
 
     repo_id = None
+    revision = None
+    trust_remote_code = False
 
     def __new__(cls):
         from diffusers import ModularPipeline
 
-        return ModularPipeline.from_pretrained(cls.repo_id, trust_remote_code=True)
+        revision = require_immutable_hub_revision(
+            cls.repo_id,
+            cls.revision,
+            required=bool(cls.trust_remote_code),
+        )
+        kwargs = {
+            "trust_remote_code": bool(cls.trust_remote_code),
+            "local_files_only": True,
+        }
+        if revision:
+            kwargs["revision"] = revision
+        return ModularPipeline.from_pretrained(cls.repo_id, **kwargs)
 
 
-DUMMY_CUSTOM_PIPELINE_CONFIG = PipelineConfig(
-    node_specs={}, label="Custom", default_repo="", default_dtype="bfloat16"
-)
+def pipeline_class_from_runtime_inputs(current_pipeline_class, *runtime_values):
+    """Recover a modular pipeline class from self-describing connected inputs.
+
+    Dynamic node-definition signals are transient and are not replayed when the
+    runtime recreates node instances between tasks. ModelsLoader therefore adds
+    ``model_type`` to each component payload, allowing downstream nodes to
+    restore the same pipeline contract from their graph inputs.
+    """
+    if current_pipeline_class is not None:
+        return current_pipeline_class
+
+    model_types = set()
+    custom_repositories = set()
+    custom_revisions = set()
+    custom_trust_values = set()
+    visited = set()
+
+    def collect(value):
+        if isinstance(value, dict):
+            value_id = id(value)
+            if value_id in visited:
+                return
+            visited.add(value_id)
+            model_type = value.get("model_type")
+            if isinstance(model_type, str) and model_type.strip():
+                model_types.add(model_type.strip())
+                if model_type.strip() == "DummyCustomPipeline":
+                    repository = value.get("repo_id")
+                    revision = value.get("revision")
+                    if isinstance(repository, str) and repository.strip():
+                        custom_repositories.add(repository.strip())
+                    if isinstance(revision, str) and revision.strip():
+                        custom_revisions.add(revision.strip())
+                    custom_trust_values.add(bool(value.get("trust_remote_code")))
+            for nested_value in value.values():
+                collect(nested_value)
+        elif isinstance(value, (list, tuple)):
+            for nested_value in value:
+                collect(nested_value)
+
+    for runtime_value in runtime_values:
+        collect(runtime_value)
+
+    if not model_types:
+        return None
+    if len(model_types) > 1:
+        raise ValueError(
+            "Connected modular model inputs use incompatible pipeline classes: " + ", ".join(sorted(model_types))
+        )
+
+    model_type = next(iter(model_types))
+    if model_type == "DummyCustomPipeline":
+        if len(custom_repositories) != 1 or len(custom_revisions) != 1 or len(custom_trust_values) != 1:
+            raise ValueError(
+                "Connected custom Modular Diffusers inputs have incomplete or conflicting trust metadata."
+            )
+        repository = next(iter(custom_repositories))
+        revision = next(iter(custom_revisions))
+        trust_remote_code = next(iter(custom_trust_values))
+        require_immutable_hub_revision(repository, revision, required=True)
+        DummyCustomPipeline.repo_id = repository
+        DummyCustomPipeline.revision = revision
+        DummyCustomPipeline.trust_remote_code = trust_remote_code
+        return DummyCustomPipeline
+
+    import diffusers as diffusers_module
+
+    pipeline_class = getattr(diffusers_module, model_type, None)
+    if pipeline_class is None:
+        raise ValueError(
+            f"Unknown Diffusers modular pipeline class '{model_type}'. "
+            "Install a Diffusers version that provides this model type."
+        )
+    return pipeline_class
+
+
+DUMMY_CUSTOM_PIPELINE_CONFIG = PipelineConfig(node_specs={}, label="Custom", default_repo="", default_dtype="bfloat16")
 
 
 # Minimal modular registry for MoDiff node configs
@@ -1140,21 +1284,6 @@ def get_all_model_types() -> Dict[str, str]:
         model_type = pipeline_cls.__name__
         all_labels[model_type] = config.label
     return all_labels
-
-
-# YiYi notes: not used for now
-def get_model_type_signal_data() -> Dict[str, str]:
-    """Get model type mapping for onSignal value actions.
-
-    Returns a dict mapping model type names to themselves, used in onSignal
-    to pass model type through from upstream nodes.
-    """
-    registry = _get_registry_instance().get_all()
-    model_types = {"": ""}
-    for pipeline_cls, _ in registry.items():
-        model_type = pipeline_cls.__name__
-        model_types[model_type] = model_type
-    return model_types
 
 
 def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:

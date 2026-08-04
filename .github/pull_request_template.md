@@ -2,13 +2,27 @@
 
 -
 
+## Scope And Human Review
+
+- Agreed scope / linked issue or discussion:
+- Human self-review completed; every changed line and generated artifact is understood: yes / no
+- AI assistance used (tool and role), or `none`:
+- Follow-up work deliberately left out of this change:
+
 ## Checks
 
-- [ ] `uv lock --check`
-- [ ] `uv pip check`
-- [ ] `uv run python -m modiff.preflight --json --check-port 8088 --fail-on-error`
-- [ ] `uv run python -m unittest discover -s tests -v`
+- [ ] `uvx --from ruff==0.12.7 ruff check . --select E9,F`
+- [ ] `uv pip check --python .venv/bin/python` (use `.venv/Scripts/python.exe` on Windows)
+- [ ] `./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error`
+- [ ] `./.venv/bin/python -m pytest -q`
 - [ ] `bash -n run.sh` when a POSIX shell is available
+- [ ] Exact command results and any skipped checks are recorded below.
+
+## Validation Results
+
+- Commands and results:
+- Checks skipped, with reason:
+- Live accelerator/model evidence, or `not claimed`:
 
 ## Compatibility, Security, And Proof
 

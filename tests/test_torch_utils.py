@@ -117,6 +117,10 @@ class TorchUtilsCompatibilityTests(unittest.TestCase):
             module.DEVICE_LIST["cuda:0"],
             {
                 "arch": "cuda",
+                "backend": "cuda",
+                "vendor": None,
+                "architecture": None,
+                "memory_kind": "dedicated",
                 "name": "First GPU 16.00GB (0)",
                 "label": ["cuda:0"],
                 "total_memory": 16 * GIB,
@@ -125,7 +129,17 @@ class TorchUtilsCompatibilityTests(unittest.TestCase):
         )
         self.assertEqual(
             set(module.DEVICE_LIST["mps:0"]),
-            {"arch", "name", "label", "total_memory", "index"},
+            {
+                "arch",
+                "backend",
+                "vendor",
+                "architecture",
+                "memory_kind",
+                "name",
+                "label",
+                "total_memory",
+                "index",
+            },
         )
         self.assertEqual(
             module.DEVICE_LIST["cpu:0"],

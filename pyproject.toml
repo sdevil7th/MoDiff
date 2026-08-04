@@ -1,15 +1,15 @@
+# Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 [project]
 name = "modiff"
 version = "0.1.0"
 description = "MoDiff is a modular Diffusers client/server application."
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
   "accelerate>=1.4.0",
   "aiohttp>=3.11.12",
   "aiohttp-cors>=0.7.0",
-  "bitsandbytes>=0.46.1; sys_platform == 'linux' or sys_platform == 'win32'",
   "kornia>=0.8.1",
   "nanoid>=2.0.0",
   "peft>=0.17.0",
@@ -20,11 +20,13 @@ dependencies = [
   "torchsde>=0.2.6",
   "torchvision>=0.21.0",
   "transformers>=4.49.0",
-  "diffusers>=0.36.0.dev0",
-  "aiofiles>=25.1.0",
+  "diffusers @ git+https://github.com/huggingface/diffusers.git@13a7bee4878d62fccc8d25f97e480e68de96fa03",
   "ftfy>=6.3.1",
+  "huggingface-hub>=1.23.0,<2.0",
   "imageio>=2.37.2",
   "imageio-ffmpeg>=0.6.0",
+  "spandrel>=0.4.2",
+  "yt-dlp>=2026.7.4",
 ]
 
 [project.optional-dependencies]
@@ -33,22 +35,24 @@ apple-silicon = [
   "torchvision>=0.21.0; sys_platform == 'darwin'",
 ]
 cuda = [
-  "bitsandbytes>=0.46.1; sys_platform == 'linux' or sys_platform == 'win32'",
-  "xformers; sys_platform == 'linux' or sys_platform == 'win32'",
+  "bitsandbytes==0.50.0; sys_platform == 'linux' or sys_platform == 'win32'",
+  # xFormers wheels are Torch-ABI specific. 0.0.32.post2 is the upstream
+  # release built for the managed NVIDIA profile's Torch 2.8 runtime; allowing
+  # an unbounded latest release currently resolves to a Torch 2.10+ build.
+  "xformers==0.0.32.post2; sys_platform == 'linux' or sys_platform == 'win32'",
 ]
 nunchaku = [
   "nunchaku>=1.0.1.dev20250924; sys_platform == 'linux' or sys_platform == 'win32'"
 ]
 spandrel = ["spandrel"]
-background-removal = ["transparent-background"]
+gallery-media = ["opencv-python-headless>=4.11.0"]
 quantization = [
   "dfloat11[cuda12]; sys_platform == 'linux' or sys_platform == 'win32'",
   "gguf",
-  "kernels",
-  "optimum-quanto",
-  "torchao",
+  "kernels==0.16.0",
+  "optimum-quanto==0.2.7",
+  "torchao==0.17.0",
 ]
-non-commercial = ["rembg[gpu]"]
 
 
 [tool.ruff]
@@ -63,6 +67,19 @@ quote-style = "double"
 
 # Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
+
+[tool.setuptools.packages.find]
+# MoDiff intentionally keeps both the server package and its built-in node
+# modules at the repository root. Explicit discovery prevents editable
+# installs from treating runtime data/web/custom directories as packages.
+include = ["modiff*", "modules*"]
+exclude = ["custom*", "data*", "tests*", "web*"]
+
+[tool.uv]
+# The accelerator-specific installer owns MoDiff's executable environment.
+# This prevents `uv run` / `uv sync` from replacing a validated CUDA, ROCm,
+# MPS, or CPU profile with the generic development resolution.
+managed = false
 
 [[tool.uv.index]]
 name = "pytorch-cu128"
@@ -80,4 +97,3 @@ nunchaku = [
   { url = "https://github.com/nunchaku-tech/nunchaku/releases/download/v1.0.1dev20250924/nunchaku-1.0.1.dev20250924+torch2.8-cp312-cp312-linux_x86_64.whl", marker = "sys_platform == 'linux'" },
   { url = "https://github.com/nunchaku-tech/nunchaku/releases/download/v1.0.1dev20250924/nunchaku-1.0.1.dev20250924+torch2.8-cp312-cp312-win_amd64.whl", marker = "sys_platform == 'win32'" },
 ]
-diffusers = { git = "https://github.com/huggingface/diffusers" }

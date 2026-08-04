@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("auto", "nvidia", "amd", "mps", "cpu")][string]$Accelerator = "auto",
+  [ValidateSet("auto", "nvidia", "amd", "intel", "mps", "cpu")][string]$Accelerator = "auto",
   [switch]$DryRun, [switch]$NonInteractive, [switch]$Repair, [switch]$SystemCheck,
   [switch]$Resume, [switch]$Json, [switch]$AllowExperimental, [switch]$BackendOnly
 )

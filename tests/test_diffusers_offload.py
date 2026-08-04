@@ -15,15 +15,30 @@ from modiff.diffusers_offload import (
     OFFLOAD_MODE_NONE,
     OFFLOAD_MODE_SEQUENTIAL_CPU,
     apply_component_group_offload,
+    apply_model_offload,
     apply_pipeline_offload,
+    configure_components_manager_offload,
+    normalize_execution_device,
     normalize_offload_mode,
+    reset_pipeline_device_map_for_runtime,
+    supports_accelerator_cpu_offload,
 )
 from modiff.diffusers_profiles import QWEN_IMAGE_2512_PREQUANTIZED_REPO, public_execution_profiles
 from modules.ModularDiffusers.denoise import embeddings_are_missing, embeddings_missing_error
 from modules.ModularDiffusers.embeddings import extract_prompt_embeddings
 from modules.ModularDiffusers.loaders import normalize_quant_config_input
-from modules.ModularDiffusers.loaders import RequiredComponentLoadError, load_components_strict
-from modules.QwenImage.main import build_qwen_pipeline_quantization_config, coerce_pipeline_quantization_config
+from modules.ModularDiffusers.loaders import (
+    AutoModelLoader,
+    ModelsLoader,
+    RequiredComponentLoadError,
+    component_reuse_compatible,
+    load_components_strict,
+    place_pipeline_components,
+    record_pipeline_component_runtime_policy,
+    reusable_standalone_component,
+    should_incrementally_group_offload,
+)
+from modules.DiffusersImage.main import build_qwen_pipeline_quantization_config, coerce_pipeline_quantization_config
 
 
 class FakePipelineState:
@@ -57,6 +72,18 @@ class FakePipeline:
 
     def enable_sequential_cpu_offload(self, device=None):
         self.calls.append(("sequential_cpu", str(device)))
+
+
+class FakeDeviceMappedPipeline(FakePipeline):
+    hf_device_map = {"transformer": 0, "text_encoder": "cpu"}
+
+    def reset_device_map(self):
+        self.calls.append(("reset_device_map", None))
+        self.hf_device_map = None
+
+
+class FakeResidentDeviceMappedPipeline(FakeDeviceMappedPipeline):
+    hf_device_map = {"transformer": 0, "text_encoder": "cuda:0"}
 
 
 class FakeCudaRuntime:
@@ -111,6 +138,54 @@ class FakeStrictPipeline:
 
 
 class DiffusersOffloadSmokeTest(unittest.TestCase):
+    def test_generic_component_filter_does_not_assign_an_uninstalled_repository(self):
+        node = AutoModelLoader("generic-component-filter")
+
+        with patch.object(node, "set_field_params") as set_field_params:
+            node.set_filters({"model_type": "controlnet"}, None)
+
+        model_call = next(call for call in set_field_params.call_args_list if call.args[0] == "model_id")
+        params = model_call.args[1]
+        self.assertEqual(
+            params["fieldOptions"]["filter"]["hub"]["className"],
+            ["ControlNetModel", "QwenImageControlNetModel", "FluxControlNetModel"],
+        )
+        self.assertNotIn("value", params)
+        self.assertNotIn("default", params)
+
+    def test_generic_pipeline_filter_preserves_selection_until_user_chooses_an_installed_repository(self):
+        node = ModelsLoader("generic-pipeline-filter")
+        node.model_types_loaded = True
+
+        with patch.object(node, "set_field_params") as set_field_params:
+            node.set_filters({"model_type": "QwenImageModularPipeline"}, None)
+
+        repo_call = next(call for call in set_field_params.call_args_list if call.args[0] == "repo_id")
+        params = repo_call.args[1]
+        self.assertEqual(
+            params["fieldOptions"]["filter"]["hub"]["className"],
+            ["QwenImageModularPipeline"],
+        )
+        self.assertNotIn("value", params)
+        self.assertNotIn("default", params)
+
+    def test_auto_model_loader_rejects_pipeline_class_before_weight_load(self):
+        node = AutoModelLoader("invalid-component-loader")
+
+        with patch("modules.ModularDiffusers.loaders.ComponentSpec.load") as load:
+            with self.assertRaisesRegex(ValueError, "requires a component type"):
+                node.execute(
+                    model_type="QwenImageModularPipeline",
+                    model_id={"source": "hub", "value": "InstantX/Qwen-Image-ControlNet-Union"},
+                    dtype=torch.bfloat16,
+                    trust_remote_code=False,
+                    device="cuda:0",
+                    auto_offload=True,
+                    offload_mode=OFFLOAD_MODE_MODEL_CPU,
+                )
+
+        load.assert_not_called()
+
     def tearDown(self):
         shutil.rmtree(Path("data") / "offload" / "diffusers" / "smoke-node", ignore_errors=True)
 
@@ -118,6 +193,22 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(normalize_offload_mode("auto_cpu", auto_offload=True), OFFLOAD_MODE_MODEL_CPU)
         self.assertEqual(normalize_offload_mode(OFFLOAD_MODE_GROUP_CPU, auto_offload=True), OFFLOAD_MODE_GROUP_CPU)
         self.assertEqual(normalize_offload_mode(OFFLOAD_MODE_GROUP_CPU, auto_offload=False), OFFLOAD_MODE_NONE)
+        self.assertEqual(
+            normalize_offload_mode(OFFLOAD_MODE_MODEL_CPU, auto_offload=True, device="cpu:0"),
+            OFFLOAD_MODE_NONE,
+        )
+        self.assertEqual(
+            normalize_offload_mode(OFFLOAD_MODE_GROUP_CPU, auto_offload=True, device="mps"),
+            OFFLOAD_MODE_NONE,
+        )
+        self.assertEqual(
+            normalize_offload_mode(OFFLOAD_MODE_MODEL_CPU, auto_offload=True, device="cuda"),
+            OFFLOAD_MODE_MODEL_CPU,
+        )
+        self.assertEqual(str(normalize_execution_device("cuda")), "cuda:0")
+        self.assertTrue(supports_accelerator_cpu_offload("cuda:1"))
+        self.assertFalse(supports_accelerator_cpu_offload("cpu"))
+        self.assertFalse(supports_accelerator_cpu_offload("mps"))
 
     def test_pipeline_model_and_sequential_cpu_offload(self):
         model_pipeline = FakePipeline()
@@ -140,31 +231,346 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertTrue(sequential_result.applied)
         self.assertEqual(sequential_pipeline.calls, [("sequential_cpu", "cuda:0")])
 
-    def test_group_cpu_and_disk_component_offload(self):
-        group_pipeline = FakePipeline()
-        group_result = apply_component_group_offload(
-            group_pipeline,
-            component_names=["transformer"],
-            device="cpu",
-            mode=OFFLOAD_MODE_GROUP_CPU,
-            node_id="smoke-node",
-            scope="smoke",
+    def test_pipeline_cpu_and_mps_execution_never_install_cpu_offload_hooks(self):
+        for device in ("cpu:0", "mps"):
+            for mode in (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ):
+                with self.subTest(device=device, mode=mode):
+                    pipeline = FakePipeline()
+                    result = apply_pipeline_offload(
+                        pipeline,
+                        mode=mode,
+                        device=device,
+                        node_id="smoke-node",
+                    )
+
+                    self.assertEqual(result.mode, OFFLOAD_MODE_NONE)
+                    self.assertEqual(result.method, "to_device")
+                    self.assertEqual(pipeline.calls, [("to", device)])
+
+    def test_standalone_model_cpu_execution_never_installs_group_hooks(self):
+        model = torch.nn.Linear(2, 2)
+        with patch(
+            "diffusers.hooks.apply_group_offloading",
+            side_effect=AssertionError("CPU execution must not install a group-offload hook"),
+        ):
+            result = apply_model_offload(
+                model,
+                component_name="transformer",
+                mode=OFFLOAD_MODE_MODEL_CPU,
+                device="cpu:0",
+                node_id="smoke-node",
+            )
+
+        self.assertEqual(result.mode, OFFLOAD_MODE_NONE)
+        self.assertEqual(result.method, "to_device")
+        self.assertEqual(model.weight.device.type, "cpu")
+
+    def test_real_components_manager_skips_auto_offload_for_cpu(self):
+        from diffusers import ComponentsManager
+
+        manager = ComponentsManager()
+        result = configure_components_manager_offload(
+            manager,
+            mode=OFFLOAD_MODE_MODEL_CPU,
+            device="cpu:0",
         )
+
+        self.assertEqual(result.mode, OFFLOAD_MODE_NONE)
+        self.assertEqual(result.method, "components_manager_no_offload")
+        self.assertFalse(manager._auto_offload_enabled)
+
+    def test_models_loader_cpu_contract_reaches_model_load_without_enabling_auto_offload(self):
+        class StopAtModelLoad(RuntimeError):
+            pass
+
+        class CpuComponentsManager:
+            _auto_offload_enabled = False
+            _auto_offload_device = None
+
+            def enable_auto_cpu_offload(self, **_kwargs):
+                raise NotImplementedError(
+                    "`enable_auto_cpu_offload()` relies on the `mem_get_info()` method. "
+                    "It's not implemented for cpu."
+                )
+
+            def disable_auto_cpu_offload(self):
+                raise AssertionError("An inactive manager should not need disabling.")
+
+            def _lookup_ids(self, **_kwargs):
+                return []
+
+            def remove_from_collection(self, *_args, **_kwargs):
+                return None
+
+        manager = CpuComponentsManager()
+        node = ModelsLoader("cpu-loader")
+        with (
+            patch("modules.ModularDiffusers.loaders.components", manager),
+            patch(
+                "modules.ModularDiffusers.loaders.ModularPipeline.from_pretrained",
+                side_effect=StopAtModelLoad("model load reached"),
+            ),
+        ):
+            with self.assertRaisesRegex(StopAtModelLoad, "model load reached"):
+                node.execute(
+                    model_type="QwenImagePipeline",
+                    repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                    device="cpu:0",
+                    dtype=torch.float32,
+                    auto_offload=True,
+                    offload_mode=OFFLOAD_MODE_MODEL_CPU,
+                )
+
+        self.assertEqual(node._loader_diagnostics["normalized_offload_mode"], OFFLOAD_MODE_NONE)
+
+    def test_resident_modular_components_report_each_accelerator_copy(self):
+        class RecordingModule(torch.nn.Module):
+            def __init__(self, name):
+                super().__init__()
+                self.name = name
+                self.devices = []
+
+            def to(self, device):
+                self.devices.append(device)
+                return self
+
+        text_encoder = RecordingModule("text_encoder")
+        transformer = RecordingModule("transformer")
+        pipeline = type(
+            "ResidentPipeline",
+            (),
+            {
+                "components": {
+                    "tokenizer": object(),
+                    "text_encoder": text_encoder,
+                    "transformer": transformer,
+                }
+            },
+        )()
+        progress = []
+
+        names = place_pipeline_components(
+            pipeline,
+            "cuda:0",
+            lambda name, index, total: progress.append((name, index, total)),
+        )
+
+        self.assertEqual(names, ["text_encoder", "transformer"])
+        self.assertEqual(progress, [("text_encoder", 1, 2), ("transformer", 2, 2)])
+        self.assertEqual(text_encoder.devices, ["cuda:0"])
+        self.assertEqual(transformer.devices, ["cuda:0"])
+
+    def test_standalone_component_reuse_requires_matching_identity_dtype_and_runtime_policy(self):
+        class ResidentManager:
+            def __init__(self, model):
+                self.model = model
+
+            def _lookup_ids(self, **_kwargs):
+                return {"controlnet_1"}
+
+            def get_one(self, *, component_id):
+                self.last_component_id = component_id
+                return self.model
+
+        model = torch.nn.Linear(2, 2, dtype=torch.bfloat16)
+        model._diffusers_load_id = "repo/controlnet|null|null|null"
+        model._modiff_offload_mode = OFFLOAD_MODE_NONE
+        model._modiff_execution_device = "cpu"
+        manager = ResidentManager(model)
+
+        reused = reusable_standalone_component(
+            manager,
+            name="controlnet",
+            load_id=model._diffusers_load_id,
+            dtype=torch.bfloat16,
+            offload_mode=OFFLOAD_MODE_NONE,
+            device="cpu",
+        )
+        self.assertEqual(reused, ("controlnet_1", model))
+        self.assertEqual(manager.last_component_id, "controlnet_1")
+
+        self.assertIsNone(
+            reusable_standalone_component(
+                manager,
+                name="controlnet",
+                load_id=model._diffusers_load_id,
+                dtype=torch.float16,
+                offload_mode=OFFLOAD_MODE_NONE,
+                device="cpu",
+            )
+        )
+        self.assertIsNone(
+            reusable_standalone_component(
+                manager,
+                name="controlnet",
+                load_id=model._diffusers_load_id,
+                dtype=torch.bfloat16,
+                offload_mode=OFFLOAD_MODE_MODEL_CPU,
+                device="cpu",
+            )
+        )
+
+    def test_shared_component_reuse_requires_matching_offload_device_and_disk_owner(self):
+        model = torch.nn.Linear(2, 2, dtype=torch.bfloat16)
+        model._modiff_offload_mode = OFFLOAD_MODE_GROUP_CPU
+        model._modiff_execution_device = "cuda:0"
+        model._modiff_offload_node_id = None
+
+        self.assertTrue(
+            component_reuse_compatible(
+                model,
+                dtype=torch.bfloat16,
+                requested_quantization=None,
+                offload_mode=OFFLOAD_MODE_GROUP_CPU,
+                device="cuda:0",
+                node_id="loader-a",
+            )
+        )
+        self.assertFalse(
+            component_reuse_compatible(
+                model,
+                dtype=torch.bfloat16,
+                requested_quantization=None,
+                offload_mode=OFFLOAD_MODE_GROUP_DISK,
+                device="cuda:0",
+                node_id="loader-a",
+            )
+        )
+        self.assertFalse(
+            component_reuse_compatible(
+                model,
+                dtype=torch.bfloat16,
+                requested_quantization=None,
+                offload_mode=OFFLOAD_MODE_GROUP_CPU,
+                device="cuda:1",
+                node_id="loader-a",
+            )
+        )
+
+        pipeline = type("SharedPipeline", (), {"components": {"transformer": model}})()
+        record_pipeline_component_runtime_policy(
+            pipeline,
+            offload_mode=OFFLOAD_MODE_GROUP_DISK,
+            device="cuda:0",
+            node_id="loader-a",
+        )
+        self.assertTrue(
+            component_reuse_compatible(
+                model,
+                dtype=torch.bfloat16,
+                requested_quantization=None,
+                offload_mode=OFFLOAD_MODE_GROUP_DISK,
+                device="cuda:0",
+                node_id="loader-a",
+            )
+        )
+        self.assertFalse(
+            component_reuse_compatible(
+                model,
+                dtype=torch.bfloat16,
+                requested_quantization=None,
+                offload_mode=OFFLOAD_MODE_GROUP_DISK,
+                device="cuda:0",
+                node_id="loader-b",
+            )
+        )
+
+    def test_device_map_is_reset_before_runtime_offload(self):
+        pipeline = FakeDeviceMappedPipeline()
+
+        result = apply_pipeline_offload(
+            pipeline,
+            mode=OFFLOAD_MODE_MODEL_CPU,
+            device="cuda:0",
+            node_id="smoke-node",
+        )
+
+        self.assertTrue(result.applied)
+        self.assertEqual(
+            pipeline.calls,
+            [("reset_device_map", None), ("model_cpu", "cuda:0")],
+        )
+
+    def test_resident_device_map_is_preserved_without_offload(self):
+        pipeline = FakeResidentDeviceMappedPipeline()
+
+        result = apply_pipeline_offload(
+            pipeline,
+            mode=OFFLOAD_MODE_NONE,
+            device="cuda:0",
+            node_id="smoke-node",
+        )
+
+        self.assertTrue(result.applied)
+        self.assertEqual(result.method, "preserve_device_map")
+        self.assertEqual(pipeline.calls, [])
+        self.assertEqual(pipeline.hf_device_map, {"transformer": 0, "text_encoder": "cuda:0"})
+
+    def test_explicit_cuda_device_map_is_preserved_without_offload(self):
+        pipeline = FakePipeline()
+        pipeline.hf_device_map = "cuda"
+
+        result = apply_pipeline_offload(
+            pipeline,
+            mode=OFFLOAD_MODE_NONE,
+            device="cuda:0",
+            node_id="loader",
+        )
+
+        self.assertEqual(result.method, "preserve_device_map")
+        self.assertEqual(pipeline.calls, [])
+        self.assertEqual(pipeline.hf_device_map, "cuda")
+
+    def test_device_map_without_reset_support_fails_before_movement(self):
+        pipeline = FakePipeline()
+        pipeline.hf_device_map = {"transformer": 0}
+
+        with self.assertRaisesRegex(RuntimeError, "cannot reset that placement"):
+            reset_pipeline_device_map_for_runtime(pipeline)
+
+        self.assertEqual(pipeline.calls, [])
+
+    def test_cpu_execution_bypasses_group_cpu_and_disk_component_hooks(self):
+        group_pipeline = FakePipeline()
+        with patch(
+            "diffusers.hooks.apply_group_offloading",
+            side_effect=AssertionError("CPU execution must not install a group-offload hook"),
+        ):
+            group_result = apply_component_group_offload(
+                group_pipeline,
+                component_names=["transformer"],
+                device="cpu",
+                mode=OFFLOAD_MODE_GROUP_CPU,
+                node_id="smoke-node",
+                scope="smoke",
+            )
         self.assertTrue(group_result.applied)
+        self.assertEqual(group_result.mode, OFFLOAD_MODE_NONE)
+        self.assertEqual(group_result.method, "to_device")
         self.assertEqual(group_result.components, ["transformer"])
 
         disk_pipeline = FakePipeline()
-        disk_result = apply_component_group_offload(
-            disk_pipeline,
-            component_names=["transformer"],
-            device="cpu",
-            mode=OFFLOAD_MODE_GROUP_DISK,
-            node_id="smoke-node",
-            scope="smoke",
-        )
+        with patch(
+            "diffusers.hooks.apply_group_offloading",
+            side_effect=AssertionError("CPU execution must not install a group-offload hook"),
+        ):
+            disk_result = apply_component_group_offload(
+                disk_pipeline,
+                component_names=["transformer"],
+                device="cpu",
+                mode=OFFLOAD_MODE_GROUP_DISK,
+                node_id="smoke-node",
+                scope="smoke",
+            )
         self.assertTrue(disk_result.applied)
-        self.assertTrue(disk_result.disk_path)
-        self.assertTrue(Path(disk_result.disk_path).exists())
+        self.assertEqual(disk_result.mode, OFFLOAD_MODE_NONE)
+        self.assertEqual(disk_result.method, "to_device")
+        self.assertIsNone(disk_result.disk_path)
 
     def test_vae_group_offload_uses_leaf_hooks_for_direct_encode_decode(self):
         pipeline = FakePipeline()
@@ -205,7 +611,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
     def test_public_execution_profiles_include_direct_qwen_fallback(self):
         profiles = {profile["id"]: profile for profile in public_execution_profiles()}
         qwen_profile = profiles["qwen-image:t2i-direct"]
-        self.assertEqual(qwen_profile["backend_path"], "modules.QwenImage.LoadPipeline")
+        self.assertEqual(qwen_profile["backend_path"], "modules.DiffusersImage.LoadPipeline")
         self.assertEqual(qwen_profile["pipeline_class"], "QwenImagePipeline")
         self.assertEqual(qwen_profile["fallback_repo"], QWEN_IMAGE_2512_PREQUANTIZED_REPO)
         self.assertEqual(qwen_profile["default_quantized_components"], [])
@@ -214,6 +620,18 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertIn(OFFLOAD_MODE_GROUP_DISK, qwen_profile["retry_offload_modes"])
 
     def test_qwen_pipeline_quant_config_supports_component_fallback(self):
+        from importlib.util import find_spec
+
+        if find_spec("bitsandbytes") is None:
+            with self.assertRaisesRegex(RuntimeError, "BitsAndBytes 4-bit quantization is not installed"):
+                build_qwen_pipeline_quantization_config(
+                    components=["transformer"],
+                    quantization_mode="bnb_4bit",
+                    compute_dtype=torch.bfloat16,
+                    quant_type="nf4",
+                    double_quant=True,
+                )
+            return
         quant_config = build_qwen_pipeline_quantization_config(
             components=["transformer", "text_encoder"],
             quantization_mode="bnb_4bit",
@@ -260,6 +678,26 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertIs(context.exception.__cause__, original)
         self.assertIn("CUDA out of memory", str(context.exception))
         self.assertEqual(diagnostics["components_failed"][0]["name"], "text_encoder")
+
+    def test_incremental_group_offload_is_selected_by_quantized_components_not_pipeline_name(self):
+        self.assertTrue(
+            should_incrementally_group_offload(
+                use_group_offload=True,
+                quant_config={"transformer": "bnb_4bit", "text_encoder": "bnb_4bit"},
+            )
+        )
+        self.assertFalse(
+            should_incrementally_group_offload(
+                use_group_offload=False,
+                quant_config={"transformer": "bnb_4bit"},
+            )
+        )
+        self.assertFalse(
+            should_incrementally_group_offload(
+                use_group_offload=True,
+                quant_config={"vae": "bnb_4bit"},
+            )
+        )
 
     def test_strict_component_loading_keeps_optional_component_failure_diagnostic(self):
         pipeline = FakeStrictPipeline({
@@ -427,14 +865,14 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertAlmostEqual(fake_torch.cuda.fractions[0][0], 0.125)
         self.assertEqual(fake_torch.cuda.fractions[0][1], 0)
 
-    def test_direct_qwen_loader_participates_in_generic_resource_retry(self):
+    def test_generic_qwen_loader_participates_in_resource_retry(self):
         from modiff.server import WebServer
 
         server = object.__new__(WebServer)
         graph = {
             "nodes": {
                 "qwen-loader": {
-                    "module": "modules.QwenImage",
+                    "module": "modules.DiffusersImage",
                     "action": "LoadPipeline",
                     "params": {
                         "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
@@ -449,15 +887,201 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(updated, ["qwen-loader"])
         self.assertEqual(graph["nodes"]["qwen-loader"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_GROUP_DISK)
 
+    def test_native_auto_plan_applies_direct_cuda_device_map_to_image_loader(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "recipe": {
+                    "module": "modules.DiffusersRuntime",
+                    "action": "DiffusersExecutionRecipe",
+                    "params": {
+                        "device_map": {"value": "none"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+                "qwen-loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "old-model"}},
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                        "device_map": {"value": "none"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                        "auto_offload": {"value": True},
+                        "execution_recipe": {"sourceId": "recipe", "sourceKey": "execution_recipe"},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                "executionPath": "direct-diffusers-image",
+                "pipelineClass": "QwenImagePipeline",
+                "modelRepo": "Qwen/Qwen-Image-2512",
+                "offloadMode": OFFLOAD_MODE_NONE,
+                "deviceMap": "cuda",
+            },
+        )
+
+        params = graph["nodes"]["qwen-loader"]["params"]
+        self.assertEqual(updated, ["recipe", "qwen-loader"])
+        self.assertEqual(params["device_map"]["value"], "cuda")
+        self.assertEqual(params["offload_mode"]["value"], OFFLOAD_MODE_NONE)
+        self.assertFalse(params["auto_offload"]["value"])
+        self.assertEqual(graph["nodes"]["recipe"]["params"]["device_map"]["value"], "cuda")
+        self.assertEqual(graph["nodes"]["recipe"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_NONE)
+
+    def test_structured_audio_plan_does_not_rewrite_independent_video_loader(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "audio-recipe": {
+                    "module": "modules.DiffusersRuntime",
+                    "action": "DiffusersExecutionRecipe",
+                    "params": {
+                        "device_map": {"value": "none"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+                "audio-loader": {
+                    "module": "modules.DiffusersAudio",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "old-audio"}},
+                        "pipeline_class": {"value": "AceStepPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                        "auto_offload": {"value": True},
+                        "execution_recipe": {
+                            "sourceId": "audio-recipe",
+                            "sourceKey": "execution_recipe",
+                        },
+                    },
+                },
+                "audio-generate": {
+                    "module": "modules.DiffusersAudio",
+                    "action": "Generate",
+                    "params": {"audio_duration": {"value": 12}, "num_inference_steps": {"value": 4}},
+                },
+                "video-loader": {
+                    "module": "modules.DiffusersVideo",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "Lightricks/LTX-Video"}},
+                        "pipeline_class": {"value": "LTXConditionPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                        "auto_offload": {"value": True},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                "modelRepo": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+                "pipelineClass": "AceStepPipeline",
+                "offloadMode": OFFLOAD_MODE_NONE,
+                "deviceMap": "cuda",
+                "generation": {"audioDuration": 24, "steps": 8},
+            },
+        )
+
+        self.assertEqual(updated, ["audio-recipe", "audio-loader"])
+        self.assertEqual(graph["nodes"]["audio-recipe"]["params"]["device_map"]["value"], "cuda")
+        self.assertEqual(graph["nodes"]["audio-recipe"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_NONE)
+        self.assertEqual(
+            graph["nodes"]["audio-loader"]["params"]["model_id"]["value"]["value"],
+            "ACE-Step/acestep-v15-xl-turbo-diffusers",
+        )
+        # Auto retry plans own runtime configuration only; creative/generation
+        # controls remain exactly as the user configured them.
+        self.assertEqual(graph["nodes"]["audio-generate"]["params"]["audio_duration"]["value"], 12)
+        self.assertEqual(
+            graph["nodes"]["video-loader"]["params"]["model_id"]["value"]["value"],
+            "Lightricks/LTX-Video",
+        )
+        self.assertEqual(
+            graph["nodes"]["video-loader"]["params"]["pipeline_class"]["value"],
+            "LTXConditionPipeline",
+        )
+
+    def test_auto_retry_preserves_pinned_fields_and_requires_an_unpinned_change(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {
+                        "schemaVersion": 1,
+                        "nodeId": "loader",
+                        "fieldKey": "dtype",
+                        "value": "float16",
+                    },
+                    {
+                        "schemaVersion": 1,
+                        "nodeId": "loader",
+                        "fieldKey": "offload_mode",
+                        "value": OFFLOAD_MODE_NONE,
+                    },
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "dtype": {"value": "float16"},
+                        "offload_mode": {"value": OFFLOAD_MODE_NONE},
+                    },
+                },
+            },
+        }
+        plan = {
+            "dtype": "bfloat16",
+            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "onCategories": ["oom"],
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(server, graph, plan)
+        retry_index, skipped = WebServer._next_applicable_retry_plan_index(
+            server,
+            graph,
+            [plan],
+            -1,
+            {"category": "oom", "error_code": "cuda_oom"},
+        )
+
+        self.assertEqual(updated, [])
+        self.assertIsNone(retry_index)
+        self.assertEqual(skipped, [0])
+        self.assertEqual(graph["nodes"]["loader"]["params"]["dtype"]["value"], "float16")
+        self.assertEqual(graph["nodes"]["loader"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_NONE)
+
     def test_execute_graph_retries_oom_with_next_offload_mode_and_diagnostics(self):
         from modiff.server import WebServer
 
         server = object.__new__(WebServer)
         server.current_task = {"task_id": "task-1"}
         server.interrupt_flag = False
-        server.queue_message = lambda *args, **kwargs: None
+        messages = []
+        server.queue_message = messages.append
         server._apply_cuda_runtime_budget = lambda runtime_hints: {}
-        server._apply_deterministic_mode = lambda graph: None
+        deterministic_calls = []
+
+        def apply_deterministic(_graph):
+            deterministic_calls.append(len(deterministic_calls) + 1)
+            return {"enabled": True, "seed": 17, "application": deterministic_calls[-1]}
+
+        server._apply_deterministic_mode = apply_deterministic
         server._runtime_fingerprint = lambda: {"fingerprint": "fake"}
         server._release_runtime_caches_for_retry = lambda: {"released": {}, "errors": []}
         server._loader_diagnostics_snapshot = lambda: {"loader-node": {"normalized_offload_mode": "group_cpu"}}
@@ -472,6 +1096,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         graph = {
             "sid": "sid-1",
             "paths": [["loader-node"]],
+            "deterministicMode": {"enabled": True, "strict": False, "seed": 17},
             "runtimeHints": {
                 "source": "studio",
                 "device": "cuda:0",
@@ -493,6 +1118,10 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         result = WebServer.execute_graph(server, graph)
         self.assertIsNone(result)
         self.assertEqual(calls["count"], 2)
+        self.assertEqual(deterministic_calls, [1, 2])
+        completed = next(message for message in messages if message.get("type") == "graph_completed")
+        self.assertEqual(completed["deterministicMode"]["seed"], 17)
+        self.assertEqual(completed["deterministicMode"]["application"], 2)
         self.assertEqual(graph["nodes"]["loader-node"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_GROUP_DISK)
 
 

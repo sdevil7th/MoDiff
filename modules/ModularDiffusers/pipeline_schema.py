@@ -1,7 +1,13 @@
-"""MoDiff-owned schema helpers for Modular Diffusers node metadata.
+"""MoDiff adapter for Hugging Face Modular Diffusers node metadata.
 
-Adapted from Hugging Face Diffusers modular pipeline utilities under Apache-2.0.
-The local copy gives MoDiff a stable, product-owned schema and Hub config format.
+Derived from Hugging Face Diffusers'
+``src/diffusers/modular_pipelines/mellon_node_utils.py`` at commit
+``13a7bee4878d62fccc8d25f97e480e68de96fa03`` (Apache-2.0):
+https://github.com/huggingface/diffusers/blob/13a7bee4878d62fccc8d25f97e480e68de96fa03/src/diffusers/modular_pipelines/mellon_node_utils.py
+
+MoDiff changes the Mellon-facing names, metadata key, configuration filename,
+and imports to integrate the helper with MoDiff. The executable Diffusers
+dependency is pinned separately in ``pyproject.toml``.
 """
 
 import copy
@@ -599,7 +605,28 @@ def node_spec_to_modiff_dict(node_spec: dict[str, Any], node_type: str) -> dict[
 
     For Modular MoDiff nodes, we need to distinguish:
         - `inputs`: Pipeline inputs (e.g., seed, prompt, image)
-        - `mode…266 tokens truncated…  - `block_name`: The backend block name
+        - `model_inputs`: Model components (e.g., unet, vae, scheduler)
+        - `outputs`: Node outputs (e.g., latents, images)
+
+    The node spec also includes:
+        - `required_inputs` / `required_model_inputs`: Which params are required (marked with *)
+        - `block_name`: The modular pipeline block this node corresponds to on backend
+
+    We provide factory methods for common parameters (e.g., `MoDiffParam.seed()`, `MoDiffParam.unet()`) so you don't
+    have to manually specify all the UI configuration.
+
+    Args:
+        node_spec: Dict with `inputs`, `model_inputs`, `outputs` (lists of MoDiffParam),
+                   plus `required_inputs`, `required_model_inputs`, `block_name`.
+        node_type: The node type string (e.g., "denoise", "controlnet")
+
+    Returns:
+        Dict with:
+            - `params`: Flat dict of all params in MoDiff UI format
+            - `input_names`: List of input parameter names
+            - `model_input_names`: List of model input parameter names
+            - `output_names`: List of output parameter names
+            - `block_name`: The backend block name
             - `node_type`: The node type
 
     Example:

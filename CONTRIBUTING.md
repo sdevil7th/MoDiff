@@ -6,18 +6,23 @@ Before starting, read [SECURITY.md](SECURITY.md) and the relevant guide in [docs
 
 ## Development setup
 
-Use Python 3.12 and the committed lockfile:
+Use Python 3.12 and create the same managed CPU profile used by baseline CI:
 
 ```bash
-uv sync --frozen
-uv run python -m modiff.preflight --json --check-port 8088 --fail-on-error
+./install.sh --accelerator cpu --backend-only
+uv pip install --python .venv/bin/python -r requirements/test.txt
+./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
-Install only the extras required for the code path being changed. For example:
+On Windows PowerShell, use the corresponding managed commands:
 
-```bash
-uv sync --frozen --extra quantization --extra spandrel
+```powershell
+.\install.ps1 -Accelerator cpu -BackendOnly
+uv pip install --python .venv/Scripts/python.exe -r requirements/test.txt
+.\.venv\Scripts\python.exe -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
+
+Choose the qualified accelerator profile relevant to a hardware-specific change and report that validation separately. Do not use `uv sync` or `uv run`: the project is intentionally `uv`-unmanaged because the installer, not the generic resolver, owns the executable Torch profile.
 
 Do not commit `config.ini`, `.env` files, model caches, generated outputs, local logs, virtual environments, or test caches.
 
@@ -51,32 +56,32 @@ Add focused tests for registry visibility, constructor safety, field contracts, 
 
 ## Dependency changes
 
-`pyproject.toml` and `uv.lock` are one change surface. After intentional metadata edits:
+The selected file under `requirements/profiles/`, `pyproject.toml`, and `modiff/compatibility/accelerators.v1.json` jointly define the executable runtime contract. Keep direct wheel URLs hash-verified, keep remote source dependencies pinned to immutable revisions, and retain the exact reviewed Diffusers commit. After an intentional dependency or profile edit, rebuild the relevant managed profile:
 
 ```bash
-uv lock
-uv lock --check
-uv sync --frozen
-uv pip check
+./install.sh --accelerator cpu --backend-only --repair
+uv pip check --python .venv/bin/python
 ```
 
-Commit the updated lockfile. Keep platform markers and optional extras explicit, and update the README/configuration guidance when an install profile changes. If the manual pip fallback is affected, update the matching requirements file too.
+Use the corresponding accelerator instead of `cpu` when the change affects CUDA, ROCm, or MPS. Update the compatibility manifest and public installation guidance only when the evidence supports the claim. MoDiff deliberately has no `uv.lock`; do not generate one or describe the top-level requirements files as a cross-platform lock.
 
 ## Validation
 
 The baseline backend checks are:
 
 ```bash
-uv lock --check
-uv pip check
-uv run python -m modiff.preflight --json --check-port 8088 --fail-on-error
-uv run python -m unittest discover -s tests -v
+uvx --from ruff==0.12.7 ruff check . --select E9,F
+uv pip check --python .venv/bin/python
+./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+./scripts/with-runtime-env.sh ./.venv/bin/python -m pytest -q
 ```
+
+The wrapper applies the installed accelerator profile's process environment before Python imports Torch. On Windows, run `.venv/Scripts/python.exe` directly in the equivalent commands.
 
 On a host with Git Bash or a POSIX shell:
 
 ```bash
-bash -n run.sh
+bash -n run.sh scripts/with-runtime-env.sh
 ```
 
 Before reporting a live smoke test, confirm port `8088` is free or intentionally reuse the running process. A file-level inspection is not evidence that a model workflow completed; distinguish unit/contract tests, registry import checks, live backend HTTP checks, and real model-generation proof.
@@ -90,7 +95,7 @@ When a change affects the client/backend contract:
 1. Update and validate the client source.
 2. Run `npm ci` and `npm run check` in MoDiff-client.
 3. Mirror the contents of its generated `dist/` directory into this repository's `web/` directory, deleting stale generated bundle files while preserving backend-owned `web/user/` custom fields.
-4. Verify that `/`, `/assets/index.js`, and `/template-gallery/manifest.json` are served by a fresh backend.
+4. Verify that `/` and `/assets/index.js` are served by a fresh backend. Verify `/template-gallery/manifest.json` only for an explicit offline/local Gallery build; a remote-asset build intentionally omits that directory and route.
 5. Include the matching backend and client commit identifiers in the change description when the repositories are published separately.
 
 See [README.md](README.md#updating-the-bundled-client) for exact-mirror examples.
