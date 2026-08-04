@@ -2,8 +2,10 @@ import io
 import json
 import re
 import subprocess
+import sys
 import tempfile
 import tomllib
+import types
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -14,6 +16,89 @@ from modiff.setup_catalog import PHASES, enrich_issue
 
 
 class GuidedInstallerTests(unittest.TestCase):
+    def _fake_torch(
+        self,
+        *,
+        cuda=None,
+        hip=None,
+        mps_built=False,
+        mps_available=False,
+        execution_device="cpu:0",
+        allow_mps_calls=False,
+    ):
+        module = types.ModuleType("torch")
+        module.__version__ = "2.8.0"
+        module.version = types.SimpleNamespace(cuda=cuda, hip=hip)
+        module.float16 = object()
+        module.float32 = object()
+
+        class Tensor:
+            def __mul__(self, _value):
+                return self
+
+            def __add__(self, _value):
+                return self
+
+            def cpu(self):
+                return self
+
+            def float(self):
+                return self
+
+            def tolist(self):
+                return [3.0, 5.0]
+
+        def tensor(_values, *, device, dtype):
+            self.assertEqual(device, execution_device)
+            self.assertIs(dtype, module.float32 if execution_device == "cpu:0" else module.float16)
+            return Tensor()
+
+        def unexpected_mps_call():
+            self.fail("The CPU profile must not execute an MPS operation")
+
+        module.tensor = tensor
+        module.cuda = types.SimpleNamespace(is_available=lambda: False, synchronize=lambda: None, empty_cache=lambda: None)
+        module.xpu = types.SimpleNamespace(is_available=lambda: False, synchronize=lambda: None, empty_cache=lambda: None)
+        module.backends = types.SimpleNamespace(
+            mps=types.SimpleNamespace(is_built=lambda: mps_built, is_available=lambda: mps_available)
+        )
+        mps_call = (lambda: None) if allow_mps_calls else unexpected_mps_call
+        module.mps = types.SimpleNamespace(synchronize=mps_call, empty_cache=mps_call)
+        return module
+
+    def test_cpu_smoke_uses_cpu_when_the_pytorch_wheel_also_contains_mps(self):
+        fake_torch = self._fake_torch(mps_built=True, mps_available=True)
+        output = io.StringIO()
+
+        with patch.dict(sys.modules, {"torch": fake_torch}), redirect_stdout(output):
+            exec(install._smoke_script("cpu"), {})
+
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["backend"], "cpu")
+        self.assertEqual(result["device"], "cpu:0")
+
+    def test_cpu_smoke_still_rejects_a_cuda_pytorch_wheel(self):
+        fake_torch = self._fake_torch(cuda="12.8")
+
+        with patch.dict(sys.modules, {"torch": fake_torch}), self.assertRaisesRegex(AssertionError, "cuda.*cpu"):
+            exec(install._smoke_script("cpu"), {})
+
+    def test_apple_mps_smoke_still_executes_on_mps(self):
+        fake_torch = self._fake_torch(
+            mps_built=True,
+            mps_available=True,
+            execution_device="mps:0",
+            allow_mps_calls=True,
+        )
+        output = io.StringIO()
+
+        with patch.dict(sys.modules, {"torch": fake_torch}), redirect_stdout(output):
+            exec(install._smoke_script("apple-mps"), {})
+
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["backend"], "mps")
+        self.assertEqual(result["device"], "mps:0")
+
     def test_plan_render_is_safe_for_legacy_windows_console_encodings(self):
         host = {
             "os": "windows",

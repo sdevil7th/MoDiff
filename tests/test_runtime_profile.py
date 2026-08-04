@@ -14,7 +14,16 @@ from modiff.runtime_profile import (
 )
 
 
-def hardware(*, version, cuda_version=None, hip_version=None, cuda_available=False, xpu_available=False):
+def hardware(
+    *,
+    version,
+    cuda_version=None,
+    hip_version=None,
+    cuda_available=False,
+    xpu_available=False,
+    mps_built=False,
+    mps_available=False,
+):
     return {
         "torch": {
             "available": True,
@@ -23,8 +32,8 @@ def hardware(*, version, cuda_version=None, hip_version=None, cuda_available=Fal
             "hip_version": hip_version,
             "cuda_available": cuda_available,
             "xpu_available": xpu_available,
-            "mps_built": False,
-            "mps_available": False,
+            "mps_built": mps_built,
+            "mps_available": mps_available,
         },
         "devices": [{"type": "cpu", "device": "cpu:0"}],
         "default_device": "cpu:0",
@@ -32,6 +41,55 @@ def hardware(*, version, cuda_version=None, hip_version=None, cuda_available=Fal
 
 
 class RuntimeProfileTests(unittest.TestCase):
+    def test_managed_macos_cpu_profile_ignores_the_wheels_optional_mps_capability(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            venv = self.write_profile(temporary, "cpu")
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="macos"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="arm64"),
+                patch(
+                    "modiff.runtime_profile._device_tensor_probe",
+                    return_value={"ready": True, "device": "cpu", "message": None},
+                ),
+            ):
+                profile = runtime_profile(
+                    hardware(
+                        version="2.8.0",
+                        mps_built=True,
+                        mps_available=True,
+                    ),
+                    venv=venv,
+                )
+
+        self.assertTrue(profile["execution_ready"])
+        self.assertEqual(profile["installed"], "cpu")
+        self.assertEqual(profile["device_validation"]["device"], "cpu")
+        self.assertNotIn("profile-mismatch", [issue["code"] for issue in profile["issues"]])
+
+    def test_managed_apple_mps_profile_keeps_using_mps(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            venv = self.write_profile(temporary, "apple-mps")
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="macos"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="arm64"),
+                patch(
+                    "modiff.runtime_profile._device_tensor_probe",
+                    return_value={"ready": True, "device": "mps:0", "message": None},
+                ),
+            ):
+                profile = runtime_profile(
+                    hardware(
+                        version="2.8.0",
+                        mps_built=True,
+                        mps_available=True,
+                    ),
+                    venv=venv,
+                )
+
+        self.assertTrue(profile["execution_ready"])
+        self.assertEqual(profile["installed"], "apple-mps")
+        self.assertEqual(profile["device_validation"]["device"], "mps:0")
+
     def test_runtime_contract_digest_changes_with_every_contract_input(self):
         with tempfile.TemporaryDirectory() as temporary:
             paths = tuple(Path(temporary) / name for name in ("profile.txt", "pyproject.toml", "manifest.json"))

@@ -795,8 +795,16 @@ def _smoke_script(profile: str) -> str:
     expected = {"amd-rocm-linux": "rocm", "amd-pytorch-windows": "rocm", "nvidia-cuda": "cuda", "intel-xpu": "xpu", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
     return f"""
 import json, torch
-backend = 'rocm' if torch.version.hip else ('cuda' if torch.version.cuda else ('xpu' if hasattr(torch, 'xpu') and torch.xpu.is_available() else ('mps' if torch.backends.mps.is_built() else 'cpu')))
-assert backend == {expected!r}, (backend, {expected!r})
+detected_backend = 'rocm' if torch.version.hip else ('cuda' if torch.version.cuda else ('xpu' if hasattr(torch, 'xpu') and torch.xpu.is_available() else ('mps' if torch.backends.mps.is_built() else 'cpu')))
+# macOS uses one PyTorch wheel for both CPU and MPS execution. MPS being
+# compiled into that wheel must not override an explicitly selected CPU
+# profile, while CUDA, ROCm, and XPU wheels remain profile mismatches.
+if {expected!r} == 'cpu':
+    assert detected_backend in ('cpu', 'mps'), (detected_backend, {expected!r})
+    backend = 'cpu'
+else:
+    backend = detected_backend
+    assert backend == {expected!r}, (backend, {expected!r})
 device = 'cuda:0' if backend in ('cuda', 'rocm') else ('xpu:0' if backend == 'xpu' else ('mps:0' if backend == 'mps' else 'cpu:0'))
 assert device == 'cpu:0' or (torch.cuda.is_available() if device.startswith('cuda') else (torch.xpu.is_available() if device.startswith('xpu') else torch.backends.mps.is_available()))
 dtype = torch.float16 if backend in ('cuda', 'rocm', 'xpu', 'mps') else torch.float32

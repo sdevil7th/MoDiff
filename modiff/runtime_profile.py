@@ -94,12 +94,21 @@ def read_install_journal() -> dict[str, Any] | None:
         return None
 
 
-def profile_for_installed_torch(torch_state: dict[str, Any], os_name: str | None = None) -> str | None:
+def profile_for_installed_torch(
+    torch_state: dict[str, Any],
+    os_name: str | None = None,
+    selected_profile: str | None = None,
+) -> str | None:
     if torch_state.get("hip_version"):
         return "amd-pytorch-windows" if normalized_os(os_name) == "windows" else "amd-rocm-linux"
     if torch_state.get("cuda_version"):
         return "nvidia-cuda"
     if torch_state.get("mps_built"):
+        # The standard macOS PyTorch wheel contains both CPU and MPS support.
+        # Preserve an explicitly managed CPU profile; capability discovery
+        # alone must not silently change which device the operator selected.
+        if selected_profile == "cpu" and normalized_os(os_name) == "macos":
+            return "cpu"
         return "apple-mps"
     if torch_state.get("xpu_available"):
         return "intel-xpu"
@@ -204,7 +213,10 @@ def runtime_profile(
     manifest = load_manifest()
     saved = read_state(venv)
     requested = requested or (saved or {}).get("profile")
-    installed = profile_for_installed_torch(hardware.get("torch", {}))
+    installed = profile_for_installed_torch(
+        hardware.get("torch", {}),
+        selected_profile=requested,
+    )
     detected = hardware.get("detected_profile") or installed or "cpu"
     issues: list[dict[str, str]] = []
     if not saved:
