@@ -765,6 +765,7 @@ def _latest_snapshot_dir(repo_path: Path) -> Path | None:
 def _prepare_snapshot_repair(repo_id: str, cache_dir: str | None, plan: dict | None):
     """Invalidate only demonstrably bad cached files before a resumed repair."""
     repo_path = _repo_cache_dir(repo_id, cache_dir)
+    blobs_root = (repo_path / 'blobs').resolve(strict=False)
     snapshot_dir = _snapshot_dir_for_plan(repo_path, plan)
     removed = []
     removed.extend(_cleanup_redundant_incomplete_files(repo_id, cache_dir))
@@ -783,20 +784,23 @@ def _prepare_snapshot_repair(repo_id: str, cache_dir: str | None, plan: dict | N
                 continue
             if actual_size == expected_size:
                 continue
-            target = snapshot_file.resolve(strict=False) if snapshot_file.is_symlink() else snapshot_file
+            try:
+                target = snapshot_file.resolve(strict=False) if snapshot_file.is_symlink() else snapshot_file
+                target_relative = target.relative_to(blobs_root)
+            except (OSError, RuntimeError, ValueError):
+                target = None
+                target_relative = None
             try:
                 snapshot_file.unlink()
                 removed.append(str(snapshot_file.relative_to(repo_path)))
             except OSError:
                 continue
-            try:
-                target.relative_to(repo_path / 'blobs')
-            except ValueError:
+            if target is None or target_relative is None:
                 continue
             try:
                 if target.is_file() and target.stat().st_size != expected_size:
                     target.unlink()
-                    removed.append(str(target.relative_to(repo_path)))
+                    removed.append(str(Path('blobs') / target_relative))
             except OSError:
                 pass
 
@@ -989,7 +993,17 @@ def _repair_from_verified_source(
             target.parent.mkdir(parents=True, exist_ok=True)
             if target.exists() or target.is_symlink():
                 target.unlink()
-            target.symlink_to(os.path.relpath(final_blob, target.parent))
+            try:
+                target.symlink_to(os.path.relpath(final_blob, target.parent))
+            except OSError:
+                # Unprivileged Windows processes commonly cannot create
+                # symlinks. Keep one physical blob when hard links are
+                # supported, with a verified byte copy as the filesystem-safe
+                # final fallback.
+                try:
+                    os.link(final_blob, target)
+                except OSError:
+                    shutil.copyfile(final_blob, target)
             repaired.append(name)
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)

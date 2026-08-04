@@ -1433,6 +1433,10 @@ class WebServer:
 
         self.main_worker_task = None
         self.background_worker_task = None
+        # ``run`` binds the server to the active application loop.  Keeping an
+        # explicit pre-run state lets node callbacks safely emit best-effort
+        # progress while a WebServer is used by tests or embedding tools.
+        self.loop = None
         self.runner = None
         self.site = None
 
@@ -10620,9 +10624,10 @@ class WebServer:
                     logger.warning(f"[Websocket] Dropped failed session {session}: {e}")
 
     def queue_message(self, message: dict | bytes, sid: list[str] | str = None, exclude: list[str] | str = None):
-        if self.loop.is_running() and not self._shutdown_event.is_set():
+        loop = self.loop
+        if loop is not None and loop.is_running() and not self._shutdown_event.is_set():
             asyncio.run_coroutine_threadsafe(
-                self.background_queue.put((self.broadcast, (message, sid, exclude))), self.loop
+                self.background_queue.put((self.broadcast, (message, sid, exclude))), loop
             )
 
     def get_signal_value(self, node: str, field: str, sid: str, timeout: int = 2):

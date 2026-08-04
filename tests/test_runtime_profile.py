@@ -187,9 +187,13 @@ class RuntimeProfileTests(unittest.TestCase):
     def test_matching_rocm_profile_is_ready_after_device_tensor(self):
         with tempfile.TemporaryDirectory() as temporary:
             venv = self.write_profile(temporary, "amd-rocm-linux")
-            with patch(
-                "modiff.runtime_profile._device_tensor_probe",
-                return_value={"ready": True, "device": "cuda:0", "message": None},
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="linux"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="x86_64"),
+                patch(
+                    "modiff.runtime_profile._device_tensor_probe",
+                    return_value={"ready": True, "device": "cuda:0", "message": None},
+                ),
             ):
                 profile = runtime_profile(
                     hardware(
@@ -208,9 +212,13 @@ class RuntimeProfileTests(unittest.TestCase):
     def test_matching_intel_xpu_profile_is_ready_after_device_tensor(self):
         with tempfile.TemporaryDirectory() as temporary:
             venv = self.write_profile(temporary, "intel-xpu")
-            with patch(
-                "modiff.runtime_profile._device_tensor_probe",
-                return_value={"ready": True, "device": "xpu:0", "message": None},
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="linux"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="x86_64"),
+                patch(
+                    "modiff.runtime_profile._device_tensor_probe",
+                    return_value={"ready": True, "device": "xpu:0", "message": None},
+                ),
             ):
                 profile = runtime_profile(
                     hardware(version="2.12.1+xpu", xpu_available=True),
@@ -225,6 +233,8 @@ class RuntimeProfileTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             venv = self.write_profile(temporary, "cpu")
             with (
+                patch("modiff.runtime_profile.normalized_os", return_value="linux"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="x86_64"),
                 patch("modiff.runtime_profile.lock_digest", return_value="f" * 64),
                 patch(
                     "modiff.runtime_profile._device_tensor_probe",
@@ -260,9 +270,13 @@ class RuntimeProfileTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            with patch(
-                "modiff.runtime_profile._device_tensor_probe",
-                return_value={"ready": True, "device": "cpu", "message": None},
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="linux"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="x86_64"),
+                patch(
+                    "modiff.runtime_profile._device_tensor_probe",
+                    return_value={"ready": True, "device": "cpu", "message": None},
+                ),
             ):
                 profile = runtime_profile(hardware(version="2.8.0"), venv=venv)
 
@@ -286,9 +300,13 @@ class RuntimeProfileTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            with patch(
-                "modiff.runtime_profile._device_tensor_probe",
-                return_value={"ready": True, "device": "cpu", "message": None},
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="linux"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="x86_64"),
+                patch(
+                    "modiff.runtime_profile._device_tensor_probe",
+                    return_value={"ready": True, "device": "cpu", "message": None},
+                ),
             ):
                 profile = runtime_profile(hardware(version="2.8.0"), venv=venv)
 

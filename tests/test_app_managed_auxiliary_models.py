@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import torch
@@ -26,9 +27,10 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
             Lora("empty-lora").execute({"source": "hub", "value": ""}, 1.0)
 
     def test_modular_lora_resolves_a_hub_weight_only_from_app_cache(self):
+        cached_weight = Path("/cache/revision/style.safetensors")
         with patch(
             "utils.huggingface.cached_file_path",
-            return_value="/cache/revision/style.safetensors",
+            return_value=str(cached_weight),
         ):
             result = Lora("cached-lora").execute(
                 {"source": "hub", "value": "example/style"},
@@ -36,7 +38,7 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
                 weight_name="style.safetensors",
             )["lora"]
 
-        self.assertEqual(result["lora_path"], "/cache/revision")
+        self.assertEqual(result["lora_path"], str(cached_weight.parent))
         self.assertEqual(result["weight_name"], "style.safetensors")
 
     def test_modular_lora_carries_a_generic_scheduler_contract(self):

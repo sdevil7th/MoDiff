@@ -306,6 +306,13 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         warning.assert_not_called()
         self.assertIn("Dropped closing session", debug.call_args.args[0])
 
+    def test_queue_message_before_server_run_is_a_safe_noop(self):
+        server = WebServer(modules={}, work_dir=".", data_dir="data")
+
+        server.queue_message({"type": "unit-test"})
+
+        self.assertTrue(server.background_queue.empty())
+
     async def test_stop_cancels_queued_runs_and_interrupts_the_active_pipeline(self):
         pipeline = SimpleNamespace(_interrupt=False)
         node = SimpleNamespace(_interrupt=False, _active_pipeline=pipeline)

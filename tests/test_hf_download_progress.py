@@ -16,6 +16,12 @@ from utils import huggingface  # noqa: E402
 
 
 class HuggingFaceDownloadProgressTests(unittest.TestCase):
+    def symlink_or_skip(self, link: Path, target: Path):
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            self.skipTest(f"Symlinks are unavailable: {exc}")
+
     def test_repo_exists_wrapper_delegates_to_hugging_face_hub(self):
         with patch.object(huggingface, "hf_repo_exists", return_value=True) as upstream, patch.object(
             huggingface.CONFIG,
@@ -357,8 +363,8 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             invalid_blob = blobs / "invalid-hash"
             valid_blob.write_bytes(b"v" * 8)
             invalid_blob.write_bytes(b"x" * 3)
-            (snapshot / "valid.bin").symlink_to(valid_blob)
-            (snapshot / "invalid.bin").symlink_to(invalid_blob)
+            self.symlink_or_skip(snapshot / "valid.bin", valid_blob)
+            self.symlink_or_skip(snapshot / "invalid.bin", invalid_blob)
             (blobs / "valid-hash.old.incomplete").write_bytes(b"redundant")
             resumable = blobs / "missing-hash.session.incomplete"
             resumable.write_bytes(b"partial")
@@ -398,8 +404,8 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             unrelated_blob = blobs / "unrelated"
             requested_blob.write_bytes(b"bad")
             unrelated_blob.write_bytes(b"also-bad")
-            (requested / "model.bin").symlink_to(requested_blob)
-            (unrelated / "model.bin").symlink_to(unrelated_blob)
+            self.symlink_or_skip(requested / "model.bin", requested_blob)
+            self.symlink_or_skip(unrelated / "model.bin", unrelated_blob)
             plan = {
                 "revision": "release",
                 "snapshot_commit": "requested-commit",
@@ -426,7 +432,7 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             final_blob = blobs / blob_hash
             partial = blobs / f"{blob_hash}.session.incomplete"
             partial.write_bytes(content)
-            (snapshot / "model.bin").symlink_to(final_blob)
+            self.symlink_or_skip(snapshot / "model.bin", final_blob)
             plan = {"files": [{"name": "model.bin", "size": len(content)}]}
 
             result = huggingface._prepare_snapshot_repair("unit/promote", temp_dir, plan)
@@ -447,7 +453,7 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             partial = blobs / f"{blob_hash}.session.incomplete"
             partial.write_bytes(b"corrupt! content")
             self.assertEqual(partial.stat().st_size, len(expected_content))
-            (snapshot / "model.bin").symlink_to(blobs / blob_hash)
+            self.symlink_or_skip(snapshot / "model.bin", blobs / blob_hash)
             plan = {"files": [{"name": "model.bin", "size": len(expected_content)}]}
 
             result = huggingface._prepare_snapshot_repair("unit/invalid-partial", temp_dir, plan)
@@ -615,9 +621,10 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
                 )
 
             target = snapshot / "transformer" / "shard.bin"
+            blob = snapshot.parents[1] / "blobs" / blob_hash
             self.assertEqual(repaired, ["transformer/shard.bin"])
             self.assertEqual(target.read_bytes(), content)
-            self.assertEqual(target.resolve().name, blob_hash)
+            self.assertEqual(blob.read_bytes(), content)
             self.assertEqual(download.call_args.kwargs["repo_id"], "unit/source")
 
     def test_repair_source_must_publish_the_same_lfs_hash(self):

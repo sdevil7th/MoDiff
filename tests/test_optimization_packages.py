@@ -85,6 +85,7 @@ class OptimizationPackageTests(unittest.TestCase):
         validation = {"status": "passed", "detail": {"torch": "2.9.1+rocm7.2"}}
         with (
             mock.patch.object(optimizations, "_uv_executable", return_value="/managed/uv"),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
             mock.patch.object(optimizations.subprocess, "run", return_value=succeeded) as run,
             mock.patch.object(optimizations, "_run_validation", return_value=validation),
         ):

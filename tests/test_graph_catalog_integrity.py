@@ -89,7 +89,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
     def test_hugging_face_graph_inputs_use_immutable_resolve_revisions(self):
         mutable_resolve_markers = ("/resolve/main/", "/resolve/master/")
         for graph_path in sorted(GRAPH_ROOT.rglob("*.json")):
-            graph_text = graph_path.read_text()
+            graph_text = graph_path.read_text(encoding="utf-8")
             for marker in mutable_resolve_markers:
                 self.assertNotIn(
                     marker,
@@ -98,7 +98,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 )
 
     def test_workflow_manifest_hashes_match_the_canonical_graphs(self):
-        manifest = json.loads(WORKFLOW_MANIFEST.read_text())
+        manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
         workflows = [
             *manifest.get("workflows", []),
             *manifest.get("experimentalWorkflows", []),
@@ -111,7 +111,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
     def test_curated_hub_loaders_store_the_exact_catalog_revision(self):
         checked = 0
         for graph_path in sorted(GRAPH_ROOT.rglob("*.json")):
-            graph = json.loads(graph_path.read_text())
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
             for node in graph.get("nodes", []):
                 if not _is_curated_loader(node):
                     continue
@@ -146,7 +146,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
 
         for graph_path in graph_paths:
             with self.subTest(graph=graph_path.relative_to(GRAPH_ROOT)):
-                graph = json.loads(graph_path.read_text())
+                graph = json.loads(graph_path.read_text(encoding="utf-8"))
                 nodes = {node["id"]: node for node in graph.get("nodes", [])}
                 incoming = defaultdict(list)
                 incident = set()

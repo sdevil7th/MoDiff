@@ -821,12 +821,13 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
     def test_adapter_uses_only_the_app_managed_cached_weight(self):
         calls = []
+        cached_weight = Path("/cache/revision/adapter.safetensors")
 
         class FakePipeline:
             def load_lora_weights(self, path, **kwargs):
                 calls.append((path, kwargs))
 
-        with patch("utils.huggingface.cached_file_path", return_value="/cache/revision/adapter.safetensors"):
+        with patch("utils.huggingface.cached_file_path", return_value=str(cached_weight)):
             LoadAdapter("adapter-probe").execute(
                 pipeline=FakePipeline(),
                 adapter_path={"source": "hub", "value": "unit/adapter"},
@@ -835,7 +836,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 scale=0.8,
             )
 
-        self.assertEqual(calls[0][0], "/cache/revision")
+        self.assertEqual(calls[0][0], str(cached_weight.parent))
         self.assertEqual(calls[0][1]["weight_name"], "adapter.safetensors")
 
     def test_adapter_missing_from_app_cache_fails_before_pipeline_load(self):

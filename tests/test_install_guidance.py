@@ -1,6 +1,8 @@
 import io
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -222,10 +224,21 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertIn('RUNTIME_PROFILE" == "amd-rocm-linux"', runtime_wrapper)
         self.assertIn("/opt/rocm/core-*/lib", runtime_wrapper)
         self.assertIn('LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH', runtime_wrapper)
-        subprocess.run(
-            ["bash", "-n", str(root / "run.sh"), str(root / "scripts/with-runtime-env.sh")],
-            check=True,
-        )
+        bash = shutil.which("bash")
+        bash_usable = False
+        if bash:
+            bash_usable = subprocess.run(
+                [bash, "--version"],
+                capture_output=True,
+                check=False,
+            ).returncode == 0
+        if bash_usable:
+            subprocess.run(
+                [bash, "-n", str(root / "run.sh"), str(root / "scripts/with-runtime-env.sh")],
+                check=True,
+            )
+        elif os.name != "nt":
+            self.fail("A usable bash executable is required to validate the POSIX launchers.")
         self.assertIn("$preflightCode =", windows_launcher)
         self.assertIn("['execution_ready']", windows_launcher)
         self.assertNotIn("uv run", linux_launcher)
@@ -418,12 +431,13 @@ class GuidedInstallerTests(unittest.TestCase):
             self.assertEqual((web / "user" / "keep.txt").read_text(encoding="utf-8"), "user asset")
             self.assertFalse((web / "stale.js").exists())
             ensure_node.assert_called_once_with()
+            npm = str(Path(toolchains["npm"]))
             self.assertEqual(
                 [call.args[0] for call in run.call_args_list],
                 [
-                    ["/tools/npm", "ci"],
+                    [npm, "ci"],
                     [str(python), str(asset_script), "verify"],
-                    ["/tools/npm", "run", "build"],
+                    [npm, "run", "build"],
                 ],
             )
 

@@ -194,13 +194,24 @@ class HardwareSnapshotTests(unittest.TestCase):
             def memory_reserved(self, _index):
                 return 3 * GIB
 
-        snapshot = get_hardware_snapshot(
-            torch_module=_fake_torch(
-                cuda=types.SimpleNamespace(is_available=lambda: False),
-                xpu=FakeXpu(),
-                mps_backend=types.SimpleNamespace(is_built=lambda: False, is_available=lambda: False),
+        with patch(
+            "modiff.hardware.system_memory_snapshot",
+            return_value={
+                "source": "unit-test",
+                "total_bytes": 64 * GIB,
+                "free_bytes": 32 * GIB,
+                "available_bytes": 32 * GIB,
+                "page_file_total_bytes": 0,
+                "page_file_available_bytes": 0,
+            },
+        ):
+            snapshot = get_hardware_snapshot(
+                torch_module=_fake_torch(
+                    cuda=types.SimpleNamespace(is_available=lambda: False),
+                    xpu=FakeXpu(),
+                    mps_backend=types.SimpleNamespace(is_built=lambda: False, is_available=lambda: False),
+                )
             )
-        )
 
         self.assertTrue(snapshot["torch"]["xpu_available"])
         self.assertEqual(snapshot["torch"]["xpu_device_count"], 1)

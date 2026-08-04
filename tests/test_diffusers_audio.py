@@ -209,10 +209,10 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(encoded[:4], b"RIFF")
         self.assertEqual(encoded[8:12], b"WAVE")
 
-        with tempfile.NamedTemporaryFile(suffix=".wav") as output:
-            output.write(encoded)
-            output.flush()
-            self.assertEqual(to_bytes("audio", output.name), encoded)
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "audio.wav"
+            output.write_bytes(encoded)
+            self.assertEqual(to_bytes("audio", output), encoded)
 
     def test_loader_rejects_unsupported_mode_before_resolving_pipeline(self):
         node = LoadPipeline("ace-mode-test")
