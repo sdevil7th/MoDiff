@@ -919,6 +919,37 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "edges": _EDIT_GRAPH_EDGES,
         "bindings": _EDIT_GRAPH_BINDINGS,
     },
+    "flux-kontext:multi-image-reference-edit:v1": {
+        "modelType": "FluxKontextPipeline",
+        "mode": "multi_image_reference_edit",
+        "profile": {
+            "id": "flux-kontext:direct",
+            "model_type": "FluxKontextPipeline",
+            "modes": ("edit_image", "multi_image_reference_edit"),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "FluxKontextPipeline",
+            "default_repo": FLUX_KONTEXT_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder_2"),
+            "default_quantized_components": ("transformer",),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (FLUX_KONTEXT_NVFP4_REPO,),
+        },
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _EDIT_GRAPH_BINDINGS,
+    },
     "wan-22-i2v-a14b:image-to-video:v1": {
         "modelType": "WanImageToVideoPipeline",
         "mode": "image_to_video",
@@ -1258,6 +1289,7 @@ def studio_auto_model_requirements() -> dict[str, dict[str, Any]]:
     return {
         definition.get("autoRequirementKey", definition["modelType"]): deepcopy(definition["autoRequirements"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+        if "autoRequirements" in definition
     }
 
 
@@ -1292,14 +1324,16 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
 
     output = []
     pairs = set()
-    profile_ids = set()
+    profiles: dict[str, dict[str, Any]] = {}
     for spec_id, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items():
         public = _public_spec(spec_id, definition)
         pair = (public["modelType"], public["mode"])
-        if pair in pairs or public["executionProfileId"] in profile_ids:
-            raise ValueError("Studio execution specifications must have unique pairs and execution profiles.")
+        profile_id = public["executionProfileId"]
+        profile = definition["profile"]
+        if pair in pairs or (profile_id in profiles and profiles[profile_id] != profile):
+            raise ValueError("Studio execution specifications must have unique pairs and consistent execution profiles.")
         pairs.add(pair)
-        profile_ids.add(public["executionProfileId"])
+        profiles[profile_id] = profile
 
         roles = {}
         for item in public["roles"]:

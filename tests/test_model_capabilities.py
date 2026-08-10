@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 10)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 11)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -106,11 +106,15 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(redux_spec["mode"], "edit_image")
         self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
 
-        kontext_spec = by_model["FluxKontextPipeline"]["studioExecutionSpecs"][0]
+        kontext_specs = by_model["FluxKontextPipeline"]["studioExecutionSpecs"]
+        kontext_spec = next(item for item in kontext_specs if item["mode"] == "edit_image")
         self.assertEqual(by_model["FluxKontextPipeline"]["modes"], ["edit_image", "multi_image_reference_edit"])
         self.assertEqual(kontext_spec["mode"], "edit_image")
         self.assertEqual(kontext_spec["pipelineClass"], "FluxKontextPipeline")
         self.assertIn("diffusersImageEdit", [item[0] for item in kontext_spec["roles"]])
+        kontext_multi_spec = next(item for item in kontext_specs if item["mode"] == "multi_image_reference_edit")
+        self.assertEqual(kontext_multi_spec["pipelineClass"], "FluxKontextPipeline")
+        self.assertNotEqual(kontext_multi_spec["contentHash"], kontext_spec["contentHash"])
 
         i2v_spec = by_model["WanImageToVideoPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(i2v_spec["mode"], "image_to_video")
@@ -173,7 +177,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(wan_t2v["modes"], ["text_to_video"])
         self.assertEqual(wan_video["studioExecutionSpecModes"], ["text_to_video"])
         self.assertEqual(wan_video["studioExecutionSpecs"][0]["pipelineClass"], "WanPipeline")
-        self.assertEqual(by_model["FluxKontextPipeline"]["studioExecutionSpecModes"], ["edit_image"])
+        self.assertEqual(
+            by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
+            ["edit_image", "multi_image_reference_edit"],
+        )
 
         ltx = by_model["LTXVideoPipeline"]
         self.assertEqual(ltx["mediaKind"], "video")
