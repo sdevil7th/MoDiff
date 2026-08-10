@@ -499,7 +499,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     passed, while one unrelated layout-snapshot case reported only the two
     absent Win32 JSON baselines; the generated baselines were removed. No model,
     media, or Gallery assets were downloaded or generated.
-- [ ] **P0.2 Explicit resource-plan targeting**
+- [x] **P0.2 Explicit resource-plan targeting**
   - Backend: put loader module/action and execution path in every specification;
     remove class-name substring routing; fail if a plan changes zero matching
     loaders.
@@ -507,6 +507,29 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     a plan; surface a mismatch instead of enabling Run.
   - Tests: Qwen Modular, Qwen Edit Plus, Qwen Layered, Wan Modular, mixed-loader
     graphs, stale candidate IDs, and zero-update plans.
+  - Status 2026-08-10: paired backend `8fb2cb9` and client `c3e8a17` make the
+    reviewed execution profile the exact Auto authority for loader module,
+    loader action, execution path, pipeline class, model type, mode, and pinned
+    artifact. Plans, selected candidates, candidate lists, retries, history, and
+    runtime hints retain and cross-check that identity. The backend targets only
+    exact executable-path loaders, rejects missing, ambiguous, stale,
+    cross-profile, disconnected, and zero-target plans, and emits bounded
+    non-echoing failures. The client validates bounded schema-v2 responses,
+    requires an exact selected/list receipt, checks an enabled managed loader
+    before readiness, mutation, and submission, and exposes a mismatch instead
+    of enabling Run. Z-Image Auto uses its reviewed direct-image adapter while
+    its separate Expert Modular capability remains unchanged.
+  - Evidence 2026-08-10: the complete backend gate passed 1113 tests with 4
+    skips and 1688 subtests; the focused independent P0.2 replay passed 172
+    tests and 330 subtests. Ruff E9/F, dependency validation, preflight, and
+    diff checks passed. The client `npm run check` and all 86 mocked Studio
+    browser cases passed; focused contracts passed 76/76 and an independent
+    critical-browser replay passed 7/7. The production bundle is 523003 bytes
+    gzip, 133 bytes inside the stricter 523136-byte safety target. The mirrored
+    client matched all 26 generated files byte-for-byte, and a fresh backend
+    served `/`, `/assets/index.js`, `/health`, and `/runtime/status`. These are
+    CPU/static/unit/contract/mocked-browser and local HTTP results: no model or
+    Gallery asset was downloaded, and no model or media output was generated.
 - [ ] **P0.3 Canonical execution-spec registry and generic node closure**
   - Deliver this as the following independently committable, CPU-only paired
     segments. None downloads a model or generates an asset.
@@ -1658,7 +1681,7 @@ Add references only after the corresponding evidence exists.
 | Segment | Backend reference | Client reference | Live proof | Dataset revision | Status |
 | --- | --- | --- | --- | --- | --- |
 | P0.1 | Pending | Pending | Not required | Not required | Implementation and gates complete; paired commits pending |
-| P0.2 | Pending | Pending | Not required | Not required | Not started |
+| P0.2 | `8fb2cb9` | `c3e8a17` | Not required | Not required | Complete: exact executable resource-plan targeting, bounded receipt binding, mixed/disconnected/zero-target rejection, and client fail-closed readiness/apply/run checks passed the complete backend/client and mocked-browser gates; no model or asset execution was needed. |
 | P0.3a.1 | Pending | Pending | Not required | Not required | Built-in implementation and gates complete; paired commits pending |
 | P0.3a.2 | Pending | Pending | Not required | Not required | Safe contract identity/preview implementation and gates complete; paired commits pending; executable custom admission moved to P1.1 |
 | P0.3b | Pending | Pending | Not required | Not required | P0.3b.1-.6 implementation and gates complete; paired UI checkpoint awaits reviewed Windows visual baselines; live qualification is not part of this segment |
