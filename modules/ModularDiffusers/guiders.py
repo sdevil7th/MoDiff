@@ -14,15 +14,18 @@ LAYER_CONFIG_MAPPING = {
     "SkipLayerGuidance": "skip_layer_config",
     "AutoGuidance": "auto_guidance_config",
     "SmoothedEnergyGuidance": "seg_guidance_config",
+    "PerturbedAttentionGuidance": "perturbed_guidance_config",
 }
 
 GUIDER_OPTIONS = {
     "ClassifierFreeGuidance": "Classifier Free Guidance",
     "SkipLayerGuidance": "Skip Layer Guidance",
     "AdaptiveProjectedGuidance": "Adaptive Projected Guidance",
+    "AdaptiveProjectedMixGuidance": "Adaptive Projected Mix Guidance",
     "ClassifierFreeZeroStarGuidance": "Classifier Free Zero Star Guidance",
     "AutoGuidance": "Auto Guidance",
     "SmoothedEnergyGuidance": "Smoothed Energy Guidance",
+    "PerturbedAttentionGuidance": "Perturbed Attention Guidance",
     "TangentialClassifierFreeGuidance": "Tangential Classifier Free Guidance",
     "FrequencyDecoupledGuidance": "Frequency Decoupled Guidance",
 }
@@ -72,6 +75,42 @@ GUIDER_CONFIGS = {
             "max": 100.0,
         },
     },
+    "AdaptiveProjectedMixGuidance": {
+        "adaptive_projected_guidance_scale": {
+            "label": "Adaptive Projected Guidance Scale",
+            "type": "float",
+            "value": 10.0,
+            "min": 0.0,
+            "max": 100.0,
+        },
+        "adaptive_projected_guidance_momentum": {
+            "label": "Adaptive Projected Guidance Momentum",
+            "type": "float",
+            "value": -0.5,
+            "min": -1.0,
+            "max": 1.0,
+            "step": 0.01,
+        },
+        "adaptive_projected_guidance_rescale": {
+            "label": "Adaptive Projected Guidance Rescale",
+            "type": "float",
+            "value": 10.0,
+            "min": 0.0,
+            "max": 100.0,
+        },
+        "eta": {
+            "label": "Eta",
+            "type": "float",
+            "value": 0.0,
+            "step": 0.01,
+        },
+        "adaptive_projected_guidance_start_step": {
+            "label": "Adaptive Projected Guidance Start Step",
+            "type": "int",
+            "value": 5,
+            "min": 0,
+        },
+    },
     "ClassifierFreeZeroStarGuidance": {
         "zero_init_steps": {
             "label": "Zero Init Steps",
@@ -89,7 +128,37 @@ GUIDER_CONFIGS = {
             "step": 0.01,
         }
     },
+    "PerturbedAttentionGuidance": {
+        "perturbed_guidance_scale": {
+            "label": "Perturbed Guidance Scale",
+            "type": "float",
+            "value": 2.8,
+            "min": 0.0,
+            "max": 10.0,
+        },
+        "perturbed_guidance_start": {
+            "label": "Perturbed Guidance Start",
+            "type": "float",
+            "display": "slider",
+            "value": 0.01,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+        },
+        "perturbed_guidance_stop": {
+            "label": "Perturbed Guidance Stop",
+            "type": "float",
+            "display": "slider",
+            "value": 0.2,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+        },
+    },
 }
+
+_BOOLEAN_GUIDER_ARGUMENTS = frozenset({"enabled", "use_original_formulation"})
+_INTEGER_GUIDER_ARGUMENTS = frozenset({"adaptive_projected_guidance_start_step", "zero_init_steps"})
 
 
 class Guider(NodeBase):
@@ -110,6 +179,7 @@ class Guider(NodeBase):
                     "SkipLayerGuidance": ["layers_config"],
                     "AutoGuidance": ["layers_config"],
                     "SmoothedEnergyGuidance": ["layers_config"],
+                    "PerturbedAttentionGuidance": ["layers_config"],
                 },
             ],
         },
@@ -135,6 +205,11 @@ class Guider(NodeBase):
             "label": "Original Formulation",
             "type": "boolean",
             "value": False,
+        },
+        "enabled": {
+            "label": "Enabled",
+            "type": "boolean",
+            "value": True,
         },
         "start": {
             "label": "Start",
@@ -180,8 +255,15 @@ class Guider(NodeBase):
         guider_options = {}
 
         for key, value in kwargs.items():
-            if key == "use_original_formulation":
+            if key in _BOOLEAN_GUIDER_ARGUMENTS:
+                if not isinstance(value, bool):
+                    raise TypeError(f"{key} must be a boolean.")
                 guider_options[key] = value
+            elif key in _INTEGER_GUIDER_ARGUMENTS:
+                numeric_value = float(value)
+                if isinstance(value, bool) or not numeric_value.is_integer():
+                    raise ValueError(f"{key} must be an integer.")
+                guider_options[key] = int(numeric_value)
             else:
                 guider_options[key] = float(value)
 
@@ -204,6 +286,8 @@ class Guider(NodeBase):
 
             if isinstance(layers_config, dict):
                 layers_config = [layers_config]
+            elif isinstance(layers_config, (LayerSkipConfig, SmoothedEnergyGuidanceConfig)):
+                layers_config = [layers_config]
 
             if isinstance(layers_config, list):
                 layer_configs = []
@@ -217,6 +301,35 @@ class Guider(NodeBase):
                             raise TypeError(
                                 f"{guider} layer entries must be mappings or {expected_type.__name__} instances."
                             )
+                        indices = getattr(config_dict, "indices", None)
+                        fqn = getattr(config_dict, "fqn", None)
+                        if (
+                            not isinstance(indices, list)
+                            or not indices
+                            or any(
+                                isinstance(index, bool) or not isinstance(index, int) or index < 0 for index in indices
+                            )
+                        ):
+                            raise ValueError(
+                                f"{guider} layer indices must be a non-empty list of non-negative integers."
+                            )
+                        if not isinstance(fqn, str) or not fqn or fqn != fqn.strip():
+                            raise ValueError(
+                                f"{guider} requires a non-empty layer FQN without surrounding whitespace."
+                            )
+                        if guider == "PerturbedAttentionGuidance":
+                            layer_config_values = config_dict.to_dict()
+                            if float(layer_config_values.get("dropout", 1.0)) != 1.0:
+                                raise ValueError(
+                                    "PerturbedAttentionGuidance requires Layers dropout to be 1.0 because it "
+                                    "perturbs attention scores."
+                                )
+                            layer_config_values.update(
+                                skip_attention=False,
+                                skip_attention_scores=True,
+                                skip_ff=False,
+                            )
+                            config_dict = LayerSkipConfig(**layer_config_values)
                         layer_configs.append(config_dict)
                         continue
 
@@ -234,7 +347,19 @@ class Guider(NodeBase):
                     if guider == "SmoothedEnergyGuidance":
                         layer_config = SmoothedEnergyGuidanceConfig(indices=indices, fqn=fqn)
                     else:
-                        layer_config = LayerSkipConfig(**config_dict)
+                        layer_config_values = dict(config_dict)
+                        if guider == "PerturbedAttentionGuidance":
+                            if float(layer_config_values.get("dropout", 1.0)) != 1.0:
+                                raise ValueError(
+                                    "PerturbedAttentionGuidance requires Layers dropout to be 1.0 because it "
+                                    "perturbs attention scores."
+                                )
+                            layer_config_values.update(
+                                skip_attention=False,
+                                skip_attention_scores=True,
+                                skip_ff=False,
+                            )
+                        layer_config = LayerSkipConfig(**layer_config_values)
 
                     layer_configs.append(layer_config)
 

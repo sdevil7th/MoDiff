@@ -675,7 +675,7 @@
         "params": {
           "expected_sha256": {
             "default": "",
-            "description": "Optional immutable hash for the selected adapter weight file.",
+            "description": "Required for Hub weights; local weights are hashed when this descriptor is created.",
             "label": "Expected SHA-256",
             "type": "string",
             "value": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f"
@@ -689,18 +689,6 @@
           "model": {
             "display": "modelselect",
             "fieldOptions": {
-              "filter": {
-                "hub": {
-                  "className": [
-                    ""
-                  ]
-                },
-                "local": {
-                  "className": [
-                    ""
-                  ]
-                }
-              },
               "noValidation": true,
               "sources": [
                 "hub",
@@ -713,6 +701,13 @@
               "source": "hub",
               "value": "lightx2v/Qwen-Image-Edit-2511-Lightning"
             }
+          },
+          "revision": {
+            "default": "",
+            "description": "Required exact commit for a Hub LoRA; unused for a local Safetensors file.",
+            "label": "Revision",
+            "type": "string",
+            "value": "d74eba145674fd7e31b949324e148e21e7118abd"
           },
           "scale": {
             "default": 1,

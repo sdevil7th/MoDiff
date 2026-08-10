@@ -1,9 +1,13 @@
-import inspect
 import hashlib
+import inspect
 import logging
+import math
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 from PIL import Image, ImageColor, ImageDraw, ImageFilter
 
 from modiff.NodeBase import NodeBase
@@ -17,26 +21,86 @@ from modiff.diffusers_offload import (
     normalize_offload_mode,
     offload_mode_param,
 )
-from modiff.model_artifact_catalog import require_catalog_revision, resolve_model_revision
-from utils.huggingface import local_files_only
+from modiff.model_artifact_catalog import (
+    IMMUTABLE_HUB_REVISION,
+    catalog_repository_pin,
+    catalog_revision,
+    require_catalog_revision,
+)
+from utils.huggingface import (
+    cached_file_path,
+    local_files_only,
+    resolve_managed_hf_cache_file,
+    validate_hf_repo_id,
+)
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 logger = logging.getLogger("modiff")
 
 FLUX_SCHNELL_REPO = "black-forest-labs/FLUX.1-schnell"
 FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
+FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
+FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
+FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
+FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
+FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
+FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
+FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
+FLUX_CANNY_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
+FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
+FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
+Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
+QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
+QWEN_IMAGE_EDIT_PREQUANTIZED_REPO = "ovedrive/qwen-image-edit-4bit"
 DEVICE_OPTIONS = list(DEVICE_LIST.keys())
+_IMAGE_MODE_ORDER = (
+    "text_to_image",
+    "edit_image",
+    "multi_image_reference_edit",
+    "inpaint",
+    "outpaint",
+    "control_image",
+)
+_IMAGE_MODEL_SOURCES = frozenset({"hub", "local"})
+_MAX_IMAGE_INPUT_DIMENSION = 8192
+_MAX_IMAGE_INPUT_PIXELS = 16 * 1024 * 1024
 
 
 @dataclass(frozen=True)
 class ImagePipelineAdapter:
     pipeline_class: str
     modes: frozenset[str]
-    default_repo: str = FLUX_SCHNELL_REPO
+    default_repo: str
+    compatible_repos: frozenset[str] = frozenset()
+    artifact_pipeline_classes: tuple[str, ...] = ()
+    runtime_pipeline_classes: tuple[str, ...] = ()
     guidance_parameter: str = "guidance_scale"
     multi_image_strategy: str = "list"
+    max_sequence_length: int = 512
+    max_reference_images: int = 1
+    max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
+
+    @property
+    def managed_repos(self) -> frozenset[str]:
+        """Reviewed repositories that remain valid when this adapter is selected."""
+
+        return frozenset((self.default_repo, *self.compatible_repos))
+
+    @property
+    def model_filter_classes(self) -> tuple[str, ...]:
+        return self.artifact_pipeline_classes or (self.pipeline_class,)
+
+    @property
+    def allowed_runtime_classes(self) -> tuple[str, ...]:
+        return self.runtime_pipeline_classes or (self.pipeline_class,)
+
+    @property
+    def mode_options(self) -> tuple[str, ...]:
+        """Expose stable UI/default ordering while preserving the set-valued contract."""
+
+        return tuple(mode for mode in _IMAGE_MODE_ORDER if mode in self.modes)
 
     def apply_generation_parameters(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> None:
         aliases = {
@@ -66,40 +130,74 @@ IMAGE_PIPELINE_ADAPTERS = {
     "QwenImagePipeline": ImagePipelineAdapter(
         "QwenImagePipeline",
         frozenset({"text_to_image"}),
-        default_repo=QWEN_IMAGE_2512_REPO,
+        QWEN_IMAGE_2512_REPO,
+        compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
         guidance_parameter="true_cfg_scale",
     ),
-    "ZImagePipeline": ImagePipelineAdapter("ZImagePipeline", frozenset({"text_to_image"})),
-    "FluxPipeline": ImagePipelineAdapter("FluxPipeline", frozenset({"text_to_image"})),
+    "ZImagePipeline": ImagePipelineAdapter("ZImagePipeline", frozenset({"text_to_image"}), Z_IMAGE_REPO),
+    "FluxPipeline": ImagePipelineAdapter(
+        "FluxPipeline",
+        frozenset({"text_to_image"}),
+        FLUX_SCHNELL_REPO,
+        compatible_repos=frozenset({FLUX_DEV_REPO, FLUX_DEV_FP8_REPO, FLUX_KREA_REPO}),
+    ),
     "Flux2KleinPipeline": ImagePipelineAdapter(
-        "Flux2KleinPipeline", frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"})
+        "Flux2KleinPipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        FLUX2_KLEIN_REPO,
+        max_reference_images=8,
     ),
     "FluxImg2ImgPipeline": ImagePipelineAdapter(
-        "FluxImg2ImgPipeline", frozenset({"edit_image", "multi_image_reference_edit"})
+        "FluxImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        FLUX_DEV_REPO,
+        compatible_repos=frozenset({FLUX_DEV_FP8_REPO}),
+        artifact_pipeline_classes=("FluxPipeline", "FluxImg2ImgPipeline"),
     ),
-    "FluxInpaintPipeline": ImagePipelineAdapter("FluxInpaintPipeline", frozenset({"inpaint"})),
-    "FluxFillPipeline": ImagePipelineAdapter("FluxFillPipeline", frozenset({"inpaint", "outpaint"})),
-    "FluxControlPipeline": ImagePipelineAdapter("FluxControlPipeline", frozenset({"control_image"})),
-    "FluxControlNetPipeline": ImagePipelineAdapter("FluxControlNetPipeline", frozenset({"control_image"})),
+    "FluxInpaintPipeline": ImagePipelineAdapter(
+        "FluxInpaintPipeline",
+        frozenset({"inpaint"}),
+        FLUX_DEV_REPO,
+        compatible_repos=frozenset({FLUX_DEV_FP8_REPO}),
+        artifact_pipeline_classes=("FluxPipeline", "FluxInpaintPipeline"),
+    ),
+    "FluxFillPipeline": ImagePipelineAdapter(
+        "FluxFillPipeline", frozenset({"inpaint", "outpaint"}), FLUX_FILL_REPO
+    ),
+    "FluxControlPipeline": ImagePipelineAdapter(
+        "FluxControlPipeline",
+        frozenset({"control_image"}),
+        FLUX_DEPTH_REPO,
+        compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
+    ),
     "FluxKontextPipeline": ImagePipelineAdapter(
         "FluxKontextPipeline",
         frozenset({"edit_image", "multi_image_reference_edit"}),
+        FLUX_KONTEXT_REPO,
+        compatible_repos=frozenset({FLUX_KONTEXT_NVFP4_REPO}),
         multi_image_strategy="stitch_horizontal",
+        max_reference_images=8,
     ),
     # Virtual adapter class: FLUX Redux is a prior that supplies embeddings to
     # a base FLUX pipeline, not a standalone img2img checkpoint.
     "FluxReduxPipeline": ImagePipelineAdapter(
         "FluxReduxPipeline",
         frozenset({"edit_image", "multi_image_reference_edit"}),
+        FLUX_REDUX_REPO,
+        artifact_pipeline_classes=("FluxPriorReduxPipeline",),
+        runtime_pipeline_classes=("FluxReduxPipelineBundle",),
         # Current Diffusers performs the documented per-reference scaling and
         # weighted sum inside FluxPriorReduxPipeline. Keep the references as a
         # list and delegate the conditioning math to the upstream pipeline.
         multi_image_strategy="upstream_weighted_sum",
+        max_reference_images=8,
     ),
     "QwenImageEditInpaintPipeline": ImagePipelineAdapter(
         "QwenImageEditInpaintPipeline",
         frozenset({"inpaint", "outpaint"}),
-        default_repo="Qwen/Qwen-Image-Edit",
+        QWEN_IMAGE_EDIT_REPO,
+        compatible_repos=frozenset({QWEN_IMAGE_EDIT_PREQUANTIZED_REPO}),
+        artifact_pipeline_classes=("QwenImageEditPipeline", "QwenImageEditInpaintPipeline"),
         guidance_parameter="true_cfg_scale",
     ),
 }
@@ -122,6 +220,21 @@ DIFFUSERS_IMAGE_OFFLOAD_MODES = [
 ]
 QUANT_COMPONENTS = ["transformer", "transformer_2", "text_encoder", "text_encoder_2", "vae"]
 
+IMAGE_ACTION_MODES = {
+    "Generate": ("text_to_image",),
+    "Edit": ("edit_image", "multi_image_reference_edit"),
+    "Inpaint": ("inpaint", "outpaint"),
+    "ControlGenerate": ("control_image",),
+}
+
+_REMOVED_IMAGE_PIPELINE_ERRORS = {
+    "FluxControlNetPipeline": (
+        "FluxControlNetPipeline requires a separately loaded FluxControlNetModel, but the generic Diffusers image "
+        "loader does not yet expose that component-assembly contract. Use FluxControlPipeline for the self-contained "
+        "FLUX Depth/Canny checkpoints until generic ControlNet assembly is available."
+    )
+}
+
 
 def repo_value(value: Any) -> str:
     if isinstance(value, dict):
@@ -129,12 +242,574 @@ def repo_value(value: Any) -> str:
     return str(value or "")
 
 
-def none_if_blank(value: Any):
-    if value is None:
-        return None
-    if isinstance(value, str) and value.strip() == "":
-        return None
+def get_image_pipeline_adapter(name: Any) -> ImagePipelineAdapter:
+    if not isinstance(name, str) or not name or name != name.strip():
+        raise ValueError("A registered Diffusers image pipeline class is required.")
+    removed_reason = _REMOVED_IMAGE_PIPELINE_ERRORS.get(name)
+    if removed_reason:
+        raise ValueError(removed_reason)
+    adapter = IMAGE_PIPELINE_ADAPTERS.get(name)
+    if adapter is None:
+        supported = ", ".join(IMAGE_PIPELINE_CLASSES)
+        raise ValueError(f"Unsupported Diffusers image pipeline class {name!r}. Supported classes: {supported}.")
+    return adapter
+
+
+def _loader_image_pipeline_adapter(values: Any) -> ImagePipelineAdapter:
+    if not isinstance(values, dict):
+        raise ValueError("Diffusers image loader values must be an object.")
+    return get_image_pipeline_adapter(values.get("pipeline_class"))
+
+
+def _loader_image_mode(values: Any, adapter: ImagePipelineAdapter) -> str:
+    mode = values.get("mode") if isinstance(values, dict) else None
+    if not isinstance(mode, str) or not mode or mode != mode.strip():
+        raise ValueError("A registered Diffusers image mode is required.")
+    if mode not in adapter.modes:
+        supported = ", ".join(adapter.mode_options)
+        raise ValueError(f"{adapter.pipeline_class} does not support {mode}. Supported modes: {supported}.")
+    return mode
+
+
+def _canonical_image_model_source(source: Any, *, label: str = "Diffusers image model") -> str:
+    if not isinstance(source, str) or not source or source != source.strip():
+        raise ValueError(f"{label} source must be exactly hub or local.")
+    normalized = source.casefold()
+    if normalized not in _IMAGE_MODEL_SOURCES:
+        raise ValueError(f"{label} source must be exactly hub or local.")
+    return normalized
+
+
+def _managed_image_repositories() -> dict[str, str]:
+    return {
+        repository.casefold(): repository
+        for registered_adapter in IMAGE_PIPELINE_ADAPTERS.values()
+        for repository in registered_adapter.managed_repos
+    }
+
+
+def _validated_image_hub_repository(value: str, *, label: str) -> str:
+    if value.count("/") != 1:
+        raise ValueError(f"{label} must use an exact Hugging Face namespace/repository ID.")
+    try:
+        validate_hf_repo_id(value)
+    except ValueError as error:
+        raise ValueError(f"{label} must use an exact Hugging Face namespace/repository ID.") from error
+    try:
+        resolves_locally = Path(value).expanduser().exists()
+    except (OSError, RuntimeError) as error:
+        raise ValueError(f"{label} could not be validated as a Hugging Face repository ID.") from error
+    if resolves_locally:
+        raise ValueError(
+            f"{label} resolves to an existing local filesystem target. Select source=local for local models."
+        )
     return value
+
+
+def resolve_image_model_selection(adapter: ImagePipelineAdapter, value: Any):
+    """Return one canonical Hub/local selection for the chosen adapter."""
+
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return {"source": "hub", "value": adapter.default_repo}
+    if isinstance(value, dict):
+        source = _canonical_image_model_source(value.get("source"))
+        raw_selected = value.get("value")
+        if not isinstance(raw_selected, str):
+            raise ValueError("Diffusers image model value must be a repository ID or local path string.")
+        selected = raw_selected.strip()
+        if not selected:
+            if source == "hub":
+                return {"source": "hub", "value": adapter.default_repo}
+            raise ValueError("A local Diffusers image model path is required.")
+    elif isinstance(value, str):
+        source = "hub"
+        selected = value.strip()
+    else:
+        raise ValueError(
+            "Diffusers image model selection must be a repository ID or a hub/local selection object."
+        )
+
+    if source == "local":
+        return {"source": "local", "value": selected}
+
+    selected = _validated_image_hub_repository(selected, label="Diffusers image model repository")
+    managed_repos = _managed_image_repositories()
+    selected_key = selected.casefold()
+    compatible_repos = {repo.casefold() for repo in adapter.managed_repos}
+    if selected_key in managed_repos and selected_key not in compatible_repos:
+        return {"source": "hub", "value": adapter.default_repo}
+    return {"source": "hub", "value": managed_repos.get(selected_key, selected)}
+
+
+def _normalize_image_revision(value: Any) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str) or value != value.strip():
+        raise ValueError("Diffusers image revision must be an exact trimmed string.")
+    return value
+
+
+def resolve_image_pipeline_revision(model_selection: Any, revision: Any) -> str:
+    """Resolve one immutable Hub revision or reject unsupported local execution."""
+
+    if not isinstance(model_selection, dict):
+        raise ValueError("Diffusers image model selection must be normalized before revision resolution.")
+    source = _canonical_image_model_source(model_selection.get("source"))
+    model_id = model_selection.get("value")
+    if not isinstance(model_id, str) or not model_id or model_id != model_id.strip():
+        raise ValueError("Diffusers image model value must be a nonblank canonical string.")
+    requested = _normalize_image_revision(revision)
+    if source == "local":
+        raise ValueError(
+            "Local standard Diffusers pipeline loading is contract-only until MoDiff has a reviewed local "
+            "pipeline-directory index. Install or select a pinned Hub pipeline through Model Manager."
+        )
+
+    pin = catalog_repository_pin(model_id)
+    if pin is not None:
+        expected = catalog_revision(model_id)
+        if requested and requested != expected:
+            raise ValueError(
+                f"Cataloged Diffusers image repository {model_id!r} must use its reviewed commit {expected}; "
+                f"received {requested!r}."
+            )
+        return str(expected)
+    if not requested:
+        raise ValueError(
+            f"Custom Diffusers image repository {model_id!r} requires an explicit lowercase 40-character commit."
+        )
+    if requested != requested.lower() or not IMMUTABLE_HUB_REVISION.fullmatch(requested):
+        raise ValueError("A custom Diffusers image repository revision must be a lowercase 40-character commit.")
+    return requested
+
+
+def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
+    classes = list(adapter.model_filter_classes)
+    return {
+        "noValidation": True,
+        "sources": ["hub", "local"],
+        "filter": {
+            "hub": {"className": classes},
+            "local": {"className": classes},
+        },
+    }
+
+
+def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[str, Any]:
+    actions = {
+        action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
+        for action, accepted_modes in IMAGE_ACTION_MODES.items()
+    }
+    return {
+        "schemaVersion": 1,
+        "library": "diffusers",
+        "mediaKind": "image",
+        "pipelineClass": adapter.pipeline_class,
+        "mode": mode,
+        "modes": list(adapter.mode_options),
+        "actions": {action: modes for action, modes in actions.items() if modes},
+    }
+
+
+DEFAULT_IMAGE_PIPELINE_CONTRACT = image_pipeline_contract(
+    IMAGE_PIPELINE_ADAPTERS["FluxPipeline"],
+    "text_to_image",
+)
+
+
+def _tag_image_pipeline(
+    pipeline: Any,
+    adapter: ImagePipelineAdapter,
+    mode: str,
+    repo: str,
+    source: str,
+    revision: str | None,
+) -> None:
+    setattr(pipeline, "_modiff_image_adapter", adapter)
+    setattr(pipeline, "_modiff_image_pipeline_class", adapter.pipeline_class)
+    setattr(pipeline, "_modiff_image_mode", mode)
+    setattr(pipeline, "_modiff_image_repo", repo)
+    setattr(pipeline, "_modiff_image_source", source)
+    setattr(pipeline, "_modiff_image_revision", revision)
+
+
+def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
+    tag_names = (
+        "_modiff_image_pipeline_class",
+        "_modiff_image_mode",
+        "_modiff_image_repo",
+        "_modiff_image_source",
+        "_modiff_image_revision",
+    )
+    has_any_tag = any(hasattr(pipeline, name) for name in (*tag_names, "_modiff_image_adapter"))
+    has_all_tags = all(hasattr(pipeline, name) for name in tag_names)
+    runtime_name = type(pipeline).__name__
+    adapter_hint = getattr(pipeline, "_modiff_image_adapter", None)
+    if has_any_tag:
+        if not has_all_tags:
+            missing = ", ".join(name.removeprefix("_modiff_image_") for name in tag_names if not hasattr(pipeline, name))
+            raise ValueError(
+                f"Diffusers image pipeline identity is incomplete; missing canonical tags: {missing}. "
+                "Reconnect it through Load Diffusers Image Pipeline."
+            )
+        adapter = get_image_pipeline_adapter(getattr(pipeline, "_modiff_image_pipeline_class"))
+        hinted_name = getattr(adapter_hint, "pipeline_class", None)
+        if adapter_hint is not None and hinted_name != adapter.pipeline_class:
+            raise ValueError(
+                "Diffusers image pipeline identity is inconsistent: adapter hint and pipeline-class tag disagree."
+            )
+        if runtime_name not in adapter.allowed_runtime_classes:
+            allowed = ", ".join(adapter.allowed_runtime_classes)
+            raise ValueError(
+                f"Diffusers image pipeline identity is inconsistent: runtime class {runtime_name!r} is tagged as "
+                f"{adapter.pipeline_class}; allowed runtime classes: {allowed}."
+            )
+
+        mode = getattr(pipeline, "_modiff_image_mode")
+        if not isinstance(mode, str) or not mode or mode != mode.strip() or mode not in adapter.modes:
+            supported = ", ".join(adapter.mode_options)
+            raise ValueError(
+                f"{adapter.pipeline_class} carries invalid image mode {mode!r}. Supported modes: {supported}."
+            )
+        source = getattr(pipeline, "_modiff_image_source")
+        if source not in _IMAGE_MODEL_SOURCES:
+            raise ValueError("Diffusers image pipeline source tag must be canonical hub or local.")
+        repository = getattr(pipeline, "_modiff_image_repo")
+        if not isinstance(repository, str) or not repository or repository != repository.strip():
+            raise ValueError("Diffusers image pipeline repository tag must be a nonblank canonical string.")
+        revision = getattr(pipeline, "_modiff_image_revision")
+        if source == "hub":
+            if not isinstance(revision, str) or revision != revision.lower() or not IMMUTABLE_HUB_REVISION.fullmatch(revision):
+                raise ValueError("Diffusers image Hub pipeline revision tag must be a lowercase 40-character commit.")
+            pin = catalog_repository_pin(repository)
+            if pin is not None and revision != catalog_revision(repository):
+                raise ValueError(
+                    f"Diffusers image pipeline revision tag does not match the reviewed pin for {repository!r}."
+                )
+            managed = _managed_image_repositories()
+            canonical_repository = managed.get(repository.casefold())
+            if canonical_repository is not None:
+                if repository != canonical_repository:
+                    raise ValueError("Diffusers image pipeline repository tag is not canonically spelled.")
+                if repository not in adapter.managed_repos:
+                    raise ValueError(
+                        f"Diffusers image pipeline repository {repository!r} is not compatible with "
+                        f"{adapter.pipeline_class}."
+                    )
+        elif revision not in (None, ""):
+            raise ValueError("A local Diffusers image pipeline must not carry a Hub revision tag.")
+        return adapter
+
+    candidates = [
+        adapter
+        for adapter in IMAGE_PIPELINE_ADAPTERS.values()
+        if runtime_name in adapter.allowed_runtime_classes
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise ValueError(
+            f"Cannot recover an exact Diffusers image adapter from untagged runtime class {runtime_name!r}. "
+            "Reconnect the pipeline through Load Diffusers Image Pipeline."
+        )
+    candidate_names = ", ".join(sorted(adapter.pipeline_class for adapter in candidates))
+    raise ValueError(
+        f"Cannot recover one exact Diffusers image adapter from untagged runtime class {runtime_name!r}: "
+        f"{candidate_names}. Reconnect it through Load Diffusers Image Pipeline."
+    )
+
+
+def validate_image_action(pipeline: Any, action: str) -> ImagePipelineAdapter:
+    accepted_modes = IMAGE_ACTION_MODES[action]
+    adapter = _image_pipeline_adapter(pipeline)
+    raw_mode = getattr(pipeline, "_modiff_image_mode", None)
+    mode = raw_mode if isinstance(raw_mode, str) else ""
+
+    if not mode:
+        # Pipelines resident before mode tagging can be recovered only when all
+        # adapter modes map to this one task node. Flux2 spans Generate and Edit,
+        # so allowing either without its exact loader mode would be ambiguous.
+        if set(adapter.modes).issubset(accepted_modes):
+            return adapter
+        supported_actions = [
+            candidate
+            for candidate, candidate_modes in IMAGE_ACTION_MODES.items()
+            if set(adapter.modes).issubset(candidate_modes)
+        ]
+        suffix = f" Safe legacy action: {supported_actions[0]}." if len(supported_actions) == 1 else ""
+        raise ValueError(
+            f"{adapter.pipeline_class} is missing its exact loaded image mode, so {action} cannot run safely. "
+            f"Reconnect it through Load Diffusers Image Pipeline.{suffix}"
+        )
+    if mode not in adapter.modes:
+        supported = ", ".join(adapter.mode_options)
+        raise ValueError(
+            f"{adapter.pipeline_class} carries invalid image mode {mode!r}. Supported modes: {supported}."
+        )
+    if mode not in accepted_modes:
+        required = ", ".join(accepted_modes)
+        raise ValueError(
+            f"{adapter.pipeline_class} was loaded for image mode {mode!r}; {action} requires one of: {required}."
+        )
+    return adapter
+
+
+def _bounded_image_int(
+    value: Any,
+    *,
+    field: str,
+    default: int,
+    minimum: int,
+    maximum: int,
+    step: int | None = None,
+) -> int:
+    raw = default if value is None else value
+    if isinstance(raw, bool):
+        raise ValueError(f"Diffusers image {field} must be an integer.")
+    if isinstance(raw, int):
+        parsed = raw
+    else:
+        try:
+            numeric = float(raw)
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError(f"Diffusers image {field} must be an integer.") from error
+        if not math.isfinite(numeric) or not numeric.is_integer():
+            raise ValueError(f"Diffusers image {field} must be a finite integer.")
+        parsed = int(numeric)
+    if parsed < minimum or parsed > maximum:
+        raise ValueError(
+            f"Diffusers image {field} must be between {minimum} and {maximum}; received {parsed}."
+        )
+    if step is not None and (parsed - minimum) % step:
+        raise ValueError(
+            f"Diffusers image {field} must use increments of {step} from {minimum}; received {parsed}."
+        )
+    return parsed
+
+
+def _bounded_image_float(
+    value: Any,
+    *,
+    field: str,
+    default: float,
+    minimum: float,
+    maximum: float,
+) -> float:
+    raw = default if value is None else value
+    if isinstance(raw, bool):
+        raise ValueError(f"Diffusers image {field} must be a number.")
+    try:
+        parsed = float(raw)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"Diffusers image {field} must be a number.") from error
+    if not math.isfinite(parsed) or parsed < minimum or parsed > maximum:
+        raise ValueError(
+            f"Diffusers image {field} must be finite and between {minimum} and {maximum}; received {raw!r}."
+        )
+    return parsed
+
+
+def _normalized_image_prompt(value: Any, *, field: str) -> str | list[str]:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (list, tuple)):
+        prompts = list(value)
+        if not prompts or len(prompts) > 64 or any(not isinstance(item, str) for item in prompts):
+            raise ValueError(f"Diffusers image {field} must be a string or a list of 1 to 64 strings.")
+        return prompts
+    raise ValueError(f"Diffusers image {field} must be a string or a list of 1 to 64 strings.")
+
+
+def _image_media_extent(value: Any, *, field: str, require_pil: bool) -> tuple[int, int]:
+    if isinstance(value, Image.Image):
+        width, height = value.size
+        sample_count = 1
+    else:
+        if require_pil:
+            raise ValueError(f"Diffusers image {field} must be a PIL image loaded by an Image node.")
+        torch_module = sys.modules.get("torch")
+        tensor_type = getattr(torch_module, "Tensor", ()) if torch_module is not None else ()
+        if not isinstance(value, np.ndarray) and not (tensor_type and isinstance(value, tensor_type)):
+            raise ValueError(
+                f"Diffusers image {field} must be a PIL image, NumPy array, or Torch tensor."
+            )
+        shape_value = getattr(value, "shape", None)
+        try:
+            shape = tuple(int(dimension) for dimension in shape_value)
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError(
+                f"Diffusers image {field} must be a PIL image, NumPy array, or Torch tensor."
+            ) from error
+        if not shape or any(dimension <= 0 for dimension in shape):
+            raise ValueError(f"Diffusers image {field} dimensions must be positive and nonempty.")
+        sample_count = shape[0] if len(shape) == 4 else 1
+        image_shape = shape[1:] if len(shape) == 4 else shape
+        if len(image_shape) == 2:
+            height, width = image_shape
+        elif len(image_shape) == 3 and image_shape[0] in {1, 3, 4}:
+            _channels, height, width = image_shape
+        elif len(image_shape) == 3 and image_shape[-1] in {1, 3, 4}:
+            height, width, _channels = image_shape
+        else:
+            raise ValueError(
+                f"Diffusers image {field} must have HW, CHW, HWC, NCHW, or NHWC image dimensions."
+            )
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Diffusers image {field} dimensions must be positive and nonempty.")
+    if width > _MAX_IMAGE_INPUT_DIMENSION or height > _MAX_IMAGE_INPUT_DIMENSION:
+        raise ValueError(
+            f"Diffusers image {field} dimensions cannot exceed {_MAX_IMAGE_INPUT_DIMENSION} pixels per edge."
+        )
+    return sample_count, sample_count * width * height
+
+
+def _validate_image_media(
+    value: Any,
+    *,
+    field: str,
+    max_items: int,
+    max_pixels: int,
+    require_pil: bool = False,
+    require_single_value: bool = False,
+) -> None:
+    if value is None:
+        raise ValueError(f"Diffusers image {field} is required.")
+    if isinstance(value, (list, tuple)):
+        if require_single_value:
+            raise ValueError(f"Diffusers image {field} requires one PIL image, not a list.")
+        items = list(value)
+        if not items:
+            raise ValueError(f"Diffusers image {field} cannot be an empty image list.")
+    else:
+        items = [value]
+
+    total_items = 0
+    total_pixels = 0
+    for index, item in enumerate(items):
+        sample_count, pixels = _image_media_extent(
+            item,
+            field=f"{field}[{index}]" if len(items) > 1 else field,
+            require_pil=require_pil,
+        )
+        total_items += sample_count
+        total_pixels += pixels
+    if total_items > max_items:
+        raise ValueError(f"Diffusers image {field} accepts at most {max_items} image(s); received {total_items}.")
+    if total_pixels > max_pixels:
+        raise ValueError(
+            f"Diffusers image {field} exceeds the {max_pixels}-pixel cumulative input limit."
+        )
+
+
+def preflight_image_action(
+    pipeline: Any,
+    action: str,
+    kwargs: dict[str, Any],
+) -> tuple[ImagePipelineAdapter, dict[str, Any]]:
+    """Validate the generic image contract before importing Torch or calling Diffusers."""
+
+    if pipeline is None:
+        raise ValueError("Diffusers image pipeline is required.")
+    adapter = validate_image_action(pipeline, action)
+    values = dict(kwargs)
+    values["pipeline"] = pipeline
+    values["prompt"] = _normalized_image_prompt(values.get("prompt"), field="prompt")
+    values["negative_prompt"] = _normalized_image_prompt(
+        values.get("negative_prompt"),
+        field="negative_prompt",
+    )
+    values["width"] = _bounded_image_int(
+        values.get("width"), field="width", default=1024, minimum=16, maximum=2048, step=16
+    )
+    values["height"] = _bounded_image_int(
+        values.get("height"), field="height", default=1024, minimum=16, maximum=2048, step=16
+    )
+    values["seed"] = _bounded_image_int(
+        values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295
+    )
+    values["num_inference_steps"] = _bounded_image_int(
+        values.get("num_inference_steps"),
+        field="num_inference_steps",
+        default=4,
+        minimum=1,
+        maximum=100,
+    )
+    values["guidance_scale"] = _bounded_image_float(
+        values.get("guidance_scale"), field="guidance_scale", default=0.0, minimum=0.0, maximum=20.0
+    )
+    values["strength"] = _bounded_image_float(
+        values.get("strength"), field="strength", default=0.8, minimum=0.0, maximum=1.0
+    )
+    values["padding_mask_crop"] = _bounded_image_int(
+        values.get("padding_mask_crop"),
+        field="padding_mask_crop",
+        default=0,
+        minimum=0,
+        maximum=512,
+        step=8,
+    )
+    values["max_sequence_length"] = _bounded_image_int(
+        values.get("max_sequence_length"),
+        field="max_sequence_length",
+        default=256,
+        minimum=1,
+        maximum=adapter.max_sequence_length,
+    )
+    values["reference_strength"] = _bounded_image_float(
+        values.get("reference_strength"),
+        field="reference_strength",
+        default=1.0,
+        minimum=0.0,
+        maximum=1.0,
+    )
+
+    output_type = "pil" if "output_type" not in values or values.get("output_type") is None else values.get("output_type")
+    allowed_output_types = {"pil"} if action == "Inpaint" else {"pil", "np", "pt"}
+    if not isinstance(output_type, str) or output_type not in allowed_output_types:
+        allowed = ", ".join(sorted(allowed_output_types))
+        raise ValueError(f"Diffusers image {action} output_type must be exactly one of: {allowed}.")
+    values["output_type"] = output_type
+
+    if action == "Edit":
+        mode = getattr(pipeline, "_modiff_image_mode", None)
+        max_references = (
+            adapter.max_reference_images
+            if mode in (None, "multi_image_reference_edit")
+            else 1
+        )
+        _validate_image_media(
+            values.get("image"),
+            field="Edit image",
+            max_items=max_references,
+            max_pixels=adapter.max_reference_pixels,
+        )
+    elif action == "Inpaint":
+        _validate_image_media(
+            values.get("image"),
+            field="Inpaint source",
+            max_items=1,
+            max_pixels=adapter.max_reference_pixels,
+            require_pil=True,
+            require_single_value=True,
+        )
+        _validate_image_media(
+            values.get("mask_image"),
+            field="Inpaint mask",
+            max_items=1,
+            max_pixels=adapter.max_reference_pixels,
+            require_pil=True,
+            require_single_value=True,
+        )
+    elif action == "ControlGenerate":
+        _validate_image_media(
+            values.get("control_image"),
+            field="Control image",
+            max_items=1,
+            max_pixels=adapter.max_reference_pixels,
+        )
+    return adapter, values
 
 
 def output_image_dimensions(images: Any, output_type: str = "pil") -> tuple[int | None, int | None]:
@@ -568,7 +1243,6 @@ class FluxReduxPipelineBundle:
     def __init__(self, prior: Any, base: Any):
         self.prior = prior
         self.base = base
-        self._modiff_image_adapter = IMAGE_PIPELINE_ADAPTERS["FluxReduxPipeline"]
 
     @property
     def device(self):
@@ -643,13 +1317,30 @@ class LoadPipeline(NodeBase):
     # from_pretrained(), so changing it must not force another 13-minute load.
     cache_ignored_params = frozenset({"mode"})
     params = {
-        "pipeline": {"label": "Pipeline", "display": "output", "type": "image_diffusion_pipeline"},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "image_diffusion_pipeline",
+            "signal": {
+                "direction": "output",
+                "origin": "pipeline_class",
+                "value": DEFAULT_IMAGE_PIPELINE_CONTRACT,
+            },
+        },
         "model_id": {
             "label": "Model",
             "display": "modelselect",
             "type": "string",
             "value": {"source": "hub", "value": FLUX_SCHNELL_REPO},
-            "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]},
+            "fieldOptions": {
+                "noValidation": True,
+                "sources": ["hub", "local"],
+                "filter": {
+                    "hub": {"className": ["FluxPipeline"]},
+                    "local": {"className": ["FluxPipeline"]},
+                },
+            },
+            "onChange": "update_pipeline_contract",
         },
         "pipeline_class": {
             "label": "Pipeline Class",
@@ -657,12 +1348,15 @@ class LoadPipeline(NodeBase):
             "options": IMAGE_PIPELINE_CLASSES,
             "default": "FluxPipeline",
             "fieldOptions": {"noValidation": True},
+            "onChange": "update_pipeline_contract",
         },
         "mode": {
             "label": "Mode",
             "type": "string",
             "options": IMAGE_PIPELINE_MODE_OPTIONS,
             "default": "text_to_image",
+            "fieldOptions": {"noValidation": True},
+            "onChange": "update_pipeline_contract",
         },
         "revision": {"label": "Revision", "type": "string", "default": ""},
         "dtype": {
@@ -714,18 +1408,107 @@ class LoadPipeline(NodeBase):
     }
 
     @staticmethod
-    def _validate_mode(pipeline_class_name: str, requested_mode: str):
-        adapter = IMAGE_PIPELINE_ADAPTERS.get(pipeline_class_name)
-        if adapter is None or requested_mode not in adapter.modes:
-            supported = ", ".join(sorted(adapter.modes if adapter else [])) or "none"
-            raise ValueError(f"{pipeline_class_name} does not support {requested_mode}. Supported modes: {supported}.")
-        return adapter
+    def _validate_mode(pipeline_class_name: str, requested_mode: Any):
+        adapter = get_image_pipeline_adapter(pipeline_class_name)
+        mode = _loader_image_mode({"mode": requested_mode}, adapter)
+        return adapter, mode
 
     def __call__(self, **kwargs):
-        pipeline_class_name = str(kwargs.get("pipeline_class") or "FluxPipeline")
-        requested_mode = str(kwargs.get("mode") or "text_to_image")
-        self._validate_mode(pipeline_class_name, requested_mode)
-        return super().__call__(**kwargs)
+        adapter = _loader_image_pipeline_adapter(kwargs)
+        requested_mode = _loader_image_mode(kwargs, adapter)
+        values = dict(kwargs)
+        values["pipeline_class"] = adapter.pipeline_class
+        values["mode"] = requested_mode
+        values["model_id"] = resolve_image_model_selection(adapter, values.get("model_id"))
+        values["revision"] = resolve_image_pipeline_revision(values["model_id"], values.get("revision"))
+        result = super().__call__(**values)
+        pipeline = result.get("pipeline") if isinstance(result, dict) else None
+        if pipeline is not None:
+            _tag_image_pipeline(
+                pipeline,
+                adapter,
+                requested_mode,
+                repo_value(values["model_id"]),
+                values["model_id"]["source"],
+                values["revision"],
+            )
+        return result
+
+    def update_pipeline_contract(self, values, ref):
+        if not isinstance(values, dict):
+            raise ValueError("Diffusers image loader values must be an object.")
+        adapter = _loader_image_pipeline_adapter(values)
+        requested_mode = values.get("mode")
+        if not isinstance(requested_mode, str) or not requested_mode or requested_mode != requested_mode.strip():
+            raise ValueError("A registered Diffusers image mode is required.")
+        signal_origin = ref.get("key") if isinstance(ref, dict) else ref
+        if requested_mode in adapter.modes:
+            selected_mode = requested_mode
+        elif signal_origin == "pipeline_class" and requested_mode in IMAGE_PIPELINE_MODE_OPTIONS:
+            selected_mode = adapter.mode_options[0]
+        else:
+            _loader_image_mode(values, adapter)
+            raise AssertionError("unreachable")
+        current_selection = values.get("model_id")
+        resolved_selection = resolve_image_model_selection(adapter, current_selection)
+        raw_revision = _normalize_image_revision(values.get("revision"))
+        if resolved_selection.get("source") == "local":
+            resolved_revision = ""
+        else:
+            selected_repo = resolved_selection["value"]
+            reviewed_revision = catalog_revision(selected_repo)
+            if reviewed_revision is not None:
+                # A managed repository always owns its catalog pin. This also
+                # replaces a stale custom pin when a class change selects the
+                # class's reviewed default repository.
+                resolved_revision = reviewed_revision
+            elif signal_origin == "model_id":
+                # A field action has no trustworthy previous-repository value,
+                # so a custom repository selection cannot inherit the visible
+                # pin from whichever repository was selected before it.
+                resolved_revision = ""
+            else:
+                selection_was_replaced = False
+                if isinstance(current_selection, dict):
+                    raw_source = current_selection.get("source")
+                    raw_repo = current_selection.get("value")
+                    selection_was_replaced = not (
+                        isinstance(raw_source, str)
+                        and raw_source.strip().casefold() == resolved_selection["source"]
+                        and isinstance(raw_repo, str)
+                        and raw_repo.strip().casefold() == selected_repo.casefold()
+                    )
+                elif isinstance(current_selection, str):
+                    selection_was_replaced = current_selection.strip().casefold() != selected_repo.casefold()
+                else:
+                    selection_was_replaced = True
+                resolved_revision = (
+                    ""
+                    if selection_was_replaced
+                    else resolve_image_pipeline_revision(resolved_selection, raw_revision)
+                )
+
+        self.set_field_params(
+            "mode",
+            {"options": list(adapter.mode_options), "default": adapter.mode_options[0]},
+        )
+        self.set_field_params("model_id", {"fieldOptions": image_model_field_options(adapter)})
+        if selected_mode != requested_mode:
+            self.set_field_value({"mode": selected_mode})
+        if resolved_selection != current_selection:
+            self.set_field_value({"model_id": resolved_selection})
+        if resolved_revision != raw_revision:
+            self.set_field_value({"revision": resolved_revision})
+        self.set_field_params(
+            "pipeline",
+            {
+                "signal": {
+                    "direction": "output",
+                    "origin": str(signal_origin or "pipeline_class"),
+                    "value": image_pipeline_contract(adapter, selected_mode),
+                }
+            },
+        )
 
     def prepare_for_workflow_reuse(self):
         """Restore a resident image pipeline before another graph adopts it."""
@@ -746,20 +1529,15 @@ class LoadPipeline(NodeBase):
             execution_recipe = {}
         if not isinstance(execution_recipe, dict):
             raise TypeError("Execution Recipe must come from a Diffusers Execution Recipe node.")
-        pipeline_class_name = str(kwargs.get("pipeline_class") or "FluxPipeline")
-        requested_mode = str(kwargs.get("mode") or "text_to_image")
-        adapter = self._validate_mode(pipeline_class_name, requested_mode)
-        model_selection = kwargs.get("model_id")
-        selected_model_id = repo_value(model_selection)
-        model_id = selected_model_id or adapter.default_repo
-        model_source = model_selection.get("source") if selected_model_id and isinstance(model_selection, dict) else "hub"
+        adapter = _loader_image_pipeline_adapter(kwargs)
+        pipeline_class_name = adapter.pipeline_class
+        requested_mode = _loader_image_mode(kwargs, adapter)
+        model_selection = resolve_image_model_selection(adapter, kwargs.get("model_id"))
+        model_id = repo_value(model_selection)
+        model_source = model_selection["source"]
         dtype = str_to_dtype(kwargs.get("dtype") or "bfloat16")
         device = execution_recipe.get("device") or kwargs.get("device") or DEFAULT_DEVICE
-        revision = resolve_model_revision(
-            model_id,
-            none_if_blank(kwargs.get("revision")),
-            source=model_source,
-        )
+        revision = resolve_image_pipeline_revision(model_selection, kwargs.get("revision"))
         auto_offload = bool(kwargs.get("auto_offload", True))
         recipe_offload = execution_recipe.get("offload_mode")
         if recipe_offload is not None:
@@ -856,7 +1634,7 @@ class LoadPipeline(NodeBase):
             pipeline_class = pipeline_class_from_name(pipeline_class_name)
             with self.diffusers_loading_progress():
                 pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
-        pipeline._modiff_image_adapter = adapter
+        _tag_image_pipeline(pipeline, adapter, requested_mode, model_id, model_source, revision)
         runtime_recipe = {
             **execution_recipe,
             "vae_slicing": bool(
@@ -937,38 +1715,46 @@ class Generate(NodeBase):
             "max": 512,
             "step": 8,
         },
-        "max_sequence_length": {"label": "Max Sequence Length", "type": "int", "default": 256, "min": 1, "max": 2048},
+        "max_sequence_length": {"label": "Max Sequence Length", "type": "int", "default": 256, "min": 1, "max": 512},
         "output_type": {"label": "Output type", "type": "string", "options": ["pil", "np", "pt"], "default": "pil"},
         "images": {"label": "Images", "display": "output", "type": "image"},
         "width_out": {"label": "Width", "display": "output", "type": "int"},
         "height_out": {"label": "Height", "display": "output", "type": "int"},
     }
 
+    def __call__(self, **kwargs):
+        # Validate the raw graph payload before NodeBase can coerce booleans,
+        # blank strings, or container values into apparently valid numbers.
+        # The concrete registered class owns the action/mode check, so this
+        # remains one generic facade for Generate/Edit/Inpaint/ControlGenerate.
+        action = self.class_name
+        if action not in {"Generate", "Edit", "Inpaint", "ControlGenerate"}:
+            raise ValueError(f"Unsupported Diffusers image action {action!r}.")
+        _adapter, values = preflight_image_action(kwargs.get("pipeline"), action, kwargs)
+        return super().__call__(**values)
+
     def execute(self, **kwargs):
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_image_action(pipeline, "Generate", kwargs)
+
         import torch
 
-        pipeline = kwargs.get("pipeline")
-        if pipeline is None:
-            raise ValueError("Diffusers image pipeline is required.")
         device = getattr(pipeline, "_execution_device", None) or getattr(pipeline, "device", None) or "cpu"
         try:
-            generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed", 0)))
+            generator = torch.Generator(device=device).manual_seed(values["seed"])
         except Exception:
-            generator = torch.Generator(device="cpu").manual_seed(int(kwargs.get("seed", 0)))
-        steps = int(kwargs.get("num_inference_steps") or 4)
+            generator = torch.Generator(device="cpu").manual_seed(values["seed"])
+        steps = values["num_inference_steps"]
         call_kwargs = {
-            "prompt": kwargs.get("prompt") or "",
-            "width": int(kwargs.get("width") or 1024),
-            "height": int(kwargs.get("height") or 1024),
+            "prompt": values.get("prompt") or "",
+            "width": values["width"],
+            "height": values["height"],
             "num_inference_steps": steps,
             "generator": generator,
-            "output_type": kwargs.get("output_type") or "pil",
+            "output_type": values["output_type"],
             "return_dict": True,
         }
-        adapter = getattr(pipeline, "_modiff_image_adapter", None) or ImagePipelineAdapter(
-            type(pipeline).__name__, frozenset()
-        )
-        adapter.apply_generation_parameters(pipeline, kwargs, call_kwargs)
+        adapter.apply_generation_parameters(pipeline, values, call_kwargs)
         add_progress_callback(self, pipeline, call_kwargs, steps)
         self._active_pipeline = pipeline
         try:
@@ -1005,40 +1791,31 @@ class Edit(Generate):
     }
 
     def execute(self, **kwargs):
-        if kwargs.get("image") is None:
-            raise ValueError("Diffusers Image Edit needs an input image.")
         pipeline = kwargs.get("pipeline")
-        adapter = getattr(pipeline, "_modiff_image_adapter", None) or ImagePipelineAdapter(
-            type(pipeline).__name__ if pipeline is not None else "unknown", frozenset()
-        )
-        image = prepare_reference_images(kwargs.get("image"), adapter)
-        return self._execute_conditioned(kwargs, {"image": image})
+        adapter, values = preflight_image_action(pipeline, "Edit", kwargs)
+        image = prepare_reference_images(values.get("image"), adapter)
+        return self._execute_conditioned(values, {"image": image}, adapter=adapter)
 
-    def _execute_conditioned(self, kwargs, extra_kwargs):
+    def _execute_conditioned(self, values, extra_kwargs, *, adapter):
+        pipeline = values["pipeline"]
+
         import torch
 
-        pipeline = kwargs.get("pipeline")
-        if pipeline is None:
-            raise ValueError("Diffusers image pipeline is required.")
         device = getattr(pipeline, "_execution_device", None) or getattr(pipeline, "device", None) or "cpu"
         try:
-            generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed", 0)))
+            generator = torch.Generator(device=device).manual_seed(values["seed"])
         except Exception:
-            generator = torch.Generator(device="cpu").manual_seed(int(kwargs.get("seed", 0)))
-        steps = int(kwargs.get("num_inference_steps") or 4)
+            generator = torch.Generator(device="cpu").manual_seed(values["seed"])
+        steps = values["num_inference_steps"]
         call_kwargs = {
-            "prompt": kwargs.get("prompt") or "",
+            "prompt": values.get("prompt") or "",
             "num_inference_steps": steps,
             "generator": generator,
-            "output_type": kwargs.get("output_type") or "pil",
+            "output_type": values["output_type"],
             "return_dict": True,
             **extra_kwargs,
         }
-        adapter = getattr(pipeline, "_modiff_image_adapter", None)
-        if adapter is None:
-            guidance_parameter = "true_cfg_scale" if supports_arg(pipeline, "true_cfg_scale") else "guidance_scale"
-            adapter = ImagePipelineAdapter(type(pipeline).__name__, frozenset(), guidance_parameter=guidance_parameter)
-        adapter.apply_generation_parameters(pipeline, kwargs, call_kwargs)
+        adapter.apply_generation_parameters(pipeline, values, call_kwargs)
         add_progress_callback(self, pipeline, call_kwargs, steps)
         self._active_pipeline = pipeline
         try:
@@ -1049,8 +1826,8 @@ class Edit(Generate):
         actual_width, actual_height = output_image_dimensions(images, call_kwargs["output_type"])
         return {
             "images": images,
-            "width_out": actual_width if actual_width is not None else int(kwargs.get("width") or 0),
-            "height_out": actual_height if actual_height is not None else int(kwargs.get("height") or 0),
+            "width_out": actual_width if actual_width is not None else values["width"],
+            "height_out": actual_height if actual_height is not None else values["height"],
         }
 
 
@@ -1066,18 +1843,17 @@ class Inpaint(Edit):
     }
 
     def execute(self, **kwargs):
-        if kwargs.get("image") is None or kwargs.get("mask_image") is None:
-            raise ValueError("Diffusers Image Inpaint needs image and mask_image inputs.")
-        if kwargs.get("output_type", "pil") != "pil":
-            raise ValueError("Diffusers Image Inpaint requires output_type='pil' for mask-safe compositing.")
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_image_action(pipeline, "Inpaint", kwargs)
         result = self._execute_conditioned(
-            kwargs,
-            {"image": kwargs.get("image"), "mask_image": kwargs.get("mask_image")},
+            values,
+            {"image": values["image"], "mask_image": values["mask_image"]},
+            adapter=adapter,
         )
         result["images"] = composite_masked_pil_outputs(
             result.get("images"),
-            kwargs.get("image"),
-            kwargs.get("mask_image"),
+            values["image"],
+            values["mask_image"],
         )
         return result
 
@@ -1093,9 +1869,13 @@ class ControlGenerate(Edit):
     }
 
     def execute(self, **kwargs):
-        if kwargs.get("control_image") is None:
-            raise ValueError("Diffusers Control Generate needs a control_image input.")
-        return self._execute_conditioned(kwargs, {"control_image": kwargs.get("control_image")})
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_image_action(pipeline, "ControlGenerate", kwargs)
+        return self._execute_conditioned(
+            values,
+            {"control_image": values["control_image"]},
+            adapter=adapter,
+        )
 
 
 class LoadAdapter(NodeBase):
@@ -1113,11 +1893,17 @@ class LoadAdapter(NodeBase):
             "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]},
         },
         "weight_name": {"label": "Weight name", "type": "string", "default": ""},
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "default": "",
+            "description": "Required immutable Hub commit for the selected adapter repository.",
+        },
         "expected_sha256": {
             "label": "Expected SHA-256",
             "type": "string",
             "default": "",
-            "description": "Optional immutable hash for the selected adapter weight file.",
+            "description": "Required SHA-256 for Hub adapter weights; optional for local weights.",
         },
         "adapter_name": {"label": "Adapter name", "type": "string", "default": "default"},
         "replace_existing": {
@@ -1138,63 +1924,232 @@ class LoadAdapter(NodeBase):
         "output": {"label": "Pipeline", "display": "output", "type": "image_diffusion_pipeline"},
     }
 
-    def execute(self, **kwargs):
+    @staticmethod
+    def _normalized_request(kwargs: dict[str, Any]) -> dict[str, Any]:
+        """Normalize the raw adapter contract without touching a pipeline."""
+
+        if not isinstance(kwargs, dict):
+            raise ValueError("Diffusers image adapter values must be an object.")
         pipeline = kwargs.get("pipeline")
         if pipeline is None:
             raise ValueError("LoadAdapter needs a pipeline input.")
-        adapter_selection = kwargs.get("adapter_path")
-        adapter_path = repo_value(adapter_selection)
-        if not adapter_path:
-            return {"output": pipeline}
-        if not hasattr(pipeline, "load_lora_weights"):
+        if not callable(getattr(pipeline, "load_lora_weights", None)):
             raise ValueError("This pipeline does not expose load_lora_weights().")
-        load_kwargs = {
-            "adapter_name": kwargs.get("adapter_name") or "default",
-        }
-        weight_name = none_if_blank(kwargs.get("weight_name"))
-        source = adapter_selection.get("source") if isinstance(adapter_selection, dict) else "hub"
-        if source == "hub":
-            from pathlib import Path
-            from utils.huggingface import cached_file_path
 
+        selection = kwargs.get("adapter_path")
+        if selection is None or (isinstance(selection, str) and not selection.strip()):
+            source = None
+            adapter_path = ""
+            normalized_selection: str | dict[str, str] = ""
+        elif isinstance(selection, dict):
+            source = _canonical_image_model_source(
+                selection.get("source"), label="Diffusers image adapter"
+            )
+            raw_adapter_path = selection.get("value")
+            if not isinstance(raw_adapter_path, str):
+                raise ValueError("Diffusers image adapter value must be a repository ID or local path string.")
+            adapter_path = raw_adapter_path.strip()
+            if not adapter_path:
+                source = None
+                normalized_selection = ""
+            else:
+                normalized_selection = {"source": source, "value": adapter_path}
+        elif isinstance(selection, str):
+            source = "hub"
+            adapter_path = selection.strip()
+            normalized_selection = {"source": source, "value": adapter_path}
+        else:
+            raise ValueError(
+                "Diffusers image adapter selection must be a repository ID or a hub/local selection object."
+            )
+
+        raw_weight_name = kwargs.get("weight_name")
+        if raw_weight_name is not None and not isinstance(raw_weight_name, str):
+            raise ValueError("Diffusers image adapter weight_name must be a string.")
+        weight_name = str(raw_weight_name or "").strip()
+
+        raw_revision = kwargs.get("revision")
+        if raw_revision is not None and not isinstance(raw_revision, str):
+            raise ValueError("Diffusers image adapter revision must be a string.")
+        revision = str(raw_revision or "").strip()
+        if isinstance(raw_revision, str) and raw_revision != revision:
+            raise ValueError("Diffusers image adapter revision must be an exact trimmed string.")
+
+        raw_expected_sha256 = kwargs.get("expected_sha256")
+        if raw_expected_sha256 is not None and not isinstance(raw_expected_sha256, str):
+            raise ValueError("Diffusers image adapter expected_sha256 must be a string.")
+        expected_sha256 = str(raw_expected_sha256 or "").strip().lower().removeprefix("sha256:")
+        if expected_sha256 and (
+            len(expected_sha256) != 64
+            or any(character not in "0123456789abcdef" for character in expected_sha256)
+        ):
+            raise ValueError("Diffusers image adapter expected_sha256 must contain exactly 64 hexadecimal digits.")
+
+        raw_adapter_name = kwargs.get("adapter_name")
+        if raw_adapter_name is not None and not isinstance(raw_adapter_name, str):
+            raise ValueError("Diffusers image adapter name must be a string.")
+        adapter_name = str(raw_adapter_name or "default").strip()
+        if not adapter_name:
+            raise ValueError("Diffusers image adapter name cannot be blank.")
+        scale = _bounded_image_float(
+            kwargs.get("scale"), field="adapter scale", default=1.0, minimum=-2.0, maximum=2.0
+        )
+        raw_replace_existing = kwargs.get("replace_existing")
+        if raw_replace_existing is None:
+            replace_existing = True
+        elif type(raw_replace_existing) is not bool:
+            raise ValueError("Diffusers image adapter replace_existing must be a boolean.")
+        else:
+            replace_existing = raw_replace_existing
+
+        if source == "hub":
+            adapter_path = _validated_image_hub_repository(
+                adapter_path, label="Diffusers image adapter repository"
+            )
+            normalized_selection = {"source": "hub", "value": adapter_path}
+            if not weight_name:
+                raise ValueError("A Hub adapter requires an exact safetensors weight_name.")
+            weight_parts = weight_name.split("/")
+            if (
+                "\\" in weight_name
+                or weight_name.startswith("/")
+                or any(part in {"", ".", ".."} for part in weight_parts)
+                or not weight_name.endswith(".safetensors")
+            ):
+                raise ValueError("A Hub adapter weight_name must be a contained .safetensors repository file.")
+            if (
+                revision != revision.lower()
+                or not revision
+                or not IMMUTABLE_HUB_REVISION.fullmatch(revision)
+            ):
+                raise ValueError("A Hub Diffusers image adapter requires a lowercase 40-character commit revision.")
+            if not expected_sha256:
+                raise ValueError("A Hub Diffusers image adapter requires an expected SHA-256 hash.")
+        elif source == "local":
+            if revision:
+                raise ValueError("A local Diffusers image adapter cannot carry a Hub revision.")
+        elif revision or expected_sha256 or weight_name:
+            raise ValueError("Adapter weight, revision, and hash values require a selected adapter.")
+
+        values = dict(kwargs)
+        values.update(
+            {
+                "pipeline": pipeline,
+                "adapter_path": normalized_selection,
+                "weight_name": weight_name,
+                "revision": revision,
+                "expected_sha256": expected_sha256,
+                "adapter_name": adapter_name,
+                "replace_existing": replace_existing,
+                "scale": scale,
+            }
+        )
+        return values
+
+    def __call__(self, **kwargs):
+        # This facade-local pass prevents NodeBase's permissive primitive casts
+        # from turning malformed security fields into another request.
+        return super().__call__(**self._normalized_request(kwargs))
+
+    def execute(self, **kwargs):
+        values = self._normalized_request(kwargs)
+        pipeline = values["pipeline"]
+        selection = values["adapter_path"]
+        if not selection:
+            return {"output": pipeline}
+        source = selection["source"]
+        adapter_path = selection["value"]
+        weight_name = values["weight_name"] or None
+        resolved_weight: Path
+        load_adapter_path: Path
+        load_weight_name: str
+        if source == "hub":
             repo_id = adapter_path
-            if not weight_name:
-                parts = adapter_path.split("/")
-                if len(parts) >= 3:
-                    repo_id, weight_name = "/".join(parts[:2]), "/".join(parts[2:])
-            if not weight_name:
-                raise ValueError("A Hub adapter requires a pinned weight_name for app-managed installation.")
-            cached = cached_file_path(repo_id, weight_name)
+            cached = cached_file_path(repo_id, weight_name, revision=values["revision"])
             if not cached:
                 raise FileNotFoundError(
                     f"Adapter {repo_id}/{weight_name} is not installed. Install the pinned file through Model Manager first."
                 )
-            cached_path = Path(cached)
-            adapter_path = str(cached_path.parent)
-            weight_name = cached_path.name
-            expected_sha256 = str(kwargs.get("expected_sha256") or "").strip().lower().removeprefix("sha256:")
-            if expected_sha256:
-                digest = hashlib.sha256()
-                with cached_path.open("rb") as handle:
-                    for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-                        digest.update(chunk)
-                if digest.hexdigest() != expected_sha256:
-                    raise ValueError(
-                        f"Adapter {repo_id}/{weight_name} failed its pinned SHA-256 verification. "
-                        "Repair the adapter through Model Manager before running this graph."
-                    )
-        if weight_name:
-            load_kwargs["weight_name"] = weight_name
-        replace_existing = bool(kwargs.get("replace_existing", True))
+            cached_alias = Path(cached).expanduser()
+            if not cached_alias.name.endswith(".safetensors"):
+                raise ValueError(
+                    "The installed Hub adapter snapshot entry must have a lowercase .safetensors filename."
+                )
+            try:
+                resolved_weight = resolve_managed_hf_cache_file(cached)
+            except (FileNotFoundError, ValueError) as error:
+                raise FileNotFoundError(
+                    f"Installed adapter cache entry does not exist: {repo_id}/{weight_name}. "
+                    "Repair it through Model Manager."
+                ) from error
+            # Hugging Face snapshot entries normally symlink to extensionless
+            # blob files. Hash the resolved blob, but retain the validated
+            # snapshot alias so Diffusers selects its safetensors-only branch.
+            load_adapter_path = cached_alias.parent
+            load_weight_name = cached_alias.name
+        else:
+            try:
+                local_target = Path(adapter_path).expanduser().resolve(strict=True)
+            except (OSError, RuntimeError) as error:
+                raise FileNotFoundError(f"Diffusers image adapter path does not exist: {adapter_path}") from error
+            if local_target.is_file():
+                if weight_name is not None and Path(weight_name).name != local_target.name:
+                    raise ValueError("Local adapter file selection and weight_name refer to different files.")
+                resolved_weight = local_target
+            elif local_target.is_dir():
+                if weight_name is None:
+                    raise ValueError("A local Diffusers image adapter directory requires an exact weight_name.")
+                requested_weight = Path(weight_name)
+                if requested_weight.is_absolute():
+                    raise ValueError("Local Diffusers image adapter weight_name must stay inside its selected folder.")
+                try:
+                    resolved_weight = (local_target / requested_weight).resolve(strict=True)
+                    resolved_weight.relative_to(local_target)
+                except (OSError, RuntimeError, ValueError) as error:
+                    raise FileNotFoundError(
+                        f"Local Diffusers image adapter weight does not exist inside the selected folder: {weight_name}"
+                    ) from error
+                if not resolved_weight.is_file():
+                    raise FileNotFoundError("The selected local Diffusers image adapter weight is not a file.")
+            else:
+                raise FileNotFoundError(
+                    f"Diffusers image adapter target is not a file or folder: {local_target}"
+                )
+
+            if not resolved_weight.name.endswith(".safetensors"):
+                raise ValueError("A local Diffusers image adapter must select a lowercase .safetensors file.")
+            load_adapter_path = resolved_weight.parent
+            load_weight_name = resolved_weight.name
+
+        expected_sha256 = values["expected_sha256"]
+        if expected_sha256:
+            digest = hashlib.sha256()
+            with resolved_weight.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+                    digest.update(chunk)
+            if digest.hexdigest() != expected_sha256:
+                raise ValueError(
+                    "The Diffusers image adapter failed its pinned SHA-256 verification. "
+                    "Repair or reselect it before running this graph."
+                )
+
+        adapter_name = values["adapter_name"]
+        scale = values["scale"]
+        load_kwargs = {
+            "adapter_name": adapter_name,
+            "weight_name": load_weight_name,
+            "use_safetensors": True,
+        }
+        adapter_path = str(load_adapter_path)
+        replace_existing = values["replace_existing"]
         adapter_scales = dict(getattr(pipeline, "_modiff_adapter_scales", {}) or {})
-        if replace_existing and hasattr(pipeline, "unload_lora_weights"):
-            pipeline.unload_lora_weights()
+        unload_lora_weights = getattr(pipeline, "unload_lora_weights", None)
+        if replace_existing and callable(unload_lora_weights):
+            unload_lora_weights()
             adapter_scales.clear()
         pipeline.load_lora_weights(adapter_path, **load_kwargs)
-        raw_scale = kwargs.get("scale")
-        scale = 1.0 if raw_scale is None else float(raw_scale)
-        adapter_scales[load_kwargs["adapter_name"]] = scale
-        if hasattr(pipeline, "set_adapters"):
+        adapter_scales[adapter_name] = scale
+        if callable(getattr(pipeline, "set_adapters", None)):
             pipeline.set_adapters(list(adapter_scales), list(adapter_scales.values()))
         pipeline._modiff_adapter_scales = adapter_scales
         return {"output": pipeline}

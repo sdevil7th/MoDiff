@@ -12,6 +12,7 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Compare the qualified accelerator profiles and their proof levels           | [Runtime support matrix](runtime-support-matrix.md)                              |
 | Review optional attention, quantization, and compilation capabilities        | [Optional runtime optimizations](optional-runtime-optimizations.md)              |
 | Build Modular Diffusers graphs and understand experimental compatibility    | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                 |
+| Track Diffusers, Modular Diffusers, speech, testing, and asset work          | [Hugging Face integration roadmap](hugging-face-integration-roadmap.md)          |
 | Review the Hugging Face-derived engineering and runtime requirements        | [Hugging Face engineering alignment](hugging-face-standards.md)                  |
 | Review inherited source baselines and per-file modification notices         | [Source provenance map](source-provenance.md)                                    |
 | Contribute code, nodes, dependencies, or client-facing changes              | [Contributing](../CONTRIBUTING.md)                                               |

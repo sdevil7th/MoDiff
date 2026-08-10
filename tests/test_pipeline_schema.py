@@ -2,7 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
+from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
 from modules.ModularDiffusers.pipeline_schema import MoDiffParam, MoDiffPipelineConfig, input_param_to_modiff_param
 
 
@@ -63,6 +65,64 @@ class PipelineSchemaTests(unittest.TestCase):
 
             self.assertTrue(config_path.is_file())
             self.assertEqual(MoDiffPipelineConfig.load(directory).to_dict(), config.to_dict())
+
+    def test_default_vae_encoder_projects_only_an_upstream_generator_to_a_seed_field(self):
+        for upstream_inputs, expected_inputs in (
+            (["image", "generator"], ["image", "seed"]),
+            (["image"], ["image"]),
+        ):
+            with self.subTest(upstream_inputs=upstream_inputs):
+                block = SimpleNamespace(
+                    input_names=upstream_inputs,
+                    intermediate_output_names=["image_latents"],
+                    component_names=["vae"],
+                )
+                blocks = SimpleNamespace(sub_blocks={"vae_encoder": block})
+
+                node_config = MoDiffPipelineConfig.from_blocks(blocks).node_params["vae_encoder"]
+
+                self.assertEqual(node_config["input_names"], expected_inputs)
+                self.assertNotIn("generator", node_config["params"])
+                if "generator" in upstream_inputs:
+                    self.assertEqual(node_config["params"]["seed"]["min"], 0)
+                    self.assertEqual(node_config["params"]["seed"]["max"], 4294967295)
+
+    def test_resolved_node_contract_does_not_mutate_deserialized_custom_config(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Custom fixture",
+                "node_params": {
+                    "denoise": {
+                        "block_name": "denoise",
+                        "params": {
+                            "unet": {"label": "Denoiser", "type": "diffusers_auto_model"},
+                            "steps": {"label": "Steps", "type": "int", "default": 4},
+                        },
+                        "input_names": ["steps"],
+                        "model_input_names": ["unet"],
+                        "output_names": ["latents"],
+                    }
+                },
+            }
+        )
+        block = object()
+
+        class CustomPipeline:
+            def __init__(self):
+                self.blocks = SimpleNamespace(sub_blocks={"denoise": block})
+
+        registry = SimpleNamespace(get=lambda _pipeline_class: config)
+        with patch("modules.ModularDiffusers.modular_utils._get_registry_instance", return_value=registry):
+            resolved_blocks, first = require_modiff_node_contract(CustomPipeline, "denoise")
+            first["params"].pop("unet")
+            first["params"]["steps"]["default"] = 99
+            _, second = require_modiff_node_contract(CustomPipeline, "denoise")
+
+        self.assertIs(resolved_blocks, block)
+        self.assertIn("unet", config.node_params["denoise"]["params"])
+        self.assertEqual(config.node_params["denoise"]["params"]["steps"]["default"], 4)
+        self.assertIn("unet", second["params"])
+        self.assertEqual(second["params"]["steps"]["default"], 4)
 
 
 if __name__ == "__main__":

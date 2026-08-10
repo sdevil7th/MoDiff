@@ -65,6 +65,10 @@ uv pip check --python .venv/bin/python
 
 Use the corresponding accelerator instead of `cpu` when the change affects CUDA, ROCm, or MPS. Update the compatibility manifest and public installation guidance only when the evidence supports the claim. MoDiff deliberately has no `uv.lock`; do not generate one or describe the top-level requirements files as a cross-platform lock.
 
+MoDiff may integrate model libraries officially maintained and published by Hugging Face, but each library remains a separately reviewed execution dependency. Verify its upstream ownership, package provenance, license, supported version, loading behavior, and remote-code boundary. Hub hosting alone does not establish that a library or model is maintained by Hugging Face. Keep execution in the existing backend graph and expose task-generic contracts to the client.
+
+Transformers-specific execution is opt-in. Do not add Transformers to the base application environment or install an optional runtime merely because a template is viewed, nodes are discovered, or Auto compatibility is planned. A requiring workflow must identify its versioned optional runtime, show an explicit install/consent action, perform installation outside graph execution, and re-run package and compatibility checks before the workflow can run.
+
 ## Validation
 
 The baseline backend checks are:

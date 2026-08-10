@@ -32,8 +32,9 @@ class WanVaceLoaderTests(unittest.TestCase):
             patch("modules.DiffusersVideo.wan_vace.apply_pipeline_offload"),
         ):
             result = node.execute(
+                pipeline_class="WanVACEPipeline",
                 model_id={"source": "hub", "value": WAN_VACE_DEFAULT_REPO},
-                revision="pinned-revision",
+                revision="ec4d2cb062b548996b179d493fdd05340de702a1",
                 dtype="bfloat16",
                 device="cuda:0",
                 auto_offload=True,
@@ -46,7 +47,7 @@ class WanVaceLoaderTests(unittest.TestCase):
             WAN_VACE_DEFAULT_REPO,
             subfolder="vae",
             torch_dtype=torch.float32,
-            revision="pinned-revision",
+            revision="ec4d2cb062b548996b179d493fdd05340de702a1",
             local_files_only=True,
             cache_dir="E:/MoDiff/huggingface/hub",
         )
@@ -55,19 +56,84 @@ class WanVaceLoaderTests(unittest.TestCase):
         self.assertEqual(load_args, (WAN_VACE_DEFAULT_REPO,))
         self.assertEqual(load_kwargs["torch_dtype"], torch.bfloat16)
         self.assertIs(load_kwargs["vae"], vae)
-        self.assertEqual(load_kwargs["revision"], "pinned-revision")
+        self.assertEqual(load_kwargs["revision"], "ec4d2cb062b548996b179d493fdd05340de702a1")
         self.assertEqual(load_kwargs["cache_dir"], "E:/MoDiff/huggingface/hub")
         self.assertTrue(load_kwargs["local_files_only"])
         self.assertTrue(load_kwargs["low_cpu_mem_usage"])
 
 
 class WanVaceLongVideoTests(unittest.TestCase):
+    def test_generic_generate_preserves_canonical_numpy_and_torch_mask_layouts(self):
+        class Output:
+            frames = [["generated"]]
+
+        class Pipeline:
+            _modiff_video_pipeline_class = "WanVACEPipeline"
+            _execution_device = "cpu"
+            vae_scale_factor_temporal = 1
+            vae_scale_factor_spatial = 8
+            transformer = type("Transformer", (), {"config": type("Config", (), {"patch_size": (1, 2, 2)})()})()
+            boundary_ratio = None
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        cases = (
+            (
+                np.full((16, 16, 3), 23, dtype=np.uint8),
+                np.pad(
+                    np.full((16, 8), 255, dtype=np.uint8),
+                    ((0, 0), (8, 0)),
+                ),
+                lambda conditioned: (
+                    np.all(conditioned[:, :8] == 23),
+                    np.all(conditioned[:, 8:] == 127),
+                ),
+            ),
+            (
+                torch.full((3, 16, 16), 23, dtype=torch.uint8),
+                torch.cat(
+                    [
+                        torch.zeros((16, 8), dtype=torch.uint8),
+                        torch.full((16, 8), 255, dtype=torch.uint8),
+                    ],
+                    dim=1,
+                ),
+                lambda conditioned: (
+                    bool(torch.all(conditioned[:, :, :8] == 23)),
+                    bool(torch.all(conditioned[:, :, 8:] == 127)),
+                ),
+            ),
+        )
+        for index, (frame, mask, assertions) in enumerate(cases):
+            pipeline = Pipeline()
+            result = Generate(f"canonical-vace-layout-{index}").execute(
+                pipeline=pipeline,
+                mode="video_inpaint",
+                video=[frame],
+                mask=[mask],
+                width=16,
+                height=16,
+                num_frames=1,
+                num_inference_steps=1,
+            )
+
+            conditioned = pipeline.calls[0]["video"][0]
+            with self.subTest(container=type(frame).__name__):
+                self.assertEqual(assertions(conditioned), (True, True))
+                self.assertEqual(result["frames_out"], 1)
+
     def test_long_masked_video_uses_native_overlapping_segments_and_generated_anchor(self):
         class Output:
             def __init__(self, frames):
                 self.frames = [frames]
 
         class Pipeline:
+            _modiff_video_pipeline_class = "WanVACEPipeline"
             _execution_device = "cpu"
             vae_scale_factor_temporal = 4
             vae_scale_factor_spatial = 8
@@ -85,6 +151,7 @@ class WanVaceLongVideoTests(unittest.TestCase):
         mask = [np.full((4, 4), 255, dtype=np.uint8) for _ in range(161)]
         output = Generate().execute(
             pipeline=pipeline,
+            mode="video_inpaint",
             video=video,
             mask=mask,
             prompt="Replace the masked vessel with one stable amber vessel.",
@@ -116,6 +183,15 @@ class WanVaceLongVideoTests(unittest.TestCase):
 
         self.assertTrue(np.all(result[:, 0] == 23))
         self.assertTrue(np.all(result[:, 1] == 127))
+
+    def test_torch_mask_neutralization_broadcasts_a_spatial_mask_across_channels(self):
+        frame = torch.full((3, 2, 2), 23, dtype=torch.uint8)
+        mask = torch.tensor([[0, 255], [0, 255]], dtype=torch.uint8)
+
+        result = _neutralize_masked_region(frame, mask)
+
+        self.assertTrue(torch.all(result[:, :, 0] == 23))
+        self.assertTrue(torch.all(result[:, :, 1] == 127))
 
     def test_rgb_mask_neutralization_uses_gray_not_packed_red(self):
         frame = Image.new("RGB", (2, 1), (23, 41, 59))

@@ -5,14 +5,14 @@
 MoDiff integrates the experimental [Diffusers Modular Pipelines](https://huggingface.co/docs/diffusers/main/en/modular_diffusers/overview) APIs with its node graph. A small set of dynamic nodes can expose different model pipelines without creating a separate hardcoded node class for every model family.
 
 > [!WARNING]
-> Modular Diffusers APIs and compatible Hub repositories are still evolving. A visible node contract is not proof that every model/revision will load or fit on the current hardware. Custom blocks and `trust_remote_code` can execute repository-supplied Python; use only reviewed, revision-pinned sources and read [SECURITY.md](../../SECURITY.md).
+> Modular Diffusers APIs and compatible Hub repositories are still evolving. A visible node contract is not proof that every model/revision will load or fit on the current hardware. Custom repository contracts are preview-only in this release; repository-code execution and `trust_remote_code` are fail-closed. Read [SECURITY.md](../../SECURITY.md).
 
 ## Concepts
 
 - **Dynamic node contracts:** node fields adapt to the selected pipeline configuration.
 - **Composable workflows:** model loading, prompt encoding, denoising, and decoding can remain separate or be combined into a custom block.
 - **Shared components:** compatible nodes can reuse components from the package-level `ComponentsManager` instead of loading duplicate models.
-- **Hub-backed blocks:** supported repositories can provide Modular Diffusers configuration/code used to construct a node interface.
+- **Hub-backed contract previews:** exact cached Hub commits can provide bounded declarative metadata used to construct a node interface; custom execution remains disabled.
 - **Resource controls:** loaders expose supported quantization and offload modes, subject to package, model, and hardware compatibility.
 
 MoDiff adapts Diffusers' Mellon node-metadata helper to supply MoDiff dynamic fields and configuration names; the
@@ -44,9 +44,9 @@ Open the workflow library in the left sidebar and expand `modular_diffusers`. Th
 - `image_to_image` — prompt plus reference-image conditioning.
 - `multiple_image_edit` — multiple-image editing inputs.
 - `quantization` — an example with an explicit quantization configuration.
-- `dynamic_node` — a Hub-backed dynamic block example.
+- `dynamic_node` — a historical Hub-backed contract-preview graph; it is not runnable in this release.
 
-Drag a graph onto the canvas, inspect its selected model and required inputs, then update the graph before running. Models are not bundled with these JSON files; MoDiff may need to download them, and gated repositories may require accepted terms plus a Hugging Face read token.
+Drag a runnable built-in graph onto the canvas, inspect its selected model and required inputs, then update the graph before running. Models are not bundled with these JSON files; MoDiff may need to download them, and gated repositories may require accepted terms plus a Hugging Face read token. The historical `dynamic_node` graph remains only as migration input; its selected repository cannot produce a current MoDiff contract preview.
 
 [Watch the bundled workflow browser demo (MP4)](https://github.com/user-attachments/assets/a4d0604f-80ea-4470-80e6-53a73e584ca3)
 
@@ -68,6 +68,33 @@ Type a prompt, confirm model readiness, and use **Run**. A queued task response 
 
 [Watch a workflow execution demo (MP4)](https://github.com/user-attachments/assets/e563eeb0-4f9e-4a27-8304-49fd15b87550)
 
+### Opaque state routes
+
+Some reviewed built-in Qwen, SDXL, and Wan I2V action contracts dynamically
+expose `Route State` connectors. Wan I2V uses **Image Embeddings** → **Encode
+Image** → **Denoise** → **Decode Latents**, with image embeddings, image
+condition latents, and denoised latents retained on their exact typed edges.
+Keep the ordinary typed connections as well as the route connection. The route is a
+process-local capability that binds the exact Models Loader execution,
+component roles and resident processors, generator state, routed geometry,
+crop/overlay state, and paired tensors;
+it is not model data and cannot be serialized, copied between loader runs, or
+restored from an imported workflow value. Rerun the loader and upstream action
+when a route is missing or stale.
+
+Studio switches to the native mask/overlay path only after the complete route
+chain is present. A partial dynamic definition remains pending instead of
+guessing a fallback topology. The generic Qwen path and the internal SDXL base
+inpaint path carry masks and masked-image latents on their typed graph edges.
+SDXL inpaint remains unadvertised, unprofiled, and unqualified; combined SDXL
+VAE-route plus ControlNet, ControlNet Union, and IP-Adapter execution remain
+disabled while legacy bundle-only SDXL ControlNet is unchanged. Wan
+first/last-frame topology is preparatory and unadvertised: its official artifact
+has a distinct processor and transformer contract that is not in the executable
+artifact catalog. Supplying `last_image` therefore fails before block
+initialization; the existing cataloged `image_to_video` route remains the only
+executable Wan Modular image-conditioned mode.
+
 ## Reusing a loaded model
 
 Compatible tasks can share components from one `Load Models` node. For example, an image-edit path can add image encoding/conditioning nodes while reusing the model components already loaded for text-to-image.
@@ -78,11 +105,13 @@ Component reuse depends on compatible pipeline contracts and current cache state
 
 ## Dynamic Block
 
-`Dynamic Block` combines a compatible Modular Diffusers block configuration into one graph node. Enter a supported repository ID, load its definition, inspect the generated fields, and connect any required shared components or media inputs.
+`Dynamic Block` previews the declarative node contract from a compatible Modular Diffusers repository. Enter a repository ID and an exact 40-character commit, cache that revision through Model Manager, then inspect its sanitized generated fields. Previewing reads only the local Hub cache, performs no network fetch, and does not construct or execute the upstream pipeline.
 
-The shipped example uses `diffusers/FLUX.2-klein-4B-modular` at the immutable revision recorded in `data/model-artifact-catalog.json`. Repository availability and code can change; custom repositories still require an explicitly reviewed 40-character commit revision.
+The legacy `diffusers/FLUX.2-klein-4B-modular` selector and bundled graph are not valid MoDiff examples because that reviewed revision does not publish `modiff_pipeline_config.json`. They remain migration debt tracked by roadmap segment P1.1 and are not runnable.
 
-Dynamic blocks are not arbitrary no-code plugins. They must expose a structure understood by the current Diffusers/MoDiff integration, may require remote Python code, and can fail when upstream APIs or model files change.
+Dynamic blocks are not arbitrary no-code plugins. Sidecars must use MoDiff's bounded declarative schema, and executable callbacks are rejected.
+
+`Dynamic Block` is `contract_only` in this release. MoDiff can preview its sanitized fields, but execution fails before Diffusers can import any repository-selected component library.
 
 ## Combining workflows
 
@@ -90,19 +119,19 @@ Multiple Modular Diffusers paths can coexist on one canvas and share compatible 
 
 Only nodes connected to the submitted graph path execute, but shared component state still consumes memory. Inspect Queue, loader diagnostics, and GPU-process information when a combined graph exceeds available resources.
 
-## Custom Hub blocks
+## Custom Hub contract previews
 
-MoDiff can load compatible custom blocks from the Hugging Face Hub. This is a trust-sensitive feature:
+MoDiff can inspect compatible custom contracts from an exact locally cached Hugging Face Hub commit. This is a bounded, no-network preview path, not an executable custom-pipeline feature:
 
 Custom block repositories must publish MoDiff's current `modiff_pipeline_config.json` schema. The loader does not fall
 back to earlier extension schemas or filenames.
 
 1. Review the repository, owner, dependencies, license, and exact commit.
 2. Enter the reviewed 40-character commit revision; moving branches and tags are rejected.
-3. Enable `trust_remote_code` only when the repository requires it and you accept that its Python executes with backend-process permissions.
-4. Test on a dedicated local environment without sensitive files in `work_dir`.
+3. Keep `trust_remote_code` off. The backend rejects it before identity issuance, cache reuse, or model construction.
+4. Use the preview only to inspect the sanitized node contract. Executable custom repository code is deferred until MoDiff has a reviewed component dependency contract and isolated, task-scoped authorization.
 
-[Watch the custom prompt block demo (MP4)](https://github.com/user-attachments/assets/d68bc8c1-1b1c-478a-b94b-1e498c60a4fc)
+[Watch the historical custom prompt block demo (MP4)](https://github.com/user-attachments/assets/d68bc8c1-1b1c-478a-b94b-1e498c60a4fc). It predates the current fail-closed execution boundary and is not current qualification evidence.
 
 ## Additional nodes
 

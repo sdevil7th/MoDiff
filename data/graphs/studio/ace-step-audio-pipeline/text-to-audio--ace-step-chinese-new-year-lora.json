@@ -452,7 +452,7 @@
             "display": "slider",
             "label": "Shift",
             "max": 10,
-            "min": 0,
+            "min": 0.1,
             "step": 0.1,
             "type": "float",
             "value": 3
@@ -1730,6 +1730,13 @@
             "label": "Replace existing adapters",
             "type": "bool",
             "value": true
+          },
+          "revision": {
+            "default": "",
+            "description": "Required immutable 40-character commit SHA for Hub LoRAs.",
+            "label": "Revision",
+            "type": "string",
+            "value": "cb829a12775740c830a6d49795f16913065dc492"
           },
           "scale": {
             "default": 0.7,

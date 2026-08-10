@@ -147,12 +147,21 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
             def refresh(self, _values, _ref):
                 self.set_field_params("dtype", {"options": ["float16", "bfloat16"]})
 
-        module_name = ".".join(FieldNode.__module__.split(".")[:-1])
-        definition = {module_name: {"FieldNode": {"params": {}}}}
+        FieldNode.__module__ = "tests.test_workflow_store"
+        module_name = "tests"
+        definition = {
+            module_name: {
+                "FieldNode": {
+                    "params": {
+                        "dtype": {"onChange": "refresh"},
+                    }
+                }
+            }
+        }
         with patch("modiff.NodeBase._module_map", return_value=definition):
             node = FieldNode("field-node")
 
-        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
         server.loop = asyncio.get_running_loop()
         server.node_cache["field-node"] = node
         messages = []
@@ -162,6 +171,8 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
             {
                 "node": "field-node",
                 "sid": "field-session",
+                "module": module_name,
+                "action": "FieldNode",
                 "fn": "refresh",
                 "values": {"dtype": "float16"},
                 "fieldKey": "dtype",
@@ -191,6 +202,127 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(completed["workflow_tab_id"], "workflow-field")
         self.assertEqual(completed["workflow_canvas_epoch"], 17)
         self.assertEqual(completed["args"][1]["node"], "field-node")
+
+    async def test_field_action_rejects_unknown_or_undeclared_targets_before_import(self):
+        module_name = "modules.ModularDiffusers"
+        action_name = "ModelsLoader"
+        definition = {
+            module_name: {
+                action_name: {
+                    "params": {
+                        "repo_id": {"onChange": "refresh_pipeline_identity"},
+                    }
+                }
+            }
+        }
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        base_payload = {
+            "node": "imported-loader",
+            "sid": "field-session",
+            "module": module_name,
+            "action": action_name,
+            "fieldKey": "repo_id",
+            "fn": "refresh_pipeline_identity",
+            "values": {},
+            "queue": False,
+        }
+        cases = {
+            "unknown module": {"module": "custom.Attacker"},
+            "unknown action": {"action": "AttackerNode"},
+            "unknown field": {"fieldKey": "removed_or_imported_field"},
+            "undeclared method": {"fn": "prepare_for_workflow_reuse"},
+        }
+
+        with patch("modiff.server.import_module") as import_mock:
+            for label, override in cases.items():
+                with self.subTest(label=label):
+                    response = await server.field_action(
+                        FakeRequest("imported-loader", {**base_payload, **override})
+                    )
+                    payload = json.loads(response.text)
+                    self.assertEqual(response.status, 400)
+                    self.assertTrue(payload["error"])
+            import_mock.assert_not_called()
+
+    async def test_field_action_rejects_non_object_payload_before_dispatch(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        with patch("modiff.server.import_module") as import_mock:
+            for payload in (None, [], ["attacker"]):
+                with self.subTest(payload=payload):
+                    response = await server.field_action(FakeRequest("field-node", payload))
+                    body = json.loads(response.text)
+                    self.assertEqual(response.status, 400)
+                    self.assertTrue(body["error"])
+                    self.assertIn("JSON object", body["message"])
+        import_mock.assert_not_called()
+
+    async def test_field_action_dispatches_authorized_models_loader_callback(self):
+        module_name = "modules.ModularDiffusers"
+        action_name = "ModelsLoader"
+        definition = {
+            module_name: {
+                action_name: {
+                    "params": {
+                        "repo_id": {
+                            "onSignal": [
+                                {"action": "value", "data": "repo_id"},
+                                [{"action": "exec", "data": "refresh_pipeline_identity"}],
+                            ]
+                        },
+                    }
+                }
+            }
+        }
+
+        class CachedModelsLoader:
+            module_name = "modules.ModularDiffusers"
+            class_name = "ModelsLoader"
+
+            def __init__(self):
+                self._sid = None
+                self.calls = []
+
+            def refresh_pipeline_identity(self, values, ref):
+                self.calls.append((values, ref))
+
+            def prepare_for_workflow_reuse(self):
+                raise AssertionError("An undeclared callback was dispatched.")
+
+        cached_node = CachedModelsLoader()
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        server.loop = asyncio.get_running_loop()
+        server.node_cache["models-loader"] = cached_node
+
+        response = await server.field_action(
+            FakeRequest(
+                "models-loader",
+                {
+                    "node": "models-loader",
+                    "sid": "field-session",
+                    "module": module_name,
+                    "action": action_name,
+                    "fieldKey": "repo_id",
+                    "fn": "refresh_pipeline_identity",
+                    "values": {"repo_id": {"source": "hub", "value": "org/repo"}},
+                    "queue": False,
+                },
+            )
+        )
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertFalse(payload["error"])
+        self.assertEqual(payload["ref"], {"node": "models-loader", "key": "repo_id", "queue": False})
+        self.assertEqual(cached_node._sid, "field-session")
+        self.assertEqual(
+            cached_node.calls,
+            [
+                (
+                    {"repo_id": {"source": "hub", "value": "org/repo"}},
+                    {"node": "models-loader", "key": "repo_id", "queue": False},
+                )
+            ],
+        )
 
     async def test_generated_media_is_preserved_without_a_frontend_history_post(self):
         server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)

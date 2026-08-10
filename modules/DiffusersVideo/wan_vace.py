@@ -37,24 +37,28 @@ def none_if_blank(value: Any):
 
 def ensure_single_prompt(prompt: Any, field_name: str):
     if isinstance(prompt, list):
-        raise ValueError(f"Wan VACE currently supports one {field_name}; prompt lists are not supported by this pipeline.")
+        raise ValueError(
+            f"Wan VACE currently supports one {field_name}; prompt lists are not supported by this pipeline."
+        )
     return prompt
 
 
 def ensure_video_list(value: Any, field_name: str):
-    if value in (None, ""):
+    if value is None or (isinstance(value, str) and value == ""):
         return None
-    if isinstance(value, list):
-        return value
+    if isinstance(value, (list, tuple)):
+        normalized = list(value)
+        return normalized or None
     raise ValueError(f"{field_name} must be a video frame list or be left empty.")
 
 
 def ensure_reference_images(value: Any):
-    if value in (None, ""):
+    if value is None or (isinstance(value, str) and value == ""):
         return None
-    if not isinstance(value, list):
-        return [value]
-    return value
+    if isinstance(value, (list, tuple)):
+        normalized = list(value)
+        return normalized or None
+    return [value]
 
 
 def parse_json_object(value: Any, field_name: str):
@@ -127,10 +131,12 @@ def _neutralize_masked_region(frame: Any, mask: Any):
 
         if isinstance(frame, torch.Tensor) and isinstance(mask, torch.Tensor):
             mask_values = mask
+            if frame.ndim == mask_values.ndim == 3 and mask_values.shape[0] in {1, 3, 4}:
+                mask_values = mask_values[0]
             threshold = 0.5 if mask_values.is_floating_point() and float(mask_values.max()) <= 1 else 127
             generate = mask_values > threshold
             while generate.ndim < frame.ndim:
-                generate = generate.unsqueeze(-1)
+                generate = generate.unsqueeze(0)
             if generate.shape != frame.shape:
                 generate = torch.broadcast_to(generate, frame.shape)
             if frame.is_floating_point():
@@ -147,7 +153,7 @@ def _neutralize_masked_region(frame: Any, mask: Any):
         import numpy as np
 
         if isinstance(frame, np.ndarray) and isinstance(mask, np.ndarray):
-            mask_values = mask[..., 0] if mask.ndim == frame.ndim else mask
+            mask_values = mask[..., 0] if frame.ndim == mask.ndim == 3 else mask
             threshold = 0.5 if np.issubdtype(mask_values.dtype, np.floating) and float(mask_values.max()) <= 1 else 127
             generate = mask_values > threshold
             while generate.ndim < frame.ndim:
@@ -169,9 +175,7 @@ def _neutralize_masked_region(frame: Any, mask: Any):
         neutral_color = 127 if len(bands) == 1 else tuple(255 if band == "A" else 127 for band in bands)
         neutral = Image.new(frame.mode, frame.size, neutral_color)
         return Image.composite(neutral, frame, mask.convert("L"))
-    raise TypeError(
-        f"Wan VACE cannot neutralize {type(frame).__name__} frames with {type(mask).__name__} masks."
-    )
+    raise TypeError(f"Wan VACE cannot neutralize {type(frame).__name__} frames with {type(mask).__name__} masks.")
 
 
 def validate_dimensions(width: int, height: int, pipeline: Any):
@@ -184,8 +188,7 @@ def validate_dimensions(width: int, height: int, pipeline: Any):
     height_multiple = spatial_scale * int(patch_height)
     if width % width_multiple != 0 or height % height_multiple != 0:
         raise ValueError(
-            f"Wan VACE size must be divisible by {width_multiple}x{height_multiple}; "
-            f"received {width}x{height}."
+            f"Wan VACE size must be divisible by {width_multiple}x{height_multiple}; received {width}x{height}."
         )
 
 
@@ -235,7 +238,9 @@ class WanVACELoadPipeline(NodeBase):
         model_selection = kwargs.get("model_id")
         selected_model_id = repo_value(model_selection)
         model_id = selected_model_id or WAN_VACE_DEFAULT_REPO
-        model_source = model_selection.get("source") if selected_model_id and isinstance(model_selection, dict) else "hub"
+        model_source = (
+            model_selection.get("source") if selected_model_id and isinstance(model_selection, dict) else "hub"
+        )
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         revision = resolve_model_revision(
             model_id,
@@ -301,21 +306,62 @@ class WanVACEGenerate(NodeBase):
         "video": {"label": "Source/control video", "display": "input", "type": "video", "required": False},
         "mask": {"label": "Mask video", "display": "input", "type": "video", "required": False},
         "reference_images": {"label": "Reference images", "display": "input", "type": "image", "required": False},
-        "conditioning_scale": {"label": "Conditioning Scale", "display": "slider", "type": "float", "min": 0, "max": 2, "step": 0.05, "default": 1.0},
+        "conditioning_scale": {
+            "label": "Conditioning Scale",
+            "display": "slider",
+            "type": "float",
+            "min": 0,
+            "max": 2,
+            "step": 0.05,
+            "default": 1.0,
+        },
         "width": {"label": "Width", "type": "int", "default": 832, "min": 16, "max": 2048, "step": 16},
         "height": {"label": "Height", "type": "int", "default": 480, "min": 16, "max": 2048, "step": 16},
         "num_frames": {"label": "Frames", "type": "int", "default": 81, "min": 1, "max": 241, "step": 4},
-        "num_inference_steps": {"label": "Steps", "display": "slider", "type": "int", "default": 30, "min": 1, "max": 100},
-        "guidance_scale": {"label": "Guidance", "display": "slider", "type": "float", "default": 5.0, "min": 0, "max": 20, "step": 0.1},
-        "guidance_scale_2": {"label": "Guidance 2", "display": "slider", "type": "float", "default": 0.0, "min": 0, "max": 20, "step": 0.1},
+        "num_inference_steps": {
+            "label": "Steps",
+            "display": "slider",
+            "type": "int",
+            "default": 30,
+            "min": 1,
+            "max": 100,
+        },
+        "guidance_scale": {
+            "label": "Guidance",
+            "display": "slider",
+            "type": "float",
+            "default": 5.0,
+            "min": 0,
+            "max": 20,
+            "step": 0.1,
+        },
+        "guidance_scale_2": {
+            "label": "Guidance 2",
+            "display": "slider",
+            "type": "float",
+            "default": 0.0,
+            "min": 0,
+            "max": 20,
+            "step": 0.1,
+        },
         "use_guidance_scale_2": {"label": "Use guidance 2", "type": "bool", "default": False},
         "num_videos_per_prompt": {"label": "Videos per prompt", "type": "int", "default": 1, "min": 1, "max": 1},
         "seed": {"label": "Seed", "type": "int", "display": "random", "default": 0, "min": 0, "max": 4294967295},
         "latents": {"label": "Latents", "display": "input", "type": "tensor", "required": False},
         "prompt_embeds": {"label": "Prompt embeds", "display": "input", "type": "tensor", "required": False},
-        "negative_prompt_embeds": {"label": "Negative prompt embeds", "display": "input", "type": "tensor", "required": False},
+        "negative_prompt_embeds": {
+            "label": "Negative prompt embeds",
+            "display": "input",
+            "type": "tensor",
+            "required": False,
+        },
         "output_type": {"label": "Output type", "type": "string", "options": ["pil", "np", "pt"], "default": "pil"},
-        "attention_kwargs_json": {"label": "Attention kwargs JSON", "display": "textarea", "type": "text", "default": ""},
+        "attention_kwargs_json": {
+            "label": "Attention kwargs JSON",
+            "display": "textarea",
+            "type": "text",
+            "default": "",
+        },
         "callback_on_step_end_tensor_inputs": {"label": "Callback tensors", "type": "string", "default": "latents"},
         "max_sequence_length": {"label": "Max sequence length", "type": "int", "default": 512, "min": 1, "max": 2048},
         "video_out": {"label": "Video frames", "display": "output", "type": "video"},
@@ -377,7 +423,9 @@ class WanVACEGenerate(NodeBase):
             "return_dict": True,
             "attention_kwargs": parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
             "callback_on_step_end": self.pipe_callback,
-            "callback_on_step_end_tensor_inputs": callback_tensor_inputs(kwargs.get("callback_on_step_end_tensor_inputs")),
+            "callback_on_step_end_tensor_inputs": callback_tensor_inputs(
+                kwargs.get("callback_on_step_end_tensor_inputs")
+            ),
             "max_sequence_length": int(kwargs.get("max_sequence_length", 512)),
         }
 

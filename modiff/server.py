@@ -1,6 +1,7 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 import asyncio
+import math
 from aiohttp import web, WSMsgType
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES
 from aiohttp_cors import setup as cors_setup, ResourceOptions
@@ -256,6 +257,20 @@ def is_image_data_type(data_type):
     return False
 
 
+def is_cache_servable_data_type(data_type):
+    if is_image_data_type(data_type):
+        return True
+    if isinstance(data_type, str):
+        return data_type in {"audio", "video", "text"} or data_type.startswith("str")
+    if isinstance(data_type, (list, tuple, set)):
+        return any(
+            item in {"audio", "video", "text"}
+            or (isinstance(item, str) and item.startswith("str"))
+            for item in data_type
+        )
+    return False
+
+
 def image_dimensions(value):
     width = getattr(value, "width", None)
     height = getattr(value, "height", None)
@@ -391,6 +406,7 @@ from modiff.diffusers_offload import (
 from modiff.diffusers_profiles import (
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     VERIFIED_REPAIR_SOURCES,
+    optional_runtime_profile_ids_for_execution,
     public_execution_profiles,
     public_experimental_pipelines,
 )
@@ -399,6 +415,7 @@ from modiff.runtime_profile import runtime_profile
 from modiff.auto_resource import (
     PROVEN_PROOF_STATUSES,
     artifact_cache_status,
+    auto_resource_pair_is_declared,
     build_auto_resource_plan,
     build_auto_resource_plans,
     clear_auto_resource_history,
@@ -406,20 +423,47 @@ from modiff.auto_resource import (
     record_auto_resource_failure,
     record_auto_resource_success,
 )
-from modiff.model_artifact_catalog import public_model_artifact_catalog, refreshed_hub_metadata
+from modiff.model_artifact_catalog import (
+    IMMUTABLE_HUB_REVISION,
+    catalog_revision,
+    public_model_artifact_catalog,
+    refreshed_hub_metadata,
+)
 from modiff.optimization_packages import (
+    activate_optional_runtime_environment,
     activate_environment as activate_optimization_environment,
+    install_optional_runtime,
     install_capability as install_optimization_capability,
     optimization_selections_from_graph,
     probe_capability as probe_optimization_capability,
     public_catalog as public_optimization_catalog,
+    public_optional_runtime_catalog,
     qualify_receipt as qualify_optimization_receipt,
     read_receipts as read_optimization_receipts,
     record_workload_observation as record_optimization_workload_observation,
     record_workload_baseline as record_optimization_workload_baseline,
     rollback_environment as rollback_optimization_environment,
+    rollback_optional_runtime_environment,
     set_capability_enabled as set_optimization_capability_enabled,
     workload_key_for_form as optimization_workload_key_for_form,
+    validate_optional_runtime_activation_request,
+    validate_optional_runtime_install_request,
+)
+from modiff.runtime_overlays import (
+    OverlayCancelled,
+    OverlayInstallBusy,
+    cancel_install as cancel_runtime_install,
+    release_install as release_runtime_install,
+    reserve_install as reserve_runtime_install,
+)
+from modiff.optional_runtimes import public_optional_runtime_profiles
+from modiff.optional_runtime_execution import (
+    assert_optional_runtime_ready,
+    graph_optional_runtime_requirement,
+    loader_optional_runtime_requirement,
+    optional_runtime_blocker_payload,
+    optional_runtime_requirement_blocks_execution,
+    optional_runtime_requirement_for_execution,
 )
 from modiff.modelstore import modelstore
 from modules import MODULE_MAP, parse_module_map
@@ -608,6 +652,7 @@ STUDIO_MODEL_CAPABILITIES = {
                 "id": "qwen-controlnet-union",
                 "label": "Qwen ControlNet Union",
                 "repo": "InstantX/Qwen-Image-ControlNet-Union",
+                "revision": "b13036f066d6dee7c20513e263d3d673055e9de8",
                 "kind": "controlnet",
                 "requiredForModes": ["control_image"],
                 "description": "Required for Qwen Image Control image workflows.",
@@ -620,6 +665,7 @@ STUDIO_MODEL_CAPABILITIES = {
                         "id": "qwen-controlnet-union",
                         "label": "Qwen ControlNet Union",
                         "repo": "InstantX/Qwen-Image-ControlNet-Union",
+                        "revision": "b13036f066d6dee7c20513e263d3d673055e9de8",
                         "kind": "controlnet",
                         "requiredForModes": ["control_image"],
                         "description": "Required for Qwen Image Control image workflows.",
@@ -699,7 +745,10 @@ STUDIO_MODEL_CAPABILITIES = {
             "offloadMode": OFFLOAD_MODE_MODEL_CPU,
             "steps": 24,
         },
-        "modes": ["edit_image", "multi_image_reference_edit", "inpaint"],
+        # Legacy clients fall back to this list when schema-v2 runnableModes is
+        # unavailable. Keep it aligned with the executable profile so an
+        # imported Edit Plus form cannot revive the unimplemented mask path.
+        "modes": ["edit_image", "multi_image_reference_edit"],
         "executionStatus": "supported_with_model",
         "notes": ["Inpaint mask execution still requires a confirmed backend mask graph contract."],
         "inpaintContract": QWEN_IMAGE_EDIT_PLUS_INPAINT_CONTRACT,
@@ -1404,6 +1453,10 @@ class WebServer:
                 pass
         self.task_graphs = {}
         self.optimization_jobs = {}
+        self._runtime_install_leases = {}
+        self._runtime_install_gate_tokens = {}
+        self._runtime_mutation_gate = None
+        self._active_nonruntime_mutations = 0
 
         self.main_queue = asyncio.Queue()
         self.background_queue = asyncio.Queue()
@@ -1452,6 +1505,7 @@ class WebServer:
         self.client_max_size = client_max_size
         self.work_dir = work_dir
         self.data_dir = data_dir
+        self._load_runtime_jobs()
         # Prime interval counters at startup so the first browser request can
         # usually report active time instead of waiting for a second poll.
         self._runtime_disk_activity_sampler.sample(self.data_dir)
@@ -1504,12 +1558,34 @@ class WebServer:
                 web.get("/runtime/optimizations", self.runtime_optimizations),
                 web.post("/runtime/optimizations/install", self.runtime_optimization_install),
                 web.get("/runtime/optimizations/jobs/{job_id}", self.runtime_optimization_job),
+                web.post(
+                    "/runtime/optimizations/jobs/{job_id}/cancel",
+                    self.runtime_optimization_job_cancel,
+                ),
                 web.post("/runtime/optimizations/activate", self.runtime_optimization_activate),
                 web.post("/runtime/optimizations/rollback", self.runtime_optimization_rollback),
                 web.post("/runtime/optimizations/enable", self.runtime_optimization_enable),
                 web.post("/runtime/optimizations/probe", self.runtime_optimization_probe),
                 web.get("/runtime/optimizations/receipts", self.runtime_optimization_receipts),
                 web.post("/runtime/optimizations/qualify", self.runtime_optimization_qualify),
+                web.get("/runtime/optional-runtimes", self.runtime_optional_runtimes),
+                web.post("/runtime/optional-runtimes/install", self.runtime_optional_runtime_install),
+                web.get(
+                    "/runtime/optional-runtimes/jobs/{job_id}",
+                    self.runtime_optimization_job,
+                ),
+                web.post(
+                    "/runtime/optional-runtimes/jobs/{job_id}/cancel",
+                    self.runtime_optimization_job_cancel,
+                ),
+                web.post(
+                    "/runtime/optional-runtimes/activate",
+                    self.runtime_optional_runtime_activate,
+                ),
+                web.post(
+                    "/runtime/optional-runtimes/rollback",
+                    self.runtime_optional_runtime_rollback,
+                ),
                 web.get("/system_stats", self.system_stats),
                 web.get("/runtime/gpu_processes", self.runtime_gpu_processes),
                 web.post("/runtime/gpu_cleanup", self.runtime_gpu_cleanup),
@@ -1926,17 +2002,51 @@ class WebServer:
                 logger.warning("Could not persist supervisor queue state", exc_info=True)
                 try:
                     temporary.unlink(missing_ok=True)
-                except OSError:
+                except (OSError, TypeError, ValueError):
                     pass
 
-    async def queue_task(self, task, args, future, sid, name=None, runtime_hints=None):
-        task_id = nanoid.generate(size=12)
+    async def queue_task(
+        self,
+        task,
+        args,
+        future,
+        sid,
+        name=None,
+        runtime_hints=None,
+        optional_runtime_requirement=None,
+    ):
+        if self._runtime_mutation_gate is not None:
+            raise OverlayInstallBusy(
+                "Runtime work is unavailable during runtime mutation or recovery."
+            )
         task_name = name or f"Unnamed task ({task.__name__})"
         graph = (
             args[0]
             if task_name == "Graph execution" and isinstance(args, tuple) and args and isinstance(args[0], dict)
             else None
         )
+        overlay_status = os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS", "base")
+        if overlay_status in {
+            "busy_recovery_only",
+            "repair_required",
+            "restart_required",
+        }:
+            requirement = (
+                graph_optional_runtime_requirement(graph)
+                if graph is not None
+                else optional_runtime_requirement
+            )
+            base_requirement = bool(
+                isinstance(requirement, dict)
+                and requirement.get("delivery") == "base"
+                and requirement.get("requiredNow") is False
+                and requirement.get("state") == "base_satisfied"
+            )
+            if requirement is not None and not base_requirement:
+                raise OverlayInstallBusy(
+                    "Runtime work is unavailable during runtime mutation or recovery."
+                )
+        task_id = nanoid.generate(size=12)
         runtime_hints = (
             self._coerce_runtime_hints(graph.get("runtimeHints"))
             if graph
@@ -2295,7 +2405,14 @@ class WebServer:
                                 terminal_message["message"] = "Execution interrupted by the user."
                             elif isinstance(failure_payload, dict):
                                 terminal_message.update(failure_payload)
-                            if runtime_cleanup is not None:
+                            if (
+                                runtime_cleanup is not None
+                                and not (
+                                    isinstance(failure_payload, dict)
+                                    and failure_payload.get("category")
+                                    == "optional_runtime"
+                                )
+                            ):
                                 terminal_message["runtimeCleanup"] = runtime_cleanup
                             if preview_state:
                                 terminal_message["preview_slots"] = preview_state["previewSlots"]
@@ -2644,7 +2761,19 @@ class WebServer:
             }
         )
 
-    def _execute_field_action(self, fn, identity, include_current_task, values, ref):
+    def _execute_field_action(
+        self,
+        fn,
+        identity,
+        include_current_task,
+        module,
+        action,
+        values,
+        ref,
+    ):
+        assert_optional_runtime_ready(
+            loader_optional_runtime_requirement(module, action, values)
+        )
         from modiff.NodeBase import node_message_context
 
         message_identity = dict(identity) if isinstance(identity, dict) else {}
@@ -2658,30 +2787,144 @@ class WebServer:
         with node_message_context(message_identity):
             return fn(values, ref)
 
+    @staticmethod
+    def _declared_field_exec_actions(field_definition):
+        """Collect backend method names from one authoritative field contract."""
+
+        if not isinstance(field_definition, dict):
+            return set()
+        allowed = set()
+        for event_name in ("onChange", "onSignal"):
+            pending = [field_definition.get(event_name)]
+            while pending:
+                descriptor = pending.pop()
+                if isinstance(descriptor, str):
+                    if descriptor:
+                        allowed.add(descriptor)
+                elif isinstance(descriptor, (list, tuple)):
+                    pending.extend(descriptor)
+                elif isinstance(descriptor, dict) and descriptor.get("action") == "exec":
+                    method_name = descriptor.get("data")
+                    if isinstance(method_name, str) and method_name:
+                        allowed.add(method_name)
+        return allowed
+
+    def _authorize_field_action(self, *, module, action, field_key, method_name):
+        """Validate a field RPC against the live backend node definition."""
+
+        if not all(isinstance(value, str) and value for value in (module, action, field_key, method_name)):
+            raise ValueError("Field actions require non-empty module, action, fieldKey, and fn strings.")
+        module_definition = self.modules.get(module)
+        if not isinstance(module_definition, dict):
+            raise ValueError(f"Unknown field-action module {module!r}.")
+        action_definition = module_definition.get(action)
+        if not isinstance(action_definition, dict):
+            raise ValueError(f"Unknown field-action node {module}.{action}.")
+        params = action_definition.get("params")
+        field_definition = params.get(field_key) if isinstance(params, dict) else None
+        if not isinstance(field_definition, dict):
+            raise ValueError(f"Unknown field {field_key!r} for field-action node {module}.{action}.")
+        allowed = self._declared_field_exec_actions(field_definition)
+        if method_name not in allowed:
+            raise ValueError(
+                f"Field {module}.{action}.{field_key} does not authorize backend action {method_name!r}."
+            )
+
     async def field_action(self, request):
         data = await request.json()
+        if not isinstance(data, dict):
+            return web.json_response(
+                {"error": True, "message": "Field action payload must be a JSON object."},
+                status=400,
+            )
+        if self._runtime_mutation_gate is not None:
+            return web.json_response(
+                {
+                    "error": True,
+                    "error_code": "runtime_mutation_busy",
+                    "message": "Field actions are unavailable during runtime mutation or recovery.",
+                },
+                status=409,
+            )
         node = data.get("node")
         sid = data.get("sid")
-        fn = data.get("fn")
+        method_name = data.get("fn")
         values = data.get("values")
         key = data.get("fieldKey", None)
         queue = data.get("queue", False)
+        module = data.get("module")
+        action = data.get("action")
+        if not isinstance(node, str) or not node:
+            return web.json_response(
+                {"error": True, "message": "Field actions require a non-empty node id."},
+                status=400,
+            )
+        if not isinstance(values, dict):
+            return web.json_response(
+                {"error": True, "message": "Field action values must be a JSON object."},
+                status=400,
+            )
+        if type(queue) is not bool:
+            return web.json_response(
+                {"error": True, "message": "Field action queue must be a JSON boolean."},
+                status=400,
+            )
+        try:
+            self._authorize_field_action(
+                module=module,
+                action=action,
+                field_key=key,
+                method_name=method_name,
+            )
+        except ValueError as error:
+            return web.json_response(
+                {"error": True, "message": str(error)},
+                status=400,
+            )
+        optional_runtime_requirement = loader_optional_runtime_requirement(
+            module,
+            action,
+            values,
+        )
+        if optional_runtime_requirement_blocks_execution(
+            optional_runtime_requirement
+        ):
+            return web.json_response(
+                optional_runtime_blocker_payload(optional_runtime_requirement),
+                status=409,
+            )
         runtime_hints = self._field_action_runtime_hints(data)
         message_identity = self._run_identity_payload(runtime_hints)
         if sid:
             message_identity["sid"] = sid
 
         if node not in self.node_cache:
-            module = data.get("module")
-            action = data.get("action")
             work_module = import_module(f"{module}.main")
             work_action = getattr(work_module, action)
             work_action = work_action(node_id=node)
             self.node_cache[node] = work_action
 
-        self.node_cache[node]._sid = sid  # always update the sid as it may change over time
+        cached_node = self.node_cache[node]
+        if (
+            getattr(cached_node, "module_name", None) != module
+            or getattr(cached_node, "class_name", None) != action
+        ):
+            return web.json_response(
+                {
+                    "error": True,
+                    "message": "The cached node does not match the requested field-action module and action.",
+                },
+                status=409,
+            )
 
-        fn = getattr(self.node_cache[node], fn)
+        cached_node._sid = sid  # always update the sid as it may change over time
+
+        callback = getattr(cached_node, method_name, None)
+        if not callable(callback):
+            return web.json_response(
+                {"error": True, "message": "The authorized backend field action is not callable."},
+                status=409,
+            )
         ref = {
             "node": node,
             "key": key,
@@ -2689,7 +2932,14 @@ class WebServer:
         }
 
         if queue:
-            task = partial(self._execute_field_action, fn, message_identity, True)
+            task = partial(
+                self._execute_field_action,
+                callback,
+                message_identity,
+                True,
+                module,
+                action,
+            )
             task_id = await self.queue_task(
                 task,
                 (values, ref),
@@ -2697,6 +2947,7 @@ class WebServer:
                 sid,
                 name="Field action",
                 runtime_hints=runtime_hints,
+                optional_runtime_requirement=optional_runtime_requirement,
             )
         else:
             # Run field action in executor to avoid blocking the event loop
@@ -2705,10 +2956,29 @@ class WebServer:
             try:
                 await self.loop.run_in_executor(
                     None,
-                    partial(self._execute_field_action, fn, message_identity, False, values, ref),
+                    partial(
+                        self._execute_field_action,
+                        callback,
+                        message_identity,
+                        False,
+                        module,
+                        action,
+                        values,
+                        ref,
+                    ),
                 )
             except Exception as e:
                 logger.error(f"Error executing field action synchronously: {e}")
+                blocked_requirement = getattr(
+                    e,
+                    "modiff_optional_runtime_requirement",
+                    None,
+                )
+                if isinstance(blocked_requirement, dict):
+                    return web.json_response(
+                        optional_runtime_blocker_payload(blocked_requirement),
+                        status=409,
+                    )
                 return web.json_response(
                     {
                         "error": True,
@@ -2723,7 +2993,7 @@ class WebServer:
         return web.json_response(
             {
                 "error": False,
-                "message": f"Field action `{fn}` for node `{node}` queued for processing",
+                "message": f"Field action `{method_name}` for node `{node}` queued for processing",
                 "sid": sid,
                 "task_id": task_id,
                 "ref": ref,
@@ -2744,14 +3014,47 @@ class WebServer:
         if node not in self.node_cache:
             return web.HTTPNotFound(text=f"Node {node} not found in cache.")
 
-        # get the actual value from the node cache
-        if field in self.node_cache[node].output:
-            data = self.node_cache[node].output[field]
-        elif field in self.node_cache[node].params:
-            data = self.node_cache[node].params[field]
+        cached_node = self.node_cache[node]
+        cached_output = getattr(cached_node, "output", None)
+        cached_params = getattr(cached_node, "params", None)
+        if isinstance(cached_output, dict) and dict.__contains__(cached_output, field):
+            cached_values = cached_output
+        elif isinstance(cached_params, dict) and dict.__contains__(cached_params, field):
+            cached_values = cached_params
         else:
             return web.HTTPNotFound(text=f"Field {field} not found in node {node} cache.")
 
+        # Dynamic outputs may carry process-local capabilities or other opaque
+        # runtime state. Only fields in the authoritative static node contract
+        # are cache-servable, and validate that contract before touching the
+        # cached value or invoking any media conversion path.
+        module = getattr(cached_node, "module_name", None)
+        action = getattr(cached_node, "class_name", None)
+        modules = self.modules
+        module_definition = (
+            dict.get(modules, module)
+            if isinstance(modules, dict) and isinstance(module, str)
+            else None
+        )
+        action_definition = (
+            dict.get(module_definition, action)
+            if isinstance(module_definition, dict) and isinstance(action, str)
+            else None
+        )
+        params = dict.get(action_definition, "params") if isinstance(action_definition, dict) else None
+        field_definition = dict.get(params, field) if isinstance(params, dict) else None
+        if not isinstance(field_definition, dict) or not dict.__contains__(field_definition, "type"):
+            return web.HTTPBadRequest(
+                text=f"Field {field} is not declared as a cache-served field for node {node}."
+            )
+
+        type = dict.get(field_definition, "type")
+        if not is_cache_servable_data_type(type):
+            return web.HTTPBadRequest(
+                text=f"Field {field} has a type that cannot be served from node cache."
+            )
+
+        data = dict.__getitem__(cached_values, field)
         if data is None:
             return web.HTTPNotFound(text=f"Field {field} is empty in node {node} cache.")
 
@@ -2759,12 +3062,9 @@ class WebServer:
             index = max(0, min(len(data) - 1, int(index))) if index else 0
             data = data[index]
 
-        # check the registry for the type of the field
-        module = self.node_cache[node].module_name
-        action = self.node_cache[node].class_name
-        field_definition = self.modules[module][action]["params"][field]
-        type = field_definition.get("type")
-        fieldOptions = field_definition.get("fieldOptions", {})
+        fieldOptions = dict.get(field_definition, "fieldOptions", {})
+        if not isinstance(fieldOptions, dict):
+            fieldOptions = {}
 
         filename = request.query.get("filename", f"{field}")
         download_format = str(request.query.get("download_format") or "").strip().lower()
@@ -3049,7 +3349,56 @@ class WebServer:
         origin_error = self._untrusted_origin_response(request)
         if origin_error is not None:
             return origin_error
-        return await handler(request)
+        method = str(getattr(request, "method", "GET")).upper()
+        path = str(getattr(request, "path", ""))
+        runtime_transaction = bool(
+            method == "POST"
+            and (
+                path
+                in {
+                    "/runtime/optimizations/install",
+                    "/runtime/optimizations/activate",
+                    "/runtime/optimizations/rollback",
+                    "/runtime/optional-runtimes/install",
+                    "/runtime/optional-runtimes/activate",
+                    "/runtime/optional-runtimes/rollback",
+                }
+                or re.fullmatch(
+                    r"/runtime/(?:optimizations|optional-runtimes)/jobs/optjob-[A-Za-z0-9_-]{12}/cancel",
+                    path,
+                )
+            )
+        )
+        query = getattr(request, "query", {}) or {}
+        converting_get = bool(
+            method == "GET"
+            and (
+                path in {"/media/export", "/media/preview", "/preview"}
+                or (path == "/file" and query.get("download_format"))
+                or (path.startswith("/cache/") and query.get("download_format"))
+            )
+        )
+        tracked_mutation = (
+            method in {"POST", "PUT", "PATCH", "DELETE"} and not runtime_transaction
+        ) or converting_get
+        if tracked_mutation:
+            if self._runtime_mutation_gate is not None:
+                return web.json_response(
+                    {
+                        "error": True,
+                        "error_code": "runtime_mutation_busy",
+                        "message": "This mutation is unavailable during runtime mutation or recovery.",
+                    },
+                    status=409,
+                )
+            self._active_nonruntime_mutations += 1
+        try:
+            return await handler(request)
+        finally:
+            if tracked_mutation:
+                self._active_nonruntime_mutations = max(
+                    0, self._active_nonruntime_mutations - 1
+                )
 
     def _untrusted_origin_response(self, request):
         if self._trusted_browser_origin(request):
@@ -3190,6 +3539,14 @@ class WebServer:
 
         graphs = list_files(str(path), recursive=True, extensions=["json"])
         workflow_metadata: dict[str, dict] = {}
+        optional_runtime_catalog_snapshot = None
+
+        def request_optional_runtime_catalog():
+            nonlocal optional_runtime_catalog_snapshot
+            if optional_runtime_catalog_snapshot is None:
+                optional_runtime_catalog_snapshot = public_optional_runtime_catalog()
+            return optional_runtime_catalog_snapshot
+
         manifest_path = Path(self.data_dir) / "workflow-library-manifest.json"
         if manifest_path.exists():
             try:
@@ -3236,6 +3593,15 @@ class WebServer:
             except (ValueError, TypeError):
                 relative_graph_path = ""
             metadata = workflow_metadata.get(relative_graph_path, {})
+            optional_runtime_profile_ids = optional_runtime_profile_ids_for_execution(
+                metadata.get("modelType"),
+                metadata.get("mode"),
+            )
+            optional_runtime_requirement = optional_runtime_requirement_for_execution(
+                metadata.get("modelType"),
+                metadata.get("mode"),
+                catalog_resolver=request_optional_runtime_catalog,
+            )
             file_item = {
                 "isDir": False,
                 "name": Path(raw_name).stem,
@@ -3246,6 +3612,11 @@ class WebServer:
                 "supportTier": metadata.get("supportTier"),
                 "qualificationStatus": metadata.get("qualificationStatus"),
                 "requiredArtifacts": metadata.get("requiredArtifacts", []),
+                "optionalRuntimeProfileIds": list(optional_runtime_profile_ids),
+                "optionalRuntimeProfiles": public_optional_runtime_profiles(
+                    optional_runtime_profile_ids
+                ),
+                "optionalRuntimeRequirement": optional_runtime_requirement,
             }
             parent_children.append(file_item)
 
@@ -5170,6 +5541,24 @@ class WebServer:
         # if not sid:
         #    return web.json_response({"error": True, "message": "Missing session id"}, status=400)
 
+        if self._runtime_mutation_gate is not None:
+            return web.json_response(
+                {
+                    "error": True,
+                    "error_code": "runtime_mutation_busy",
+                    "message": "A runtime install, activation, rollback, or restart is in progress.",
+                },
+                status=409,
+            )
+
+        optional_runtime_requirement = graph_optional_runtime_requirement(graph)
+
+        if optional_runtime_requirement_blocks_execution(optional_runtime_requirement):
+            return web.json_response(
+                optional_runtime_blocker_payload(optional_runtime_requirement),
+                status=409,
+            )
+
         runtime_block = self._auto_resource_runtime_block()
         if runtime_block:
             issue = runtime_block["issue"]
@@ -5292,6 +5681,29 @@ class WebServer:
         return payload
 
     def _exception_payload(self, e, task_id=None, sid=None, node_id=None, node_name=None, traceback_text=None):
+        optional_runtime_requirement = getattr(
+            e,
+            "modiff_optional_runtime_requirement",
+            None,
+        )
+        if isinstance(optional_runtime_requirement, dict):
+            payload = optional_runtime_blocker_payload(
+                optional_runtime_requirement
+            )
+            if isinstance(task_id, str) and re.fullmatch(
+                r"[A-Za-z0-9_-]{1,64}", task_id
+            ):
+                payload["task_id"] = task_id
+            if isinstance(node_id, str) and re.fullmatch(
+                r"[A-Za-z0-9_-]{1,128}", node_id
+            ):
+                payload["node"] = node_id
+            if isinstance(node_name, str) and re.fullmatch(
+                r"[A-Za-z0-9_.:-]{1,256}", node_name
+            ):
+                payload["node_name"] = node_name
+            return payload
+
         exception_type = type(e).__name__
         message = str(e) or exception_type
         classification = self._classify_exception(e, message=message, exception_type=exception_type)
@@ -5304,7 +5716,7 @@ class WebServer:
         if oom:
             memory_summary = message.split("\n")[0]
 
-        return {
+        payload = {
             "task_id": task_id,
             "sid": sid,
             "node": node_id,
@@ -5323,6 +5735,7 @@ class WebServer:
             "runtime_budget": self.current_task.get("runtimeBudget") if self.current_task else None,
             "loader_diagnostics": self._loader_diagnostics_snapshot(),
         }
+        return payload
 
     def _classify_exception(self, e, message=None, exception_type=None):
         exception_type = exception_type or type(e).__name__
@@ -5694,6 +6107,7 @@ class WebServer:
             "cudaMemoryTotalBytes",
             "modelFamily",
             "modelType",
+            "mode",
             "modelRepo",
             "modelName",
             "resolvedModelRepo",
@@ -5752,6 +6166,7 @@ class WebServer:
             "device",
             "modelFamily",
             "modelType",
+            "mode",
             "modelRepo",
             "modelName",
             "resolvedModelRepo",
@@ -6124,13 +6539,102 @@ class WebServer:
             return False
         current = params[key].get("value")
         current_repo = current.get("value") if isinstance(current, dict) else current
-        if current_repo == repo:
+        current_source = current.get("source") if isinstance(current, dict) else "hub"
+        if current_repo == repo and current_source == "hub":
             return False
         if isinstance(current, dict):
-            params[key]["value"] = {**current, "value": repo}
+            params[key]["value"] = {**current, "source": "hub", "value": repo}
         else:
             params[key]["value"] = {"source": "hub", "value": repo}
         return True
+
+    @staticmethod
+    def _auto_resource_artifact_revision(plan, repo):
+        """Resolve the exact Hub commit owned by one Auto artifact."""
+
+        if not isinstance(plan, dict) or not isinstance(repo, str) or not repo:
+            raise ValueError("Auto repository mutation requires a non-empty artifact repository.")
+        resolution = plan.get("artifactResolution")
+        resolved = resolution.get("resolved") if isinstance(resolution, dict) else None
+        declared = plan.get("artifactRevision")
+        if declared in (None, "") and isinstance(resolved, dict):
+            declared = resolved.get("revision")
+        if declared not in (None, ""):
+            if (
+                not isinstance(declared, str)
+                or declared != declared.strip()
+                or declared != declared.lower()
+                or not IMMUTABLE_HUB_REVISION.fullmatch(declared)
+            ):
+                raise ValueError(
+                    f"Auto artifact {repo!r} requires an exact lowercase 40-character commit revision."
+                )
+        else:
+            declared = None
+
+        reviewed = catalog_revision(repo)
+        if reviewed is not None and declared is not None and declared != reviewed:
+            raise ValueError(
+                f"Auto artifact revision {declared!r} does not match the reviewed catalog commit "
+                f"{reviewed!r} for {repo!r}."
+            )
+        revision = reviewed or declared
+        if revision is None:
+            raise ValueError(
+                f"Auto artifact {repo!r} has no immutable revision in its plan or the model artifact catalog."
+            )
+        return revision
+
+    def _set_model_repo_and_revision_if_present(
+        self,
+        node,
+        key,
+        repo,
+        revision,
+        *,
+        node_id,
+        pinned_fields,
+        dry_run=False,
+    ):
+        """Mutate a generic loader's Hub repository and commit as one identity."""
+
+        params = node.get("params") if isinstance(node, dict) else None
+        field = params.get(key) if isinstance(params, dict) else None
+        if not repo or not isinstance(field, dict):
+            return False
+        node_key = str(node_id)
+        if (node_key, key) in pinned_fields:
+            # A pinned repository selection owns its existing revision too.
+            return False
+
+        current = field.get("value", field.get("default"))
+        current_repo = current.get("value") if isinstance(current, dict) else current
+        current_source = current.get("source") if isinstance(current, dict) else "hub"
+        repository_changes = current_repo != repo or current_source != "hub"
+        revision_field = params.get("revision") if isinstance(params, dict) else None
+        if not isinstance(revision_field, dict):
+            if repository_changes:
+                raise ValueError(
+                    f"Auto cannot change {node_key}.{key} without a revision field on the same loader."
+                )
+            return False
+
+        revision_is_pinned = (node_key, "revision") in pinned_fields
+        current_revision = revision_field.get("value", revision_field.get("default"))
+        if revision_is_pinned and repository_changes and current_revision != revision:
+            raise ValueError(
+                f"Auto cannot change {node_key}.{key} from {current_repo!r} to {repo!r} while its "
+                "revision override is pinned to a different commit. Unpin both fields or switch to Expert."
+            )
+
+        revision_changes = not revision_is_pinned and current_revision != revision
+        if dry_run:
+            return repository_changes or revision_changes
+        changed = self._set_model_repo_if_present(node, key, repo)
+        if revision_changes:
+            revision_field["value"] = revision
+            changed = True
+        return changed
 
     def _resource_plan_loader_module(self, plan):
         """Resolve the direct-loader family owned by a structured Auto plan.
@@ -6140,7 +6644,10 @@ class WebServer:
         and pipeline-class overrides belong only to the plan's family; applying
         them to every loader corrupts the other branch before execution.
         """
+        execution_path = str(plan.get("executionPath") or "").strip().lower() if isinstance(plan, dict) else ""
         pipeline_class = str(plan.get("pipelineClass") or "").strip().lower() if isinstance(plan, dict) else ""
+        if "modular" in execution_path or pipeline_class.endswith("modularpipeline"):
+            return "modules.ModularDiffusers"
         if not pipeline_class:
             return None
         if "acestep" in pipeline_class or "audio" in pipeline_class:
@@ -6199,6 +6706,8 @@ class WebServer:
             "executionPath",
             "modelRepo",
             "resolvedArtifact",
+            "artifactRevision",
+            "artifactResolution",
             "quantizationMode",
             "quantizedComponents",
             "bnb4ComputeDtype",
@@ -6259,13 +6768,23 @@ class WebServer:
             return self._set_param_value_if_present(node, param_key, value)
 
         def set_model_repo(node_id, node, param_key, value):
-            if (str(node_id), param_key) in pinned_fields:
-                return False
-            return self._set_model_repo_if_present(node, param_key, value)
+            return self._set_model_repo_and_revision_if_present(
+                node,
+                param_key,
+                value,
+                artifact_revision,
+                node_id=node_id,
+                pinned_fields=pinned_fields,
+            )
 
         offload_mode = plan.get("offloadMode")
         device_map = plan.get("deviceMap")
         model_repo = plan.get("modelRepo") or plan.get("resolvedArtifact")
+        artifact_revision = (
+            self._auto_resource_artifact_revision(plan, model_repo)
+            if isinstance(model_repo, str) and model_repo
+            else None
+        )
         quantization_mode = plan.get("quantizationMode")
         quantized_components = plan.get("quantizedComponents")
         compute_dtype = plan.get("bnb4ComputeDtype")
@@ -6288,6 +6807,35 @@ class WebServer:
             recipe_source_id = recipe_param.get("sourceId") if isinstance(recipe_param, dict) else None
             if isinstance(recipe_source_id, str) and recipe_source_id:
                 target_recipe_ids.add(recipe_source_id)
+
+        # Validate every target before mutating any node. A pinned stale commit
+        # must fail the whole Auto rewrite without leaving a partially changed
+        # graph behind.
+        if isinstance(model_repo, str) and model_repo:
+            for node_id, node in nodes.items():
+                if not isinstance(node, dict):
+                    continue
+                action = node.get("action")
+                module = node.get("module")
+                compatible_loader = (
+                    module == "modules.ModularDiffusers"
+                    and action in ("ModelsLoader", "DynamicPipelineLoader")
+                ) or (
+                    module in ("modules.DiffusersImage", "modules.DiffusersAudio", "modules.DiffusersVideo")
+                    and action == "LoadPipeline"
+                )
+                if not compatible_loader or not self._resource_plan_targets_node_family(node, plan):
+                    continue
+                for param_key in ("model_id", "repo_id"):
+                    self._set_model_repo_and_revision_if_present(
+                        node,
+                        param_key,
+                        model_repo,
+                        artifact_revision,
+                        node_id=node_id,
+                        pinned_fields=pinned_fields,
+                        dry_run=True,
+                    )
 
         updated = []
         for node_id, node in nodes.items():
@@ -6367,9 +6915,62 @@ class WebServer:
         return False
 
     def _assert_auto_resource_candidate_ready(self, runtime_hints):
+        if not isinstance(runtime_hints, dict) or runtime_hints.get("resourceMode") != "auto":
+            return
+
+        auto_plan = runtime_hints.get("autoResourcePlan")
+        plan_model_type = str(auto_plan.get("modelType") or "").strip() if isinstance(auto_plan, dict) else ""
+        plan_mode = str(auto_plan.get("mode") or "").strip() if isinstance(auto_plan, dict) else ""
+        hint_model_type = str(runtime_hints.get("modelType") or "").strip()
+        hint_mode = str(runtime_hints.get("mode") or "").strip()
+        pair_mismatch = bool(
+            (plan_model_type and hint_model_type and plan_model_type != hint_model_type)
+            or (plan_mode and hint_mode and plan_mode != hint_mode)
+        )
+        if pair_mismatch:
+            plan_pair = f"{plan_model_type or '<missing model type>'}:{plan_mode or '<missing mode>'}"
+            requested_pair = f"{hint_model_type or '<missing model type>'}:{hint_mode or '<missing mode>'}"
+            error = RuntimeError(
+                f"Auto resource plan pair '{plan_pair}' does not match the requested workflow pair "
+                f"'{requested_pair}'. Refresh the Auto plan or switch to Expert before executing this workflow."
+            )
+            setattr(error, "modiff_error_code", "auto_resource_pair_mismatch")
+            setattr(error, "modiff_category", "auto_resource")
+            setattr(
+                error,
+                "modiff_recovery_hint",
+                "Refresh Auto so the selected candidate is resolved for the current model and task. "
+                "Structurally valid workflows can still be configured explicitly in Expert mode.",
+            )
+            setattr(error, "modiff_auto_resource_status", "expert_only")
+            raise error
+
+        model_type = plan_model_type
+        mode = plan_mode
+        if (
+            not isinstance(auto_plan, dict)
+            or not model_type
+            or not mode
+            or not auto_resource_pair_is_declared(model_type, mode)
+        ):
+            pair_label = f"{model_type or '<missing model type>'}:{mode or '<missing mode>'}"
+            error = RuntimeError(
+                f"Auto has no declared execution recipe for the exact model/task pair '{pair_label}'. "
+                "Refresh the Auto plan or switch to Expert before executing this workflow."
+            )
+            setattr(error, "modiff_error_code", "auto_resource_pair_undeclared")
+            setattr(error, "modiff_category", "auto_resource")
+            setattr(
+                error,
+                "modiff_recovery_hint",
+                "Use Auto only for a model and task pair declared by both the backend resource requirements "
+                "and execution profiles. Structurally valid workflows can still be configured explicitly in Expert mode.",
+            )
+            setattr(error, "modiff_auto_resource_status", "expert_only")
+            raise error
+
         if not self._auto_resource_requires_proven_candidate(runtime_hints):
             return
-        auto_plan = runtime_hints.get("autoResourcePlan") if isinstance(runtime_hints, dict) else None
         if self._auto_resource_candidate_is_proven(auto_plan):
             return
 
@@ -7209,6 +7810,7 @@ class WebServer:
             logger.warning("Could not fully restore process-wide execution settings: %s", exc)
 
     def execute_graph(self, graph):
+        assert_optional_runtime_ready(graph_optional_runtime_requirement(graph))
         process_state = self._capture_execution_process_state()
         try:
             return self._execute_graph(graph)
@@ -7836,6 +8438,14 @@ class WebServer:
                 raise TypeError("Node parameter overrides must be a dictionary.")
             args.update(param_overrides)
 
+        # Re-resolve the exact loader from authoritative node arguments at the
+        # last boundary before importing its module.  This closes admission to
+        # worker and connected-parameter TOCTOU gaps without trusting runtime
+        # hints or triggering an install/activation path.
+        assert_optional_runtime_ready(
+            loader_optional_runtime_requirement(module, action, args)
+        )
+
         if not quiet:
             reset_memory_stats()
             start_time = time.time()
@@ -8352,30 +8962,561 @@ class WebServer:
             hardware = get_hardware_snapshot(self.data_dir, refresh=not bool(self.current_task))
         return runtime_fingerprint, hardware, runtime_profile(hardware, venv=Path(sys.prefix))
 
-    def _persist_optimization_job(self, job):
+    def _runtime_job_root(self, *, create=False):
+        data_root_path = Path(self.data_dir)
+        if create:
+            data_root_path.mkdir(parents=True, exist_ok=True)
+        data_root_info = data_root_path.lstat()
+        if (
+            not stat.S_ISDIR(data_root_info.st_mode)
+            or stat.S_ISLNK(data_root_info.st_mode)
+            or bool(
+                getattr(data_root_info, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+            )
+        ):
+            raise OSError("The configured runtime data root is unsafe.")
+        data_root = data_root_path.resolve(strict=True)
+        current = data_root
+        for name in ("runtime", "optimization-jobs"):
+            candidate = current / name
+            if create:
+                try:
+                    candidate.mkdir()
+                except FileExistsError:
+                    pass
+            details = candidate.lstat()
+            if (
+                not stat.S_ISDIR(details.st_mode)
+                or stat.S_ISLNK(details.st_mode)
+                or bool(
+                    getattr(details, "st_file_attributes", 0)
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+                )
+            ):
+                raise OSError("The runtime job receipt directory is unsafe.")
+            resolved = candidate.resolve(strict=True)
+            resolved.relative_to(data_root)
+            current = resolved
+        return current
+
+    @staticmethod
+    def _parse_runtime_job_document(raw):
+        def reject_duplicates(pairs):
+            value = {}
+            for key, item in pairs:
+                if key in value:
+                    raise ValueError("duplicate JSON key")
+                value[key] = item
+            return value
+
+        return json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=reject_duplicates,
+            parse_constant=lambda _value: (_ for _ in ()).throw(ValueError("non-finite")),
+        )
+
+    def _read_runtime_job_file(self, job_id):
+        if not self._valid_runtime_job_id(job_id):
+            return None
         try:
-            job_dir = Path(self.data_dir) / "runtime" / "optimization-jobs"
-            job_dir.mkdir(parents=True, exist_ok=True)
-            path = job_dir / f"{job.get('id')}.json"
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(json.dumps(job, indent=2, default=str) + "\n", encoding="utf-8")
+            job_root = self._runtime_job_root(create=False)
+            path = job_root / f"{job_id}.json"
+            details = path.lstat()
+            if (
+                not stat.S_ISREG(details.st_mode)
+                or stat.S_ISLNK(details.st_mode)
+                or details.st_nlink != 1
+                or details.st_size > 64 * 1024
+                or bool(
+                    getattr(details, "st_file_attributes", 0)
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+                )
+            ):
+                return None
+            resolved = path.resolve(strict=True)
+            resolved.relative_to(job_root)
+            raw = path.read_bytes()
+            if len(raw) != details.st_size:
+                return None
+            value = self._parse_runtime_job_document(raw)
+            return value if isinstance(value, dict) and value.get("id") == job_id else None
+        except (OSError, TypeError, ValueError, UnicodeDecodeError, RecursionError):
+            return None
+
+    def _load_runtime_jobs(self):
+        try:
+            job_root = self._runtime_job_root(create=False)
+        except OSError:
+            return
+        jobs = []
+        scanned = 0
+        try:
+            with os.scandir(job_root) as entries:
+                for entry in entries:
+                    scanned += 1
+                    if scanned > 10_000:
+                        os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+                        break
+                    match = re.fullmatch(r"(optjob-[A-Za-z0-9_-]{12})\.json", entry.name)
+                    if not match:
+                        continue
+                    job = self._read_runtime_job_file(match.group(1))
+                    if not isinstance(job, dict):
+                        continue
+                    if job.get("kind") not in {"optimization", "optional_runtime"}:
+                        continue
+                    if job.get("status") in {"queued", "running", "cancelling"}:
+                        job["status"] = "failed"
+                        job["error"] = "Optional-runtime installation failed."
+                        job["progress"] = {
+                            "phase": "failed",
+                            "message": "The prior worker exited before this installation completed.",
+                            "updatedAt": time.time(),
+                        }
+                        job["updatedAt"] = time.time()
+                        try:
+                            self._persist_optimization_job(job)
+                        except (OSError, TypeError, ValueError):
+                            logger.warning(
+                                "Could not reconcile an interrupted runtime job", exc_info=True
+                            )
+                            os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+                    jobs.append(job)
+        except OSError:
+            return
+        for job in sorted(
+            jobs,
+            key=lambda item: item.get("updatedAt")
+            if isinstance(item.get("updatedAt"), (int, float))
+            else 0,
+            reverse=True,
+        )[:100]:
+            self.optimization_jobs[job["id"]] = job
+
+    def _persist_optimization_job(self, job):
+        job_id = str(job.get("id") or "") if isinstance(job, dict) else ""
+        if not self._valid_runtime_job_id(job_id):
+            raise OSError("The runtime job ID is invalid.")
+        job_dir = self._runtime_job_root(create=True)
+        path = job_dir / f"{job_id}.json"
+        try:
+            existing = path.lstat()
+            if (
+                not stat.S_ISREG(existing.st_mode)
+                or stat.S_ISLNK(existing.st_mode)
+                or existing.st_nlink != 1
+                or bool(
+                    getattr(existing, "st_file_attributes", 0)
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+                )
+            ):
+                raise OSError("The runtime job receipt target is unsafe.")
+        except FileNotFoundError:
+            pass
+        temporary = job_dir / f".{job_id}.{nanoid.generate(size=12)}.tmp"
+        body = (json.dumps(job, indent=2, allow_nan=False) + "\n").encode("utf-8")
+        if len(body) > 64 * 1024:
+            raise OSError("The runtime job receipt exceeds its safe size.")
+        try:
+            with temporary.open("xb") as output:
+                output.write(body)
+                output.flush()
+                os.fsync(output.fileno())
             temporary.replace(path)
-        except Exception:
-            logger.debug("Could not persist optional-runtime installation job", exc_info=True)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def _update_optimization_job(self, job_id, **updates):
         job = self.optimization_jobs.get(job_id)
         if not isinstance(job, dict):
             return
-        job.update(updates)
-        job["updatedAt"] = time.time()
-        self._persist_optimization_job(job)
+        current_status = str(job.get("status") or "")
+        requested_status = updates.get("status", current_status)
+        terminal = {"ready", "failed", "cancelled"}
+        transitions = {
+            "queued": {"queued", "running", "cancelling", "cancelled", "failed", "ready"},
+            "running": {"running", "cancelling", "cancelled", "failed", "ready"},
+            "cancelling": {"cancelling", "cancelled", "failed"},
+        }
+        if current_status in terminal or requested_status not in transitions.get(
+            current_status, set()
+        ):
+            return
+        next_job = deepcopy(job)
+        next_job.update(updates)
+        next_job["updatedAt"] = time.time()
+        try:
+            self._persist_optimization_job(next_job)
+        except (OSError, TypeError, ValueError):
+            logger.warning("Could not persist optional-runtime installation job", exc_info=True)
+            os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+            return
+        self.optimization_jobs[job_id] = next_job
+
+    def _reserve_worker_runtime_gate(self, kind, identifier):
+        if (
+            self._runtime_mutation_gate is not None
+            or self.current_task
+            or self.queued_tasks
+            or self._active_nonruntime_mutations
+            or self.hf_download_tasks
+        ):
+            raise OverlayInstallBusy(
+                "Finish or stop active and queued runs before changing the runtime environment."
+            )
+        token = f"runtime-gate-{nanoid.generate(size=16)}"
+        self._runtime_mutation_gate = {
+            "token": token,
+            "kind": str(kind)[:64],
+            "identifier": str(identifier)[:256],
+        }
+        return token
+
+    def _release_worker_runtime_gate(self, token):
+        gate = self._runtime_mutation_gate
+        if isinstance(gate, dict) and gate.get("token") == token:
+            self._runtime_mutation_gate = None
+
+    async def _strict_runtime_control_json(self, request, *, allowed, required=(), allow_empty=False):
+        content_length = getattr(request, "content_length", None)
+        if content_length is not None and (
+            not isinstance(content_length, int)
+            or isinstance(content_length, bool)
+            or content_length < 0
+            or content_length > 4096
+        ):
+            raise ValueError("Runtime control request exceeds 4096 bytes.")
+
+        def reject_duplicates(pairs):
+            value = {}
+            for key, item in pairs:
+                if key in value:
+                    raise ValueError("Runtime control request contains a duplicate JSON key.")
+                value[key] = item
+            return value
+
+        content = getattr(request, "content", None)
+        if content is not None and hasattr(content, "read"):
+            chunks = []
+            total = 0
+            while not content.at_eof():
+                chunk = await content.read(min(4097 - total, 4097))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                total += len(chunk)
+                if total > 4096:
+                    raise ValueError("Runtime control request exceeds 4096 bytes.")
+            raw = b"".join(chunks)
+        elif hasattr(request, "read"):
+            raw = await request.read()
+            if len(raw) > 4096:
+                raise ValueError("Runtime control request exceeds 4096 bytes.")
+        else:
+            raw = None
+        if raw is not None:
+            if not raw and allow_empty:
+                body = {}
+            else:
+                try:
+                    body = json.loads(
+                        raw.decode("utf-8"),
+                        object_pairs_hook=reject_duplicates,
+                        parse_constant=lambda _value: (_ for _ in ()).throw(
+                            ValueError("Runtime control request contains a non-finite number.")
+                        ),
+                    )
+                except (UnicodeDecodeError, json.JSONDecodeError, RecursionError, ValueError) as exc:
+                    raise ValueError("Runtime control request must be a JSON object.") from exc
+        else:
+            try:
+                body = await request.json()
+            except (TypeError, ValueError, RecursionError) as exc:
+                raise ValueError("Runtime control request must be a JSON object.") from exc
+        if not isinstance(body, dict):
+            raise ValueError("Runtime control request must be a JSON object.")
+        keys = set(body)
+        if not keys.issubset(set(allowed)) or not set(required).issubset(keys):
+            raise ValueError("Runtime control request has missing or unknown fields.")
+        return body
+
+    @staticmethod
+    def _valid_runtime_job_id(job_id):
+        return bool(re.fullmatch(r"optjob-[A-Za-z0-9_-]{12}", str(job_id or "")))
+
+    @staticmethod
+    def _public_runtime_job(job):
+        if not isinstance(job, dict):
+            return None
+        job_id = str(job.get("id") or "")
+        if not WebServer._valid_runtime_job_id(job_id):
+            return None
+        def environment_id(value):
+            return (
+                value
+                if isinstance(value, str)
+                and re.fullmatch(r"runtime-[0-9]{1,16}-[0-9a-f]{8}", value)
+                else None
+            )
+
+        def contract_id(value):
+            return (
+                value
+                if isinstance(value, str)
+                and re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,127}", value)
+                else None
+            )
+
+        def spec_digest(value):
+            return (
+                value
+                if isinstance(value, str)
+                and re.fullmatch(r"sha256:[0-9a-f]{64}", value)
+                else None
+            )
+
+        def utc_timestamp(value):
+            if not isinstance(value, str) or not re.fullmatch(
+                r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",
+                value,
+            ):
+                return None
+            try:
+                parsed = time.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                return None
+            return value if time.strftime("%Y-%m-%dT%H:%M:%SZ", parsed) == value else None
+
+        def finite_time(value):
+            return (
+                float(value)
+                if isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and math.isfinite(value)
+                else None
+            )
+
+        result = job.get("result") if isinstance(job.get("result"), dict) else {}
+        public_result = {
+            "environmentId": environment_id(result.get("environmentId")),
+            "specs": [
+                {
+                    "kind": item.get("kind"),
+                    "id": contract_id(item.get("id")),
+                    "specDigest": spec_digest(item.get("specDigest")),
+                }
+                for item in (result.get("specs") or [])
+                if isinstance(item, dict)
+                and item.get("kind") in {"optimization", "optional_runtime"}
+                and contract_id(item.get("id")) is not None
+                and spec_digest(item.get("specDigest")) is not None
+            ][:32],
+            "requiresActivation": result.get("requiresActivation") is True,
+            "activeRuntimeChanged": result.get("activeRuntimeChanged") is True,
+        }
+        capabilities = result.get("capabilities")
+        if isinstance(capabilities, list):
+            public_result["capabilities"] = [
+                item for item in capabilities[:32] if contract_id(item) is not None
+            ]
+        validation = result.get("validation")
+        if isinstance(validation, dict):
+            public_result["validation"] = {
+                "status": (
+                    validation.get("status")
+                    if validation.get("status") in {"passed", "failed"}
+                    else None
+                ),
+                "validatedAt": utc_timestamp(validation.get("validatedAt")),
+                "bindingDigest": spec_digest(validation.get("bindingDigest")),
+            }
+        progress = job.get("progress") if isinstance(job.get("progress"), dict) else {}
+        status = (
+            str(job.get("status"))
+            if job.get("status")
+            in {"queued", "running", "cancelling", "cancelled", "failed", "ready"}
+            else "failed"
+        )
+        phase = str(progress.get("phase") or "")
+        phase_messages = {
+            "queued": "Installation is queued.",
+            "copying": "Preparing the isolated staged environment.",
+            "downloading": "Acquiring reviewed runtime artifacts.",
+            "installing": "Installing reviewed artifacts into the isolated stage.",
+            "validating": "Validating the staged runtime in an isolated process.",
+            "promoting": "Promoting the validated staged runtime.",
+            "ready": "Validation passed. Explicit activation and restart are required.",
+            "cancelling": "Cancelling the staged installation.",
+            "cancelled": "Installation was cancelled; the active environment was unchanged.",
+            "failed": "Installation failed; the active environment was unchanged.",
+        }
+        if phase not in phase_messages:
+            phase = status if status in phase_messages else "failed"
+        public = {
+            "id": job_id,
+            "status": status,
+            "progress": {
+                "phase": phase,
+                "message": phase_messages[phase],
+                "updatedAt": finite_time(progress.get("updatedAt")),
+            },
+            "createdAt": finite_time(job.get("createdAt")),
+            "updatedAt": finite_time(job.get("updatedAt")),
+        }
+        for key in ("capabilityId", "profileId"):
+            normalized = contract_id(job.get(key))
+            if normalized is not None:
+                public[key] = normalized
+        normalized_digest = spec_digest(job.get("specDigest"))
+        if normalized_digest is not None:
+            public["specDigest"] = normalized_digest
+        if result:
+            public["result"] = public_result
+        if job.get("error"):
+            public["error"] = "Optional-runtime installation failed."
+        return public
+
+    @staticmethod
+    def _public_optimization_receipt(receipt):
+        if not isinstance(receipt, dict):
+            return None
+        receipt_id = receipt.get("id")
+        if not isinstance(receipt_id, str) or not re.fullmatch(
+            r"(?:probe|workload|baseline)-[0-9a-f]{32}", receipt_id
+        ):
+            return None
+        kind = receipt.get("kind")
+        status = receipt.get("status")
+        if kind not in {"compatibility_probe", "workload", "workload_baseline"} or status not in {
+            "probe_passed",
+            "probe_failed",
+            "observed",
+            "qualified",
+        }:
+            return None
+
+        def contract_id(value):
+            return (
+                value
+                if isinstance(value, str)
+                and re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,127}", value)
+                else None
+            )
+
+        def environment_id(value):
+            return (
+                value
+                if isinstance(value, str)
+                and re.fullmatch(r"runtime-[0-9]{1,16}-[0-9a-f]{8}", value)
+                else None
+            )
+
+        def timestamp(value):
+            if not isinstance(value, str) or not re.fullmatch(
+                r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",
+                value,
+            ):
+                return None
+            try:
+                parsed = time.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                return None
+            return value if time.strftime("%Y-%m-%dT%H:%M:%SZ", parsed) == value else None
+
+        public = {
+            "id": receipt_id,
+            "schemaVersion": 1,
+            "kind": kind,
+            "status": status,
+            "capabilityId": contract_id(receipt.get("capabilityId")),
+            "environmentId": environment_id(receipt.get("environmentId")),
+            "createdAt": timestamp(receipt.get("createdAt")),
+            "qualifiedAt": timestamp(receipt.get("qualifiedAt")),
+            "autoEligible": receipt.get("autoEligible") is True,
+        }
+        fingerprint = receipt.get("runtimeFingerprintHash")
+        if isinstance(fingerprint, str) and re.fullmatch(r"[0-9a-f]{64}", fingerprint):
+            public["runtimeFingerprintHash"] = fingerprint
+        if kind == "compatibility_probe":
+            result = receipt.get("result") if isinstance(receipt.get("result"), dict) else {}
+            public["validationStatus"] = (
+                result.get("status") if result.get("status") in {"passed", "failed"} else "failed"
+            )
+        evidence = receipt.get("benchmarkEvidence")
+        if isinstance(evidence, dict):
+            public_evidence = {"improved": evidence.get("improved") is True}
+            for key in ("elapsedRatio", "peakMemoryRatio"):
+                value = evidence.get(key)
+                if (
+                    isinstance(value, (int, float))
+                    and not isinstance(value, bool)
+                    and math.isfinite(value)
+                ):
+                    public_evidence[key] = float(value)
+            public["benchmarkEvidence"] = public_evidence
+        baseline_id = receipt.get("baselineReceiptId")
+        if isinstance(baseline_id, str) and re.fullmatch(r"baseline-[0-9a-f]{32}", baseline_id):
+            public["baselineReceiptId"] = baseline_id
+        return public
+
+    @staticmethod
+    def _public_runtime_mutation_result(result):
+        value = result if isinstance(result, dict) else {}
+        state = value.get("state") if isinstance(value.get("state"), dict) else {}
+        enabled_capabilities = (
+            state.get("enabledCapabilities")
+            if isinstance(state.get("enabledCapabilities"), list)
+            else []
+        )
+
+        def environment_id(raw):
+            if not isinstance(raw, str) or not re.fullmatch(
+                r"runtime-[0-9]{1,16}-[0-9a-f]{8}", raw
+            ):
+                return None
+            return raw
+
+        def timestamp(raw):
+            if not isinstance(raw, str) or not re.fullmatch(
+                r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",
+                raw,
+            ):
+                return None
+            try:
+                parsed = time.strptime(raw, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                return None
+            return raw if time.strftime("%Y-%m-%dT%H:%M:%SZ", parsed) == raw else None
+
+        return {
+            "state": {
+                "schemaVersion": state.get("schemaVersion")
+                if isinstance(state.get("schemaVersion"), int)
+                and not isinstance(state.get("schemaVersion"), bool)
+                else 2,
+                "activeEnvironmentId": environment_id(state.get("activeEnvironmentId")),
+                "previousEnvironmentId": environment_id(state.get("previousEnvironmentId")),
+                "enabledCapabilities": [
+                    str(item)[:128]
+                    for item in enabled_capabilities
+                    if isinstance(item, str) and re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,127}", item)
+                ][:64],
+                "updatedAt": timestamp(state.get("updatedAt")),
+            },
+            "restartRequired": value.get("restartRequired") is True,
+        }
 
     async def runtime_optimizations(self, _request):
         _fingerprint, hardware, profile = self._optimization_runtime_context()
         return web.json_response(public_optimization_catalog(runtime_profile=profile, hardware=hardware))
 
-    async def _run_optimization_install_job(self, job_id, capability_id, profile, hardware):
+    async def runtime_optional_runtimes(self, _request):
+        return web.json_response(public_optional_runtime_catalog())
+
+    async def _run_optimization_install_job(
+        self, job_id, capability_id, profile, hardware, lease, gate_token
+    ):
         loop = asyncio.get_running_loop()
 
         def progress(update):
@@ -8393,6 +9534,7 @@ class WebServer:
                 runtime_profile=profile,
                 hardware=hardware,
                 progress=progress,
+                lease=lease,
             )
             self._update_optimization_job(
                 job_id,
@@ -8404,6 +9546,16 @@ class WebServer:
                 },
                 result=result,
             )
+        except OverlayCancelled:
+            self._update_optimization_job(
+                job_id,
+                status="cancelled",
+                progress={
+                    "phase": "cancelled",
+                    "message": "Optional-runtime installation was cancelled and staging was removed.",
+                    "updatedAt": time.time(),
+                },
+            )
         except Exception as exc:
             logger.warning("Optional runtime package installation failed: %s", exc)
             self._update_optimization_job(
@@ -8411,11 +9563,76 @@ class WebServer:
                 status="failed",
                 progress={
                     "phase": "failed",
-                    "message": str(exc),
+                    "message": "Optional-runtime installation failed. The active environment was unchanged.",
                     "updatedAt": time.time(),
                 },
-                error=str(exc),
+                error="Optional-runtime installation failed.",
             )
+        finally:
+            self._runtime_install_leases.pop(job_id, None)
+            self._runtime_install_gate_tokens.pop(job_id, None)
+            release_runtime_install(lease)
+            self._release_worker_runtime_gate(gate_token)
+
+    async def _run_optional_runtime_install_job(
+        self, job_id, profile_id, spec_digest, lease, gate_token
+    ):
+        loop = asyncio.get_running_loop()
+
+        def progress(update):
+            loop.call_soon_threadsafe(
+                self._update_optimization_job,
+                job_id,
+                status="running",
+                progress=update,
+            )
+
+        try:
+            result = await asyncio.to_thread(
+                install_optional_runtime,
+                profile_id,
+                spec_digest,
+                consent=True,
+                lease=lease,
+                progress=progress,
+            )
+            self._update_optimization_job(
+                job_id,
+                status="ready",
+                result=result,
+                progress={
+                    "phase": "ready",
+                    "message": "Validation passed. Explicit activation and restart are required.",
+                    "updatedAt": time.time(),
+                },
+            )
+        except OverlayCancelled:
+            self._update_optimization_job(
+                job_id,
+                status="cancelled",
+                progress={
+                    "phase": "cancelled",
+                    "message": "Optional-runtime installation was cancelled and staging was removed.",
+                    "updatedAt": time.time(),
+                },
+            )
+        except Exception:
+            logger.warning("Optional model-runtime installation failed", exc_info=True)
+            self._update_optimization_job(
+                job_id,
+                status="failed",
+                error="Optional-runtime installation failed.",
+                progress={
+                    "phase": "failed",
+                    "message": "Optional-runtime installation failed. The active environment was unchanged.",
+                    "updatedAt": time.time(),
+                },
+            )
+        finally:
+            self._runtime_install_leases.pop(job_id, None)
+            self._runtime_install_gate_tokens.pop(job_id, None)
+            release_runtime_install(lease)
+            self._release_worker_runtime_gate(gate_token)
 
     async def runtime_optimization_install(self, request):
         if self.current_task or self.queued_tasks:
@@ -8428,46 +9645,370 @@ class WebServer:
                 status=409,
             )
         try:
-            body = await request.json()
-        except Exception:
-            body = {}
+            body = await self._strict_runtime_control_json(
+                request,
+                allowed={"capabilityId"},
+                required={"capabilityId"},
+            )
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
         capability_id = str(body.get("capabilityId") or "").strip()
         if not capability_id:
             return web.json_response({"error": True, "message": "capabilityId is required."}, status=400)
         _fingerprint, hardware, profile = self._optimization_runtime_context()
-        job_id = f"optjob-{nanoid.generate(size=12)}"
-        job = {
-            "id": job_id,
-            "capabilityId": capability_id,
-            "status": "queued",
-            "progress": {
-                "phase": "queued",
-                "message": "Waiting to stage the optional package.",
+        catalog = public_optimization_catalog(runtime_profile=profile, hardware=hardware)
+        capability = next(
+            (item for item in catalog.get("capabilities", []) if item.get("id") == capability_id),
+            None,
+        )
+        if (
+            not capability
+            or capability.get("kind") != "package"
+            or not capability.get("compatible")
+            or capability.get("canInstall") is not True
+        ):
+            return web.json_response(
+                {"error": True, "message": "This optimization package is unavailable."},
+                status=400,
+            )
+        try:
+            gate_token = self._reserve_worker_runtime_gate("optimization_install", capability_id)
+        except OverlayInstallBusy as exc:
+            return web.json_response(
+                {"error": True, "error_code": "optimization_install_busy", "message": str(exc)},
+                status=409,
+            )
+        try:
+            lease = reserve_runtime_install("optimization", capability_id)
+        except OverlayInstallBusy as exc:
+            self._release_worker_runtime_gate(gate_token)
+            return web.json_response(
+                {"error": True, "error_code": "optimization_install_busy", "message": str(exc)},
+                status=409,
+            )
+        try:
+            job_id = f"optjob-{nanoid.generate(size=12)}"
+            job = {
+                "id": job_id,
+                "kind": "optimization",
+                "capabilityId": capability_id,
+                "status": "queued",
+                "progress": {
+                    "phase": "queued",
+                    "message": "Waiting to stage the optional package.",
+                    "updatedAt": time.time(),
+                },
+                "createdAt": time.time(),
                 "updatedAt": time.time(),
-            },
-            "createdAt": time.time(),
-            "updatedAt": time.time(),
-        }
-        self.optimization_jobs[job_id] = job
-        self._persist_optimization_job(job)
-        asyncio.create_task(self._run_optimization_install_job(job_id, capability_id, profile, hardware))
-        return web.json_response({"error": False, "job": job}, status=202)
+            }
+            self.optimization_jobs[job_id] = job
+            self._runtime_install_leases[job_id] = lease
+            self._runtime_install_gate_tokens[job_id] = gate_token
+            self._persist_optimization_job(job)
+            asyncio.create_task(
+                self._run_optimization_install_job(
+                    job_id, capability_id, profile, hardware, lease, gate_token
+                )
+            )
+        except Exception:
+            self.optimization_jobs.pop(locals().get("job_id", ""), None)
+            self._runtime_install_leases.pop(locals().get("job_id", ""), None)
+            self._runtime_install_gate_tokens.pop(locals().get("job_id", ""), None)
+            release_runtime_install(lease)
+            self._release_worker_runtime_gate(gate_token)
+            logger.exception("Could not start the optional-runtime installation job")
+            return web.json_response(
+                {"error": True, "message": "Could not start the optional-runtime installation job."},
+                status=500,
+            )
+        return web.json_response(
+            {"error": False, "job": self._public_runtime_job(job)}, status=202
+        )
+
+    async def runtime_optional_runtime_install(self, request):
+        if self.current_task or self.queued_tasks:
+            return web.json_response(
+                {
+                    "error": True,
+                    "error_code": "optional_runtime_install_busy",
+                    "message": "Finish or stop active and queued runs before changing optional runtimes.",
+                },
+                status=409,
+            )
+        try:
+            body = await self._strict_runtime_control_json(
+                request,
+                allowed={"profileId", "specDigest", "consent"},
+                required={"profileId", "specDigest", "consent"},
+            )
+            profile_id = body.get("profileId")
+            spec_digest = body.get("specDigest")
+            if (
+                not isinstance(profile_id, str)
+                or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,127}", profile_id)
+                or not isinstance(spec_digest, str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", spec_digest)
+                or body.get("consent") is not True
+            ):
+                raise ValueError(
+                    "profileId, exact specDigest, and literal consent=true are required."
+                )
+            # Qualification, digest, artifact-lock, base binding, and managed
+            # installer checks all run before a lease, job, staging path, or
+            # subprocess can be created.
+            validate_optional_runtime_install_request(profile_id, spec_digest, consent=True)
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except RuntimeError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        try:
+            gate_token = self._reserve_worker_runtime_gate("optional_runtime_install", profile_id)
+        except OverlayInstallBusy as exc:
+            return web.json_response(
+                {"error": True, "error_code": "optional_runtime_install_busy", "message": str(exc)},
+                status=409,
+            )
+        try:
+            lease = reserve_runtime_install("optional_runtime", profile_id)
+        except OverlayInstallBusy as exc:
+            self._release_worker_runtime_gate(gate_token)
+            return web.json_response(
+                {"error": True, "error_code": "optional_runtime_install_busy", "message": str(exc)},
+                status=409,
+            )
+        try:
+            job_id = f"optjob-{nanoid.generate(size=12)}"
+            job = {
+                "id": job_id,
+                "kind": "optional_runtime",
+                "profileId": profile_id,
+                "specDigest": spec_digest,
+                "status": "queued",
+                "progress": {
+                    "phase": "queued",
+                    "message": "Waiting to stage the reviewed optional runtime.",
+                    "updatedAt": time.time(),
+                },
+                "createdAt": time.time(),
+                "updatedAt": time.time(),
+            }
+            self.optimization_jobs[job_id] = job
+            self._runtime_install_leases[job_id] = lease
+            self._runtime_install_gate_tokens[job_id] = gate_token
+            self._persist_optimization_job(job)
+            asyncio.create_task(
+                self._run_optional_runtime_install_job(
+                    job_id, profile_id, spec_digest, lease, gate_token
+                )
+            )
+        except Exception:
+            self.optimization_jobs.pop(locals().get("job_id", ""), None)
+            self._runtime_install_leases.pop(locals().get("job_id", ""), None)
+            self._runtime_install_gate_tokens.pop(locals().get("job_id", ""), None)
+            release_runtime_install(lease)
+            self._release_worker_runtime_gate(gate_token)
+            logger.exception("Could not start the optional-runtime installation job")
+            return web.json_response(
+                {"error": True, "message": "Could not start the optional-runtime installation job."},
+                status=500,
+            )
+        return web.json_response(
+            {"error": False, "job": self._public_runtime_job(job)}, status=202
+        )
 
     async def runtime_optimization_job(self, request):
         job_id = str(request.match_info.get("job_id") or "")
-        job = self.optimization_jobs.get(job_id)
-        if not isinstance(job, dict):
-            path = Path(self.data_dir) / "runtime" / "optimization-jobs" / f"{job_id}.json"
-            try:
-                value = json.loads(path.read_text(encoding="utf-8"))
-                job = value if isinstance(value, dict) else None
-            except (OSError, TypeError, ValueError):
-                job = None
-        if not job:
+        expected_kind = (
+            "optional_runtime"
+            if str(getattr(request, "path", "")).startswith("/runtime/optional-runtimes/")
+            else "optimization"
+        )
+        if not self._valid_runtime_job_id(job_id):
             return web.json_response(
                 {"error": True, "message": "Optimization installation job not found."}, status=404
             )
-        return web.json_response({"error": False, "job": job})
+        job = self.optimization_jobs.get(job_id)
+        if not isinstance(job, dict):
+            job = self._read_runtime_job_file(job_id)
+        if isinstance(job, dict) and job.get("kind") != expected_kind:
+            job = None
+        public_job = self._public_runtime_job(job)
+        if not public_job:
+            return web.json_response(
+                {"error": True, "message": "Optimization installation job not found."}, status=404
+            )
+        return web.json_response({"error": False, "job": public_job})
+
+    async def runtime_optimization_job_cancel(self, request):
+        job_id = str(request.match_info.get("job_id") or "")
+        expected_kind = (
+            "optional_runtime"
+            if str(getattr(request, "path", "")).startswith("/runtime/optional-runtimes/")
+            else "optimization"
+        )
+        if not self._valid_runtime_job_id(job_id):
+            return web.json_response(
+                {"error": True, "message": "Optimization installation job not found."}, status=404
+            )
+        try:
+            await self._strict_runtime_control_json(
+                request, allowed=set(), required=set(), allow_empty=True
+            )
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        job = self.optimization_jobs.get(job_id)
+        if not isinstance(job, dict) or job.get("kind") != expected_kind:
+            return web.json_response(
+                {"error": True, "message": "The installation is not active in this worker."},
+                status=409,
+            )
+        if job.get("status") in {"ready", "failed", "cancelled"}:
+            return web.json_response(
+                {"error": True, "message": "The installation job is already complete."}, status=409
+            )
+        lease = self._runtime_install_leases.get(job_id)
+        cancelled = (
+            await asyncio.to_thread(cancel_runtime_install, lease.token)
+            if lease is not None
+            else False
+        )
+        if not cancelled:
+            return web.json_response(
+                {"error": True, "message": "The installation can no longer be cancelled."}, status=409
+            )
+        self._update_optimization_job(
+            job_id,
+            status="cancelling",
+            progress={
+                "phase": "cancelling",
+                "message": "Cancelling the exact installer process tree and removing staging.",
+                "updatedAt": time.time(),
+            },
+        )
+        return web.json_response(
+            {"error": False, "job": self._public_runtime_job(self.optimization_jobs[job_id])},
+            status=202,
+        )
+
+    async def runtime_optional_runtime_activate(self, request):
+        if self.current_task or self.queued_tasks:
+            return web.json_response(
+                {
+                    "error": True,
+                    "error_code": "optional_runtime_activation_busy",
+                    "message": "Finish or stop active and queued runs before activating an optional runtime.",
+                },
+                status=409,
+            )
+        gate_token = None
+        keep_gate = False
+        try:
+            body = await self._strict_runtime_control_json(
+                request,
+                allowed={"environmentId", "profileId", "specDigest", "consent"},
+                required={"environmentId", "profileId", "specDigest", "consent"},
+            )
+            environment_id = body.get("environmentId")
+            profile_id = body.get("profileId")
+            spec_digest = body.get("specDigest")
+            if (
+                not isinstance(environment_id, str)
+                or not re.fullmatch(r"runtime-[0-9]{1,16}-[0-9a-f]{8}", environment_id)
+                or not isinstance(profile_id, str)
+                or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,127}", profile_id)
+                or not isinstance(spec_digest, str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", spec_digest)
+                or body.get("consent") is not True
+            ):
+                raise ValueError(
+                    "environmentId, profileId, exact specDigest, and literal consent=true are required."
+                )
+            validate_optional_runtime_activation_request(
+                profile_id, spec_digest, consent=True
+            )
+            gate_token = self._reserve_worker_runtime_gate(
+                "optional_runtime_activation", environment_id
+            )
+            result = await asyncio.to_thread(
+                activate_optional_runtime_environment,
+                environment_id,
+                profile_id,
+                spec_digest,
+                consent=True,
+            )
+            result = self._public_runtime_mutation_result(result)
+            restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
+            if result.get("restartRequired"):
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
+            keep_gate = restarting
+            return web.json_response(
+                {
+                    "error": False,
+                    **result,
+                    "restarting": restarting,
+                    "message": (
+                        "The validated optional runtime is active. MoDiff is restarting."
+                        if restarting
+                        else "The validated optional runtime is active. Restart MoDiff to load it."
+                        if result.get("restartRequired")
+                        else "This optional runtime is already active."
+                    ),
+                }
+            )
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except (RuntimeError, OverlayInstallBusy) as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        finally:
+            if gate_token is not None and not keep_gate:
+                self._release_worker_runtime_gate(gate_token)
+
+    async def runtime_optional_runtime_rollback(self, request):
+        if self.current_task or self.queued_tasks:
+            return web.json_response(
+                {
+                    "error": True,
+                    "error_code": "optional_runtime_rollback_busy",
+                    "message": "Finish or stop active and queued runs before rolling back an optional runtime.",
+                },
+                status=409,
+            )
+        gate_token = None
+        keep_gate = False
+        try:
+            body = await self._strict_runtime_control_json(
+                request, allowed={"consent"}, required={"consent"}
+            )
+            if body.get("consent") is not True:
+                raise ValueError("Literal consent=true is required to roll back an optional runtime.")
+            gate_token = self._reserve_worker_runtime_gate(
+                "optional_runtime_rollback", "previous_environment"
+            )
+            result = await asyncio.to_thread(rollback_optional_runtime_environment, consent=True)
+            result = self._public_runtime_mutation_result(result)
+            restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
+            if result.get("restartRequired"):
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
+            keep_gate = restarting
+            return web.json_response(
+                {
+                    "error": False,
+                    **result,
+                    "restarting": restarting,
+                    "message": (
+                        "The previous optional runtime is restored. MoDiff is restarting."
+                        if restarting
+                        else "The previous optional runtime is selected. Restart MoDiff to finish rollback."
+                    ),
+                }
+            )
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except (RuntimeError, OverlayInstallBusy) as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        finally:
+            if gate_token is not None and not keep_gate:
+                self._release_worker_runtime_gate(gate_token)
 
     def _schedule_optional_runtime_restart(self):
         if os.environ.get("MODIFF_WORKER_SUPERVISED") != "1":
@@ -8491,28 +10032,51 @@ class WebServer:
                 },
                 status=409,
             )
+        gate_token = None
+        keep_gate = False
         try:
-            body = await request.json()
-            result = activate_optimization_environment(str(body.get("environmentId") or ""))
-        except (ValueError, RuntimeError) as exc:
+            body = await self._strict_runtime_control_json(
+                request, allowed={"environmentId"}, required={"environmentId"}
+            )
+            environment_id = body.get("environmentId")
+            if not isinstance(environment_id, str) or not re.fullmatch(
+                r"runtime-[0-9]{1,16}-[0-9a-f]{8}", environment_id
+            ):
+                raise ValueError("A valid environmentId is required.")
+            gate_token = self._reserve_worker_runtime_gate(
+                "optimization_activation", environment_id
+            )
+            result = await asyncio.to_thread(
+                activate_optimization_environment, environment_id
+            )
+            result = self._public_runtime_mutation_result(result)
+            restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
+            if result.get("restartRequired"):
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
+            keep_gate = restarting
+            return web.json_response(
+                {
+                    "error": False,
+                    **result,
+                    "restarting": restarting,
+                    "message": (
+                        "The validated optional runtime is active. MoDiff is restarting."
+                        if restarting
+                        else "The validated optional runtime is active. Restart MoDiff to load it."
+                        if result.get("restartRequired")
+                        else "This optional runtime is already active."
+                    ),
+                }
+            )
+        except ValueError as exc:
             return web.json_response({"error": True, "message": str(exc)}, status=400)
-        restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
-        return web.json_response(
-            {
-                "error": False,
-                **result,
-                "restarting": restarting,
-                "message": (
-                    "The validated optional runtime is active. MoDiff is restarting."
-                    if restarting
-                    else "The validated optional runtime is active. Restart MoDiff to load it."
-                    if result.get("restartRequired")
-                    else "This optional runtime is already active."
-                ),
-            }
-        )
+        except (RuntimeError, OverlayInstallBusy) as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        finally:
+            if gate_token is not None and not keep_gate:
+                self._release_worker_runtime_gate(gate_token)
 
-    async def runtime_optimization_rollback(self, _request):
+    async def runtime_optimization_rollback(self, request):
         if self.current_task or self.queued_tasks:
             return web.json_response(
                 {
@@ -8522,23 +10086,40 @@ class WebServer:
                 },
                 status=409,
             )
+        gate_token = None
+        keep_gate = False
         try:
-            result = rollback_optimization_environment()
-        except RuntimeError as exc:
+            await self._strict_runtime_control_json(
+                request, allowed=set(), required=set(), allow_empty=True
+            )
+            gate_token = self._reserve_worker_runtime_gate(
+                "optimization_rollback", "previous_environment"
+            )
+            result = await asyncio.to_thread(rollback_optimization_environment)
+            result = self._public_runtime_mutation_result(result)
+            restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
+            if result.get("restartRequired"):
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
+            keep_gate = restarting
+            return web.json_response(
+                {
+                    "error": False,
+                    **result,
+                    "restarting": restarting,
+                    "message": (
+                        "The previous optional runtime is restored. MoDiff is restarting."
+                        if restarting
+                        else "The previous optional runtime is selected. Restart MoDiff to finish rollback."
+                    ),
+                }
+            )
+        except ValueError as exc:
             return web.json_response({"error": True, "message": str(exc)}, status=400)
-        restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
-        return web.json_response(
-            {
-                "error": False,
-                **result,
-                "restarting": restarting,
-                "message": (
-                    "The previous optional runtime is restored. MoDiff is restarting."
-                    if restarting
-                    else "The previous optional runtime is selected. Restart MoDiff to finish rollback."
-                ),
-            }
-        )
+        except (RuntimeError, OverlayInstallBusy) as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        finally:
+            if gate_token is not None and not keep_gate:
+                self._release_worker_runtime_gate(gate_token)
 
     async def runtime_optimization_enable(self, request):
         try:
@@ -8610,7 +10191,7 @@ class WebServer:
         return web.json_response(
             {
                 "error": False,
-                "receipt": receipt,
+                "receipt": self._public_optimization_receipt(receipt),
                 "message": (
                     "Compatibility probe passed. This does not authorize Auto until a real workload is qualified."
                     if receipt.get("status") == "probe_passed"
@@ -8620,7 +10201,20 @@ class WebServer:
         )
 
     async def runtime_optimization_receipts(self, _request):
-        return web.json_response(read_optimization_receipts())
+        document = read_optimization_receipts()
+        receipts = document.get("receipts") if isinstance(document, dict) else []
+        if not isinstance(receipts, list):
+            receipts = []
+        return web.json_response(
+            {
+                "schemaVersion": 1,
+                "receipts": [
+                    projected
+                    for item in receipts
+                    if (projected := self._public_optimization_receipt(item)) is not None
+                ][:500],
+            }
+        )
 
     async def runtime_optimization_qualify(self, request):
         try:
@@ -8634,7 +10228,7 @@ class WebServer:
         return web.json_response(
             {
                 "error": False,
-                "receipt": receipt,
+                "receipt": self._public_optimization_receipt(receipt),
                 "message": "This exact runtime, model, workload, and optimization selection is now eligible for Auto.",
             }
         )
@@ -9348,8 +10942,19 @@ class WebServer:
 
     async def model_capabilities(self, request):
         query = str(request.query.get("q", "")).lower().strip()
+        optional_runtime_catalog_snapshot = None
+
+        def request_optional_runtime_catalog():
+            nonlocal optional_runtime_catalog_snapshot
+            if optional_runtime_catalog_snapshot is None:
+                optional_runtime_catalog_snapshot = public_optional_runtime_catalog()
+            return optional_runtime_catalog_snapshot
+
         profiles_by_model = {}
-        for profile in public_execution_profiles():
+        for profile in public_execution_profiles(
+            observe_optional_runtime=True,
+            optional_runtime_catalog_resolver=request_optional_runtime_catalog,
+        ):
             profiles_by_model.setdefault(profile.get("model_type"), []).append(profile)
 
         capabilities = []
@@ -9374,6 +10979,13 @@ class WebServer:
             )
             quantized_components = sorted(
                 {component for profile in profiles for component in profile.get("quantizable_components", [])}
+            )
+            optional_runtime_profile_ids = list(
+                dict.fromkeys(
+                    profile_id
+                    for profile in profiles
+                    for profile_id in profile.get("optional_runtime_profiles", [])
+                )
             )
             capability.update(
                 {
@@ -9407,6 +11019,14 @@ class WebServer:
                         "offloadModes": (capability.get("offloadSupport") or {}).get("modes", []),
                     },
                     "qualificationStatus": capability.get("qualificationStatus") or "graph-qualified",
+                    "optionalRuntimeProfileIds": optional_runtime_profile_ids,
+                    "optionalRuntimeProfiles": public_optional_runtime_profiles(
+                        optional_runtime_profile_ids
+                    ),
+                    "optionalRuntimeRequirement": optional_runtime_requirement_for_execution(
+                        capability.get("modelType"),
+                        catalog_resolver=request_optional_runtime_catalog,
+                    ),
                 }
             )
             capabilities.append(capability)
@@ -9426,8 +11046,15 @@ class WebServer:
                 "schemaVersion": 2,
                 "count": len(capabilities),
                 "capabilities": capabilities,
-                "diffusersExecutionProfiles": public_execution_profiles(),
-                "experimentalCapabilities": public_experimental_pipelines(),
+                "diffusersExecutionProfiles": public_execution_profiles(
+                    observe_optional_runtime=True,
+                    optional_runtime_catalog_resolver=request_optional_runtime_catalog,
+                ),
+                "optionalRuntimeProfiles": public_optional_runtime_profiles(),
+                "experimentalCapabilities": public_experimental_pipelines(
+                    observe_optional_runtime=True,
+                    optional_runtime_catalog_resolver=request_optional_runtime_catalog,
+                ),
                 "source": "modiff-backend",
             }
         )
@@ -10213,7 +11840,10 @@ class WebServer:
         sid = request.query.get("sid")
 
         future = asyncio.Future()
-        await self.queue_task(search_hub, query, future, sid, name="Hugging Face search")
+        try:
+            await self.queue_task(search_hub, query, future, sid, name="Hugging Face search")
+        except OverlayInstallBusy as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
 
         try:
             result = await future

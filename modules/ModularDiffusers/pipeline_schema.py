@@ -11,12 +11,16 @@ dependency is pinned separately in ``pyproject.toml``.
 """
 
 import copy
+import hashlib
 import json
 import logging
 import os
+import re
+from collections.abc import Mapping
 
 # Simple typed wrapper for parameter overrides
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
 from huggingface_hub import create_repo, hf_hub_download, upload_file
@@ -25,6 +29,7 @@ from huggingface_hub.utils import (
     HfHubHTTPError,
     RepositoryNotFoundError,
     RevisionNotFoundError,
+    validate_repo_id,
 )
 
 from diffusers.utils import HUGGINGFACE_CO_RESOLVE_ENDPOINT
@@ -32,6 +37,487 @@ from diffusers.modular_pipelines.modular_pipeline_utils import InputParam, Outpu
 
 
 logger = logging.getLogger(__name__)
+
+
+MAX_MODIFF_PIPELINE_CONFIG_BYTES = 1024 * 1024
+MAX_CUSTOM_PIPELINE_REPOSITORY_CHARS = 4096
+MAX_LOCAL_EXECUTABLE_MANIFEST_ENTRIES = 16384
+MAX_LOCAL_EXECUTABLE_MANIFEST_FILES = 256
+MAX_LOCAL_EXECUTABLE_FILE_BYTES = 2 * 1024 * 1024
+MAX_LOCAL_EXECUTABLE_MANIFEST_BYTES = 16 * 1024 * 1024
+MAX_LOCAL_EXECUTABLE_MANIFEST_DEPTH = 16
+MAX_CUSTOM_PIPELINE_JSON_DEPTH = 16
+MAX_CUSTOM_PIPELINE_JSON_VALUES = 16_384
+MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS = 2_048
+MAX_CUSTOM_PIPELINE_JSON_STRING_CHARS = 16_384
+MAX_CUSTOM_PIPELINE_ACTIONS = 128
+MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION = 256
+PROTOTYPE_SENSITIVE_FIELD_NAMES = frozenset({"__proto__", "prototype", "constructor"})
+_IMMUTABLE_HUB_REVISION = re.compile(r"^[0-9a-f]{40}$")
+_LOCAL_EXECUTABLE_CONFIG_FILES = {
+    "config.json",
+    "model_index.json",
+    "modular_config.json",
+    "modular_model_index.json",
+}
+
+
+class DuplicateConfigKeyError(ValueError):
+    """Raised when a JSON object contains an ambiguous duplicate key."""
+
+
+def _reject_duplicate_config_keys(pairs):
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise DuplicateConfigKeyError(f"Duplicate JSON key {key!r} is not allowed")
+        value[key] = item
+    return value
+
+
+def _reject_nonfinite_config_constant(value):
+    raise ValueError(f"Non-finite JSON number {value!r} is not allowed")
+
+
+def _decode_pipeline_config_bytes(raw_bytes: bytes, *, source_label: str) -> dict[str, Any]:
+    try:
+        decoded = raw_bytes.decode("utf-8")
+        data = json.loads(
+            decoded,
+            object_pairs_hook=_reject_duplicate_config_keys,
+            parse_constant=_reject_nonfinite_config_constant,
+        )
+    except (UnicodeDecodeError, ValueError, RecursionError) as error:
+        raise EnvironmentError(
+            f"The config file at '{source_label}' is not valid unambiguous UTF-8 JSON: {error}"
+        ) from error
+    if not isinstance(data, dict):
+        raise EnvironmentError(f"The config file at '{source_label}' must contain a JSON object at its root.")
+    return data
+
+
+def _validate_bounded_json_structure(data: dict[str, Any], *, source_label: str) -> None:
+    """Bound nested metadata before it can become client-visible node state."""
+
+    pending = [(data, 0)]
+    value_count = 0
+    while pending:
+        value, depth = pending.pop()
+        value_count += 1
+        if value_count > MAX_CUSTOM_PIPELINE_JSON_VALUES:
+            raise EnvironmentError(
+                f"The config file at '{source_label}' exceeds the "
+                f"{MAX_CUSTOM_PIPELINE_JSON_VALUES}-value structural limit."
+            )
+        if depth > MAX_CUSTOM_PIPELINE_JSON_DEPTH:
+            raise EnvironmentError(
+                f"The config file at '{source_label}' exceeds the "
+                f"{MAX_CUSTOM_PIPELINE_JSON_DEPTH}-level structural depth limit."
+            )
+        if isinstance(value, dict):
+            if len(value) > MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS:
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' contains an object larger than the "
+                    f"{MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS}-item limit."
+                )
+            for key, item in value.items():
+                if len(key) > 256:
+                    raise EnvironmentError(
+                        f"The config file at '{source_label}' contains a JSON key longer than 256 characters."
+                    )
+                pending.append((item, depth + 1))
+        elif isinstance(value, list):
+            if len(value) > MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS:
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' contains a list larger than the "
+                    f"{MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS}-item limit."
+                )
+            pending.extend((item, depth + 1) for item in value)
+        elif isinstance(value, str) and len(value) > MAX_CUSTOM_PIPELINE_JSON_STRING_CHARS:
+            raise EnvironmentError(
+                f"The config file at '{source_label}' contains a string longer than the "
+                f"{MAX_CUSTOM_PIPELINE_JSON_STRING_CHARS}-character limit."
+            )
+
+
+def _validate_declarative_field_action(
+    value: Any,
+    *,
+    source_label: str,
+    field_path: str,
+    field_definitions: Mapping[str, Any],
+) -> None:
+    """Reject callbacks that execute code or mutate fields outside their contract."""
+
+    if isinstance(value, str) or not isinstance(value, (dict, list)):
+        raise EnvironmentError(
+            f"The config file at '{source_label}' requires '{field_path}' to be a declarative JSON object or list; "
+            "string callbacks are not allowed in custom pipeline sidecars."
+        )
+
+    allowed_fields = set(field_definitions)
+
+    def validate_visibility_map(mapping: Any) -> None:
+        if not isinstance(mapping, dict):
+            raise EnvironmentError(
+                f"The config file at '{source_label}' requires visibility data in '{field_path}' to be an object."
+            )
+        for targets in mapping.values():
+            target_names = targets if isinstance(targets, list) else [targets]
+            if any(not isinstance(target, str) or target not in allowed_fields for target in target_names):
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' contains an unknown field target in '{field_path}'."
+                )
+
+    pending = [value]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, list):
+            for descriptor in item:
+                if not isinstance(descriptor, (dict, list)):
+                    raise EnvironmentError(
+                        f"The config file at '{source_label}' contains a non-declarative callback item in "
+                        f"'{field_path}'; string callbacks are not allowed."
+                    )
+                pending.append(descriptor)
+        elif isinstance(item, dict):
+            if "action" in item:
+                action = item["action"]
+                if not isinstance(action, str) or action not in {"show", "hide", "value", "signal"}:
+                    raise EnvironmentError(
+                        f"The config file at '{source_label}' contains prohibited field action "
+                        f"{action!r} in '{field_path}'. Custom sidecars may only declare show, hide, value, or signal."
+                    )
+                if action in {"show", "hide"}:
+                    validate_visibility_map(item.get("data", {}))
+                else:
+                    target = item.get("target")
+                    if not isinstance(target, str) or target not in allowed_fields:
+                        raise EnvironmentError(
+                            f"The config file at '{source_label}' contains an unknown field target in '{field_path}'."
+                        )
+                    if action == "value":
+                        prop = item.get("prop", "value")
+                        if prop not in {"value", "hidden", "disabled", "options", "fieldOptions", "display"}:
+                            raise EnvironmentError(
+                                f"The config file at '{source_label}' contains unsupported value property "
+                                f"{prop!r} in '{field_path}'."
+                            )
+                    else:
+                        target_definition = field_definitions.get(target)
+                        target_display = (
+                            target_definition.get("display") if isinstance(target_definition, Mapping) else None
+                        )
+                        if target_display in {"input", "output"}:
+                            continue
+                        raise EnvironmentError(
+                            f"The config file at '{source_label}' requires signal target {target!r} in "
+                            f"'{field_path}' to be an input or output field."
+                        )
+            else:
+                # An action-less object is the client's visibility map.
+                validate_visibility_map(item)
+
+
+def _validate_pipeline_config_document(data: dict[str, Any], *, source_label: str) -> None:
+    """Validate structural fields consumed before the richer P1 schema gate."""
+
+    _validate_bounded_json_structure(data, source_label=source_label)
+    for field_name in ("label", "default_repo", "default_dtype"):
+        field_value = data.get(field_name, "")
+        if not isinstance(field_value, str):
+            raise EnvironmentError(
+                f"The config file at '{source_label}' requires string field '{field_name}'."
+            )
+    if "node_params" not in data or not isinstance(data["node_params"], dict) or not data["node_params"]:
+        raise EnvironmentError(
+            f"The config file at '{source_label}' requires a non-empty 'node_params' JSON object."
+        )
+    if len(data["node_params"]) > MAX_CUSTOM_PIPELINE_ACTIONS:
+        raise EnvironmentError(
+            f"The config file at '{source_label}' exceeds the {MAX_CUSTOM_PIPELINE_ACTIONS}-action limit."
+        )
+
+    for action_name, action in data["node_params"].items():
+        if (
+            not isinstance(action_name, str)
+            or not action_name.strip()
+            or len(action_name) > 128
+            or action_name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+        ):
+            raise EnvironmentError(
+                f"The config file at '{source_label}' contains an invalid node action name."
+            )
+        if action is None:
+            continue
+        if not isinstance(action, dict):
+            raise EnvironmentError(
+                f"The config file at '{source_label}' requires action '{action_name}' to be a JSON object or null."
+            )
+        params = action.get("params")
+        if not isinstance(params, dict):
+            raise EnvironmentError(
+                f"The config file at '{source_label}' requires action '{action_name}.params' to be a JSON object."
+            )
+        if len(params) > MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION:
+            raise EnvironmentError(
+                f"The config file at '{source_label}' action '{action_name}' exceeds the "
+                f"{MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION}-parameter limit."
+            )
+        for param_name, param in params.items():
+            if (
+                not isinstance(param_name, str)
+                or not param_name.strip()
+                or len(param_name) > 128
+                or param_name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+            ):
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' contains an invalid parameter name in '{action_name}'."
+                )
+            if not isinstance(param, dict):
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' requires parameter '{action_name}.{param_name}' "
+                    "to be a JSON object."
+                )
+            for callback_name in ("onChange", "onSignal"):
+                if callback_name in param:
+                    _validate_declarative_field_action(
+                        param[callback_name],
+                        source_label=source_label,
+                        field_path=f"{action_name}.{param_name}.{callback_name}",
+                        field_definitions=params,
+                    )
+        for names_field in ("input_names", "model_input_names", "output_names"):
+            names = action.get(names_field)
+            if not isinstance(names, list) or any(
+                not isinstance(name, str) or not name.strip() or len(name) > 128 for name in names
+            ):
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' requires '{action_name}.{names_field}' "
+                    "to be a list of non-empty strings."
+                )
+        block_name = action.get("block_name")
+        if block_name is not None and (
+            not isinstance(block_name, str) or not block_name.strip() or len(block_name) > 256
+        ):
+            raise EnvironmentError(
+                f"The config file at '{source_label}' requires '{action_name}.block_name' "
+                "to be a non-empty string or null."
+            )
+        for optional_string in ("node_type", "label", "color"):
+            if optional_string in action and not isinstance(action[optional_string], str):
+                raise EnvironmentError(
+                    f"The config file at '{source_label}' requires '{action_name}.{optional_string}' "
+                    "to be a string."
+                )
+
+
+def _read_pipeline_config_bytes(config_path: Path) -> bytes:
+    try:
+        size = config_path.stat().st_size
+    except OSError as error:
+        raise EnvironmentError(f"Could not inspect Modular Diffusers config file '{config_path}': {error}") from error
+    if size > MAX_MODIFF_PIPELINE_CONFIG_BYTES:
+        raise EnvironmentError(
+            f"The Modular Diffusers config file at '{config_path}' is larger than the "
+            f"{MAX_MODIFF_PIPELINE_CONFIG_BYTES}-byte limit."
+        )
+    try:
+        with config_path.open("rb") as reader:
+            raw_bytes = reader.read(MAX_MODIFF_PIPELINE_CONFIG_BYTES + 1)
+    except OSError as error:
+        raise EnvironmentError(f"Could not read Modular Diffusers config file '{config_path}': {error}") from error
+    if len(raw_bytes) > MAX_MODIFF_PIPELINE_CONFIG_BYTES:
+        raise EnvironmentError(
+            f"The Modular Diffusers config file at '{config_path}' is larger than the "
+            f"{MAX_MODIFF_PIPELINE_CONFIG_BYTES}-byte limit."
+        )
+    return raw_bytes
+
+
+def _is_executable_manifest_file(path: Path, relative_name: str) -> bool:
+    return relative_name in _LOCAL_EXECUTABLE_CONFIG_FILES or path.suffix.lower() == ".py"
+
+
+def _hub_snapshot_blob_root(repository_path: Path) -> Path:
+    return repository_path.parent.parent / "blobs"
+
+
+def _is_linked_directory(path: Path) -> bool:
+    return path.is_symlink() or bool(getattr(path, "is_junction", lambda: False)())
+
+
+def _validate_hub_snapshot_config_path(config_path: Path, *, revision: str) -> None:
+    repository_path = config_path.parent
+    if (
+        config_path.name != MoDiffPipelineConfig.config_name
+        or repository_path.name != revision
+        or repository_path.parent.name != "snapshots"
+    ):
+        raise EnvironmentError(
+            f"The cached Hub result for revision {revision} is not contained in its exact snapshot directory."
+        )
+    repo_cache_root = repository_path.parent.parent
+    for directory, label in (
+        (repo_cache_root, "repository cache"),
+        (repository_path.parent, "snapshots directory"),
+        (repository_path, "exact snapshot"),
+    ):
+        if _is_linked_directory(directory):
+            raise EnvironmentError(f"The cached Hub {label} must not be a symlink or junction: '{directory}'.")
+    if config_path.is_symlink():
+        try:
+            blob_root = _hub_snapshot_blob_root(repository_path)
+            if _is_linked_directory(blob_root):
+                raise ValueError("the repository blobs directory is linked")
+            target = config_path.resolve(strict=True)
+            target.relative_to(blob_root.resolve(strict=True))
+        except (OSError, RuntimeError, ValueError) as error:
+            raise EnvironmentError(
+                f"The cached Hub {MoDiffPipelineConfig.config_name} symlink does not resolve inside this "
+                "repository cache's blobs directory."
+            ) from error
+
+
+def _executable_manifest_sha256(repository_path: Path, *, source: str) -> str:
+    """Detect bounded loader/control metadata drift, not weights or atomic code."""
+
+    candidates = []
+    pending = [(repository_path, 0)]
+    scanned_entries = 0
+    while pending:
+        current_directory, depth = pending.pop()
+        try:
+            entries = sorted(os.scandir(current_directory), key=lambda entry: entry.name)
+        except OSError as error:
+            raise EnvironmentError(
+                f"Could not inspect custom pipeline directory '{current_directory}': {error}"
+            ) from error
+        for entry in entries:
+            scanned_entries += 1
+            if scanned_entries > MAX_LOCAL_EXECUTABLE_MANIFEST_ENTRIES:
+                raise EnvironmentError(
+                    "Custom pipeline repository exceeds the "
+                    f"{MAX_LOCAL_EXECUTABLE_MANIFEST_ENTRIES}-entry executable-manifest scan limit."
+                )
+            entry_path = Path(entry.path)
+            relative_name = entry_path.relative_to(repository_path).as_posix()
+            manifest_file = _is_executable_manifest_file(entry_path, relative_name)
+            is_junction = bool(getattr(entry_path, "is_junction", lambda: False)())
+            if entry.is_symlink() or is_junction:
+                if entry.is_dir(follow_symlinks=True) or is_junction:
+                    raise EnvironmentError(
+                        f"Custom pipeline executable manifest does not allow linked directory '{entry_path}'."
+                    )
+                if manifest_file:
+                    if source == "local":
+                        raise EnvironmentError(
+                            f"Local custom pipeline executable manifest does not allow linked file '{entry_path}'."
+                        )
+                    try:
+                        blob_root = _hub_snapshot_blob_root(repository_path)
+                        if _is_linked_directory(blob_root):
+                            raise ValueError("the repository blobs directory is linked")
+                        resolved_path = entry_path.resolve(strict=True)
+                        resolved_path.relative_to(blob_root.resolve(strict=True))
+                        if not resolved_path.is_file():
+                            raise ValueError("linked executable is not a regular file")
+                    except (OSError, RuntimeError, ValueError) as error:
+                        raise EnvironmentError(
+                            f"Cached Hub executable file '{entry_path}' does not resolve inside this repository "
+                            "cache's blobs directory."
+                        ) from error
+                    candidates.append((entry_path, resolved_path))
+                continue
+            if entry.is_dir(follow_symlinks=False):
+                if depth >= MAX_LOCAL_EXECUTABLE_MANIFEST_DEPTH:
+                    raise EnvironmentError(
+                        "Custom pipeline repository exceeds the "
+                        f"{MAX_LOCAL_EXECUTABLE_MANIFEST_DEPTH}-level executable-manifest depth limit."
+                    )
+                pending.append((entry_path, depth + 1))
+            elif entry.is_file(follow_symlinks=False) and manifest_file:
+                candidates.append((entry_path, entry_path))
+
+    if len(candidates) > MAX_LOCAL_EXECUTABLE_MANIFEST_FILES:
+        raise EnvironmentError(
+            "Custom pipeline repository exceeds the "
+            f"{MAX_LOCAL_EXECUTABLE_MANIFEST_FILES}-file executable-manifest limit."
+        )
+
+    manifest_entries = []
+    total_bytes = 0
+    for display_path, resolved_path in candidates:
+        relative_name = display_path.relative_to(repository_path).as_posix()
+        if len(relative_name) > MAX_CUSTOM_PIPELINE_REPOSITORY_CHARS:
+            raise EnvironmentError("Custom pipeline executable manifest path exceeds 4096 characters.")
+        try:
+            file_size = resolved_path.stat().st_size
+        except OSError as error:
+            raise EnvironmentError(
+                f"Could not inspect custom pipeline executable file '{display_path}': {error}"
+            ) from error
+        if file_size > MAX_LOCAL_EXECUTABLE_FILE_BYTES:
+            raise EnvironmentError(
+                f"Custom pipeline executable file '{display_path}' exceeds the "
+                f"{MAX_LOCAL_EXECUTABLE_FILE_BYTES}-byte limit."
+            )
+        try:
+            with resolved_path.open("rb") as reader:
+                raw_bytes = reader.read(MAX_LOCAL_EXECUTABLE_FILE_BYTES + 1)
+        except OSError as error:
+            raise EnvironmentError(
+                f"Could not read custom pipeline executable file '{display_path}': {error}"
+            ) from error
+        if len(raw_bytes) > MAX_LOCAL_EXECUTABLE_FILE_BYTES:
+            raise EnvironmentError(
+                f"Custom pipeline executable file '{display_path}' exceeds the "
+                f"{MAX_LOCAL_EXECUTABLE_FILE_BYTES}-byte limit."
+            )
+        if len(raw_bytes) != file_size:
+            raise EnvironmentError(
+                f"Custom pipeline loader metadata '{display_path}' changed while its manifest was being read. "
+                "Retry after the repository cache is stable."
+            )
+        total_bytes += len(raw_bytes)
+        if total_bytes > MAX_LOCAL_EXECUTABLE_MANIFEST_BYTES:
+            raise EnvironmentError(
+                "Custom pipeline executable manifest exceeds the "
+                f"{MAX_LOCAL_EXECUTABLE_MANIFEST_BYTES}-byte total limit."
+            )
+        manifest_entries.append((relative_name, raw_bytes))
+
+    digest = hashlib.sha256(b"modiff-executable-manifest-v2\0")
+    present_names = {relative_name for relative_name, _raw_bytes in manifest_entries}
+    for config_name in sorted(_LOCAL_EXECUTABLE_CONFIG_FILES):
+        name_bytes = config_name.encode("utf-8")
+        digest.update(b"fixed-config\0")
+        digest.update(len(name_bytes).to_bytes(4, "big"))
+        digest.update(name_bytes)
+        digest.update(b"present\0" if config_name in present_names else b"absent\0")
+    for relative_name, raw_bytes in sorted(manifest_entries):
+        name_bytes = relative_name.encode("utf-8")
+        digest.update(b"file\0")
+        digest.update(len(name_bytes).to_bytes(4, "big"))
+        digest.update(name_bytes)
+        digest.update(len(raw_bytes).to_bytes(8, "big"))
+        digest.update(raw_bytes)
+    return digest.hexdigest()
+
+
+@dataclass(frozen=True)
+class VerifiedMoDiffPipelineConfig:
+    """A bounded sidecar plus loader-metadata drift checksum; model weights are not hashed."""
+
+    config: "MoDiffPipelineConfig"
+    raw_bytes: bytes
+    sha256: str
+    source: str
+    repo_id: str
+    revision: str | None
+    executable_manifest_sha256: str
+    config_path: str
+    repository_path: str
 
 
 def _name_to_label(name: str) -> str:
@@ -43,12 +529,24 @@ def _name_to_label(name: str) -> str:
 MODIFF_PARAM_TEMPLATES = {
     # Image I/O
     "image": {"label": "Image", "type": "image", "display": "input", "required_block_params": ["image"]},
+    "last_image": {
+        "label": "Last Image",
+        "type": "image",
+        "display": "input",
+        "required_block_params": ["last_image"],
+    },
     "images": {"label": "Images", "type": "image", "display": "output", "required_block_params": ["images"]},
     "control_image": {
         "label": "Control Image",
         "type": "image",
         "display": "input",
         "required_block_params": ["control_image"],
+    },
+    "mask_image": {
+        "label": "Mask Image",
+        "type": "image",
+        "display": "input",
+        "required_block_params": ["mask_image"],
     },
     # Latents
     "latents": {"label": "Latents", "type": "latents", "display": "input", "required_block_params": ["latents"]},
@@ -58,11 +556,29 @@ MODIFF_PARAM_TEMPLATES = {
         "display": "input",
         "required_block_params": ["image_latents"],
     },
+    "mask": {
+        "label": "Latent Mask",
+        "type": "latent_mask",
+        "display": "input",
+        "required_block_params": ["mask"],
+    },
+    "masked_image_latents": {
+        "label": "Masked Image Latents",
+        "type": "masked_latents",
+        "display": "input",
+        "required_block_params": ["masked_image_latents"],
+    },
     "first_frame_latents": {
         "label": "First Frame Latents",
         "type": "latents",
         "display": "input",
         "required_block_params": ["first_frame_latents"],
+    },
+    "image_condition_latents": {
+        "label": "Image Condition Latents",
+        "type": "video_condition_latents",
+        "display": "output",
+        "required_block_params": ["image_condition_latents"],
     },
     "latents_preview": {"label": "Latents Preview", "type": "latent", "display": "output"},
     # Image Latents with Strength
@@ -140,6 +656,14 @@ MODIFF_PARAM_TEMPLATES = {
         "max": 4294967295,
         "display": "random",
         "required_block_params": ["generator"],
+    },
+    "padding_mask_crop": {
+        "label": "Mask Crop Padding",
+        "type": "int",
+        "min": 0,
+        "max": 8192,
+        "step": 1,
+        "required_block_params": ["padding_mask_crop"],
     },
     "num_inference_steps": {
         "label": "Steps",
@@ -239,8 +763,19 @@ MODIFF_PARAM_TEMPLATES = {
         "type": "custom_guider",
         "display": "input",
         "onChange": {False: ["guidance_scale"], True: []},
+        "required_block_params": ["guider"],
     },
     "doc": {"label": "Doc", "type": "string", "display": "output"},
+    "route_state_in": {
+        "label": "Route State",
+        "type": "modular_route_state",
+        "display": "input",
+    },
+    "route_state_out": {
+        "label": "Route State",
+        "type": "modular_route_state",
+        "display": "output",
+    },
 }
 
 
@@ -537,6 +1072,7 @@ DEFAULT_NODE_SPECS = {
     "vae_encoder": {
         "inputs": [
             MoDiffParam.image(),
+            MoDiffParam.seed(),
         ],
         "model_inputs": [
             MoDiffParam.vae(),
@@ -834,11 +1370,24 @@ class MoDiffPipelineConfig:
             writer.write(self.to_json_string())
 
     @classmethod
+    def from_json_bytes(cls, raw_bytes: bytes, *, source_label: str = "<memory>") -> "MoDiffPipelineConfig":
+        """Load one bounded, duplicate-free JSON object from an exact byte sequence."""
+
+        if len(raw_bytes) > MAX_MODIFF_PIPELINE_CONFIG_BYTES:
+            raise EnvironmentError(
+                f"The Modular Diffusers config at '{source_label}' is larger than the "
+                f"{MAX_MODIFF_PIPELINE_CONFIG_BYTES}-byte limit."
+            )
+        data = _decode_pipeline_config_bytes(raw_bytes, source_label=source_label)
+        _validate_pipeline_config_document(data, source_label=source_label)
+        return cls.from_dict(data)
+
+    @classmethod
     def from_json_file(cls, json_file_path: str | os.PathLike) -> "MoDiffPipelineConfig":
         """Load from a JSON file."""
-        with open(json_file_path, "r", encoding="utf-8") as reader:
-            data = json.load(reader)
-        return cls.from_dict(data)
+        config_path = Path(json_file_path)
+        raw_bytes = _read_pipeline_config_bytes(config_path)
+        return cls.from_json_bytes(raw_bytes, source_label=str(config_path))
 
     def save(self, save_directory: str | os.PathLike, push_to_hub: bool = False, **kwargs):
         """Save the modiff pipeline config to a directory."""
@@ -867,6 +1416,114 @@ class MoDiffPipelineConfig:
                 create_pr=create_pr,
             )
             logger.info(f"Pipeline config pushed to hub: {repo_id}")
+
+    @classmethod
+    def load_verified(
+        cls,
+        pretrained_model_name_or_path: str | os.PathLike,
+        *,
+        source: str,
+        revision: str | None = None,
+        cache_dir: str | os.PathLike | None = None,
+        token: bool | str | None = None,
+    ) -> VerifiedMoDiffPipelineConfig:
+        """Read a source-explicit sidecar and loader metadata without network access.
+
+        ``source='hub'`` never falls back to a same-named local directory. It
+        resolves only an exact cached Hub commit. ``source='local'`` never calls
+        the Hub and rejects a sidecar symlink that escapes the selected model
+        directory. The executable manifest detects reviewed config/Python drift;
+        it is not an atomic code authorization or a model-weight proof.
+        """
+
+        if not isinstance(source, str) or source not in {"hub", "local"}:
+            raise ValueError("Custom Modular Diffusers repositories must declare source as 'hub' or 'local'.")
+
+        repository = str(pretrained_model_name_or_path or "").strip()
+        if not repository:
+            raise ValueError("Custom Modular Diffusers repositories require a non-empty repository or local path.")
+        if len(repository) > MAX_CUSTOM_PIPELINE_REPOSITORY_CHARS:
+            raise ValueError("Custom Modular Diffusers repository or local path exceeds 4096 characters.")
+
+        normalized_revision = str(revision or "").strip() or None
+        if source == "hub":
+            try:
+                validate_repo_id(repository)
+            except ValueError as error:
+                raise ValueError(f"Invalid Hugging Face repository ID {repository!r}: {error}") from error
+            if normalized_revision is None or _IMMUTABLE_HUB_REVISION.fullmatch(normalized_revision) is None:
+                raise ValueError(
+                    "Custom Modular Diffusers Hub repositories require an immutable lowercase 40-character commit "
+                    "revision before their MoDiff sidecar can be read."
+                )
+            try:
+                config_file = hf_hub_download(
+                    repository,
+                    filename=cls.config_name,
+                    cache_dir=cache_dir,
+                    local_files_only=True,
+                    token=token,
+                    revision=normalized_revision,
+                )
+            except (
+                RepositoryNotFoundError,
+                RevisionNotFoundError,
+                EntryNotFoundError,
+                HfHubHTTPError,
+                ValueError,
+            ) as error:
+                raise EnvironmentError(
+                    f"Could not resolve cached {cls.config_name} for {repository}@{normalized_revision}. "
+                    "Install that exact revision through Model Manager before refreshing the custom pipeline contract."
+                ) from error
+            config_path = Path(config_file).absolute()
+            if not config_path.is_file():
+                raise EnvironmentError(
+                    f"The cached Hub snapshot for {repository}@{normalized_revision} has no {cls.config_name}."
+                )
+            repository_path = config_path.parent
+            _validate_hub_snapshot_config_path(config_path, revision=normalized_revision)
+            normalized_repository = repository
+            executable_manifest_sha256 = _executable_manifest_sha256(repository_path, source="hub")
+        else:
+            if normalized_revision is not None:
+                raise ValueError(
+                    "Local custom Modular Diffusers directories are mutable and must not claim a Hub revision. "
+                    "Clear Revision or select the Hub source."
+                )
+            try:
+                repository_path = Path(repository).expanduser().resolve(strict=True)
+            except (OSError, RuntimeError) as error:
+                raise EnvironmentError(
+                    f"Local custom Modular Diffusers directory '{repository}' does not exist."
+                ) from error
+            if not repository_path.is_dir():
+                raise EnvironmentError(f"Local custom Modular Diffusers source '{repository}' must be a directory.")
+            try:
+                config_path = (repository_path / cls.config_name).resolve(strict=True)
+                config_path.relative_to(repository_path)
+            except (OSError, RuntimeError, ValueError) as error:
+                raise EnvironmentError(
+                    f"Local {cls.config_name} must be a regular file contained by '{repository_path}'."
+                ) from error
+            if not config_path.is_file():
+                raise EnvironmentError(f"No file named {cls.config_name} found in {repository_path}")
+            normalized_repository = str(repository_path)
+            executable_manifest_sha256 = _executable_manifest_sha256(repository_path, source="local")
+
+        raw_bytes = _read_pipeline_config_bytes(config_path)
+        config = cls.from_json_bytes(raw_bytes, source_label=str(config_path))
+        return VerifiedMoDiffPipelineConfig(
+            config=config,
+            raw_bytes=raw_bytes,
+            sha256=hashlib.sha256(raw_bytes).hexdigest(),
+            source=source,
+            repo_id=normalized_repository,
+            revision=normalized_revision,
+            executable_manifest_sha256=executable_manifest_sha256,
+            config_path=str(config_path),
+            repository_path=str(repository_path),
+        )
 
     @classmethod
     def load(

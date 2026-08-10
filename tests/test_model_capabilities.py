@@ -18,10 +18,16 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
+        # Official Hugging Face libraries may back generic task nodes, but the
+        # removed library/model-specific driver must not return as a parallel path.
         self.assertNotIn("modules.TransformersMultimodal", module_registry.MODULE_MAP)
         self.assertEqual(
             experimental["Flux2KleinModularPipeline"]["runnableModes"],
             ["text_to_image", "edit_image", "multi_image_reference_edit"],
+        )
+        self.assertEqual(
+            experimental["FluxModularPipeline"]["runnableModes"],
+            ["text_to_image", "image_to_image"],
         )
         for capability in payload["experimentalCapabilities"]:
             self.assertIn("executionProfiles", capability)
@@ -97,9 +103,21 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         qwen_inpaint = by_model["QwenImageEditModularPipeline"]
         self.assertEqual(qwen_inpaint["inpaintContract"]["source"], "modules.DiffusersImage.Inpaint")
         self.assertIn("QwenImageEditInpaintPipeline", qwen_inpaint["pipelineClasses"])
+        self.assertEqual(qwen_inpaint["modes"], ["edit_image", "inpaint", "outpaint"])
+        self.assertEqual(qwen_inpaint["runnableModes"], ["edit_image", "inpaint", "outpaint"])
+
+        qwen_control = by_model["QwenImageModularPipeline"]
+        control_requirement = qwen_control["modeRequirements"]["control_image"]["modelRequirements"][0]
+        self.assertEqual(control_requirement["repo"], "InstantX/Qwen-Image-ControlNet-Union")
+        self.assertEqual(control_requirement["revision"], "b13036f066d6dee7c20513e263d3d673055e9de8")
+        self.assertEqual(qwen_control["additionalRequirements"][0], control_requirement)
 
         blocked = by_model["QwenImageEditPlusModularPipeline"]
+        self.assertEqual(blocked["modes"], ["edit_image", "multi_image_reference_edit"])
+        self.assertEqual(blocked["runnableModes"], ["edit_image", "multi_image_reference_edit"])
         self.assertNotIn("inpaint", blocked["runnableModes"])
+        self.assertFalse(blocked["inpaintContract"]["available"])
+        self.assertEqual(blocked["inpaintContract"]["status"], "blocked")
 
 
 if __name__ == "__main__":

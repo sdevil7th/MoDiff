@@ -1,35 +1,155 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
-import logging
+from collections.abc import Mapping
+from copy import deepcopy
 
-from diffusers import ModularPipeline
+from .pipeline_schema import PROTOTYPE_SENSITIVE_FIELD_NAMES
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import (
-    DEFAULT_GROUP_COMPONENTS,
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
     OFFLOAD_MODE_MODEL_CPU,
     OFFLOAD_MODE_NONE,
-    apply_component_group_offload,
-    configure_components_manager_offload,
-    normalize_offload_mode,
     offload_mode_param,
 )
 from modiff.model_artifact_catalog import resolve_model_revision
-from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
+from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST
 
-from . import MESSAGE_DURATION, components
-from .loaders import record_pipeline_component_runtime_policy, reusable_component_ids
-from .utils import collect_model_ids
-from .modular_utils import pin_modular_component_revisions, require_immutable_hub_revision
+from . import components
+from .modular_utils import require_immutable_hub_revision
 
 
-logger = logging.getLogger("modiff")
+_DECLARATIVE_SIDECAR_ACTIONS = {"show", "hide", "value", "signal"}
+_EXECUTION_UNSUPPORTED_MESSAGE = (
+    "Dynamic Block Node is contract-preview only in this release. Upstream Modular configs can direct imports of "
+    "installed libraries even when trust_remote_code is disabled, so execution remains unavailable until MoDiff "
+    "has a reviewed component-library allowlist. Use the built-in generic Modular Diffusers nodes to run models."
+)
+
+
+def _require_json_boolean_trust(value):
+    if type(value) is not bool:
+        raise TypeError("Dynamic Block trust_remote_code must be a JSON boolean.")
+    return value
+
+
+def _validate_sidecar_field_action(value, *, field_name, event_name, field_definitions):
+    """Reject code callbacks and mutations outside the published field contract."""
+
+    if value is None:
+        return
+    if isinstance(value, str):
+        raise ValueError(
+            f"Dynamic Block sidecar field {field_name!r} must not define server-executing {event_name} metadata."
+        )
+    if isinstance(value, list):
+        for item in value:
+            _validate_sidecar_field_action(
+                item,
+                field_name=field_name,
+                event_name=event_name,
+                field_definitions=field_definitions,
+            )
+        return
+    if not isinstance(value, Mapping):
+        raise ValueError(f"Dynamic Block sidecar field {field_name!r} has malformed {event_name} metadata.")
+
+    action = value.get("action")
+    if action in {"exec", "create"}:
+        raise ValueError(f"Dynamic Block sidecar field {field_name!r} must not define {event_name} action {action!r}.")
+    if action is not None and action not in _DECLARATIVE_SIDECAR_ACTIONS:
+        raise ValueError(f"Dynamic Block sidecar field {field_name!r} has unsupported {event_name} action {action!r}.")
+
+    allowed_fields = set(field_definitions)
+
+    def validate_visibility_map(mapping):
+        if not isinstance(mapping, Mapping):
+            raise ValueError(
+                f"Dynamic Block sidecar field {field_name!r} has malformed {event_name} visibility data."
+            )
+        for targets in mapping.values():
+            target_names = targets if isinstance(targets, list) else [targets]
+            if any(not isinstance(target, str) or target not in allowed_fields for target in target_names):
+                raise ValueError(
+                    f"Dynamic Block sidecar field {field_name!r} targets an unknown contract field."
+                )
+
+    if action is None:
+        validate_visibility_map(value)
+    elif action in {"show", "hide"}:
+        validate_visibility_map(value.get("data", {}))
+    else:
+        target = value.get("target")
+        if not isinstance(target, str) or target not in allowed_fields:
+            raise ValueError(f"Dynamic Block sidecar field {field_name!r} targets an unknown contract field.")
+        if action == "value":
+            prop = value.get("prop", "value")
+            if prop not in {"value", "hidden", "disabled", "options", "fieldOptions", "display"}:
+                raise ValueError(
+                    f"Dynamic Block sidecar field {field_name!r} defines unsupported value property {prop!r}."
+                )
+        else:
+            target_definition = field_definitions.get(target)
+            target_display = target_definition.get("display") if isinstance(target_definition, Mapping) else None
+            if target_display not in {"input", "output"}:
+                raise ValueError(
+                    f"Dynamic Block sidecar field {field_name!r} signal target must be an input or output field."
+                )
+
+
+def _custom_node_contract(custom_config):
+    """Return an isolated, declarative-only DynamicBlock node contract."""
+
+    node_params = custom_config.node_params
+    if not isinstance(node_params, Mapping):
+        raise ValueError("Dynamic Block sidecar node_params must be a JSON object.")
+    raw_contract = node_params.get("custom")
+    if not isinstance(raw_contract, Mapping):
+        raise ValueError("Dynamic Block sidecar must define a 'custom' node contract object.")
+
+    contract = deepcopy(dict(raw_contract))
+    raw_params = contract.get("params")
+    if not isinstance(raw_params, Mapping):
+        raise ValueError("Dynamic Block sidecar custom.params must be a JSON object.")
+    field_definitions = dict(raw_params)
+
+    sanitized_params = {}
+    for field_name, raw_field in raw_params.items():
+        if (
+            not isinstance(field_name, str)
+            or field_name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+            or not isinstance(raw_field, Mapping)
+        ):
+            raise ValueError("Dynamic Block sidecar fields must map string names to JSON objects.")
+        field = deepcopy(dict(raw_field))
+        for event_name in ("onChange", "onSignal"):
+            if event_name in field:
+                _validate_sidecar_field_action(
+                    field[event_name],
+                    field_name=field_name,
+                    event_name=event_name,
+                    field_definitions=field_definitions,
+                )
+        sanitized_params[field_name] = field
+    contract["params"] = sanitized_params
+
+    for names_key in ("model_input_names", "input_names", "output_names"):
+        names = contract.get(names_key, [])
+        if not isinstance(names, list) or any(not isinstance(name, str) for name in names):
+            raise ValueError(f"Dynamic Block sidecar custom.{names_key} must be a JSON string array.")
+        contract[names_key] = list(names)
+
+    for text_key in ("label", "color"):
+        value = contract.get(text_key)
+        if value is not None and not isinstance(value, str):
+            raise ValueError(f"Dynamic Block sidecar custom.{text_key} must be a string when provided.")
+    return contract
 
 
 def _server():
     from modiff.server import server
+
     return server
 
 
@@ -79,15 +199,22 @@ class DynamicBlockNode(NodeBase):
             "fieldOptions": {"noValidation": True},
         },
         "load_block_button": {
-            "label": "Load Custom Block",
+            "label": "Preview Custom Block Contract",
             "display": "ui_button",
             "value": False,
             "onChange": "update_node",
         },
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": False},
-        "offload_mode": offload_mode_param(modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]),
-        "trust_remote_code": {"label": "Trust Remote Code", "type": "boolean", "value": False},
+        "offload_mode": offload_mode_param(
+            modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
+        ),
+        "trust_remote_code": {
+            "label": "Trust Remote Code",
+            "type": "boolean",
+            "value": False,
+            "description": "Execution is disabled on this contract-preview-only legacy node.",
+        },
         "revision": {
             "label": "Revision",
             "type": "string",
@@ -111,21 +238,35 @@ class DynamicBlockNode(NodeBase):
             components.remove_from_collection(comp_id, self.node_id)
         super().__del__()
 
-    def _get_custom_config(self, repo_id, revision=None):
+    def _get_verified_custom_config(self, repo_id, revision=None):
         revision = resolve_model_revision(repo_id, revision)
         revision = require_immutable_hub_revision(repo_id, revision, required=True)
-        custom_config = PipelineConfig.load(repo_id, revision=revision)
-        return custom_config
+        return PipelineConfig.load_verified(
+            repo_id,
+            source="hub",
+            revision=revision,
+        )
+
+    def _get_custom_config(self, repo_id, revision=None):
+        """Compatibility wrapper returning the verified sidecar configuration."""
+
+        return self._get_verified_custom_config(repo_id, revision).config
 
     def update_node(self, values, ref):
         if not values.get("repo_id", ""):
             self.send_node_definition({})
             return
 
+        trust_remote_code = _require_json_boolean_trust(values.get("trust_remote_code", False))
+        if trust_remote_code:
+            raise ValueError(
+                "Dynamic Block contract preview requires Trust Remote Code off; repository code is not "
+                "authorized by this legacy node."
+            )
         repo_id = values.get("repo_id", "")
         revision = values.get("revision")
-        custom_config = self._get_custom_config(repo_id, revision)
-        node_config = custom_config.node_params["custom"]
+        verified_config = self._get_verified_custom_config(repo_id, revision)
+        node_config = _custom_node_contract(verified_config.config)
 
         custom_params = node_config["params"]
         self._model_input_names = node_config.get("model_input_names", [])
@@ -152,155 +293,5 @@ class DynamicBlockNode(NodeBase):
         revision=None,
         **kwargs,
     ):
-        revision = resolve_model_revision(repo_id, revision)
-        revision = require_immutable_hub_revision(repo_id, revision, required=True)
-        offload_mode = normalize_offload_mode(offload_mode, auto_offload=auto_offload, device=device)
-        if offload_mode not in [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]:
-            self.notify(
-                f"Dynamic Modular Diffusers blocks do not support {offload_mode} offload.",
-                variant="error",
-                persist=False,
-                autoHideDuration=MESSAGE_DURATION,
-            )
-            return None
-        logger.debug(f"Dynamic Block Node ({self.node_id}) received parameters:")
-        logger.debug(f"  repo_id: '{repo_id}'")
-        logger.debug(f"  device: '{device}'")
-        logger.debug(f"  auto_offload: '{auto_offload}'")
-        logger.debug(f"  offload_mode: '{offload_mode}'")
-        logger.debug(f"  trust_remote_code: '{trust_remote_code}'")
-
-        try:
-            pipeline = ModularPipeline.from_pretrained(
-                repo_id,
-                trust_remote_code=bool(trust_remote_code),
-                revision=revision,
-                components_manager=components,
-                collection=self.node_id,
-                local_files_only=True,
-            )
-        except ValueError as e:
-            self.notify(f"{str(e)}", variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
-            raise e
-        except ModuleNotFoundError as e:
-            self.notify(
-                f"{str(e)}. This likely means the custom code is trying to import a library that is not installed in MoDiff. Please check the error message for which module is missing and install it in your MoDiff environment.",
-                variant="error",
-                persist=False,
-                autoHideDuration=MESSAGE_DURATION,
-            )
-            raise e
-
-        pin_modular_component_revisions(pipeline, repo_id, revision)
-
-        # Load config to get input/output names and dtype
-        custom_config = self._get_custom_config(repo_id, revision)
-        node_config = custom_config.node_params["custom"]
-
-        # Get dtype from config
-        default_dtype = custom_config.default_dtype
-        if not default_dtype:
-            default_dtype = "bfloat16"
-        torch_dtype = str_to_dtype(default_dtype)
-
-        use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
-
-        # Configure component-manager residency before component load. CPU and
-        # MPS execution deliberately bypass accelerator offload hooks.
-        configure_components_manager_offload(components, mode=offload_mode, device=device)
-
-        # Cast parameters to the types expected by the modular pipeline.
-        for param_name, param_config in node_config["params"].items():
-            if param_name in kwargs and kwargs[param_name] is not None:
-                param_type = param_config.get("type", None)
-                if param_type == "float":
-                    kwargs[param_name] = float(kwargs[param_name])
-                elif param_type == "int":
-                    kwargs[param_name] = int(kwargs[param_name])
-
-        # Handle components - collect from connected inputs (Load Models) and config
-        model_input_names = node_config.get("model_input_names", [])
-        expected_component_names = pipeline.pretrained_component_names
-
-        model_ids = collect_model_ids(
-            kwargs,
-            target_key_names=model_input_names,
-            target_model_names=expected_component_names,
-        )
-
-        components_update_dict = {}
-        if model_ids:
-            components_update_dict = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
-
-        # Check which components need to be loaded vs reused
-        components_to_load = []
-        for comp_name in pipeline.pretrained_component_names:
-            if comp_name in components_update_dict:
-                continue  # Already provided externally
-
-            comp_spec = pipeline.get_component_spec(comp_name)
-            comp_ids_to_reuse = reusable_component_ids(
-                components,
-                name=comp_name,
-                load_id=comp_spec.load_id,
-                dtype=torch_dtype,
-                requested_quantization=None,
-                offload_mode=offload_mode,
-                device=device,
-                node_id=self.node_id,
-            )
-            if comp_ids_to_reuse:
-                # Reuse existing component
-                comp_id = comp_ids_to_reuse[0]
-                components_update_dict[comp_name] = components.get_one(component_id=comp_id)
-            else:
-                components_to_load.append(comp_name)
-
-        pipeline.update_components(**components_update_dict)
-        pipeline.load_components(names=components_to_load, torch_dtype=torch_dtype)
-
-        if use_group_offload:
-            try:
-                offload_result = apply_component_group_offload(
-                    pipeline,
-                    component_names=DEFAULT_GROUP_COMPONENTS,
-                    device=device,
-                    mode=offload_mode,
-                    node_id=self.node_id,
-                    scope="dynamic-modular",
-                )
-                if not offload_result.applied:
-                    raise RuntimeError("No compatible custom Modular Diffusers component was available to offload.")
-                logger.debug(f"Dynamic Block Node: applied {offload_mode} to {offload_result.components}")
-            except RuntimeError as exc:
-                self.notify(str(exc), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
-                raise
-        elif offload_mode == "none":
-            pipeline.to(device)
-
-        record_pipeline_component_runtime_policy(
-            pipeline,
-            offload_mode=offload_mode,
-            device=device,
-            node_id=self.node_id,
-        )
-
-        # Build inputs dict
-        inputs_dict = {}
-        for input_name in node_config["input_names"]:
-            if input_name in kwargs:
-                inputs_dict[input_name] = kwargs.pop(input_name)
-
-        # Execute pipeline - strip out_ prefix for pipeline call
-        node_output_names = node_config["output_names"]
-        pipeline_output_names = [name[4:] if name.startswith("out_") else name for name in node_output_names]
-        pipeline_outputs = pipeline(**inputs_dict, output=pipeline_output_names)
-
-        # Map pipeline outputs back to node names (with the out_ prefix).
-        final_outputs = {}
-        for node_name, pipeline_name in zip(node_output_names, pipeline_output_names):
-            if pipeline_name in pipeline_outputs:
-                final_outputs[node_name] = pipeline_outputs[pipeline_name]
-
-        final_outputs["doc"] = pipeline.blocks.doc
-        return final_outputs
+        _require_json_boolean_trust(trust_remote_code)
+        raise ValueError(_EXECUTION_UNSUPPORTED_MESSAGE)

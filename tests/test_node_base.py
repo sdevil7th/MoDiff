@@ -172,6 +172,93 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
             server.execute_node("generate", graph_node, "test", quiet=True)
             self.assertEqual(consumer.execution_count, 2)
 
+    def test_cache_ignored_semantic_change_reuses_resident_output_and_invalidates_consumer(self):
+        from modiff.server import WebServer
+
+        class ResidentLoader(NodeBase):
+            cache_ignored_params = frozenset({"mode"})
+
+            def __init__(self, node_id):
+                self.execution_count = 0
+                self.pipeline = {"mode": None}
+                super().__init__(node_id)
+
+            def __call__(self, **kwargs):
+                result = super().__call__(**kwargs)
+                result["pipeline"]["mode"] = kwargs["mode"]
+                return result
+
+            def execute(self, mode):
+                self.execution_count += 1
+                return {"pipeline": self.pipeline}
+
+        class ContractConsumer(NodeBase):
+            def __init__(self, node_id):
+                self.execution_count = 0
+                super().__init__(node_id)
+
+            def execute(self, pipeline):
+                self.execution_count += 1
+                return {"result": pipeline["mode"]}
+
+        module_name = ".".join(ResidentLoader.__module__.split(".")[:-1])
+        definition = {
+            module_name: {
+                "ResidentLoader": {
+                    "params": {
+                        "mode": {"type": "string", "default": "generate"},
+                        "pipeline": {"type": "pipeline", "display": "output"},
+                    }
+                },
+                "ContractConsumer": {
+                    "params": {
+                        "pipeline": {"type": "pipeline", "required": True},
+                        "result": {"type": "string", "display": "output"},
+                    }
+                },
+            }
+        }
+        graph_node = {
+            "module": module_name,
+            "action": "ContractConsumer",
+            "params": {
+                "pipeline": {
+                    "sourceId": "loader",
+                    "sourceKey": "pipeline",
+                }
+            },
+        }
+
+        with patch("modiff.NodeBase._module_map", return_value=definition):
+            loader = ResidentLoader("loader")
+            consumer = ContractConsumer("consumer")
+            server = object.__new__(WebServer)
+            server.modules = definition
+            server.node_cache = {"loader": loader, "consumer": consumer}
+
+            first = loader(mode="generate")
+            server.execute_node("consumer", graph_node, "test", quiet=True)
+            self.assertTrue(loader._has_changed)
+            self.assertEqual(loader.execution_count, 1)
+            self.assertEqual(consumer.output, {"result": "generate"})
+
+            second = loader(mode="edit")
+            server.execute_node("consumer", graph_node, "test", quiet=True)
+            self.assertIs(first["pipeline"], second["pipeline"])
+            self.assertTrue(loader._has_changed)
+            self.assertEqual(loader.execution_count, 1)
+            self.assertTrue(consumer._has_changed)
+            self.assertEqual(consumer.execution_count, 2)
+            self.assertEqual(consumer.output, {"result": "edit"})
+
+            third = loader(mode="edit")
+            server.execute_node("consumer", graph_node, "test", quiet=True)
+            self.assertIs(second["pipeline"], third["pipeline"])
+            self.assertFalse(loader._has_changed)
+            self.assertEqual(loader.execution_count, 1)
+            self.assertFalse(consumer._has_changed)
+            self.assertEqual(consumer.execution_count, 2)
+
     def test_typed_numeric_value_matches_string_keyed_option_contract(self):
         class NumericOptionNode(NodeBase):
             def execute(self, sample_rate):

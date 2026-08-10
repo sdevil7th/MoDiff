@@ -1,15 +1,27 @@
+import hashlib
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import numpy as np
 import torch
 from diffusers import FlowMatchEulerDiscreteScheduler
+from safetensors.numpy import save_file
 
 from modules.ModularDiffusers.adapters import Lora
 from modules.ModularDiffusers.loaders import apply_lora_scheduler_override
 from modules.Spandrel import MODULE_MAP as SPANDREL_MODULE_MAP
 from modules.Spandrel.main import Upscaler
-from utils.huggingface import local_files_only
+from utils.huggingface import CONFIG, local_files_only
+
+
+LORA_REVISION = "a" * 40
+
+
+def _write_tiny_safetensors(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    save_file({"lora.weight": np.asarray([1.0], dtype=np.float32)}, str(path))
 
 
 class AppManagedAuxiliaryModelTests(unittest.TestCase):
@@ -27,32 +39,46 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
             Lora("empty-lora").execute({"source": "hub", "value": ""}, 1.0)
 
     def test_modular_lora_resolves_a_hub_weight_only_from_app_cache(self):
-        cached_weight = Path("/cache/revision/style.safetensors")
-        with patch(
-            "utils.huggingface.cached_file_path",
-            return_value=str(cached_weight),
-        ):
-            result = Lora("cached-lora").execute(
-                {"source": "hub", "value": "example/style"},
-                0.75,
-                weight_name="style.safetensors",
-            )["lora"]
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory)
+            cached_weight = (
+                cache_root
+                / "models--example--style"
+                / "snapshots"
+                / LORA_REVISION
+                / "style.safetensors"
+            )
+            _write_tiny_safetensors(cached_weight)
+            digest = hashlib.sha256(cached_weight.read_bytes()).hexdigest()
+            with patch.dict(CONFIG.hf, {"cache_dir": str(cache_root)}):
+                with patch("utils.huggingface.cached_file_path", return_value=str(cached_weight)) as cached:
+                    result = Lora("cached-lora").execute(
+                        {"source": "hub", "value": "example/style"},
+                        0.75,
+                        weight_name="style.safetensors",
+                        revision=LORA_REVISION,
+                        expected_sha256=digest,
+                    )["lora"]
 
-        self.assertEqual(result["lora_path"], str(cached_weight.parent))
-        self.assertEqual(result["weight_name"], "style.safetensors")
+        self.assertEqual(result["artifact"]["repository"], "example/style")
+        self.assertEqual(result["artifact"]["revision"], LORA_REVISION)
+        self.assertEqual(result["artifact"]["weight_name"], "style.safetensors")
+        self.assertEqual(cached.call_args.kwargs["revision"], LORA_REVISION)
 
     def test_modular_lora_carries_a_generic_scheduler_contract(self):
-        with patch("utils.huggingface.cached_file_path", return_value="/cache/revision/lightning.safetensors"):
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "lightning.safetensors"
+            _write_tiny_safetensors(weight)
             result = Lora("lightning-lora").execute(
-                {"source": "hub", "value": "example/lightning"},
+                {"source": "local", "value": str(weight)},
                 1.0,
                 weight_name="lightning.safetensors",
                 scheduler_class="FlowMatchEulerDiscreteScheduler",
                 scheduler_config='{"base_shift": 1.0986122886681098, "shift_terminal": null}',
             )["lora"]
 
-        self.assertEqual(result["scheduler_class"], "FlowMatchEulerDiscreteScheduler")
-        self.assertIsNone(result["scheduler_config"]["shift_terminal"])
+        self.assertEqual(result["scheduler"]["class_name"], "FlowMatchEulerDiscreteScheduler")
+        self.assertIsNone(result["scheduler"]["config"]["shift_terminal"])
 
     def test_loader_applies_explicit_lora_scheduler_contract(self):
         class FakePipeline:
@@ -63,14 +89,18 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
                 for name, component in components.items():
                     setattr(self, name, component)
 
-        pipeline = FakePipeline()
-        scheduler = apply_lora_scheduler_override(
-            pipeline,
-            {
-                "scheduler_class": "FlowMatchEulerDiscreteScheduler",
-                "scheduler_config": {"base_shift": 1.0986122886681098, "shift_terminal": None},
-            },
-        )
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "lightning.safetensors"
+            _write_tiny_safetensors(weight)
+            descriptor = Lora("lightning-lora").execute(
+                {"source": "local", "value": str(weight)},
+                1.0,
+                weight_name=weight.name,
+                scheduler_class="FlowMatchEulerDiscreteScheduler",
+                scheduler_config={"base_shift": 1.0986122886681098, "shift_terminal": None},
+            )["lora"]
+            pipeline = FakePipeline()
+            scheduler = apply_lora_scheduler_override(pipeline, descriptor)
 
         self.assertIs(pipeline.scheduler, scheduler)
         self.assertAlmostEqual(scheduler.config.base_shift, 1.0986122886681098)
@@ -83,7 +113,14 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
                     {"source": "hub", "value": "example/style"},
                     1.0,
                     weight_name="style.safetensors",
+                    revision=LORA_REVISION,
+                    expected_sha256="b" * 64,
                 )
+
+    def test_modular_lora_model_selection_does_not_publish_a_blank_class_filter(self):
+        options = Lora.params["model"]["fieldOptions"]
+        self.assertEqual(options["sources"], ["hub", "local"])
+        self.assertNotIn("filter", options)
 
     def test_hub_upscaler_requires_a_pinned_filename(self):
         with self.assertRaisesRegex(ValueError, "pinned filename"):

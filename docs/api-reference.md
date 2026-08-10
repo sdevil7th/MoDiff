@@ -21,12 +21,13 @@ resolve to loopback.
 | WebSocket        | `GET /ws`                                                                                                                                                                          | Session handshake, queue restoration, progress/events, field signals, and node updates.                                                     |
 | Registry         | `GET /nodes`                                                                                                                                                                       | Return the live registered node contracts used by the bundled client.                                                                       |
 | Execution        | `POST /graph`, `GET /queue`, `GET /runs/{task_id}`, `DELETE /queue/{task_id}`, `POST /stop`                                                                                        | Queue, inspect, remove, or interrupt graph work. A normally supervised backend replaces its worker when a blocking model call misses the cancellation grace period. |
-| Node state       | `POST /fields/action`, `GET /cache/{node}/{field}[/{index}]`, `DELETE /cache`                                                                                                      | Run dynamic field actions and access/clear node cache values.                                                                               |
+| Node state       | `POST /fields/action`, `GET /cache/{node}/{field}[/{index}]`, `DELETE /cache`                                                                                                      | Run declared dynamic field actions and access/clear statically declared media or text cache fields. Connector, process-local, and other opaque outputs are not cache-servable. |
 | Files and graphs | `GET /listdir`, `GET /listgraphs`, `GET /file`, `POST /file`, `GET /preview`, `GET /stream`                                                                                        | Browse the configured working directory, load/save graph files, upload media, and stream previews.                                          |
 | Saved workflows  | `GET /workflows`, `GET/PUT/DELETE /workflows/{workflow_id}`                                                                                                                        | List, read, replace, or delete versioned workflow records below the configured data directory.                                               |
 | Media I/O        | `GET /media/capabilities`, `/media/probe`, `/media/export`, `/media/preview`                                                                                                       | Inspect a managed media identifier or return a cached, converted download/browser preview through the built-in deterministic media tools.   |
 | Runtime          | `GET /health`, `/runtime/status`, `/runtime/resources`, `/runtime/options`, `/system_stats`, `/runtime/gpu_processes`; `POST /runtime/gpu_cleanup`                                  | Read readiness, resource, option, and hardware state or request best-effort runtime cleanup.                                                 |
-| Optimizations    | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`                       | Stage, validate, select, roll back, and qualify optional app-managed runtime packages and record their local evidence.                       |
+| Optimizations    | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`, `/jobs/{job_id}/cancel` | Inspect runtime features and legacy package contracts, manage recovery, and record bounded local qualification evidence. Hashless package install and activation are unavailable. |
+| Optional model runtimes | `GET /runtime/optional-runtimes`, `/jobs/{job_id}`; `POST /runtime/optional-runtimes/install`, `/activate`, `/rollback`, `/jobs/{job_id}/cancel` | Publish the reviewed optional-library contract and its fail-closed staged lifecycle. The current candidate exposes no executable install or activation action. |
 | Auto resource    | `POST /auto_resource/plan`, `POST /auto_resource/plans`, `GET /auto_resource/history`, `DELETE /auto_resource/history`                                                             | Plan hardware-aware model recipes and manage local planner history.                                                                         |
 | Models           | `GET /model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover, diagnose, download, authenticate, fingerprint, and delete model artifacts. |
 | Media lifecycle  | `GET /media_assets`, `DELETE /media_assets`                                                                                                                                        | Inspect temporary media records or remove exact unpinned, task-scoped, or age-scoped files while no generation is active.                   |
@@ -94,6 +95,93 @@ dedicated-VRAM, or shared-memory thresholds. A client waiting for this response
 should report a pending compatibility check. Existing plan fields remain for
 execution and backward compatibility.
 
+### Optional model runtime metadata
+
+Diffusers execution profiles identify their declarative dependencies in
+`optional_runtime_profiles`. Auto plans, model capabilities, and file items from
+`GET /listgraphs` publish the corresponding `optionalRuntimeProfileIds` and
+`optionalRuntimeProfiles`; candidates carry the IDs, and the root
+`GET /model_capabilities` response also publishes the complete profile catalog.
+Each exact execution-profile record and each resolved Auto, capability, or
+workflow item also carries `optionalRuntimeRequirement`, a version-1 object
+with exactly these seven fields:
+
+- `schemaVersion`: literal `1`;
+- `delivery`: `base` or `optional_overlay`;
+- `requiredNow`: whether this exact executable contract currently requires the
+  app-owned overlay;
+- `profileIds`: zero to 32 unique optional-runtime profile IDs;
+- `executionProfileIds`: zero to 32 unique execution-profile IDs;
+- `state`: `base_satisfied`, `missing`, `wrong_version`,
+  `present_unqualified`, `staged`, `active`, `busy_recovery_only`,
+  `restart_required`, `repair_required`, or `unavailable`; and
+- `reason`: a bounded lowercase snake-case code.
+
+An item with no registered execution contract may publish empty ID arrays only
+with `delivery: base` and `requiredNow: false`. An `optional_overlay`
+requirement has non-empty ID arrays and becomes runnable only in `active`.
+Active means the current worker and catalog both report the overlay active and
+every required profile reports `contractState: qualified` and
+`cutoverReady: true`. Missing, malformed, ambiguous, duplicate, oversized, or
+inconsistent execution/catalog metadata resolves to `unavailable`, not active.
+
+The current composite Transformers + PEFT profile is contract metadata plus a
+non-runnable staged-lifecycle scaffold. It reports
+`contractState: candidate_unqualified`, `cutoverReady: false`, empty
+`artifactLocks`, ten exact `stagedRequirements`, and unavailable install and
+activation actions. Its metadata-only package status is `missing`,
+`wrong_version`, or `present_unqualified`; unreadable distribution metadata
+fails closed as `wrong_version` with `metadataState: unreadable`. These
+observations do not change Auto selection, `canAutoRun`, or execution
+readiness, and browsing or opening a workflow never imports, installs, or
+activates the runtime. Every current Diffusers execution profile has
+`delivery: base` and `requiredNow: false`; publishing an optional profile ID is
+dependency metadata, not an activation gate. A future cutover must change the
+authoritative exact execution profile to `optional_overlay` atomically.
+
+`GET /runtime/optional-runtimes` returns the same profile catalog plus bounded
+overlay state, staged-environment summaries, and a redacted active job summary.
+`overlay.processLoadStatus` is one of `base`, `active`,
+`busy_recovery_only`, `repair_required`, or `restart_required`. Status listing
+does not perform a full overlay hash or import optional packages. A live
+runtime mutation gate serializes all graph admission and field actions. After
+that mutation completes, persistent recovery or restart status blocks only an
+exact execution contract whose `optionalRuntimeRequirement.requiredNow` is
+true; base-delivered graphs and field actions remain runnable.
+
+`POST /graph` checks executable loader nodes referenced by `paths`, and
+`POST /fields/action` checks its authorized loader module, action, and values.
+The worker repeats the check immediately before execution and again before a
+loader module import or field callback. `runtimeHints` are never authority for
+this decision. A blocked HTTP execution returns `409` with the fixed keys
+`error`, `category: optional_runtime`,
+`error_code: optional_runtime_<state>`, `message`, `recovery_hint`, and
+`optionalRuntimeRequirement`. A worker failure uses the same bounded object and
+may add only task/node identifiers; it does not expose tracebacks, host paths,
+process details, or loader diagnostics.
+
+The optional-runtime mutation routes use exact JSON objects:
+
+- `POST /runtime/optional-runtimes/install` requires
+  `{ "profileId": string, "specDigest": "sha256:<64 lowercase hex>",
+  "consent": true }`.
+- `POST /runtime/optional-runtimes/activate` additionally requires a bounded
+  `environmentId`.
+- `POST /runtime/optional-runtimes/rollback` requires
+  `{ "consent": true }`.
+- `POST /runtime/optional-runtimes/jobs/{job_id}/cancel` accepts an empty body
+  or an empty JSON object. `GET` on the same job path is read-only.
+
+Unknown or duplicate fields, non-object bodies, non-literal consent, malformed
+identifiers/digests, oversized bodies, cross-kind jobs, and stale terminal jobs
+fail closed. The current profile rejects install and activation with HTTP `409`
+before reserving a lease, creating a job/staging directory, opening the
+network, or starting a subprocess. A successful future activation or rollback
+requires a worker restart; an unsupervised process remains
+`restart_required`. It releases the completed mutation gate: base-delivered
+work remains runnable, while `optional_overlay` work stays blocked until the
+worker restarts into the qualified active environment.
+
 ### Saved workflows and media
 
 The `/workflows/{workflow_id}` store is separate from the legacy file browser.
@@ -118,15 +206,21 @@ secure-erasure guarantee.
 ### Optional runtime optimizations
 
 The optimization catalog is app-owned and compatibility-filtered; it is not a
-generic package installer. `POST /runtime/optimizations/install` stages one
-known capability in an isolated optional environment and returns a job with
-HTTP `202`. Activation or rollback can select an environment and request a
-supervised worker restart. Enablement changes local opt-in state; probing
-records only a compatibility result; qualification additionally asserts that
-the exact workload output was reviewed. Installation, activation, rollback,
-enablement, probing, and qualification all mutate local state and must be
-treated as trusted operator actions. See [Optional runtime
-optimizations](optional-runtime-optimizations.md) for the support boundary.
+generic package installer. Package profiles without complete immutable
+artifact locks publish `canInstall: false` and `canEnable: false` and reject
+install/activation before creating a job, lease, staged directory, network
+request, or subprocess. Existing hashless environments are
+`legacy_unqualified`, are never inserted into the worker import path, and may
+only be deactivated to the base environment through the compatibility rollback
+route.
+
+Runtime-only enablement changes local opt-in state when its capability permits
+it; probing records only a compatibility result; qualification additionally
+asserts that the exact workload output was reviewed. Public job and receipt
+responses are fixed-schema projections and never return raw subprocess output,
+commands, tokens, or absolute paths. These mutations remain trusted operator
+actions. See [Optional runtime optimizations](optional-runtime-optimizations.md)
+for the qualification boundary.
 
 `GET /model_artifact_catalog` returns the checked immutable Hugging Face model
 catalog. `?refresh=1` performs live Hub metadata lookup for the optional
@@ -203,7 +297,7 @@ Uploads are written under configured data subdirectories and share the configure
 - `POST /hf_download` accepts a JSON object with `repo_id`, optional `sid`, `repair`, `repair_source_repo_id`, and a `files` string list. It can consume substantial network, disk, RAM, and accelerator resources.
 - `DELETE /hf_cache/{hash}` deletes selected cached model revisions.
 - `POST /custom_modules/install` accepts a Git URL or local directory, places it under `custom/`, and refreshes the live registry. Imported custom code has the backend process's permissions.
-- Modular Diffusers nodes may expose `trust_remote_code`. Remote custom pipelines/blocks require explicit trust metadata and an exact 40-character commit revision; moving branches and tags are rejected.
+- Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but the current backend rejects all custom Modular pipeline and Dynamic Block execution, plus standalone component loading with remote code, before upstream construction. Exact cached 40-character commits may provide bounded declarative contract previews; a preview or persisted checksum is not execution authorization.
 
 HTTP reads and mutations require a literal loopback destination and peer. Browser requests with an `Origin` header must also use a loopback `http` or `https` origin; CLI HTTP clients without an `Origin` header remain supported over loopback. WebSocket upgrades use the same destination and peer boundary, browser clients must send a loopback Origin, and native clients without one are accepted only over a loopback connection. The initial `welcome.recent` list uses the same compact receipts as `GET /queue`; full completed workflow snapshots remain available through `GET /runs/{task_id}`. The separate supervisor control server binds to `127.0.0.1` and likewise rejects non-loopback browser origins.
 

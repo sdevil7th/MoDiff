@@ -17,11 +17,14 @@ from modiff.diffusers_offload_modes import (
 )
 from modiff.diffusers_profiles import (
     ACE_STEP_REPO,
+    DIFFUSERS_EXECUTION_PROFILES,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
     FLUX_DEV_REPO,
+    FLUX_DEV_FP8_REPO,
     FLUX_FILL_REPO,
     FLUX_KONTEXT_REPO,
+    FLUX_KONTEXT_NVFP4_REPO,
     FLUX_KREA_REPO,
     FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO,
@@ -29,6 +32,7 @@ from modiff.diffusers_profiles import (
     LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
+    optional_runtime_profile_ids_for_execution,
 )
 from modiff.hardware import disk_snapshot, get_hardware_snapshot, system_memory_snapshot
 from modiff.model_artifact_catalog import (
@@ -37,6 +41,8 @@ from modiff.model_artifact_catalog import (
     catalog_model,
     community_artifact_is_discoverable,
 )
+from modiff.optional_runtimes import public_optional_runtime_profiles
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
 
 
 GIB = 1024**3
@@ -58,8 +64,6 @@ QWEN_IMAGE_EDIT_PREQUANTIZED_REPO = "ovedrive/qwen-image-edit-4bit"
 QWEN_IMAGE_EDIT_PLUS_REPO = "Qwen/Qwen-Image-Edit-2511"
 QWEN_IMAGE_LAYERED_REPO = "Qwen/Qwen-Image-Layered"
 WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
-FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
-FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
@@ -196,7 +200,7 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
         "guardedReason": "Prefer the Apache-2.0 Diffusers-compatible prequantized Qwen Image Edit artifact on nominal 16 GiB CUDA systems before attempting official BF16 disk offload.",
     },
     "QwenImageEditPlusModularPipeline": {
-        "supportedTasks": ["edit_image", "multi_image_reference_edit", "inpaint"],
+        "supportedTasks": ["edit_image", "multi_image_reference_edit"],
         "defaultRepo": QWEN_IMAGE_EDIT_PLUS_REPO,
         "executionPath": "modular-diffusers",
         "pipelineClass": "QwenImageEditPlusModularPipeline",
@@ -533,7 +537,7 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
         "guardedReason": "FLUX Canny has guarded Auto coverage through generic control-image Diffusers nodes.",
     },
     "FluxReduxPipeline": {
-        "supportedTasks": ["edit_image", "multi_image_reference_edit"],
+        "supportedTasks": ["edit_image"],
         "defaultRepo": FLUX_REDUX_REPO,
         "executionPath": "direct-diffusers-image",
         "pipelineClass": "FluxReduxPipeline",
@@ -559,6 +563,57 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
         "guardedReason": "FLUX Redux has guarded Auto coverage through generic Diffusers image/reference nodes.",
     },
 }
+
+
+def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | None:
+    """Return requirements only when Auto and an execution profile declare this pair."""
+
+    normalized_model = str(model_type or "").strip()
+    normalized_mode = str(mode or "").strip()
+    if not normalized_model or not normalized_mode:
+        return None
+
+    exact_key = f"{normalized_model}:{normalized_mode}"
+    if exact_key in AUTO_MODEL_REQUIREMENTS:
+        requirements = AUTO_MODEL_REQUIREMENTS[exact_key]
+    else:
+        requirements = AUTO_MODEL_REQUIREMENTS.get(normalized_model)
+    if not isinstance(requirements, dict):
+        return None
+
+    supported_tasks = {
+        str(task).strip()
+        for task in requirements.get("supportedTasks") or []
+        if str(task).strip()
+    }
+    if normalized_mode not in supported_tasks:
+        return None
+
+    profile_declared = any(
+        profile.model_type == normalized_model and normalized_mode in profile.modes
+        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+    )
+    return requirements if profile_declared else None
+
+
+def auto_resource_pair_is_declared(model_type: str, mode: str) -> bool:
+    """Return whether both Auto requirements and an execution profile declare a pair."""
+
+    return _auto_requirements_for_pair(model_type, mode) is not None
+
+
+def _declared_auto_modes(model_type: str) -> list[str]:
+    normalized_model = str(model_type or "").strip()
+    modes = set()
+    for key, requirements in AUTO_MODEL_REQUIREMENTS.items():
+        if key != normalized_model and not key.startswith(f"{normalized_model}:"):
+            continue
+        modes.update(
+            str(task).strip()
+            for task in requirements.get("supportedTasks") or []
+            if str(task).strip()
+        )
+    return sorted(mode for mode in modes if _auto_requirements_for_pair(normalized_model, mode) is not None)
 
 
 def _now_ms() -> int:
@@ -1149,7 +1204,10 @@ def record_auto_resource_success(
     measurement: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     candidate = _runtime_candidate_from_hints(runtime_hints)
-    if not candidate:
+    if not candidate or _auto_requirements_for_pair(
+        str(candidate.get("modelType") or ""),
+        str(candidate.get("mode") or ""),
+    ) is None:
         return None
     history = read_auto_resource_history(data_dir)
     key = auto_resource_history_key(candidate, runtime_fingerprint=runtime_fingerprint)
@@ -1526,6 +1584,9 @@ def _apply_catalog_hardware_support(
     output: list[dict[str, Any]] = []
     for candidate in candidates:
         item = _clone_candidate(candidate)
+        if item.get("exactPairDeclared") is False:
+            output.append(item)
+            continue
         artifact = catalog_artifact(str(item.get("modelType") or ""), str(item.get("artifact") or ""))
         missing: list[str] = []
         if artifact:
@@ -1576,6 +1637,9 @@ def _apply_community_confirmation(
     output: list[dict[str, Any]] = []
     for candidate in candidates:
         item = _clone_candidate(candidate)
+        if item.get("exactPairDeclared") is False:
+            output.append(item)
+            continue
         repo = str(item.get("resolvedArtifact") or item.get("artifact") or "").strip().lower()
         if (
             repo == confirmed
@@ -2240,6 +2304,47 @@ def _cache_missing_for_status(status: dict[str, Any], label: str) -> list[str]:
     return []
 
 
+def _undeclared_pair_candidates(form: dict[str, Any]) -> list[dict[str, Any]]:
+    model_type = str(form.get("modelType") or "").strip()
+    mode = str(form.get("mode") or "").strip()
+    pair_label = f"{model_type or '<missing model type>'}:{mode or '<missing mode>'}"
+    declared_modes = _declared_auto_modes(model_type)
+    if declared_modes:
+        reason = (
+            f"No Auto recipe is declared for the exact model/task pair '{pair_label}'. "
+            f"Declared Auto modes for {model_type} are: {', '.join(declared_modes)}. "
+            "This workflow remains available for explicit Expert configuration when its graph structure "
+            "and runtime inputs are valid."
+        )
+    else:
+        reason = (
+            f"No Auto recipe is declared for the exact model/task pair '{pair_label}'. "
+            "This workflow remains available for explicit Expert configuration when its graph structure "
+            "and runtime inputs are valid."
+        )
+
+    candidate = _candidate(
+        candidate_id=f"{model_type or 'studio'}-{mode or 'mode'}-expert-only",
+        rank=99,
+        model_type=model_type,
+        mode=mode,
+        execution_path=str(form.get("executionPath") or ""),
+        artifact=str(form.get("defaultRepo") or form.get("modelRepo") or ""),
+        dtype=str(form.get("dtype") or "bfloat16"),
+        quantization_mode="none",
+        quantized_components=[],
+        offload_mode=str(form.get("offloadMode") or OFFLOAD_MODE_NONE),
+        quality_tier="expert-only",
+        reason=reason,
+        generation=_generation_for_requirements(model_type, form, {}),
+        installed=True,
+        manual_only_reason=reason,
+        pipeline_class=str(form.get("pipelineClass") or "") or None,
+    )
+    candidate["exactPairDeclared"] = False
+    return [candidate]
+
+
 def _declared_profile_candidates(
     form: dict[str, Any],
     local_models: list[dict[str, Any]] | None,
@@ -2248,8 +2353,9 @@ def _declared_profile_candidates(
     model_type = str(form.get("modelType") or "")
     mode = str(form.get("mode") or "")
     installed = _repo_id_set(local_models)
-    key = f"{model_type}:{mode}" if f"{model_type}:{mode}" in AUTO_MODEL_REQUIREMENTS else model_type
-    requirements = AUTO_MODEL_REQUIREMENTS.get(key) or {}
+    requirements = _auto_requirements_for_pair(model_type, mode)
+    if requirements is None:
+        return _undeclared_pair_candidates(form)
     default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or form.get("modelRepo") or "")
     lower_memory_repo = str(requirements.get("preferredLowerMemoryRepo") or "")
     manual_only_reason = requirements.get("manualOnlyReason")
@@ -2513,6 +2619,10 @@ def _apply_history_to_candidates(
     for candidate in candidates:
         item = _clone_candidate(candidate)
         key = auto_resource_history_key(item, hardware=hardware)
+        if item.get("exactPairDeclared") is False:
+            item["historyKey"] = key
+            output.append(item)
+            continue
         entry = entries.get(key) if isinstance(entries.get(key), dict) else None
         compatible_key = None
         if entry is None:
@@ -2830,10 +2940,30 @@ def build_auto_resource_plan(
     hardware_override = payload.get("hardwareOverride") if isinstance(payload.get("hardwareOverride"), dict) else None
     hardware = hardware_override or _hardware_snapshot(runtime_fingerprint, data_dir)
 
-    if model_type == "QwenImageModularPipeline" and mode == "text_to_image":
+    exact_pair_requirements = _auto_requirements_for_pair(model_type, mode)
+    if exact_pair_requirements is None:
+        candidates = _undeclared_pair_candidates(form)
+    elif model_type == "QwenImageModularPipeline" and mode == "text_to_image":
         candidates = _qwen_text_to_image_candidates(form, local_models, hardware)
     else:
         candidates = _declared_profile_candidates(form, local_models, hardware)
+
+    exact_pair_declared = exact_pair_requirements is not None
+    optional_runtime_profile_ids = optional_runtime_profile_ids_for_execution(
+        model_type,
+        mode,
+    )
+    optional_runtime_profiles = public_optional_runtime_profiles(
+        optional_runtime_profile_ids
+    )
+    optional_runtime_requirement = optional_runtime_requirement_for_execution(
+        model_type,
+        mode,
+    )
+    for candidate in candidates:
+        candidate["exactPairDeclared"] = exact_pair_declared
+        candidate["optionalRuntimeProfileIds"] = list(optional_runtime_profile_ids)
+        candidate["optionalRuntimeRequirement"] = dict(optional_runtime_requirement)
 
     candidates = _apply_catalog_hardware_support(candidates, hardware)
     candidates = _apply_community_confirmation(candidates, form)
@@ -2846,6 +2976,8 @@ def build_auto_resource_plan(
     )
     workload_key = workload_key_for_form(form)
     for candidate in candidates:
+        if candidate.get("exactPairDeclared") is False:
+            continue
         artifact = str(
             candidate.get("resolvedArtifact")
             or candidate.get("artifact")
@@ -2869,7 +3001,8 @@ def build_auto_resource_plan(
 
     ready = [
         candidate for candidate in candidates
-        if candidate.get("proof", {}).get("status") in READY_PROOF_STATUSES
+        if candidate.get("exactPairDeclared") is not False
+        and candidate.get("proof", {}).get("status") in READY_PROOF_STATUSES
     ]
     manual_only = [
         candidate for candidate in candidates
@@ -2930,6 +3063,10 @@ def build_auto_resource_plan(
         "schemaVersion": AUTO_RESOURCE_SCHEMA_VERSION,
         "resourceMode": "auto",
         "resourcePreference": preference,
+        "exactPairDeclared": exact_pair_declared,
+        "optionalRuntimeProfileIds": list(optional_runtime_profile_ids),
+        "optionalRuntimeProfiles": optional_runtime_profiles,
+        "optionalRuntimeRequirement": optional_runtime_requirement,
         "status": status,
         "readiness": readiness,
         "statusLabel": status_label,

@@ -9,7 +9,7 @@ from unittest.mock import patch
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
-from modiff.server import WebServer, is_hidden_path
+from modiff.server import WebServer, is_cache_servable_data_type, is_hidden_path
 
 
 class JsonRequest:
@@ -23,6 +23,13 @@ class JsonRequest:
 
     async def json(self):
         return self._payload
+
+
+class CacheRequest:
+    def __init__(self, node, field):
+        self.match_info = {"node": node, "field": field}
+        self.query = {}
+        self.headers = {}
 
 
 class WebSocketRequest:
@@ -86,8 +93,165 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(is_hidden_path(windows_hidden))
             self.assertFalse(is_hidden_path(visible))
 
+    def test_cache_served_type_boundary_accepts_only_media_and_text_families(self):
+        for value in (
+            "image",
+            "audio",
+            "video",
+            "text",
+            "string",
+            ["audio"],
+            ("video",),
+            {"text"},
+        ):
+            with self.subTest(value=value):
+                self.assertTrue(is_cache_servable_data_type(value))
+        for value in ("diffusers_auto_model", "any", "int", ["collection"], {}, None):
+            with self.subTest(value=value):
+                self.assertFalse(is_cache_servable_data_type(value))
+
     def test_mutation_origin_guard_is_registered_centrally(self):
         self.assertIn(self.server._mutation_origin_middleware, self.server.app.middlewares)
+
+    async def test_cache_rejects_undeclared_dynamic_output_before_conversion(self):
+        class OpaqueCacheValue:
+            def __str__(self):
+                raise AssertionError("Opaque cache output was converted to text.")
+
+            def __bytes__(self):
+                raise AssertionError("Opaque cache output was converted to bytes.")
+
+            def __fspath__(self):
+                raise AssertionError("Opaque cache output was converted to a path.")
+
+            def __iter__(self):
+                raise AssertionError("Opaque cache output was inspected as an iterable.")
+
+            def __reduce__(self):
+                raise AssertionError("Opaque cache output was serialized.")
+
+        module = "modules.ModularDiffusers"
+        action = "Denoise"
+        self.server.node_cache["denoise"] = SimpleNamespace(
+            module_name=module,
+            class_name=action,
+            output={"route_state_out": OpaqueCacheValue()},
+            params={},
+        )
+        malformed_registries = {
+            "invalid registry": [],
+            "missing module": {},
+            "invalid module": {module: []},
+            "missing action": {module: {}},
+            "invalid action": {module: {action: []}},
+            "missing params": {module: {action: {}}},
+            "invalid params": {module: {action: {"params": None}}},
+            "invalid field definition": {
+                module: {action: {"params": {"route_state_out": []}}}
+            },
+            "missing field type": {
+                module: {action: {"params": {"route_state_out": {}}}}
+            },
+            "missing static field": {
+                module: {action: {"params": {"image": {"type": "image"}}}}
+            },
+        }
+
+        with (
+            patch("modiff.server.to_bytes") as convert_media,
+            patch("modiff.server.web.FileResponse") as file_response,
+        ):
+            for label, registry in malformed_registries.items():
+                with self.subTest(label=label):
+                    self.server.modules = registry
+                    response = await self.server.cache(CacheRequest("denoise", "route_state_out"))
+                    self.assertEqual(response.status, 400)
+                    self.assertEqual(
+                        response.text,
+                        "Field route_state_out is not declared as a cache-served field for node denoise.",
+                    )
+
+        convert_media.assert_not_called()
+        file_response.assert_not_called()
+
+    async def test_cache_preserves_missing_field_404_and_declared_media_serving(self):
+        module = "modules.StaticMedia"
+        action = "Preview"
+        cached_image = object()
+        self.server.modules = {
+            module: {
+                action: {
+                    "params": {
+                        "image": {"type": "image", "fieldOptions": {"quality": 91}},
+                    }
+                }
+            }
+        }
+        self.server.node_cache["preview"] = SimpleNamespace(
+            module_name=module,
+            class_name=action,
+            output={"image": cached_image},
+            params={},
+        )
+
+        missing = await self.server.cache(CacheRequest("preview", "absent"))
+        self.assertEqual(missing.status, 404)
+        self.assertEqual(missing.text, "Field absent not found in node preview cache.")
+
+        with patch("modiff.server.to_bytes", return_value=b"encoded-image") as convert_media:
+            response = await self.server.cache(CacheRequest("preview", "image"))
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.body, b"encoded-image")
+        self.assertEqual(response.content_type, "image/webp")
+        convert_media.assert_called_once_with(
+            "image",
+            cached_image,
+            {"format": "WEBP", "quality": 100},
+        )
+
+    async def test_cache_rejects_statically_declared_connector_outputs_before_conversion(self):
+        class OpaqueConnector:
+            def __fspath__(self):
+                raise AssertionError("Opaque connector output was converted to a path.")
+
+            def __iter__(self):
+                raise AssertionError("Opaque connector output was inspected as an iterable.")
+
+        module = "modules.ModularDiffusers"
+        action = "AutoModelLoader"
+        self.server.modules = {
+            module: {
+                action: {
+                    "params": {
+                        "model": {
+                            "display": "output",
+                            "type": "diffusers_auto_model",
+                        }
+                    }
+                }
+            }
+        }
+        self.server.node_cache["loader"] = SimpleNamespace(
+            module_name=module,
+            class_name=action,
+            output={"model": OpaqueConnector()},
+            params={},
+        )
+
+        with (
+            patch("modiff.server.to_bytes") as convert_media,
+            patch("modiff.server.web.FileResponse") as file_response,
+        ):
+            response = await self.server.cache(CacheRequest("loader", "model"))
+
+        self.assertEqual(response.status, 400)
+        self.assertEqual(
+            response.text,
+            "Field model has a type that cannot be served from node cache.",
+        )
+        convert_media.assert_not_called()
+        file_response.assert_not_called()
 
     def test_template_gallery_route_is_optional_for_remote_asset_builds(self):
         missing_gallery = Path(self.temporary.name) / "no-local-gallery"

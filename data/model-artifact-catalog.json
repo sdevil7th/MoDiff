@@ -28,6 +28,7 @@
     {"repo": "Wan-AI/Wan2.2-Animate-14B-Diffusers", "revision": "6f4df10861c758af86ac3c979aacc1bf5c03eff0", "license": "apache-2.0", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Lightricks/LTX-2", "revision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a", "license": "other", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Lightricks/LTX-Video", "revision": "8984fa25007f376c1a299016d0957a37a2f797bb", "license": "other", "purpose": "verified-diffusers-fallback", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "InstantX/Qwen-Image-ControlNet-Union", "revision": "b13036f066d6dee7c20513e263d3d673055e9de8", "license": "apache-2.0", "purpose": "qwen-image-controlnet-component", "verifiedAt": "2026-08-09T23:24:38+05:30"},
     {"repo": "fuliucansheng/FLUX.1-Canny-dev-diffusers", "revision": "24df2ba1c46a8c735589cc8f81302678797c9821", "license": "other", "purpose": "verified-diffusers-repair-source", "verifiedAt": "2026-08-03T14:34:36+05:30"}
   ],
   "models": [

@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 from scipy.io import wavfile
@@ -9,10 +10,140 @@ from scipy.io import wavfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from modules.Audio.main import Export, FitDuration, Join, MatchLoudness, _atempo_factors, _audio_to_numpy, _read_wav
+from modules.Audio.main import (
+    Export,
+    FitDuration,
+    Join,
+    MatchLoudness,
+    TrimPad,
+    _atempo_factors,
+    _audio_to_numpy,
+    _read_wav,
+)
 
 
 class AudioExportTests(unittest.TestCase):
+    def test_explicit_sample_layout_preserves_square_stereo_payloads(self):
+        square = np.asarray([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+
+        frames_first, _ = _audio_to_numpy(
+            {
+                "samples": square,
+                "sample_rate": 48000,
+                "channels": 2,
+                "sample_layout": "frames_first",
+            }
+        )
+        channels_first, _ = _audio_to_numpy(
+            {
+                "samples": square,
+                "sample_rate": 48000,
+                "channels": 2,
+                "sample_layout": "channels_first",
+            }
+        )
+
+        np.testing.assert_array_equal(frames_first, square)
+        np.testing.assert_array_equal(channels_first, square.T)
+
+    def test_trim_pad_consumes_a_square_diffusers_channels_first_audio_object(self):
+        channels_first = np.asarray([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+
+        result = TrimPad().execute(
+            audio={
+                "samples": channels_first,
+                "sample_layout": "channels_first",
+                "sample_rate": 48000,
+                "channels": 2,
+                "duration_seconds": 2 / 48000,
+            },
+            target_sample_rate=48000,
+        )
+
+        self.assertEqual(result["output"]["sample_layout"], "frames_first")
+        self.assertEqual(result["output"]["channels"], 2)
+        np.testing.assert_array_equal(result["output"]["samples"], channels_first.T)
+
+    def test_trim_pad_rejects_contradictory_layout_and_channel_metadata(self):
+        cases = (
+            (
+                {
+                    "samples": np.zeros((2, 3), dtype=np.float32),
+                    "sample_layout": "frames_first",
+                    "sample_rate": 48000,
+                    "channels": 2,
+                },
+                "frames_first identifies 3",
+            ),
+            (
+                {
+                    "samples": np.zeros((3, 2), dtype=np.float32),
+                    "sample_layout": "channels_first",
+                    "sample_rate": 48000,
+                    "channels": 2,
+                },
+                "channels_first identifies 3",
+            ),
+        )
+        for payload, message in cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    TrimPad().execute(audio=payload, target_sample_rate=48000)
+
+        for channels in (True, 0, -1, 1.5, float("nan"), float("inf"), "two"):
+            with self.subTest(channels=channels):
+                with self.assertRaisesRegex(ValueError, "channels metadata must be a positive integer"):
+                    TrimPad().execute(
+                        audio={
+                            "samples": np.zeros((3, 2), dtype=np.float32),
+                            "sample_layout": "frames_first",
+                            "sample_rate": 48000,
+                            "channels": channels,
+                        },
+                        target_sample_rate=48000,
+                    )
+
+    def test_trim_pad_uses_decoder_provenance_for_path_backed_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "two-channel.wav"
+            wavfile.write(path, 48000, np.zeros((3, 2), dtype=np.int16))
+
+            with patch("modules.Audio.main._read_wav") as decoder:
+                with self.assertRaisesRegex(ValueError, "Decoded audio files use frames_first"):
+                    TrimPad().execute(
+                        audio={
+                            "samples": str(path),
+                            "sample_layout": "channels_first",
+                            "sample_rate": 48000,
+                            "channels": 2,
+                        },
+                        target_sample_rate=48000,
+                    )
+                decoder.assert_not_called()
+
+            with self.assertRaisesRegex(ValueError, "declares 1 channels, but the decoded file has 2"):
+                TrimPad().execute(
+                    audio={
+                        "samples": str(path),
+                        "sample_layout": "frames_first",
+                        "sample_rate": 48000,
+                        "channels": 1,
+                    },
+                    target_sample_rate=48000,
+                )
+
+            result = TrimPad().execute(
+                audio={
+                    "samples": str(path),
+                    "sample_layout": "frames_first",
+                    "sample_rate": 48000,
+                    "channels": 2,
+                },
+                target_sample_rate=48000,
+            )
+        self.assertEqual(result["output"]["samples"].shape, (3, 2))
+        self.assertEqual(result["output"]["sample_layout"], "frames_first")
+
     def test_unsigned_pcm_midpoint_is_silence_for_arrays_and_wav_files(self):
         source = np.asarray([0, 128, 255], dtype=np.uint8)
         converted, _sample_rate = _audio_to_numpy({"samples": source, "sample_rate": 8000})

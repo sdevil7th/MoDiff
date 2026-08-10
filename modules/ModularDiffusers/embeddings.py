@@ -1,5 +1,4 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
-import importlib
 import logging
 
 from diffusers import ComponentSpec
@@ -8,9 +7,27 @@ from modiff.NodeBase import NodeBase
 
 from . import MESSAGE_DURATION, components
 from .modular_utils import (
-    DummyCustomPipeline,
+    normalize_modular_runtime_params,
+    pipeline_class_from_model_type,
     pipeline_class_from_runtime_inputs,
-    pipeline_class_to_modiff_node_config,
+    require_modiff_node_contract,
+    reject_undeclared_modular_generator,
+)
+from .route_state import (
+    ROUTE_STATE_OUTPUT,
+    issue_wan_image_encoder_route_state,
+    preflight_wan_image_encoder_inputs,
+    reject_route_reserved_inputs_before_identity_resolution,
+    resolve_managed_component_by_id,
+    require_cataloged_wan_action_source,
+    require_component_binding,
+    require_route_state_shape_before_identity_resolution,
+    route_contract_for_model_type,
+    snapshot_wan_source_media,
+    validate_route_field_contract,
+    validate_wan_image_encoder_route_state,
+    wan_image_encoder_contract_from_component,
+    wan_image_processor_config_seal,
 )
 from .utils import collect_model_ids
 
@@ -82,19 +99,24 @@ class EncodePrompt(NodeBase):
         if self._model_type == model_type:
             return None
 
-        if model_type is None or model_type == "" or model_type == "DummyCustomPipeline":
-            self._pipeline_class = DummyCustomPipeline
-        else:
-            diffusers_module = importlib.import_module("diffusers")
-            self._pipeline_class = getattr(diffusers_module, model_type)
-
-        self._model_type = model_type
-
-        _, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
-        # not support this node type
-        if node_config is None:
+        if model_type is None or model_type == "":
+            self._model_type = ""
+            self._pipeline_class = None
             self.send_node_definition(node_params)
-            return
+            return None
+        try:
+            self._pipeline_class = pipeline_class_from_model_type(model_type)
+            _, node_config = require_modiff_node_contract(
+                self._pipeline_class,
+                self.node_type,
+                resolve_blocks=False,
+            )
+        except ValueError:
+            self._model_type = ""
+            self._pipeline_class = None
+            self.send_node_definition(node_params)
+            raise
+        self._model_type = model_type
 
         node_params_to_update = node_config["params"]
         node_params_to_update.pop("text_encoders", None)
@@ -112,7 +134,7 @@ class EncodePrompt(NodeBase):
         kwargs = dict(kwargs)
         self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
         # 1. Get node config
-        blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
+        blocks, node_config = require_modiff_node_contract(self._pipeline_class, self.node_type)
 
         # 2. create pipeline
         repo_id = None
@@ -128,16 +150,13 @@ class EncodePrompt(NodeBase):
             )
             return None
 
-        self._pipeline = blocks.init_pipeline(repo_id, components_manager=components)
+        # Enforce the backend-issued action schema before initializing blocks.
+        kwargs = normalize_modular_runtime_params(kwargs, node_config)
 
-        # Preserve the graph compatibility cast until the upstream schema exposes exact types.
-        for param_name, param_config in node_config["params"].items():
-            if param_name in kwargs and kwargs[param_name] is not None:
-                param_type = param_config.get("type", None)
-                if param_type == "float":
-                    kwargs[param_name] = float(kwargs[param_name])
-                elif param_type == "int":
-                    kwargs[param_name] = int(kwargs[param_name])
+        # Components came from the reviewed ModelsLoader contract. Re-reading
+        # repository config here would let a later cache mutation choose fresh
+        # component type hints outside that validation boundary.
+        self._pipeline = blocks.init_pipeline(components_manager=components)
 
         # 3. update components
         expected_component_names = blocks.component_names
@@ -232,26 +251,89 @@ class ImageEmbeddings(NodeBase):
         self._model_type = ""
         self._pipeline_class = None
 
+    def _cache_params_equal(self, previous, current):
+        equal = super()._cache_params_equal(previous, current)
+        if not equal or not isinstance(current, dict) or self._pipeline_class is None:
+            return equal
+        model_type = getattr(self._pipeline_class, "__name__", "")
+        if route_contract_for_model_type(model_type) != "wan_i2v":
+            return True
+        require_cataloged_wan_action_source(
+            image=current.get("image"),
+            last_image=current.get("last_image"),
+        )
+        _blocks, node_config = require_modiff_node_contract(
+            self._pipeline_class,
+            self.node_type,
+            resolve_blocks=False,
+        )
+        current = normalize_modular_runtime_params(dict(current), node_config)
+        route_state = self.output.get(ROUTE_STATE_OUTPUT)
+        if route_state is None or getattr(self, "_pipeline", None) is None:
+            return False
+        binding = require_component_binding(
+            current.get("image_encoder"),
+            label="image encoder",
+            expected_model_type=model_type,
+            expected_role="image_encoder",
+        )
+        resident_image_encoder = resolve_managed_component_by_id(
+            components,
+            current.get("image_encoder"),
+            label="Image Embeddings image encoder",
+        )
+        if getattr(self._pipeline, "image_encoder", None) is not resident_image_encoder:
+            raise ValueError("The resident Wan image pipeline does not hold the exact connected image encoder.")
+        validate_wan_image_encoder_route_state(
+            route_state,
+            binding=binding,
+            model_type=model_type,
+            image=current.get("image"),
+            last_image=current.get("last_image"),
+            height=current.get("height"),
+            width=current.get("width"),
+            image_embeds=self.output.get("image_embeds"),
+            image_encoder=resident_image_encoder,
+            image_processor=getattr(self._pipeline, "image_processor", None),
+            execution_device=getattr(self._pipeline, "_execution_device", None),
+        )
+        return True
+
     def update_node(self, values, ref):
         node_params = {}
         model_type = self.get_signal_value("image_encoder")
 
         if self._model_type == model_type:
+            if not model_type or self._pipeline_class is None:
+                return None
+            _, node_config = require_modiff_node_contract(
+                self._pipeline_class,
+                self.node_type,
+                resolve_blocks=False,
+            )
+            node_params_to_update = dict(node_config["params"])
+            node_params_to_update.pop("image_encoder", None)
+            self.send_node_definition(node_params_to_update)
             return None
 
-        if model_type is None or model_type == "" or model_type == "DummyCustomPipeline":
-            self._pipeline_class = DummyCustomPipeline
-        else:
-            diffusers_module = importlib.import_module("diffusers")
-            self._pipeline_class = getattr(diffusers_module, model_type)
-
-        self._model_type = model_type
-
-        _, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
-
-        if node_config is None:
+        if model_type is None or model_type == "":
+            self._model_type = ""
+            self._pipeline_class = None
             self.send_node_definition(node_params)
-            return
+            return None
+        try:
+            self._pipeline_class = pipeline_class_from_model_type(model_type)
+            _, node_config = require_modiff_node_contract(
+                self._pipeline_class,
+                self.node_type,
+                resolve_blocks=False,
+            )
+        except ValueError:
+            self._model_type = ""
+            self._pipeline_class = None
+            self.send_node_definition(node_params)
+            raise
+        self._model_type = model_type
 
         node_params_to_update = node_config["params"]
         node_params_to_update.pop("image_encoder", None)
@@ -260,10 +342,45 @@ class ImageEmbeddings(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        require_route_state_shape_before_identity_resolution(kwargs)
+        reject_undeclared_modular_generator(kwargs)
+        reject_route_reserved_inputs_before_identity_resolution(kwargs)
         self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
+        model_type = getattr(self._pipeline_class, "__name__", "")
+        wan_route = route_contract_for_model_type(model_type) == "wan_i2v"
+        if wan_route:
+            require_cataloged_wan_action_source(
+                image=kwargs.get("image"),
+                last_image=kwargs.get("last_image"),
+            )
 
         # 1. Get node config
-        blocks, node_config = pipeline_class_to_modiff_node_config(self._pipeline_class, self.node_type)
+        blocks, node_config = require_modiff_node_contract(self._pipeline_class, self.node_type)
+        validate_route_field_contract(kwargs, node_config)
+        kwargs = normalize_modular_runtime_params(kwargs, node_config)
+        source_snapshot = None
+        image_preflight = None
+        route_binding = None
+        if wan_route:
+            source_snapshot = snapshot_wan_source_media(kwargs.get("image"), kwargs.get("last_image"))
+            image_preflight = preflight_wan_image_encoder_inputs(
+                image=kwargs.get("image"),
+                last_image=kwargs.get("last_image"),
+                height=kwargs.get("height"),
+                width=kwargs.get("width"),
+            )
+            route_binding = require_component_binding(
+                kwargs.get("image_encoder"),
+                label="image encoder",
+                expected_model_type=model_type,
+                expected_role="image_encoder",
+            )
+            preinit_image_encoder = resolve_managed_component_by_id(
+                components,
+                kwargs.get("image_encoder"),
+                label="Image Embeddings image encoder",
+            )
+            preinit_image_encoder_config_seal = wan_image_encoder_contract_from_component(preinit_image_encoder)
 
         # 2. Create pipeline
         repo_id = None
@@ -281,18 +398,9 @@ class ImageEmbeddings(NodeBase):
             )
             return None
 
-        self._pipeline = blocks.init_pipeline(repo_id, components_manager=components)
+        self._pipeline = blocks.init_pipeline(components_manager=components)
 
-        # 3. Cast parameters to the types expected by the modular pipeline.
-        for param_name, param_config in node_config["params"].items():
-            if param_name in kwargs and kwargs[param_name] is not None:
-                param_type = param_config.get("type", None)
-                if param_type == "float":
-                    kwargs[param_name] = float(kwargs[param_name])
-                elif param_type == "int":
-                    kwargs[param_name] = int(kwargs[param_name])
-
-        # 4. Update components
+        # 3. Update components
         expected_component_names = blocks.component_names
         model_input_names = node_config["model_input_names"]
         model_ids = collect_model_ids(
@@ -315,10 +423,35 @@ class ImageEmbeddings(NodeBase):
         comp_id = components.add("image_processor", comp, collection=self.node_id)
         model_ids.append(comp_id)
 
+        components_to_update = {}
         if model_ids:
             components_to_update = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
             if components_to_update:
                 self._pipeline.update_components(**components_to_update)
+
+        installed_image_encoder = getattr(self._pipeline, "image_encoder", None)
+        installed_image_processor = getattr(self._pipeline, "image_processor", None)
+        image_processor_config_seal = None
+        if wan_route:
+            require_component_binding(
+                kwargs.get("image_encoder"),
+                label="image encoder",
+                expected_model_type=model_type,
+                expected_token=route_binding,
+                expected_role="image_encoder",
+            )
+            if components_to_update.get("image_encoder") is not installed_image_encoder:
+                raise ValueError("The Wan image pipeline did not install the exact connected image encoder.")
+            if components_to_update.get("image_processor") is not installed_image_processor:
+                raise ValueError("The Wan image pipeline did not install the exact locally resolved image processor.")
+            if installed_image_encoder is not preinit_image_encoder:
+                raise ValueError("The connected Wan image encoder changed during pipeline initialization.")
+            if wan_image_encoder_contract_from_component(installed_image_encoder) != preinit_image_encoder_config_seal:
+                raise ValueError("The connected Wan image encoder contract changed during pipeline initialization.")
+            image_processor_config_seal = wan_image_processor_config_seal(
+                installed_image_processor,
+                workflow=image_preflight[0],
+            )
 
         # 5. Compile runtime inputs from kwargs based on node_config["input_names"]
         node_kwargs = {}
@@ -337,11 +470,58 @@ class ImageEmbeddings(NodeBase):
                 node_kwargs[name] = value
 
         # 6. Run the pipeline
+        if wan_route:
+            live_image_encoder = resolve_managed_component_by_id(
+                components,
+                kwargs.get("image_encoder"),
+                label="Image Embeddings image encoder",
+            )
+            if live_image_encoder is not installed_image_encoder:
+                raise ValueError("The connected Wan image encoder changed before upstream execution.")
+            if (
+                getattr(self._pipeline, "image_encoder", None) is not installed_image_encoder
+                or getattr(self._pipeline, "image_processor", None) is not installed_image_processor
+            ):
+                raise ValueError("Wan image encoder components changed before upstream execution.")
+            if (
+                wan_image_processor_config_seal(installed_image_processor, workflow=image_preflight[0])
+                != image_processor_config_seal
+            ):
+                raise ValueError("The Wan image processor configuration changed before upstream execution.")
+            if wan_image_encoder_contract_from_component(installed_image_encoder) != preinit_image_encoder_config_seal:
+                raise ValueError("The connected Wan image encoder contract changed before upstream execution.")
         try:
             node_output_state = self._pipeline(**node_kwargs)
         except ValueError as e:
             self.notify(str(e), variant="error", persist=False, autoHideDuration=MESSAGE_DURATION)
             return None
+
+        if wan_route:
+            require_component_binding(
+                kwargs.get("image_encoder"),
+                label="image encoder",
+                expected_model_type=model_type,
+                expected_token=route_binding,
+                expected_role="image_encoder",
+            )
+            if (
+                getattr(self._pipeline, "image_encoder", None) is not installed_image_encoder
+                or getattr(self._pipeline, "image_processor", None) is not installed_image_processor
+            ):
+                raise ValueError("Wan image encoder components changed during upstream execution.")
+            if resolve_managed_component_by_id(
+                components,
+                kwargs.get("image_encoder"),
+                label="Image Embeddings image encoder",
+            ) is not installed_image_encoder:
+                raise ValueError("The connected Wan image encoder changed during upstream execution.")
+            if (
+                wan_image_processor_config_seal(installed_image_processor, workflow=image_preflight[0])
+                != image_processor_config_seal
+            ):
+                raise ValueError("The Wan image processor configuration changed during upstream execution.")
+            if wan_image_encoder_contract_from_component(installed_image_encoder) != preinit_image_encoder_config_seal:
+                raise ValueError("The connected Wan image encoder contract changed during upstream execution.")
 
         # 7. Prepare outputs based on node_config["output_names"]
         output_names = node_config["output_names"].copy()
@@ -349,6 +529,24 @@ class ImageEmbeddings(NodeBase):
         for name in output_names:
             if name == "doc":
                 outputs["doc"] = self._pipeline.blocks.doc
+            elif name == ROUTE_STATE_OUTPUT:
+                if not wan_route or route_binding is None or source_snapshot is None or image_preflight is None:
+                    raise ValueError("The Wan Image Embeddings route is missing its backend binding.")
+                outputs[name] = issue_wan_image_encoder_route_state(
+                    binding=route_binding,
+                    image=kwargs.get("image"),
+                    last_image=kwargs.get("last_image"),
+                    height=kwargs.get("height"),
+                    width=kwargs.get("width"),
+                    image_embeds=node_output_state.get("image_embeds"),
+                    image_encoder=installed_image_encoder,
+                    image_processor=installed_image_processor,
+                    resized_image=node_output_state.get("resized_image"),
+                    resized_last_image=node_output_state.get("resized_last_image"),
+                    execution_device=self._pipeline._execution_device,
+                    source_snapshot=source_snapshot,
+                    preflight_geometry=image_preflight,
+                )
             else:
                 outputs[name] = node_output_state.get(name)
 

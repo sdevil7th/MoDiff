@@ -1710,7 +1710,7 @@
           },
           "expected_sha256": {
             "default": "",
-            "description": "Optional immutable hash for the selected adapter weight file.",
+            "description": "Required SHA-256 for Hub adapter weights; optional for local weights.",
             "label": "Expected SHA-256",
             "type": "string",
             "value": "1863f382199698b8b756d98ecd8060698d5928ed30009cd16f0531f142e4057b"
@@ -1734,6 +1734,13 @@
             "label": "Replace existing adapters",
             "type": "boolean",
             "value": true
+          },
+          "revision": {
+            "default": "",
+            "description": "Required immutable Hub commit for the selected adapter repository.",
+            "label": "Revision",
+            "type": "string",
+            "value": "5cdd7ac47ad1b99f705ac2a03a39d480d34abb5d"
           },
           "scale": {
             "default": 1,

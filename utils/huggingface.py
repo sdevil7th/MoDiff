@@ -1279,7 +1279,7 @@ def get_local_model_ids(id: Optional[str] = None, class_name: Optional[str] | bo
 
     return local_models
 
-def cached_file_path(repo_id: str, file: str | None = None):
+def cached_file_path(repo_id: str, file: str | None = None, *, revision: str | None = None):
     cache_dir = CONFIG.hf['cache_dir']
     file_path = None
 
@@ -1291,7 +1291,12 @@ def cached_file_path(repo_id: str, file: str | None = None):
         repo_id = '/'.join(path[:2])
 
     try:
-        file_path = try_to_load_from_cache(repo_id=repo_id, filename=file, cache_dir=cache_dir)
+        file_path = try_to_load_from_cache(
+            repo_id=repo_id,
+            filename=file,
+            cache_dir=cache_dir,
+            revision=revision,
+        )
     except Exception as e:
         logger.error(f'Error checking cache for {repo_id}/{file}: {e}')
         return None
@@ -1300,6 +1305,29 @@ def cached_file_path(repo_id: str, file: str | None = None):
         return file_path
 
     return False
+
+
+def resolve_managed_hf_cache_file(path: str | os.PathLike[str]) -> Path:
+    """Resolve one cached Hub file without allowing a cache-root escape.
+
+    Hugging Face snapshots normally contain symlinks into the repository's
+    ``blobs`` directory. Both locations remain below the configured Hub cache
+    root, so resolving the link before the containment check accepts the normal
+    layout while rejecting a tampered snapshot link that points elsewhere.
+    """
+
+    try:
+        resolved = Path(path).expanduser().resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise FileNotFoundError(f'Installed Hugging Face cache entry does not exist: {path}') from error
+    cache_root = Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser().resolve(strict=False)
+    try:
+        resolved.relative_to(cache_root)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise ValueError('Installed Hugging Face cache entry resolves outside the managed cache root.') from error
+    if not resolved.is_file():
+        raise FileNotFoundError('Installed Hugging Face cache entry is not a file.')
+    return resolved
 
 def is_file_cached(repo_id: str, file: str | list[str] | tuple[str, ...]) -> bool:
     if isinstance(file, str):

@@ -1,10 +1,8 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
-import json
-import hashlib
-import os
-from pathlib import Path
+from pathlib import PurePosixPath
 
 from modiff.NodeBase import NodeBase
+from modiff.auxiliary_lora import build_lora_descriptor
 
 
 class Lora(NodeBase):
@@ -20,21 +18,23 @@ class Lora(NodeBase):
             "fieldOptions": {
                 "noValidation": True,
                 "sources": ["hub", "local"],
-                "filter": {
-                    "hub": {"className": [""]},
-                    "local": {"className": [""]},
-                },
             },
         },
         "weight_name": {
             "label": "Weight Name",
             "type": "string",
         },
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "default": "",
+            "description": "Required exact commit for a Hub LoRA; unused for a local Safetensors file.",
+        },
         "expected_sha256": {
             "label": "Expected SHA-256",
             "type": "string",
             "default": "",
-            "description": "Optional immutable hash for the selected adapter weight file.",
+            "description": "Required for Hub weights; local weights are hashed when this descriptor is created.",
         },
         "scale": {
             "label": "Scale",
@@ -68,68 +68,25 @@ class Lora(NodeBase):
         model,
         scale,
         weight_name=None,
+        revision="",
         expected_sha256="",
         scheduler_class="",
         scheduler_config="{}",
     ):
-        if isinstance(model, dict):
-            lora_path = model.get("value")
-            if not lora_path:
-                raise ValueError("A LoRA model is required.")
-            filename = os.path.splitext(os.path.basename(lora_path))[0]
-            if model.get("source") == "hub" and lora_path:
-                from utils.huggingface import cached_file_path
-
-                repo_id = lora_path
-                if not weight_name:
-                    parts = lora_path.split("/")
-                    if len(parts) >= 3:
-                        repo_id, weight_name = "/".join(parts[:2]), "/".join(parts[2:])
-                if not weight_name:
-                    raise ValueError("A Hub LoRA requires a pinned weight_name for app-managed installation.")
-                cached = cached_file_path(repo_id, weight_name)
-                if not cached:
-                    raise FileNotFoundError(
-                        f"LoRA {repo_id}/{weight_name} is not installed. Install the pinned file through Model Manager first."
-                    )
-                cached_path = Path(cached)
-                lora_path = str(cached_path.parent)
-                weight_name = cached_path.name
-                expected_sha256 = str(expected_sha256 or "").strip().lower().removeprefix("sha256:")
-                if expected_sha256:
-                    digest = hashlib.sha256()
-                    with cached_path.open("rb") as handle:
-                        for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-                            digest.update(chunk)
-                    if digest.hexdigest() != expected_sha256:
-                        raise ValueError(
-                            f"LoRA {repo_id}/{weight_name} failed its pinned SHA-256 verification. "
-                            "Repair the adapter through Model Manager before running this graph."
-                        )
-        else:
-            lora_path = None
-            filename = ""
-
-        adapter_name = f"{filename}_{self.node_id}"
-
-        if isinstance(scheduler_config, str):
-            try:
-                scheduler_config = json.loads(scheduler_config or "{}")
-            except json.JSONDecodeError as exc:
-                raise ValueError(f"LoRA scheduler config must be valid JSON: {exc}") from exc
-        if not isinstance(scheduler_config, dict):
-            raise TypeError("LoRA scheduler config must decode to a JSON object.")
-
-        # Return the LoRA configuration directly, including optional generic
-        # inference metadata for distilled adapters. Models without that
-        # metadata continue to use the repository scheduler unchanged.
-        return {
-            "lora": {
-                "lora_path": lora_path,
-                "weight_name": weight_name,
-                "adapter_name": adapter_name,
-                "scale": scale,
-                "scheduler_class": scheduler_class or None,
-                "scheduler_config": scheduler_config,
-            }
-        }
+        if not isinstance(model, dict) or not model.get("value"):
+            raise ValueError("A LoRA model is required and must explicitly select a hub or local source.")
+        requested_weight = str(weight_name or "")
+        name_seed = PurePosixPath(requested_weight.replace("\\", "/")).stem
+        if not name_seed:
+            name_seed = PurePosixPath(str(model.get("value") or "").replace("\\", "/")).stem or "lora"
+        descriptor = build_lora_descriptor(
+            selection=model,
+            weight_name=weight_name,
+            revision=revision,
+            expected_sha256=expected_sha256,
+            adapter_name=f"{name_seed}_{self.node_id}",
+            scale=scale,
+            scheduler_class=scheduler_class,
+            scheduler_config=scheduler_config,
+        )
+        return {"lora": descriptor}

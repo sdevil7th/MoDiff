@@ -2,13 +2,6 @@
 
 import os
 
-from modiff.optimization_packages import activate_runtime_overlay
-
-# Optional accelerator packages are staged and validated out-of-process. Make
-# only the explicitly activated environment visible, before importing Torch or
-# any MoDiff module that can transitively import it.
-activate_runtime_overlay()
-
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 # Diffusers reads this once while its modules are imported. Configure it before
 # the worker imports any node packages so large sharded pipelines can load
@@ -58,6 +51,11 @@ def handle_loop_exception(loop, context):
 async def worker_main():
     # Import heavyweight model/runtime modules only inside the replaceable
     # worker. The small parent supervisor must never own accelerator state.
+    from modiff.optimization_packages import activate_runtime_overlay
+
+    # Plain-path activation is stdlib-only and fresh-validates the sealed
+    # overlay before any worker import can transitively load Torch/Diffusers.
+    activate_runtime_overlay()
     from modiff.server import server
 
     await server.run()

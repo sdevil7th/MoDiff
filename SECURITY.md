@@ -13,11 +13,14 @@ Do not expose MoDiff directly to an untrusted LAN, the public internet, a shared
 MoDiff is designed to execute Python and model code:
 
 - Custom-module installation can clone a Git repository or copy a local directory into `custom/`, then import it into the live registry.
-- Enabling `trust_remote_code`, and custom Modular Diffusers block paths that require remote code, can execute Python supplied by a model repository. MoDiff requires an exact 40-character commit revision for these remote custom paths; do not weaken that check to accept moving branches or tags.
+- Reviewed model-execution libraries maintained by Hugging Face run in the backend process with the same filesystem, network, CPU, and accelerator access as MoDiff. Official maintenance reduces neither package supply-chain risk nor the need to review the selected version and integration.
+- Repository-supplied Python would run with backend-process permissions. Current custom Modular Diffusers paths are `contract_only` and reject `trust_remote_code` before model construction; exact cached 40-character commits are still required for Hub contract preview. Do not weaken that fail-closed boundary or accept moving branches/tags if executable support is added later.
 - Model deserialization and optional native/CUDA packages have their own supply-chain and memory-safety risks.
 - Workflows can allocate substantial CPU, RAM, accelerator memory, disk, and network bandwidth.
 
 Install only sources you trust. Review repository ownership, code, dependencies, model licenses, and the exact revision before installation. Prefer immutable commit revisions over moving branches. Disabling a module after import does not undo code that has already run; restart the backend after changing trusted code.
+
+A package being part of the Hugging Face ecosystem is distinct from a model being hosted on the Hub. Do not treat a Hub namespace, model card, or `trust_remote_code` implementation as first-party library code. Optional model runtimes, including Transformers, require an explicit local install action and version verification; template browsing, registry discovery, and Auto planning must remain non-installing operations.
 
 ## Tokens and secrets
 

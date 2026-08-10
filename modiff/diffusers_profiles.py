@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import re
 
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
@@ -9,6 +10,14 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_NONE,
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
+from modiff.modular_workflow_contracts import (
+    FLUX_MODULAR_CONTROL_UNSUPPORTED,
+    SDXL_MODULAR_INPAINT_UNSUPPORTED,
+)
+from modiff.optional_runtimes import (
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    public_optional_runtime_profiles,
+)
 
 
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
@@ -16,8 +25,10 @@ QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 FLUX_SCHNELL_REPO = "black-forest-labs/FLUX.1-schnell"
 FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
+FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
 FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
+FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
@@ -32,6 +43,15 @@ WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 VERIFIED_REPAIR_SOURCES = {
     FLUX_CANNY_REPO: FLUX_CANNY_VERIFIED_REPAIR_REPO,
 }
+
+OPTIONAL_RUNTIME_REQUIREMENT_SCHEMA_VERSION = 1
+OPTIONAL_RUNTIME_DELIVERY_BASE = "base"
+OPTIONAL_RUNTIME_DELIVERY_OVERLAY = "optional_overlay"
+OPTIONAL_RUNTIME_DELIVERIES = frozenset(
+    {OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY}
+)
+_OPTIONAL_RUNTIME_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
+_EXECUTION_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._:-]{0,127}")
 
 
 @dataclass(frozen=True)
@@ -50,10 +70,40 @@ class DiffusersExecutionProfile:
     max_low_memory_side: int | None
     max_low_memory_steps: int | None
     live_proof: bool
+    # All current profiles load Transformers-backed components and use the PEFT
+    # integration surface.  A future pure-Diffusers profile must opt out with
+    # ``optional_runtime_profiles=()`` rather than inheriting this composite.
+    optional_runtime_profiles: tuple[str, ...] = (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+    # Keep optional-runtime discovery metadata separate from executable
+    # delivery.  Every current profile is still satisfied by the reviewed base
+    # environment; only the atomic dependency cutover may change this to
+    # ``optional_overlay`` and make first-use status an execution prerequisite.
+    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
+    compatible_repos: tuple[str, ...] = ()
 
-    def to_public_dict(self) -> dict:
+    def to_public_dict(
+        self,
+        *,
+        observe_optional_runtime: bool = False,
+        optional_runtime_catalog_resolver=None,
+    ) -> dict:
         data = asdict(self)
-        return {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        if observe_optional_runtime:
+            # Lazy to keep the declarative profile module independent of
+            # overlay storage during registry import.
+            from modiff.optional_runtime_execution import (
+                optional_runtime_requirement_for_profiles as observed_requirement,
+            )
+
+            requirement = observed_requirement(
+                (self,),
+                catalog_resolver=optional_runtime_catalog_resolver,
+            )
+        else:
+            requirement = optional_runtime_requirement_for_profiles((self,))
+        public["optionalRuntimeRequirement"] = requirement
+        return public
 
 
 DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
@@ -376,6 +426,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         max_low_memory_side=768,
         max_low_memory_steps=20,
         live_proof=False,
+        compatible_repos=(FLUX_DEV_FP8_REPO,),
     ),
 }
 
@@ -388,6 +439,7 @@ def _flux_execution_profile(
     repo: str,
     *,
     live_proof: bool = False,
+    compatible_repos: tuple[str, ...] = (),
 ) -> DiffusersExecutionProfile:
     """Build the shared generic-image execution contract for FLUX variants."""
 
@@ -411,6 +463,7 @@ def _flux_execution_profile(
         max_low_memory_side=768,
         max_low_memory_steps=24,
         live_proof=live_proof,
+        compatible_repos=compatible_repos,
     )
 
 
@@ -433,6 +486,7 @@ DIFFUSERS_EXECUTION_PROFILES.update(
             ("edit_image", "multi_image_reference_edit"),
             "FluxKontextPipeline",
             FLUX_KONTEXT_REPO,
+            compatible_repos=(FLUX_KONTEXT_NVFP4_REPO,),
         ),
         "flux-fill:direct": _flux_execution_profile(
             "flux-fill:direct", "FluxFillPipeline", ("inpaint", "outpaint"), "FluxFillPipeline", FLUX_FILL_REPO
@@ -441,7 +495,12 @@ DIFFUSERS_EXECUTION_PROFILES.update(
             "flux-depth:direct", "FluxDepthPipeline", ("control_image",), "FluxControlPipeline", FLUX_DEPTH_REPO
         ),
         "flux-canny:direct": _flux_execution_profile(
-            "flux-canny:direct", "FluxCannyPipeline", ("control_image",), "FluxControlPipeline", FLUX_CANNY_REPO
+            "flux-canny:direct",
+            "FluxCannyPipeline",
+            ("control_image",),
+            "FluxControlPipeline",
+            FLUX_CANNY_REPO,
+            compatible_repos=(FLUX_CANNY_VERIFIED_REPAIR_REPO,),
         ),
         "flux-redux:direct": _flux_execution_profile(
             "flux-redux:direct",
@@ -459,22 +518,31 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
         "label": "Stable Diffusion XL (Modular)",
         "mediaKind": "image",
         "pipelineClasses": ["StableDiffusionXLModularPipeline"],
-        "runnableModes": ["text_to_image", "image_to_image", "inpaint", "control_image"],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
+        "runnableModes": ["text_to_image", "image_to_image", "control_image"],
+        "unsupportedModes": {"inpaint": SDXL_MODULAR_INPAINT_UNSUPPORTED},
     },
     {
         "modelType": "FluxModularPipeline",
         "label": "FLUX (Modular)",
         "mediaKind": "image",
         "pipelineClasses": ["FluxModularPipeline"],
-        "runnableModes": ["text_to_image", "image_to_image", "control_image"],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
+        "runnableModes": ["text_to_image", "image_to_image"],
+        "unsupportedModes": {"control_image": FLUX_MODULAR_CONTROL_UNSUPPORTED},
     },
     {
         "modelType": "Flux2KleinModularPipeline",
-        "label": "FLUX.2 Klein (Modular)",
+        "label": "FLUX.2 Klein (Standard Diffusers)",
         "mediaKind": "image",
         "defaultRepo": "black-forest-labs/FLUX.2-klein-4B",
-        "pipelineClasses": ["Flux2KleinPipeline", "Flux2KleinModularPipeline"],
+        "pipelineClasses": ["Flux2KleinPipeline"],
         "backendPath": "modules.DiffusersImage.LoadPipeline",
+        "executionKind": "standard",
+        "executionModelType": "Flux2KleinPipeline",
+        "executionProfileIds": ["flux2-klein:direct"],
         "runnableModes": ["text_to_image", "edit_image", "multi_image_reference_edit"],
     },
     {
@@ -482,6 +550,8 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
         "label": "Wan Text to Video (Modular)",
         "mediaKind": "video",
         "pipelineClasses": ["WanModularPipeline"],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
         "runnableModes": ["text_to_video"],
     },
     {
@@ -489,12 +559,205 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
         "label": "Wan Image to Video (Modular)",
         "mediaKind": "video",
         "pipelineClasses": ["WanImage2VideoModularPipeline"],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
         "runnableModes": ["image_to_video"],
     },
 ]
 
 
-def public_experimental_pipelines() -> list[dict]:
+def optional_runtime_requirement_for_profiles(
+    profiles: tuple[DiffusersExecutionProfile, ...] | list[DiffusersExecutionProfile],
+) -> dict:
+    """Describe whether selected execution profiles require an overlay now.
+
+    This helper is declarative and deliberately does not inspect installed
+    distributions or managed overlay state.  Runtime observations are added by
+    :mod:`modiff.optional_runtime_execution` only for ``optional_overlay``
+    delivery.
+    """
+
+    selected = tuple(profiles)
+    profile_ids: list[str] = []
+    invalid_profile_ids = False
+    deliveries: set[str] = set()
+    execution_profile_ids: list[str] = []
+    base_profile_with_optional_ids = False
+    for profile in selected:
+        if (
+            isinstance(profile.id, str)
+            and _EXECUTION_PROFILE_ID_PATTERN.fullmatch(profile.id)
+        ):
+            if profile.id in execution_profile_ids:
+                invalid_profile_ids = True
+            else:
+                execution_profile_ids.append(profile.id)
+        else:
+            invalid_profile_ids = True
+        delivery = profile.optional_runtime_delivery
+        if delivery not in OPTIONAL_RUNTIME_DELIVERIES:
+            deliveries.add("invalid")
+        else:
+            deliveries.add(delivery)
+        valid_ids_for_profile = 0
+        profile_seen_ids: set[str] = set()
+        for raw_profile_id in profile.optional_runtime_profiles:
+            if (
+                not isinstance(raw_profile_id, str)
+                or not _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN.fullmatch(raw_profile_id)
+                or raw_profile_id in profile_seen_ids
+            ):
+                invalid_profile_ids = True
+                continue
+            profile_id = raw_profile_id
+            profile_seen_ids.add(profile_id)
+            valid_ids_for_profile += 1
+            if profile_id not in profile_ids:
+                profile_ids.append(profile_id)
+        if delivery == OPTIONAL_RUNTIME_DELIVERY_BASE and valid_ids_for_profile:
+            base_profile_with_optional_ids = True
+
+    requires_overlay = OPTIONAL_RUNTIME_DELIVERY_OVERLAY in deliveries
+    contract_invalid = bool(
+        invalid_profile_ids
+        or len(profile_ids) > 32
+        or len(execution_profile_ids) > 32
+        or "invalid" in deliveries
+        or (requires_overlay and base_profile_with_optional_ids)
+        or (requires_overlay and not profile_ids)
+    )
+    if contract_invalid:
+        delivery = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+        required_now = True
+        state = "unavailable"
+        reason = "execution_profile_contract_invalid"
+    elif requires_overlay:
+        delivery = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+        required_now = True
+        state = "unavailable"
+        reason = "optional_runtime_status_required"
+    else:
+        delivery = OPTIONAL_RUNTIME_DELIVERY_BASE
+        required_now = False
+        state = "base_satisfied"
+        reason = "base_runtime_contract" if profile_ids else "no_optional_runtime_required"
+
+    return {
+        "schemaVersion": OPTIONAL_RUNTIME_REQUIREMENT_SCHEMA_VERSION,
+        "delivery": delivery,
+        "requiredNow": required_now,
+        "profileIds": profile_ids[:32],
+        "executionProfileIds": execution_profile_ids[:32],
+        "state": state,
+        "reason": reason,
+    }
+
+
+def execution_profiles_for_execution(
+    model_type: str,
+    mode: str | None = None,
+) -> tuple[DiffusersExecutionProfile, ...]:
+    """Resolve declared profiles for one backend-owned model/mode pair."""
+
+    normalized_model_type = str(model_type or "").strip()
+    normalized_mode = str(mode or "").strip()
+    return tuple(
+        profile
+        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+        if profile.model_type == normalized_model_type
+        and (not normalized_mode or normalized_mode in profile.modes)
+    )
+
+
+def optional_runtime_requirement_for_execution(
+    model_type: str,
+    mode: str | None = None,
+) -> dict:
+    """Return declarative optional-runtime delivery for one exact pair."""
+
+    return optional_runtime_requirement_for_profiles(
+        execution_profiles_for_execution(model_type, mode)
+    )
+
+
+def resolve_execution_profiles_for_loader(
+    module: str,
+    action: str,
+    values: dict,
+) -> tuple[tuple[DiffusersExecutionProfile, ...], str | None]:
+    """Resolve an executable loader from authoritative node parameters.
+
+    The returned reason is non-``None`` when the loader belongs to a declared
+    Diffusers backend path but its exact execution profile cannot be proven.
+    Base delivery intentionally tolerates that legacy/Expert ambiguity.  Once a
+    relevant profile selects ``optional_overlay``, the execution guard treats
+    the same reason as a fail-closed contract blocker.
+    """
+
+    backend_path = f"{str(module or '').strip()}.{str(action or '').strip()}"
+    backend_profiles = tuple(
+        profile
+        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+        if profile.backend_path == backend_path
+    )
+    if not backend_profiles:
+        return (), None
+    if not isinstance(values, dict):
+        return backend_profiles, "loader_parameters_invalid"
+
+    identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
+    raw_identity = values.get(identity_key)
+    identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
+    if not identity:
+        return backend_profiles, "loader_identity_missing"
+
+    matching = tuple(
+        profile
+        for profile in backend_profiles
+        if (
+            profile.model_type == identity
+            if action == "ModelsLoader"
+            else profile.pipeline_class == identity
+        )
+    )
+    if not matching:
+        return backend_profiles, "loader_selection_unregistered"
+    if len(matching) == 1:
+        return matching, None
+
+    raw_repository = values.get("model_id") or values.get("repo_id")
+    if isinstance(raw_repository, str):
+        repository = raw_repository.strip()
+        repository_source = "hub"
+    elif (
+        isinstance(raw_repository, dict)
+        and set(raw_repository).issubset({"source", "value"})
+        and raw_repository.get("source") in {"hub", "local"}
+        and isinstance(raw_repository.get("value"), str)
+    ):
+        repository = raw_repository["value"].strip()
+        repository_source = raw_repository["source"]
+    else:
+        repository = ""
+        repository_source = ""
+    if repository and repository_source == "hub":
+        repository_matches = tuple(
+            profile
+            for profile in matching
+            if repository
+            in {profile.default_repo, profile.fallback_repo, *profile.compatible_repos}
+        )
+        if len(repository_matches) == 1:
+            return repository_matches, None
+
+    return matching, "loader_profile_ambiguous"
+
+
+def public_experimental_pipelines(
+    *,
+    observe_optional_runtime: bool = False,
+    optional_runtime_catalog_resolver=None,
+) -> list[dict]:
     parameter_aliases = {
         "modelRepository": ["model_id", "model", "repo"],
         "guidanceScale": ["guidance_scale", "true_cfg_scale", "guidance"],
@@ -503,26 +766,135 @@ def public_experimental_pipelines() -> list[dict]:
         "maskImage": ["mask_image", "mask"],
         "controlImage": ["control_image", "conditioning_image"],
     }
+    public_pipelines = []
+    for pipeline in EXPERIMENTAL_DIFFUSERS_PIPELINES:
+        profile_ids = pipeline.get("executionProfileIds", [])
+        execution_profiles = [
+            DIFFUSERS_EXECUTION_PROFILES[profile_id].to_public_dict(
+                observe_optional_runtime=observe_optional_runtime,
+                optional_runtime_catalog_resolver=optional_runtime_catalog_resolver,
+            )
+            for profile_id in profile_ids
+            if profile_id in DIFFUSERS_EXECUTION_PROFILES
+        ]
+        if len(execution_profiles) != len(profile_ids):
+            # A dangling profile reference must never leave a mode looking
+            # runnable. Tests make this branch a permanent registry invariant.
+            execution_profiles = []
+            runnable_modes = []
+            pipeline_classes = []
+            backend_path = None
+            qualification_status = "invalid_contract"
+        elif execution_profiles:
+            runnable_modes = list(
+                dict.fromkeys(mode for profile in execution_profiles for mode in profile["modes"])
+            )
+            pipeline_classes = list(
+                dict.fromkeys(profile["pipeline_class"] for profile in execution_profiles)
+            )
+            backend_paths = {profile["backend_path"] for profile in execution_profiles}
+            backend_path = next(iter(backend_paths)) if len(backend_paths) == 1 else None
+            qualification_status = pipeline.get("qualificationStatus", "unqualified")
+        else:
+            runnable_modes = list(pipeline["runnableModes"])
+            pipeline_classes = list(pipeline["pipelineClasses"])
+            backend_path = pipeline.get("backendPath")
+            qualification_status = pipeline.get("qualificationStatus", "unqualified")
+
+        optional_runtime_profile_ids = list(
+            dict.fromkeys(
+                profile_id
+                for profile in execution_profiles
+                for profile_id in profile.get("optional_runtime_profiles", [])
+            )
+        )
+        if not optional_runtime_profile_ids:
+            optional_runtime_profile_ids = list(
+                pipeline.get("optionalRuntimeProfileIds")
+                or (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+            )
+        selected_profile_contracts = tuple(
+            DIFFUSERS_EXECUTION_PROFILES[profile_id]
+            for profile_id in profile_ids
+            if profile_id in DIFFUSERS_EXECUTION_PROFILES
+        )
+        if observe_optional_runtime and selected_profile_contracts:
+            from modiff.optional_runtime_execution import (
+                optional_runtime_requirement_for_profiles as observed_requirement,
+            )
+
+            optional_runtime_requirement = observed_requirement(
+                selected_profile_contracts,
+                catalog_resolver=optional_runtime_catalog_resolver,
+            )
+        else:
+            optional_runtime_requirement = optional_runtime_requirement_for_profiles(
+                selected_profile_contracts
+            )
+
+        public_pipelines.append(
+            {
+                **pipeline,
+                "pipelineClasses": pipeline_classes,
+                "backendPath": backend_path,
+                "runnableModes": runnable_modes,
+                "schemaVersion": 2,
+                "supportTier": "experimental",
+                "executionProfiles": execution_profiles,
+                "inputContracts": dict(pipeline.get("inputContracts", {})),
+                "unsupportedModes": {
+                    mode: dict(contract) for mode, contract in pipeline.get("unsupportedModes", {}).items()
+                },
+                "parameterAliases": parameter_aliases,
+                "defaults": dict(pipeline.get("defaults", {})),
+                "artifactCandidates": [pipeline["defaultRepo"]] if pipeline.get("defaultRepo") else [],
+                "revisionCandidates": list(pipeline.get("revisionCandidates", [])),
+                "quantizationSupport": dict(
+                    pipeline.get(
+                        "quantizationSupport",
+                        {"defaultMode": "none", "components": [], "offloadModes": []},
+                    )
+                ),
+                "qualificationStatus": qualification_status,
+                "optionalRuntimeProfileIds": optional_runtime_profile_ids,
+                "optionalRuntimeProfiles": public_optional_runtime_profiles(
+                    optional_runtime_profile_ids
+                ),
+                **(
+                    {
+                        "optionalRuntimeRequirement": optional_runtime_requirement
+                    }
+                    if execution_profiles
+                    else {}
+                ),
+            }
+        )
+    return public_pipelines
+
+
+def public_execution_profiles(
+    *,
+    observe_optional_runtime: bool = False,
+    optional_runtime_catalog_resolver=None,
+) -> list[dict]:
     return [
-        {
-            **pipeline,
-            "schemaVersion": 2,
-            "supportTier": "experimental",
-            "executionProfiles": [],
-            "inputContracts": pipeline.get("inputContracts", {}),
-            "parameterAliases": parameter_aliases,
-            "defaults": pipeline.get("defaults", {}),
-            "artifactCandidates": [pipeline["defaultRepo"]] if pipeline.get("defaultRepo") else [],
-            "revisionCandidates": pipeline.get("revisionCandidates", []),
-            "quantizationSupport": pipeline.get(
-                "quantizationSupport",
-                {"defaultMode": "none", "components": [], "offloadModes": []},
-            ),
-            "qualificationStatus": pipeline.get("qualificationStatus", "unqualified"),
-        }
-        for pipeline in EXPERIMENTAL_DIFFUSERS_PIPELINES
+        profile.to_public_dict(
+            observe_optional_runtime=observe_optional_runtime,
+            optional_runtime_catalog_resolver=optional_runtime_catalog_resolver,
+        )
+        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
     ]
 
 
-def public_execution_profiles() -> list[dict]:
-    return [profile.to_public_dict() for profile in DIFFUSERS_EXECUTION_PROFILES.values()]
+def optional_runtime_profile_ids_for_execution(
+    model_type: str,
+    mode: str | None = None,
+) -> tuple[str, ...]:
+    """Resolve optional runtime IDs for one declared model/mode pair."""
+
+    profile_ids: list[str] = []
+    for profile in execution_profiles_for_execution(model_type, mode):
+        for profile_id in profile.optional_runtime_profiles:
+            if profile_id not in profile_ids:
+                profile_ids.append(profile_id)
+    return tuple(profile_ids)

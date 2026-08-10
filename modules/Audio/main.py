@@ -47,7 +47,26 @@ def _collapse_single(values):
 def _audio_to_numpy(audio):
     import torch
 
+    sample_layout = None
+    declared_channels = None
     if isinstance(audio, dict):
+        sample_layout = audio.get("sample_layout")
+        if sample_layout not in {None, "channels_first", "frames_first"}:
+            raise ValueError("Audio sample_layout must be exactly channels_first or frames_first.")
+        if "channels" in audio:
+            raw_channels = audio.get("channels")
+            try:
+                numeric_channels = float(raw_channels)
+            except (TypeError, ValueError, OverflowError) as error:
+                raise ValueError("Audio channels metadata must be a positive integer.") from error
+            if (
+                isinstance(raw_channels, bool)
+                or not np.isfinite(numeric_channels)
+                or not numeric_channels.is_integer()
+                or numeric_channels <= 0
+            ):
+                raise ValueError("Audio channels metadata must be a positive integer.")
+            declared_channels = int(numeric_channels)
         if "samples" in audio:
             data = audio["samples"]
         elif "audio" in audio:
@@ -62,15 +81,54 @@ def _audio_to_numpy(audio):
     elif isinstance(data, np.ndarray):
         array = _pcm_to_float32(data)
     elif isinstance(data, str):
+        if sample_layout not in {None, "frames_first"}:
+            raise ValueError("Decoded audio files use frames_first sample_layout; the supplied metadata conflicts.")
         loaded = _read_wav(resolve_runtime_input_path(data))
+        if declared_channels is not None and declared_channels != loaded["channels"]:
+            raise ValueError(
+                f"Audio channels metadata declares {declared_channels} channels, but the decoded file has "
+                f"{loaded['channels']}."
+            )
         return loaded["samples"], loaded["sample_rate"]
     else:
         array = np.asarray(data, dtype=np.float32)
 
     if array.ndim == 1:
+        if declared_channels not in {None, 1}:
+            raise ValueError(
+                f"Audio channels metadata declares {declared_channels} channels, but the waveform is one-dimensional."
+            )
         array = array[:, None]
-    elif array.ndim == 2 and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
-        array = array.T
+    elif array.ndim == 2:
+        rows, columns = (int(value) for value in array.shape)
+        if sample_layout is not None:
+            layout_channels = rows if sample_layout == "channels_first" else columns
+            if declared_channels is not None and declared_channels != layout_channels:
+                raise ValueError(
+                    f"Audio channels metadata declares {declared_channels} channels, but sample_layout "
+                    f"{sample_layout} identifies {layout_channels}."
+                )
+        elif declared_channels is not None:
+            rows_match = rows == declared_channels
+            columns_match = columns == declared_channels
+            if rows_match and columns_match:
+                if declared_channels != 1:
+                    raise ValueError(
+                        "Audio sample layout is ambiguous because both axes match the declared channel count."
+                    )
+            elif rows_match:
+                sample_layout = "channels_first"
+            elif columns_match:
+                sample_layout = "frames_first"
+            else:
+                raise ValueError(
+                    f"Audio channels metadata declares {declared_channels} channels, but neither sample axis matches."
+                )
+
+        if sample_layout == "channels_first":
+            array = array.T
+        elif sample_layout is None and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
+            array = array.T
 
     sample_rate = int(audio.get("sample_rate", 48000)) if isinstance(audio, dict) else 48000
     return np.clip(array, -1.0, 1.0), sample_rate
@@ -90,6 +148,7 @@ def _read_wav(path):
     return {
         "path": str(path),
         "samples": array,
+        "sample_layout": "frames_first",
         "sample_rate": int(sample_rate),
         "channels": int(channels),
         "duration_seconds": duration,
@@ -340,6 +399,7 @@ class TrimPad(NodeBase):
 
         output = {
             "samples": trimmed,
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(trimmed.shape[1] if trimmed.ndim == 2 else 1),
             "duration_seconds": float(trimmed.shape[0] / sample_rate) if sample_rate else 0.0,
@@ -466,6 +526,7 @@ class FitDuration(NodeBase):
         shifted = np.clip(shifted, -1.0, 1.0)
         output = {
             "samples": shifted,
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(shifted.shape[1]),
             "duration_seconds": target_frames / sample_rate,
@@ -570,6 +631,7 @@ class MatchLoudness(NodeBase):
         )
         output = {
             "samples": matched,
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(matched.shape[1] if matched.ndim == 2 else 1),
             "duration_seconds": float(matched.shape[0] / sample_rate) if sample_rate else 0.0,
@@ -657,6 +719,7 @@ class Join(NodeBase):
         joined = np.concatenate([source, continuation], axis=0)
         output = {
             "samples": np.clip(joined, -1.0, 1.0),
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(joined.shape[1]),
             "duration_seconds": float(joined.shape[0] / sample_rate) if sample_rate else 0.0,

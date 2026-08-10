@@ -1,9 +1,14 @@
 import inspect
+import sys
+import tempfile
 import unittest
+from contextlib import chdir
+from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
+from PIL import Image
 
 import modules as module_registry
 from modules.DiffusersVideo import (
@@ -20,7 +25,13 @@ from modules.DiffusersVideo.main import (
     FRAMEPACK_BASE_REPO,
     FRAMEPACK_VISION_REPO,
     LTX_DISTILLED_TIMESTEPS,
+    VIDEO_PIPELINE_ADAPTERS,
+    VIDEO_PIPELINE_EXECUTE_HANDLERS,
+    VIDEO_PIPELINE_LOAD_HANDLERS,
+    WAN_VACE_MODE_MEDIA_CONTRACTS,
+    _pipeline_adapter,
     _resolve_adapter_model_selection,
+    _resolve_loader_revision,
     get_video_pipeline_adapter,
 )
 
@@ -45,7 +56,11 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
     def test_quality_shot_jobs_allow_a_per_shot_conditioning_strength_override(self):
         result = BuildShotJobs().execute(
             shots=[
-                {"prompt": "Preserve the parked car while the station door opens.", "duration_seconds": 5, "conditioning_strength": 0.8},
+                {
+                    "prompt": "Preserve the parked car while the station door opens.",
+                    "duration_seconds": 5,
+                    "conditioning_strength": 0.8,
+                },
                 {"prompt": "The same car drives away through snow.", "duration_seconds": 5},
             ],
             opening_images=[object(), object()],
@@ -193,6 +208,1008 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
     def test_unknown_pipeline_is_rejected_before_model_load(self):
         with self.assertRaisesRegex(ValueError, "Unsupported Diffusers video pipeline"):
             get_video_pipeline_adapter("UnknownVideoPipeline")
+
+    def test_missing_null_and_malformed_pipeline_class_fail_closed_before_loading(self):
+        node = LoadPipeline("video-loader-identity")
+        node._load_wan_vace = MagicMock(side_effect=AssertionError("loader must not run"))
+
+        for values in (
+            {},
+            {"pipeline_class": None},
+            {"pipeline_class": ""},
+            {"pipeline_class": " WanVACEPipeline "},
+            {"pipeline_class": []},
+            {"pipeline_class": {}},
+        ):
+            with self.subTest(values=values):
+                with self.assertRaisesRegex(ValueError, "registered Diffusers video pipeline class is required"):
+                    node(**values)
+        node._load_wan_vace.assert_not_called()
+
+    def test_unknown_pipeline_class_survives_node_normalization_for_an_actionable_error(self):
+        node = LoadPipeline("video-loader-unknown")
+        node._load_wan_vace = MagicMock(side_effect=AssertionError("loader must not run"))
+
+        with self.assertRaisesRegex(ValueError, "Unsupported Diffusers video pipeline class UnknownVideoPipeline"):
+            node(pipeline_class="UnknownVideoPipeline")
+        node._load_wan_vace.assert_not_called()
+
+    def test_registered_adapter_without_a_dispatch_handler_fails_before_loading_or_execution(self):
+        pipeline = SimpleNamespace(_modiff_video_pipeline_class="HunyuanVideoFramepackPipeline")
+        loader = LoadPipeline()
+        loader._load_framepack = MagicMock(side_effect=AssertionError("FramePack loader must not run"))
+        generator = Generate()
+        generator._execute_framepack = MagicMock(side_effect=AssertionError("FramePack generator must not run"))
+
+        with patch.dict(VIDEO_PIPELINE_LOAD_HANDLERS, {"HunyuanVideoFramepackPipeline": None}):
+            with self.assertRaisesRegex(RuntimeError, "No loader handler.*HunyuanVideoFramepackPipeline"):
+                loader.execute(pipeline_class="HunyuanVideoFramepackPipeline")
+        with patch.dict(VIDEO_PIPELINE_EXECUTE_HANDLERS, {"HunyuanVideoFramepackPipeline": None}):
+            with self.assertRaisesRegex(RuntimeError, "No execution handler.*HunyuanVideoFramepackPipeline"):
+                generator.execute(pipeline=pipeline, mode="image_to_video")
+
+        loader._load_framepack.assert_not_called()
+        generator._execute_framepack.assert_not_called()
+
+    def test_framepack_has_explicit_load_and_execute_dispatch(self):
+        self.assertEqual(set(VIDEO_PIPELINE_LOAD_HANDLERS), set(VIDEO_PIPELINE_ADAPTERS))
+        self.assertEqual(set(VIDEO_PIPELINE_EXECUTE_HANDLERS), set(VIDEO_PIPELINE_ADAPTERS))
+        self.assertEqual(
+            VIDEO_PIPELINE_LOAD_HANDLERS["HunyuanVideoFramepackPipeline"],
+            "_load_framepack",
+        )
+        self.assertEqual(
+            VIDEO_PIPELINE_EXECUTE_HANDLERS["HunyuanVideoFramepackPipeline"],
+            "_execute_framepack",
+        )
+
+        pipeline = SimpleNamespace()
+        loader = LoadPipeline()
+        with patch.object(loader, "_load_framepack", return_value=pipeline) as load_framepack:
+            result = loader.execute(pipeline_class="HunyuanVideoFramepackPipeline")
+        load_framepack.assert_called_once()
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "HunyuanVideoFramepackPipeline")
+        self.assertEqual(result["resolved_artifact"], "lllyasviel/FramePackI2V_HY")
+
+    def test_real_loader_normalizes_a_stale_managed_repo_before_caching(self):
+        pipeline = SimpleNamespace()
+        node = LoadPipeline("normalized-video-loader-cache")
+        node._load_framepack = MagicMock(return_value=pipeline)
+        selected_class = "HunyuanVideoFramepackPipeline"
+        stale = {"source": "hub", "value": "Wan-AI/Wan2.1-VACE-1.3B-diffusers"}
+        corrected = {"source": "hub", "value": "lllyasviel/FramePackI2V_HY"}
+        case_variant = {"source": "HUB", "value": "LLLYASVIEL/FRAMEPACKI2V_HY"}
+
+        with patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
+            first = node(pipeline_class=selected_class, model_id=stale)
+            second = node(pipeline_class=selected_class, model_id=corrected)
+            third = node(pipeline_class=selected_class, model_id=case_variant)
+
+        self.assertIs(first, second)
+        self.assertIs(first, third)
+        self.assertEqual(node.params["model_id"], corrected)
+        self.assertEqual(first["resolved_artifact"], corrected["value"])
+        self.assertEqual(first["pipeline"]._modiff_video_revision, "86cef4396041b6002c957852daac4c91aaa47c79")
+        node._load_framepack.assert_called_once()
+
+    def test_hub_pipeline_revisions_fail_closed_before_nodebase_or_loader(self):
+        custom_revision = "0123456789abcdef0123456789abcdef01234567"
+        custom_selection = {"source": "hub", "value": "organization/custom-framepack"}
+        invalid_revisions = (
+            None,
+            "",
+            "main",
+            custom_revision.upper(),
+            f" {custom_revision}",
+            custom_revision[:-1],
+            123,
+            False,
+        )
+        invalid = LoadPipeline("strict-video-hub-revision")
+        invalid._load_framepack = MagicMock(side_effect=AssertionError("loader must not run"))
+        for revision in invalid_revisions:
+            with self.subTest(revision=revision):
+                with self.assertRaisesRegex(ValueError, "immutable lowercase|exact lowercase"):
+                    invalid(
+                        pipeline_class="HunyuanVideoFramepackPipeline",
+                        model_id=custom_selection,
+                        revision=revision,
+                    )
+        invalid._load_framepack.assert_not_called()
+
+        curated_mismatch = LoadPipeline("strict-video-curated-mismatch")
+        curated_mismatch._load_framepack = MagicMock(side_effect=AssertionError("loader must not run"))
+        with self.assertRaisesRegex(ValueError, "pinned to .* does not match"):
+            curated_mismatch(
+                pipeline_class="HunyuanVideoFramepackPipeline",
+                model_id={"source": "hub", "value": "lllyasviel/FramePackI2V_HY"},
+                revision="0000000000000000000000000000000000000000",
+            )
+        curated_mismatch._load_framepack.assert_not_called()
+
+        custom_pipeline = SimpleNamespace()
+        valid_custom = LoadPipeline("strict-video-custom-valid")
+        valid_custom._load_framepack = MagicMock(return_value=custom_pipeline)
+        with patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
+            custom_result = valid_custom(
+                pipeline_class="HunyuanVideoFramepackPipeline",
+                model_id=custom_selection,
+                revision=custom_revision,
+            )
+        self.assertEqual(custom_result["pipeline"]._modiff_video_revision, custom_revision)
+        self.assertEqual(valid_custom._load_framepack.call_args.args[1]["revision"], custom_revision)
+
+        curated_pipeline = SimpleNamespace()
+        valid_curated = LoadPipeline("strict-video-curated-valid")
+        valid_curated._load_framepack = MagicMock(return_value=curated_pipeline)
+        with patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
+            curated_result = valid_curated(
+                pipeline_class="HunyuanVideoFramepackPipeline",
+                model_id={"source": "hub", "value": "lllyasviel/FramePackI2V_HY"},
+            )
+        self.assertEqual(
+            curated_result["pipeline"]._modiff_video_revision,
+            "86cef4396041b6002c957852daac4c91aaa47c79",
+        )
+
+    def test_tagged_pipeline_recovers_only_its_exact_registered_adapter(self):
+        tagged = SimpleNamespace(_modiff_video_pipeline_class="LTXConditionPipeline")
+        self.assertEqual(_pipeline_adapter(tagged).pipeline_class, "LTXConditionPipeline")
+
+        tagged._modiff_video_pipeline_class = "UnknownVideoPipeline"
+        with self.assertRaisesRegex(ValueError, "Unsupported Diffusers video pipeline"):
+            _pipeline_adapter(tagged)
+
+    def test_real_node_rejects_null_or_runtime_inconsistent_pipeline_tags(self):
+        null_tagged = type(
+            "LTXConditionPipeline",
+            (),
+            {
+                "_modiff_video_pipeline_class": None,
+                "_modiff_video_repo": "Lightricks/LTX-Video-0.9.8-13B-distilled",
+            },
+        )()
+        inconsistent = type(
+            "WanVACEPipeline",
+            (),
+            {
+                "_modiff_video_pipeline_class": "HunyuanVideoFramepackPipeline",
+                "_modiff_video_repo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            },
+        )()
+        managed_repo_inconsistent = type(
+            "WanPipeline",
+            (),
+            {
+                "_modiff_video_pipeline_class": "WanTI2VPipeline",
+                "_modiff_video_repo": "WAN-AI/WAN2.1-T2V-1.3B-DIFFUSERS",
+            },
+        )()
+
+        for pipeline, message in (
+            (null_tagged, "registered Diffusers video pipeline class is required"),
+            (inconsistent, "identity is inconsistent.*tagged as HunyuanVideoFramepackPipeline"),
+            (managed_repo_inconsistent, "identity is inconsistent.*tagged as WanTI2VPipeline"),
+        ):
+            with self.subTest(message=message):
+                node = Generate("strict-video-tag")
+                node._execute_ltx = MagicMock(side_effect=AssertionError("LTX handler must not run"))
+                node._execute_framepack = MagicMock(side_effect=AssertionError("FramePack handler must not run"))
+                node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                node._execute_wan_text_to_video = MagicMock(
+                    side_effect=AssertionError("Wan text handler must not run")
+                )
+                with self.assertRaisesRegex(RuntimeError, message):
+                    node(
+                        pipeline=pipeline,
+                        mode="image_to_video" if pipeline is inconsistent else "text_to_video",
+                        reference_images=[Image.new("RGB", (4, 4))] if pipeline is inconsistent else None,
+                    )
+                node._execute_ltx.assert_not_called()
+                node._execute_framepack.assert_not_called()
+                node._execute_wan_vace.assert_not_called()
+                node._execute_wan_text_to_video.assert_not_called()
+
+    def test_known_shared_runtime_accepts_a_consistent_tag_and_custom_repo(self):
+        pipeline = type(
+            "WanPipeline",
+            (),
+            {
+                "_modiff_video_pipeline_class": "WanTI2VPipeline",
+                "_modiff_video_repo": "organization/custom-wan-ti2v",
+            },
+        )()
+        node = Generate("consistent-video-tag")
+        node._execute_wan_text_to_video = MagicMock(
+            return_value={"video_out": [], "width_out": 1, "height_out": 1, "frames_out": 0}
+        )
+
+        result = node(pipeline=pipeline, mode="text_to_video")
+
+        self.assertEqual(result["frames_out"], 0)
+        node._execute_wan_text_to_video.assert_called_once()
+
+    def test_untagged_unique_runtime_class_requires_an_exact_reviewed_repo(self):
+        pipeline = type("LTXConditionPipeline", (), {})()
+        with self.assertRaisesRegex(ValueError, "without an exact reviewed repository"):
+            _pipeline_adapter(pipeline)
+
+        pipeline._modiff_video_repo = "organization/custom-ltx"
+        with self.assertRaisesRegex(ValueError, "unreviewed repository"):
+            _pipeline_adapter(pipeline)
+
+        pipeline._modiff_video_repo = "Lightricks/LTX-Video-0.9.8-13B-distilled"
+        self.assertEqual(_pipeline_adapter(pipeline).pipeline_class, "LTXConditionPipeline")
+
+    def test_tagged_loader_output_keeps_custom_repository_support(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="LTXConditionPipeline",
+            _modiff_video_repo="organization/custom-ltx",
+        )
+        self.assertEqual(_pipeline_adapter(pipeline).pipeline_class, "LTXConditionPipeline")
+
+    def test_untagged_unknown_runtime_class_fails_closed(self):
+        pipeline = type("UnreviewedVideoPipeline", (), {})()
+        with self.assertRaisesRegex(ValueError, "Cannot recover.*UnreviewedVideoPipeline"):
+            _pipeline_adapter(pipeline)
+
+    def test_untagged_shared_wan_runtime_is_ambiguous_without_an_exact_reviewed_repo(self):
+        pipeline = type("WanPipeline", (), {})()
+        with self.assertRaisesRegex(ValueError, "without an exact reviewed repository"):
+            _pipeline_adapter(pipeline)
+
+        pipeline._modiff_video_repo = "organization/custom-wan"
+        with self.assertRaisesRegex(ValueError, "unreviewed repository"):
+            _pipeline_adapter(pipeline)
+
+    def test_exact_reviewed_repo_disambiguates_a_shared_wan_runtime(self):
+        pipeline = type(
+            "WanPipeline",
+            (),
+            {"_modiff_video_repo": "Wan-AI/Wan2.2-TI2V-5B-Diffusers"},
+        )()
+        self.assertEqual(_pipeline_adapter(pipeline).pipeline_class, "WanTI2VPipeline")
+
+    def test_pipeline_signal_publishes_backend_owned_exact_adapter_modes(self):
+        loader = LoadPipeline("loader")
+        loader.set_field_value = MagicMock()
+        loader.set_field_params = MagicMock()
+        loader.select_adapter(
+            {
+                "pipeline_class": "HunyuanVideoFramepackPipeline",
+                "model_id": {"source": "hub", "value": "Wan-AI/Wan2.1-VACE-1.3B-diffusers"},
+            },
+            None,
+        )
+
+        loader.set_field_value.assert_called_once_with(
+            {
+                "model_id": {"source": "hub", "value": "lllyasviel/FramePackI2V_HY"},
+                "revision": "86cef4396041b6002c957852daac4c91aaa47c79",
+            }
+        )
+        signal = loader.set_field_params.call_args.args[1]["signal"]
+        self.assertEqual(
+            signal["value"],
+            {
+                "schemaVersion": 1,
+                "library": "diffusers",
+                "mediaKind": "video",
+                "pipelineClass": "HunyuanVideoFramepackPipeline",
+                "modes": ["image_to_video"],
+            },
+        )
+
+        generator = Generate("generator")
+        generator.set_field_params = MagicMock()
+        generator.update_adapter_modes(
+            {
+                "mode": "text_to_video",
+                "video_contract": {
+                    "schemaVersion": 1,
+                    "library": "diffusers",
+                    "mediaKind": "video",
+                    "pipelineClass": "HunyuanVideoFramepackPipeline",
+                    "modes": ["image_to_video"],
+                },
+            },
+            None,
+        )
+        generator.set_field_params.assert_called_once_with(
+            "mode",
+            {"options": ["image_to_video"], "default": "image_to_video", "value": "image_to_video"},
+        )
+        self.assertEqual(LoadPipeline.params["pipeline_class"]["onChange"], "select_adapter")
+        self.assertEqual(LoadPipeline.params["model_id"]["onChange"], "select_adapter")
+        self.assertEqual(
+            Generate.params["pipeline"]["onSignal"],
+            [
+                {"action": "value", "target": "video_contract"},
+                {"action": "exec", "data": "update_adapter_modes"},
+            ],
+        )
+        self.assertEqual(
+            LoadPipeline.params["pipeline"]["signal"]["value"],
+            {
+                "schemaVersion": 1,
+                "library": "diffusers",
+                "mediaKind": "video",
+                "pipelineClass": "WanVACEPipeline",
+                "modes": list(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"].modes),
+            },
+        )
+
+    def test_video_model_action_couples_repository_and_revision_before_real_execution(self):
+        stale_revision = "0" * 40
+        replacement_revision = "1234567890abcdef1234567890abcdef12345678"
+        replacement = {"source": "hub", "value": "organization/replacement-video"}
+        loader = LoadPipeline("video-model-identity-action")
+        loader._sid = "video-browser-session"
+        messages = []
+        current_server = SimpleNamespace(
+            _current_dynamic_message_identity_payload=lambda: {},
+            queue_message=lambda message, sid=None: messages.append((message, sid)),
+        )
+
+        with patch("modiff.NodeBase._server", return_value=current_server):
+            loader.select_adapter(
+                {
+                    "pipeline_class": "LTXConditionPipeline",
+                    "model_id": replacement,
+                    "revision": stale_revision,
+                },
+                {"key": "model_id"},
+            )
+
+        value_message = next(message for message, _sid in messages if message["type"] == "set_field_value")
+        self.assertEqual(value_message["fields"], {"revision": ""})
+        self.assertEqual(
+            next(sid for message, sid in messages if message["type"] == "set_field_value"),
+            "video-browser-session",
+        )
+
+        preserving = LoadPipeline("video-custom-pin-class-action")
+        preserving.set_field_params = MagicMock()
+        preserving.set_field_value = MagicMock()
+        preserving.select_adapter(
+            {
+                "pipeline_class": "LTXConditionPipeline",
+                "model_id": replacement,
+                "revision": replacement_revision,
+            },
+            {"key": "pipeline_class"},
+        )
+        preserving.set_field_value.assert_not_called()
+
+        upstream_calls = []
+
+        class FakePipelineClass:
+            @classmethod
+            def from_pretrained(cls, repository, **kwargs):
+                upstream_calls.append((repository, kwargs["revision"]))
+                return SimpleNamespace()
+
+        executing = LoadPipeline("video-replacement-execution")
+        executing.mm_add = MagicMock()
+        with (
+            patch("diffusers.LTXConditionPipeline", FakePipelineClass),
+            patch("modules.DiffusersVideo.main.local_files_only", return_value=True),
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+        ):
+            result = executing.execute(
+                pipeline_class="LTXConditionPipeline",
+                model_id=replacement,
+                revision=replacement_revision,
+            )
+
+        self.assertEqual(upstream_calls, [(replacement["value"], replacement_revision)])
+        self.assertEqual(result["pipeline"]._modiff_video_repo, replacement["value"])
+        self.assertEqual(result["pipeline"]._modiff_video_revision, replacement_revision)
+
+    def test_video_model_action_publishes_catalog_pin_and_clears_local_revision(self):
+        cataloged = LoadPipeline("video-catalog-pin-action")
+        cataloged.set_field_params = MagicMock()
+        cataloged.set_field_value = MagicMock()
+        cataloged.select_adapter(
+            {
+                "pipeline_class": "LTXConditionPipeline",
+                "model_id": {
+                    "source": "hub",
+                    "value": "Lightricks/LTX-Video-0.9.8-13B-distilled",
+                },
+                "revision": "0" * 40,
+            },
+            {"key": "model_id"},
+        )
+        self.assertEqual(
+            cataloged.set_field_value.call_args.args[0]["revision"],
+            "7c64400e1861cc0d7b98d570a1926d5408ec60cd",
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            local_model = Path(temporary) / "local-video"
+            local_model.mkdir()
+            local = LoadPipeline("video-local-revision-action")
+            local.set_field_params = MagicMock()
+            local.set_field_value = MagicMock()
+            local.select_adapter(
+                {
+                    "pipeline_class": "LTXConditionPipeline",
+                    "model_id": {"source": "local", "value": str(local_model)},
+                    "revision": "0" * 40,
+                },
+                {"key": "model_id"},
+            )
+        self.assertEqual(local.set_field_value.call_args.args[0]["revision"], "")
+
+    def test_mode_action_rejects_a_stale_or_unknown_video_contract(self):
+        generator = Generate("generator")
+        generator.set_field_params = MagicMock()
+        with self.assertRaisesRegex(ValueError, "valid adapter contract"):
+            generator.update_adapter_modes({}, None)
+        with self.assertRaisesRegex(ValueError, "Unsupported Diffusers video pipeline"):
+            generator.update_adapter_modes(
+                {
+                    "video_contract": {
+                        "pipelineClass": "UnknownVideoPipeline",
+                        "modes": ["text_to_video"],
+                    }
+                },
+                None,
+            )
+        with self.assertRaisesRegex(ValueError, "stale or mismatched"):
+            generator.update_adapter_modes(
+                {
+                    "video_contract": {
+                        "pipelineClass": "HunyuanVideoFramepackPipeline",
+                        "modes": ["text_to_video"],
+                    }
+                },
+                None,
+            )
+        with self.assertRaisesRegex(ValueError, "stale or mismatched"):
+            generator.update_adapter_modes(
+                {
+                    "video_contract": {
+                        "schemaVersion": 999,
+                        "library": "unreviewed",
+                        "mediaKind": "audio",
+                        "pipelineClass": "HunyuanVideoFramepackPipeline",
+                        "modes": ["image_to_video"],
+                    }
+                },
+                None,
+            )
+        generator.set_field_params.assert_not_called()
+
+    def test_wan_vace_declares_the_reviewed_mode_media_matrix(self):
+        adapter = VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"]
+        expected = {
+            "text_to_video": ("forbidden", "forbidden", "forbidden"),
+            "video_to_video": ("required", "forbidden", "optional"),
+            "video_inpaint": ("required", "required", "optional"),
+            "video_outpaint": ("required", "required", "optional"),
+            "reference_to_video": ("forbidden", "forbidden", "required"),
+            "control_to_video": ("required", "forbidden", "optional"),
+            "video_color_edit": ("required", "forbidden", "optional"),
+        }
+
+        self.assertEqual(tuple(WAN_VACE_MODE_MEDIA_CONTRACTS), adapter.modes)
+        self.assertEqual(set(WAN_VACE_MODE_MEDIA_CONTRACTS), set(expected))
+        self.assertNotIn("image_to_video", adapter.modes)
+        for mode, requirements in expected.items():
+            with self.subTest(mode=mode):
+                contract = WAN_VACE_MODE_MEDIA_CONTRACTS[mode]
+                self.assertEqual((contract.video, contract.mask, contract.reference_images), requirements)
+
+    def test_wan_vace_every_required_and_forbidden_media_rule_preflights_before_torch(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="WanVACEPipeline",
+            vae_scale_factor_temporal=1,
+        )
+        media = {
+            "video": [np.zeros((4, 4, 3), dtype=np.uint8)],
+            "mask": [np.zeros((4, 4), dtype=np.uint8)],
+            "reference_images": [Image.new("RGB", (4, 4))],
+        }
+
+        with patch.dict(sys.modules, {"torch": None}):
+            for mode, contract in WAN_VACE_MODE_MEDIA_CONTRACTS.items():
+                requirements = {
+                    "video": contract.video,
+                    "mask": contract.mask,
+                    "reference_images": contract.reference_images,
+                }
+                valid = {
+                    field: media[field] for field, requirement in requirements.items() if requirement == "required"
+                }
+                for field, requirement in requirements.items():
+                    if requirement == "required":
+                        values = {key: value for key, value in valid.items() if key != field}
+                        node = Generate()
+                        node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                        with self.subTest(mode=mode, missing=field):
+                            with self.assertRaisesRegex(ValueError, "requires"):
+                                node.execute(pipeline=pipeline, mode=mode, num_frames=1, **values)
+                            node._execute_wan_vace.assert_not_called()
+                    elif requirement == "forbidden":
+                        node = Generate()
+                        node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                        with self.subTest(mode=mode, forbidden=field):
+                            with self.assertRaisesRegex(ValueError, "does not accept"):
+                                node.execute(
+                                    pipeline=pipeline,
+                                    mode=mode,
+                                    num_frames=1,
+                                    **valid,
+                                    **{field: media[field]},
+                                )
+                            node._execute_wan_vace.assert_not_called()
+
+    def test_wan_vace_optional_references_and_empty_media_are_normalized_before_dispatch(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="WanVACEPipeline",
+            vae_scale_factor_temporal=1,
+        )
+        video = [np.zeros((4, 4, 3), dtype=np.uint8)]
+        mask = [np.zeros((4, 4), dtype=np.uint8)]
+        reference = Image.new("RGB", (6, 5))
+        output = {"video_out": [], "width_out": 4, "height_out": 4, "frames_out": 0}
+
+        node = Generate()
+        node._execute_wan_vace = MagicMock(return_value=output)
+        for mode, contract in WAN_VACE_MODE_MEDIA_CONTRACTS.items():
+            values = {"video": [], "mask": [], "reference_images": [], "num_frames": 1}
+            if contract.video == "required":
+                values["video"] = video
+            if contract.mask == "required":
+                values["mask"] = mask
+            if contract.reference_images in {"required", "optional"}:
+                values["reference_images"] = [reference]
+
+            with self.subTest(mode=mode):
+                node.execute(pipeline=pipeline, mode=mode, **values)
+                dispatched = node._execute_wan_vace.call_args.args[3]
+                if contract.video == "forbidden":
+                    self.assertIsNone(dispatched["video"])
+                else:
+                    self.assertEqual(len(dispatched["video"]), 1)
+                    self.assertIs(dispatched["video"][0], video[0])
+                if contract.mask == "forbidden":
+                    self.assertIsNone(dispatched["mask"])
+                else:
+                    self.assertEqual(len(dispatched["mask"]), 1)
+                    self.assertIs(dispatched["mask"][0], mask[0])
+                if contract.reference_images == "forbidden":
+                    self.assertIsNone(dispatched["reference_images"])
+                else:
+                    self.assertEqual(dispatched["reference_images"], [reference])
+                self.assertEqual(dispatched["num_frames"], 1)
+                node._execute_wan_vace.reset_mock()
+
+    def test_real_video_node_preserves_unknown_mode_for_an_actionable_failure(self):
+        pipeline = SimpleNamespace(_modiff_video_pipeline_class="WanVACEPipeline")
+        node = Generate("strict-video-mode")
+        node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+
+        self.assertTrue(Generate.params["mode"]["fieldOptions"]["noValidation"])
+        for value in (None, [], {}):
+            with self.subTest(mode=value):
+                with self.assertRaisesRegex(ValueError, "exact non-empty Diffusers video mode"):
+                    node(pipeline=pipeline, mode=value)
+        with self.assertRaisesRegex(ValueError, "exact non-empty Diffusers video mode"):
+            node(pipeline=pipeline)
+        with self.assertRaisesRegex(RuntimeError, "does not support video mode future_video_mode"):
+            node(pipeline=pipeline, mode="future_video_mode")
+        with self.assertRaisesRegex(RuntimeError, "does not support video mode  text_to_video "):
+            node(pipeline=pipeline, mode=" text_to_video ")
+        with self.assertRaisesRegex(RuntimeError, "does not support video mode image_to_video"):
+            node(pipeline=pipeline, mode="image_to_video")
+        node._execute_wan_vace.assert_not_called()
+
+    def test_real_video_node_passes_normalized_media_to_the_wan_handler(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="WanVACEPipeline",
+            vae_scale_factor_temporal=1,
+        )
+        frame = np.zeros((4, 4, 3), dtype=np.uint8)
+        node = Generate("normalized-wan-media")
+        node._execute_wan_vace = MagicMock(
+            return_value={"video_out": [], "width_out": 4, "height_out": 4, "frames_out": 0}
+        )
+
+        result = node(
+            pipeline=pipeline,
+            mode="video_to_video",
+            video=(frame,),
+            mask=[],
+            reference_images=[],
+            num_frames=1,
+        )
+
+        self.assertEqual(result["frames_out"], 0)
+        dispatched = node._execute_wan_vace.call_args.args[3]
+        self.assertEqual(len(dispatched["video"]), 1)
+        np.testing.assert_array_equal(dispatched["video"][0], frame)
+        self.assertIsNone(dispatched["mask"])
+        self.assertIsNone(dispatched["reference_images"])
+        self.assertEqual(dispatched["num_frames"], 1)
+
+    def test_wan_vace_media_types_shapes_counts_and_requested_length_preflight_before_torch(self):
+        class TorchLikeFrame:
+            __module__ = "torch"
+            shape = (3, 4, 4)
+            dtype = "float32"
+            device = "cpu"
+
+            def detach(self):
+                return self
+
+        class HWCTorchLikeFrame:
+            __module__ = "torch"
+            shape = (8, 8, 3)
+            dtype = "float32"
+            device = "cpu"
+
+            def detach(self):
+                return self
+
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="WanVACEPipeline",
+            vae_scale_factor_temporal=1,
+        )
+        output = {"video_out": [], "width_out": 4, "height_out": 4, "frames_out": 0}
+        valid_frames = (
+            Image.new("RGB", (4, 4)),
+            np.zeros((4, 4, 3), dtype=np.uint8),
+            TorchLikeFrame(),
+        )
+
+        with patch.dict(sys.modules, {"torch": None}):
+            for frame in valid_frames:
+                with self.subTest(valid_type=type(frame).__name__):
+                    node = Generate()
+                    node._execute_wan_vace = MagicMock(return_value=output)
+                    node.execute(
+                        pipeline=pipeline,
+                        mode="video_to_video",
+                        video=[frame],
+                        num_frames=1,
+                    )
+                    node._execute_wan_vace.assert_called_once()
+
+            reference = Image.new("RGB", (6, 5))
+            for selection in (reference, [reference], [[reference]], ((reference,),)):
+                with self.subTest(reference_shape=type(selection).__name__, selection=selection):
+                    node = Generate()
+                    node._execute_wan_vace = MagicMock(return_value=output)
+                    node.execute(
+                        pipeline=pipeline,
+                        mode="reference_to_video",
+                        reference_images=selection,
+                        num_frames=1,
+                    )
+                    dispatched_references = node._execute_wan_vace.call_args.args[3]["reference_images"]
+                    self.assertEqual(dispatched_references, [reference])
+
+            frame4 = np.zeros((4, 4, 3), dtype=np.uint8)
+            frame5 = np.zeros((5, 4, 3), dtype=np.uint8)
+            mask4 = np.zeros((4, 4), dtype=np.uint8)
+            mask5 = np.zeros((5, 4), dtype=np.uint8)
+            cases = (
+                (
+                    {"mode": "video_to_video", "video": [object()], "num_frames": 1},
+                    "must be a PIL image, NumPy array, or Torch tensor-like image",
+                ),
+                (
+                    {
+                        "mode": "video_to_video",
+                        "video": [frame4],
+                        "reference_images": [object()],
+                        "num_frames": 1,
+                    },
+                    "reference images must be actual PIL images",
+                ),
+                (
+                    {
+                        "mode": "reference_to_video",
+                        "reference_images": [np.zeros((4, 4, 3), dtype=np.uint8)],
+                        "num_frames": 1,
+                    },
+                    "reference images must be actual PIL images",
+                ),
+                (
+                    {
+                        "mode": "reference_to_video",
+                        "reference_images": [[Image.new("RGB", (4, 4))], [Image.new("RGB", (4, 4))]],
+                        "num_frames": 1,
+                    },
+                    "one flat list or one nested batch",
+                ),
+                (
+                    {"mode": "video_inpaint", "video": [frame4], "mask": [object()], "num_frames": 1},
+                    "mask video frame 1 must be a PIL image",
+                ),
+                (
+                    {
+                        "mode": "video_inpaint",
+                        "video": [frame4, frame4],
+                        "mask": [mask4],
+                        "num_frames": 2,
+                    },
+                    "video/mask frame count mismatch: 2 vs 1",
+                ),
+                (
+                    {"mode": "video_inpaint", "video": [frame4], "mask": [mask5], "num_frames": 1},
+                    "must have matching spatial dimensions",
+                ),
+                (
+                    {
+                        "mode": "video_inpaint",
+                        "video": [frame4],
+                        "mask": [Image.new("L", (4, 4))],
+                        "num_frames": 1,
+                    },
+                    "must use the same container family",
+                ),
+                (
+                    {
+                        "mode": "video_inpaint",
+                        "video": [Image.new("RGB", (4, 4))],
+                        "mask": [mask4],
+                        "num_frames": 1,
+                    },
+                    "must use the same container family",
+                ),
+                (
+                    {
+                        "mode": "video_inpaint",
+                        "video": [np.zeros((8, 8), dtype=np.uint8)],
+                        "mask": [np.zeros((8, 8, 1), dtype=np.uint8)],
+                        "num_frames": 1,
+                    },
+                    "2D source/control video frames require 2D mask frames",
+                ),
+                (
+                    {"mode": "video_to_video", "video": [frame4, frame5], "num_frames": 2},
+                    "frames must all have the same spatial dimensions",
+                ),
+                (
+                    {
+                        "mode": "video_to_video",
+                        "video": [Image.new("RGB", (4, 4)), frame4],
+                        "num_frames": 2,
+                    },
+                    "source/control video frames must use one container family",
+                ),
+                (
+                    {
+                        "mode": "video_inpaint",
+                        "video": [Image.new("RGB", (4, 4)), Image.new("RGB", (4, 4))],
+                        "mask": [Image.new("L", (4, 4)), mask4],
+                        "num_frames": 2,
+                    },
+                    "mask video frames must use one container family",
+                ),
+                (
+                    {
+                        "mode": "reference_to_video",
+                        "reference_images": [Image.new("RGB", (4, 4)) for _ in range(9)],
+                        "num_frames": 1,
+                    },
+                    "accepts at most 8 reference images",
+                ),
+                (
+                    {
+                        "mode": "reference_to_video",
+                        "reference_images": [Image.new("1", (4097, 4097))],
+                        "num_frames": 1,
+                    },
+                    "16777216-pixel cumulative input limit",
+                ),
+                (
+                    {
+                        "mode": "video_to_video",
+                        "video": [frame4] * 82,
+                        "num_frames": 82,
+                        "output_type": "np",
+                    },
+                    "conditioned video currently requires output_type=pil",
+                ),
+                (
+                    {
+                        "mode": "video_to_video",
+                        "video": [frame4] * 82,
+                        "num_frames": 82,
+                        "output_type": "pt",
+                    },
+                    "conditioned video currently requires output_type=pil",
+                ),
+                (
+                    {
+                        "mode": "video_to_video",
+                        "video": [np.zeros((3, 8, 8), dtype=np.uint8)],
+                        "num_frames": 1,
+                    },
+                    "NumPy images must use HWC layout",
+                ),
+                (
+                    {
+                        "mode": "video_to_video",
+                        "video": [HWCTorchLikeFrame()],
+                        "num_frames": 1,
+                    },
+                    "Torch tensor-like images must use CHW layout",
+                ),
+                (
+                    {"mode": "video_to_video", "video": [frame4], "num_frames": 2},
+                    "received 1 conditioned video frames, but normalized num_frames is 2",
+                ),
+            )
+            for values, message in cases:
+                with self.subTest(message=message):
+                    node = Generate()
+                    node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                    with self.assertRaisesRegex(ValueError, message):
+                        node.execute(pipeline=pipeline, **values)
+                    node._execute_wan_vace.assert_not_called()
+
+    def test_wan_vace_numeric_resource_contract_preflights_before_torch_and_dispatch(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="WanVACEPipeline",
+            vae_scale_factor_temporal=1,
+            vae_scale_factor_spatial=8,
+            transformer=SimpleNamespace(config=SimpleNamespace(patch_size=(1, 2, 2))),
+        )
+        invalid = (
+            ("width", False, "width.*finite integer"),
+            ("width", 15, "width.*16 through 2048"),
+            ("width", 2049, "width.*16 through 2048"),
+            ("width", 16.5, "width.*finite integer"),
+            ("height", 15, "height.*16 through 2048"),
+            ("height", 2049, "height.*16 through 2048"),
+            ("height", 16.5, "height.*finite integer"),
+            ("height", float("nan"), "height.*finite integer"),
+            ("num_inference_steps", 0, "inference steps.*1 through 100"),
+            ("num_inference_steps", 101, "inference steps.*1 through 100"),
+            ("num_inference_steps", 1.5, "inference steps.*finite integer"),
+            ("guidance_scale", -0.1, "guidance scale.*0 through 20"),
+            ("guidance_scale", float("nan"), "guidance scale.*finite"),
+            ("guidance_scale_2", 20.1, "secondary guidance scale.*0 through 20"),
+            ("guidance_scale_2", float("inf"), "secondary guidance scale.*finite"),
+            ("conditioning_scale", -0.1, "conditioning scale.*0 through 2"),
+            ("conditioning_scale", float("nan"), "conditioning scale.*finite"),
+            ("seed", -1, "seed.*0 through 4294967295"),
+            ("seed", 4294967296, "seed.*0 through 4294967295"),
+            ("seed", 1.5, "seed.*finite integer"),
+            ("num_videos_per_prompt", 0, "videos per prompt.*1 through 1"),
+            ("num_videos_per_prompt", 2, "videos per prompt.*1 through 1"),
+            ("num_videos_per_prompt", True, "videos per prompt.*finite integer"),
+            ("output_type", "tensor", "output_type must be exactly"),
+            ("output_type", " pt ", "output_type must be exactly"),
+            ("max_sequence_length", 0, "max sequence length.*1 through 512"),
+            ("max_sequence_length", 513, "max sequence length.*1 through 512"),
+            ("max_sequence_length", 1.5, "max sequence length.*finite integer"),
+        )
+
+        with patch.dict(sys.modules, {"torch": None}):
+            for index, (field, value, message) in enumerate(invalid):
+                node = Generate(f"strict-wan-scalar-{index}")
+                node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                values = {
+                    "pipeline": pipeline,
+                    "mode": "text_to_video",
+                    "num_frames": 1,
+                    "width": 16,
+                    "height": 16,
+                    field: value,
+                }
+                with self.subTest(field=field, value=value):
+                    with self.assertRaisesRegex(ValueError, message):
+                        node(**values)
+                node._execute_wan_vace.assert_not_called()
+
+            misaligned = Generate("strict-wan-alignment")
+            misaligned._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+            with self.assertRaisesRegex(ValueError, "size must be divisible by 16x16"):
+                misaligned(
+                    pipeline=pipeline,
+                    mode="text_to_video",
+                    width=24,
+                    height=16,
+                    num_frames=1,
+                )
+            misaligned._execute_wan_vace.assert_not_called()
+
+            boundary = Generate("strict-wan-scalar-boundaries")
+            boundary._execute_wan_vace = MagicMock(
+                return_value={"video_out": [], "width_out": 16, "height_out": 16, "frames_out": 0}
+            )
+            result = boundary(
+                pipeline=pipeline,
+                mode="text_to_video",
+                width=16,
+                height=16,
+                num_frames=1,
+                num_inference_steps=1,
+                guidance_scale=0,
+                guidance_scale_2=0,
+                conditioning_scale=0,
+                seed=4294967295,
+                num_videos_per_prompt=1,
+                output_type="pt",
+                max_sequence_length=512,
+            )
+
+        self.assertEqual(result["frames_out"], 0)
+        dispatched = boundary._execute_wan_vace.call_args.args[3]
+        self.assertEqual(dispatched["width"], 16)
+        self.assertEqual(dispatched["height"], 16)
+        self.assertEqual(dispatched["num_inference_steps"], 1)
+        self.assertEqual(dispatched["guidance_scale"], 0)
+        self.assertEqual(dispatched["guidance_scale_2"], 0)
+        self.assertEqual(dispatched["conditioning_scale"], 0)
+        self.assertEqual(dispatched["seed"], 4294967295)
+        self.assertEqual(dispatched["num_videos_per_prompt"], 1)
+        self.assertEqual(dispatched["output_type"], "pt")
+        self.assertEqual(dispatched["max_sequence_length"], 512)
+
+    def test_real_wan_vace_node_rejects_invalid_reference_pairing_and_frame_bounds_before_dispatch(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="WanVACEPipeline",
+            vae_scale_factor_temporal=4,
+        )
+        invalid_media = (
+            {
+                "mode": "reference_to_video",
+                "reference_images": [np.zeros((4, 4, 3), dtype=np.uint8)],
+                "num_frames": 1,
+            },
+            {
+                "mode": "video_inpaint",
+                "video": [np.zeros((4, 4, 3), dtype=np.uint8)],
+                "mask": [Image.new("L", (4, 4))],
+                "num_frames": 1,
+            },
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for index, values in enumerate(invalid_media):
+                with self.subTest(values=values):
+                    node = Generate(f"strict-wan-media-{index}")
+                    node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                    with self.assertRaisesRegex(RuntimeError, "actual PIL images|same container family"):
+                        node(pipeline=pipeline, **values)
+                    node._execute_wan_vace.assert_not_called()
+
+            invalid_frame_counts = (False, 0, -1, 1.5, "1.5", 242, float("inf"), float("nan"), object())
+            for index, num_frames in enumerate(invalid_frame_counts):
+                with self.subTest(num_frames=num_frames):
+                    node = Generate(f"strict-wan-frames-{index}")
+                    node._execute_wan_vace = MagicMock(side_effect=AssertionError("VACE handler must not run"))
+                    with self.assertRaisesRegex(ValueError, "finite integer from 1 through 241"):
+                        node(pipeline=pipeline, mode="text_to_video", num_frames=num_frames)
+                    node._execute_wan_vace.assert_not_called()
+
+            node = Generate("strict-wan-frames-boundary")
+            node._execute_wan_vace = MagicMock(
+                return_value={
+                    "video_out": [],
+                    "width_out": 4,
+                    "height_out": 4,
+                    "frames_out": 0,
+                }
+            )
+            result = node(pipeline=pipeline, mode="text_to_video", num_frames=241.0)
+            self.assertEqual(result["frames_out"], 0)
+            self.assertEqual(node._execute_wan_vace.call_args.args[3]["num_frames"], 241)
+
+    def test_invalid_non_vace_media_contract_fails_before_torch_import(self):
+        pipeline = SimpleNamespace(_modiff_video_pipeline_class="WanPipeline")
+        with patch.dict(sys.modules, {"torch": None}):
+            with self.assertRaisesRegex(ValueError, "text_to_video does not accept a source video"):
+                Generate().execute(pipeline=pipeline, mode="text_to_video", video=[object()])
 
     def test_sequence_generator_reuses_one_generic_pipeline_for_multiple_shots(self):
         class FakePipeline:
@@ -703,7 +1720,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(pipeline.calls[0]["num_frames"], 481)
         self.assertEqual(pipeline.calls[0]["sampling_type"], "inverted_anti_drifting")
 
-    def test_non_wan_adapter_replaces_only_the_inherited_legacy_model_default(self):
+    def test_adapter_replaces_any_managed_default_but_preserves_custom_hub_and_local_selections(self):
         adapter = get_video_pipeline_adapter("HunyuanVideoFramepackPipeline")
         inherited = {"source": "hub", "value": "Wan-AI/Wan2.1-VACE-1.3B-diffusers"}
         self.assertEqual(
@@ -711,8 +1728,201 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             {"source": "hub", "value": "lllyasviel/FramePackI2V_HY"},
         )
 
-        explicit = {"source": "local", "value": "/models/custom-framepack"}
-        self.assertIs(_resolve_adapter_model_selection(adapter, explicit), explicit)
+        other_managed = {"source": "hub", "value": "Lightricks/LTX-2"}
+        self.assertEqual(
+            _resolve_adapter_model_selection(adapter, other_managed),
+            {"source": "hub", "value": "lllyasviel/FramePackI2V_HY"},
+        )
+
+        same_managed_with_noncanonical_case = {"source": "HUB", "value": "LLLYASVIEL/FRAMEPACKI2V_HY"}
+        self.assertEqual(
+            _resolve_adapter_model_selection(adapter, same_managed_with_noncanonical_case),
+            {"source": "hub", "value": "lllyasviel/FramePackI2V_HY"},
+        )
+
+        custom_hub = {"source": "Hub", "value": "organization/custom-framepack"}
+        self.assertEqual(
+            _resolve_adapter_model_selection(adapter, custom_hub),
+            {"source": "hub", "value": "organization/custom-framepack"},
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            explicit_path = Path(temporary) / "models" / "custom-framepack"
+            explicit_path.mkdir(parents=True)
+            managed_path = Path(temporary) / "Lightricks" / "LTX-2"
+            managed_path.mkdir(parents=True)
+            explicit = {"source": "LOCAL", "value": str(explicit_path)}
+            self.assertEqual(
+                _resolve_adapter_model_selection(adapter, explicit),
+                {"source": "local", "value": str(explicit_path.resolve())},
+            )
+
+            with chdir(temporary):
+                local_managed_name = {"source": "Local", "value": "Lightricks/LTX-2"}
+                self.assertEqual(
+                    _resolve_adapter_model_selection(adapter, local_managed_name),
+                    {"source": "local", "value": str(managed_path.resolve())},
+                )
+
+                for invalid in ("organization/not-a-local-model", str(Path(temporary) / "missing")):
+                    with self.subTest(invalid=invalid):
+                        with self.assertRaisesRegex(ValueError, "directory does not exist"):
+                            _resolve_adapter_model_selection(
+                                adapter,
+                                {"source": "local", "value": invalid},
+                            )
+
+                        node = LoadPipeline("missing-local-video-boundary")
+                        node._load_framepack = MagicMock(side_effect=AssertionError("upstream must not run"))
+                        with self.assertRaisesRegex(ValueError, "directory does not exist"):
+                            node(
+                                pipeline_class="HunyuanVideoFramepackPipeline",
+                                model_id={"source": "local", "value": invalid},
+                                revision="main",
+                            )
+                        node._load_framepack.assert_not_called()
+        self.assertEqual(
+            _resolve_adapter_model_selection(adapter, "organization/legacy-framepack"),
+            {"source": "hub", "value": "organization/legacy-framepack"},
+        )
+
+    def test_video_model_selection_defaults_and_source_boundary_fail_before_revision_or_loader(self):
+        adapter = get_video_pipeline_adapter("HunyuanVideoFramepackPipeline")
+        expected_default = {"source": "hub", "value": adapter.default_repo}
+        for selection in (None, "", "   ", {"source": "Hub", "value": ""}):
+            with self.subTest(default_selection=selection):
+                self.assertEqual(_resolve_adapter_model_selection(adapter, selection), expected_default)
+
+        invalid_selections = (
+            {"value": "organization/model"},
+            {"source": None, "value": "organization/model"},
+            {"source": "", "value": "organization/model"},
+            {"source": " hub ", "value": "organization/model"},
+            {"source": "remote", "value": "organization/model"},
+            {"source": [], "value": "organization/model"},
+            {"source": {}, "value": "organization/model"},
+            {"source": "hub"},
+            {"source": "hub", "value": []},
+            {"source": "local", "value": ""},
+            {"source": "local", "value": "   "},
+            [],
+            (),
+        )
+        node = LoadPipeline("strict-video-model-selection")
+        node._load_framepack = MagicMock(side_effect=AssertionError("FramePack loader must not run"))
+        with patch("modules.DiffusersVideo.main.catalog_revision") as resolve_revision:
+            for selection in invalid_selections:
+                with self.subTest(invalid_selection=selection):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "source must be exactly hub or local|value must be a repository ID|local Diffusers video "
+                        "model path is required|model selection must be a repository ID",
+                    ):
+                        node(
+                            pipeline_class="HunyuanVideoFramepackPipeline",
+                            model_id=selection,
+                        )
+            resolve_revision.assert_not_called()
+        node._load_framepack.assert_not_called()
+
+    def test_video_hub_source_cannot_resolve_as_a_local_directory(self):
+        revision = "0123456789abcdef0123456789abcdef01234567"
+        node = LoadPipeline("video-hub-local-path-boundary")
+        node._load_ltx = MagicMock(side_effect=AssertionError("upstream must not run"))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            local_repo = Path(temporary) / "organization" / "local-video"
+            local_repo.mkdir(parents=True)
+            with chdir(temporary):
+                invalid_hub_values = (
+                    "organization/local-video",
+                    str(local_repo),
+                    local_repo.as_uri(),
+                    "../local-video",
+                    "single-component",
+                )
+                for value in invalid_hub_values:
+                    with self.subTest(value=value):
+                        with self.assertRaisesRegex(ValueError, "namespace/repository|local filesystem"):
+                            node(
+                                pipeline_class="LTXConditionPipeline",
+                                model_id={"source": "hub", "value": value},
+                                revision=revision,
+                            )
+
+        node._load_ltx.assert_not_called()
+
+    def test_default_video_hub_model_cannot_resolve_as_a_local_directory(self):
+        adapter = get_video_pipeline_adapter("LTXConditionPipeline")
+        node = LoadPipeline("video-default-hub-local-path-boundary")
+        node._load_ltx = MagicMock(side_effect=AssertionError("upstream must not run"))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            (Path(temporary) / adapter.default_repo).mkdir(parents=True)
+            with chdir(temporary):
+                for selection in (None, "", {"source": "hub", "value": ""}):
+                    with self.subTest(selection=selection):
+                        with self.assertRaisesRegex(ValueError, "local filesystem"):
+                            node(
+                                pipeline_class="LTXConditionPipeline",
+                                model_id=selection,
+                            )
+
+        node._load_ltx.assert_not_called()
+
+    def test_local_video_model_is_canonical_before_cache_and_drops_hub_revision(self):
+        pipeline = SimpleNamespace()
+        node = LoadPipeline("canonical-local-video-cache")
+        node._load_ltx = MagicMock(return_value=pipeline)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            local_model = Path(temporary) / "models" / "local-video"
+            local_model.mkdir(parents=True)
+            with chdir(temporary), patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True):
+                first = node(
+                    pipeline_class="LTXConditionPipeline",
+                    model_id={"source": "local", "value": "models/local-video"},
+                    revision="main",
+                )
+                second = node(
+                    pipeline_class="LTXConditionPipeline",
+                    model_id={"source": "local", "value": str(local_model)},
+                    revision=None,
+                )
+
+        self.assertIs(first, second)
+        node._load_ltx.assert_called_once()
+        dispatched = node._load_ltx.call_args.args[1]
+        self.assertEqual(
+            dispatched["model_id"],
+            {"source": "local", "value": str(local_model.resolve())},
+        )
+        self.assertIsNone(dispatched["revision"])
+        self.assertIsNone(pipeline._modiff_video_revision)
+
+    def test_curated_video_hub_default_keeps_catalog_revision_while_local_selection_does_not(self):
+        adapter = get_video_pipeline_adapter("HunyuanVideoFramepackPipeline")
+        default_selection = _resolve_adapter_model_selection(
+            adapter,
+            {"source": "Hub", "value": ""},
+        )
+        self.assertEqual(default_selection, {"source": "hub", "value": adapter.default_repo})
+        self.assertEqual(
+            _resolve_loader_revision(default_selection, adapter.default_repo, None),
+            "86cef4396041b6002c957852daac4c91aaa47c79",
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            local_model = Path(temporary) / adapter.default_repo
+            local_model.mkdir(parents=True)
+            with chdir(temporary):
+                local_selection = _resolve_adapter_model_selection(
+                    adapter,
+                    {"source": "LOCAL", "value": adapter.default_repo},
+                )
+        self.assertEqual(local_selection, {"source": "local", "value": str(local_model.resolve())})
+        self.assertIsNone(_resolve_loader_revision(local_selection, local_selection["value"], None))
+        self.assertIsNone(_resolve_loader_revision(local_selection, local_selection["value"], "main"))
 
     def test_framepack_loader_composes_the_official_transformer_base_and_vision_repositories(self):
         adapter = get_video_pipeline_adapter("HunyuanVideoFramepackPipeline")

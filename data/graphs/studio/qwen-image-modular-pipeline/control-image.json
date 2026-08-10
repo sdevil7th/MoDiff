@@ -614,6 +614,12 @@
             "type": "string",
             "value": "none"
           },
+          "revision": {
+            "description": "Required exact lowercase 40-character commit hash for every Hub component.",
+            "label": "Revision",
+            "type": "string",
+            "value": "b13036f066d6dee7c20513e263d3d673055e9de8"
+          },
           "subfolder": {
             "label": "Subfolder",
             "type": "string",

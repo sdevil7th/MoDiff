@@ -53,11 +53,28 @@ def _is_curated_loader(node):
         and data.get("action") == "LoadPipeline"
     ) or (
         data.get("module") == "modules.ModularDiffusers"
-        and data.get("action") in {"ModelsLoader", "DynamicBlockNode"}
+        and data.get("action") in {"ModelsLoader", "AutoModelLoader", "DynamicBlockNode"}
     )
 
 
 class GraphCatalogIntegrityTests(unittest.TestCase):
+    def test_ace_step_graphs_keep_the_positive_shift_contract(self):
+        graph_dir = GRAPH_ROOT / "studio" / "ace-step-audio-pipeline"
+        checked = 0
+        for graph_path in sorted(graph_dir.glob("*.json")):
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
+            for node in graph.get("nodes", []):
+                data = node.get("data", {})
+                if data.get("module") != "modules.DiffusersAudio" or data.get("action") != "Generate":
+                    continue
+                shift = data.get("params", {}).get("shift")
+                if not isinstance(shift, dict):
+                    continue
+                checked += 1
+                self.assertEqual(shift.get("min"), 0.1, graph_path.name)
+                self.assertGreater(float(shift.get("value")), 0, graph_path.name)
+        self.assertEqual(checked, 6)
+
     def test_curated_graphs_exclude_runtime_and_machine_state(self):
         node_runtime_fields = {"measured", "selected", "dragging"}
         measured_runtime_fields = {"memoryUsage", "executionTime"}
@@ -96,6 +113,108 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     graph_text,
                     f"{graph_path.relative_to(GRAPH_ROOT)} contains a mutable Hugging Face URL",
                 )
+
+    def test_hub_diffusers_adapter_graphs_pin_revision_weight_and_digest(self):
+        checked = defaultdict(int)
+        for graph_path in sorted(GRAPH_ROOT.rglob("*.json")):
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
+            for node in graph.get("nodes", []):
+                data = node.get("data", {})
+                module = data.get("module")
+                if module not in {"modules.DiffusersAudio", "modules.DiffusersImage"} or data.get("action") != "LoadAdapter":
+                    continue
+                params = data.get("params", {})
+                selection = (params.get("adapter_path") or {}).get("value")
+                if not isinstance(selection, dict) or str(selection.get("source") or "").casefold() != "hub":
+                    continue
+                checked[module] += 1
+                revision = str((params.get("revision") or {}).get("value") or "")
+                digest = str((params.get("expected_sha256") or {}).get("value") or "")
+                weight_name = str((params.get("weight_name") or {}).get("value") or "")
+                self.assertRegex(revision, r"^[0-9a-f]{40}$", str(graph_path.relative_to(GRAPH_ROOT)))
+                self.assertRegex(digest, r"^[0-9a-f]{64}$", str(graph_path.relative_to(GRAPH_ROOT)))
+                self.assertTrue(
+                    weight_name.endswith(".safetensors"),
+                    f"{graph_path.relative_to(GRAPH_ROOT)}: Hub adapter must use safetensors",
+                )
+        self.assertGreater(checked["modules.DiffusersAudio"], 0)
+        self.assertEqual(checked["modules.DiffusersImage"], 11)
+
+    def test_hub_modular_lora_graphs_pin_the_generic_auxiliary_identity(self):
+        expected_revisions = {
+            "lightx2v/Qwen-Image-Edit-2511-Lightning": "d74eba145674fd7e31b949324e148e21e7118abd",
+        }
+        manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
+        manifest_workflows = {
+            workflow["graphPath"]: workflow
+            for workflow in [
+                *manifest.get("workflows", []),
+                *manifest.get("experimentalWorkflows", []),
+            ]
+        }
+        checked = 0
+        for graph_path in sorted(GRAPH_ROOT.rglob("*.json")):
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
+            for node in graph.get("nodes", []):
+                data = node.get("data", {})
+                if data.get("module") != "modules.ModularDiffusers" or data.get("action") != "Lora":
+                    continue
+                params = data.get("params", {})
+                selection = (params.get("model") or {}).get("value")
+                if not isinstance(selection, dict) or selection.get("source") != "hub":
+                    continue
+                checked += 1
+                label = str(graph_path.relative_to(GRAPH_ROOT))
+                manifest_label = graph_path.relative_to(GRAPH_ROOT).as_posix()
+                repository = str(selection.get("value") or "")
+                revision = str((params.get("revision") or {}).get("value") or "")
+                digest = str((params.get("expected_sha256") or {}).get("value") or "")
+                weight_name = str((params.get("weight_name") or {}).get("value") or "")
+                self.assertEqual(revision, expected_revisions[repository], label)
+                self.assertRegex(digest, r"^[0-9a-f]{64}$", label)
+                self.assertTrue(weight_name.endswith(".safetensors"), label)
+                self.assertNotIn("filter", (params.get("model") or {}).get("fieldOptions", {}), label)
+                self.assertIn(manifest_label, manifest_workflows, label)
+                self.assertIn(
+                    repository,
+                    manifest_workflows[manifest_label].get("requiredArtifacts", []),
+                    f"{label}: workflow manifest omits its mandatory Hub LoRA",
+                )
+        self.assertEqual(checked, 2)
+
+    def test_hub_modular_component_graphs_pin_and_manifest_their_artifact(self):
+        manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
+        manifest_workflows = {
+            workflow["graphPath"]: workflow
+            for workflow in [
+                *manifest.get("workflows", []),
+                *manifest.get("experimentalWorkflows", []),
+            ]
+        }
+        checked = 0
+        for graph_path in sorted(GRAPH_ROOT.rglob("*.json")):
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
+            for node in graph.get("nodes", []):
+                data = node.get("data", {})
+                if data.get("module") != "modules.ModularDiffusers" or data.get("action") != "AutoModelLoader":
+                    continue
+                params = data.get("params", {})
+                selection = (params.get("model_id") or {}).get("value")
+                if not isinstance(selection, dict) or selection.get("source") != "hub":
+                    continue
+                checked += 1
+                label = str(graph_path.relative_to(GRAPH_ROOT))
+                manifest_label = graph_path.relative_to(GRAPH_ROOT).as_posix()
+                repository = str(selection.get("value") or "")
+                revision = str((params.get("revision") or {}).get("value") or "")
+                self.assertEqual(revision, catalog_revision(repository), label)
+                self.assertIn(manifest_label, manifest_workflows, label)
+                self.assertIn(
+                    repository,
+                    manifest_workflows[manifest_label].get("requiredArtifacts", []),
+                    f"{label}: workflow manifest omits its mandatory Hub component",
+                )
+        self.assertEqual(checked, 1)
 
     def test_workflow_manifest_hashes_match_the_canonical_graphs(self):
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))

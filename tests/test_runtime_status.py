@@ -628,6 +628,75 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(release.call_count, 2)
         self.assertEqual(self.server._last_auto_model_family, "AceStep")
 
+    def test_auto_execution_rejects_an_undeclared_pair_even_if_the_client_marks_it_ready(self):
+        cases = (
+            ("BrandNewPipeline", "text_to_image"),
+            ("QwenImageEditPlusModularPipeline", "inpaint"),
+            ("FluxReduxPipeline", "multi_image_reference_edit"),
+        )
+
+        for model_type, mode in cases:
+            with self.subTest(model_type=model_type, mode=mode):
+                hints = self.server._coerce_runtime_hints(
+                    {
+                        "resourceMode": "auto",
+                        "modelType": model_type,
+                        "mode": mode,
+                        "autoResourcePlan": {
+                            "id": "stale-client-candidate",
+                            "modelType": model_type,
+                            "mode": mode,
+                            "proof": {"status": "declared_safe"},
+                        },
+                    }
+                )
+
+                with self.assertRaisesRegex(RuntimeError, "no declared execution recipe") as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_pair_undeclared")
+                self.assertEqual(raised.exception.modiff_auto_resource_status, "expert_only")
+
+    def test_auto_execution_rejects_a_stale_declared_plan_for_a_different_requested_pair(self):
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "QwenImageEditPlusModularPipeline",
+                "mode": "inpaint",
+                "autoResourcePlan": {
+                    "id": "stale-flux-candidate",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "proof": {"status": "declared_safe"},
+                },
+            }
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "does not match the requested workflow pair") as raised:
+            self.server._assert_auto_resource_candidate_ready(hints)
+
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_pair_mismatch")
+        self.assertEqual(raised.exception.modiff_auto_resource_status, "expert_only")
+        self.assertIn("FluxSchnellPipeline:text_to_image", str(raised.exception))
+        self.assertIn("QwenImageEditPlusModularPipeline:inpaint", str(raised.exception))
+
+    def test_auto_execution_keeps_declared_but_unqualified_recipe_behavior(self):
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourcePlan": {
+                    "id": "flux-schnell-contract-only",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "proof": {"status": "skipped"},
+                },
+            }
+        )
+
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
     def test_auto_pre_run_cleanup_preserves_same_family_cache_with_headroom(self):
         self.server.node_cache = {"cached-node": object()}
         self.server._last_auto_model_family = "QwenImage"

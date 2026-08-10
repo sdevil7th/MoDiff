@@ -28,6 +28,7 @@ from modiff.auto_resource import (  # noqa: E402
 )
 from modiff.diffusers_profiles import (  # noqa: E402
     ACE_STEP_REPO,
+    DIFFUSERS_EXECUTION_PROFILES,
     FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO,
     LTX_VIDEO_REPO,
@@ -362,6 +363,151 @@ class AutoResourcePlanTests(unittest.TestCase):
                 or "; ".join(candidate.get("knownBadReasons") or [])
             )
             self.assertTrue(explanation, candidate["id"])
+
+    def test_unknown_model_task_pair_is_expert_only_even_with_an_installed_artifact_and_history(self):
+        payload = {
+            "form": {
+                "modelType": "BrandNewPipeline",
+                "mode": "text_to_image",
+                "modelRepo": "org/new-model",
+                "executionPath": "modular-diffusers",
+            }
+        }
+        hardware = self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120)
+
+        with tempfile.TemporaryDirectory() as data_dir:
+            plan = self._plan(
+                payload,
+                repos=["org/new-model"],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+            candidate = plan["candidates"][0]
+            recorded = record_auto_resource_success(
+                data_dir,
+                runtime_fingerprint={"resourceFingerprint": hardware["runtimeFingerprint"]},
+                runtime_hints={"resourceMode": "auto", "autoResourcePlan": candidate},
+            )
+            replayed = self._plan(
+                payload,
+                repos=["org/new-model"],
+                hardware=hardware,
+                data_dir=data_dir,
+            )
+
+        self.assertIsNone(recorded)
+        for result in (plan, replayed):
+            self.assertFalse(result["exactPairDeclared"])
+            self.assertFalse(result["canAutoRun"])
+            self.assertIsNone(result["selectedCandidate"])
+            self.assertIsNone(result["selectedInstallTarget"])
+            self.assertEqual(result["readiness"], "manual_only")
+            self.assertEqual(result["compatibility"]["state"], "expert_only")
+            self.assertEqual(result["compatibility"]["action"]["type"], "switch_to_expert")
+            self.assertEqual(result["candidates"][0]["proof"]["status"], "manual_only")
+            self.assertFalse(result["candidates"][0]["exactPairDeclared"])
+            self.assertIn("BrandNewPipeline:text_to_image", result["blockingReason"])
+
+    def test_known_model_with_unsupported_mode_is_expert_only(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "audio_repaint",
+                    "modelRepo": FLUX_SCHNELL_REPO,
+                }
+            },
+            repos=[FLUX_SCHNELL_REPO],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertFalse(plan["exactPairDeclared"])
+        self.assertFalse(plan["canAutoRun"])
+        self.assertIsNone(plan["selectedCandidate"])
+        self.assertEqual(plan["readiness"], "manual_only")
+        self.assertEqual(plan["healthBadge"], "Expert only")
+        self.assertEqual(plan["compatibility"]["state"], "expert_only")
+        self.assertIn("FluxSchnellPipeline:audio_repaint", plan["blockingReason"])
+        self.assertIn("text_to_image", plan["blockingReason"])
+
+    def test_removed_false_auto_modes_cannot_be_promoted_by_history(self):
+        cases = (
+            ("QwenImageEditPlusModularPipeline", "inpaint"),
+            ("FluxReduxPipeline", "multi_image_reference_edit"),
+        )
+        hardware = self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120)
+
+        for model_type, mode in cases:
+            with self.subTest(model_type=model_type, mode=mode), tempfile.TemporaryDirectory() as data_dir:
+                requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+                self.assertNotIn(mode, requirements["supportedTasks"])
+                repo = requirements["defaultRepo"]
+                plan = self._plan(
+                    {
+                        "form": {
+                            "modelType": model_type,
+                            "mode": mode,
+                            "modelRepo": repo,
+                        }
+                    },
+                    repos=[repo],
+                    hardware=hardware,
+                    data_dir=data_dir,
+                )
+                candidate = plan["candidates"][0]
+                recorded = record_auto_resource_success(
+                    data_dir,
+                    runtime_fingerprint={"resourceFingerprint": hardware["runtimeFingerprint"]},
+                    runtime_hints={"resourceMode": "auto", "autoResourcePlan": candidate},
+                )
+
+                self.assertIsNone(recorded)
+                self.assertFalse(plan["exactPairDeclared"])
+                self.assertFalse(plan["canAutoRun"])
+                self.assertIsNone(plan["selectedCandidate"])
+                self.assertEqual(plan["readiness"], "manual_only")
+                self.assertEqual(plan["compatibility"]["state"], "expert_only")
+                self.assertIn(f"{model_type}:{mode}", plan["blockingReason"])
+
+    def test_auto_requirement_without_an_execution_profile_still_fails_closed(self):
+        requirements = AUTO_MODEL_REQUIREMENTS["FluxSchnellPipeline"]
+        inconsistent = {
+            **requirements,
+            "supportedTasks": [*requirements["supportedTasks"], "audio_repaint"],
+        }
+        with patch.dict(AUTO_MODEL_REQUIREMENTS, {"FluxSchnellPipeline": inconsistent}):
+            plan = self._plan(
+                {
+                    "form": {
+                        "modelType": "FluxSchnellPipeline",
+                        "mode": "audio_repaint",
+                        "modelRepo": FLUX_SCHNELL_REPO,
+                    }
+                },
+                repos=[FLUX_SCHNELL_REPO],
+                hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+            )
+
+        self.assertFalse(plan["exactPairDeclared"])
+        self.assertFalse(plan["canAutoRun"])
+        self.assertEqual(plan["readiness"], "manual_only")
+
+    def test_profile_only_mode_without_an_auto_requirement_remains_expert_only(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "FluxKontextPipeline",
+                    "mode": "multi_image_reference_edit",
+                    "modelRepo": AUTO_MODEL_REQUIREMENTS["FluxKontextPipeline"]["defaultRepo"],
+                }
+            },
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertFalse(plan["exactPairDeclared"])
+        self.assertFalse(plan["canAutoRun"])
+        self.assertEqual(plan["readiness"], "manual_only")
+        self.assertEqual(plan["compatibility"]["state"], "expert_only")
 
     def test_wan_uses_minimum_for_admission_and_keeps_recommended_metadata(self):
         plan = self._plan(
@@ -1249,6 +1395,19 @@ class AutoResourcePlanTests(unittest.TestCase):
             self.assertTrue(entry.get("defaultRepo") or entry.get("manualOnlyReason"), key)
             if entry.get("manualOnlyReason"):
                 self.assertIn("Auto", entry["manualOnlyReason"])
+
+    def test_every_auto_supported_task_has_an_execution_profile(self):
+        profile_pairs = {
+            (profile.model_type, mode)
+            for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+            for mode in profile.modes
+        }
+
+        for key, requirements in AUTO_MODEL_REQUIREMENTS.items():
+            model_type = key.split(":", 1)[0]
+            for mode in requirements.get("supportedTasks") or []:
+                with self.subTest(model_type=model_type, mode=mode):
+                    self.assertIn((model_type, mode), profile_pairs)
 
     def test_resource_planner_accepts_supported_ram_vram_os_matrix(self):
         ram_tiers = (8, 16, 32, 64, 96)

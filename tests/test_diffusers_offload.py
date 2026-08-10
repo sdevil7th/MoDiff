@@ -24,6 +24,7 @@ from modiff.diffusers_offload import (
     supports_accelerator_cpu_offload,
 )
 from modiff.diffusers_profiles import QWEN_IMAGE_2512_PREQUANTIZED_REPO, public_execution_profiles
+from modiff.model_artifact_catalog import catalog_revision
 from modules.ModularDiffusers.denoise import embeddings_are_missing, embeddings_missing_error
 from modules.ModularDiffusers.embeddings import extract_prompt_embeddings
 from modules.ModularDiffusers.loaders import normalize_quant_config_input
@@ -146,12 +147,23 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
 
         model_call = next(call for call in set_field_params.call_args_list if call.args[0] == "model_id")
         params = model_call.args[1]
-        self.assertEqual(
-            params["fieldOptions"]["filter"]["hub"]["className"],
-            ["ControlNetModel", "QwenImageControlNetModel", "FluxControlNetModel"],
-        )
+        filters = params["fieldOptions"]["filter"]
+        class_names = filters["hub"]["className"]
+        self.assertEqual(class_names, sorted(class_names))
+        self.assertEqual(filters["local"]["className"], class_names)
+        self.assertIn("ControlNetModel", class_names)
+        self.assertIn("QwenImageControlNetModel", class_names)
+        self.assertIn("FluxControlNetModel", class_names)
+        self.assertIn("ZImageControlNetModel", class_names)
+        self.assertNotIn("FluxPipeline", class_names)
+        self.assertNotIn("AutoencoderKL", class_names)
         self.assertNotIn("value", params)
         self.assertNotIn("default", params)
+
+        self.assertIn(
+            "every Hub component",
+            AutoModelLoader.params["revision"]["description"],
+        )
 
     def test_generic_pipeline_filter_preserves_selection_until_user_chooses_an_installed_repository(self):
         node = ModelsLoader("generic-pipeline-filter")
@@ -312,13 +324,17 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         with (
             patch("modules.ModularDiffusers.loaders.components", manager),
             patch(
-                "modules.ModularDiffusers.loaders.ModularPipeline.from_pretrained",
+                "modules.ModularDiffusers.loaders._validate_reviewed_pipeline_index",
+                return_value=("model_index.json", {"_class_name": "QwenImagePipeline"}),
+            ),
+            patch(
+                "modules.ModularDiffusers.loaders._instantiate_reviewed_builtin_pipeline",
                 side_effect=StopAtModelLoad("model load reached"),
             ),
         ):
             with self.assertRaisesRegex(StopAtModelLoad, "model load reached"):
                 node.execute(
-                    model_type="QwenImagePipeline",
+                    model_type="QwenImageModularPipeline",
                     repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
                     device="cpu:0",
                     dtype=torch.float32,
@@ -906,6 +922,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                     "action": "LoadPipeline",
                     "params": {
                         "model_id": {"value": {"source": "hub", "value": "old-model"}},
+                        "revision": {"value": "a" * 40},
                         "pipeline_class": {"value": "QwenImagePipeline"},
                         "device_map": {"value": "none"},
                         "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
@@ -933,6 +950,8 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(params["device_map"]["value"], "cuda")
         self.assertEqual(params["offload_mode"]["value"], OFFLOAD_MODE_NONE)
         self.assertFalse(params["auto_offload"]["value"])
+        self.assertEqual(params["model_id"]["value"]["value"], "Qwen/Qwen-Image-2512")
+        self.assertEqual(params["revision"]["value"], catalog_revision("Qwen/Qwen-Image-2512"))
         self.assertEqual(graph["nodes"]["recipe"]["params"]["device_map"]["value"], "cuda")
         self.assertEqual(graph["nodes"]["recipe"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_NONE)
 
@@ -955,6 +974,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                     "action": "LoadPipeline",
                     "params": {
                         "model_id": {"value": {"source": "hub", "value": "old-audio"}},
+                        "revision": {"value": "a" * 40},
                         "pipeline_class": {"value": "AceStepPipeline"},
                         "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
                         "auto_offload": {"value": True},
@@ -1001,6 +1021,10 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             graph["nodes"]["audio-loader"]["params"]["model_id"]["value"]["value"],
             "ACE-Step/acestep-v15-xl-turbo-diffusers",
         )
+        self.assertEqual(
+            graph["nodes"]["audio-loader"]["params"]["revision"]["value"],
+            catalog_revision("ACE-Step/acestep-v15-xl-turbo-diffusers"),
+        )
         # Auto retry plans own runtime configuration only; creative/generation
         # controls remain exactly as the user configured them.
         self.assertEqual(graph["nodes"]["audio-generate"]["params"]["audio_duration"]["value"], 12)
@@ -1011,6 +1035,258 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(
             graph["nodes"]["video-loader"]["params"]["pipeline_class"]["value"],
             "LTXConditionPipeline",
+        )
+
+    def test_auto_repo_mutation_uses_custom_plan_revision_and_changes_identity_atomically(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        revision = "b" * 40
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "local", "value": "old/repo"}},
+                        "revision": {"value": "a" * 40},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                "modelRepo": "custom/new-repo",
+                "artifactRevision": revision,
+                "pipelineClass": "FluxPipeline",
+            },
+        )
+
+        params = graph["nodes"]["loader"]["params"]
+        self.assertEqual(updated, ["loader"])
+        self.assertEqual(params["model_id"]["value"], {"source": "hub", "value": "custom/new-repo"})
+        self.assertEqual(params["revision"]["value"], revision)
+
+    def test_modular_auto_plan_updates_models_loader_repo_and_revision(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        target_repo = "Tongyi-MAI/Z-Image-Turbo"
+        graph = {
+            "nodes": {
+                "models-loader": {
+                    "module": "modules.ModularDiffusers",
+                    "action": "ModelsLoader",
+                    "params": {
+                        "repo_id": {"value": {"source": "hub", "value": "custom/old-repo"}},
+                        "revision": {"value": "a" * 40},
+                    },
+                },
+                "independent-image-loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "custom/image-repo"}},
+                        "revision": {"value": "c" * 40},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                "executionPath": "modular-diffusers",
+                "pipelineClass": "ZImageModularPipeline",
+                "modelRepo": target_repo,
+            },
+        )
+
+        params = graph["nodes"]["models-loader"]["params"]
+        self.assertEqual(updated, ["models-loader"])
+        self.assertEqual(params["repo_id"]["value"], {"source": "hub", "value": target_repo})
+        self.assertEqual(params["revision"]["value"], catalog_revision(target_repo))
+        self.assertEqual(
+            graph["nodes"]["independent-image-loader"]["params"]["model_id"]["value"]["value"],
+            "custom/image-repo",
+        )
+
+    def test_auto_repo_mutation_rejects_stale_pinned_revision_without_partial_change(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        old_selection = {"source": "hub", "value": "custom/old-repo"}
+        stale_revision = "a" * 40
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "revision"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": dict(old_selection)},
+                        "revision": {"value": stale_revision},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(ValueError, "revision override is pinned"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                    "pipelineClass": "QwenImagePipeline",
+                },
+            )
+
+        self.assertEqual(graph["nodes"]["loader"]["params"]["model_id"]["value"], old_selection)
+        self.assertEqual(graph["nodes"]["loader"]["params"]["revision"]["value"], stale_revision)
+
+    def test_auto_repo_mutation_preserves_a_pinned_repo_and_its_revision(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        selection = {"source": "hub", "value": "custom/pinned-repo"}
+        revision = "c" * 40
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "model_id"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": dict(selection)},
+                        "revision": {"value": revision},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                "modelRepo": "custom/new-repo",
+                "artifactRevision": "d" * 40,
+                "pipelineClass": "FluxPipeline",
+            },
+        )
+
+        self.assertEqual(updated, [])
+        self.assertEqual(graph["nodes"]["loader"]["params"]["model_id"]["value"], selection)
+        self.assertEqual(graph["nodes"]["loader"]["params"]["revision"]["value"], revision)
+
+    def test_auto_repo_mutation_preserves_pinned_revision_when_repository_is_unchanged(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        repository = "custom/same-repo"
+        pinned_revision = "c" * 40
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "revision"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": repository}},
+                        "revision": {"value": pinned_revision},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                "modelRepo": repository,
+                "artifactRevision": "d" * 40,
+                "pipelineClass": "FluxPipeline",
+            },
+        )
+
+        self.assertEqual(updated, [])
+        self.assertEqual(graph["nodes"]["loader"]["params"]["revision"]["value"], pinned_revision)
+
+    def test_auto_repo_mutation_fails_closed_when_loader_has_no_revision_contract(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "legacy-loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "custom/old-repo"}},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(ValueError, "without a revision field"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                    "pipelineClass": "QwenImagePipeline",
+                },
+            )
+        self.assertEqual(
+            graph["nodes"]["legacy-loader"]["params"]["model_id"]["value"]["value"],
+            "custom/old-repo",
+        )
+
+    def test_auto_repo_mutation_rejects_plan_revision_that_disagrees_with_catalog(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "custom/old-repo"}},
+                        "revision": {"value": "a" * 40},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(ValueError, "does not match the reviewed catalog commit"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                    "artifactRevision": "b" * 40,
+                    "pipelineClass": "QwenImagePipeline",
+                },
+            )
+        self.assertEqual(
+            graph["nodes"]["loader"]["params"]["model_id"]["value"]["value"],
+            "custom/old-repo",
         )
 
     def test_auto_retry_preserves_pinned_fields_and_requires_an_unpinned_change(self):

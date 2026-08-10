@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,16 +12,44 @@ import numpy as np
 from PIL import Image
 
 import modules as module_registry
+from modiff.model_artifact_catalog import catalog_revision
 from modiff.server import WebServer
-from modules.DiffusersImage import ControlGenerate, Edit, Inpaint, LoadAdapter, LoadPipeline, MODULE_MAP
+from modules.DiffusersImage import ControlGenerate, Edit, Generate, Inpaint, LoadAdapter, LoadPipeline, MODULE_MAP
 from modules.DiffusersImage.main import (
+    FLUX2_KLEIN_REPO,
+    FLUX_CANNY_REPO,
+    FLUX_DEPTH_REPO,
     FLUX_DEV_REPO,
+    FLUX_FILL_REPO,
+    FLUX_KONTEXT_REPO,
+    FLUX_KREA_REPO,
+    FLUX_SCHNELL_REPO,
+    IMAGE_PIPELINE_CLASSES,
+    Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
+    _tag_image_pipeline,
     add_progress_callback,
+    image_pipeline_contract,
     output_image_dimensions,
     quant_config_for,
+    resolve_image_model_selection,
+    resolve_image_pipeline_revision,
+    validate_image_action,
 )
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+from utils.huggingface import resolve_managed_hf_cache_file
+
+CUSTOM_IMAGE_REVISION = "a" * 40
+HUB_ADAPTER_REVISION = "b" * 40
+
+
+def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revision=None):
+    adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+    pipeline.__class__.__name__ = adapter.allowed_runtime_classes[0]
+    repository = repo or adapter.default_repo
+    resolved_revision = revision or catalog_revision(repository) or CUSTOM_IMAGE_REVISION
+    _tag_image_pipeline(pipeline, adapter, mode, repository, "hub", resolved_revision)
+    return pipeline
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
@@ -150,6 +180,353 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertEqual(node.node_id, "registry-probe")
                 self.assertTrue(node.resizable)
 
+    def test_loader_rejects_missing_null_malformed_and_noncanonical_class_or_mode_before_nodebase(self):
+        invalid_values = (
+            ("class-absent", {"mode": "text_to_image"}),
+            ("class-null", {"pipeline_class": None, "mode": "text_to_image"}),
+            ("class-false", {"pipeline_class": False, "mode": "text_to_image"}),
+            ("class-zero", {"pipeline_class": 0, "mode": "text_to_image"}),
+            ("class-object", {"pipeline_class": {}, "mode": "text_to_image"}),
+            ("class-array", {"pipeline_class": [], "mode": "text_to_image"}),
+            ("class-blank", {"pipeline_class": "", "mode": "text_to_image"}),
+            ("class-spaced", {"pipeline_class": " FluxPipeline ", "mode": "text_to_image"}),
+            ("mode-absent", {"pipeline_class": "FluxPipeline"}),
+            ("mode-null", {"pipeline_class": "FluxPipeline", "mode": None}),
+            ("mode-false", {"pipeline_class": "FluxPipeline", "mode": False}),
+            ("mode-zero", {"pipeline_class": "FluxPipeline", "mode": 0}),
+            ("mode-object", {"pipeline_class": "FluxPipeline", "mode": {}}),
+            ("mode-array", {"pipeline_class": "FluxPipeline", "mode": []}),
+            ("mode-blank", {"pipeline_class": "FluxPipeline", "mode": ""}),
+            ("mode-spaced", {"pipeline_class": "FluxPipeline", "mode": " text_to_image "}),
+        )
+        for label, values in invalid_values:
+            with self.subTest(case=label):
+                node = LoadPipeline(f"strict-{label}")
+                node.execute = Mock()
+                with self.assertRaises(ValueError):
+                    node(
+                        model_id={"source": "hub", "value": FLUX_SCHNELL_REPO},
+                        **values,
+                    )
+                node.execute.assert_not_called()
+                self.assertEqual(node.params, {})
+
+    def test_loader_canonicalizes_complete_identity_before_real_nodebase_cache(self):
+        class FluxPipeline:
+            pass
+
+        pipeline = FluxPipeline()
+        node = LoadPipeline("canonical-image-loader")
+        node.execute = Mock(
+            return_value={"pipeline": pipeline, "resolved_artifact": FLUX_SCHNELL_REPO}
+        )
+        with patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
+            result = node(
+                model_id={"source": "HUB", "value": " BLACK-FOREST-LABS/FLUX.1-SCHNELL "},
+                pipeline_class="FluxPipeline",
+                mode="text_to_image",
+                revision=None,
+            )
+
+        expected_revision = catalog_revision(FLUX_SCHNELL_REPO)
+        self.assertEqual(
+            node.params,
+            {
+                "model_id": {"source": "hub", "value": FLUX_SCHNELL_REPO},
+                "pipeline_class": "FluxPipeline",
+                "mode": "text_to_image",
+                "revision": expected_revision,
+            },
+        )
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(pipeline._modiff_image_pipeline_class, "FluxPipeline")
+        self.assertEqual(pipeline._modiff_image_mode, "text_to_image")
+        self.assertEqual(pipeline._modiff_image_repo, FLUX_SCHNELL_REPO)
+        self.assertEqual(pipeline._modiff_image_source, "hub")
+        self.assertEqual(pipeline._modiff_image_revision, expected_revision)
+
+    def test_model_selection_source_value_and_catalog_spelling_are_canonical_or_rejected(self):
+        adapter = IMAGE_PIPELINE_ADAPTERS["FluxPipeline"]
+        accepted = (
+            (None, {"source": "hub", "value": FLUX_SCHNELL_REPO}),
+            ("", {"source": "hub", "value": FLUX_SCHNELL_REPO}),
+            ({"source": "HUB", "value": " BLACK-FOREST-LABS/FLUX.1-SCHNELL "}, {"source": "hub", "value": FLUX_SCHNELL_REPO}),
+            ({"source": "Local", "value": " models/custom "}, {"source": "local", "value": "models/custom"}),
+            (" org/custom ", {"source": "hub", "value": "org/custom"}),
+        )
+        for value, expected in accepted:
+            with self.subTest(value=value):
+                self.assertEqual(resolve_image_model_selection(adapter, value), expected)
+
+        rejected = (
+            {"source": "local", "value": ""},
+            {"source": " hub ", "value": FLUX_SCHNELL_REPO},
+            {"source": "remote", "value": FLUX_SCHNELL_REPO},
+            {"value": FLUX_SCHNELL_REPO},
+            {"source": None, "value": FLUX_SCHNELL_REPO},
+            {"source": 7, "value": FLUX_SCHNELL_REPO},
+            {"source": "hub", "value": [FLUX_SCHNELL_REPO]},
+            [],
+        )
+        for value in rejected:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                resolve_image_model_selection(adapter, value)
+
+        with self.assertRaisesRegex(ValueError, "existing local filesystem target"):
+            resolve_image_model_selection(
+                adapter,
+                {"source": "hub", "value": "modules/DiffusersImage"},
+            )
+
+    def test_loader_revision_shape_local_boundary_and_custom_commit_fail_closed_before_execute(self):
+        managed = {"source": "hub", "value": FLUX_SCHNELL_REPO}
+        expected_pin = catalog_revision(FLUX_SCHNELL_REPO)
+        for value in (None, "", expected_pin):
+            with self.subTest(valid_revision=value):
+                self.assertEqual(resolve_image_pipeline_revision(managed, value), expected_pin)
+
+        for value in (" ", False, 0, {}, [], "main", "A" * 40):
+            with self.subTest(invalid_revision=value), self.assertRaises(ValueError):
+                resolve_image_pipeline_revision(managed, value)
+
+        custom = {"source": "hub", "value": "org/custom-image"}
+        self.assertEqual(resolve_image_pipeline_revision(custom, CUSTOM_IMAGE_REVISION), CUSTOM_IMAGE_REVISION)
+        for value in (None, "", "main", "A" * 40, "a" * 39):
+            with self.subTest(custom_revision=value), self.assertRaises(ValueError):
+                resolve_image_pipeline_revision(custom, value)
+
+        node = LoadPipeline("local-image-contract-only")
+        node.execute = Mock()
+        with self.assertRaisesRegex(ValueError, "reviewed local pipeline-directory index"):
+            node(
+                model_id={"source": "local", "value": "models/local-pipeline"},
+                pipeline_class="FluxPipeline",
+                mode="text_to_image",
+                revision="",
+            )
+        node.execute.assert_not_called()
+
+    def test_class_only_changes_replace_the_inherited_managed_repository(self):
+        cases = {
+            "ZImagePipeline": ("text_to_image", Z_IMAGE_REPO),
+            "Flux2KleinPipeline": ("text_to_image", FLUX2_KLEIN_REPO),
+            "FluxFillPipeline": ("inpaint", FLUX_FILL_REPO),
+            "FluxControlPipeline": ("control_image", FLUX_DEPTH_REPO),
+            "FluxKontextPipeline": ("edit_image", FLUX_KONTEXT_REPO),
+        }
+        loaded = []
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **_kwargs):
+                loaded.append(repo)
+                return cls()
+
+        node = LoadPipeline("class-only-default-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=FakePipeline),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            for pipeline_class, (mode, expected_repo) in cases.items():
+                with self.subTest(pipeline_class=pipeline_class):
+                    result = node.execute(
+                        model_id={"source": "hub", "value": FLUX_SCHNELL_REPO},
+                        pipeline_class=pipeline_class,
+                        mode=mode,
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+                    self.assertEqual(result["resolved_artifact"], expected_repo)
+                    self.assertEqual(result["pipeline"]._modiff_image_mode, mode)
+
+        self.assertEqual(loaded, [expected for _mode, expected in cases.values()])
+
+    def test_model_resolution_preserves_explicit_and_shared_compatible_repositories(self):
+        flux2 = IMAGE_PIPELINE_ADAPTERS["Flux2KleinPipeline"]
+        custom_hub = {"source": "hub", "value": "example/custom-flux2-compatible"}
+        local = {"source": "local", "value": FLUX_SCHNELL_REPO}
+        self.assertEqual(resolve_image_model_selection(flux2, custom_hub), custom_hub)
+        self.assertEqual(resolve_image_model_selection(flux2, local), local)
+
+        flux = IMAGE_PIPELINE_ADAPTERS["FluxPipeline"]
+        for repo in (FLUX_SCHNELL_REPO, FLUX_DEV_REPO, FLUX_KREA_REPO):
+            with self.subTest(repo=repo):
+                selection = {"source": "hub", "value": repo}
+                self.assertEqual(resolve_image_model_selection(flux, selection), selection)
+
+        control = IMAGE_PIPELINE_ADAPTERS["FluxControlPipeline"]
+        canny = {"source": "hub", "value": FLUX_CANNY_REPO}
+        self.assertEqual(resolve_image_model_selection(control, canny), canny)
+
+    def test_every_image_adapter_owns_a_default_and_all_reviewed_compatible_repositories(self):
+        all_managed_repos = {
+            repo
+            for adapter in IMAGE_PIPELINE_ADAPTERS.values()
+            for repo in adapter.managed_repos
+        }
+        for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
+            with self.subTest(pipeline_class=pipeline_class):
+                self.assertTrue(adapter.default_repo)
+                contract = image_pipeline_contract(adapter, adapter.mode_options[0])
+                implemented_modes = {
+                    mode
+                    for action_modes in contract["actions"].values()
+                    for mode in action_modes
+                }
+                self.assertEqual(implemented_modes, adapter.modes)
+                self.assertEqual(
+                    resolve_image_model_selection(adapter, None),
+                    {"source": "hub", "value": adapter.default_repo},
+                )
+                for repo in adapter.managed_repos:
+                    selection = {"source": "hub", "value": repo}
+                    self.assertEqual(resolve_image_model_selection(adapter, selection), selection)
+                    self.assertEqual(
+                        resolve_image_pipeline_revision(selection, ""),
+                        catalog_revision(repo),
+                    )
+
+                incompatible = next(repo for repo in all_managed_repos if repo not in adapter.managed_repos)
+                self.assertEqual(
+                    resolve_image_model_selection(
+                        adapter,
+                        {"source": "hub", "value": incompatible},
+                    ),
+                    {"source": "hub", "value": adapter.default_repo},
+                )
+
+    def test_flux_controlnet_is_not_advertised_without_component_assembly(self):
+        self.assertNotIn("FluxControlNetPipeline", IMAGE_PIPELINE_CLASSES)
+        node = LoadPipeline("removed-controlnet-probe")
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name") as resolve_pipeline,
+            self.assertRaisesRegex(ValueError, "requires a separately loaded FluxControlNetModel"),
+        ):
+            node(
+                model_id=FLUX_DEV_REPO,
+                pipeline_class="FluxControlNetPipeline",
+                mode="control_image",
+            )
+        resolve_pipeline.assert_not_called()
+
+    def test_pipeline_field_action_publishes_backend_owned_options_defaults_and_signal(self):
+        self.assertEqual(LoadPipeline.params["model_id"]["onChange"], "update_pipeline_contract")
+        self.assertEqual(
+            LoadPipeline.params["pipeline"]["signal"]["value"],
+            image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image"),
+        )
+        node = LoadPipeline("image-contract-action")
+        node.set_field_params = Mock()
+        node.set_field_value = Mock()
+
+        node.update_pipeline_contract(
+            {
+                "pipeline_class": "FluxKontextPipeline",
+                "mode": "control_image",
+                "model_id": {"source": "hub", "value": FLUX_SCHNELL_REPO},
+            },
+            {"key": "pipeline_class"},
+        )
+
+        node.set_field_value.assert_any_call({"mode": "edit_image"})
+        node.set_field_value.assert_any_call(
+            {"model_id": {"source": "hub", "value": FLUX_KONTEXT_REPO}}
+        )
+        node.set_field_value.assert_any_call({"revision": catalog_revision(FLUX_KONTEXT_REPO)})
+        mode_update = next(
+            call for call in node.set_field_params.call_args_list if call.args[0] == "mode"
+        )
+        self.assertEqual(mode_update.args[1]["options"], ["edit_image", "multi_image_reference_edit"])
+        self.assertEqual(mode_update.args[1]["default"], "edit_image")
+        model_update = next(
+            call for call in node.set_field_params.call_args_list if call.args[0] == "model_id"
+        )
+        self.assertEqual(
+            model_update.args[1]["fieldOptions"]["filter"]["hub"]["className"],
+            ["FluxKontextPipeline"],
+        )
+        signal_update = next(
+            call for call in node.set_field_params.call_args_list if call.args[0] == "pipeline"
+        )
+        signal = signal_update.args[1]["signal"]
+        self.assertEqual(signal["origin"], "pipeline_class")
+        self.assertEqual(
+            signal["value"],
+            image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxKontextPipeline"], "edit_image"),
+        )
+
+    def test_model_field_action_couples_repository_and_exact_revision_without_stale_pins(self):
+        node = LoadPipeline("image-model-revision-action")
+        node.set_field_params = Mock()
+        node.set_field_value = Mock()
+
+        node.update_pipeline_contract(
+            {
+                "pipeline_class": "FluxPipeline",
+                "mode": "text_to_image",
+                "model_id": {"source": "hub", "value": "org/custom-image"},
+                "revision": CUSTOM_IMAGE_REVISION,
+            },
+            {"key": "model_id"},
+        )
+        node.set_field_value.assert_any_call({"revision": ""})
+
+        node.set_field_value.reset_mock()
+        node.update_pipeline_contract(
+            {
+                "pipeline_class": "FluxPipeline",
+                "mode": "text_to_image",
+                "model_id": {"source": "hub", "value": FLUX_DEV_REPO},
+                "revision": CUSTOM_IMAGE_REVISION,
+            },
+            {"key": "model_id"},
+        )
+        node.set_field_value.assert_any_call({"revision": catalog_revision(FLUX_DEV_REPO)})
+
+        node.set_field_value.reset_mock()
+        node.update_pipeline_contract(
+            {
+                "pipeline_class": "FluxPipeline",
+                "mode": "text_to_image",
+                "model_id": {"source": "local", "value": "models/custom"},
+                "revision": CUSTOM_IMAGE_REVISION,
+            },
+            {"key": "model_id"},
+        )
+        node.set_field_value.assert_any_call({"revision": ""})
+
+        node.set_field_value.reset_mock()
+        node.update_pipeline_contract(
+            {
+                "pipeline_class": "FluxPipeline",
+                "mode": "text_to_image",
+                "model_id": {"source": "hub", "value": "org/custom-image"},
+                "revision": CUSTOM_IMAGE_REVISION,
+            },
+            {"key": "mode"},
+        )
+        self.assertNotIn(
+            {"revision": ""},
+            [call.args[0] for call in node.set_field_value.call_args_list],
+        )
+
+    def test_pipeline_field_action_rejects_noncanonical_identity_and_source(self):
+        node = LoadPipeline("invalid-image-contract-action")
+        invalid = (
+            {"pipeline_class": " FluxPipeline ", "mode": "text_to_image", "model_id": FLUX_SCHNELL_REPO},
+            {"pipeline_class": "FluxPipeline", "mode": " text_to_image ", "model_id": FLUX_SCHNELL_REPO},
+            {
+                "pipeline_class": "FluxPipeline",
+                "mode": "text_to_image",
+                "model_id": {"source": " hub ", "value": FLUX_SCHNELL_REPO},
+            },
+        )
+        for values in invalid:
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                node.update_pipeline_contract(values, {"key": "pipeline_class"})
+
     def test_unsupported_mode_fails_before_pipeline_resolution(self):
         node = LoadPipeline("mode-probe")
         with self.assertRaisesRegex(ValueError, "does not support outpaint"):
@@ -178,6 +555,15 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     offload_mode="none",
                 )
 
+    def test_flux_img2img_exposes_only_single_image_edit(self):
+        adapter = IMAGE_PIPELINE_ADAPTERS["FluxImg2ImgPipeline"]
+        self.assertEqual(adapter.mode_options, ("edit_image",))
+        self.assertEqual(adapter.max_reference_images, 1)
+        self.assertNotIn(
+            "multi_image_reference_edit",
+            image_pipeline_contract(adapter, "edit_image")["modes"],
+        )
+
     def test_flux2_klein_reuses_one_resident_loader_when_only_mode_changes(self):
         loaded = []
 
@@ -202,11 +588,468 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         ):
             first = node(mode="text_to_image", **common)
             second = node(mode="edit_image", **common)
+            self.assertTrue(node._has_changed)
+            third = node(mode="edit_image", **common)
 
         self.assertIs(first["pipeline"], second["pipeline"])
+        self.assertIs(second["pipeline"], third["pipeline"])
         self.assertEqual(loaded, ["black-forest-labs/FLUX.2-klein-4B"])
         self.assertEqual(node.params["mode"], "edit_image")
         self.assertFalse(node._has_changed)
+        self.assertEqual(second["pipeline"]._modiff_image_pipeline_class, "Flux2KleinPipeline")
+        self.assertEqual(second["pipeline"]._modiff_image_mode, "edit_image")
+        self.assertEqual(second["pipeline"]._modiff_image_repo, FLUX2_KLEIN_REPO)
+
+    def test_mode_retag_invalidates_cached_generate_edit_and_inpaint_outputs(self):
+        image = Image.new("RGB", (8, 8), "black")
+        mask = Image.new("L", (8, 8), "white")
+        cases = (
+            (
+                Generate,
+                "Flux2KleinPipeline",
+                FLUX2_KLEIN_REPO,
+                "text_to_image",
+                "edit_image",
+                {"prompt": "same prompt"},
+                "Generate requires one of: text_to_image",
+            ),
+            (
+                Edit,
+                "Flux2KleinPipeline",
+                FLUX2_KLEIN_REPO,
+                "edit_image",
+                "text_to_image",
+                {"prompt": "same prompt", "image": image},
+                "Edit requires one of: edit_image, multi_image_reference_edit",
+            ),
+            (
+                Inpaint,
+                "FluxFillPipeline",
+                FLUX_FILL_REPO,
+                "inpaint",
+                "outpaint",
+                {
+                    "prompt": "same prompt",
+                    "image": image,
+                    "mask_image": mask,
+                    "output_type": "pil",
+                },
+                None,
+            ),
+        )
+
+        for action_class, pipeline_class, repository, first_mode, second_mode, values, error in cases:
+            with self.subTest(action=action_class.__name__, mode=f"{first_mode}->{second_mode}"):
+                class FakePipeline:
+                    _execution_device = "cpu"
+
+                    def __init__(self):
+                        self.calls = 0
+
+                    def __call__(self, **_kwargs):
+                        self.calls += 1
+                        return SimpleNamespace(images=[Image.new("RGB", (8, 8), "white")])
+
+                FakePipeline.__name__ = IMAGE_PIPELINE_ADAPTERS[pipeline_class].allowed_runtime_classes[0]
+                pipeline = FakePipeline()
+                loader = LoadPipeline(f"{action_class.__name__}-loader")
+                loader.execute = Mock(
+                    return_value={"pipeline": pipeline, "resolved_artifact": repository}
+                )
+                task = action_class(f"{action_class.__name__}-task")
+                server = object.__new__(WebServer)
+                server.modules = module_registry.MODULE_MAP
+                server.node_cache = {"loader": loader, "task": task}
+                server.current_task = None
+                server.queue_message = lambda *_args, **_kwargs: None
+                graph_node = {
+                    "module": "modules.DiffusersImage",
+                    "action": action_class.__name__,
+                    "params": {
+                        "pipeline": {"sourceId": "loader", "sourceKey": "pipeline"},
+                        **{key: {"value": value} for key, value in values.items()},
+                    },
+                }
+                common = {
+                    "pipeline_class": pipeline_class,
+                    "model_id": {"source": "hub", "value": repository},
+                }
+
+                with patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
+                    loader(mode=first_mode, **common)
+                    server.execute_node("task", graph_node, "test", quiet=True)
+                    loader(mode=second_mode, **common)
+
+                self.assertTrue(loader._has_changed)
+                self.assertEqual(loader.execute.call_count, 1)
+                if error is not None:
+                    with self.assertRaisesRegex(ValueError, error):
+                        server.execute_node("task", graph_node, "test", quiet=True)
+                    self.assertEqual(pipeline.calls, 1)
+                else:
+                    server.execute_node("task", graph_node, "test", quiet=True)
+                    self.assertTrue(task._has_changed)
+                    self.assertEqual(pipeline.calls, 2)
+
+    def test_task_nodes_reject_a_pipeline_loaded_for_another_mode_before_inference(self):
+        calls = []
+
+        class TaggedPipeline:
+            _execution_device = "cpu"
+
+            def __call__(self, **_kwargs):
+                calls.append(True)
+                return type("Result", (), {"images": [Image.new("RGB", (8, 8), "white")]})()
+
+        image = Image.new("RGB", (8, 8), "black")
+        mask = Image.new("L", (8, 8), "white")
+        cases = (
+            (
+                Generate("wrong-generate-mode"),
+                "Flux2KleinPipeline",
+                "edit_image",
+                {"prompt": "test"},
+                "Generate requires one of: text_to_image",
+            ),
+            (
+                Edit("wrong-edit-mode"),
+                "Flux2KleinPipeline",
+                "text_to_image",
+                {"image": image, "prompt": "test"},
+                "Edit requires one of: edit_image, multi_image_reference_edit",
+            ),
+            (
+                Inpaint("wrong-inpaint-mode"),
+                "FluxControlPipeline",
+                "control_image",
+                {"image": image, "mask_image": mask, "prompt": "test"},
+                "Inpaint requires one of: inpaint, outpaint",
+            ),
+            (
+                ControlGenerate("wrong-control-mode"),
+                "FluxFillPipeline",
+                "inpaint",
+                {"control_image": image, "prompt": "test"},
+                "ControlGenerate requires one of: control_image",
+            ),
+        )
+        for node, pipeline_class, mode, kwargs, message in cases:
+            with self.subTest(node=type(node).__name__):
+                pipeline = tag_test_image_pipeline(TaggedPipeline(), pipeline_class, mode)
+                with self.assertRaisesRegex(ValueError, message):
+                    node.execute(pipeline=pipeline, **kwargs)
+
+        self.assertEqual(calls, [])
+
+    def test_untagged_multi_action_pipeline_requires_an_exact_loaded_mode(self):
+        class Flux2KleinPipeline:
+            def __call__(self, **_kwargs):
+                self.fail("inference must not run")
+
+        with self.assertRaisesRegex(ValueError, "missing its exact loaded image mode"):
+            Generate("untagged-flux2-probe").execute(
+                pipeline=Flux2KleinPipeline(),
+                prompt="test",
+            )
+
+    def test_exact_untagged_single_action_pipeline_has_safe_legacy_recovery(self):
+        received = []
+
+        class FluxPipeline:
+            _execution_device = "cpu"
+
+            def __call__(self, **kwargs):
+                received.append(kwargs)
+                return type("Result", (), {"images": [Image.new("RGB", (8, 8), "white")]})()
+
+        result = Generate("legacy-flux-generate-probe").execute(
+            pipeline=FluxPipeline(),
+            prompt="test",
+            width=16,
+            height=16,
+            num_inference_steps=1,
+        )
+
+        self.assertEqual(result["images"][0].size, (8, 8))
+        self.assertEqual(received[0]["prompt"], "test")
+
+    def test_unknown_untagged_pipeline_is_rejected_before_inference(self):
+        calls = []
+
+        class UnknownPipeline:
+            def __call__(self, **_kwargs):
+                calls.append(True)
+
+        with self.assertRaisesRegex(ValueError, "Cannot recover an exact Diffusers image adapter"):
+            Generate("unknown-image-pipeline-probe").execute(
+                pipeline=UnknownPipeline(),
+                prompt="test",
+            )
+
+        self.assertEqual(calls, [])
+
+    def test_tagged_pipeline_requires_complete_runtime_source_repo_and_revision_consistency(self):
+        class PartialPipeline:
+            pass
+
+        partial = PartialPipeline()
+        partial._modiff_image_pipeline_class = "FluxPipeline"
+        partial._modiff_image_mode = "text_to_image"
+        with self.assertRaisesRegex(ValueError, "identity is incomplete"):
+            validate_image_action(partial, "Generate")
+
+        class FluxPipeline:
+            pass
+
+        runtime_mismatch = FluxPipeline()
+        qwen = IMAGE_PIPELINE_ADAPTERS["QwenImagePipeline"]
+        _tag_image_pipeline(
+            runtime_mismatch,
+            qwen,
+            "text_to_image",
+            qwen.default_repo,
+            "hub",
+            catalog_revision(qwen.default_repo),
+        )
+        with self.assertRaisesRegex(ValueError, "runtime class 'FluxPipeline' is tagged as QwenImagePipeline"):
+            validate_image_action(runtime_mismatch, "Generate")
+
+        class Flux2KleinPipeline:
+            pass
+
+        incompatible_repo = Flux2KleinPipeline()
+        flux2 = IMAGE_PIPELINE_ADAPTERS["Flux2KleinPipeline"]
+        _tag_image_pipeline(
+            incompatible_repo,
+            flux2,
+            "text_to_image",
+            FLUX_SCHNELL_REPO,
+            "hub",
+            catalog_revision(FLUX_SCHNELL_REPO),
+        )
+        with self.assertRaisesRegex(ValueError, "is not compatible with Flux2KleinPipeline"):
+            validate_image_action(incompatible_repo, "Generate")
+
+        valid = tag_test_image_pipeline(FluxPipeline(), "FluxPipeline", "text_to_image")
+        self.assertIs(validate_image_action(valid, "Generate"), IMAGE_PIPELINE_ADAPTERS["FluxPipeline"])
+
+        bundle = FluxReduxPipelineBundle(SimpleNamespace(), SimpleNamespace())
+        tag_test_image_pipeline(bundle, "FluxReduxPipeline", "edit_image")
+        self.assertIs(validate_image_action(bundle, "Edit"), IMAGE_PIPELINE_ADAPTERS["FluxReduxPipeline"])
+
+    def test_all_image_actions_validate_numeric_and_media_contracts_before_torch(self):
+        calls = []
+
+        def pipeline(runtime_name):
+            pipeline_type = type(runtime_name, (), {"__call__": lambda _self, **_kwargs: calls.append(runtime_name)})
+            return pipeline_type()
+
+        image = Image.new("RGB", (16, 16), "black")
+        mask = Image.new("L", (16, 16), "white")
+        cases = (
+            (Generate(), pipeline("FluxPipeline"), {"width": 15}, "width"),
+            (Edit(), pipeline("FluxImg2ImgPipeline"), {"image": image, "height": 31}, "height"),
+            (
+                Inpaint(),
+                pipeline("FluxFillPipeline"),
+                {"image": image, "mask_image": mask, "num_inference_steps": 0},
+                "num_inference_steps",
+            ),
+            (
+                ControlGenerate(),
+                pipeline("FluxControlPipeline"),
+                {"control_image": image, "guidance_scale": float("nan")},
+                "guidance_scale",
+            ),
+            (Edit(), pipeline("FluxImg2ImgPipeline"), {"image": []}, "empty image list"),
+            (
+                Inpaint(),
+                pipeline("FluxFillPipeline"),
+                {"image": "not-an-image", "mask_image": "not-a-mask"},
+                "must be a PIL image",
+            ),
+            (
+                ControlGenerate(),
+                pipeline("FluxControlPipeline"),
+                {"control_image": "not-an-image"},
+                "PIL image, NumPy array, or Torch tensor",
+            ),
+        )
+        for node, selected_pipeline, values, message in cases:
+            with self.subTest(node=type(node).__name__, message=message):
+                with (
+                    patch.dict(sys.modules, {"torch": None}),
+                    self.assertRaisesRegex(ValueError, message) as raised,
+                ):
+                    node.execute(pipeline=selected_pipeline, **values)
+                self.assertNotIn("torch halted", str(raised.exception))
+        self.assertEqual(calls, [])
+
+    def test_generate_preflight_rejects_every_declared_bound_and_nonfinite_value(self):
+        class FluxPipeline:
+            def __call__(self, **_kwargs):
+                raise AssertionError("inference must not run")
+
+        invalid = (
+            ("width", 2064),
+            ("height", 17),
+            ("seed", 4294967296),
+            ("num_inference_steps", 101),
+            ("guidance_scale", float("inf")),
+            ("strength", -0.01),
+            ("padding_mask_crop", 7),
+            ("max_sequence_length", 513),
+            ("output_type", "latent"),
+        )
+        for field, value in invalid:
+            with self.subTest(field=field, value=value), patch.dict(sys.modules, {"torch": None}):
+                with self.assertRaises(ValueError) as raised:
+                    Generate().execute(pipeline=FluxPipeline(), **{field: value})
+                self.assertNotIn("torch halted", str(raised.exception))
+
+    def test_action_preflight_runs_through_real_nodebase_before_torch_or_upstream(self):
+        calls = []
+
+        class FluxPipeline:
+            def __call__(self, **_kwargs):
+                calls.append(True)
+
+        node = Generate("real-nodebase-image-preflight")
+        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(ValueError, "width") as raised:
+            node(pipeline=FluxPipeline(), width=15)
+
+        self.assertNotIn("torch halted", str(raised.exception))
+        self.assertEqual(calls, [])
+
+    def test_facade_rejects_raw_nodebase_coercion_inputs_before_torch(self):
+        class FluxPipeline:
+            def __call__(self, **_kwargs):
+                raise AssertionError("inference must not run")
+
+        image = Image.new("RGB", (16, 16), "black")
+        mask = Image.new("L", (16, 16), "white")
+        cases = (
+            (Generate("raw-generate-bool"), FluxPipeline(), {"width": True}),
+            (Generate("raw-generate-blank"), FluxPipeline(), {"num_inference_steps": ""}),
+            (Edit("raw-edit-container"), type("FluxImg2ImgPipeline", (), {})(), {"image": image, "height": []}),
+            (
+                Inpaint("raw-inpaint-bool"),
+                type("FluxFillPipeline", (), {})(),
+                {"image": image, "mask_image": mask, "padding_mask_crop": False},
+            ),
+            (
+                ControlGenerate("raw-control-container"),
+                type("FluxControlPipeline", (), {})(),
+                {"control_image": image, "guidance_scale": {}},
+            ),
+        )
+        for node, pipeline, values in cases:
+            with self.subTest(node=node.node_id), patch.dict(sys.modules, {"torch": None}):
+                with self.assertRaises(ValueError):
+                    node(pipeline=pipeline, **values)
+
+    def test_media_shape_duck_types_are_not_accepted_as_images(self):
+        class FluxImg2ImgPipeline:
+            pass
+
+        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(
+            ValueError, "PIL image, NumPy array, or Torch tensor"
+        ):
+            Edit().execute(
+                pipeline=FluxImg2ImgPipeline(),
+                image=SimpleNamespace(shape=(16, 16, 3)),
+            )
+
+    def test_reference_count_and_pixel_limits_fail_before_stitching_or_torch(self):
+        class FluxImg2ImgPipeline:
+            def __call__(self, **_kwargs):
+                raise AssertionError("inference must not run")
+
+        oversized_shape = np.broadcast_to(np.zeros((1, 1, 3), dtype=np.uint8), (8192, 8192, 3))
+        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(ValueError, "cumulative input limit"):
+            Edit().execute(pipeline=FluxImg2ImgPipeline(), image=oversized_shape)
+
+        references = [Image.new("RGB", (1, 1), "black") for _ in range(2)]
+        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(ValueError, "at most 1"):
+            Edit().execute(pipeline=FluxImg2ImgPipeline(), image=references)
+
+        class Flux2KleinPipeline:
+            pass
+
+        multi_mode = tag_test_image_pipeline(
+            Flux2KleinPipeline(), "Flux2KleinPipeline", "multi_image_reference_edit"
+        )
+        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(ValueError, "at most 8"):
+            Edit().execute(
+                pipeline=multi_mode,
+                image=[Image.new("RGB", (1, 1), "black") for _ in range(9)],
+            )
+
+        single_mode = tag_test_image_pipeline(Flux2KleinPipeline(), "Flux2KleinPipeline", "edit_image")
+        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(ValueError, "at most 1"):
+            Edit().execute(
+                pipeline=single_mode,
+                image=[Image.new("RGB", (1, 1)), Image.new("RGB", (1, 1))],
+            )
+
+    def test_generate_preflight_preserves_valid_zero_and_boundary_values(self):
+        received = {}
+
+        class FluxPipeline:
+            _execution_device = "cpu"
+
+            def __call__(
+                self,
+                *,
+                prompt,
+                width,
+                height,
+                num_inference_steps,
+                generator,
+                output_type,
+                return_dict,
+                guidance_scale,
+                strength,
+                max_sequence_length,
+            ):
+                received.update(
+                    width=width,
+                    height=height,
+                    num_inference_steps=num_inference_steps,
+                    output_type=output_type,
+                    guidance_scale=guidance_scale,
+                    strength=strength,
+                    max_sequence_length=max_sequence_length,
+                    seed=generator.initial_seed(),
+                )
+                return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+        Generate().execute(
+            pipeline=FluxPipeline(),
+            width=16,
+            height=2048,
+            seed=4294967295,
+            num_inference_steps=1,
+            guidance_scale=0,
+            strength=0,
+            padding_mask_crop=0,
+            max_sequence_length=512,
+            output_type="pil",
+        )
+
+        self.assertEqual(
+            received,
+            {
+                "width": 16,
+                "height": 2048,
+                "num_inference_steps": 1,
+                "output_type": "pil",
+                "guidance_scale": 0.0,
+                "strength": 0.0,
+                "max_sequence_length": 512,
+                "seed": 4294967295,
+            },
+        )
 
     def test_cross_workflow_loader_reuse_removes_residual_lora(self):
         unloads = []
@@ -240,6 +1083,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     model_id=repo,
                     pipeline_class="FluxPipeline",
                     mode="text_to_image",
+                    revision=CUSTOM_IMAGE_REVISION,
                     auto_offload=False,
                     offload_mode="none",
                 )
@@ -295,6 +1139,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     model_id="org/runtime-recipe-model",
                     pipeline_class="FluxPipeline",
                     mode="text_to_image",
+                    revision=CUSTOM_IMAGE_REVISION,
                     execution_recipe=recipe,
                 )
             recipe["quantization_config"] = None
@@ -302,6 +1147,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 model_id="org/runtime-recipe-model",
                 pipeline_class="FluxPipeline",
                 mode="text_to_image",
+                revision=CUSTOM_IMAGE_REVISION,
                 execution_recipe=recipe,
             )
 
@@ -346,6 +1192,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 model_id="org/direct-image-model",
                 pipeline_class="FluxPipeline",
                 mode="text_to_image",
+                revision=CUSTOM_IMAGE_REVISION,
                 execution_recipe=recipe,
                 enable_vae_slicing=False,
                 enable_vae_tiling=False,
@@ -385,6 +1232,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 model_id="org/direct-image-model",
                 pipeline_class="FluxPipeline",
                 mode="text_to_image",
+                revision=CUSTOM_IMAGE_REVISION,
                 auto_offload=False,
                 offload_mode="none",
                 enable_vae_slicing=False,
@@ -418,6 +1266,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 model_id="org/native-model",
                 pipeline_class="FluxPipeline",
                 mode="text_to_image",
+                revision=CUSTOM_IMAGE_REVISION,
                 device="cuda:0",
                 device_map="cuda",
                 auto_offload=False,
@@ -448,6 +1297,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 model_id="org/native-model",
                 pipeline_class="FluxPipeline",
                 mode="text_to_image",
+                revision=CUSTOM_IMAGE_REVISION,
                 execution_recipe={"device_map": "none", "offload_mode": "none", "device": "cuda:0"},
                 device_map="cuda",
             )
@@ -490,7 +1340,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 model_id="black-forest-labs/FLUX.1-Redux-dev",
                 pipeline_class="FluxReduxPipeline",
                 mode="edit_image",
-                revision="redux-commit",
                 auto_offload=False,
                 offload_mode="none",
             )
@@ -499,7 +1348,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(loaded[0][0:2], ("base", FLUX_DEV_REPO))
         self.assertEqual(loaded[0][2]["revision"], "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21")
         self.assertEqual(loaded[1][0:2], ("prior", "black-forest-labs/FLUX.1-Redux-dev"))
-        self.assertEqual(loaded[1][2]["revision"], "redux-commit")
+        self.assertEqual(loaded[1][2]["revision"], catalog_revision("black-forest-labs/FLUX.1-Redux-dev"))
         self.assertEqual(loaded[1][2]["text_encoder"], "clip")
         self.assertEqual(loaded[1][2]["text_encoder_2"], "t5")
         self.assertEqual(loaded[1][2]["tokenizer"], "clip-tokenizer")
@@ -509,7 +1358,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertIsNone(result["pipeline"].base.text_encoder)
         self.assertIsNone(result["pipeline"].base.text_encoder_2)
 
-    def test_curated_image_loader_uses_catalog_pin_but_preserves_explicit_revision(self):
+    def test_curated_image_loader_uses_only_its_catalog_pin(self):
         loaded = []
 
         class FakePipeline:
@@ -532,17 +1381,18 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 auto_offload=False,
                 offload_mode="none",
             )
-            node.execute(
-                model_id="black-forest-labs/FLUX.1-schnell",
-                pipeline_class="FluxPipeline",
-                mode="text_to_image",
-                revision="reviewed-user-revision",
-                auto_offload=False,
-                offload_mode="none",
-            )
+            with self.assertRaisesRegex(ValueError, "must use its reviewed commit"):
+                node.execute(
+                    model_id="black-forest-labs/FLUX.1-schnell",
+                    pipeline_class="FluxPipeline",
+                    mode="text_to_image",
+                    revision="main",
+                    auto_offload=False,
+                    offload_mode="none",
+                )
 
         self.assertEqual(loaded[0][1]["revision"], "741f7c3ce8b383c54771c7003378a50191e9efe9")
-        self.assertEqual(loaded[1][1]["revision"], "reviewed-user-revision")
+        self.assertEqual(len(loaded), 1)
 
     def test_flux_redux_bundle_delegates_multiple_reference_fusion_to_diffusers(self):
         import torch
@@ -628,9 +1478,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_flux_kontext_stitches_multiple_references_through_generic_edit(self):
         received = {}
 
-        class FakeKontextPipeline:
+        class FluxKontextPipeline:
             _execution_device = "cpu"
-            _modiff_image_adapter = IMAGE_PIPELINE_ADAPTERS["FluxKontextPipeline"]
 
             def __call__(self, **kwargs):
                 received.update(kwargs)
@@ -638,7 +1487,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         references = [Image.new("RGB", (16, 16), "red"), Image.new("RGB", (8, 16), "blue")]
         result = Edit("kontext-multi-probe").execute(
-            pipeline=FakeKontextPipeline(),
+            pipeline=FluxKontextPipeline(),
             image=references,
             prompt="use first for identity and second for style",
             width=32,
@@ -660,6 +1509,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         class FakeQwenPipeline:
             _execution_device = "cpu"
+            _modiff_image_pipeline_class = "QwenImageEditInpaintPipeline"
+            _modiff_image_mode = "inpaint"
 
             def __call__(
                 self,
@@ -684,7 +1535,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         node = Inpaint("qwen-generic-probe")
         result = node.execute(
-            pipeline=FakeQwenPipeline(),
+            pipeline=tag_test_image_pipeline(
+                FakeQwenPipeline(), "QwenImageEditInpaintPipeline", "inpaint"
+            ),
             image=Image.new("RGB", (16, 16), "black"),
             mask_image=Image.new("L", (16, 16), "white"),
             prompt="replace the object",
@@ -747,6 +1600,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         class FakePipeline:
             _execution_device = "cpu"
+            _modiff_image_pipeline_class = "FluxFillPipeline"
+            _modiff_image_mode = "inpaint"
 
             def __call__(self, **_kwargs):
                 return FakeResult()
@@ -758,7 +1613,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 mask.putpixel((x, y), 255)
 
         result = Inpaint("mask-contract-probe").execute(
-            pipeline=FakePipeline(),
+            pipeline=tag_test_image_pipeline(FakePipeline(), "FluxFillPipeline", "inpaint"),
             image=source,
             mask_image=mask,
             prompt="replace",
@@ -803,13 +1658,15 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         class FakePipeline:
             _execution_device = "cpu"
+            _modiff_image_pipeline_class = "FluxFillPipeline"
+            _modiff_image_mode = "inpaint"
 
             def __call__(self, **_kwargs):
                 observed.append(node._active_pipeline is self)
                 return FakeResult()
 
         node.execute(
-            pipeline=FakePipeline(),
+            pipeline=tag_test_image_pipeline(FakePipeline(), "FluxFillPipeline", "inpaint"),
             image=Image.new("RGB", (16, 16), "black"),
             mask_image=Image.new("L", (16, 16), "white"),
             prompt="replace",
@@ -821,36 +1678,345 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
     def test_adapter_uses_only_the_app_managed_cached_weight(self):
         calls = []
-        cached_weight = Path("/cache/revision/adapter.safetensors")
 
         class FakePipeline:
             def load_lora_weights(self, path, **kwargs):
                 calls.append((path, kwargs))
 
-        with patch("utils.huggingface.cached_file_path", return_value=str(cached_weight)):
-            LoadAdapter("adapter-probe").execute(
-                pipeline=FakePipeline(),
-                adapter_path={"source": "hub", "value": "unit/adapter"},
-                weight_name="adapter.safetensors",
-                adapter_name="gallery",
-                scale=0.8,
-            )
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory) / "hub"
+            cache_root.mkdir()
+            cached_weight = cache_root / "adapter.safetensors"
+            cached_weight.write_bytes(b"cached adapter")
+            expected = hashlib.sha256(cached_weight.read_bytes()).hexdigest()
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch(
+                    "modules.DiffusersImage.main.cached_file_path",
+                    return_value=str(cached_weight),
+                ) as cached,
+            ):
+                LoadAdapter("adapter-probe").execute(
+                    pipeline=FakePipeline(),
+                    adapter_path={"source": "hub", "value": "unit/adapter"},
+                    weight_name="adapter.safetensors",
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256=expected,
+                    adapter_name="gallery",
+                    scale=0.8,
+                )
 
+        cached.assert_called_once_with(
+            "unit/adapter", "adapter.safetensors", revision=HUB_ADAPTER_REVISION
+        )
         self.assertEqual(calls[0][0], str(cached_weight.parent))
         self.assertEqual(calls[0][1]["weight_name"], "adapter.safetensors")
+        self.assertTrue(calls[0][1]["use_safetensors"])
 
     def test_adapter_missing_from_app_cache_fails_before_pipeline_load(self):
         class FakePipeline:
             def load_lora_weights(self, *_args, **_kwargs):
                 raise AssertionError("must not download or load")
 
-        with patch("utils.huggingface.cached_file_path", return_value=False):
+        with patch("modules.DiffusersImage.main.cached_file_path", return_value=False):
             with self.assertRaisesRegex(FileNotFoundError, "Model Manager"):
                 LoadAdapter("missing-adapter-probe").execute(
                     pipeline=FakePipeline(),
                     adapter_path={"source": "hub", "value": "unit/adapter"},
                     weight_name="adapter.safetensors",
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256="0" * 64,
                 )
+
+    def test_adapter_rejects_nonliteral_safetensors_suffixes_before_cache_or_pipeline_mutation(self):
+        class FakePipeline:
+            def load_lora_weights(self, *_args, **_kwargs):
+                raise AssertionError("adapter loading must not run")
+
+        with patch("modules.DiffusersImage.main.cached_file_path") as cached:
+            for weight_name in ("adapter.bin", "adapter.SAFETENSORS", "adapter.SafeTensors"):
+                with self.subTest(weight_name=weight_name), self.assertRaisesRegex(
+                    ValueError, "contained \\.safetensors"
+                ):
+                    LoadAdapter("unsafe-hub-adapter").execute(
+                        pipeline=FakePipeline(),
+                        adapter_path={"source": "hub", "value": "unit/adapter"},
+                        weight_name=weight_name,
+                        revision=HUB_ADAPTER_REVISION,
+                        expected_sha256="0" * 64,
+                    )
+        cached.assert_not_called()
+
+    def test_adapter_source_variants_cannot_bypass_the_app_cache_boundary(self):
+        class FakePipeline:
+            def __init__(self):
+                self.calls = []
+
+            def load_lora_weights(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+
+        for source in ("Hub", "HUB"):
+            with self.subTest(canonical_source=source):
+                pipeline = FakePipeline()
+                with (
+                    patch("modules.DiffusersImage.main.cached_file_path", return_value=False) as cached,
+                    self.assertRaisesRegex(FileNotFoundError, "Model Manager"),
+                ):
+                    LoadAdapter("canonical-adapter-source").execute(
+                        pipeline=pipeline,
+                        adapter_path={"source": source, "value": "unit/adapter"},
+                        weight_name="adapter.safetensors",
+                        revision=HUB_ADAPTER_REVISION,
+                        expected_sha256="0" * 64,
+                    )
+                cached.assert_called_once_with(
+                    "unit/adapter", "adapter.safetensors", revision=HUB_ADAPTER_REVISION
+                )
+                self.assertEqual(pipeline.calls, [])
+
+        invalid = (" hub ", "remote", None, 7)
+        for source in invalid:
+            with self.subTest(invalid_source=source):
+                pipeline = FakePipeline()
+                with self.assertRaisesRegex(ValueError, "source must be exactly hub or local"):
+                    LoadAdapter("invalid-adapter-source").execute(
+                        pipeline=pipeline,
+                        adapter_path={"source": source, "value": "unit/adapter"},
+                        weight_name="adapter.safetensors",
+                        revision=HUB_ADAPTER_REVISION,
+                        expected_sha256="0" * 64,
+                    )
+                self.assertEqual(pipeline.calls, [])
+
+    def test_adapter_truthy_missing_cache_entry_fails_before_pipeline_mutation(self):
+        events = []
+
+        class FakePipeline:
+            def unload_lora_weights(self):
+                events.append("unload")
+
+            def load_lora_weights(self, *_args, **_kwargs):
+                events.append("load")
+
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "missing.safetensors"
+            with (
+                patch("modules.DiffusersImage.main.cached_file_path", return_value=str(missing)),
+                self.assertRaisesRegex(FileNotFoundError, "cache entry does not exist"),
+            ):
+                LoadAdapter("truthy-missing-adapter").execute(
+                    pipeline=FakePipeline(),
+                    adapter_path={"source": "hub", "value": "unit/adapter"},
+                    weight_name=missing.name,
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256="0" * 64,
+                )
+        self.assertEqual(events, [])
+
+    def test_managed_cache_resolution_accepts_contained_files_and_rejects_escapes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache_root = root / "hub"
+            cache_root.mkdir()
+            contained = cache_root / "blob.safetensors"
+            contained.write_bytes(b"contained")
+            outside = root / "outside.safetensors"
+            outside.write_bytes(b"outside")
+            with patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}):
+                self.assertEqual(resolve_managed_hf_cache_file(contained), contained.resolve())
+                with self.assertRaisesRegex(ValueError, "outside the managed cache root"):
+                    resolve_managed_hf_cache_file(outside)
+
+    def test_managed_cache_resolution_preserves_snapshot_to_blob_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory) / "hub"
+            repository_root = cache_root / "models--unit--adapter"
+            blob = repository_root / "blobs" / "abc"
+            blob.parent.mkdir(parents=True)
+            blob.write_bytes(b"blob")
+            snapshot_file = repository_root / "snapshots" / HUB_ADAPTER_REVISION / "adapter.safetensors"
+            snapshot_file.parent.mkdir(parents=True)
+            try:
+                os.symlink(blob, snapshot_file)
+            except OSError as error:
+                self.skipTest(f"Symlinks are unavailable on this Windows runtime: {error}")
+            with patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}):
+                self.assertEqual(resolve_managed_hf_cache_file(snapshot_file), blob.resolve())
+
+    def test_hub_adapter_load_preserves_safe_snapshot_alias_for_extensionless_blob(self):
+        calls = []
+
+        class FakePipeline:
+            def load_lora_weights(self, path, **kwargs):
+                calls.append((path, kwargs))
+
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory) / "hub"
+            repository_root = cache_root / "models--unit--adapter"
+            blob = repository_root / "blobs" / "abc"
+            blob.parent.mkdir(parents=True)
+            blob.write_bytes(b"extensionless safetensors blob probe")
+            snapshot_file = repository_root / "snapshots" / HUB_ADAPTER_REVISION / "adapter.safetensors"
+            snapshot_file.parent.mkdir(parents=True)
+            try:
+                os.symlink(blob, snapshot_file)
+            except OSError as error:
+                self.skipTest(f"Symlinks are unavailable on this Windows runtime: {error}")
+
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch("modules.DiffusersImage.main.cached_file_path", return_value=str(snapshot_file)),
+            ):
+                LoadAdapter("snapshot-alias-adapter").execute(
+                    pipeline=FakePipeline(),
+                    adapter_path={"source": "hub", "value": "unit/adapter"},
+                    weight_name="adapter.safetensors",
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256=hashlib.sha256(blob.read_bytes()).hexdigest(),
+                )
+
+        self.assertEqual(calls[0][0], str(snapshot_file.parent))
+        self.assertEqual(calls[0][1]["weight_name"], "adapter.safetensors")
+        self.assertTrue(calls[0][1]["use_safetensors"])
+
+    def test_hub_adapter_cache_escape_fails_before_pipeline_mutation(self):
+        events = []
+
+        class FakePipeline:
+            def unload_lora_weights(self):
+                events.append("unload")
+
+            def load_lora_weights(self, *_args, **_kwargs):
+                events.append("load")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache_root = root / "hub"
+            cache_root.mkdir()
+            outside = root / "outside.safetensors"
+            outside.write_bytes(b"outside")
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch(
+                    "modules.DiffusersImage.main.cached_file_path",
+                    return_value=str(outside),
+                ),
+                self.assertRaisesRegex(FileNotFoundError, "cache entry does not exist"),
+            ):
+                LoadAdapter("escaped-hub-adapter").execute(
+                    pipeline=FakePipeline(),
+                    adapter_path={"source": "hub", "value": "unit/adapter"},
+                    weight_name=outside.name,
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256=hashlib.sha256(outside.read_bytes()).hexdigest(),
+                )
+        self.assertEqual(events, [])
+
+    def test_hub_label_cannot_turn_an_existing_local_path_into_a_repository(self):
+        class FakePipeline:
+            def load_lora_weights(self, *_args, **_kwargs):
+                raise AssertionError("adapter loading must not run")
+
+        with self.assertRaisesRegex(ValueError, "existing local filesystem target"):
+            LoadAdapter("hub-local-confusion").execute(
+                pipeline=FakePipeline(),
+                adapter_path={"source": "hub", "value": "modules/DiffusersImage"},
+                weight_name="adapter.safetensors",
+                revision=HUB_ADAPTER_REVISION,
+                expected_sha256="0" * 64,
+            )
+
+    def test_adapter_facade_rejects_raw_nodebase_coercion_before_cache_or_mutation(self):
+        class FakePipeline:
+            def load_lora_weights(self, *_args, **_kwargs):
+                raise AssertionError("adapter loading must not run")
+
+        base = {
+            "pipeline": FakePipeline(),
+            "adapter_path": {"source": "hub", "value": "unit/adapter"},
+            "weight_name": "adapter.safetensors",
+            "revision": HUB_ADAPTER_REVISION,
+            "expected_sha256": "0" * 64,
+        }
+        invalid = (
+            {"scale": False},
+            {"scale": []},
+            {"replace_existing": "false"},
+            {"revision": False},
+            {"expected_sha256": []},
+            {"weight_name": 0},
+            {"adapter_path": False},
+        )
+        with patch("modules.DiffusersImage.main.cached_file_path") as cached:
+            for index, override in enumerate(invalid):
+                with self.subTest(override=override), self.assertRaises(ValueError):
+                    LoadAdapter(f"raw-adapter-{index}")(**{**base, **override})
+        cached.assert_not_called()
+
+    def test_local_adapter_requires_an_existing_file_or_contained_directory_weight(self):
+        calls = []
+
+        class FakePipeline:
+            def load_lora_weights(self, path, **kwargs):
+                calls.append((path, kwargs))
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            direct = root / "direct.safetensors"
+            direct.write_bytes(b"direct")
+            nested = root / "weights"
+            nested.mkdir()
+            nested_weight = nested / "nested.safetensors"
+            nested_weight.write_bytes(b"nested")
+            selected = root / "selected"
+            selected.mkdir()
+            (root / "outside.safetensors").write_bytes(b"outside")
+
+            LoadAdapter("local-file-adapter").execute(
+                pipeline=FakePipeline(),
+                adapter_path={"source": "LOCAL", "value": str(direct)},
+                adapter_name="direct",
+            )
+            LoadAdapter("local-folder-adapter").execute(
+                pipeline=FakePipeline(),
+                adapter_path={"source": "local", "value": str(root)},
+                weight_name="weights/nested.safetensors",
+                adapter_name="nested",
+            )
+            self.assertEqual(calls[0][0], str(root.resolve()))
+            self.assertEqual(calls[0][1]["weight_name"], direct.name)
+            self.assertTrue(calls[0][1]["use_safetensors"])
+            self.assertEqual(calls[1][0], str(nested.resolve()))
+            self.assertEqual(calls[1][1]["weight_name"], nested_weight.name)
+            self.assertTrue(calls[1][1]["use_safetensors"])
+
+            before = len(calls)
+            for value, weight_name in (
+                (str(root / "missing.safetensors"), ""),
+                ("unit/adapter", "adapter.safetensors"),
+                (str(selected), "../outside.safetensors"),
+            ):
+                with self.subTest(value=value, weight_name=weight_name), self.assertRaises(
+                    (FileNotFoundError, ValueError)
+                ):
+                    LoadAdapter("invalid-local-adapter").execute(
+                        pipeline=FakePipeline(),
+                        adapter_path={"source": "local", "value": value},
+                        weight_name=weight_name,
+                    )
+            self.assertEqual(len(calls), before)
+
+            for unsafe_name in ("unsafe.bin", "unsafe.SAFETENSORS", "unsafe.SafeTensors"):
+                unsafe = root / unsafe_name
+                unsafe.write_bytes(b"unsafe format probe")
+                with self.subTest(unsafe_name=unsafe_name), self.assertRaisesRegex(
+                    ValueError, "lowercase \\.safetensors"
+                ):
+                    LoadAdapter("unsafe-local-adapter").execute(
+                        pipeline=FakePipeline(),
+                        adapter_path={"source": "local", "value": str(unsafe)},
+                    )
+            self.assertEqual(len(calls), before)
 
     def test_adapter_verifies_pinned_hash_and_replaces_previous_pipeline_adapters(self):
         events = []
@@ -866,14 +2032,23 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 events.append(("activate", names, weights))
 
         with tempfile.TemporaryDirectory() as directory:
-            adapter_file = Path(directory) / "adapter.safetensors"
+            cache_root = Path(directory) / "hub"
+            cache_root.mkdir()
+            adapter_file = cache_root / "adapter.safetensors"
             adapter_file.write_bytes(b"pinned adapter bytes")
             expected = hashlib.sha256(adapter_file.read_bytes()).hexdigest()
-            with patch("utils.huggingface.cached_file_path", return_value=str(adapter_file)):
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch(
+                    "modules.DiffusersImage.main.cached_file_path",
+                    return_value=str(adapter_file),
+                ),
+            ):
                 LoadAdapter("verified-adapter-probe").execute(
                     pipeline=FakePipeline(),
                     adapter_path={"source": "hub", "value": "unit/adapter"},
                     weight_name=adapter_file.name,
+                    revision=HUB_ADAPTER_REVISION,
                     expected_sha256=expected,
                     adapter_name="theme",
                     scale=0.75,
@@ -898,18 +2073,25 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         pipeline = FakePipeline()
         with tempfile.TemporaryDirectory() as directory:
-            first = Path(directory) / "first.safetensors"
-            second = Path(directory) / "second.safetensors"
+            cache_root = Path(directory) / "hub"
+            cache_root.mkdir()
+            first = cache_root / "first.safetensors"
+            second = cache_root / "second.safetensors"
             first.write_bytes(b"first")
             second.write_bytes(b"second")
-            with patch(
-                "utils.huggingface.cached_file_path",
-                side_effect=[str(first), str(second)],
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch(
+                    "modules.DiffusersImage.main.cached_file_path",
+                    side_effect=[str(first), str(second)],
+                ),
             ):
                 LoadAdapter("first-adapter").execute(
                     pipeline=pipeline,
                     adapter_path={"source": "hub", "value": "unit/first"},
                     weight_name=first.name,
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256=hashlib.sha256(first.read_bytes()).hexdigest(),
                     adapter_name="cinematic",
                     scale=0.8,
                     replace_existing=True,
@@ -918,6 +2100,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     pipeline=pipeline,
                     adapter_path={"source": "hub", "value": "unit/second"},
                     weight_name=second.name,
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256=hashlib.sha256(second.read_bytes()).hexdigest(),
                     adapter_name="render_3d",
                     scale=0.18,
                     replace_existing=False,
@@ -937,15 +2121,28 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             def set_adapters(self, names, weights):
                 activations.append((names, weights))
 
-        with patch("utils.huggingface.cached_file_path", return_value="/cache/adapter.safetensors"):
-            LoadAdapter("zero-scale-adapter").execute(
-                pipeline=FakePipeline(),
-                adapter_path={"source": "hub", "value": "unit/adapter"},
-                weight_name="adapter.safetensors",
-                adapter_name="optional",
-                scale=0,
-                replace_existing=False,
-            )
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory) / "hub"
+            cache_root.mkdir()
+            cached_weight = cache_root / "adapter.safetensors"
+            cached_weight.write_bytes(b"cached adapter")
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch(
+                    "modules.DiffusersImage.main.cached_file_path",
+                    return_value=str(cached_weight),
+                ),
+            ):
+                LoadAdapter("zero-scale-adapter").execute(
+                    pipeline=FakePipeline(),
+                    adapter_path={"source": "hub", "value": "unit/adapter"},
+                    weight_name="adapter.safetensors",
+                    revision=HUB_ADAPTER_REVISION,
+                    expected_sha256=hashlib.sha256(cached_weight.read_bytes()).hexdigest(),
+                    adapter_name="optional",
+                    scale=0,
+                    replace_existing=False,
+                )
 
         self.assertEqual(activations, [(["optional"], [0.0])])
 
@@ -958,14 +2155,23 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 raise AssertionError("hash validation must happen before adapter loading")
 
         with tempfile.TemporaryDirectory() as directory:
-            adapter_file = Path(directory) / "adapter.safetensors"
+            cache_root = Path(directory) / "hub"
+            cache_root.mkdir()
+            adapter_file = cache_root / "adapter.safetensors"
             adapter_file.write_bytes(b"unexpected bytes")
-            with patch("utils.huggingface.cached_file_path", return_value=str(adapter_file)):
+            with (
+                patch.dict("utils.huggingface.CONFIG.hf", {"cache_dir": str(cache_root)}),
+                patch(
+                    "modules.DiffusersImage.main.cached_file_path",
+                    return_value=str(adapter_file),
+                ),
+            ):
                 with self.assertRaisesRegex(ValueError, "pinned SHA-256"):
                     LoadAdapter("invalid-adapter-probe").execute(
                         pipeline=FakePipeline(),
                         adapter_path={"source": "hub", "value": "unit/adapter"},
                         weight_name=adapter_file.name,
+                        revision=HUB_ADAPTER_REVISION,
                         expected_sha256="0" * 64,
                     )
 

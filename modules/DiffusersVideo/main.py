@@ -9,13 +9,19 @@ from dataclasses import dataclass
 from functools import wraps
 import json
 import logging
+from math import isfinite
+from pathlib import Path
 from typing import Any
+
+import numpy as np
+from PIL import Image
 
 from modiff.config import CONFIG
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import OFFLOAD_MODE_MODEL_CPU, apply_pipeline_offload
-from modiff.model_artifact_catalog import require_catalog_revision, resolve_model_revision
+from modiff.model_artifact_catalog import IMMUTABLE_HUB_REVISION, catalog_revision, require_catalog_revision
 from modules.DiffusersVideo.wan_vace import (
+    WAN_VACE_NATIVE_CHUNK_FRAMES,
     WanVACEGenerate,
     WanVACELoadPipeline,
     callback_tensor_inputs,
@@ -26,8 +32,9 @@ from modules.DiffusersVideo.wan_vace import (
     normalize_num_frames,
     parse_json_object,
     repo_value,
+    validate_dimensions,
 )
-from utils.huggingface import local_files_only
+from utils.huggingface import local_files_only, validate_hf_repo_id
 from utils.torch_utils import DEFAULT_DEVICE, str_to_dtype
 
 logger = logging.getLogger("modiff")
@@ -38,6 +45,10 @@ logger = logging.getLogger("modiff")
 LTX_DISTILLED_TIMESTEPS = [1000, 900, 700, 500, 300, 200, 100, 40]
 FRAMEPACK_BASE_REPO = "hunyuanvideo-community/HunyuanVideo"
 FRAMEPACK_VISION_REPO = "lllyasviel/flux_redux_bfl"
+WAN_VACE_MAX_SEQUENCE_LENGTH = 512
+WAN_VACE_MAX_SEED = 4294967295
+WAN_VACE_MAX_REFERENCE_IMAGES = 8
+WAN_VACE_MAX_REFERENCE_PIXELS = 16 * 1024 * 1024
 
 
 def _value_or_default(mapping: dict[str, Any], key: str, default: Any):
@@ -58,6 +69,24 @@ class VideoPipelineAdapter:
     default_audio_sample_rate: int | None = None
 
 
+@dataclass(frozen=True)
+class VideoModeMediaContract:
+    video: str
+    mask: str
+    reference_images: str
+
+
+WAN_VACE_MODE_MEDIA_CONTRACTS = {
+    "text_to_video": VideoModeMediaContract("forbidden", "forbidden", "forbidden"),
+    "video_to_video": VideoModeMediaContract("required", "forbidden", "optional"),
+    "video_inpaint": VideoModeMediaContract("required", "required", "optional"),
+    "video_outpaint": VideoModeMediaContract("required", "required", "optional"),
+    "reference_to_video": VideoModeMediaContract("forbidden", "forbidden", "required"),
+    "control_to_video": VideoModeMediaContract("required", "forbidden", "optional"),
+    "video_color_edit": VideoModeMediaContract("required", "forbidden", "optional"),
+}
+
+
 VIDEO_PIPELINE_ADAPTERS = {
     "WanVACEPipeline": VideoPipelineAdapter(
         id="wan-vace",
@@ -66,7 +95,6 @@ VIDEO_PIPELINE_ADAPTERS = {
         default_repo="Wan-AI/Wan2.1-VACE-1.3B-diffusers",
         modes=(
             "text_to_video",
-            "image_to_video",
             "video_to_video",
             "video_inpaint",
             "video_outpaint",
@@ -157,42 +185,570 @@ VIDEO_PIPELINE_ADAPTERS = {
 }
 
 
+VIDEO_PIPELINE_LOAD_HANDLERS = {
+    "WanVACEPipeline": "_load_wan_vace",
+    "WanVideoToVideoPipeline": "_load_wan_video_to_video",
+    "WanPipeline": "_load_wan_text_to_video",
+    "Wan22Pipeline": "_load_wan_text_to_video",
+    "WanTI2VPipeline": "_load_wan_text_to_video",
+    "WanImageToVideoPipeline": "_load_wan_image_to_video",
+    "WanAnimatePipeline": "_load_wan_animate",
+    "LTXConditionPipeline": "_load_ltx",
+    "LTXI2VLongMultiPromptPipeline": "_load_ltx_long",
+    "LTX2ConditionPipeline": "_load_ltx2",
+    "HunyuanVideoFramepackPipeline": "_load_framepack",
+}
+
+
+VIDEO_PIPELINE_EXECUTE_HANDLERS = {
+    "WanVACEPipeline": "_execute_wan_vace",
+    "WanVideoToVideoPipeline": "_execute_wan_video_to_video",
+    "WanPipeline": "_execute_wan_text_to_video",
+    "Wan22Pipeline": "_execute_wan_text_to_video",
+    "WanTI2VPipeline": "_execute_wan_text_to_video",
+    "WanImageToVideoPipeline": "_execute_wan_image_to_video",
+    "WanAnimatePipeline": "_execute_wan_animate",
+    "LTXConditionPipeline": "_execute_ltx",
+    "LTXI2VLongMultiPromptPipeline": "_execute_ltx_long",
+    "LTX2ConditionPipeline": "_execute_ltx2",
+    "HunyuanVideoFramepackPipeline": "_execute_framepack",
+}
+
+
 def get_video_pipeline_adapter(name: Any) -> VideoPipelineAdapter:
-    key = str(name or "WanVACEPipeline")
-    adapter = VIDEO_PIPELINE_ADAPTERS.get(key)
+    if not isinstance(name, str) or not name or name != name.strip():
+        raise ValueError("A registered Diffusers video pipeline class is required.")
+    adapter = VIDEO_PIPELINE_ADAPTERS.get(name)
     if adapter is None:
         supported = ", ".join(sorted(VIDEO_PIPELINE_ADAPTERS))
-        raise ValueError(f"Unsupported Diffusers video pipeline class {key}. Supported classes: {supported}.")
+        raise ValueError(f"Unsupported Diffusers video pipeline class {name}. Supported classes: {supported}.")
     return adapter
 
 
-def _resolve_adapter_model_selection(adapter: VideoPipelineAdapter, value: Any):
-    """Replace only the inherited Wan VACE default for non-VACE adapters.
+def _canonical_video_model_source(source: Any) -> str:
+    if not isinstance(source, str) or not source or source != source.strip():
+        raise ValueError("Diffusers video model source must be exactly hub or local.")
+    normalized = source.casefold()
+    if normalized not in {"hub", "local"}:
+        raise ValueError("Diffusers video model source must be exactly hub or local.")
+    return normalized
 
-    ``LoadPipeline`` intentionally inherits the mature Wan loader contract, so
-    its model selector also inherits Wan's persisted default value.  A graph
-    that changes only ``pipeline_class`` must resolve to that adapter's model;
-    an explicitly selected local or Hub artifact must remain untouched.
+
+def _validated_video_hub_repository(value: str) -> str:
+    if value.count("/") != 1:
+        raise ValueError("Diffusers video Hub models must use an exact namespace/repository ID.")
+    try:
+        validate_hf_repo_id(value)
+    except ValueError as error:
+        raise ValueError("Diffusers video Hub models must use an exact namespace/repository ID.") from error
+    try:
+        resolves_locally = Path(value).expanduser().exists()
+    except (OSError, RuntimeError) as error:
+        raise ValueError("Diffusers video Hub model identity could not be validated.") from error
+    if resolves_locally:
+        raise ValueError(
+            "Diffusers video Hub model resolves to an existing local filesystem target. "
+            "Select source=local for local models."
+        )
+    return value
+
+
+def _validated_video_local_model_directory(value: str) -> str:
+    try:
+        resolved = Path(value).expanduser().resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise ValueError(f"Local Diffusers video model directory does not exist: {value}") from error
+    if not resolved.is_dir():
+        raise ValueError(f"Local Diffusers video model selection must be a directory: {value}")
+    return str(resolved)
+
+
+def _resolve_adapter_model_selection(adapter: VideoPipelineAdapter, value: Any):
+    """Replace managed adapter defaults while preserving custom selections.
+
+    The generic loader inherits one persisted model selector. A class-only
+    change can therefore leave any previous adapter's managed default behind.
+    Registered Hub defaults follow the adapter selection, while an explicit
+    custom Hub repository or any local selection remains untouched.
     """
 
-    selected = repo_value(value)
-    inherited_vace_default = VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"].default_repo
-    if not selected or (adapter.pipeline_class != "WanVACEPipeline" and selected == inherited_vace_default):
+    if value is None or (isinstance(value, str) and not value.strip()):
+        source = "hub"
+        selected = adapter.default_repo
+    elif isinstance(value, dict):
+        source = _canonical_video_model_source(value.get("source"))
+        raw_selected = value.get("value")
+        if not isinstance(raw_selected, str):
+            raise ValueError("Diffusers video model value must be a repository ID or local path string.")
+        selected = raw_selected.strip()
+        if not selected:
+            if source == "hub":
+                selected = adapter.default_repo
+            else:
+                raise ValueError("A local Diffusers video model path is required.")
+    elif isinstance(value, str):
+        source = "hub"
+        selected = value.strip()
+    else:
+        raise ValueError("Diffusers video model selection must be a repository ID or a hub/local selection object.")
+
+    if source == "hub":
+        selected = _validated_video_hub_repository(selected)
+    else:
+        selected = _validated_video_local_model_directory(selected)
+    managed_defaults = {candidate.default_repo.casefold() for candidate in VIDEO_PIPELINE_ADAPTERS.values()}
+    selected_key = selected.casefold()
+    if source == "hub" and selected_key in managed_defaults:
         return {"source": "hub", "value": adapter.default_repo}
-    return value
+    return {"source": source, "value": selected}
 
 
 def _resolve_loader_revision(model_selection: Any, model_id: str, revision: Any) -> str | None:
     source = model_selection.get("source") if isinstance(model_selection, dict) else None
-    return resolve_model_revision(model_id, none_if_blank(revision), source=source)
+    if source == "local":
+        return None
+
+    catalog_pin = catalog_revision(model_id)
+    if revision is None or revision == "":
+        if catalog_pin is not None:
+            return catalog_pin
+        raise ValueError(
+            f"Custom Hugging Face video repository {model_id!r} requires an explicit immutable "
+            "lowercase 40-character commit SHA revision."
+        )
+    if (
+        not isinstance(revision, str)
+        or revision != revision.strip()
+        or revision != revision.lower()
+        or not IMMUTABLE_HUB_REVISION.fullmatch(revision)
+    ):
+        raise ValueError("Hugging Face video revision must be an exact lowercase 40-character commit SHA.")
+    if catalog_pin is not None and revision != catalog_pin:
+        raise ValueError(
+            f"Cataloged Hugging Face video repository {model_id!r} is pinned to {catalog_pin}; "
+            f"the requested revision {revision} does not match."
+        )
+    return revision
+
+
+_MISSING_VIDEO_PIPELINE_TAG = object()
 
 
 def _pipeline_adapter(pipeline: Any) -> VideoPipelineAdapter:
-    adapter_name = getattr(pipeline, "_modiff_video_pipeline_class", None)
-    if adapter_name:
-        return get_video_pipeline_adapter(adapter_name)
-    # Compatibility for pipelines loaded before adapter tagging existed.
-    return get_video_pipeline_adapter("WanVACEPipeline")
+    runtime_class = type(pipeline).__name__
+    runtime_candidates = [
+        adapter
+        for adapter in VIDEO_PIPELINE_ADAPTERS.values()
+        if runtime_class in {adapter.pipeline_class, adapter.diffusers_class}
+    ]
+    adapter_name = getattr(pipeline, "_modiff_video_pipeline_class", _MISSING_VIDEO_PIPELINE_TAG)
+    if adapter_name is not _MISSING_VIDEO_PIPELINE_TAG:
+        adapter = get_video_pipeline_adapter(adapter_name)
+        if runtime_candidates and adapter not in runtime_candidates:
+            runtime_names = ", ".join(sorted(candidate.pipeline_class for candidate in runtime_candidates))
+            raise ValueError(
+                f"Diffusers video pipeline identity is inconsistent: runtime class {runtime_class} supports "
+                f"{runtime_names}, but the pipeline is tagged as {adapter.pipeline_class}."
+            )
+        tagged_repo = getattr(pipeline, "_modiff_video_repo", None)
+        if isinstance(tagged_repo, str) and tagged_repo.strip():
+            repository_key = tagged_repo.strip().casefold()
+            managed_repo_adapters = [
+                candidate
+                for candidate in VIDEO_PIPELINE_ADAPTERS.values()
+                if candidate.default_repo.casefold() == repository_key
+            ]
+            if managed_repo_adapters and adapter not in managed_repo_adapters:
+                repository_names = ", ".join(sorted(candidate.pipeline_class for candidate in managed_repo_adapters))
+                raise ValueError(
+                    "Diffusers video pipeline identity is inconsistent: managed repository "
+                    f"{tagged_repo.strip()!r} supports {repository_names}, but the pipeline is tagged as "
+                    f"{adapter.pipeline_class}."
+                )
+        return adapter
+
+    if not runtime_candidates:
+        raise ValueError(
+            f"Cannot recover a registered Diffusers video adapter from untagged runtime class {runtime_class}."
+        )
+
+    reviewed_repo = getattr(pipeline, "_modiff_video_repo", None)
+    if not isinstance(reviewed_repo, str) or not reviewed_repo.strip():
+        raise ValueError(
+            f"Cannot recover untagged Diffusers video runtime class {runtime_class} without an exact reviewed "
+            "repository identity. Reload it through the generic video loader."
+        )
+    candidates = [adapter for adapter in runtime_candidates if adapter.default_repo == reviewed_repo.strip()]
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise ValueError(
+            f"Cannot recover untagged Diffusers video runtime class {runtime_class} from unreviewed repository "
+            f"{reviewed_repo!r}. Reload it through the generic video loader."
+        )
+    candidate_names = ", ".join(sorted(adapter.pipeline_class for adapter in candidates))
+    raise ValueError(
+        f"Untagged Diffusers video runtime class {runtime_class} is ambiguous across adapters: {candidate_names}. "
+        "Reload it through the generic video loader so its exact adapter is tagged."
+    )
+
+
+def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
+    return {
+        "schemaVersion": 1,
+        "library": "diffusers",
+        "mediaKind": "video",
+        "pipelineClass": adapter.pipeline_class,
+        "modes": list(adapter.modes),
+    }
+
+
+def _media_frame_container_family(frame: Any, *, field_name: str, index: int) -> str:
+    label = f"{field_name} frame {index + 1}"
+    if isinstance(frame, Image.Image):
+        return "pil"
+    if isinstance(frame, np.ndarray):
+        return "numpy"
+
+    frame_type = type(frame)
+    module_name = str(getattr(frame_type, "__module__", ""))
+    is_torch_like = (
+        module_name.startswith("torch")
+        and callable(getattr(frame, "detach", None))
+        and hasattr(frame, "device")
+        and hasattr(frame, "dtype")
+        and hasattr(frame, "shape")
+    )
+    if is_torch_like:
+        return "torch"
+    raise ValueError(f"Wan VACE {label} must be a PIL image, NumPy array, or Torch tensor-like image.")
+
+
+def _media_frame_spatial_size(frame: Any, *, field_name: str, index: int) -> tuple[int, int]:
+    """Validate one image-like frame without importing a heavyweight runtime."""
+
+    family = _media_frame_container_family(frame, field_name=field_name, index=index)
+    size = getattr(frame, "size", None)
+
+    label = f"{field_name} frame {index + 1}"
+    if family == "pil":
+        try:
+            width, height = (int(value) for value in size)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"Wan VACE {label} has an invalid PIL spatial size.") from error
+    else:
+        try:
+            shape = tuple(int(value) for value in frame.shape)
+        except (AttributeError, TypeError, ValueError) as error:
+            raise ValueError(f"Wan VACE {label} has an invalid array/tensor shape.") from error
+        if len(shape) == 2:
+            height, width = shape
+        elif len(shape) == 3:
+            # Diffusers' image/video processors use NumPy HWC and Torch CHW.
+            # Accepting the opposite layout here is unsafe for masked VACE
+            # modes: neutralization broadcasts along those canonical channel
+            # axes before the upstream processor runs.
+            if family == "numpy":
+                if shape[-1] not in {1, 3, 4}:
+                    raise ValueError(f"Wan VACE {label} NumPy images must use HWC layout with 1, 3, or 4 channels.")
+                height, width = shape[0], shape[1]
+            else:
+                if shape[0] not in {1, 3, 4}:
+                    raise ValueError(
+                        f"Wan VACE {label} Torch tensor-like images must use CHW layout with 1, 3, or 4 channels."
+                    )
+                height, width = shape[1], shape[2]
+        else:
+            raise ValueError(f"Wan VACE {label} must be a 2D or 3D image frame; received shape {shape}.")
+
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Wan VACE {label} must have positive spatial dimensions; received {width}x{height}.")
+    return width, height
+
+
+def _validate_media_sequence(
+    frames: list[Any] | None,
+    *,
+    field_name: str,
+    uniform_spatial_size: bool,
+) -> list[tuple[int, int]]:
+    if frames is None:
+        return []
+    families = [
+        _media_frame_container_family(frame, field_name=field_name, index=index)
+        for index, frame in enumerate(frames)
+    ]
+    if any(family != families[0] for family in families[1:]):
+        received = ", ".join(dict.fromkeys(families))
+        raise ValueError(
+            f"Wan VACE {field_name} frames must use one container family; received {received}."
+        )
+    sizes = [
+        _media_frame_spatial_size(frame, field_name=field_name, index=index)
+        for index, frame in enumerate(frames)
+    ]
+    if uniform_spatial_size and any(size != sizes[0] for size in sizes[1:]):
+        raise ValueError(f"Wan VACE {field_name} frames must all have the same spatial dimensions.")
+    return sizes
+
+
+def _normalize_wan_vace_reference_images(value: Any) -> list[Image.Image] | None:
+    references = ensure_reference_images(value)
+    if references is None:
+        return None
+
+    nested = [item for item in references if isinstance(item, (list, tuple))]
+    if nested:
+        if len(references) != 1:
+            raise ValueError("Wan VACE reference images support one flat list or one nested batch only.")
+        references = list(nested[0])
+        if not references:
+            return None
+    if not all(isinstance(reference, Image.Image) for reference in references):
+        raise ValueError("Wan VACE reference images must be actual PIL images.")
+    if len(references) > WAN_VACE_MAX_REFERENCE_IMAGES:
+        raise ValueError(
+            f"Wan VACE accepts at most {WAN_VACE_MAX_REFERENCE_IMAGES} reference images per video."
+        )
+    return references
+
+
+def _bounded_wan_vace_num_frames(value: Any) -> int:
+    if isinstance(value, bool):
+        raise ValueError("Wan VACE num_frames must be a finite integer from 1 through 241.")
+    try:
+        number = float(81 if value is None else value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Wan VACE num_frames must be a finite integer from 1 through 241.") from error
+    if not isfinite(number) or not number.is_integer() or number < 1 or number > 241:
+        raise ValueError("Wan VACE num_frames must be a finite integer from 1 through 241.")
+    return int(number)
+
+
+def _bounded_wan_vace_int(
+    value: Any,
+    *,
+    default: int,
+    label: str,
+    minimum: int,
+    maximum: int,
+) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"Wan VACE {label} must be a finite integer from {minimum} through {maximum}.")
+    try:
+        number = float(default if value is None else value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"Wan VACE {label} must be a finite integer from {minimum} through {maximum}.") from error
+    if not isfinite(number) or not number.is_integer() or number < minimum or number > maximum:
+        raise ValueError(f"Wan VACE {label} must be a finite integer from {minimum} through {maximum}.")
+    return int(number)
+
+
+def _bounded_wan_vace_float(
+    value: Any,
+    *,
+    default: float,
+    label: str,
+    minimum: float,
+    maximum: float,
+) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"Wan VACE {label} must be finite and from {minimum:g} through {maximum:g}.")
+    try:
+        number = float(default if value is None else value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"Wan VACE {label} must be finite and from {minimum:g} through {maximum:g}.") from error
+    if not isfinite(number) or number < minimum or number > maximum:
+        raise ValueError(f"Wan VACE {label} must be finite and from {minimum:g} through {maximum:g}.")
+    return number
+
+
+def _normalize_wan_vace_scalar_contract(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Validate graph-controlled VACE resource values before Torch/upstream."""
+
+    pipeline = kwargs.get("pipeline")
+    width = _bounded_wan_vace_int(
+        kwargs.get("width"),
+        default=832,
+        label="width",
+        minimum=16,
+        maximum=2048,
+    )
+    height = _bounded_wan_vace_int(
+        kwargs.get("height"),
+        default=480,
+        label="height",
+        minimum=16,
+        maximum=2048,
+    )
+    validate_dimensions(width, height, pipeline)
+
+    requested_num_frames = _bounded_wan_vace_num_frames(kwargs.get("num_frames"))
+    normalized_num_frames = normalize_num_frames(requested_num_frames, pipeline)
+    if normalized_num_frames > 241:
+        raise ValueError(
+            "Wan VACE num_frames normalization exceeds the supported maximum of 241; "
+            f"received {requested_num_frames}, normalized to {normalized_num_frames}."
+        )
+
+    output_type = kwargs.get("output_type")
+    output_type = "pil" if output_type is None else output_type
+    if not isinstance(output_type, str) or output_type not in {"pil", "np", "pt"}:
+        raise ValueError("Wan VACE output_type must be exactly one of: pil, np, pt.")
+
+    return {
+        "width": width,
+        "height": height,
+        "num_frames": normalized_num_frames,
+        "num_inference_steps": _bounded_wan_vace_int(
+            kwargs.get("num_inference_steps"),
+            default=30,
+            label="inference steps",
+            minimum=1,
+            maximum=100,
+        ),
+        "guidance_scale": _bounded_wan_vace_float(
+            kwargs.get("guidance_scale"),
+            default=5.0,
+            label="guidance scale",
+            minimum=0,
+            maximum=20,
+        ),
+        "guidance_scale_2": _bounded_wan_vace_float(
+            kwargs.get("guidance_scale_2"),
+            default=0.0,
+            label="secondary guidance scale",
+            minimum=0,
+            maximum=20,
+        ),
+        "conditioning_scale": _bounded_wan_vace_float(
+            kwargs.get("conditioning_scale"),
+            default=1.0,
+            label="conditioning scale",
+            minimum=0,
+            maximum=2,
+        ),
+        "seed": _bounded_wan_vace_int(
+            kwargs.get("seed"),
+            default=0,
+            label="seed",
+            minimum=0,
+            maximum=WAN_VACE_MAX_SEED,
+        ),
+        "num_videos_per_prompt": _bounded_wan_vace_int(
+            kwargs.get("num_videos_per_prompt"),
+            default=1,
+            label="videos per prompt",
+            minimum=1,
+            maximum=1,
+        ),
+        "output_type": output_type,
+        "max_sequence_length": _bounded_wan_vace_int(
+            kwargs.get("max_sequence_length"),
+            default=WAN_VACE_MAX_SEQUENCE_LENGTH,
+            label="max sequence length",
+            minimum=1,
+            maximum=WAN_VACE_MAX_SEQUENCE_LENGTH,
+        ),
+    }
+
+
+def _validate_wan_vace_media_contract(mode: str, kwargs: dict[str, Any]) -> dict[str, Any]:
+    contract = WAN_VACE_MODE_MEDIA_CONTRACTS.get(mode)
+    if contract is None:
+        raise ValueError(f"WanVACEPipeline does not have a media contract for video mode {mode}.")
+
+    media = {
+        "video": ensure_video_list(kwargs.get("video"), "video"),
+        "mask": ensure_video_list(kwargs.get("mask"), "mask"),
+        "reference_images": _normalize_wan_vace_reference_images(kwargs.get("reference_images")),
+    }
+    labels = {
+        "video": "source/control video",
+        "mask": "mask video",
+        "reference_images": "reference images",
+    }
+    for field in ("video", "mask", "reference_images"):
+        requirement = getattr(contract, field)
+        if requirement not in {"required", "optional", "forbidden"}:
+            raise RuntimeError(f"Wan VACE {mode} has an invalid {field} media requirement {requirement!r}.")
+        present = media[field] is not None
+        if requirement == "required" and not present:
+            raise ValueError(f"Wan VACE {mode} requires {labels[field]}.")
+        if requirement == "forbidden" and present:
+            raise ValueError(f"Wan VACE {mode} does not accept {labels[field]}.")
+
+    video_sizes = _validate_media_sequence(
+        media["video"], field_name="source/control video", uniform_spatial_size=True
+    )
+    mask_sizes = _validate_media_sequence(media["mask"], field_name="mask video", uniform_spatial_size=True)
+    reference_sizes = _validate_media_sequence(
+        media["reference_images"],
+        field_name="reference image",
+        uniform_spatial_size=False,
+    )
+    reference_pixels = sum(width * height for width, height in reference_sizes)
+    if reference_pixels > WAN_VACE_MAX_REFERENCE_PIXELS:
+        raise ValueError(
+            "Wan VACE reference images exceed the "
+            f"{WAN_VACE_MAX_REFERENCE_PIXELS}-pixel cumulative input limit."
+        )
+
+    if media["video"] is not None and media["mask"] is not None:
+        if len(media["video"]) != len(media["mask"]):
+            raise ValueError(
+                f"Wan VACE video/mask frame count mismatch: {len(media['video'])} vs {len(media['mask'])}."
+            )
+        if any(video_size != mask_size for video_size, mask_size in zip(video_sizes, mask_sizes)):
+            raise ValueError("Wan VACE source/control video and mask frames must have matching spatial dimensions.")
+        for index, (video_frame, mask_frame) in enumerate(zip(media["video"], media["mask"])):
+            video_family = _media_frame_container_family(
+                video_frame,
+                field_name="source/control video",
+                index=index,
+            )
+            mask_family = _media_frame_container_family(mask_frame, field_name="mask video", index=index)
+            if video_family != mask_family:
+                raise ValueError(
+                    "Wan VACE source/control video and mask frame "
+                    f"{index + 1} must use the same container family; received {video_family} and {mask_family}."
+                )
+            if video_family in {"numpy", "torch"}:
+                video_ndim = len(tuple(video_frame.shape))
+                mask_ndim = len(tuple(mask_frame.shape))
+                if video_ndim == 2 and mask_ndim != 2:
+                    raise ValueError(
+                        "Wan VACE 2D source/control video frames require 2D mask frames; "
+                        f"frame {index + 1} received a {mask_ndim}D mask."
+                    )
+
+    scalar_values = _normalize_wan_vace_scalar_contract(kwargs)
+    normalized_num_frames = scalar_values["num_frames"]
+    if media["video"] is not None and len(media["video"]) != normalized_num_frames:
+        raise ValueError(
+            f"Wan VACE {mode} received {len(media['video'])} conditioned video frames, but normalized "
+            f"num_frames is {normalized_num_frames}."
+        )
+    if (
+        media["video"] is not None
+        and normalized_num_frames > WAN_VACE_NATIVE_CHUNK_FRAMES
+        and scalar_values["output_type"] != "pil"
+    ):
+        raise ValueError(
+            "Segmented Wan VACE conditioned video currently requires output_type=pil; "
+            "NumPy and Torch chunk concatenation are not supported."
+        )
+
+    return {**media, **scalar_values}
+
+
+DEFAULT_VIDEO_CONTRACT = _adapter_signal(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"])
+
+
+def _require_video_mode(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("An exact non-empty Diffusers video mode is required.")
+    return value
 
 
 def _normalize_ltx_frames(value: int) -> int:
@@ -270,50 +826,98 @@ class LoadPipeline(WanVACELoadPipeline):
     category = "Diffusers Video"
     params = {
         **WanVACELoadPipeline.params,
-        "pipeline": {"label": "Pipeline", "display": "output", "type": "video_diffusion_pipeline"},
+        "model_id": {
+            **WanVACELoadPipeline.params["model_id"],
+            "onChange": "select_adapter",
+        },
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "video_diffusion_pipeline",
+            "signal": {
+                "direction": "output",
+                "origin": "pipeline_class",
+                "value": DEFAULT_VIDEO_CONTRACT,
+            },
+        },
         "pipeline_class": {
             "label": "Pipeline Class",
             "type": "string",
             "options": list(VIDEO_PIPELINE_ADAPTERS),
             "default": "WanVACEPipeline",
+            "fieldOptions": {"noValidation": True},
+            "onChange": "select_adapter",
         },
         "resolved_artifact": {"label": "Resolved Artifact", "display": "output", "type": "string"},
     }
+
+    def __call__(self, **kwargs):
+        # A missing, null, or malformed class is not distinguishable from a
+        # stale imported graph. New graphs persist the declared default
+        # explicitly, so execution can require exact identity here.
+        adapter = get_video_pipeline_adapter(kwargs.get("pipeline_class"))
+        values = dict(kwargs)
+        values["model_id"] = _resolve_adapter_model_selection(adapter, values.get("model_id"))
+        model_id = repo_value(values["model_id"])
+        values["revision"] = _resolve_loader_revision(values["model_id"], model_id, values.get("revision"))
+        return super().__call__(**values)
 
     def execute(self, **kwargs):
         adapter = get_video_pipeline_adapter(kwargs.get("pipeline_class"))
         values = dict(kwargs)
         values["model_id"] = _resolve_adapter_model_selection(adapter, values.get("model_id"))
-        if adapter.pipeline_class == "WanVACEPipeline":
-            result = super().execute(**values)
-            pipeline = result["pipeline"]
-        elif adapter.pipeline_class == "WanVideoToVideoPipeline":
-            pipeline = self._load_wan_video_to_video(adapter, values)
-            result = {"pipeline": pipeline}
-        elif adapter.pipeline_class in {"WanPipeline", "Wan22Pipeline", "WanTI2VPipeline"}:
-            pipeline = self._load_wan_text_to_video(adapter, values)
-            result = {"pipeline": pipeline}
-        elif adapter.pipeline_class == "WanImageToVideoPipeline":
-            pipeline = self._load_wan_image_to_video(adapter, values)
-            result = {"pipeline": pipeline}
-        elif adapter.pipeline_class == "LTXConditionPipeline":
-            pipeline = self._load_ltx(adapter, values)
-            result = {"pipeline": pipeline}
-        elif adapter.pipeline_class == "LTXI2VLongMultiPromptPipeline":
-            pipeline = self._load_ltx_long(adapter, values)
-            result = {"pipeline": pipeline}
-        elif adapter.pipeline_class == "LTX2ConditionPipeline":
-            pipeline = self._load_ltx2(adapter, values)
-            result = {"pipeline": pipeline}
-        elif adapter.pipeline_class == "WanAnimatePipeline":
-            pipeline = self._load_wan_animate(adapter, values)
-            result = {"pipeline": pipeline}
-        else:
-            pipeline = self._load_framepack(adapter, values)
-            result = {"pipeline": pipeline}
+        model_id = repo_value(values["model_id"])
+        values["revision"] = _resolve_loader_revision(values["model_id"], model_id, values.get("revision"))
+        handler_name = VIDEO_PIPELINE_LOAD_HANDLERS.get(adapter.pipeline_class)
+        handler = getattr(self, handler_name, None) if handler_name else None
+        if not callable(handler):
+            raise RuntimeError(f"No loader handler is registered for video adapter {adapter.pipeline_class}.")
+        pipeline = handler(adapter, values)
         setattr(pipeline, "_modiff_video_pipeline_class", adapter.pipeline_class)
-        setattr(pipeline, "_modiff_video_repo", repo_value(values.get("model_id")) or adapter.default_repo)
-        return {**result, "resolved_artifact": values.get("model_id")}
+        setattr(pipeline, "_modiff_video_repo", model_id or adapter.default_repo)
+        setattr(pipeline, "_modiff_video_revision", values["revision"])
+        return {
+            "pipeline": pipeline,
+            "resolved_artifact": model_id or adapter.default_repo,
+        }
+
+    def select_adapter(self, values, ref):
+        values = values if isinstance(values, dict) else {}
+        adapter = get_video_pipeline_adapter(values.get("pipeline_class"))
+        selected = values.get("model_id")
+        resolved = _resolve_adapter_model_selection(adapter, selected)
+        signal_origin = ref.get("key") if isinstance(ref, dict) else ref
+        field_values = {}
+        if resolved != selected:
+            field_values["model_id"] = resolved
+        if resolved["source"] == "local":
+            field_values["revision"] = ""
+        else:
+            managed_revision = catalog_revision(resolved["value"])
+            if managed_revision is not None:
+                field_values["revision"] = managed_revision
+            elif signal_origin == "model_id":
+                # A custom repository selected by this action must not inherit
+                # the commit belonging to the previously visible repository.
+                field_values["revision"] = ""
+            elif values.get("revision") not in (None, ""):
+                _resolve_loader_revision(resolved, resolved["value"], values.get("revision"))
+        if field_values:
+            self.set_field_value(field_values)
+        self.set_field_params(
+            "pipeline",
+            {
+                "signal": {
+                    "direction": "output",
+                    "origin": str(signal_origin or "pipeline_class"),
+                    "value": _adapter_signal(adapter),
+                }
+            },
+        )
+
+    def _load_wan_vace(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        result = super().execute(**kwargs)
+        return result["pipeline"]
 
     def _load_ltx(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
         from diffusers import LTXConditionPipeline
@@ -663,12 +1267,28 @@ class Generate(WanVACEGenerate):
             "min": 0,
             "max": 9007199254740991,
         },
-        "pipeline": {"label": "Pipeline", "display": "input", "type": "video_diffusion_pipeline", "required": True},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "video_diffusion_pipeline",
+            "required": True,
+            "onSignal": [
+                {"action": "value", "target": "video_contract"},
+                {"action": "exec", "data": "update_adapter_modes"},
+            ],
+        },
+        "video_contract": {
+            "label": "Video Contract",
+            "type": "object",
+            "default": DEFAULT_VIDEO_CONTRACT,
+            "hidden": True,
+        },
         "mode": {
             "label": "Mode",
             "type": "string",
             "options": sorted({mode for adapter in VIDEO_PIPELINE_ADAPTERS.values() for mode in adapter.modes}),
             "default": "text_to_video",
+            "fieldOptions": {"noValidation": True},
         },
         "frame_rate": {"label": "Frame rate", "type": "int", "default": 25, "min": 1, "max": 60},
         "strength": {"label": "Condition strength", "type": "float", "default": 1.0, "min": 0, "max": 1, "step": 0.05},
@@ -707,7 +1327,12 @@ class Generate(WanVACEGenerate):
         },
         "pose_video": {"label": "Pose Video", "display": "input", "type": ["video", "str"], "required": False},
         "face_video": {"label": "Face Video", "display": "input", "type": ["video", "str"], "required": False},
-        "background_video": {"label": "Background Video", "display": "input", "type": ["video", "str"], "required": False},
+        "background_video": {
+            "label": "Background Video",
+            "display": "input",
+            "type": ["video", "str"],
+            "required": False,
+        },
         "segment_frame_length": {"label": "Segment Frames", "type": "int", "default": 77, "min": 5, "max": 241},
         "previous_conditioning_frames": {"label": "Previous Frames", "type": "int", "default": 1, "min": 1, "max": 16},
         "motion_encode_batch_size": {"label": "Motion Batch", "type": "int", "default": 1, "min": 1, "max": 32},
@@ -737,20 +1362,55 @@ class Generate(WanVACEGenerate):
         },
     }
 
+    def __call__(self, **kwargs):
+        values = dict(kwargs)
+        values["mode"] = _require_video_mode(values.get("mode"))
+        pipeline = values.get("pipeline")
+        if pipeline is not None:
+            try:
+                adapter = _pipeline_adapter(pipeline)
+            except ValueError:
+                # Preserve the established NodeBase error wrapping for stale or
+                # inconsistent pipeline identities. Execution validates it
+                # authoritatively before dispatch.
+                adapter = None
+            if adapter is not None and adapter.pipeline_class == "WanVACEPipeline":
+                values.update(_normalize_wan_vace_scalar_contract(values))
+        return super().__call__(**values)
+
     def execute(self, **kwargs):
         _adapter, result = self._execute_with_adapter(**kwargs)
         result.pop("_audio", None)
         return result
+
+    def update_adapter_modes(self, values, ref):
+        values = values if isinstance(values, dict) else {}
+        signal = values.get("video_contract")
+        if not isinstance(signal, dict):
+            raise ValueError("The connected video pipeline did not publish a valid adapter contract.")
+        adapter = get_video_pipeline_adapter(signal.get("pipelineClass"))
+        if signal != _adapter_signal(adapter):
+            raise ValueError("The connected video pipeline published a stale or mismatched adapter contract.")
+        current_mode = values.get("mode")
+        selected_mode = current_mode if current_mode in adapter.modes else adapter.modes[0]
+        self.set_field_params(
+            "mode",
+            {"options": list(adapter.modes), "default": adapter.modes[0], "value": selected_mode},
+        )
 
     def _execute_with_adapter(self, **kwargs):
         pipeline = kwargs.get("pipeline")
         if pipeline is None:
             raise ValueError("A Diffusers video pipeline is required.")
         adapter = _pipeline_adapter(pipeline)
-        mode = str(kwargs.get("mode") or "text_to_video")
+        mode = _require_video_mode(kwargs.get("mode"))
         if mode not in adapter.modes:
             raise ValueError(f"{adapter.pipeline_class} does not support video mode {mode}.")
-        return adapter, self._execute_adapter(pipeline, adapter, mode, kwargs)
+        values = dict(kwargs)
+        values["mode"] = mode
+        if adapter.pipeline_class == "WanVACEPipeline":
+            values.update(_validate_wan_vace_media_contract(mode, values))
+        return adapter, self._execute_adapter(pipeline, adapter, mode, values)
 
     def _execute_adapter(
         self,
@@ -759,27 +1419,22 @@ class Generate(WanVACEGenerate):
         mode: str,
         kwargs: dict[str, Any],
     ):
-        if adapter.pipeline_class == "WanVACEPipeline":
-            return super().execute(**kwargs)
-        if adapter.pipeline_class == "WanVideoToVideoPipeline":
-            return self._execute_wan_video_to_video(pipeline, adapter, mode, kwargs)
-        if adapter.pipeline_class in {"WanPipeline", "Wan22Pipeline", "WanTI2VPipeline"}:
-            return self._execute_wan_text_to_video(pipeline, adapter, mode, kwargs)
-        if adapter.pipeline_class == "WanImageToVideoPipeline":
-            return self._execute_wan_image_to_video(pipeline, adapter, mode, kwargs)
-        if adapter.pipeline_class == "LTXConditionPipeline":
-            return self._execute_ltx(pipeline, adapter, mode, kwargs)
-        if adapter.pipeline_class == "LTXI2VLongMultiPromptPipeline":
-            return self._execute_ltx_long(pipeline, adapter, mode, kwargs)
-        if adapter.pipeline_class == "LTX2ConditionPipeline":
-            return self._execute_ltx2(pipeline, adapter, mode, kwargs)
-        if adapter.pipeline_class == "WanAnimatePipeline":
-            return self._execute_wan_animate(pipeline, adapter, mode, kwargs)
-        return self._execute_framepack(pipeline, adapter, mode, kwargs)
+        handler_name = VIDEO_PIPELINE_EXECUTE_HANDLERS.get(adapter.pipeline_class)
+        handler = getattr(self, handler_name, None) if handler_name else None
+        if not callable(handler):
+            raise RuntimeError(f"No execution handler is registered for video adapter {adapter.pipeline_class}.")
+        return handler(pipeline, adapter, mode, kwargs)
+
+    def _execute_wan_vace(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        return super().execute(**kwargs)
 
     def _execute_wan_animate(self, pipeline: Any, adapter: VideoPipelineAdapter, mode: str, kwargs: dict[str, Any]):
-        import torch
-
         references = ensure_reference_images(kwargs.get("reference_images"))
         if not references or len(references) != 1:
             raise ValueError("Wan Animate needs exactly one character reference image.")
@@ -796,6 +1451,8 @@ class Generate(WanVACEGenerate):
             raise ValueError("Wan character replacement needs background and mask videos.")
         if call_mode == "animate" and (background is not None or mask is not None):
             raise ValueError("Wan character animation does not accept background or mask videos.")
+        import torch
+
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
         height = int(kwargs.get("height") or 720)
@@ -841,8 +1498,6 @@ class Generate(WanVACEGenerate):
         }
 
     def _execute_framepack(self, pipeline: Any, adapter: VideoPipelineAdapter, mode: str, kwargs: dict[str, Any]):
-        import torch
-
         if mode != "image_to_video":
             raise ValueError("FramePack supports image_to_video generation only.")
         if ensure_video_list(kwargs.get("video"), "video") is not None:
@@ -864,6 +1519,8 @@ class Generate(WanVACEGenerate):
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens)
+        import torch
+
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
         call_kwargs = {
@@ -912,8 +1569,6 @@ class Generate(WanVACEGenerate):
         mode: str,
         kwargs: dict[str, Any],
     ):
-        import torch
-
         if mode != "text_to_video":
             raise ValueError(f"{adapter.pipeline_class} does not support video mode {mode}.")
         if ensure_video_list(kwargs.get("video"), "video") is not None:
@@ -927,6 +1582,8 @@ class Generate(WanVACEGenerate):
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens)
         _validate_prompt_token_limit(pipeline, negative_prompt, "negative prompt", adapter.max_prompt_tokens)
+        import torch
+
         is_ti2v = adapter.pipeline_class == "WanTI2VPipeline"
         width = int(kwargs.get("width") or (1280 if is_ti2v else 832))
         height = int(kwargs.get("height") or (704 if is_ti2v else 480))
@@ -989,8 +1646,6 @@ class Generate(WanVACEGenerate):
         mode: str,
         kwargs: dict[str, Any],
     ):
-        import torch
-
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         video = ensure_video_list(kwargs.get("video"), "video")
@@ -1004,6 +1659,8 @@ class Generate(WanVACEGenerate):
         strength = float(kwargs.get("strength", 0.8))
         if not 0 < strength <= 1:
             raise ValueError(f"Wan {mode} strength must be greater than 0 and at most 1; received {strength}.")
+        import torch
+
         width = int(kwargs.get("width", 832))
         height = int(kwargs.get("height", 480))
         device = getattr(pipeline, "_execution_device", None) or "cpu"
@@ -1053,8 +1710,6 @@ class Generate(WanVACEGenerate):
         mode: str,
         kwargs: dict[str, Any],
     ):
-        import torch
-
         if mode not in {"image_to_video", "reference_to_video"}:
             raise ValueError(f"{adapter.pipeline_class} does not support video mode {mode}.")
         if ensure_video_list(kwargs.get("video"), "video") is not None:
@@ -1083,6 +1738,8 @@ class Generate(WanVACEGenerate):
         num_frames = normalize_num_frames(int(kwargs.get("num_frames") or 81), pipeline)
         if num_frames < 81:
             raise ValueError("Quality-first Wan shots need at least 81 frames (about five seconds at 16 fps).")
+        import torch
+
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
         call_kwargs = {
@@ -1126,9 +1783,6 @@ class Generate(WanVACEGenerate):
         }
 
     def _execute_ltx(self, pipeline: Any, adapter: VideoPipelineAdapter, mode: str, kwargs: dict[str, Any]):
-        import torch
-        from diffusers.pipelines.ltx.pipeline_ltx_condition import LTXVideoCondition
-
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         video = ensure_video_list(kwargs.get("video"), "video")
@@ -1152,6 +1806,9 @@ class Generate(WanVACEGenerate):
         height = int(kwargs.get("height", 480))
         _validate_ltx_dimensions(width, height)
         num_frames = _normalize_ltx_frames(int(kwargs.get("num_frames", 97)))
+        import torch
+        from diffusers.pipelines.ltx.pipeline_ltx_condition import LTXVideoCondition
+
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed", 0)))
         call_kwargs = {
@@ -1325,9 +1982,6 @@ class Generate(WanVACEGenerate):
         }
 
     def _execute_ltx2(self, pipeline: Any, adapter: VideoPipelineAdapter, mode: str, kwargs: dict[str, Any]):
-        import torch
-        from diffusers.pipelines.ltx2.pipeline_ltx2_condition import LTX2VideoCondition
-
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         video = ensure_video_list(kwargs.get("video"), "video")
@@ -1343,6 +1997,9 @@ class Generate(WanVACEGenerate):
         _validate_ltx_dimensions(width, height)
         num_frames = _normalize_ltx_frames(int(kwargs.get("num_frames") or 121))
         strength = float(_value_or_default(kwargs, "strength", 1))
+        import torch
+        from diffusers.pipelines.ltx2.pipeline_ltx2_condition import LTX2VideoCondition
+
         conditions = None
         if references:
             conditions = [
@@ -1406,6 +2063,11 @@ class GenerateVideoAudio(NodeBase):
         "duration_seconds": {"label": "Audio Duration", "display": "output", "type": "float"},
     }
 
+    def __call__(self, **kwargs):
+        values = dict(kwargs)
+        values["mode"] = _require_video_mode(values.get("mode"))
+        return super().__call__(**values)
+
     def execute(self, **kwargs):
         from modules.DiffusersAudio.main import output_to_audio_object
 
@@ -1451,7 +2113,12 @@ class BuildShotJobs(NodeBase):
     params = {
         "shots": {"label": "Shot Plan", "display": "input", "type": "collection"},
         "opening_images": {"label": "Opening Keyframes", "display": "input", "type": "image"},
-        "ending_images": {"label": "Optional Ending Keyframes", "display": "input", "type": "image", "required": False},
+        "ending_images": {
+            "label": "Optional Ending Keyframes",
+            "display": "input",
+            "type": "image",
+            "required": False,
+        },
         "mode": {
             "label": "Shot Mode",
             "type": "string",
@@ -1554,9 +2221,7 @@ class BuildShotJobs(NodeBase):
                     "height": int(kwargs.get("height") or 480),
                     "steps": int(kwargs.get("steps") or 40),
                     "guidance_scale": float(_value_or_default(kwargs, "guidance_scale", 3.5)),
-                    "secondary_guidance_scale": float(
-                        _value_or_default(kwargs, "secondary_guidance_scale", 3.5)
-                    ),
+                    "secondary_guidance_scale": float(_value_or_default(kwargs, "secondary_guidance_scale", 3.5)),
                     "conditioning_strength": float(
                         _value_or_default(
                             shot,
@@ -1704,10 +2369,7 @@ class GenerateSequence(NodeBase):
                 self.progress(
                     int(completed_steps / total_steps * 100),
                     phase="denoising",
-                    message=(
-                        f"Shot {shot_index + 1}/{len(shots)}: "
-                        f"denoising {completed_in_shot}/{shot_steps}"
-                    ),
+                    message=(f"Shot {shot_index + 1}/{len(shots)}: denoising {completed_in_shot}/{shot_steps}"),
                     current_step=completed_steps,
                     total_steps=total_steps,
                 )

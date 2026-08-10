@@ -306,7 +306,8 @@ class NodeBase:
     CALLBACK = 'execute'
     # Subclasses may list validated inputs that affect how a resident object is
     # used but not how it is constructed. Changes to these values should update
-    # the node's current parameters without discarding expensive cached output.
+    # the node's current parameters without discarding expensive cached output,
+    # while still invalidating results produced by connected descendants.
     cache_ignored_params = frozenset()
 
     def __init__(self, node_id=None):
@@ -340,6 +341,11 @@ class NodeBase:
         actually re-executed.
         """
         self._cache_invalidated = True
+
+    def _cache_params_equal(self, previous, current):
+        """Compare cached inputs, allowing security-sensitive nodes to tighten equality."""
+
+        return deep_equal(previous, current)
 
     def __call__(self, **kwargs):
         self._interrupt = False
@@ -427,13 +433,20 @@ class NodeBase:
         current_cache_params = {
             key: value for key, value in params.items() if key not in ignored_cache_params
         }
+        previous_ignored_params = {
+            key: value for key, value in self.params.items() if key in ignored_cache_params
+        }
+        current_ignored_params = {
+            key: value for key, value in params.items() if key in ignored_cache_params
+        }
+        ignored_params_changed = not deep_equal(previous_ignored_params, current_ignored_params)
 
         # If any load-relevant value changed, or output is empty, execute the
         # node. Validated passthrough inputs are still recorded below so
         # diagnostics reflect the current graph invocation.
         if (
             self._cache_invalidated
-            or (not deep_equal(previous_cache_params, current_cache_params))
+            or (not self._cache_params_equal(previous_cache_params, current_cache_params))
             or any(v is None for v in self.output.values())
         ):
             self._cache_invalidated = False
@@ -479,6 +492,11 @@ class NodeBase:
                     "node": self.node_id,
                 }, self._sid)
         else:
+            # A cache-ignored value can reconfigure the same resident output
+            # without repeating its expensive construction.  Preserve that
+            # cache hit, but publish the semantic change so connected nodes do
+            # not reuse results computed under the previous contract.
+            self._has_changed = ignored_params_changed
             self.params = params
 
         return self.output
