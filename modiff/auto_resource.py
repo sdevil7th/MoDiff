@@ -282,22 +282,6 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
             OFFLOAD_MODE_NONE,
         ],
     },
-    "WanVideoPipeline:text_to_video": {
-        "supportedTasks": ["text_to_video"],
-        "defaultRepo": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
-        "executionPath": "direct-diffusers-video",
-        "pipelineClass": "WanPipeline",
-        "qualityDefaults": {"width": 832, "height": 480, "steps": 30, "guidanceScale": 5, "numFrames": 81},
-        "minimum": {"accelerator": "cuda", "vramBytes": 10 * GIB, "systemRamBytes": 24 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 12 * GIB, "systemRamBytes": 32 * GIB},
-        "highQuality": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB},
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-    },
     "LTXVideoPipeline": {
         "supportedTasks": ["text_to_video", "image_to_video", "video_to_video", "reference_to_video"],
         "defaultRepo": LTX_VIDEO_REPO,

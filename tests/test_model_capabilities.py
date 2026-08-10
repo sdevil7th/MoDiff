@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 8)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 9)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -66,6 +66,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "FluxReduxPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
+            "WanVideoPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],
@@ -113,6 +114,22 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ti2v_spec["mode"], "text_to_video")
         self.assertEqual(ti2v_spec["pipelineClass"], "WanTI2VPipeline")
         self.assertIn("wanGenerate", [item[0] for item in ti2v_spec["roles"]])
+        for model_type in (
+            "FluxSchnellPipeline",
+            "FluxDevPipeline",
+            "FluxKreaPipeline",
+            "FluxDepthPipeline",
+            "FluxCannyPipeline",
+            "FluxReduxPipeline",
+            "WanImageToVideoPipeline",
+            "WanTI2VPipeline",
+            "WanVideoPipeline",
+        ):
+            capability = by_model[model_type]
+            self.assertEqual(
+                capability["studioExecutionSpecModes"],
+                sorted(item["mode"] for item in capability["studioExecutionSpecs"]),
+            )
 
         z_image = by_model["ZImageModularPipeline"]
         self.assertEqual(z_image["pipelineClasses"], ["ZImagePipeline"])
@@ -146,6 +163,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(wan_v2v["modes"], ["video_to_video", "video_color_edit"])
         wan_t2v = next(profile for profile in wan_video["executionProfiles"] if profile["id"] == "wan-text-to-video:direct")
         self.assertEqual(wan_t2v["modes"], ["text_to_video"])
+        self.assertEqual(wan_video["studioExecutionSpecModes"], ["text_to_video"])
+        self.assertEqual(wan_video["studioExecutionSpecs"][0]["pipelineClass"], "WanPipeline")
 
         ltx = by_model["LTXVideoPipeline"]
         self.assertEqual(ltx["mediaKind"], "video")

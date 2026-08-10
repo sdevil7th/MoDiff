@@ -59,6 +59,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxReduxPipeline", "edit_image"),
                 ("WanImageToVideoPipeline", "image_to_video"),
                 ("WanTI2VPipeline", "text_to_video"),
+                ("WanVideoPipeline", "text_to_video"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -117,6 +118,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
         )
         self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[7]["bindings"])
         self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[7]["edges"])
+        self.assertEqual(specs[8]["pipelineClass"], "WanPipeline")
+        self.assertEqual(specs[8]["roles"], specs[7]["roles"])
+        self.assertEqual(specs[8]["edges"], specs[7]["edges"])
+        self.assertEqual(specs[8]["bindings"], specs[7]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -124,11 +129,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
         for spec in specs:
             definition = STUDIO_EXECUTION_SPEC_DEFINITIONS[spec["id"]]
             profile = DIFFUSERS_EXECUTION_PROFILES[spec["executionProfileId"]]
-            capability = STUDIO_MODEL_CAPABILITIES[spec["modelType"]]
-            requirements = AUTO_MODEL_REQUIREMENTS[spec["modelType"]]
+            requirements_key = definition.get("autoRequirementKey", spec["modelType"])
+            requirements = AUTO_MODEL_REQUIREMENTS[requirements_key]
             self.assertEqual(profile.default_repo, definition["profile"]["default_repo"])
             self.assertEqual(profile.pipeline_class, spec["pipelineClass"])
-            self.assertEqual(capability, definition["capability"])
+            if "capability" in definition:
+                self.assertEqual(STUDIO_MODEL_CAPABILITIES[spec["modelType"]], definition["capability"])
             self.assertEqual(requirements, definition["autoRequirements"])
 
     def test_registry_validation_rejects_unknown_nodes_params_handles_and_dangling_edges(self):
@@ -199,6 +205,15 @@ class StudioExecutionSpecTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
+
+    def test_partial_wan_migration_seals_text_to_video_without_claiming_sibling_modes(self):
+        spec = studio_execution_spec_for_pair("WanVideoPipeline", "text_to_video")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["pipelineClass"], "WanPipeline")
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+        self.assertIsNone(studio_execution_spec_for_pair("WanVideoPipeline", "video_to_video"))
+        self.assertIsNone(studio_execution_spec_for_pair("WanVideoPipeline", "video_color_edit"))
 
     def test_runtime_hint_parser_rejects_malformed_new_receipts_without_legacy_fallback(self):
         server = WebServer(module_registry.MODULE_MAP)

@@ -26,6 +26,7 @@ FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -1070,6 +1071,55 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "edges": _VIDEO_GRAPH_EDGES,
         "bindings": _VIDEO_GRAPH_BINDINGS,
     },
+    "wan-21-t2v-1.3b:text-to-video:v1": {
+        "modelType": "WanVideoPipeline",
+        "mode": "text_to_video",
+        "autoRequirementKey": "WanVideoPipeline:text_to_video",
+        "profile": {
+            "id": "wan-text-to-video:direct",
+            "model_type": "WanVideoPipeline",
+            "modes": ("text_to_video",),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-video",
+            "pipeline_class": "WanPipeline",
+            "default_repo": WAN_T2V_1_3B_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 30,
+            "live_proof": True,
+            "compatible_repos": (),
+        },
+        "autoRequirements": {
+            "supportedTasks": ["text_to_video"],
+            "defaultRepo": WAN_T2V_1_3B_REPO,
+            "executionPath": "direct-diffusers-video",
+            "pipelineClass": "WanPipeline",
+            "qualityDefaults": {
+                "width": 832,
+                "height": 480,
+                "steps": 30,
+                "guidanceScale": 5,
+                "numFrames": 81,
+            },
+            "minimum": {"accelerator": "cuda", "vramBytes": 10 * _GIB, "systemRamBytes": 24 * _GIB},
+            "recommended": {"accelerator": "cuda", "vramBytes": 12 * _GIB, "systemRamBytes": 32 * _GIB},
+            "highQuality": {"accelerator": "cuda", "vramBytes": 24 * _GIB, "systemRamBytes": 48 * _GIB},
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+        },
+        "roles": _VIDEO_GRAPH_ROLES,
+        "edges": _VIDEO_GRAPH_EDGES,
+        "bindings": _VIDEO_GRAPH_BINDINGS,
+    },
 }
 
 
@@ -1127,7 +1177,7 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
 
 def studio_auto_model_requirements() -> dict[str, dict[str, Any]]:
     return {
-        definition["modelType"]: deepcopy(definition["autoRequirements"])
+        definition.get("autoRequirementKey", definition["modelType"]): deepcopy(definition["autoRequirements"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     }
 
@@ -1136,6 +1186,7 @@ def studio_capability_definitions() -> dict[str, dict[str, Any]]:
     return {
         definition["modelType"]: deepcopy(definition["capability"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+        if "capability" in definition
     }
 
 

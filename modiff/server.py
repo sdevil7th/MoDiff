@@ -11738,6 +11738,9 @@ class WebServer:
             )
             if capability["studioExecutionSpecs"]:
                 capability["studioExecutionSpecSchemaVersion"] = 1
+                capability["studioExecutionSpecModes"] = sorted(
+                    specification["mode"] for specification in capability["studioExecutionSpecs"]
+                )
             capabilities.append(capability)
         if query:
             capabilities = [

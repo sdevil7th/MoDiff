@@ -96,10 +96,14 @@ remote qualification gates.
 ### Studio execution specifications
 
 For migrated exact pairs, `GET /model_capabilities` publishes a
-`studioExecutionSpecSchemaVersion: 1` marker and one or more
-`studioExecutionSpecs` beside the pair's `executionProfiles`. The root response
-also includes the same specification catalog. Each specification binds one
-exact model/mode pair to its execution-profile ID, loader module/action,
+`studioExecutionSpecSchemaVersion: 1` marker, a bounded
+`studioExecutionSpecModes` list, and one or more `studioExecutionSpecs` beside
+the pair's `executionProfiles`. The mode list must match the specification modes
+exactly: claimed modes fail closed when their specification is absent or
+malformed, while unclaimed sibling modes remain on the reviewed migration path.
+The root response also includes the same specification catalog. Each
+specification binds one exact model/mode pair to its execution-profile ID,
+loader module/action,
 execution path, pipeline class, default repository, generic graph roles and
 positions, typed edges, form bindings, ordered dynamic actions, and declared
 Auto override fields. `contentHash` is the canonical
