@@ -50,9 +50,11 @@ FLUX_CANNY_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
+SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
+QWEN_IMAGE_EDIT_PLUS_REPO = "Qwen/Qwen-Image-Edit-2511"
 QWEN_IMAGE_EDIT_PREQUANTIZED_REPO = "ovedrive/qwen-image-edit-4bit"
 DEVICE_OPTIONS = list(DEVICE_LIST.keys())
 _IMAGE_MODE_ORDER = (
@@ -135,11 +137,41 @@ IMAGE_PIPELINE_ADAPTERS = {
         guidance_parameter="true_cfg_scale",
     ),
     "ZImagePipeline": ImagePipelineAdapter("ZImagePipeline", frozenset({"text_to_image"}), Z_IMAGE_REPO),
+    "ZImageImg2ImgPipeline": ImagePipelineAdapter(
+        "ZImageImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        Z_IMAGE_REPO,
+        artifact_pipeline_classes=("ZImagePipeline", "ZImageImg2ImgPipeline"),
+    ),
+    "ZImageInpaintPipeline": ImagePipelineAdapter(
+        "ZImageInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        Z_IMAGE_REPO,
+        artifact_pipeline_classes=("ZImagePipeline", "ZImageInpaintPipeline"),
+    ),
+    "StableDiffusionXLPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLPipeline",
+        frozenset({"text_to_image"}),
+        SDXL_BASE_REPO,
+    ),
+    "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLImg2ImgPipeline"),
+    ),
+    "StableDiffusionXLInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLInpaintPipeline"),
+    ),
     "FluxPipeline": ImagePipelineAdapter(
         "FluxPipeline",
         frozenset({"text_to_image"}),
         FLUX_SCHNELL_REPO,
         compatible_repos=frozenset({FLUX_DEV_REPO, FLUX_DEV_FP8_REPO, FLUX_KREA_REPO}),
+        guidance_parameter="true_cfg_scale",
     ),
     "Flux2KleinPipeline": ImagePipelineAdapter(
         "Flux2KleinPipeline",
@@ -147,12 +179,19 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX2_KLEIN_REPO,
         max_reference_images=8,
     ),
+    "Flux2KleinInpaintPipeline": ImagePipelineAdapter(
+        "Flux2KleinInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        FLUX2_KLEIN_REPO,
+        artifact_pipeline_classes=("Flux2KleinPipeline", "Flux2KleinInpaintPipeline"),
+    ),
     "FluxImg2ImgPipeline": ImagePipelineAdapter(
         "FluxImg2ImgPipeline",
         frozenset({"edit_image"}),
         FLUX_DEV_REPO,
         compatible_repos=frozenset({FLUX_DEV_FP8_REPO}),
         artifact_pipeline_classes=("FluxPipeline", "FluxImg2ImgPipeline"),
+        guidance_parameter="true_cfg_scale",
     ),
     "FluxInpaintPipeline": ImagePipelineAdapter(
         "FluxInpaintPipeline",
@@ -160,6 +199,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_DEV_REPO,
         compatible_repos=frozenset({FLUX_DEV_FP8_REPO}),
         artifact_pipeline_classes=("FluxPipeline", "FluxInpaintPipeline"),
+        guidance_parameter="true_cfg_scale",
     ),
     "FluxFillPipeline": ImagePipelineAdapter(
         "FluxFillPipeline", frozenset({"inpaint", "outpaint"}), FLUX_FILL_REPO
@@ -175,8 +215,17 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"edit_image", "multi_image_reference_edit"}),
         FLUX_KONTEXT_REPO,
         compatible_repos=frozenset({FLUX_KONTEXT_NVFP4_REPO}),
+        guidance_parameter="true_cfg_scale",
         multi_image_strategy="stitch_horizontal",
         max_reference_images=8,
+    ),
+    "FluxKontextInpaintPipeline": ImagePipelineAdapter(
+        "FluxKontextInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        FLUX_KONTEXT_REPO,
+        compatible_repos=frozenset({FLUX_KONTEXT_NVFP4_REPO}),
+        artifact_pipeline_classes=("FluxKontextPipeline", "FluxKontextInpaintPipeline"),
+        guidance_parameter="true_cfg_scale",
     ),
     # Virtual adapter class: FLUX Redux is a prior that supplies embeddings to
     # a base FLUX pipeline, not a standalone img2img checkpoint.
@@ -199,6 +248,36 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({QWEN_IMAGE_EDIT_PREQUANTIZED_REPO}),
         artifact_pipeline_classes=("QwenImageEditPipeline", "QwenImageEditInpaintPipeline"),
         guidance_parameter="true_cfg_scale",
+    ),
+    "QwenImageImg2ImgPipeline": ImagePipelineAdapter(
+        "QwenImageImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        QWEN_IMAGE_2512_REPO,
+        compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
+        artifact_pipeline_classes=("QwenImagePipeline", "QwenImageImg2ImgPipeline"),
+        guidance_parameter="true_cfg_scale",
+    ),
+    "QwenImageInpaintPipeline": ImagePipelineAdapter(
+        "QwenImageInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        QWEN_IMAGE_2512_REPO,
+        compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
+        artifact_pipeline_classes=("QwenImagePipeline", "QwenImageInpaintPipeline"),
+        guidance_parameter="true_cfg_scale",
+    ),
+    "QwenImageEditPipeline": ImagePipelineAdapter(
+        "QwenImageEditPipeline",
+        frozenset({"edit_image"}),
+        QWEN_IMAGE_EDIT_REPO,
+        compatible_repos=frozenset({QWEN_IMAGE_EDIT_PREQUANTIZED_REPO}),
+        guidance_parameter="true_cfg_scale",
+    ),
+    "QwenImageEditPlusPipeline": ImagePipelineAdapter(
+        "QwenImageEditPlusPipeline",
+        frozenset({"edit_image", "multi_image_reference_edit"}),
+        QWEN_IMAGE_EDIT_PLUS_REPO,
+        guidance_parameter="true_cfg_scale",
+        max_reference_images=8,
     ),
 }
 IMAGE_PIPELINE_CLASSES = list(IMAGE_PIPELINE_ADAPTERS)

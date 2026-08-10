@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -25,12 +26,17 @@ from modules.DiffusersImage.main import (
     FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO,
     IMAGE_PIPELINE_CLASSES,
+    QWEN_IMAGE_2512_REPO,
+    QWEN_IMAGE_EDIT_PLUS_REPO,
+    QWEN_IMAGE_EDIT_REPO,
+    SDXL_BASE_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
     _tag_image_pipeline,
     add_progress_callback,
     image_pipeline_contract,
     output_image_dimensions,
+    pipeline_class_from_name,
     quant_config_for,
     resolve_image_model_selection,
     resolve_image_pipeline_revision,
@@ -395,6 +401,187 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         {"source": "hub", "value": incompatible},
                     ),
                     {"source": "hub", "value": adapter.default_repo},
+                )
+
+    def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
+        expected = {
+            "StableDiffusionXLPipeline": ({"text_to_image"}, SDXL_BASE_REPO, {"prompt"}),
+            "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
+            "StableDiffusionXLInpaintPipeline": (
+                {"inpaint", "outpaint"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+            "QwenImageImg2ImgPipeline": ({"edit_image"}, QWEN_IMAGE_2512_REPO, {"prompt", "image"}),
+            "QwenImageInpaintPipeline": (
+                {"inpaint", "outpaint"},
+                QWEN_IMAGE_2512_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+            "QwenImageEditPipeline": ({"edit_image"}, QWEN_IMAGE_EDIT_REPO, {"prompt", "image"}),
+            "QwenImageEditPlusPipeline": (
+                {"edit_image", "multi_image_reference_edit"},
+                QWEN_IMAGE_EDIT_PLUS_REPO,
+                {"prompt", "image"},
+            ),
+            "ZImageImg2ImgPipeline": ({"edit_image"}, Z_IMAGE_REPO, {"prompt", "image"}),
+            "ZImageInpaintPipeline": (
+                {"inpaint", "outpaint"},
+                Z_IMAGE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+            "FluxKontextInpaintPipeline": (
+                {"inpaint", "outpaint"},
+                FLUX_KONTEXT_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+            "Flux2KleinInpaintPipeline": (
+                {"inpaint", "outpaint"},
+                FLUX2_KLEIN_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+        }
+        for pipeline_name, (modes, repository, required_inputs) in expected.items():
+            with self.subTest(pipeline=pipeline_name):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                parameters = set(inspect.signature(pipeline_class_from_name(pipeline_name).__call__).parameters)
+                self.assertEqual(adapter.modes, frozenset(modes))
+                self.assertEqual(adapter.default_repo, repository)
+                self.assertTrue(required_inputs.issubset(parameters))
+                self.assertIn("num_inference_steps", parameters)
+                self.assertIn("generator", parameters)
+                self.assertIn("output_type", parameters)
+                self.assertIn(adapter.guidance_parameter, parameters)
+
+        for deferred in (
+            "Flux2Pipeline",
+            "Flux2KleinKVPipeline",
+            "FluxControlImg2ImgPipeline",
+            "FluxControlInpaintPipeline",
+            "FluxControlNetPipeline",
+            "FluxControlNetImg2ImgPipeline",
+            "FluxControlNetInpaintPipeline",
+            "QwenImageControlNetPipeline",
+            "QwenImageControlNetInpaintPipeline",
+            "QwenImageLayeredPipeline",
+            "ZImageControlNetPipeline",
+            "ZImageControlNetInpaintPipeline",
+            "ZImageOmniPipeline",
+            "StableDiffusionXLInstructPix2PixPipeline",
+        ):
+            with self.subTest(deferred=deferred):
+                self.assertNotIn(deferred, IMAGE_PIPELINE_ADAPTERS)
+
+    def test_new_standard_image_adapters_execute_only_their_pinned_signature(self):
+        image = Image.new("RGB", (16, 16), "black")
+        mask = Image.new("L", (16, 16), "white")
+        cases = (
+            ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+            ("QwenImageImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("QwenImageInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+            ("QwenImageEditPipeline", "edit_image", Edit, {"image": image}),
+            ("QwenImageEditPlusPipeline", "edit_image", Edit, {"image": image}),
+            ("ZImageImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("ZImageInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+            ("FluxKontextInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+            ("Flux2KleinInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+        )
+        aliases = {
+            "negative_prompt": "negative_prompt",
+            "width": "width",
+            "height": "height",
+            "max_sequence_length": "max_sequence_length",
+            "strength": "strength",
+            "padding_mask_crop": "padding_mask_crop",
+            "reference_strength": "reference_strength",
+        }
+        for pipeline_name, mode, action_class, action_inputs in cases:
+            with self.subTest(pipeline=pipeline_name):
+                upstream_signature = inspect.signature(pipeline_class_from_name(pipeline_name).__call__)
+                upstream_parameters = set(upstream_signature.parameters)
+                received = {}
+
+                def call(_self, **kwargs):
+                    received.update(kwargs)
+                    return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+                call.__signature__ = upstream_signature
+                fake_type = type(
+                    pipeline_name,
+                    (),
+                    {"_execution_device": "cpu", "__call__": call},
+                )
+                pipeline = tag_test_image_pipeline(fake_type(), pipeline_name, mode)
+                values = {
+                    "pipeline": pipeline,
+                    "prompt": "render the reviewed fixture",
+                    "negative_prompt": "artifact",
+                    "width": 32,
+                    "height": 32,
+                    "num_inference_steps": 2,
+                    "guidance_scale": 4.0,
+                    "strength": 0.75,
+                    "padding_mask_crop": 16,
+                    "max_sequence_length": 128,
+                    "output_type": "pil",
+                    **action_inputs,
+                }
+                initial = {
+                    "prompt",
+                    "num_inference_steps",
+                    "generator",
+                    "output_type",
+                    "return_dict",
+                    *action_inputs.keys(),
+                }
+                if action_class is Generate:
+                    initial.update({"width", "height"})
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                expected_keys = initial | {
+                    destination
+                    for source, destination in aliases.items()
+                    if values.get(source) is not None and destination in upstream_parameters
+                }
+                expected_keys.add(adapter.guidance_parameter)
+
+                with patch("modules.DiffusersImage.main.add_progress_callback"):
+                    action_class(f"signature-{pipeline_name}").execute(**values)
+
+                self.assertEqual(set(received), expected_keys)
+                self.assertEqual(received[adapter.guidance_parameter], 4.0)
+                if "negative_prompt" in upstream_parameters:
+                    self.assertEqual(received["negative_prompt"], "artifact")
+
+    def test_modern_flux_true_cfg_and_negative_prompt_use_the_reviewed_parameters(self):
+        class ModernFlux:
+            def __call__(
+                self,
+                *,
+                negative_prompt=None,
+                true_cfg_scale=1.0,
+                guidance_scale=3.5,
+            ):
+                return None
+
+        for pipeline_name in (
+            "FluxPipeline",
+            "FluxImg2ImgPipeline",
+            "FluxInpaintPipeline",
+            "FluxKontextPipeline",
+            "FluxKontextInpaintPipeline",
+        ):
+            with self.subTest(pipeline=pipeline_name):
+                target = {}
+                IMAGE_PIPELINE_ADAPTERS[pipeline_name].apply_generation_parameters(
+                    ModernFlux(),
+                    {"negative_prompt": "artifact", "guidance_scale": 5.0},
+                    target,
+                )
+                self.assertEqual(
+                    target,
+                    {"negative_prompt": "artifact", "true_cfg_scale": 5.0},
                 )
 
     def test_flux_controlnet_is_not_advertised_without_component_assembly(self):
@@ -1008,7 +1195,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 generator,
                 output_type,
                 return_dict,
-                guidance_scale,
+                true_cfg_scale,
                 strength,
                 max_sequence_length,
             ):
@@ -1017,7 +1204,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     height=height,
                     num_inference_steps=num_inference_steps,
                     output_type=output_type,
-                    guidance_scale=guidance_scale,
+                    true_cfg_scale=true_cfg_scale,
                     strength=strength,
                     max_sequence_length=max_sequence_length,
                     seed=generator.initial_seed(),
@@ -1044,7 +1231,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "height": 2048,
                 "num_inference_steps": 1,
                 "output_type": "pil",
-                "guidance_scale": 0.0,
+                "true_cfg_scale": 0.0,
                 "strength": 0.0,
                 "max_sequence_length": 512,
                 "seed": 4294967295,

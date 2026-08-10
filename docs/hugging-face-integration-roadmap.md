@@ -1071,12 +1071,32 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         for the completed Qwen and SDXL base-inpaint flows remain outstanding;
         SDXL ControlNet/Union/IP-Adapter combinations and Wan FLF executable
         artifact admission are also unfinished, so P0.3c.3 stays incomplete.
-    - [ ] **P0.3c.4 Standard signature and adapter truth:** correct Flux
+    - [x] **P0.3c.4 Standard signature and adapter truth:** correct Flux
       `true_cfg_scale`/negative-prompt forwarding and register missing standard
       image classes only when each maps to an existing generic action with an
       exact fake-pipeline signature test. Keep KV/full Flux2 and other
       artifact-sensitive variants deferred until their runtime artifacts are
       reviewed. Assets: none.
+      - Status 2026-08-10: modern Flux text, img2img, inpaint, and Kontext
+        adapters now bind the generic guidance value to `true_cfg_scale` and
+        forward the negative prompt only through an upstream signature that
+        declares it. Eleven pinned standard classes now reuse the existing
+        generic Generate/Edit/Inpaint actions: SDXL base/img2img/inpaint; Qwen
+        Image img2img/inpaint and Edit/Edit Plus; Z-Image img2img/inpaint; Flux
+        Kontext inpaint; and Flux2 Klein inpaint. Every class uses an already
+        reviewed immutable base artifact and remains contract-only with no Auto
+        profile or public template. Full Flux2, Flux2 KV, ControlNet/composite
+        variants, Qwen Layered, Z-Image Omni, and SDXL instruct-pix2pix remain
+        unregistered until their extra inputs or artifacts are reviewed.
+      - Evidence 2026-08-10: the focused image registry passed 73 tests with 2
+        skips and 177 subtests. The adjacent profile, capability, artifact,
+        offload, Qwen-inpaint, and optional-runtime matrix passed 99 tests and
+        176 subtests. The complete backend gate passed 1116 tests with 4 skips,
+        1740 subtests, and only the existing upstream Diffusers deprecation
+        warning. Ruff E9/F, `py_compile`, dependency validation (78 compatible
+        packages), preflight, and diff checks passed. Tests inspected the pinned
+        upstream signatures and executed every new adapter through fake
+        pipelines; no model, artifact, media, network, or GPU execution occurred.
     - [ ] **P0.3c.5 Contract-only exposure:** publish newly complete modes and
       already implemented but unprofiled video/audio adapters as
       `contract_only`, with backend-driven parameters and no Auto eligibility.
@@ -1686,7 +1706,7 @@ Add references only after the corresponding evidence exists.
 | P0.3a.1 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: registered Modular dynamic action safety and its backend/client gates are recorded in the paired implementation commits. |
 | P0.3a.2 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: safe declarative custom contract identity/preview and its backend/client/HTTP gates are recorded; executable custom admission remains deferred to P1.1. |
 | P0.3b | `91c9a36` (revalidated at `8fb2cb9`) | `28b12b7`; Win32 checkpoint `d226c4b` (revalidated at `c3e8a17`) | Not required | Not required | Complete: P0.3b.1-.7 implementation, complete backend/client gates, reviewed Windows visual baselines, exact bundle mirror, and fresh HTTP smoke passed; live qualification is not part of this segment. |
-| P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, and the Wan I2V split route are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain |
+| P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2/.4 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, the Wan I2V split route, modern Flux true-CFG forwarding, and eleven contract-only standard image adapters are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain. |
 | P0.3d | Pending | Pending | Not required | Not required | Planned |
 | P0.3e | Pending; add one row per migrated pair | Pending; add one row per migrated pair | Not required | Not required | Planned |
 | P0.4 | Pending | `12847d0` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Broader backend history/profile receipt binding and the remaining P0.4 mismatch cleanup remain. |
