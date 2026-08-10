@@ -24,6 +24,8 @@ FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
+FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
+FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -835,6 +837,83 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 "optimum-quanto",
             ],
             "guardedReason": "FLUX Redux has guarded Auto coverage through generic Diffusers image/reference nodes.",
+        },
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _EDIT_GRAPH_BINDINGS,
+    },
+    "flux-kontext:edit-image:v1": {
+        "modelType": "FluxKontextPipeline",
+        "mode": "edit_image",
+        "profile": {
+            "id": "flux-kontext:direct",
+            "model_type": "FluxKontextPipeline",
+            "modes": ("edit_image", "multi_image_reference_edit"),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "FluxKontextPipeline",
+            "default_repo": FLUX_KONTEXT_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder_2"),
+            "default_quantized_components": ("transformer",),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (FLUX_KONTEXT_NVFP4_REPO,),
+        },
+        "autoRequirements": {
+            "supportedTasks": ["edit_image"],
+            "defaultRepo": FLUX_KONTEXT_REPO,
+            "preferredLowerMemoryRepo": FLUX_KONTEXT_NVFP4_REPO,
+            "executionPath": "direct-diffusers-image",
+            "pipelineClass": "FluxKontextPipeline",
+            "qualityDefaults": {
+                "width": 768,
+                "height": 768,
+                "steps": 24,
+                "guidanceScale": 3.5,
+                "maxSequenceLength": 256,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 60 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "lowerMemory": {
+                "accelerator": "cuda",
+                "vramBytes": 16 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+                "quantizationMode": "torchao_float8",
+                "quantizedComponents": ["transformer", "text_encoder_2"],
+            },
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+            "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "torchao"],
+            "guardedReason": (
+                "FLUX Kontext uses the NVFP4 lower-memory artifact when available; failures are remembered for "
+                "this machine."
+            ),
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
