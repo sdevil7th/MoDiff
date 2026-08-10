@@ -1104,7 +1104,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       41/41, including partial-route, field-toggle, core-schema mutation, and
       post-finalization edge-deletion cases; the complete mocked Studio suite
       passed 83/83. This is not generic controlled-extension proof.
-    - [ ] Schema-v3 controlled-workflow proof: begin only from a matching proof,
+    - [x] Schema-v3 controlled-workflow proof: begin only from a matching proof,
       perform each trusted extension as one synchronous fail-closed transaction,
       validate a strict controlled-role-to-node-key contract, preserve the
       independent exact Modular core-route check, and seal every managed
@@ -1113,8 +1113,31 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       complete hash, and abort must roll back or remain proofless. Cover LoRA
       (Modular, direct image, and direct audio), video sequence and upscaler
       composition, quality-sequence loops, soundtrack/export replacement, and
-      lyric/mux workflows. Until this gate passes, those groups are not proof of
-      controlled-workflow execution readiness.
+      lyric/mux workflows. These reviewed groups are now covered by the client
+      proof gate; broader P0.4 receipt work and live execution remain separate.
+      Evidence 2026-08-10: schema-v3 now persists a bounded controlled-contract
+      declaration and seals the exact managed role/node identity, reviewed
+      registry execution shape, node execution-disabled state, parent/quality-
+      loop membership, and actual edge IDs/endpoints/handles. Each reviewed
+      builder runs inside one synchronous begin/commit/abort boundary; partial or
+      failed mutations restore the previous graph/proof/history, successful
+      replacement defers cache cleanup until after commit, and sequential/reverse
+      compositions retain prior receipts. Authoritative schema messages clear
+      the proof before mutation and may reseal only the same topology/execution
+      baseline; malformed persisted declarations remain quarantined until the
+      operator explicitly detaches the invalid receipt. Field-level `disabled`
+      and non-durable callbacks remain proof-neutral, while registry-declared
+      type/display/input/spawn/data-source shape is revalidated independently of
+      self-supplied hashes. Focused graph/template/run contracts passed 136/136,
+      the full client `npm run check` passed, and the complete mocked Studio suite
+      passed 85/85. The production bundle was 522753/523264 gzip bytes (511-byte
+      hard-cap headroom and 383 bytes below the stricter safety target). The
+      tracked packed-template codec regenerates deterministically in the normal
+      unit gate; 77 runnable and 3 planning templates remained deep-identical,
+      and all 360 Gallery asset paths/purpose sets remained unchanged. Independent
+      graph-contract and bundle-semantic audits found no remaining blocker. This
+      is static/unit/contract/mocked-browser CPU evidence only: no model execution,
+      media qualification, optional package action, or live runtime cutover ran.
 - [ ] **P0.5 Lazy optional Hugging Face runtime installation**
   - [x] Contract/status preparation: declare one exact composite
     `transformers==5.14.1` + `peft==0.20.0` profile, bind it to every current
@@ -1251,7 +1274,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
 
 - [ ] All focused backend tests pass.
 - [ ] Complete backend gate passes.
-- [ ] Client unit and mocked browser gates pass.
+- [x] Client unit and mocked browser gates pass.
 - [ ] Existing supported exact pairs retain their public inputs and outputs.
 - [ ] Unknown or unsupported pairs cannot become Auto-ready.
 - [ ] No generated assets or model downloads were needed.
@@ -1642,7 +1665,7 @@ Add references only after the corresponding evidence exists.
 | P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, and the Wan I2V split route are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain |
 | P0.3d | Pending | Pending | Not required | Not required | Planned |
 | P0.3e | Pending; add one row per migrated pair | Pending; add one row per migrated pair | Not required | Not required | Planned |
-| P0.4 | Pending | Pending | Not required | Not required | In progress: the bounded schema-v2 upscaler proof repair is unit- and mocked-browser-tested; schema-v3 controlled-workflow proof for LoRA, sequence, quality, soundtrack, and lyric/mux groups remains |
+| P0.4 | Pending | `12847d0` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Broader backend history/profile receipt binding and the remaining P0.4 mismatch cleanup remain. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
