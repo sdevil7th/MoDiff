@@ -1343,10 +1343,35 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       contract, mocked-browser, build, and local HTTP evidence only; no Wan model
       download, model execution, generated media, or new live workload
       qualification occurred.
+    - [x] `FluxKontextPipeline:edit_image`: backend commit `5f4d437`
+      moves the existing `flux-kontext:direct` profile, exact edit-only Auto
+      requirements, six-node generic edit recipe, declarative form bindings,
+      and receipt hash `studio-spec-v1-393009a9` into the specification
+      registry. Client commit `8ae0dd9` proves the generic specification path
+      without adding a new model-named production branch. Exact mode ownership
+      is limited to `edit_image`; `multi_image_reference_edit` remains on its
+      existing generic legacy graph and retains the broader reviewed execution
+      profile until that sibling is migrated separately. The focused backend
+      matrix passed 98 tests with 451 subtests; the exact mirrored backend tree
+      passed 1,125 tests with 4 skips, the existing Diffusers deprecation
+      warning, and 1,770 subtests. The focused client graph contract and exact
+      mocked-browser recipe/sibling transition each passed 1/1, the complete
+      `npm run check` passed, and the final full mocked Studio browser suite
+      passed 87/87. The unchanged production bundle was 522738/523264 gzip
+      bytes, 398 bytes below the stricter 523136-byte safety target. The mirror
+      matched all 26 generated files byte-for-byte while preserving 317
+      backend-owned Gallery files. A fresh worker returned 200 for `/`, the
+      favicon, and all 23 generated assets, published ten exact specs plus the
+      Kontext `edit_image` marker/hash, and port 8088 was free after its verified
+      worker stopped. Ruff 0.12.7 E9/F, `py_compile`, `uv pip check` (78
+      packages), preflight, formatting, lint, type, and diff checks passed. This
+      is static, unit, contract, mocked-browser, build, and local HTTP evidence
+      only; no Kontext download, model execution, generated media, or live
+      workload qualification occurred.
     - [ ] Continue one exact model/mode pair per paired commit; Krea, Depth,
-      Canny, Redux, Wan TI2V, Wan I2V, and Wan 2.1 T2V completion does not
-      qualify the remaining Kontext, Fill, Klein, Qwen, other Wan, LTX, ACE, or
-      modular overlays.
+      Canny, Redux, Kontext edit, Wan TI2V, Wan I2V, and Wan 2.1 T2V completion
+      does not qualify Kontext multi-reference or the remaining Fill, Klein,
+      Qwen, other Wan, LTX, ACE, or modular overlays.
 - [ ] **P0.4 Proof receipts and current mismatch cleanup**
   - Backend: bind history to profile/schema version, graph and loader topology,
     auxiliary repositories, adapters, LoRAs, ControlNets, runtime profile, and
@@ -1924,7 +1949,7 @@ Add references only after the corresponding evidence exists.
 | P0.3b | `91c9a36` (revalidated at `8fb2cb9`) | `28b12b7`; Win32 checkpoint `d226c4b` (revalidated at `c3e8a17`) | Not required | Not required | Complete: P0.3b.1-.7 implementation, complete backend/client gates, reviewed Windows visual baselines, exact bundle mirror, and fresh HTTP smoke passed; live qualification is not part of this segment. |
 | P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2/.4 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, the Wan I2V split route, modern Flux true-CFG forwarding, and eleven contract-only standard image adapters are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain. |
 | P0.3d | `fd258d8` | `642ea9c` | Not required | Not required | Complete: backend-owned versioned Flux Schnell/Dev specifications, strict client parsing, generic graph materialization, exact proof/runtime receipt binding, complete backend/client/browser gates, byte-exact mirror verification, and local HTTP smoke passed. No model or media execution was required. |
-| P0.3e | `96f70cb` (Flux Krea T2I), `a299d1d` (Flux Depth control-image), `14fef9f` (Flux Canny control-image), `6be23e7` (Flux Redux edit-image), `276dd1f` (Wan TI2V text-to-video; corrected by `6983ce6`), `6983ce6` (Wan I2V image-to-video), `92cd1f5` (Wan 2.1 T2V); add one row/reference per remaining pair | `80ac243` (Flux Krea T2I), `2de0c68` (Flux Depth control-image), `784e3c7` (Flux Canny control-image), `b709126` (Flux Redux edit-image), `049addb` (Wan TI2V text-to-video; corrected by `60f4036`), `60f4036` (Wan I2V image-to-video), `0e359ce` (Wan 2.1 T2V); add one row/reference per remaining pair | Not required | Not required | In progress: the exact Flux Krea text-to-image, Flux Depth/Canny control-image, Flux Redux edit-image, Wan TI2V/I2V, and Wan 2.1 T2V pairs are backend-specification-owned and passed complete backend/client/mocked-browser gates. Remaining exact pairs and declarative overlays are pending. |
+| P0.3e | `96f70cb` (Flux Krea T2I), `a299d1d` (Flux Depth control-image), `14fef9f` (Flux Canny control-image), `6be23e7` (Flux Redux edit-image), `5f4d437` (Flux Kontext edit-image), `276dd1f` (Wan TI2V text-to-video; corrected by `6983ce6`), `6983ce6` (Wan I2V image-to-video), `92cd1f5` (Wan 2.1 T2V); add one row/reference per remaining pair | `80ac243` (Flux Krea T2I), `2de0c68` (Flux Depth control-image), `784e3c7` (Flux Canny control-image), `b709126` (Flux Redux edit-image), `8ae0dd9` (Flux Kontext edit-image), `049addb` (Wan TI2V text-to-video; corrected by `60f4036`), `60f4036` (Wan I2V image-to-video), `0e359ce` (Wan 2.1 T2V); add one row/reference per remaining pair | Not required | Not required | In progress: the exact Flux Krea text-to-image, Flux Depth/Canny control-image, Flux Redux/Kontext edit-image, Wan TI2V/I2V, and Wan 2.1 T2V pairs are backend-specification-owned and passed complete backend/client/mocked-browser gates. Remaining exact pairs and declarative overlays are pending. |
 | P0.4 | Pending | `12847d0` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Broader backend history/profile receipt binding and the remaining P0.4 mismatch cleanup remain. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
