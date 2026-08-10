@@ -19,6 +19,7 @@ STUDIO_EXECUTION_SPEC_CANONICALIZATION_VERSION = 1
 FLUX_SCHNELL_REPO = "black-forest-labs/FLUX.1-schnell"
 FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
 FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
+FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -145,6 +146,9 @@ def _capability(
     guidance: float,
     low_vram_mode: str,
     alternate_artifact: str | None = None,
+    low_vram_width: int | None = None,
+    low_vram_steps: int | None = None,
+    execution_status: str = "supported_with_model",
 ) -> dict[str, Any]:
     return {
         "modelType": model_type,
@@ -175,12 +179,12 @@ def _capability(
             "dtype": "bfloat16",
             "autoOffload": True,
             "offloadMode": low_vram_mode,
-            "steps": steps,
-            "width": width,
-            "height": width,
+            "steps": low_vram_steps if low_vram_steps is not None else steps,
+            "width": low_vram_width if low_vram_width is not None else width,
+            "height": low_vram_width if low_vram_width is not None else width,
         },
         "modes": ["text_to_image"],
-        "executionStatus": "supported_with_model",
+        "executionStatus": execution_status,
     }
 
 
@@ -322,6 +326,84 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 "torch",
                 "optimum-quanto",
             ],
+        },
+    },
+    "flux-krea:text-to-image:v1": {
+        "modelType": "FluxKreaPipeline",
+        "mode": "text_to_image",
+        "profile": _profile(
+            "flux-krea:direct",
+            "FluxKreaPipeline",
+            FLUX_KREA_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+        ),
+        "capability": _capability(
+            "FluxKreaPipeline",
+            "FLUX.1 Krea dev",
+            "FLUX.1-Krea-dev",
+            FLUX_KREA_REPO,
+            width=1024,
+            steps=28,
+            guidance=3.5,
+            low_vram_mode=OFFLOAD_MODE_GROUP_DISK,
+            low_vram_width=768,
+            low_vram_steps=20,
+            execution_status="expert_only",
+        ),
+        "autoRequirements": {
+            "supportedTasks": ["text_to_image"],
+            "defaultRepo": FLUX_KREA_REPO,
+            "qualityDefaults": {
+                "width": 768,
+                "height": 768,
+                "steps": 24,
+                "guidanceScale": 3.5,
+                "maxSequenceLength": 256,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 60 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "onLoadQuantization": {
+                "accelerator": "cuda",
+                "vramBytes": 16 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+                "quantizationMode": "quanto_float8",
+                "quantizedComponents": ["transformer", "text_encoder_2"],
+            },
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+            "requiredPackages": [
+                "diffusers",
+                "transformers",
+                "accelerate",
+                "torch",
+                "optimum-quanto",
+            ],
+            "guardedReason": "FLUX Krea has broad guarded Auto coverage through on-load float8 quantization and Diffusers offload.",
         },
     },
 }

@@ -115,6 +115,9 @@ recipe. A managed submission includes a bounded
 map. Graph admission checks that those exact nodes are executable and that all
 declared edges and bindings remain present. The receipt and checksum are
 consistency identifiers, not authorization tokens or live-model evidence.
+The current schema-v1 catalog covers Flux Schnell, Flux Dev, and Flux Krea
+text-to-image. They share one generic image topology; their exact profile,
+artifact, resource policy, and receipt identity remain distinct.
 
 ### Auto resource compatibility
 

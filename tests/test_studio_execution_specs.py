@@ -46,18 +46,22 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
-    def test_flux_pair_registry_owns_profile_capability_and_auto_contracts(self):
+    def test_flux_registry_owns_profile_capability_and_auto_contracts(self):
         specs = validate_studio_execution_specs(module_registry.MODULE_MAP)
         self.assertEqual(
             [(item["modelType"], item["mode"]) for item in specs],
             [
                 ("FluxSchnellPipeline", "text_to_image"),
                 ("FluxDevPipeline", "text_to_image"),
+                ("FluxKreaPipeline", "text_to_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
         self.assertEqual(specs[0]["edges"], specs[1]["edges"])
         self.assertEqual(specs[0]["bindings"], specs[1]["bindings"])
+        self.assertEqual(specs[0]["roles"], specs[2]["roles"])
+        self.assertEqual(specs[0]["edges"], specs[2]["edges"])
+        self.assertEqual(specs[0]["bindings"], specs[2]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -119,7 +123,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 validate_studio_execution_specs(module_registry.MODULE_MAP)
 
     def test_runtime_receipt_binds_graph_profile_and_topology(self):
-        spec = studio_execution_spec_for_pair("FluxSchnellPipeline", "text_to_image")
+        spec = studio_execution_spec_for_pair("FluxKreaPipeline", "text_to_image")
         self.assertIsNotNone(spec)
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)

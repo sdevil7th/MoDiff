@@ -22,6 +22,7 @@ from modiff.optional_runtimes import (
 from modiff.studio_execution_specs import (
     FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
     FLUX_DEV_REPO,
+    FLUX_KREA_REPO as FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
     studio_execution_profile_definitions,
 )
@@ -31,7 +32,6 @@ QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
-FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
@@ -509,9 +509,6 @@ DIFFUSERS_EXECUTION_PROFILES.update(
             "Flux2KleinPipeline",
             FLUX2_KLEIN_REPO,
             live_proof=True,
-        ),
-        "flux-krea:direct": _flux_execution_profile(
-            "flux-krea:direct", "FluxKreaPipeline", ("text_to_image",), "FluxPipeline", FLUX_KREA_REPO
         ),
         "flux-kontext:direct": _flux_execution_profile(
             "flux-kontext:direct",
