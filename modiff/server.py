@@ -1205,46 +1205,6 @@ STUDIO_MODEL_CAPABILITIES = {
             "inpaint": {"requiredImages": ["referenceImages", "maskImage"], "note": "Requires source and mask images."}
         },
     },
-    "FluxCannyPipeline": {
-        "modelType": "FluxCannyPipeline",
-        "label": "FLUX.1 Canny dev",
-        "displayName": "FLUX.1-Canny-dev",
-        "family": "FLUX Image",
-        "defaultRepo": "black-forest-labs/FLUX.1-Canny-dev",
-        "artifactCandidates": [
-            "black-forest-labs/FLUX.1-Canny-dev",
-            "fuliucansheng/FLUX.1-Canny-dev-diffusers",
-        ],
-        "verifiedRepairSources": [
-            {
-                "repo": "fuliucansheng/FLUX.1-Canny-dev-diffusers",
-                "verification": "matching filename, size, and LFS SHA-256 plus local byte verification",
-            }
-        ],
-        "artifactLabel": "Diffusers repo",
-        "defaultDtype": "bfloat16",
-        "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
-        "recommendedSteps": 28,
-        "recommendedGuidance": 3.5,
-        "guidanceLabel": "Guidance",
-        "supportsImageInput": True,
-        "supportsMask": False,
-        "supportsMultiImage": False,
-        "supportsControlImage": True,
-        "supportsLayers": False,
-        "supportsLora": True,
-        "offloadSupport": DIRECT_OFFLOAD_SUPPORT,
-        "lowVram": {
-            "dtype": "bfloat16",
-            "autoOffload": True,
-            "offloadMode": OFFLOAD_MODE_GROUP_DISK,
-            "steps": 20,
-            "width": 768,
-            "height": 768,
-        },
-        "modes": ["control_image"],
-        "executionStatus": "expert_only",
-    },
     "FluxReduxPipeline": {
         "modelType": "FluxReduxPipeline",
         "label": "FLUX.1 Redux dev",

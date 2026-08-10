@@ -17,7 +17,7 @@ from modiff.diffusers_offload_modes import (
 )
 from modiff.diffusers_profiles import (
     ACE_STEP_REPO,
-    FLUX_CANNY_REPO,
+    FLUX_CANNY_REPO as FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO as FLUX_DEPTH_REPO,
     FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
     FLUX_FILL_REPO,
@@ -414,32 +414,6 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
         ],
         "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
         "guardedReason": "FLUX Fill has guarded Auto coverage through generic Diffusers inpaint/outpaint nodes and on-load quantization.",
-    },
-    "FluxCannyPipeline": {
-        "supportedTasks": ["control_image"],
-        "defaultRepo": FLUX_CANNY_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxControlPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 10, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "onLoadQuantization": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-        "guardedReason": "FLUX Canny has guarded Auto coverage through generic control-image Diffusers nodes.",
     },
     "FluxReduxPipeline": {
         "supportedTasks": ["edit_image"],

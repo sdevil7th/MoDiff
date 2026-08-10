@@ -21,6 +21,8 @@ FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
 FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
 FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
 FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
+FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
+FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -523,6 +525,105 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 "optimum-quanto",
             ],
             "guardedReason": "FLUX Depth has guarded Auto coverage through generic control-image Diffusers nodes.",
+        },
+        "roles": _CONTROL_GRAPH_ROLES,
+        "edges": _CONTROL_GRAPH_EDGES,
+        "bindings": _CONTROL_GRAPH_BINDINGS,
+    },
+    "flux-canny:control-image:v1": {
+        "modelType": "FluxCannyPipeline",
+        "mode": "control_image",
+        "profile": _profile(
+            "flux-canny:direct",
+            "FluxCannyPipeline",
+            FLUX_CANNY_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            compatible_repos=(FLUX_CANNY_VERIFIED_REPAIR_REPO,),
+            mode="control_image",
+            pipeline_class="FluxControlPipeline",
+        ),
+        "capability": {
+            **_capability(
+                "FluxCannyPipeline",
+                "FLUX.1 Canny dev",
+                "FLUX.1-Canny-dev",
+                FLUX_CANNY_REPO,
+                width=1024,
+                steps=28,
+                guidance=3.5,
+                low_vram_mode=OFFLOAD_MODE_GROUP_DISK,
+                low_vram_width=768,
+                low_vram_steps=20,
+                execution_status="expert_only",
+            ),
+            "artifactCandidates": [
+                FLUX_CANNY_REPO,
+                FLUX_CANNY_VERIFIED_REPAIR_REPO,
+            ],
+            "verifiedRepairSources": [
+                {
+                    "repo": FLUX_CANNY_VERIFIED_REPAIR_REPO,
+                    "verification": "matching filename, size, and LFS SHA-256 plus local byte verification",
+                }
+            ],
+            "supportsImageInput": True,
+            "supportsControlImage": True,
+            "modes": ["control_image"],
+        },
+        "autoRequirements": {
+            "supportedTasks": ["control_image"],
+            "defaultRepo": FLUX_CANNY_REPO,
+            "qualityDefaults": {
+                "width": 768,
+                "height": 768,
+                "steps": 24,
+                "guidanceScale": 10,
+                "maxSequenceLength": 256,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 60 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "onLoadQuantization": {
+                "accelerator": "cuda",
+                "vramBytes": 16 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+                "quantizationMode": "quanto_float8",
+                "quantizedComponents": ["transformer", "text_encoder_2"],
+            },
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+            "requiredPackages": [
+                "diffusers",
+                "transformers",
+                "accelerate",
+                "torch",
+                "optimum-quanto",
+            ],
+            "guardedReason": "FLUX Canny has guarded Auto coverage through generic control-image Diffusers nodes.",
         },
         "roles": _CONTROL_GRAPH_ROLES,
         "edges": _CONTROL_GRAPH_EDGES,

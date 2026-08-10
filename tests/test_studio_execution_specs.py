@@ -55,6 +55,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxDevPipeline", "text_to_image"),
                 ("FluxKreaPipeline", "text_to_image"),
                 ("FluxDepthPipeline", "control_image"),
+                ("FluxCannyPipeline", "control_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -79,6 +80,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
             ("loadImage", "image", "diffusersImageControl", "control_image"),
             specs[3]["edges"],
         )
+        self.assertEqual(specs[3]["roles"], specs[4]["roles"])
+        self.assertEqual(specs[3]["edges"], specs[4]["edges"])
+        self.assertEqual(specs[3]["bindings"], specs[4]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
