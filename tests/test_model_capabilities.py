@@ -56,13 +56,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 5)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 6)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
             "FluxKreaPipeline",
             "FluxDepthPipeline",
             "FluxCannyPipeline",
+            "FluxReduxPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],
@@ -95,6 +96,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(canny_spec["mode"], "control_image")
         self.assertEqual(canny_spec["roles"], depth_spec["roles"])
         self.assertEqual(canny_spec["edges"], depth_spec["edges"])
+
+        redux_spec = by_model["FluxReduxPipeline"]["studioExecutionSpecs"][0]
+        self.assertEqual(by_model["FluxReduxPipeline"]["modes"], ["edit_image"])
+        self.assertEqual(redux_spec["mode"], "edit_image")
+        self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
 
         z_image = by_model["ZImageModularPipeline"]
         self.assertEqual(z_image["pipelineClasses"], ["ZImagePipeline"])

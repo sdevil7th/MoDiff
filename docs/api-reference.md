@@ -116,11 +116,13 @@ map. Graph admission checks that those exact nodes are executable and that all
 declared edges and bindings remain present. The receipt and checksum are
 consistency identifiers, not authorization tokens or live-model evidence.
 The current schema-v1 catalog covers Flux Schnell, Flux Dev, and Flux Krea
-text-to-image plus Flux Depth and Flux Canny control-image. The text-to-image
-pairs share one generic image topology. The control-image pairs share a separate
-generic image-loader, control-image loader, control generator, and preview
-route. Every pair keeps a distinct exact profile, artifact, resource policy,
-and receipt identity; Canny also retains its reviewed compatible repair source.
+text-to-image, Flux Depth and Flux Canny control-image, and Flux Redux
+edit-image. The text-to-image pairs share one generic image topology. The
+control-image pairs share a separate generic image-loader, control-image
+loader, control generator, and preview route. Redux uses the generic image
+loader, image-edit generator, reference-image loader, and preview route. Every
+pair keeps a distinct exact profile, artifact, resource policy, and receipt
+identity; Canny also retains its reviewed compatible repair source.
 
 ### Auto resource compatibility
 

@@ -26,6 +26,7 @@ from modiff.studio_execution_specs import (
     FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
     FLUX_DEV_REPO,
     FLUX_KREA_REPO as FLUX_KREA_REPO,
+    FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
     studio_execution_profile_definitions,
 )
@@ -38,7 +39,6 @@ ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
-FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
@@ -520,13 +520,6 @@ DIFFUSERS_EXECUTION_PROFILES.update(
         ),
         "flux-fill:direct": _flux_execution_profile(
             "flux-fill:direct", "FluxFillPipeline", ("inpaint", "outpaint"), "FluxFillPipeline", FLUX_FILL_REPO
-        ),
-        "flux-redux:direct": _flux_execution_profile(
-            "flux-redux:direct",
-            "FluxReduxPipeline",
-            ("edit_image",),
-            "FluxReduxPipeline",
-            FLUX_REDUX_REPO,
         ),
     }
 )

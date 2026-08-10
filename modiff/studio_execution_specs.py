@@ -23,6 +23,7 @@ FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
 FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
+FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -117,6 +118,36 @@ _CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageControl", "output_type", "outputType"),
     ("diffusersImageControl", "max_sequence_length", "maxSequenceLength"),
 )
+_EDIT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("diffusersImageEdit", "modules.DiffusersImage.Edit", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_EDIT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageEdit", "pipeline"),
+    ("loadImage", "image", "diffusersImageEdit", "image"),
+    ("diffusersImageEdit", "images", "preview", "image"),
+)
+_EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("diffusersImageEdit", "prompt", "prompt"),
+    ("diffusersImageEdit", "negative_prompt", "negativePrompt"),
+    ("diffusersImageEdit", "width", "width"),
+    ("diffusersImageEdit", "height", "height"),
+    ("diffusersImageEdit", "seed", "seed"),
+    ("diffusersImageEdit", "num_inference_steps", "steps"),
+    ("diffusersImageEdit", "guidance_scale", "guidanceScale"),
+    ("diffusersImageEdit", "strength", "strength"),
+    ("diffusersImageEdit", "reference_strength", "conditioningScale"),
+    ("diffusersImageEdit", "output_type", "outputType"),
+    ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -132,7 +163,9 @@ _AUTO_FIELDS = (
     "layerwiseCasting",
     "channelsLast",
 )
-_BINDING_SOURCES = frozenset(item[2] for item in (*_GRAPH_BINDINGS, *_CONTROL_GRAPH_BINDINGS))
+_BINDING_SOURCES = frozenset(
+    item[2] for item in (*_GRAPH_BINDINGS, *_CONTROL_GRAPH_BINDINGS, *_EDIT_GRAPH_BINDINGS)
+)
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
 
 
@@ -628,6 +661,94 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _CONTROL_GRAPH_ROLES,
         "edges": _CONTROL_GRAPH_EDGES,
         "bindings": _CONTROL_GRAPH_BINDINGS,
+    },
+    "flux-redux:edit-image:v1": {
+        "modelType": "FluxReduxPipeline",
+        "mode": "edit_image",
+        "profile": _profile(
+            "flux-redux:direct",
+            "FluxReduxPipeline",
+            FLUX_REDUX_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            mode="edit_image",
+            pipeline_class="FluxReduxPipeline",
+        ),
+        "capability": {
+            **_capability(
+                "FluxReduxPipeline",
+                "FLUX.1 Redux dev",
+                "FLUX.1-Redux-dev",
+                FLUX_REDUX_REPO,
+                width=1024,
+                steps=28,
+                guidance=3.5,
+                low_vram_mode=OFFLOAD_MODE_GROUP_DISK,
+                low_vram_width=768,
+                low_vram_steps=20,
+                execution_status="expert_only",
+            ),
+            "artifactCandidates": [FLUX_REDUX_REPO, FLUX_DEV_REPO],
+            "supportsImageInput": True,
+            "modes": ["edit_image"],
+        },
+        "autoRequirements": {
+            "supportedTasks": ["edit_image"],
+            "defaultRepo": FLUX_REDUX_REPO,
+            "qualityDefaults": {
+                "width": 768,
+                "height": 768,
+                "steps": 24,
+                "guidanceScale": 3.5,
+                "maxSequenceLength": 256,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 60 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "onLoadQuantization": {
+                "accelerator": "cuda",
+                "vramBytes": 16 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+                "quantizationMode": "quanto_float8",
+                "quantizedComponents": ["transformer", "text_encoder_2"],
+            },
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+            "requiredPackages": [
+                "diffusers",
+                "transformers",
+                "accelerate",
+                "torch",
+                "optimum-quanto",
+            ],
+            "guardedReason": "FLUX Redux has guarded Auto coverage through generic Diffusers image/reference nodes.",
+        },
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _EDIT_GRAPH_BINDINGS,
     },
 }
 
