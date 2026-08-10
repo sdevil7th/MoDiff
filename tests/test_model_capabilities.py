@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 7)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 8)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -64,6 +64,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "FluxDepthPipeline",
             "FluxCannyPipeline",
             "FluxReduxPipeline",
+            "WanImageToVideoPipeline",
             "WanTI2VPipeline",
         ):
             self.assertEqual(
@@ -102,6 +103,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(by_model["FluxReduxPipeline"]["modes"], ["edit_image"])
         self.assertEqual(redux_spec["mode"], "edit_image")
         self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
+
+        i2v_spec = by_model["WanImageToVideoPipeline"]["studioExecutionSpecs"][0]
+        self.assertEqual(i2v_spec["mode"], "image_to_video")
+        self.assertEqual(i2v_spec["pipelineClass"], "WanImageToVideoPipeline")
+        self.assertIn("loadImage", [item[0] for item in i2v_spec["roles"]])
 
         ti2v_spec = by_model["WanTI2VPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(ti2v_spec["mode"], "text_to_video")

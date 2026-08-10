@@ -24,6 +24,7 @@ FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
+WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 
 _GIB = 1024**3
@@ -153,8 +154,8 @@ _VIDEO_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
     ("wanPipeline", "modules.DiffusersVideo.LoadPipeline", -520, -80),
-    ("wanGenerate", "modules.DiffusersVideo.Generate", -120, -80),
-    ("videoExport", "modules.Video.Export", 980, -80),
+    ("wanGenerate", "modules.DiffusersVideo.Generate", 220, -80),
+    ("videoExport", "modules.Video.Export", 640, -80),
 )
 _VIDEO_GRAPH_EDGES = (
     ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
@@ -205,6 +206,30 @@ _VIDEO_GRAPH_BINDINGS = (
     ("wanGenerate", "attention_kwargs_json", "attentionKwargsJson"),
     ("videoExport", "fps", "fps"),
 )
+_I2V_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
+    ("loadImage", "modules.Image.Load", -520, 300),
+)
+_I2V_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (
+    ("loadImage", "image", "wanGenerate", "reference_images"),
+)
+_I2V_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "dualQuantizedComponents"
+        if role == "diffusersQuantization" and param == "components"
+        else "dualTransformer"
+        if role == "diffusersRecipe" and param == "attention_components"
+        else "true"
+        if role == "diffusersRecipe" and param == "vae_tiling"
+        else source,
+    )
+    for role, param, source in _VIDEO_GRAPH_BINDINGS
+    if not (role == "wanGenerate" and param == "scheduler_flow_shift")
+) + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -222,7 +247,13 @@ _AUTO_FIELDS = (
 )
 _BINDING_SOURCES = frozenset(
     item[2]
-    for item in (*_GRAPH_BINDINGS, *_CONTROL_GRAPH_BINDINGS, *_EDIT_GRAPH_BINDINGS, *_VIDEO_GRAPH_BINDINGS)
+    for item in (
+        *_GRAPH_BINDINGS,
+        *_CONTROL_GRAPH_BINDINGS,
+        *_EDIT_GRAPH_BINDINGS,
+        *_VIDEO_GRAPH_BINDINGS,
+        *_I2V_GRAPH_BINDINGS,
+    )
 )
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
 
@@ -807,6 +838,127 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
         "bindings": _EDIT_GRAPH_BINDINGS,
+    },
+    "wan-22-i2v-a14b:image-to-video:v1": {
+        "modelType": "WanImageToVideoPipeline",
+        "mode": "image_to_video",
+        "profile": {
+            "id": "wan-22-image-to-video:direct",
+            "model_type": "WanImageToVideoPipeline",
+            "modes": ("image_to_video",),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-video",
+            "pipeline_class": "WanImageToVideoPipeline",
+            "default_repo": WAN_22_I2V_A14B_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "transformer_2", "text_encoder"),
+            "default_quantized_components": ("transformer", "transformer_2"),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 40,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "WanImageToVideoPipeline",
+            "label": "Wan 2.2 I2V A14B",
+            "displayName": "Wan2.2-I2V-A14B-Diffusers",
+            "family": "Wan Video",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": WAN_22_I2V_A14B_REPO,
+            "artifactLabel": "Diffusers repo",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 832, "height": 480, "aspectRatio": "16:9"},
+            "recommendedSteps": 40,
+            "recommendedGuidance": 3.5,
+            "guidanceLabel": "High-noise guidance",
+            "supportsImageInput": True,
+            "supportsMask": False,
+            "supportsMultiImage": True,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": False,
+            "supportsVideoInput": False,
+            "supportsVideoMask": False,
+            "outputKind": "video",
+            "recommendedFrames": 81,
+            "recommendedFps": 16,
+            "conditioningScale": 1.0,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_MODEL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                "steps": 40,
+                "width": 832,
+                "height": 480,
+                "numFrames": 81,
+            },
+            "modes": ["image_to_video"],
+            "executionStatus": "supported_with_model",
+            "notes": [
+                "Uses the generic Diffusers video facade with the official dual-expert WanImageToVideoPipeline.",
+                "The quality workflow quantizes both denoising experts to Quanto INT8 and runs five-second shots sequentially.",
+                "Human review remains required before generated examples are promoted to the gallery.",
+            ],
+            "modeRequirements": {
+                "image_to_video": {
+                    "requiredImages": ["referenceImages"],
+                    "note": "The story workflow requires one ordered opening keyframe per shot.",
+                },
+            },
+        },
+        "autoRequirements": {
+            "supportedTasks": ["image_to_video"],
+            "defaultRepo": WAN_22_I2V_A14B_REPO,
+            "executionPath": "direct-diffusers-video",
+            "pipelineClass": "WanImageToVideoPipeline",
+            "qualityDefaults": {
+                "width": 832,
+                "height": 480,
+                "steps": 40,
+                "guidanceScale": 3.5,
+                "numFrames": 81,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 140 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 80 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 140 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ],
+            "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+            "guardedReason": "Wan 2.2 I2V A14B uses the generic Diffusers video graph with a dual-transformer execution contract.",
+        },
+        "roles": _I2V_GRAPH_ROLES,
+        "edges": _I2V_GRAPH_EDGES,
+        "bindings": _I2V_GRAPH_BINDINGS,
     },
     "wan-22-ti2v-5b:text-to-video:v1": {
         "modelType": "WanTI2VPipeline",

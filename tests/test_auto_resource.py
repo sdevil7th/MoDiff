@@ -1011,6 +1011,30 @@ class AutoResourcePlanTests(unittest.TestCase):
                 self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
                 self.assertEqual(plan["selectedCandidate"]["deviceMap"], "cuda")
 
+    def test_wan_i2v_auto_plan_uses_the_exact_direct_profile(self):
+        requirements = AUTO_MODEL_REQUIREMENTS["WanImageToVideoPipeline"]
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "WanImageToVideoPipeline",
+                    "mode": "image_to_video",
+                    "offloadMode": "model_cpu",
+                },
+            },
+            runtime=self._runtime(vram_gib=2, free_gib=1.5),
+            repos=[requirements["defaultRepo"]],
+            hardware=self._shared_rocm_hardware(accessible_gib=128, disk_free_gib=256),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        candidate = plan["selectedCandidate"]
+        self.assertEqual(candidate["loaderModule"], "modules.DiffusersVideo")
+        self.assertEqual(candidate["loaderAction"], "LoadPipeline")
+        self.assertEqual(candidate["executionPath"], "direct-diffusers-video")
+        self.assertEqual(candidate["pipelineClass"], "WanImageToVideoPipeline")
+        self.assertEqual(candidate["quantizedComponents"], [])
+        self.assertEqual(candidate["offloadMode"], "model_cpu")
+
     def test_generic_auto_ignores_a_stale_expert_no_offload_value_on_constrained_hardware(self):
         requirements = AUTO_MODEL_REQUIREMENTS["AceStepAudioPipeline"]
         plan = self._plan(
@@ -1397,6 +1421,7 @@ class AutoResourcePlanTests(unittest.TestCase):
             "WanVACEPipeline",
             "WanVideoPipeline",
             "WanVideoPipeline:text_to_video",
+            "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "LTXVideoPipeline",
             "AceStepAudioPipeline",

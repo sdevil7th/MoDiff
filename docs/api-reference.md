@@ -117,15 +117,17 @@ declared edges and bindings remain present. The receipt and checksum are
 consistency identifiers, not authorization tokens or live-model evidence.
 The current schema-v1 catalog covers Flux Schnell, Flux Dev, and Flux Krea
 text-to-image, Flux Depth and Flux Canny control-image, and Flux Redux
-edit-image, plus Wan 2.2 TI2V 5B text-to-video. The text-to-image pairs share one generic image topology. The
+edit-image, plus Wan 2.2 I2V A14B image-to-video and TI2V 5B text-to-video. The
+text-to-image pairs share one generic image topology. The
 control-image pairs share a separate generic image-loader, control-image
 loader, control generator, and preview route. Redux uses the generic image
 loader, image-edit generator, reference-image loader, and preview route. Every
 pair keeps a distinct exact profile, artifact, resource policy, and receipt
 identity; Canny also retains its reviewed compatible repair source.
-Wan TI2V uses the generic Diffusers video quantization, execution-recipe,
-pipeline, generation, and export roles, including backend-declared native-flash,
-VAE-tiling, scheduler-flow-shift, and frame-rate bindings.
+The Wan pairs use generic Diffusers video quantization, execution-recipe,
+pipeline, generation, and export roles. I2V adds the generic image loader and
+dual-transformer bindings; TI2V declares scheduler flow shift. Both keep
+backend-declared native-flash, VAE-tiling, and frame-rate behavior.
 
 ### Auto resource compatibility
 

@@ -57,6 +57,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxDepthPipeline", "control_image"),
                 ("FluxCannyPipeline", "control_image"),
                 ("FluxReduxPipeline", "edit_image"),
+                ("WanImageToVideoPipeline", "image_to_video"),
                 ("WanTI2VPipeline", "text_to_video"),
             ],
         )
@@ -100,10 +101,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersImageEdit", "reference_strength", "conditioningScale"), specs[5]["bindings"])
         self.assertEqual(
             [item[0] for item in specs[6]["roles"]],
+            ["diffusersQuantization", "diffusersRecipe", "wanPipeline", "wanGenerate", "videoExport", "loadImage"],
+        )
+        self.assertIn(("diffusersQuantization", "components", "dualQuantizedComponents"), specs[6]["bindings"])
+        self.assertIn(("loadImage", "file", "referenceImages"), specs[6]["bindings"])
+        self.assertIn(("loadImage", "image", "wanGenerate", "reference_images"), specs[6]["edges"])
+        self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[6]["bindings"])
+        self.assertEqual(
+            DIFFUSERS_EXECUTION_PROFILES[specs[6]["executionProfileId"]].default_quantized_components,
+            ("transformer", "transformer_2"),
+        )
+        self.assertEqual(
+            [item[0] for item in specs[7]["roles"]],
             ["diffusersQuantization", "diffusersRecipe", "wanPipeline", "wanGenerate", "videoExport"],
         )
-        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[6]["bindings"])
-        self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[6]["edges"])
+        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[7]["bindings"])
+        self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[7]["edges"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
