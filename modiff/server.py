@@ -406,6 +406,7 @@ from modiff.diffusers_offload import (
 from modiff.diffusers_profiles import (
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     VERIFIED_REPAIR_SOURCES,
+    execution_profiles_for_execution,
     optional_runtime_profile_ids_for_execution,
     public_execution_profiles,
     public_experimental_pipelines,
@@ -496,6 +497,53 @@ QWEN_MODULAR_OFFLOAD_SUPPORT = {
         OFFLOAD_MODE_GROUP_CPU,
         OFFLOAD_MODE_GROUP_DISK,
     ],
+}
+
+# Runtime-hint copies are persisted and included in task events, so these
+# execution selectors must be primitive, bounded, and drawn from the same
+# closed vocabularies as the generic Diffusers runtime nodes. Keep these
+# values local instead of importing modules.DiffusersRuntime during server
+# startup; that module owns model-runtime imports which remain lazy.
+RUNTIME_ATTENTION_BACKENDS = {
+    "auto",
+    "native",
+    "_native_flash",
+    "_native_efficient",
+    "_native_math",
+    "_native_cudnn",
+    "flex",
+    "flash",
+    "flash_hub",
+    "flash_varlen",
+    "flash_varlen_hub",
+    "flash_4_hub",
+    "_flash_3",
+    "_flash_varlen_3",
+    "_flash_3_hub",
+    "_flash_3_varlen_hub",
+    "aiter",
+    "sage",
+    "sage_hub",
+    "sage_varlen",
+    "xformers",
+}
+RUNTIME_DENOISER_CACHE_MODES = {
+    "none",
+    "first_block",
+    "magcache",
+    "taylorseer",
+    "pab",
+    "fastercache",
+    "text_kv",
+}
+RUNTIME_DEVICE_MAPS = {
+    "none",
+    "cuda",
+    "auto",
+    "balanced",
+    "balanced_low_0",
+    "cpu",
+    "manual",
 }
 
 # The official 0.9.8 13B repository duplicates pipeline components under a
@@ -2052,6 +2100,13 @@ class WebServer:
             if graph
             else self._coerce_runtime_hints(runtime_hints)
         )
+        if graph is not None:
+            if runtime_hints is None:
+                graph.pop("runtimeHints", None)
+            else:
+                # Replace the untrusted object before the graph is copied,
+                # queued, persisted, or later inspected by plan application.
+                graph["runtimeHints"] = runtime_hints
 
         self.queued_tasks[task_id] = {
             "task": task,
@@ -6095,6 +6150,213 @@ class WebServer:
 
         return applied
 
+    @staticmethod
+    def _bounded_auto_value(value, *, field_name, depth, budget):
+        if depth > 8:
+            raise ValueError("nested value is too deep")
+        budget["entries"] += 1
+        if budget["entries"] > 4096:
+            raise ValueError("too many nested values")
+        if value is None or isinstance(value, (bool, int)):
+            return value
+        if isinstance(value, float):
+            if not math.isfinite(value):
+                raise ValueError("numeric value is not finite")
+            return value
+        if isinstance(value, str):
+            limit = 512 if field_name in {
+                "id",
+                "candidateId",
+                "modelType",
+                "mode",
+                "loaderModule",
+                "loaderAction",
+                "executionPath",
+                "pipelineClass",
+                "artifact",
+                "baseArtifact",
+                "modelRepo",
+                "resolvedArtifact",
+                "repo",
+                "revision",
+            } else 4096
+            if len(value) > limit:
+                raise ValueError("string value is too long")
+            budget["chars"] += len(value)
+            if budget["chars"] > 65536:
+                raise ValueError("too much string data")
+            return value
+        if isinstance(value, list):
+            if len(value) > 32:
+                raise ValueError("array is too large")
+            return [
+                WebServer._bounded_auto_value(
+                    item,
+                    field_name=field_name,
+                    depth=depth + 1,
+                    budget=budget,
+                )
+                for item in value
+            ]
+        if isinstance(value, dict):
+            if len(value) > 128:
+                raise ValueError("object is too large")
+            output = {}
+            for key, item in value.items():
+                if not isinstance(key, str) or len(key) > 128:
+                    raise ValueError("object key is invalid")
+                output[key] = WebServer._bounded_auto_value(
+                    item,
+                    field_name=key,
+                    depth=depth + 1,
+                    budget=budget,
+                )
+            return output
+        raise ValueError("value is not JSON-compatible")
+
+    @staticmethod
+    def _project_bounded_auto_mapping(value, *, retry=False):
+        if not isinstance(value, dict):
+            raise WebServer._auto_resource_contract_error(
+                "Auto candidate data is malformed. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        allowed = {"id", *WebServer._auto_candidate_execution_fields()}
+        if retry:
+            allowed.update({"candidateId", "index", "reason", "onCategories", "onErrorCodes"})
+        budget = {"entries": 0, "chars": 0}
+        try:
+            projected = {
+                key: WebServer._bounded_auto_value(
+                    value[key],
+                    field_name=key,
+                    depth=0,
+                    budget=budget,
+                )
+                for key in allowed
+                if key in value
+            }
+            if len(json.dumps(projected, ensure_ascii=False, separators=(",", ":"))) > 65536:
+                raise ValueError("mapping is too large")
+        except (OverflowError, RecursionError, TypeError, ValueError):
+            raise WebServer._auto_resource_contract_error(
+                "Auto candidate data exceeds the supported execution contract. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            ) from None
+        return projected
+
+    @staticmethod
+    def _bounded_runtime_container_value(
+        value,
+        *,
+        depth,
+        budget,
+        max_depth,
+        max_entries,
+        max_items,
+        max_keys,
+        max_string_chars,
+        max_total_chars,
+    ):
+        if depth > max_depth:
+            raise ValueError("nested value is too deep")
+        budget["entries"] += 1
+        if budget["entries"] > max_entries:
+            raise ValueError("too many nested values")
+        if value is None or isinstance(value, (bool, int)):
+            return value
+        if isinstance(value, float):
+            if not math.isfinite(value):
+                raise ValueError("numeric value is not finite")
+            return value
+        if isinstance(value, str):
+            if len(value) > max_string_chars:
+                raise ValueError("string value is too long")
+            budget["chars"] += len(value)
+            if budget["chars"] > max_total_chars:
+                raise ValueError("too much string data")
+            return value
+        if isinstance(value, list):
+            if len(value) > max_items:
+                raise ValueError("array is too large")
+            return [
+                WebServer._bounded_runtime_container_value(
+                    item,
+                    depth=depth + 1,
+                    budget=budget,
+                    max_depth=max_depth,
+                    max_entries=max_entries,
+                    max_items=max_items,
+                    max_keys=max_keys,
+                    max_string_chars=max_string_chars,
+                    max_total_chars=max_total_chars,
+                )
+                for item in value
+            ]
+        if isinstance(value, dict):
+            if len(value) > max_keys:
+                raise ValueError("object is too large")
+            output = {}
+            for key, item in value.items():
+                if not isinstance(key, str) or len(key) > 256:
+                    raise ValueError("object key is invalid")
+                budget["chars"] += len(key)
+                if budget["chars"] > max_total_chars:
+                    raise ValueError("too much string data")
+                output[key] = WebServer._bounded_runtime_container_value(
+                    item,
+                    depth=depth + 1,
+                    budget=budget,
+                    max_depth=max_depth,
+                    max_entries=max_entries,
+                    max_items=max_items,
+                    max_keys=max_keys,
+                    max_string_chars=max_string_chars,
+                    max_total_chars=max_total_chars,
+                )
+            return output
+        raise ValueError("value is not JSON-compatible")
+
+    @staticmethod
+    def _project_bounded_runtime_container(
+        value,
+        *,
+        expected_type,
+        max_depth=8,
+        max_entries=4096,
+        max_items=256,
+        max_keys=256,
+        max_string_chars=65536,
+        max_total_chars=262144,
+        max_serialized_chars=262144,
+    ):
+        if not isinstance(value, expected_type):
+            raise WebServer._auto_resource_contract_error(
+                "Runtime hints contain malformed structured data. Refresh the workflow before running it.",
+                code="auto_resource_candidate_mismatch",
+            )
+        budget = {"entries": 0, "chars": 0}
+        try:
+            projected = WebServer._bounded_runtime_container_value(
+                value,
+                depth=0,
+                budget=budget,
+                max_depth=max_depth,
+                max_entries=max_entries,
+                max_items=max_items,
+                max_keys=max_keys,
+                max_string_chars=max_string_chars,
+                max_total_chars=max_total_chars,
+            )
+            if len(json.dumps(projected, ensure_ascii=False, separators=(",", ":"))) > max_serialized_chars:
+                raise ValueError("structured value is too large")
+        except (OverflowError, RecursionError, TypeError, ValueError):
+            raise WebServer._auto_resource_contract_error(
+                "Runtime hints exceed the supported structured-data contract. Refresh the workflow before running it.",
+                code="auto_resource_candidate_mismatch",
+            ) from None
+        return projected
+
     def _coerce_runtime_hints(self, value):
         if not isinstance(value, dict):
             return None
@@ -6113,6 +6375,8 @@ class WebServer:
             "resolvedModelRepo",
             "resolvedArtifact",
             "modelDependencies",
+            "loaderModule",
+            "loaderAction",
             "executionPath",
             "pipelineClass",
             "dtype",
@@ -6171,6 +6435,8 @@ class WebServer:
             "modelName",
             "resolvedModelRepo",
             "resolvedArtifact",
+            "loaderModule",
+            "loaderAction",
             "executionPath",
             "pipelineClass",
             "dtype",
@@ -6179,8 +6445,6 @@ class WebServer:
             "quantizationMode",
             "offloadMode",
             "offloadDiskPath",
-            "resourceRetryLastError",
-            "resourceRetryLastCode",
             "cudaBudgetPolicy",
             "compatibilityStatus",
             "autoResourceProofStatus",
@@ -6191,7 +6455,54 @@ class WebServer:
             "nodeId",
         ):
             if key in hints and hints[key] is not None and not isinstance(hints[key], str):
-                hints[key] = str(hints[key])
+                raw_value = hints[key]
+                if (
+                    not isinstance(raw_value, (bool, int, float))
+                    or isinstance(raw_value, float) and not math.isfinite(raw_value)
+                ):
+                    raise self._auto_resource_contract_error(
+                        "Runtime hint identity has an invalid primitive shape. Refresh the workflow before running it.",
+                        code="auto_resource_candidate_mismatch",
+                    )
+                hints[key] = str(raw_value)
+            if key in hints and isinstance(hints[key], str) and len(hints[key]) > 512:
+                raise self._auto_resource_contract_error(
+                    "Auto runtime identity exceeds the supported execution contract. "
+                    "Refresh Auto before running this workflow.",
+                    code="auto_resource_candidate_mismatch",
+                )
+
+        enum_fields = {
+            "deviceMap": RUNTIME_DEVICE_MAPS,
+            "attentionBackend": RUNTIME_ATTENTION_BACKENDS,
+            "denoiserCache": RUNTIME_DENOISER_CACHE_MODES,
+        }
+        for key, admitted_values in enum_fields.items():
+            if key not in hints or hints[key] is None:
+                hints.pop(key, None)
+                continue
+            if not isinstance(hints[key], str) or hints[key] not in admitted_values:
+                raise self._auto_resource_contract_error(
+                    "Runtime hint execution selector is unsupported. Refresh the workflow before running it.",
+                    code="auto_resource_candidate_mismatch",
+                )
+
+        for key in (
+            "autoOffload",
+            "lowVramMode",
+            "enforceCudaBudget",
+            "regionalCompile",
+            "channelsLast",
+            "layerwiseCasting",
+        ):
+            if key not in hints or hints[key] is None:
+                hints.pop(key, None)
+                continue
+            if not isinstance(hints[key], bool):
+                raise self._auto_resource_contract_error(
+                    "Runtime hint flag has an invalid primitive shape. Refresh the workflow before running it.",
+                    code="auto_resource_candidate_mismatch",
+                )
 
         workflow_canvas_epoch = hints.get("workflowCanvasEpoch")
         if workflow_canvas_epoch is not None and (
@@ -6202,20 +6513,54 @@ class WebServer:
         ):
             hints.pop("workflowCanvasEpoch", None)
 
+        known_offload_modes = {
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_SEQUENTIAL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        }
         for key in ("quantizedComponents", "supportedOffloadModes", "resourceRetryModes"):
             if key in hints and hints[key] is not None:
                 if isinstance(hints[key], list):
-                    hints[key] = [str(item) for item in hints[key] if item is not None]
+                    if len(hints[key]) > 32:
+                        raise self._auto_resource_contract_error(
+                            "Runtime hint list exceeds the supported execution contract. Refresh the workflow before running it.",
+                            code="auto_resource_candidate_mismatch",
+                        )
+                    normalized = [
+                        item
+                        for item in hints[key]
+                        if isinstance(item, str) and len(item) <= 128
+                    ]
+                    if key != "quantizedComponents":
+                        normalized = [item for item in normalized if item in known_offload_modes]
+                    hints[key] = normalized
                 else:
                     hints.pop(key, None)
 
         if "modelDependencies" in hints and hints["modelDependencies"] is not None:
             dependencies = hints["modelDependencies"]
             if isinstance(dependencies, list):
+                if len(dependencies) > 32:
+                    raise self._auto_resource_contract_error(
+                        "Model dependency list exceeds the supported execution contract. Refresh the workflow before running it.",
+                        code="auto_resource_candidate_mismatch",
+                    )
                 hints["modelDependencies"] = [
-                    {key: str(item[key]) for key in ("id", "kind", "repo") if key in item and item[key] is not None}
+                    self._project_bounded_runtime_container(
+                        {key: item[key] for key in ("id", "kind", "repo") if key in item},
+                        expected_type=dict,
+                        max_depth=2,
+                        max_entries=16,
+                        max_items=8,
+                        max_keys=8,
+                        max_string_chars=512,
+                        max_total_chars=2048,
+                        max_serialized_chars=4096,
+                    )
                     for item in dependencies
-                    if isinstance(item, dict) and item.get("repo")
+                    if isinstance(item, dict) and isinstance(item.get("repo"), str) and item.get("repo")
                 ]
             else:
                 hints.pop("modelDependencies", None)
@@ -6226,6 +6571,21 @@ class WebServer:
             and not isinstance(hints["resourcePlan"], dict)
         ):
             hints.pop("resourcePlan", None)
+        elif isinstance(hints.get("resourcePlan"), dict):
+            hints["resourcePlan"] = self._project_bounded_runtime_container(
+                hints["resourcePlan"],
+                expected_type=dict,
+                max_depth=8,
+                max_entries=4096,
+                max_items=64,
+                max_keys=128,
+                max_string_chars=4096,
+                max_total_chars=65536,
+                max_serialized_chars=65536,
+            )
+            # Active retry state is produced only by this worker after a
+            # failed attempt; submitted copies are not execution authority.
+            hints["resourcePlan"].pop("activeRetryPlan", None)
 
         if (
             "autoResourcePlan" in hints
@@ -6233,6 +6593,8 @@ class WebServer:
             and not isinstance(hints["autoResourcePlan"], dict)
         ):
             hints.pop("autoResourcePlan", None)
+        elif isinstance(hints.get("autoResourcePlan"), dict):
+            hints["autoResourcePlan"] = self._project_bounded_auto_mapping(hints["autoResourcePlan"])
 
         if (
             "autoResourceCandidates" in hints
@@ -6240,20 +6602,54 @@ class WebServer:
             and not isinstance(hints["autoResourceCandidates"], list)
         ):
             hints.pop("autoResourceCandidates", None)
+        elif isinstance(hints.get("autoResourceCandidates"), list):
+            if len(hints["autoResourceCandidates"]) > 64:
+                raise self._auto_resource_contract_error(
+                    "Auto candidate list exceeds the supported execution contract. Refresh Auto before running this workflow.",
+                    code="auto_resource_candidate_mismatch",
+                )
+            if any(not isinstance(candidate, dict) for candidate in hints["autoResourceCandidates"]):
+                raise self._auto_resource_contract_error(
+                    "Auto candidate list is malformed. Refresh Auto before running this workflow.",
+                    code="auto_resource_candidate_mismatch",
+                )
+            hints["autoResourceCandidates"] = [
+                self._project_bounded_auto_mapping(candidate)
+                for candidate in hints["autoResourceCandidates"]
+                if isinstance(candidate, dict)
+            ]
+            if len(json.dumps(hints["autoResourceCandidates"], ensure_ascii=False)) > 1_048_576:
+                raise self._auto_resource_contract_error(
+                    "Auto candidate list exceeds the supported execution contract. Refresh Auto before running this workflow.",
+                    code="auto_resource_candidate_mismatch",
+                )
 
-        if (
-            "resourceRetryHistory" in hints
-            and hints["resourceRetryHistory"] is not None
-            and not isinstance(hints["resourceRetryHistory"], list)
+        # Retry state is derived by the worker. Submitted copies must never
+        # influence a new run or survive into queue/completion payloads.
+        for key in (
+            "resourceRetryAttempt",
+            "resourceRetryHistory",
+            "resourceRetryLastError",
+            "resourceRetryLastCode",
         ):
-            hints.pop("resourceRetryHistory", None)
+            hints.pop(key, None)
 
         if "resourceRetryPlans" in hints and hints["resourceRetryPlans"] is not None:
             if isinstance(hints["resourceRetryPlans"], list):
+                if len(hints["resourceRetryPlans"]) > 32:
+                    raise self._auto_resource_contract_error(
+                        "Auto retry list exceeds the supported execution contract. Refresh Auto before running this workflow.",
+                        code="auto_resource_candidate_mismatch",
+                    )
+                if any(not isinstance(item, dict) for item in hints["resourceRetryPlans"]):
+                    raise self._auto_resource_contract_error(
+                        "Auto retry list is malformed. Refresh Auto before running this workflow.",
+                        code="auto_resource_candidate_mismatch",
+                    )
                 plans = []
                 for item in hints["resourceRetryPlans"]:
                     if isinstance(item, dict):
-                        plans.append(deepcopy(item))
+                        plans.append(self._project_bounded_auto_mapping(item, retry=True))
                 hints["resourceRetryPlans"] = plans
             else:
                 hints.pop("resourceRetryPlans", None)
@@ -6264,6 +6660,18 @@ class WebServer:
             and not isinstance(hints["compatibilityProbe"], dict)
         ):
             hints.pop("compatibilityProbe", None)
+        elif isinstance(hints.get("compatibilityProbe"), dict):
+            hints["compatibilityProbe"] = self._project_bounded_runtime_container(
+                hints["compatibilityProbe"],
+                expected_type=dict,
+                max_depth=8,
+                max_entries=4096,
+                max_items=256,
+                max_keys=256,
+                max_string_chars=4096,
+                max_total_chars=262144,
+                max_serialized_chars=262144,
+            )
 
         for key in (
             "cudaIndex",
@@ -6283,6 +6691,13 @@ class WebServer:
             workflow_title = hints["workflowTitle"]
             if workflow_title is None:
                 hints.pop("workflowTitle", None)
+            elif not isinstance(workflow_title, (str, bool, int, float)) or (
+                isinstance(workflow_title, float) and not math.isfinite(workflow_title)
+            ):
+                raise self._auto_resource_contract_error(
+                    "Workflow title has an invalid primitive shape. Refresh the workflow before running it.",
+                    code="auto_resource_candidate_mismatch",
+                )
             else:
                 hints["workflowTitle"] = str(workflow_title).strip()[:256]
                 if not hints["workflowTitle"]:
@@ -6290,25 +6705,81 @@ class WebServer:
         if "workflowSnapshot" in hints:
             workflow_snapshot = hints["workflowSnapshot"]
             if isinstance(workflow_snapshot, dict):
-                hints["workflowSnapshot"] = deepcopy(workflow_snapshot)
+                hints["workflowSnapshot"] = self._project_bounded_runtime_container(
+                    workflow_snapshot,
+                    expected_type=dict,
+                    max_depth=32,
+                    max_entries=200000,
+                    max_items=20000,
+                    max_keys=20000,
+                    max_string_chars=1_048_576,
+                    max_total_chars=8_388_608,
+                    max_serialized_chars=8_388_608,
+                )
             else:
                 hints.pop("workflowSnapshot", None)
         if "autoFieldOverrides" in hints:
             overrides = hints["autoFieldOverrides"]
             if isinstance(overrides, list):
-                hints["autoFieldOverrides"] = [
-                    {
-                        key: deepcopy(item[key])
-                        for key in ("schemaVersion", "nodeId", "fieldKey", "formKey", "value", "updatedAt")
-                        if key in item
-                    }
-                    for item in overrides[:256]
-                    if isinstance(item, dict)
-                    and isinstance(item.get("nodeId"), str)
-                    and isinstance(item.get("fieldKey"), str)
-                ]
+                if len(overrides) > 256:
+                    raise self._auto_resource_contract_error(
+                        "Auto field override list exceeds the supported execution contract. Refresh the workflow before running it.",
+                        code="auto_resource_candidate_mismatch",
+                    )
+                projected_overrides = []
+                for item in overrides:
+                    if (
+                        not isinstance(item, dict)
+                        or not isinstance(item.get("nodeId"), str)
+                        or not isinstance(item.get("fieldKey"), str)
+                        or len(item["nodeId"]) > 512
+                        or len(item["fieldKey"]) > 512
+                    ):
+                        raise self._auto_resource_contract_error(
+                            "Auto field override identity is malformed. Refresh the workflow before running it.",
+                            code="auto_resource_candidate_mismatch",
+                        )
+                    projected_overrides.append(
+                        self._project_bounded_runtime_container(
+                            {
+                                key: item[key]
+                                for key in ("schemaVersion", "nodeId", "fieldKey", "formKey", "value", "updatedAt")
+                                if key in item
+                            },
+                            expected_type=dict,
+                            max_depth=8,
+                            max_entries=4096,
+                            max_items=64,
+                            max_keys=16,
+                            max_string_chars=4096,
+                            max_total_chars=65536,
+                            max_serialized_chars=65536,
+                        )
+                    )
+                if len(json.dumps(projected_overrides, ensure_ascii=False)) > 1_048_576:
+                    raise self._auto_resource_contract_error(
+                        "Auto field override data exceeds the supported execution contract. Refresh the workflow before running it.",
+                        code="auto_resource_candidate_mismatch",
+                    )
+                hints["autoFieldOverrides"] = projected_overrides
             else:
                 hints.pop("autoFieldOverrides", None)
+        if "optimizationQualificationForm" in hints:
+            form = hints["optimizationQualificationForm"]
+            if isinstance(form, dict):
+                hints["optimizationQualificationForm"] = self._project_bounded_runtime_container(
+                    form,
+                    expected_type=dict,
+                    max_depth=12,
+                    max_entries=16384,
+                    max_items=512,
+                    max_keys=512,
+                    max_string_chars=65536,
+                    max_total_chars=524288,
+                    max_serialized_chars=524288,
+                )
+            else:
+                hints.pop("optimizationQualificationForm", None)
         if "maxRuntimeSeconds" in hints:
             # Quality-first local video models can legitimately need more than
             # six hours at their upstream-recommended step count. Keep a hard
@@ -6316,13 +6787,15 @@ class WebServer:
             # merely to fit the old gallery-oriented limit.
             hints["maxRuntimeSeconds"] = max(60, min(43200, hints["maxRuntimeSeconds"]))
 
-        for key in ("autoOffload", "lowVramMode"):
-            if key in hints and hints[key] is not None:
-                hints[key] = bool(hints[key])
-        if "enforceCudaBudget" in hints and hints["enforceCudaBudget"] is not None:
-            hints["enforceCudaBudget"] = bool(hints["enforceCudaBudget"])
         if hints.get("cudaBudgetPolicy") not in (None, "advisory", "enforced"):
             hints.pop("cudaBudgetPolicy", None)
+
+        if isinstance(hints.get("resourceRetryPlans"), list):
+            canonical_plans = self._coerce_retry_plan_list(hints)
+            hints["resourceRetryPlans"] = [
+                self._sanitize_retry_plan_for_hints(plan)
+                for plan in canonical_plans
+            ]
 
         return hints
 
@@ -6501,21 +6974,320 @@ class WebServer:
             for index, raw_plan in enumerate(raw_plans):
                 if not isinstance(raw_plan, dict):
                     continue
-                plan = deepcopy(raw_plan)
-                plan.setdefault("index", index)
-                plan.setdefault("reason", f"retry_plan_{index + 1}")
+                if runtime_hints.get("resourceMode") == "auto":
+                    plan = self._canonical_auto_retry_plan(runtime_hints, raw_plan, index=index)
+                else:
+                    plan = deepcopy(raw_plan)
+                    plan["index"] = index
+                    plan["reason"] = f"retry_plan_{index + 1}"
+                    plan.pop("candidateId", None)
+                    plan.pop("id", None)
+                    self._normalize_retry_plan_triggers(plan)
+                    profile = self._resource_plan_execution_profile(plan, runtime_hints=runtime_hints)
+                    self._assert_resource_plan_values_supported(plan, profile)
                 plans.append(plan)
             return plans
 
+        selected = runtime_hints.get("autoResourcePlan")
+        target_source = selected if isinstance(selected, dict) else runtime_hints
+        target = {
+            key: target_source.get(key)
+            for key in (
+                "modelType",
+                "mode",
+                "loaderModule",
+                "loaderAction",
+                "executionPath",
+                "pipelineClass",
+            )
+        }
+        if not all(isinstance(value, str) and value for value in target.values()):
+            return []
         return [
             {
                 "index": index,
                 "reason": f"{mode}_after_oom",
+                "candidateId": target_source.get("id"),
+                **target,
                 "offloadMode": mode,
                 "onCategories": ["oom"],
             }
             for index, mode in enumerate(self._resource_retry_modes(runtime_hints))
         ]
+
+    @staticmethod
+    def _auto_resource_contract_error(message, *, code="auto_resource_target_mismatch"):
+        error = RuntimeError(message)
+        setattr(error, "modiff_error_code", code)
+        setattr(error, "modiff_category", "auto_resource")
+        setattr(
+            error,
+            "modiff_recovery_hint",
+            "Refresh Auto so every plan is resolved from the current exact candidate and loader contract.",
+        )
+        setattr(error, "modiff_auto_resource_status", "expert_only")
+        return error
+
+    @staticmethod
+    def _normalize_retry_plan_triggers(plan):
+        # These are the stable resource-pressure classifications for which a
+        # loader recipe change can be corrective. Keep this narrower than the
+        # full runtime classifier while preserving the existing Qwen kernel
+        # fallback contract.
+        allowed_categories = {"oom", "cuda_kernel"}
+        allowed_error_codes = {"cuda_oom", "cuda_kernel_unsupported"}
+        if "onCategories" in plan:
+            plan["onCategories"] = [
+                value
+                for value in plan.get("onCategories") or []
+                if isinstance(value, str) and value in allowed_categories
+            ]
+        if "onErrorCodes" in plan:
+            plan["onErrorCodes"] = [
+                value
+                for value in plan.get("onErrorCodes") or []
+                if isinstance(value, str) and value in allowed_error_codes
+            ]
+
+    @staticmethod
+    def _auto_candidate_execution_fields():
+        return (
+            "modelType",
+            "mode",
+            "loaderModule",
+            "loaderAction",
+            "executionPath",
+            "pipelineClass",
+            "artifact",
+            "baseArtifact",
+            "modelRepo",
+            "resolvedArtifact",
+            "artifactRevision",
+            "artifactResolution",
+            "dtype",
+            "quantizationMode",
+            "loadedQuantization",
+            "quantizedComponents",
+            "bnb4ComputeDtype",
+            "offloadMode",
+            "autoOffload",
+            "deviceMap",
+            "generation",
+            "attentionBackend",
+            "regionalCompile",
+            "denoiserCache",
+            "channelsLast",
+            "layerwiseCasting",
+            "modelDependencies",
+            "optionalRuntimeProfileIds",
+            "optionalRuntimeRequirement",
+            "proof",
+            "readiness",
+            "canAutoRun",
+            "exactPairDeclared",
+            "profileArtifactCompatible",
+            "requiresConfirmation",
+            "artifactTrust",
+            "knownBadReasons",
+            "requirementsMissing",
+            "requirements",
+        )
+
+    def _runtime_auto_candidate(self, runtime_hints, candidate_id):
+        candidates = runtime_hints.get("autoResourceCandidates") if isinstance(runtime_hints, dict) else None
+        if (
+            not isinstance(candidate_id, str)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", candidate_id) is None
+            or not isinstance(candidates, list)
+        ):
+            raise self._auto_resource_contract_error(
+                "Auto candidate binding is missing. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        matches = [
+            candidate
+            for candidate in candidates
+            if isinstance(candidate, dict) and candidate.get("id") == candidate_id
+        ]
+        if len(matches) != 1:
+            raise self._auto_resource_contract_error(
+                "Auto candidate binding is stale or ambiguous. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        return matches[0]
+
+    def _assert_same_auto_candidate_recipe(self, plan, candidate):
+        if not isinstance(plan, dict) or not isinstance(candidate, dict):
+            raise self._auto_resource_contract_error(
+                "Auto candidate recipe is unavailable. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        mismatches = [
+            key
+            for key in self._auto_candidate_execution_fields()
+            if plan.get(key) != candidate.get(key)
+        ]
+        if mismatches:
+            raise self._auto_resource_contract_error(
+                "Auto candidate recipe does not match the current candidate list. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+
+    @staticmethod
+    def _resource_plan_artifact(plan):
+        if not isinstance(plan, dict):
+            return None
+        resolution = plan.get("artifactResolution")
+        resolved = resolution.get("resolved") if isinstance(resolution, dict) else None
+        values = [
+            plan.get("modelRepo"),
+            plan.get("resolvedArtifact"),
+            plan.get("artifact"),
+            resolved.get("repo") if isinstance(resolved, dict) else None,
+        ]
+        repos = [value for value in values if isinstance(value, str) and value]
+        if not repos:
+            return None
+        if any(repo != repos[0] for repo in repos[1:]):
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains inconsistent artifact identities. Refresh Auto before running this workflow."
+            )
+        return repos[0]
+
+    @staticmethod
+    def _assert_resource_plan_artifact_compatible(plan, profile):
+        repo = WebServer._resource_plan_artifact(plan)
+        if repo is None:
+            return
+        compatible = {
+            item
+            for item in (profile.default_repo, profile.fallback_repo, *profile.compatible_repos)
+            if isinstance(item, str) and item
+        }
+        if repo not in compatible:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan artifact is not admitted by its exact execution profile. "
+                "Refresh Auto before running this workflow."
+            )
+
+    @staticmethod
+    def _assert_resource_plan_values_supported(plan, profile):
+        offload_mode = plan.get("offloadMode")
+        if offload_mode is not None and offload_mode not in profile.supported_offload_modes:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported offload mode. Refresh Auto before running this workflow."
+            )
+        dtype = plan.get("dtype")
+        if dtype is not None and dtype not in {"float32", "float16", "bfloat16"}:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported dtype. Refresh Auto before running this workflow."
+            )
+        compute_dtype = plan.get("bnb4ComputeDtype")
+        if compute_dtype is not None and compute_dtype not in {"float32", "float16", "bfloat16"}:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported compute dtype. Refresh Auto before running this workflow."
+            )
+        quantization_mode = plan.get("quantizationMode")
+        if quantization_mode is not None and quantization_mode not in {
+            "none",
+            "bnb_4bit",
+            "bnb_8bit",
+            "quanto_float8",
+            "quanto_int8",
+            "torchao_float8",
+            "torchao_int8_weight_only",
+        }:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported quantization mode. Refresh Auto before running this workflow."
+            )
+        device_map = plan.get("deviceMap")
+        if device_map is not None and device_map not in RUNTIME_DEVICE_MAPS:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported device map. Refresh Auto before running this workflow."
+            )
+        attention_backend = plan.get("attentionBackend")
+        if attention_backend is not None and attention_backend not in RUNTIME_ATTENTION_BACKENDS:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported attention backend. Refresh Auto before running this workflow."
+            )
+        denoiser_cache = plan.get("denoiserCache")
+        if denoiser_cache is not None and denoiser_cache not in RUNTIME_DENOISER_CACHE_MODES:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan contains an unsupported denoiser cache. Refresh Auto before running this workflow."
+            )
+        for key in ("autoOffload", "regionalCompile", "channelsLast", "layerwiseCasting"):
+            if key in plan and plan.get(key) is not None and not isinstance(plan.get(key), bool):
+                raise WebServer._auto_resource_contract_error(
+                    "Auto resource plan contains an invalid runtime flag. Refresh Auto before running this workflow."
+                )
+        components = plan.get("quantizedComponents")
+        if components is not None:
+            admitted = set(profile.quantizable_components)
+            if (
+                not isinstance(components, list)
+                or any(not isinstance(item, str) or item not in admitted for item in components)
+            ):
+                raise WebServer._auto_resource_contract_error(
+                    "Auto resource plan contains unsupported quantized components. "
+                    "Refresh Auto before running this workflow."
+                )
+
+    def _canonical_auto_retry_plan(self, runtime_hints, raw_plan, *, index):
+        candidate_id = raw_plan.get("candidateId") if isinstance(raw_plan, dict) else None
+        candidate = self._runtime_auto_candidate(runtime_hints, candidate_id)
+        retry_identity_fields = (
+            "modelType",
+            "mode",
+            "loaderModule",
+            "loaderAction",
+            "executionPath",
+            "pipelineClass",
+        )
+        if any(raw_plan.get(key) != candidate.get(key) for key in retry_identity_fields):
+            raise self._auto_resource_contract_error(
+                "Auto retry identity does not match its current candidate. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        if any(
+            key in raw_plan and raw_plan.get(key) != candidate.get(key)
+            for key in self._auto_candidate_execution_fields()
+            if key not in retry_identity_fields
+        ):
+            raise self._auto_resource_contract_error(
+                "Auto retry recipe does not match its current candidate. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        selected = runtime_hints.get("autoResourcePlan")
+        selected_id = selected.get("id") if isinstance(selected, dict) else None
+        selected_candidate = self._runtime_auto_candidate(runtime_hints, selected_id)
+        self._assert_same_auto_candidate_recipe(selected, selected_candidate)
+
+        selected_profile = self._resource_plan_execution_profile(selected, runtime_hints=runtime_hints)
+        retry_profile = self._resource_plan_execution_profile(candidate, runtime_hints=runtime_hints)
+        if retry_profile.id != selected_profile.id:
+            raise self._auto_resource_contract_error(
+                "Auto retry candidate does not belong to the selected execution profile. "
+                "Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        if not self._auto_resource_candidate_is_proven(candidate):
+            raise self._auto_resource_contract_error(
+                "Auto retry candidate is not runnable. Refresh Auto before running this workflow.",
+                code="auto_resource_candidate_mismatch",
+            )
+        self._assert_resource_plan_artifact_compatible(candidate, retry_profile)
+        self._assert_resource_plan_values_supported(candidate, retry_profile)
+
+        plan = deepcopy(candidate)
+        plan["candidateId"] = candidate_id
+        plan["index"] = index
+        plan["reason"] = f"candidate_retry_{index + 1}"
+        for key in ("onCategories", "onErrorCodes"):
+            values = raw_plan.get(key)
+            if isinstance(values, list):
+                plan[key] = list(values)
+        self._normalize_retry_plan_triggers(plan)
+        return plan
 
     def _set_param_value_if_present(self, node, key, value):
         params = node.get("params") if isinstance(node, dict) else None
@@ -6553,7 +7325,9 @@ class WebServer:
         """Resolve the exact Hub commit owned by one Auto artifact."""
 
         if not isinstance(plan, dict) or not isinstance(repo, str) or not repo:
-            raise ValueError("Auto repository mutation requires a non-empty artifact repository.")
+            raise WebServer._auto_resource_contract_error(
+                "Auto repository mutation requires a reviewed artifact identity."
+            )
         resolution = plan.get("artifactResolution")
         resolved = resolution.get("resolved") if isinstance(resolution, dict) else None
         declared = plan.get("artifactRevision")
@@ -6566,22 +7340,21 @@ class WebServer:
                 or declared != declared.lower()
                 or not IMMUTABLE_HUB_REVISION.fullmatch(declared)
             ):
-                raise ValueError(
-                    f"Auto artifact {repo!r} requires an exact lowercase 40-character commit revision."
+                raise WebServer._auto_resource_contract_error(
+                    "Auto artifact requires an exact lowercase 40-character commit revision."
                 )
         else:
             declared = None
 
         reviewed = catalog_revision(repo)
         if reviewed is not None and declared is not None and declared != reviewed:
-            raise ValueError(
-                f"Auto artifact revision {declared!r} does not match the reviewed catalog commit "
-                f"{reviewed!r} for {repo!r}."
+            raise WebServer._auto_resource_contract_error(
+                "Auto artifact revision does not match the reviewed catalog commit."
             )
         revision = reviewed or declared
         if revision is None:
-            raise ValueError(
-                f"Auto artifact {repo!r} has no immutable revision in its plan or the model artifact catalog."
+            raise WebServer._auto_resource_contract_error(
+                "Auto artifact has no immutable reviewed revision."
             )
         return revision
 
@@ -6614,17 +7387,17 @@ class WebServer:
         revision_field = params.get("revision") if isinstance(params, dict) else None
         if not isinstance(revision_field, dict):
             if repository_changes:
-                raise ValueError(
-                    f"Auto cannot change {node_key}.{key} without a revision field on the same loader."
+                raise self._auto_resource_contract_error(
+                    "Auto cannot change a loader repository without a revision field on the same loader."
                 )
             return False
 
         revision_is_pinned = (node_key, "revision") in pinned_fields
         current_revision = revision_field.get("value", revision_field.get("default"))
         if revision_is_pinned and repository_changes and current_revision != revision:
-            raise ValueError(
-                f"Auto cannot change {node_key}.{key} from {current_repo!r} to {repo!r} while its "
-                "revision override is pinned to a different commit. Unpin both fields or switch to Expert."
+            raise self._auto_resource_contract_error(
+                "Auto cannot change a loader repository while its revision override is pinned to a different commit. "
+                "Unpin both fields or switch to Expert."
             )
 
         revision_changes = not revision_is_pinned and current_revision != revision
@@ -6636,31 +7409,99 @@ class WebServer:
             changed = True
         return changed
 
-    def _resource_plan_loader_module(self, plan):
-        """Resolve the direct-loader family owned by a structured Auto plan.
+    @staticmethod
+    def _resource_plan_execution_profile(plan, *, runtime_hints=None):
+        """Resolve and validate the one backend-owned target for a plan."""
 
-        A Studio graph may intentionally contain more than one independent
-        Diffusers pipeline (for example ACE-Step audio plus LTX video).  Model
-        and pipeline-class overrides belong only to the plan's family; applying
-        them to every loader corrupts the other branch before execution.
-        """
-        execution_path = str(plan.get("executionPath") or "").strip().lower() if isinstance(plan, dict) else ""
-        pipeline_class = str(plan.get("pipelineClass") or "").strip().lower() if isinstance(plan, dict) else ""
-        if "modular" in execution_path or pipeline_class.endswith("modularpipeline"):
-            return "modules.ModularDiffusers"
-        if not pipeline_class:
-            return None
-        if "acestep" in pipeline_class or "audio" in pipeline_class:
-            return "modules.DiffusersAudio"
-        if any(token in pipeline_class for token in ("wan", "ltx", "video", "framepack", "hunyuan", "mochi")):
-            return "modules.DiffusersVideo"
-        return "modules.DiffusersImage"
+        if not isinstance(plan, dict):
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan must be a JSON object with an exact loader target."
+            )
+        hints = runtime_hints if isinstance(runtime_hints, dict) else {}
+        for key in ("modelType", "mode"):
+            plan_value = plan.get(key)
+            hint_value = hints.get(key)
+            if (
+                isinstance(plan_value, str)
+                and isinstance(hint_value, str)
+                and hint_value
+                and plan_value != hint_value
+            ):
+                raise WebServer._auto_resource_contract_error(
+                    f"Auto resource plan {key} does not match the active workflow. "
+                    "Refresh Auto before running this workflow."
+                )
+        model_type = plan.get("modelType")
+        mode = plan.get("mode")
+        if (
+            not isinstance(model_type, str)
+            or not model_type
+            or model_type != model_type.strip()
+            or not isinstance(mode, str)
+            or not mode
+            or mode != mode.strip()
+        ):
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan requires an exact modelType and mode before it can target a loader."
+            )
+        profiles = execution_profiles_for_execution(model_type, mode)
+        if len(profiles) != 1:
+            raise WebServer._auto_resource_contract_error(
+                "Auto resource plan does not resolve to one exact execution profile."
+            )
+        profile = profiles[0]
+        expected = {
+            "loaderModule": profile.loader_module,
+            "loaderAction": profile.loader_action,
+            "executionPath": profile.execution_path,
+            "pipelineClass": profile.pipeline_class,
+        }
+        mismatches = [
+            key
+            for key, value in expected.items()
+            if plan.get(key) != value
+        ]
+        if mismatches:
+            raise WebServer._auto_resource_contract_error(
+                f"Auto resource plan target does not match execution profile {profile.id!r}: "
+                + ", ".join(mismatches)
+                + ". Refresh Auto before running this workflow."
+            )
+        hint_mismatches = [
+            key
+            for key, value in expected.items()
+            if hints.get(key) not in (None, "") and hints.get(key) != value
+        ]
+        if hint_mismatches:
+            raise WebServer._auto_resource_contract_error(
+                f"Active workflow target does not match execution profile {profile.id!r}: "
+                + ", ".join(hint_mismatches)
+                + ". Refresh Auto before running this workflow."
+            )
+        return profile
 
-    def _resource_plan_targets_node_family(self, node, plan):
-        target_module = self._resource_plan_loader_module(plan)
-        if target_module is None:
-            return True
-        return isinstance(node, dict) and node.get("module") == target_module
+    @staticmethod
+    def _resource_plan_node_matches_profile(node, profile):
+        if (
+            not isinstance(node, dict)
+            or node.get("module") != profile.loader_module
+            or node.get("action") != profile.loader_action
+        ):
+            return False
+        params = node.get("params")
+        if not isinstance(params, dict):
+            return False
+        identity_key = "model_type" if profile.loader_action == "ModelsLoader" else "pipeline_class"
+        identity_param = params.get(identity_key)
+        if not isinstance(identity_param, dict):
+            return False
+        identity = identity_param.get("value", identity_param.get("default"))
+        expected_identity = profile.model_type if identity_key == "model_type" else profile.pipeline_class
+        return identity == expected_identity
+
+    def _resource_plan_targets_node_family(self, node, plan, *, runtime_hints=None):
+        profile = self._resource_plan_execution_profile(plan, runtime_hints=runtime_hints)
+        return self._resource_plan_node_matches_profile(node, profile)
 
     def _retry_plan_matches(self, plan, classification):
         if not isinstance(plan, dict) or not isinstance(classification, dict):
@@ -6703,6 +7544,10 @@ class WebServer:
         allowed = {
             "index",
             "reason",
+            "modelType",
+            "mode",
+            "loaderModule",
+            "loaderAction",
             "executionPath",
             "modelRepo",
             "resolvedArtifact",
@@ -6713,13 +7558,27 @@ class WebServer:
             "bnb4ComputeDtype",
             "dtype",
             "pipelineClass",
+            "candidateId",
+            "id",
             "offloadMode",
             "deviceMap",
             "generation",
             "onCategories",
             "onErrorCodes",
         }
-        return {key: deepcopy(plan.get(key)) for key in allowed if key in plan}
+        sanitized = {key: deepcopy(plan.get(key)) for key in allowed if key in plan}
+        for key in ("candidateId", "id"):
+            value = sanitized.get(key)
+            if not isinstance(value, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", value) is None:
+                sanitized.pop(key, None)
+        index = sanitized.get("index")
+        sanitized["reason"] = (
+            f"retry_plan_{index + 1}"
+            if isinstance(index, int) and not isinstance(index, bool) and 0 <= index < 32
+            else "retry_plan"
+        )
+        self._normalize_retry_plan_triggers(sanitized)
+        return sanitized
 
     def _apply_resource_retry_to_graph(self, graph, offload_mode):
         nodes = graph.get("nodes", {})
@@ -6754,7 +7613,32 @@ class WebServer:
         if not isinstance(nodes, dict) or not isinstance(plan, dict):
             return []
 
-        runtime_hints = graph.get("runtimeHints")
+        runtime_hints = self._coerce_runtime_hints(graph.get("runtimeHints"))
+        profile = self._resource_plan_execution_profile(plan, runtime_hints=runtime_hints)
+        if isinstance(runtime_hints, dict) and runtime_hints.get("resourceMode") == "auto":
+            self._assert_resource_plan_artifact_compatible(plan, profile)
+            self._assert_resource_plan_values_supported(plan, profile)
+        paths = graph.get("paths")
+        executable_node_ids = None
+        if isinstance(paths, list):
+            executable_node_ids = {
+                str(node_id)
+                for path in paths
+                if isinstance(path, list)
+                for node_id in path
+            }
+        target_nodes = [
+            (node_id, node)
+            for node_id, node in nodes.items()
+            if (executable_node_ids is None or str(node_id) in executable_node_ids)
+            and self._resource_plan_node_matches_profile(node, profile)
+        ]
+        if not target_nodes:
+            raise self._auto_resource_contract_error(
+                f"Auto resource plan target {profile.loader_module}.{profile.loader_action} matched zero exact "
+                "loader identities. Refresh Auto before running this workflow."
+            )
+        target_node_ids = {str(node_id) for node_id, _node in target_nodes}
         raw_overrides = runtime_hints.get("autoFieldOverrides") if isinstance(runtime_hints, dict) else None
         pinned_fields = {
             (str(item.get("nodeId")), str(item.get("fieldKey")))
@@ -6789,20 +7673,33 @@ class WebServer:
         quantized_components = plan.get("quantizedComponents")
         compute_dtype = plan.get("bnb4ComputeDtype")
         dtype = plan.get("dtype")
-        target_recipe_ids = set()
-        for node in nodes.values():
-            if not isinstance(node, dict):
-                continue
-            module = node.get("module")
-            action = node.get("action")
-            compatible_loader = (
-                module == "modules.ModularDiffusers" and action in ("ModelsLoader", "DynamicPipelineLoader")
-            ) or (
-                module in ("modules.DiffusersImage", "modules.DiffusersAudio", "modules.DiffusersVideo")
-                and action == "LoadPipeline"
+        applicable_param_keys = set()
+        if isinstance(offload_mode, str):
+            applicable_param_keys.update(("offload_mode", "auto_offload"))
+        if isinstance(device_map, str):
+            applicable_param_keys.add("device_map")
+        if isinstance(model_repo, str) and model_repo:
+            applicable_param_keys.update(("model_id", "repo_id"))
+        if isinstance(dtype, str):
+            applicable_param_keys.add("dtype")
+        if profile.loader_module == "modules.DiffusersImage":
+            if isinstance(quantization_mode, str):
+                applicable_param_keys.add("quantization_mode")
+            if isinstance(quantized_components, list):
+                applicable_param_keys.add("quantized_components")
+            if isinstance(compute_dtype, str):
+                applicable_param_keys.add("bnb_4bit_compute_dtype")
+        if not any(
+            isinstance(node.get("params"), dict)
+            and any(key in node["params"] for key in applicable_param_keys)
+            for _node_id, node in target_nodes
+        ):
+            raise self._auto_resource_contract_error(
+                f"Auto resource plan target {profile.loader_module}.{profile.loader_action} matched loader nodes "
+                "but none exposes an applicable plan field. Refresh Auto before running this workflow."
             )
-            if not compatible_loader or not self._resource_plan_targets_node_family(node, plan):
-                continue
+        target_recipe_ids = set()
+        for _node_id, node in target_nodes:
             recipe_param = (node.get("params") or {}).get("execution_recipe")
             recipe_source_id = recipe_param.get("sourceId") if isinstance(recipe_param, dict) else None
             if isinstance(recipe_source_id, str) and recipe_source_id:
@@ -6812,20 +7709,7 @@ class WebServer:
         # must fail the whole Auto rewrite without leaving a partially changed
         # graph behind.
         if isinstance(model_repo, str) and model_repo:
-            for node_id, node in nodes.items():
-                if not isinstance(node, dict):
-                    continue
-                action = node.get("action")
-                module = node.get("module")
-                compatible_loader = (
-                    module == "modules.ModularDiffusers"
-                    and action in ("ModelsLoader", "DynamicPipelineLoader")
-                ) or (
-                    module in ("modules.DiffusersImage", "modules.DiffusersAudio", "modules.DiffusersVideo")
-                    and action == "LoadPipeline"
-                )
-                if not compatible_loader or not self._resource_plan_targets_node_family(node, plan):
-                    continue
+            for node_id, node in target_nodes:
                 for param_key in ("model_id", "repo_id"):
                     self._set_model_repo_and_revision_if_present(
                         node,
@@ -6843,14 +7727,9 @@ class WebServer:
                 continue
             action = node.get("action")
             module = node.get("module")
-            compatible_loader = (
-                module == "modules.ModularDiffusers" and action in ("ModelsLoader", "DynamicPipelineLoader")
-            ) or (
-                module in ("modules.DiffusersImage", "modules.DiffusersAudio", "modules.DiffusersVideo")
-                and action == "LoadPipeline"
-            )
             if (
                 str(node_id) in target_recipe_ids
+                and (executable_node_ids is None or str(node_id) in executable_node_ids)
                 and module == "modules.DiffusersRuntime"
                 and action == "DiffusersExecutionRecipe"
             ):
@@ -6862,7 +7741,7 @@ class WebServer:
                 if recipe_changed:
                     updated.append(str(node_id))
 
-            if compatible_loader and self._resource_plan_targets_node_family(node, plan):
+            if str(node_id) in target_node_ids:
                 changed = False
                 if isinstance(offload_mode, str):
                     changed = set_param(node_id, node, "offload_mode", offload_mode) or changed
@@ -6872,8 +7751,10 @@ class WebServer:
                 if isinstance(model_repo, str) and model_repo:
                     changed = set_model_repo(node_id, node, "model_id", model_repo) or changed
                     changed = set_model_repo(node_id, node, "repo_id", model_repo) or changed
-                if isinstance(plan.get("pipelineClass"), str):
-                    changed = set_param(node_id, node, "pipeline_class", plan.get("pipelineClass")) or changed
+                if profile.loader_action == "ModelsLoader":
+                    changed = set_param(node_id, node, "model_type", profile.model_type) or changed
+                else:
+                    changed = set_param(node_id, node, "pipeline_class", profile.pipeline_class) or changed
                 if isinstance(dtype, str):
                     changed = set_param(node_id, node, "dtype", dtype) or changed
                 if module == "modules.DiffusersImage" and action == "LoadPipeline":
@@ -6928,11 +7809,9 @@ class WebServer:
             or (plan_mode and hint_mode and plan_mode != hint_mode)
         )
         if pair_mismatch:
-            plan_pair = f"{plan_model_type or '<missing model type>'}:{plan_mode or '<missing mode>'}"
-            requested_pair = f"{hint_model_type or '<missing model type>'}:{hint_mode or '<missing mode>'}"
             error = RuntimeError(
-                f"Auto resource plan pair '{plan_pair}' does not match the requested workflow pair "
-                f"'{requested_pair}'. Refresh the Auto plan or switch to Expert before executing this workflow."
+                "Auto resource plan pair does not match the requested workflow pair. "
+                "Refresh the Auto plan or switch to Expert before executing this workflow."
             )
             setattr(error, "modiff_error_code", "auto_resource_pair_mismatch")
             setattr(error, "modiff_category", "auto_resource")
@@ -6953,9 +7832,8 @@ class WebServer:
             or not mode
             or not auto_resource_pair_is_declared(model_type, mode)
         ):
-            pair_label = f"{model_type or '<missing model type>'}:{mode or '<missing mode>'}"
             error = RuntimeError(
-                f"Auto has no declared execution recipe for the exact model/task pair '{pair_label}'. "
+                "Auto has no declared execution recipe for the exact model/task pair. "
                 "Refresh the Auto plan or switch to Expert before executing this workflow."
             )
             setattr(error, "modiff_error_code", "auto_resource_pair_undeclared")
@@ -6968,6 +7846,44 @@ class WebServer:
             )
             setattr(error, "modiff_auto_resource_status", "expert_only")
             raise error
+
+        plan_candidate_id = auto_plan.get("id")
+        selected_candidate_id = runtime_hints.get("autoResourceCandidateId")
+        if (
+            not isinstance(plan_candidate_id, str)
+            or not plan_candidate_id
+            or not isinstance(selected_candidate_id, str)
+            or not selected_candidate_id
+            or selected_candidate_id != plan_candidate_id
+        ):
+            error = RuntimeError(
+                "Auto resource candidate ID does not match the selected plan ID. "
+                "Refresh Auto before executing this workflow."
+            )
+            setattr(error, "modiff_error_code", "auto_resource_candidate_mismatch")
+            setattr(error, "modiff_category", "auto_resource")
+            setattr(error, "modiff_recovery_hint", "Refresh Auto and reselect a candidate for the current graph.")
+            setattr(error, "modiff_auto_resource_status", "expert_only")
+            raise error
+
+        candidate = self._runtime_auto_candidate(runtime_hints, plan_candidate_id)
+        self._assert_same_auto_candidate_recipe(auto_plan, candidate)
+
+        try:
+            profile = self._resource_plan_execution_profile(auto_plan, runtime_hints=runtime_hints)
+            self._assert_resource_plan_artifact_compatible(auto_plan, profile)
+            self._assert_resource_plan_values_supported(auto_plan, profile)
+        except RuntimeError as exc:
+            error = RuntimeError(str(exc))
+            setattr(error, "modiff_error_code", "auto_resource_target_mismatch")
+            setattr(error, "modiff_category", "auto_resource")
+            setattr(
+                error,
+                "modiff_recovery_hint",
+                "Refresh Auto so the selected candidate targets the exact loader contract in this workflow.",
+            )
+            setattr(error, "modiff_auto_resource_status", "expert_only")
+            raise error from exc
 
         if not self._auto_resource_requires_proven_candidate(runtime_hints):
             return
@@ -6988,9 +7904,9 @@ class WebServer:
             return
 
         status = runtime_hints.get("compatibilityStatus") or runtime_hints.get("autoResourceProofStatus") or "unproven"
-        model_name = runtime_hints.get("modelName") or runtime_hints.get("modelType") or "this workflow"
         error = RuntimeError(
-            f"Auto resource plan is not ready for {model_name}. Refresh the Auto plan or choose Expert settings before executing this workflow."
+            "Auto resource plan is not ready for this workflow. Refresh the Auto plan or choose Expert "
+            "settings before executing this workflow."
         )
         setattr(error, "modiff_error_code", "auto_resource_unproven")
         setattr(error, "modiff_category", "auto_resource")
@@ -7248,6 +8164,8 @@ class WebServer:
                 or runtime_hints.get("resolvedArtifact")
                 or runtime_hints.get("modelRepo")
             ),
+            "loaderModule": candidate.get("loaderModule") or runtime_hints.get("loaderModule"),
+            "loaderAction": candidate.get("loaderAction") or runtime_hints.get("loaderAction"),
             "executionPath": candidate.get("executionPath") or runtime_hints.get("executionPath"),
             "pipelineClass": candidate.get("pipelineClass") or runtime_hints.get("pipelineClass"),
             # The same model/artifact can be represented by an assembled
@@ -7826,6 +8744,8 @@ class WebServer:
 
         graph_execution_time = time.time()
         base_runtime_hints = self._coerce_runtime_hints(graph.get("runtimeHints"))
+        if base_runtime_hints is not None:
+            graph["runtimeHints"] = deepcopy(base_runtime_hints)
         if isinstance(base_runtime_hints, dict):
             base_runtime_hints["loaderContract"] = self._graph_loader_contract(nodes)
         auto_runtime_preparation = self._prepare_auto_runtime_for_graph(base_runtime_hints)
@@ -7852,9 +8772,15 @@ class WebServer:
             if runtime_hints and active_retry_plan is None and attempt_index == 0:
                 self._assert_auto_resource_candidate_ready(runtime_hints)
                 auto_plan = runtime_hints.get("autoResourcePlan")
-                if isinstance(auto_plan, dict) and self._auto_resource_candidate_is_proven(auto_plan):
-                    updated_nodes = self._apply_resource_retry_plan_to_graph(graph, auto_plan)
-                    if updated_nodes:
+                if isinstance(auto_plan, dict):
+                    proven = self._auto_resource_candidate_is_proven(auto_plan)
+                    # Every Auto plan must address one exact visible loader,
+                    # even when qualification is still advisory.  Simulate
+                    # unproven plans on a copy so validation cannot mutate the
+                    # user's graph.
+                    target_graph = graph if proven else deepcopy(graph)
+                    updated_nodes = self._apply_resource_retry_plan_to_graph(target_graph, auto_plan)
+                    if proven and updated_nodes:
                         self.queue_message(
                             {
                                 "type": "auto_resource_plan_applied",
@@ -7900,7 +8826,7 @@ class WebServer:
                         plan["offloadMode"] = retry_mode
                         plan["autoOffload"] = retry_mode != OFFLOAD_MODE_NONE
                 retry_message = (
-                    f"Retrying with {str(retry_mode or active_retry_plan.get('reason') or 'safer plan').replace('_', '-')} "
+                    f"Retrying with validated resource plan {retry_plan_index + 1} "
                     f"after {retry_history[-1]['errorCode'] if retry_history else 'resource pressure'}."
                 )
                 retry_progress = self.record_node_progress(

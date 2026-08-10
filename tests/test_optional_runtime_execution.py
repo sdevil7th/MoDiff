@@ -61,11 +61,11 @@ def loader_graph(*, runtime_hints=None):
         "sid": "optional-runtime-test",
         "nodes": {
             "loader": {
-                "module": "modules.ModularDiffusers",
-                "action": "ModelsLoader",
+                "module": "modules.DiffusersImage",
+                "action": "LoadPipeline",
                 "params": {
-                    "model_type": {"value": "ZImageModularPipeline"},
-                    "repo_id": {
+                    "pipeline_class": {"value": "ZImagePipeline"},
+                    "model_id": {
                         "value": {
                             "source": "hub",
                             "value": "Tongyi-MAI/Z-Image-Turbo",
@@ -224,11 +224,17 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual(duplicate["state"], "unavailable")
         self.assertEqual(duplicate["reason"], "execution_profile_contract_invalid")
 
-    def test_loader_resolution_uses_authoritative_model_type_and_structured_hub_repo(self):
+    def test_loader_resolution_uses_authoritative_identity_and_structured_hub_repo(self):
         profiles, reason = resolve_execution_profiles_for_loader(
-            "modules.ModularDiffusers",
-            "ModelsLoader",
-            {"model_type": "ZImageModularPipeline"},
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            {
+                "pipeline_class": "ZImagePipeline",
+                "model_id": {
+                    "source": "hub",
+                    "value": "Tongyi-MAI/Z-Image-Turbo",
+                },
+            },
         )
         self.assertIsNone(reason)
         self.assertEqual([profile.id for profile in profiles], [EXECUTION_PROFILE_ID])
@@ -771,8 +777,8 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
 
     def test_loader_boundary_blocks_before_module_import(self):
         self.server.modules = {
-            "modules.ModularDiffusers": {
-                "ModelsLoader": {"params": {}},
+            "modules.DiffusersImage": {
+                "LoadPipeline": {"params": {}},
             }
         }
         node = loader_graph()["nodes"]["loader"]
@@ -801,7 +807,7 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
             task_id="task-fixture",
             sid=r"C:\private\sid-token",
             node_id="loader",
-            node_name="modules.ModularDiffusers.ModelsLoader",
+            node_name="modules.DiffusersImage.LoadPipeline",
             traceback_text=r"C:\private\source.py secret-token",
         )
         self.assertEqual(
@@ -1014,8 +1020,8 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
 
 class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
     class FakeNode:
-        module_name = "modules.ModularDiffusers"
-        class_name = "ModelsLoader"
+        module_name = "modules.DiffusersImage"
+        class_name = "LoadPipeline"
 
         def __init__(self):
             self.calls = []
@@ -1032,8 +1038,8 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
         )
         self.environment.start()
         modules = {
-            "modules.ModularDiffusers": {
-                "ModelsLoader": {
+            "modules.DiffusersImage": {
+                "LoadPipeline": {
                     "params": {
                         "trigger": {"onChange": "refresh"},
                     }
@@ -1060,11 +1066,11 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 "fn": "refresh",
                 "fieldKey": "trigger",
                 "queue": queue,
-                "module": "modules.ModularDiffusers",
-                "action": "ModelsLoader",
+                "module": "modules.DiffusersImage",
+                "action": "LoadPipeline",
                 "values": {
-                    "model_type": "ZImageModularPipeline",
-                    "repo_id": {
+                    "pipeline_class": "ZImagePipeline",
+                    "model_id": {
                         "source": "hub",
                         "value": "Tongyi-MAI/Z-Image-Turbo",
                     },

@@ -27,11 +27,25 @@ sys.modules.setdefault(
 )
 
 from modiff import preflight  # noqa: E402
+from modiff.diffusers_profiles import execution_profiles_for_execution  # noqa: E402
 from modiff.server import WebServer  # noqa: E402
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
 
 
 GIB = 1024**3
+
+
+def resource_plan_target(model_type, mode):
+    profiles = execution_profiles_for_execution(model_type, mode)
+    if len(profiles) != 1:
+        raise AssertionError(f"Expected one execution profile for {model_type}:{mode}, got {len(profiles)}")
+    profile = profiles[0]
+    return {
+        "loaderModule": profile.loader_module,
+        "loaderAction": profile.loader_action,
+        "executionPath": profile.execution_path,
+        "pipelineClass": profile.pipeline_class,
+    }
 
 
 def hardware_snapshot(*, ram_total=32 * GIB, cuda=True):
@@ -677,25 +691,500 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(raised.exception.modiff_error_code, "auto_resource_pair_mismatch")
         self.assertEqual(raised.exception.modiff_auto_resource_status, "expert_only")
-        self.assertIn("FluxSchnellPipeline:text_to_image", str(raised.exception))
-        self.assertIn("QwenImageEditPlusModularPipeline:inpaint", str(raised.exception))
+        self.assertNotIn("FluxSchnellPipeline:text_to_image", str(raised.exception))
+        self.assertNotIn("QwenImageEditPlusModularPipeline:inpaint", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
 
     def test_auto_execution_keeps_declared_but_unqualified_recipe_behavior(self):
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-schnell-contract-only",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "skipped"},
+        }
         hints = self.server._coerce_runtime_hints(
             {
                 "resourceMode": "auto",
                 "modelType": "FluxSchnellPipeline",
                 "mode": "text_to_image",
-                "autoResourcePlan": {
-                    "id": "flux-schnell-contract-only",
-                    "modelType": "FluxSchnellPipeline",
-                    "mode": "text_to_image",
-                    "proof": {"status": "skipped"},
-                },
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
             }
         )
 
         self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
+    def test_auto_execution_requires_exact_candidate_id_and_list_binding(self):
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-bound",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        cases = (
+            {
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            },
+            {
+                "autoResourcePlan": candidate,
+                "autoResourceCandidateId": candidate["id"],
+            },
+            {
+                "autoResourcePlan": candidate,
+                "autoResourceCandidateId": "stale-id",
+                "autoResourceCandidates": [candidate],
+            },
+        )
+        for case in cases:
+            with self.subTest(keys=sorted(case)):
+                hints = self.server._coerce_runtime_hints(
+                    {
+                        "resourceMode": "auto",
+                        "modelType": "FluxSchnellPipeline",
+                        "mode": "text_to_image",
+                        **case,
+                    }
+                )
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+                self.assertLess(len(str(raised.exception)), 256)
+
+    def test_auto_execution_rejects_same_id_with_divergent_proof_recipe(self):
+        listed = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "same-id",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "skipped"},
+        }
+        selected = copy.deepcopy(listed)
+        selected["proof"] = {"status": "declared_safe"}
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": "same-id",
+                "autoResourcePlan": selected,
+                "autoResourceCandidates": [listed],
+            }
+        )
+
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._assert_auto_resource_candidate_ready(hints)
+
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_auto_target_errors_do_not_echo_oversized_untrusted_values(self):
+        marker = "PUBLIC_SECRET_MARKER_" + "x" * 2048
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-bound",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "loaderModule": marker,
+            "proof": {"status": "declared_safe"},
+        }
+
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "autoResourceCandidateId": candidate["id"],
+                    "autoResourcePlan": candidate,
+                    "autoResourceCandidates": [candidate],
+                }
+            )
+
+        self.assertNotIn("PUBLIC_SECRET_MARKER_", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_auto_candidate_projection_drops_unknown_deep_and_wide_values_but_bounds_contract_fields(self):
+        deep = {}
+        cursor = deep
+        for _ in range(1200):
+            cursor["next"] = {}
+            cursor = cursor["next"]
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "bounded",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+            "junk": deep,
+            "wideJunk": list(range(100000)),
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            }
+        )
+        self.assertNotIn("junk", hints["autoResourcePlan"])
+        self.assertNotIn("wideJunk", hints["autoResourceCandidates"][0])
+
+        nested_proof = {"status": "declared_safe"}
+        cursor = nested_proof
+        for _ in range(10):
+            cursor["nested"] = {}
+            cursor = cursor["nested"]
+        invalid = {**candidate, "proof": nested_proof}
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints({"autoResourcePlan": invalid})
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints({"autoResourceCandidates": [candidate] * 65})
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints({"resourceRetryPlans": [{}] * 33})
+
+    def test_retry_adjacent_runtime_containers_are_bounded_or_worker_owned(self):
+        marker = "RUNTIME_CONTAINER_SECRET_MARKER"
+        deep = {"marker": marker}
+        cursor = deep
+        for _ in range(1200):
+            cursor["next"] = {}
+            cursor = cursor["next"]
+
+        for payload in (
+            {"resourcePlan": deep},
+            {"compatibilityProbe": deep},
+            {"optimizationQualificationForm": deep},
+            {"workflowSnapshot": deep},
+            {"modelType": deep},
+            {"workflowTitle": deep},
+            {"deviceMap": deep},
+            {"attentionBackend": deep},
+            {"denoiserCache": deep},
+            {"regionalCompile": deep},
+            {"channelsLast": deep},
+            {"layerwiseCasting": deep},
+            {
+                "autoFieldOverrides": [
+                    {"nodeId": "loader", "fieldKey": "dtype", "value": deep},
+                ],
+            },
+        ):
+            with self.subTest(field=next(iter(payload))):
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._coerce_runtime_hints(payload)
+                self.assertNotIn(marker, str(raised.exception))
+                self.assertLess(len(str(raised.exception)), 256)
+
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceRetryHistory": [deep],
+                "resourceRetryAttempt": 9,
+                "resourceRetryLastError": marker,
+                "resourceRetryLastCode": marker,
+                "resourcePlan": {
+                    "summary": "bounded",
+                    "activeRetryPlan": {"reason": marker},
+                },
+            }
+        )
+        self.assertNotIn("resourceRetryHistory", hints)
+        self.assertNotIn("resourceRetryAttempt", hints)
+        self.assertNotIn("resourceRetryLastError", hints)
+        self.assertNotIn("resourceRetryLastCode", hints)
+        self.assertNotIn("activeRetryPlan", hints["resourcePlan"])
+        self.assertNotIn(marker, json.dumps(hints))
+
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints({"resourceRetryModes": ["model_cpu"] * 100000})
+
+    async def test_graph_queue_replaces_raw_deep_candidate_data_before_copying(self):
+        deep = {}
+        cursor = deep
+        for _ in range(1200):
+            cursor["next"] = {}
+            cursor = cursor["next"]
+        graph = {
+            "nodes": {},
+            "paths": [],
+            "runtimeHints": {
+                "autoResourcePlan": {
+                    "id": "queue-candidate",
+                    "junk": deep,
+                },
+                "resourceRetryHistory": [deep],
+            },
+        }
+
+        await self.server.queue_task(
+            lambda: None,
+            (graph,),
+            None,
+            "sid",
+            name="Graph execution",
+        )
+
+        self.assertNotIn("junk", graph["runtimeHints"]["autoResourcePlan"])
+        self.assertNotIn("resourceRetryHistory", graph["runtimeHints"])
+        queued_graph = next(iter(self.server.task_graphs.values()))
+        self.assertNotIn("junk", queued_graph["runtimeHints"]["autoResourcePlan"])
+        self.assertNotIn("resourceRetryHistory", queued_graph["runtimeHints"])
+
+    def test_auto_retry_candidate_is_bound_to_selected_profile_and_supported_values(self):
+        flux = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        qwen = {
+            **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "id": "qwen",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        cross_branch = {
+            **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "candidateId": "qwen",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "text_to_image",
+            "onCategories": ["oom"],
+        }
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "autoResourceCandidateId": "flux",
+                    "autoResourcePlan": flux,
+                    "autoResourceCandidates": [flux, qwen],
+                    "resourceRetryPlans": [cross_branch],
+                }
+            )
+
+        marker = "EVENT_SECRET_MARKER_" + "x" * 1024
+        invalid = {**flux, "offloadMode": marker}
+        invalid_retry = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "candidateId": "flux",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+        }
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "autoResourceCandidateId": "flux",
+                    "autoResourcePlan": invalid,
+                    "autoResourceCandidates": [invalid],
+                    "resourceRetryPlans": [invalid_retry],
+                }
+            )
+        self.assertNotIn("EVENT_SECRET_MARKER_", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+
+    def test_expert_retry_events_drop_untrusted_ids_and_trigger_labels(self):
+        marker = "RETRY_EVENT_SECRET_MARKER"
+        raw_plan = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "candidateId": marker,
+            "id": marker,
+            "offloadMode": "model_cpu",
+            "reason": marker,
+            "onCategories": ["oom", marker],
+            "onErrorCodes": ["cuda_oom", marker],
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "expert",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "resourceRetryPlans": [raw_plan],
+            }
+        )
+
+        plan = self.server._coerce_retry_plan_list(hints)[0]
+        public = self.server._sanitize_retry_plan_for_hints(plan)
+
+        self.assertNotIn("candidateId", public)
+        self.assertNotIn("id", public)
+        self.assertEqual(public["reason"], "retry_plan_1")
+        self.assertEqual(public["onCategories"], ["oom"])
+        self.assertEqual(public["onErrorCodes"], ["cuda_oom"])
+        self.assertNotIn(marker, json.dumps(public))
+        self.assertNotIn(marker, json.dumps(hints))
+
+    def test_graph_completed_runtime_hints_never_echo_raw_retry_state(self):
+        marker = "GRAPH_COMPLETED_RETRY_SECRET_MARKER"
+        messages = []
+        self.server.current_task = {"task_id": "task-redaction", "progress": 0}
+        self.server.interrupt_flag = False
+        self.server.queue_message = messages.append
+        self.server.execute_node = lambda *_args, **_kwargs: None
+        self.server._runtime_fingerprint = lambda: {"fingerprint": "test"}
+        self.server._runtime_measurement = lambda **_kwargs: {"elapsedSeconds": 0}
+        self.server._record_auto_resource_success = lambda *_args, **_kwargs: None
+        self.server._record_optimization_observations = lambda *_args, **_kwargs: []
+        raw_plan = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "candidateId": marker,
+            "id": marker,
+            "offloadMode": "model_cpu",
+            "reason": marker,
+            "onCategories": ["oom", marker],
+            "onErrorCodes": ["cuda_oom", marker],
+        }
+        graph = {
+            "sid": "sid",
+            "paths": [["noop"]],
+            "nodes": {
+                "noop": {
+                    "module": "modules.Primitive",
+                    "action": "Value",
+                    "params": {},
+                },
+            },
+            "runtimeHints": {
+                "resourceMode": "expert",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "resourceRetryPlans": [raw_plan],
+                "resourceRetryAttempt": 7,
+                "resourceRetryLastError": marker,
+                "resourceRetryLastCode": marker,
+                "resourceRetryHistory": [{"error": marker}],
+                "resourcePlan": {"activeRetryPlan": {"reason": marker}},
+            },
+        }
+
+        self.server._execute_graph(graph)
+
+        completed = next(message for message in messages if message.get("type") == "graph_completed")
+        self.assertNotIn(marker, json.dumps(completed))
+        self.assertNotIn(marker, json.dumps(graph["runtimeHints"]))
+
+    def test_qwen_legacy_cuda_kernel_triggers_survive_but_cross_branch_retry_is_rejected(self):
+        marker = "UNTRUSTED_RETRY_TRIGGER"
+        raw_plan = {
+            **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "modelType": "QwenImageModularPipeline",
+            "mode": "text_to_image",
+            "modelRepo": "Qwen/Qwen-Image-2512",
+            "resolvedArtifact": "Qwen/Qwen-Image-2512",
+            "quantizationMode": "bnb_4bit",
+            "quantizedComponents": ["transformer"],
+            "bnb4ComputeDtype": "bfloat16",
+            "offloadMode": "model_cpu",
+            "generation": {"steps": 50, "guidanceScale": 4.0},
+            "onErrorCodes": ["cuda_kernel_unsupported", marker],
+        }
+        self.server._normalize_retry_plan_triggers(raw_plan)
+        self.assertNotIn("onCategories", raw_plan)
+        self.assertEqual(raw_plan["onErrorCodes"], ["cuda_kernel_unsupported"])
+        self.assertTrue(
+            self.server._retry_plan_matches(
+                raw_plan,
+                {"category": "cuda_kernel", "error_code": "cuda_kernel_unsupported"},
+            )
+        )
+        self.assertNotIn(marker, json.dumps(raw_plan))
+
+        modular_graph = {
+            "paths": [["loader"]],
+            "nodes": {
+                "loader": {
+                    "module": "modules.ModularDiffusers",
+                    "action": "ModelsLoader",
+                    "params": {
+                        "model_type": {"value": "QwenImageModularPipeline"},
+                        "repo_id": {"value": "Qwen/Qwen-Image-2512"},
+                    },
+                },
+            },
+        }
+        with self.assertRaisesRegex(RuntimeError, "matched zero exact loader identities"):
+            self.server._apply_resource_retry_plan_to_graph(modular_graph, raw_plan)
+
+        missing_identity = {
+            key: value
+            for key, value in raw_plan.items()
+            if key not in {"modelType", "mode", "loaderModule", "loaderAction", "pipelineClass"}
+        }
+        with self.assertRaisesRegex(RuntimeError, "exact modelType and mode"):
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "expert",
+                    "modelType": "QwenImageModularPipeline",
+                    "mode": "text_to_image",
+                    "resourceRetryPlans": [missing_identity],
+                }
+            )
+
+        category_plan = copy.deepcopy(raw_plan)
+        category_plan.pop("onErrorCodes")
+        category_plan["onCategories"] = ["cuda_kernel", marker]
+        self.server._normalize_retry_plan_triggers(category_plan)
+        self.assertEqual(category_plan["onCategories"], ["cuda_kernel"])
+        self.assertTrue(
+            self.server._retry_plan_matches(
+                category_plan,
+                {"category": "cuda_kernel", "error_code": "cuda_kernel_unsupported"},
+            )
+        )
+
+    def test_unqualified_auto_plan_still_requires_an_executable_exact_loader(self):
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-unqualified",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "offloadMode": "model_cpu",
+            "proof": {"status": "skipped"},
+        }
+        graph = {
+            "sid": "sid",
+            "paths": [["qwen"]],
+            "runtimeHints": {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            },
+            "nodes": {
+                "qwen": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                        "offload_mode": {"value": "model_cpu"},
+                    },
+                },
+            },
+        }
+
+        with (
+            patch.object(self.server, "_prepare_auto_runtime_for_graph", return_value=None),
+            self.assertRaisesRegex(RuntimeError, "matched zero exact loader identities"),
+        ):
+            self.server._execute_graph(graph)
 
     def test_auto_pre_run_cleanup_preserves_same_family_cache_with_headroom(self):
         self.server.node_cache = {"cached-node": object()}

@@ -14,7 +14,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 5)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 6)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -29,6 +29,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             experimental["FluxModularPipeline"]["runnableModes"],
             ["text_to_image", "image_to_image"],
         )
+        self.assertEqual(
+            experimental["ZImageModularPipeline"]["backendPath"],
+            "modules.ModularDiffusers.ModelsLoader",
+        )
+        self.assertEqual(
+            experimental["ZImageModularPipeline"]["pipelineClasses"],
+            ["ZImageModularPipeline"],
+        )
         for capability in payload["experimentalCapabilities"]:
             self.assertIn("executionProfiles", capability)
             self.assertIn("inputContracts", capability)
@@ -38,6 +46,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("revisionCandidates", capability)
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
+
+        z_image = by_model["ZImageModularPipeline"]
+        self.assertEqual(z_image["pipelineClasses"], ["ZImagePipeline"])
+        self.assertEqual(
+            z_image["executionProfiles"][0]["backend_path"],
+            "modules.DiffusersImage.LoadPipeline",
+        )
+        self.assertEqual(z_image["executionProfiles"][0]["execution_path"], "direct-diffusers-image")
 
         wan = by_model["WanVACEPipeline"]
         self.assertEqual(wan["mediaKind"], "video")

@@ -16,6 +16,7 @@ from modiff.auto_resource import (  # noqa: E402
     READY_PROOF_STATUSES,
     WAN_VACE_REPO,
     Z_IMAGE_REPO,
+    _auto_requirements_for_pair,
     _candidate_history_signature,
     _requirements_missing_for_dict,
     _requirements_missing,
@@ -596,7 +597,7 @@ class AutoResourcePlanTests(unittest.TestCase):
 
         self.assertEqual(missing, [])
 
-    def test_qwen_edit_prefers_apache_prequantized_install_on_nominal_16gb_cuda(self):
+    def test_qwen_edit_modular_does_not_offer_unprofiled_direct_prequantized_install(self):
         plan = self._plan(
             {"form": {"modelType": "QwenImageEditModularPipeline", "mode": "edit_image"}},
             runtime=self._runtime(vram_gib=15.99, free_gib=14),
@@ -604,12 +605,17 @@ class AutoResourcePlanTests(unittest.TestCase):
         )
 
         self.assertEqual(plan["status"], "needs_setup")
-        self.assertEqual(plan["selectedInstallTarget"]["repo"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
-        self.assertEqual(plan["candidates"][0]["resolvedArtifact"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
-        self.assertEqual(plan["compatibility"]["state"], "needs_model")
-        self.assertEqual(plan["compatibility"]["action"]["repo"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
+        self.assertIsNone(plan["selectedInstallTarget"])
+        community = next(
+            candidate
+            for candidate in plan["candidates"]
+            if candidate["resolvedArtifact"] == QWEN_IMAGE_EDIT_PREQUANTIZED_REPO
+        )
+        self.assertEqual(community["proof"]["status"], "manual_only")
+        self.assertEqual(community["loaderModule"], "modules.ModularDiffusers")
+        self.assertEqual(community["executionPath"], "modular-diffusers")
 
-    def test_qwen_edit_community_artifact_requires_explicit_workflow_confirmation(self):
+    def test_qwen_edit_unprofiled_community_artifact_cannot_become_auto_ready(self):
         hardware = self._hardware(vram_gib=15.99, free_gib=14, system_ram_gib=31.8)
         unconfirmed = self._plan(
             {"form": {"modelType": "QwenImageEditModularPipeline", "mode": "edit_image"}},
@@ -637,8 +643,12 @@ class AutoResourcePlanTests(unittest.TestCase):
             repos=[QWEN_IMAGE_EDIT_PREQUANTIZED_REPO],
             hardware=hardware,
         )
-        self.assertEqual(confirmed["selectedCandidate"]["resolvedArtifact"], QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
-        self.assertEqual(confirmed["selectedCandidate"]["proof"]["source"], "user_community_confirmation")
+        confirmed_candidate = next(
+            item for item in confirmed["candidates"]
+            if item["resolvedArtifact"] == QWEN_IMAGE_EDIT_PREQUANTIZED_REPO
+        )
+        self.assertIsNone(confirmed["selectedCandidate"])
+        self.assertEqual(confirmed_candidate["proof"]["status"], "manual_only")
 
     def test_normalized_runtime_mps_snapshot_satisfies_cuda_or_mps(self):
         plan = self._plan(
@@ -699,6 +709,10 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["offloadMode"], "none")
         self.assertFalse(selected["autoOffload"])
         self.assertIsNone(selected["deviceMap"])
+        self.assertEqual(selected["loaderModule"], "modules.DiffusersImage")
+        self.assertEqual(selected["loaderAction"], "LoadPipeline")
+        self.assertEqual(selected["executionPath"], "direct-diffusers-image")
+        self.assertEqual(selected["pipelineClass"], "ZImagePipeline")
 
     def test_qwen_official_bf16_is_not_auto_ready_on_constrained_cuda_without_prequantized_artifact(self):
         plan = self._plan(
@@ -1346,6 +1360,9 @@ class AutoResourcePlanTests(unittest.TestCase):
             "resolvedArtifact": Z_IMAGE_REPO,
             "dtype": "bfloat16",
             "offloadMode": "none",
+            "loaderModule": "modules.DiffusersImage",
+            "loaderAction": "LoadPipeline",
+            "executionPath": "direct-diffusers-image",
             "attentionBackend": "auto",
             "regionalCompile": False,
             "denoiserCache": "none",
@@ -1359,6 +1376,9 @@ class AutoResourcePlanTests(unittest.TestCase):
             ("denoiserCache", "first_block"),
             ("channelsLast", True),
             ("layerwiseCasting", True),
+            ("loaderModule", "modules.ModularDiffusers"),
+            ("loaderAction", "ModelsLoader"),
+            ("executionPath", "modular-diffusers"),
         ):
             self.assertNotEqual(
                 baseline,
@@ -1408,6 +1428,121 @@ class AutoResourcePlanTests(unittest.TestCase):
             for mode in requirements.get("supportedTasks") or []:
                 with self.subTest(model_type=model_type, mode=mode):
                     self.assertIn((model_type, mode), profile_pairs)
+
+    def test_every_effective_auto_specification_has_one_canonical_target(self):
+        checked = set()
+        for key, requirements in AUTO_MODEL_REQUIREMENTS.items():
+            model_type = key.split(":", 1)[0]
+            for mode in requirements.get("supportedTasks") or []:
+                with self.subTest(model_type=model_type, mode=mode):
+                    specification = _auto_requirements_for_pair(model_type, mode)
+                    self.assertIsNotNone(specification)
+                    profiles = [
+                        profile
+                        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+                        if profile.model_type == model_type and mode in profile.modes
+                    ]
+                    self.assertEqual(len(profiles), 1)
+                    profile = profiles[0]
+                    self.assertEqual(specification["loaderModule"], profile.loader_module)
+                    self.assertEqual(specification["loaderAction"], profile.loader_action)
+                    self.assertEqual(specification["executionPath"], profile.execution_path)
+                    self.assertEqual(specification["pipelineClass"], profile.pipeline_class)
+                    checked.add((model_type, mode))
+
+        self.assertTrue(checked)
+
+    def test_public_model_requirements_are_exact_pair_specifications(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "QwenImageEditModularPipeline",
+                    "mode": "edit_image",
+                }
+            }
+        )
+        requirements = plan["modelRequirements"]
+
+        self.assertNotIn("QwenImageEditModularPipeline", requirements)
+        edit = requirements["QwenImageEditModularPipeline:edit_image"]
+        self.assertEqual(edit["loaderModule"], "modules.ModularDiffusers")
+        self.assertEqual(edit["loaderAction"], "ModelsLoader")
+        self.assertEqual(edit["executionPath"], "modular-diffusers")
+        for key, specification in requirements.items():
+            with self.subTest(key=key):
+                self.assertIn(":", key)
+                self.assertEqual(specification["supportedTasks"], [key.split(":", 1)[1]])
+                self.assertTrue(specification["loaderModule"])
+                self.assertTrue(specification["loaderAction"])
+                self.assertTrue(specification["executionPath"])
+
+    def test_qwen_effective_targets_follow_exact_mode_profiles(self):
+        expected = {
+            ("QwenImageModularPipeline", "text_to_image"): (
+                "modules.DiffusersImage",
+                "LoadPipeline",
+                "direct-diffusers-image",
+            ),
+            ("QwenImageModularPipeline", "control_image"): (
+                "modules.ModularDiffusers",
+                "ModelsLoader",
+                "modular-diffusers",
+            ),
+            ("QwenImageEditModularPipeline", "edit_image"): (
+                "modules.ModularDiffusers",
+                "ModelsLoader",
+                "modular-diffusers",
+            ),
+            ("QwenImageEditModularPipeline", "inpaint"): (
+                "modules.DiffusersImage",
+                "LoadPipeline",
+                "direct-diffusers-image",
+            ),
+            ("QwenImageEditPlusModularPipeline", "edit_image"): (
+                "modules.ModularDiffusers",
+                "ModelsLoader",
+                "modular-diffusers",
+            ),
+            ("QwenImageLayeredModularPipeline", "layer_decomposition"): (
+                "modules.ModularDiffusers",
+                "ModelsLoader",
+                "modular-diffusers",
+            ),
+        }
+        for pair, target in expected.items():
+            with self.subTest(pair=pair):
+                specification = _auto_requirements_for_pair(*pair)
+                self.assertEqual(
+                    (
+                        specification["loaderModule"],
+                        specification["loaderAction"],
+                        specification["executionPath"],
+                    ),
+                    target,
+                )
+
+        edit_specification = _auto_requirements_for_pair(
+            "QwenImageEditModularPipeline",
+            "edit_image",
+        )
+        self.assertNotIn("preferredLowerMemoryRepo", edit_specification)
+
+    def test_wan_modular_remains_auto_undeclared_without_a_profile_target(self):
+        self.assertIsNone(_auto_requirements_for_pair("WanModularPipeline", "text_to_video"))
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "WanModularPipeline",
+                    "mode": "text_to_video",
+                    "pipelineClass": "WanModularPipeline",
+                    "executionPath": "modular-diffusers",
+                }
+            }
+        )
+        self.assertFalse(plan["exactPairDeclared"])
+        self.assertIsNone(plan["selectedCandidate"])
+        self.assertIsNone(plan["candidates"][0]["loaderModule"])
+        self.assertIsNone(plan["candidates"][0]["loaderAction"])
 
     def test_resource_planner_accepts_supported_ram_vram_os_matrix(self):
         ram_tiers = (8, 16, 32, 64, 96)

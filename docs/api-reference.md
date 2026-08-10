@@ -95,6 +95,46 @@ dedicated-VRAM, or shared-memory thresholds. A client waiting for this response
 should report a pending compatibility check. Existing plan fields remain for
 execution and backward compatibility.
 
+Every declared schema-version-2 Auto candidate, including
+`selectedCandidate` and `nextCandidate`, carries one exact backend-owned loader
+target:
+
+- `modelType` and `mode` identify the declared model/task pair;
+- `loaderModule` and `loaderAction` identify the loader node contract;
+- `executionPath` identifies the reviewed execution adapter; and
+- `pipelineClass` identifies the profile's canonical pipeline implementation.
+
+The response `modelRequirements` map is also exact-pair data. Its keys are
+`<modelType>:<mode>`, and every value carries the same
+`loaderModule`/`loaderAction`/`executionPath` target resolved from one unique
+execution profile. A model-only aggregate is not returned because different
+operations for one Studio model can intentionally use different loaders.
+
+For an Auto graph run, `runtimeHints.autoResourceCandidateId` must equal the
+selected plan `id`, and `runtimeHints.autoResourceCandidates` must contain
+exactly one same-ID entry with the same execution-affecting recipe and proof
+state. Auto retry plans carry `candidateId`, `modelType`, `mode`,
+`loaderModule`, `loaderAction`, `executionPath`, and `pipelineClass`; the worker
+resolves `candidateId` back to that bounded candidate list and applies the
+canonical candidate fields. It rejects missing, duplicate, stale, cross-pair,
+cross-profile, unqualified, unsupported, or unreviewed retry candidates.
+
+Plan application considers only executable loader IDs referenced by graph
+`paths`. Direct loaders must already expose the profile's exact
+`pipeline_class`; modular `ModelsLoader` nodes must already expose the exact
+`model_type`. Module/action equality alone, disconnected nodes, and class-name
+substring inference never authorize a rewrite. A plan that matches zero exact
+executable loaders, or whose matching loaders expose none of its requested
+resource fields, fails closed. An exact target whose requested fields already
+have the planned values is a valid idempotent application.
+
+Auto admission and retry failures use bounded, non-echoing messages with the
+`auto_resource` category. Relevant stable codes include
+`auto_resource_pair_undeclared`, `auto_resource_pair_mismatch`,
+`auto_resource_candidate_mismatch`, and `auto_resource_target_mismatch`.
+Clients should refresh Auto for these failures; structurally valid manual
+configurations remain available through Expert mode.
+
 ### Optional model runtime metadata
 
 Diffusers execution profiles identify their declarative dependencies in

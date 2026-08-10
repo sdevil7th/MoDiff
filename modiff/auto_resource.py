@@ -17,7 +17,6 @@ from modiff.diffusers_offload_modes import (
 )
 from modiff.diffusers_profiles import (
     ACE_STEP_REPO,
-    DIFFUSERS_EXECUTION_PROFILES,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
     FLUX_DEV_REPO,
@@ -32,6 +31,7 @@ from modiff.diffusers_profiles import (
     LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
+    execution_profiles_for_execution,
     optional_runtime_profile_ids_for_execution,
 )
 from modiff.hardware import disk_snapshot, get_hardware_snapshot, system_memory_snapshot
@@ -100,7 +100,7 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
     "ZImageModularPipeline": {
         "supportedTasks": ["text_to_image"],
         "defaultRepo": Z_IMAGE_REPO,
-        "executionPath": "modular-diffusers",
+        "executionPath": "direct-diffusers-image",
         "qualityDefaults": {"width": 1024, "height": 1024, "steps": 8, "guidanceScale": 1},
         "minimum": {"accelerator": "gpu_or_cpu", "vramBytes": 0, "systemRamBytes": 8 * GIB},
         "recommended": {"accelerator": "gpu", "vramBytes": 8 * GIB, "systemRamBytes": 16 * GIB},
@@ -566,7 +566,13 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
 
 
 def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | None:
-    """Return requirements only when Auto and an execution profile declare this pair."""
+    """Return the exact effective Auto specification for one declared pair.
+
+    Resource requirements may be shared by several modes, but their loader
+    target is never inferred from a pipeline-class name or a stale generic
+    execution-path hint.  One unique execution profile owns the effective
+    module, action, execution path, and pipeline class.
+    """
 
     normalized_model = str(model_type or "").strip()
     normalized_mode = str(mode or "").strip()
@@ -589,11 +595,30 @@ def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | 
     if normalized_mode not in supported_tasks:
         return None
 
-    profile_declared = any(
-        profile.model_type == normalized_model and normalized_mode in profile.modes
-        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-    )
-    return requirements if profile_declared else None
+    profiles = execution_profiles_for_execution(normalized_model, normalized_mode)
+    if len(profiles) != 1:
+        return None
+    profile = profiles[0]
+    effective = {
+        **requirements,
+        "supportedTasks": [normalized_mode],
+        "executionProfileId": profile.id,
+        "loaderModule": profile.loader_module,
+        "loaderAction": profile.loader_action,
+        "executionPath": profile.execution_path,
+        "pipelineClass": profile.pipeline_class,
+        "defaultRepo": profile.default_repo,
+        "fallbackRepo": profile.fallback_repo,
+        "compatibleRepos": list(profile.compatible_repos),
+    }
+    allowed_lower_memory_repos = {
+        repo
+        for repo in (profile.fallback_repo, *profile.compatible_repos)
+        if isinstance(repo, str) and repo
+    }
+    if effective.get("preferredLowerMemoryRepo") not in allowed_lower_memory_repos:
+        effective.pop("preferredLowerMemoryRepo", None)
+    return effective
 
 
 def auto_resource_pair_is_declared(model_type: str, mode: str) -> bool:
@@ -614,6 +639,23 @@ def _declared_auto_modes(model_type: str) -> list[str]:
             if str(task).strip()
         )
     return sorted(mode for mode in modes if _auto_requirements_for_pair(normalized_model, mode) is not None)
+
+
+def _public_auto_model_requirements() -> dict[str, dict[str, Any]]:
+    """Publish only exact pair specifications with one canonical loader target."""
+
+    specifications: dict[str, dict[str, Any]] = {}
+    model_types = {
+        str(key).split(":", 1)[0]
+        for key in AUTO_MODEL_REQUIREMENTS
+        if str(key).split(":", 1)[0]
+    }
+    for model_type in sorted(model_types):
+        for mode in _declared_auto_modes(model_type):
+            specification = _auto_requirements_for_pair(model_type, mode)
+            if specification is not None:
+                specifications[f"{model_type}:{mode}"] = specification
+    return specifications
 
 
 def _now_ms() -> int:
@@ -1075,6 +1117,8 @@ def _candidate_history_signature(
         "channelsLast": bool(candidate.get("channelsLast")),
         "layerwiseCasting": bool(candidate.get("layerwiseCasting")),
         "pipelineClass": str(candidate.get("pipelineClass") or ""),
+        "loaderModule": str(candidate.get("loaderModule") or ""),
+        "loaderAction": str(candidate.get("loaderAction") or ""),
         "executionPath": str(candidate.get("executionPath") or ""),
         "workload": workload,
     }
@@ -1137,6 +1181,8 @@ def _runtime_candidate_from_hints(runtime_hints: dict[str, Any] | None) -> dict[
         "channelsLast": runtime_hints.get("channelsLast"),
         "layerwiseCasting": runtime_hints.get("layerwiseCasting"),
         "pipelineClass": runtime_hints.get("pipelineClass"),
+        "loaderModule": runtime_hints.get("loaderModule"),
+        "loaderAction": runtime_hints.get("loaderAction"),
         "executionPath": runtime_hints.get("executionPath"),
         "generation": runtime_hints.get("generation") if isinstance(runtime_hints.get("generation"), dict) else {},
         "artifactResolution": runtime_hints.get("artifactResolution") if isinstance(runtime_hints.get("artifactResolution"), dict) else {},
@@ -1164,6 +1210,8 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "channelsLast": bool(candidate.get("channelsLast")),
         "layerwiseCasting": bool(candidate.get("layerwiseCasting")),
         "pipelineClass": candidate.get("pipelineClass"),
+        "loaderModule": candidate.get("loaderModule"),
+        "loaderAction": candidate.get("loaderAction"),
         "executionPath": candidate.get("executionPath"),
         "generation": candidate.get("generation") if isinstance(candidate.get("generation"), dict) else {},
     }
@@ -1644,6 +1692,7 @@ def _apply_community_confirmation(
         if (
             repo == confirmed
             and item.get("requiresConfirmation")
+            and item.get("profileArtifactCompatible") is not False
             and item.get("installed")
             and not item.get("requirementsMissing")
         ):
@@ -1878,6 +1927,8 @@ def _candidate(
     model_type: str,
     mode: str,
     execution_path: str,
+    loader_module: str | None,
+    loader_action: str | None,
     artifact: str,
     dtype: str,
     quantization_mode: str,
@@ -1957,6 +2008,8 @@ def _candidate(
         "rank": rank,
         "modelType": model_type,
         "mode": mode,
+        "loaderModule": loader_module,
+        "loaderAction": loader_action,
         "executionPath": execution_path,
         "pipelineClass": pipeline_class,
         "artifact": artifact,
@@ -2039,12 +2092,15 @@ def _catalog_community_candidates(
     *,
     model_type: str,
     mode: str,
+    loader_module: str,
+    loader_action: str,
     execution_path: str,
     pipeline_class: str,
     generation: dict[str, Any],
     local_models: list[dict[str, Any]] | None,
     hardware: dict[str, Any],
     requirements: dict[str, Any],
+    profile_artifacts: set[str],
     existing_artifacts: set[str],
 ) -> list[dict[str, Any]]:
     model = catalog_model(model_type) or {}
@@ -2067,6 +2123,8 @@ def _catalog_community_candidates(
             rank=70 + index,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=repo,
             dtype="bfloat16",
@@ -2087,6 +2145,7 @@ def _catalog_community_candidates(
         candidate["healthBadge"] = "Community option"
         candidate["compatibilityEvidence"]["label"] = "Community option"
         candidate["requiresConfirmation"] = True
+        candidate["profileArtifactCompatible"] = repo in profile_artifacts
         output.append(candidate)
     return output
 
@@ -2120,6 +2179,13 @@ def _qwen_text_to_image_candidates(
     prequantized_installed = bool(prequantized_cache_status.get("installed")) or _has_installed(QWEN_IMAGE_2512_PREQUANTIZED_REPO, installed)
     model_type = str(form.get("modelType") or "QwenImageModularPipeline")
     mode = str(form.get("mode") or "text_to_image")
+    specification = _auto_requirements_for_pair(model_type, mode)
+    if specification is None:
+        return _undeclared_pair_candidates(form)
+    loader_module = str(specification["loaderModule"])
+    loader_action = str(specification["loaderAction"])
+    execution_path = str(specification["executionPath"])
+    pipeline_class = str(specification["pipelineClass"])
 
     offload_mode = _qwen_auto_offload_for(hardware)
     native_offload_mode = _qwen_native_offload_for(hardware)
@@ -2152,7 +2218,9 @@ def _qwen_text_to_image_candidates(
             rank=1,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2164,13 +2232,16 @@ def _qwen_text_to_image_candidates(
             installed=prequantized_installed,
             requirements_missing=prequantized_missing + prequantized_cache_missing,
             artifact_status=prequantized_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-prequantized-sequential-cpu",
             rank=2,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2182,13 +2253,16 @@ def _qwen_text_to_image_candidates(
             installed=prequantized_installed,
             requirements_missing=prequantized_missing + prequantized_cache_missing,
             artifact_status=prequantized_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-prequantized-group-disk",
             rank=3,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2207,13 +2281,16 @@ def _qwen_text_to_image_candidates(
                 offload_mode=OFFLOAD_MODE_GROUP_DISK,
             ) + prequantized_cache_missing,
             artifact_status=prequantized_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-official-bf16-native",
             rank=4,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2226,13 +2303,16 @@ def _qwen_text_to_image_candidates(
             installed=official_installed,
             requirements_missing=official_missing + official_cache_missing,
             artifact_status=official_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-official-transformer-bnb4-manual",
             rank=5,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_REPO,
             dtype="bfloat16",
             quantization_mode="bnb_4bit",
@@ -2244,6 +2324,7 @@ def _qwen_text_to_image_candidates(
             installed=official_installed,
             manual_only_reason="On-the-fly BnB quantization is not an Auto default because package/kernel compatibility varies; use Manual if you want this configuration.",
             artifact_status=official_cache_status,
+            pipeline_class=pipeline_class,
         ),
     ]
     return candidates
@@ -2328,6 +2409,8 @@ def _undeclared_pair_candidates(form: dict[str, Any]) -> list[dict[str, Any]]:
         rank=99,
         model_type=model_type,
         mode=mode,
+        loader_module=None,
+        loader_action=None,
         execution_path=str(form.get("executionPath") or ""),
         artifact=str(form.get("defaultRepo") or form.get("modelRepo") or ""),
         dtype=str(form.get("dtype") or "bfloat16"),
@@ -2359,8 +2442,10 @@ def _declared_profile_candidates(
     default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or form.get("modelRepo") or "")
     lower_memory_repo = str(requirements.get("preferredLowerMemoryRepo") or "")
     manual_only_reason = requirements.get("manualOnlyReason")
-    execution_path = str(requirements.get("executionPath") or ("direct-wan-vace" if model_type == "WanVACEPipeline" else "modular-diffusers"))
-    pipeline_class = str(requirements.get("pipelineClass") or "")
+    loader_module = str(requirements["loaderModule"])
+    loader_action = str(requirements["loaderAction"])
+    execution_path = str(requirements["executionPath"])
+    pipeline_class = str(requirements["pipelineClass"])
     generation_defaults = requirements.get("qualityDefaults") if isinstance(requirements.get("qualityDefaults"), dict) else {}
 
     minimum = requirements.get("minimum") if isinstance(requirements.get("minimum"), dict) else requirements.get("recommended")
@@ -2408,6 +2493,8 @@ def _declared_profile_candidates(
             rank=10,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=lower_memory_repo,
             dtype=str(form.get("dtype") or "bfloat16"),
@@ -2443,6 +2530,8 @@ def _declared_profile_candidates(
             rank=5 if full_residency_ready else 30,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=default_repo,
             dtype=str(form.get("dtype") or "bfloat16"),
@@ -2472,15 +2561,27 @@ def _declared_profile_candidates(
         str(candidate.get("resolvedArtifact") or candidate.get("artifact") or "").lower()
         for candidate in candidates
     }
+    profile_artifacts = {
+        str(repo)
+        for repo in (
+            requirements.get("defaultRepo"),
+            requirements.get("fallbackRepo"),
+            *(requirements.get("compatibleRepos") or []),
+        )
+        if isinstance(repo, str) and repo
+    }
     candidates.extend(_catalog_community_candidates(
         model_type=model_type,
         mode=mode,
+        loader_module=loader_module,
+        loader_action=loader_action,
         execution_path=execution_path,
         pipeline_class=pipeline_class,
         generation=generation,
         local_models=local_models,
         hardware=hardware,
         requirements=requirements,
+        profile_artifacts=profile_artifacts,
         existing_artifacts=existing_artifacts,
     ))
 
@@ -2490,6 +2591,8 @@ def _declared_profile_candidates(
             rank=99,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=default_repo,
             dtype=str(form.get("dtype") or "bfloat16"),
@@ -2534,6 +2637,8 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "channelsLast",
         "layerwiseCasting",
         "pipelineClass",
+        "loaderModule",
+        "loaderAction",
         "executionPath",
     ):
         if candidate.get(key) is None and stored.get(key) is not None:
@@ -3088,7 +3193,10 @@ def build_auto_resource_plan(
         "nextCandidate": next((candidate for candidate in candidates if candidate is not selected and candidate.get("proof", {}).get("status") in READY_PROOF_STATUSES), None),
         "hardware": hardware,
         "hardwareSnapshot": hardware,
-        "modelRequirements": AUTO_MODEL_REQUIREMENTS,
+        # Aggregate model-only requirements cannot faithfully represent models
+        # whose modes use different loaders.  Schema v2 publishes one exact
+        # specification per model/task pair instead.
+        "modelRequirements": _public_auto_model_requirements(),
         "requirementsMatched": selected.get("requirementsMatched") if isinstance(selected, dict) else [],
         "requirementsMissing": requirements_missing,
         "candidateReasons": list(dict.fromkeys(candidate_reasons)),

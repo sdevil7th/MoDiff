@@ -23,6 +23,7 @@ from modiff.optional_runtimes import (
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
+ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 FLUX_SCHNELL_REPO = "black-forest-labs/FLUX.1-schnell"
 FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
 FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
@@ -59,7 +60,9 @@ class DiffusersExecutionProfile:
     id: str
     model_type: str
     modes: tuple[str, ...]
-    backend_path: str
+    loader_module: str
+    loader_action: str
+    execution_path: str
     pipeline_class: str
     default_repo: str
     fallback_repo: str | None
@@ -81,6 +84,32 @@ class DiffusersExecutionProfile:
     optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
     compatible_repos: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        expected_loader = {
+            "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
+            "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
+            "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
+            "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
+            "direct-diffusers-audio": ("modules.DiffusersAudio", "LoadPipeline"),
+        }.get(self.execution_path)
+        if expected_loader is None:
+            raise ValueError(
+                f"Diffusers execution profile {self.id!r} has unsupported execution path "
+                f"{self.execution_path!r}."
+            )
+        if (self.loader_module, self.loader_action) != expected_loader:
+            raise ValueError(
+                f"Diffusers execution profile {self.id!r} loader "
+                f"{self.loader_module}.{self.loader_action} does not match execution path "
+                f"{self.execution_path!r}."
+            )
+
+    @property
+    def backend_path(self) -> str:
+        """Return the legacy combined loader key from the explicit target."""
+
+        return f"{self.loader_module}.{self.loader_action}"
+
     def to_public_dict(
         self,
         *,
@@ -89,6 +118,7 @@ class DiffusersExecutionProfile:
     ) -> dict:
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        public["backend_path"] = self.backend_path
         if observe_optional_runtime:
             # Lazy to keep the declarative profile module independent of
             # overlay storage during registry import.
@@ -111,8 +141,10 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="z-image:auto",
         model_type="ZImageModularPipeline",
         modes=("text_to_image",),
-        backend_path="modules.ModularDiffusers.ModelsLoader",
-        pipeline_class="ZImageModularPipeline",
+        loader_module="modules.DiffusersImage",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-image",
+        pipeline_class="ZImagePipeline",
         default_repo="Tongyi-MAI/Z-Image-Turbo",
         fallback_repo=None,
         quantizable_components=(),
@@ -127,7 +159,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="qwen-image:t2i-direct",
         model_type="QwenImageModularPipeline",
         modes=("text_to_image",),
-        backend_path="modules.DiffusersImage.LoadPipeline",
+        loader_module="modules.DiffusersImage",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-image",
         pipeline_class="QwenImagePipeline",
         default_repo=QWEN_IMAGE_2512_REPO,
         fallback_repo=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
@@ -149,7 +183,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="qwen-image:modular",
         model_type="QwenImageModularPipeline",
         modes=("control_image",),
-        backend_path="modules.ModularDiffusers.ModelsLoader",
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
         pipeline_class="QwenImageModularPipeline",
         default_repo=QWEN_IMAGE_2512_REPO,
         fallback_repo=None,
@@ -165,7 +201,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="qwen-edit:direct-inpaint",
         model_type="QwenImageEditModularPipeline",
         modes=("inpaint", "outpaint"),
-        backend_path="modules.DiffusersImage.LoadPipeline",
+        loader_module="modules.DiffusersImage",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-image",
         pipeline_class="QwenImageEditInpaintPipeline",
         default_repo="Qwen/Qwen-Image-Edit",
         fallback_repo=None,
@@ -187,7 +225,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="qwen-edit:modular",
         model_type="QwenImageEditModularPipeline",
         modes=("edit_image",),
-        backend_path="modules.ModularDiffusers.ModelsLoader",
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
         pipeline_class="QwenImageEditModularPipeline",
         default_repo="Qwen/Qwen-Image-Edit",
         fallback_repo=None,
@@ -203,7 +243,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="qwen-edit-plus:modular",
         model_type="QwenImageEditPlusModularPipeline",
         modes=("edit_image", "multi_image_reference_edit"),
-        backend_path="modules.ModularDiffusers.ModelsLoader",
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
         pipeline_class="QwenImageEditPlusModularPipeline",
         default_repo="Qwen/Qwen-Image-Edit-2511",
         fallback_repo=None,
@@ -219,7 +261,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="qwen-layered:modular",
         model_type="QwenImageLayeredModularPipeline",
         modes=("layer_decomposition",),
-        backend_path="modules.ModularDiffusers.ModelsLoader",
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
         pipeline_class="QwenImageLayeredModularPipeline",
         default_repo="Qwen/Qwen-Image-Layered",
         fallback_repo=None,
@@ -240,7 +284,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
             "video_outpaint",
             "control_to_video",
         ),
-        backend_path="modules.DiffusersVideo.LoadPipeline",
+        loader_module="modules.DiffusersVideo",
+        loader_action="LoadPipeline",
+        execution_path="direct-wan-vace",
         pipeline_class="WanVACEPipeline",
         default_repo="Wan-AI/Wan2.1-VACE-1.3B-diffusers",
         fallback_repo=None,
@@ -262,7 +308,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="wan-video-to-video:direct",
         model_type="WanVideoPipeline",
         modes=("video_to_video", "video_color_edit"),
-        backend_path="modules.DiffusersVideo.LoadPipeline",
+        loader_module="modules.DiffusersVideo",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-video",
         pipeline_class="WanVideoToVideoPipeline",
         default_repo=WAN_T2V_1_3B_REPO,
         fallback_repo=None,
@@ -284,7 +332,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="wan-text-to-video:direct",
         model_type="WanVideoPipeline",
         modes=("text_to_video",),
-        backend_path="modules.DiffusersVideo.LoadPipeline",
+        loader_module="modules.DiffusersVideo",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-video",
         pipeline_class="WanPipeline",
         default_repo=WAN_T2V_1_3B_REPO,
         fallback_repo=None,
@@ -306,7 +356,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="wan-22-image-to-video:direct",
         model_type="WanImageToVideoPipeline",
         modes=("image_to_video",),
-        backend_path="modules.DiffusersVideo.LoadPipeline",
+        loader_module="modules.DiffusersVideo",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-video",
         pipeline_class="WanImageToVideoPipeline",
         default_repo="Wan-AI/Wan2.2-I2V-A14B-Diffusers",
         fallback_repo=None,
@@ -327,7 +379,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="wan-22-ti2v-5b:direct",
         model_type="WanTI2VPipeline",
         modes=("text_to_video",),
-        backend_path="modules.DiffusersVideo.LoadPipeline",
+        loader_module="modules.DiffusersVideo",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-video",
         pipeline_class="WanTI2VPipeline",
         default_repo=WAN_22_TI2V_5B_REPO,
         fallback_repo=None,
@@ -349,7 +403,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="ltx-video:direct",
         model_type="LTXVideoPipeline",
         modes=("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
-        backend_path="modules.DiffusersVideo.LoadPipeline",
+        loader_module="modules.DiffusersVideo",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-video",
         pipeline_class="LTXConditionPipeline",
         default_repo=LTX_VIDEO_REPO,
         fallback_repo=LTX_VIDEO_FALLBACK_REPO,
@@ -371,7 +427,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="ace-step-audio:direct",
         model_type="AceStepAudioPipeline",
         modes=("text_to_audio", "audio_variation", "audio_continuation", "audio_repaint"),
-        backend_path="modules.DiffusersAudio.LoadPipeline",
+        loader_module="modules.DiffusersAudio",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-audio",
         pipeline_class="AceStepPipeline",
         default_repo=ACE_STEP_REPO,
         fallback_repo=None,
@@ -388,12 +446,15 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         max_low_memory_side=None,
         max_low_memory_steps=8,
         live_proof=False,
+        compatible_repos=(ACE_STEP_LORA_BASE_REPO,),
     ),
     "flux-schnell:direct": DiffusersExecutionProfile(
         id="flux-schnell:direct",
         model_type="FluxSchnellPipeline",
         modes=("text_to_image",),
-        backend_path="modules.DiffusersImage.LoadPipeline",
+        loader_module="modules.DiffusersImage",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-image",
         pipeline_class="FluxPipeline",
         default_repo=FLUX_SCHNELL_REPO,
         fallback_repo=None,
@@ -415,7 +476,9 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         id="flux-dev:direct",
         model_type="FluxDevPipeline",
         modes=("text_to_image",),
-        backend_path="modules.DiffusersImage.LoadPipeline",
+        loader_module="modules.DiffusersImage",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-image",
         pipeline_class="FluxPipeline",
         default_repo=FLUX_DEV_REPO,
         fallback_repo=None,
@@ -447,7 +510,9 @@ def _flux_execution_profile(
         id=profile_id,
         model_type=model_type,
         modes=modes,
-        backend_path="modules.DiffusersImage.LoadPipeline",
+        loader_module="modules.DiffusersImage",
+        loader_action="LoadPipeline",
+        execution_path="direct-diffusers-image",
         pipeline_class=pipeline_class,
         default_repo=repo,
         fallback_repo=None,
@@ -532,6 +597,20 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
         "executionKind": "modular",
         "runnableModes": ["text_to_image", "image_to_image"],
         "unsupportedModes": {"control_image": FLUX_MODULAR_CONTROL_UNSUPPORTED},
+    },
+    {
+        # Auto uses the established direct DiffusersImage facade for this
+        # model/task pair. Keep the separately supported Modular workflow
+        # visible as an Expert capability without creating a second Auto
+        # execution profile for the same exact pair.
+        "modelType": "ZImageModularPipeline",
+        "label": "Z-Image (Modular)",
+        "mediaKind": "image",
+        "defaultRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "pipelineClasses": ["ZImageModularPipeline"],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
+        "runnableModes": ["text_to_image"],
     },
     {
         "modelType": "Flux2KleinModularPipeline",
