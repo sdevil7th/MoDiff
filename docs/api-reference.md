@@ -93,6 +93,29 @@ still inspect the same generic node fields from `/nodes`. Templates, resource
 qualification, live media, and Gallery publication require later graph and
 remote qualification gates.
 
+### Studio execution specifications
+
+For migrated exact pairs, `GET /model_capabilities` publishes a
+`studioExecutionSpecSchemaVersion: 1` marker and one or more
+`studioExecutionSpecs` beside the pair's `executionProfiles`. The root response
+also includes the same specification catalog. Each specification binds one
+exact model/mode pair to its execution-profile ID, loader module/action,
+execution path, pipeline class, default repository, generic graph roles and
+positions, typed edges, form bindings, ordered dynamic actions, and declared
+Auto override fields. `contentHash` is the canonical
+`studio-spec-v1-<8 lowercase hex>` checksum of every semantic field.
+
+The server validates every node, parameter, input/output handle, connection
+type, binding, and graph component against the live `/nodes` registry before
+publishing the response. Unknown, incompatible, duplicate, or disconnected
+contracts fail the capability request instead of falling back to a client
+recipe. A managed submission includes a bounded
+`runtimeHints.studioExecutionSpec` receipt containing exactly
+`schemaVersion`, `id`, `contentHash`, and the specification role-to-node-ID
+map. Graph admission checks that those exact nodes are executable and that all
+declared edges and bindings remain present. The receipt and checksum are
+consistency identifiers, not authorization tokens or live-model evidence.
+
 ### Auto resource compatibility
 
 `POST /auto_resource/plan` and every item returned by
@@ -117,6 +140,7 @@ Every declared schema-version-2 Auto candidate, including
 `selectedCandidate` and `nextCandidate`, carries one exact backend-owned loader
 target:
 
+- `executionProfileId` identifies the exact reviewed execution profile;
 - `modelType` and `mode` identify the declared model/task pair;
 - `loaderModule` and `loaderAction` identify the loader node contract;
 - `executionPath` identifies the reviewed execution adapter; and

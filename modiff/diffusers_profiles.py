@@ -19,15 +19,18 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     public_optional_runtime_profiles,
 )
+from modiff.studio_execution_specs import (
+    FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
+    FLUX_DEV_REPO,
+    FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
+    studio_execution_profile_definitions,
+)
 
 
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
-FLUX_SCHNELL_REPO = "black-forest-labs/FLUX.1-schnell"
-FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
-FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
 FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
@@ -449,50 +452,14 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         live_proof=False,
         compatible_repos=(ACE_STEP_LORA_BASE_REPO,),
     ),
-    "flux-schnell:direct": DiffusersExecutionProfile(
-        id="flux-schnell:direct",
-        model_type="FluxSchnellPipeline",
-        modes=("text_to_image",),
-        loader_module="modules.DiffusersImage",
-        loader_action="LoadPipeline",
-        execution_path="direct-diffusers-image",
-        pipeline_class="FluxPipeline",
-        default_repo=FLUX_SCHNELL_REPO,
-        fallback_repo=None,
-        quantizable_components=("transformer", "text_encoder_2"),
-        default_quantized_components=(),
-        supported_offload_modes=(
-            OFFLOAD_MODE_NONE,
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-        ),
-        retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
-        max_low_memory_side=1024,
-        max_low_memory_steps=4,
-        live_proof=False,
-    ),
-    "flux-dev:direct": DiffusersExecutionProfile(
-        id="flux-dev:direct",
-        model_type="FluxDevPipeline",
-        modes=("text_to_image",),
-        loader_module="modules.DiffusersImage",
-        loader_action="LoadPipeline",
-        execution_path="direct-diffusers-image",
-        pipeline_class="FluxPipeline",
-        default_repo=FLUX_DEV_REPO,
-        fallback_repo=None,
-        quantizable_components=("transformer", "text_encoder_2"),
-        default_quantized_components=("transformer",),
-        supported_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
-        retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
-        max_low_memory_side=768,
-        max_low_memory_steps=20,
-        live_proof=False,
-        compatible_repos=(FLUX_DEV_FP8_REPO,),
-    ),
 }
+
+DIFFUSERS_EXECUTION_PROFILES.update(
+    {
+        profile_id: DiffusersExecutionProfile(**definition)
+        for profile_id, definition in studio_execution_profile_definitions().items()
+    }
+)
 
 
 def _flux_execution_profile(

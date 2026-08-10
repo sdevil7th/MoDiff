@@ -466,6 +466,12 @@ from modiff.optional_runtime_execution import (
     optional_runtime_requirement_blocks_execution,
     optional_runtime_requirement_for_execution,
 )
+from modiff.studio_execution_specs import (
+    assert_studio_execution_graph,
+    studio_capability_definitions,
+    studio_execution_spec_for_pair,
+    validate_studio_execution_specs,
+)
 from modiff.modelstore import modelstore
 from modules import MODULE_MAP, parse_module_map
 from utils.huggingface import (
@@ -1132,68 +1138,6 @@ STUDIO_MODEL_CAPABILITIES = {
             "audio_repaint": {"requiredAudio": ["sourceAudio"], "note": "Requires source audio plus repaint timing."},
         },
     },
-    "FluxSchnellPipeline": {
-        "modelType": "FluxSchnellPipeline",
-        "label": "FLUX.1 schnell",
-        "displayName": "FLUX.1-schnell",
-        "family": "FLUX Image",
-        "defaultRepo": "black-forest-labs/FLUX.1-schnell",
-        "artifactLabel": "Diffusers repo",
-        "defaultDtype": "bfloat16",
-        "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
-        "recommendedSteps": 4,
-        "recommendedGuidance": 0.0,
-        "guidanceLabel": "Guidance",
-        "supportsImageInput": False,
-        "supportsMask": False,
-        "supportsMultiImage": False,
-        "supportsControlImage": False,
-        "supportsLayers": False,
-        "supportsLora": True,
-        "offloadSupport": DIRECT_OFFLOAD_SUPPORT,
-        "lowVram": {
-            "dtype": "bfloat16",
-            "autoOffload": True,
-            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
-            "steps": 4,
-            "width": 1024,
-            "height": 1024,
-        },
-        "modes": ["text_to_image"],
-        "executionStatus": "supported_with_model",
-    },
-    "FluxDevPipeline": {
-        "modelType": "FluxDevPipeline",
-        "label": "FLUX.1 dev",
-        "displayName": "FLUX.1-dev",
-        "family": "FLUX Image",
-        "defaultRepo": "black-forest-labs/FLUX.1-dev",
-        "alternateArtifact": "black-forest-labs/FLUX.1-dev-FP8",
-        "artifactLabel": "Diffusers repo",
-        "defaultDtype": "bfloat16",
-        "defaultSize": {"width": 768, "height": 768, "aspectRatio": "1:1"},
-        "recommendedSteps": 20,
-        "recommendedGuidance": 3.5,
-        "guidanceLabel": "Guidance",
-        "supportsImageInput": False,
-        "supportsMask": False,
-        "supportsMultiImage": False,
-        "supportsControlImage": False,
-        "supportsLayers": False,
-        "supportsLora": True,
-        "offloadSupport": DIRECT_OFFLOAD_SUPPORT,
-        "lowVram": {
-            "dtype": "bfloat16",
-            "autoOffload": True,
-            "offloadMode": OFFLOAD_MODE_GROUP_DISK,
-            "steps": 20,
-            "width": 768,
-            "height": 768,
-        },
-        "modes": ["text_to_image"],
-        "executionStatus": "supported_with_model",
-        "notes": ["Auto prefers the FP8 artifact on 16 GB CUDA when available."],
-    },
     "FluxKreaPipeline": {
         "modelType": "FluxKreaPipeline",
         "label": "FLUX.1 Krea dev",
@@ -1433,6 +1377,10 @@ STUDIO_MODEL_CAPABILITIES = {
         ],
     },
 }
+
+# The migrated exact pairs are generated from the execution-spec registry.
+# The remaining records stay on the schema-v2 migration path until P0.3e.
+STUDIO_MODEL_CAPABILITIES.update(studio_capability_definitions())
 
 
 class WebServer:
@@ -6422,6 +6370,7 @@ class WebServer:
             "maxRuntimeSeconds",
             "autoFieldOverrides",
             "optimizationQualificationForm",
+            "studioExecutionSpec",
         }
         hints = {key: value.get(key) for key in allowed if key in value}
 
@@ -6586,6 +6535,59 @@ class WebServer:
             # Active retry state is produced only by this worker after a
             # failed attempt; submitted copies are not execution authority.
             hints["resourcePlan"].pop("activeRetryPlan", None)
+
+        if "studioExecutionSpec" in hints:
+            receipt = hints["studioExecutionSpec"]
+            if not isinstance(receipt, dict):
+                raise self._auto_resource_contract_error(
+                    "Studio execution specification receipt is malformed. Rebuild the managed graph.",
+                    code="studio_execution_spec_mismatch",
+                )
+            allowed_receipt_keys = {"schemaVersion", "id", "contentHash", "nodes"}
+            if set(receipt) != allowed_receipt_keys or not isinstance(receipt.get("nodes"), dict):
+                raise self._auto_resource_contract_error(
+                    "Studio execution specification receipt is malformed. Rebuild the managed graph.",
+                    code="studio_execution_spec_mismatch",
+                )
+            nodes = receipt["nodes"]
+            if (
+                receipt.get("schemaVersion") != 1
+                or not isinstance(receipt.get("id"), str)
+                or len(receipt["id"]) > 128
+                or not isinstance(receipt.get("contentHash"), str)
+                or re.fullmatch(r"studio-spec-v1-[0-9a-f]{8}", receipt["contentHash"]) is None
+                or len(nodes) > 32
+                or any(
+                    not isinstance(role, str)
+                    or not role
+                    or len(role) > 64
+                    or not isinstance(node_id, str)
+                    or not node_id
+                    or len(node_id) > 128
+                    for role, node_id in nodes.items()
+                )
+            ):
+                raise self._auto_resource_contract_error(
+                    "Studio execution specification receipt is invalid. Rebuild the managed graph.",
+                    code="studio_execution_spec_mismatch",
+                )
+            hints["studioExecutionSpec"] = {
+                key: deepcopy(receipt[key]) for key in ("schemaVersion", "id", "contentHash", "nodes")
+            }
+            specification = studio_execution_spec_for_pair(
+                str(hints.get("modelType") or ""),
+                str(hints.get("mode") or ""),
+            )
+            if (
+                specification is None
+                or receipt["id"] != specification["id"]
+                or receipt["contentHash"] != specification["contentHash"]
+                or set(nodes) != {role[0] for role in specification["roles"]}
+            ):
+                raise self._auto_resource_contract_error(
+                    "Studio execution specification receipt does not match this workflow. Rebuild the managed graph.",
+                    code="studio_execution_spec_mismatch",
+                )
 
         if (
             "autoResourcePlan" in hints
@@ -7052,6 +7054,7 @@ class WebServer:
     @staticmethod
     def _auto_candidate_execution_fields():
         return (
+            "executionProfileId",
             "modelType",
             "mode",
             "loaderModule",
@@ -8746,6 +8749,7 @@ class WebServer:
         base_runtime_hints = self._coerce_runtime_hints(graph.get("runtimeHints"))
         if base_runtime_hints is not None:
             graph["runtimeHints"] = deepcopy(base_runtime_hints)
+        assert_studio_execution_graph(graph, base_runtime_hints)
         if isinstance(base_runtime_hints, dict):
             base_runtime_hints["loaderContract"] = self._graph_loader_contract(nodes)
         auto_runtime_preparation = self._prepare_auto_runtime_for_graph(base_runtime_hints)
@@ -11869,6 +11873,10 @@ class WebServer:
     async def model_capabilities(self, request):
         query = str(request.query.get("q", "")).lower().strip()
         optional_runtime_catalog_snapshot = None
+        execution_specs = validate_studio_execution_specs(self.modules)
+        specs_by_model = {}
+        for specification in execution_specs:
+            specs_by_model.setdefault(specification["modelType"], []).append(specification)
 
         def request_optional_runtime_catalog():
             nonlocal optional_runtime_catalog_snapshot
@@ -11920,6 +11928,7 @@ class WebServer:
                     "supportTier": capability.get("supportTier") or "supported",
                     "pipelineClasses": pipeline_classes,
                     "executionProfiles": profiles,
+                    "studioExecutionSpecs": specs_by_model.get(capability.get("modelType"), []),
                     "runnableModes": runnable_modes,
                     "inputContracts": capability.get("modeRequirements") or {},
                     "parameterAliases": {
@@ -11955,6 +11964,8 @@ class WebServer:
                     ),
                 }
             )
+            if capability["studioExecutionSpecs"]:
+                capability["studioExecutionSpecSchemaVersion"] = 1
             capabilities.append(capability)
         if query:
             capabilities = [
@@ -11976,6 +11987,7 @@ class WebServer:
                     observe_optional_runtime=True,
                     optional_runtime_catalog_resolver=request_optional_runtime_catalog,
                 ),
+                "studioExecutionSpecs": execution_specs,
                 "optionalRuntimeProfiles": public_optional_runtime_profiles(),
                 "experimentalCapabilities": public_experimental_pipelines(
                     observe_optional_runtime=True,

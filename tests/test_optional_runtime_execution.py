@@ -934,6 +934,10 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
             server_module,
             "public_optional_runtime_catalog",
             catalog,
+        ), mock.patch.object(
+            server_module,
+            "validate_studio_execution_specs",
+            return_value=[],
         ):
             response = await self.server.model_capabilities(
                 type("Request", (), {"query": {}})()

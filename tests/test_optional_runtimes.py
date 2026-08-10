@@ -420,6 +420,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
                 ),
                 patch("pathlib.Path.mkdir", side_effect=forbidden_install),
                 patch("pathlib.Path.write_text", side_effect=forbidden_install),
+                patch("modiff.server.validate_studio_execution_specs", return_value=[]),
                 patch("urllib.request.urlopen", side_effect=forbidden_install),
                 patch("subprocess.Popen", side_effect=forbidden_install),
                 patch("subprocess.run", side_effect=forbidden_install),
