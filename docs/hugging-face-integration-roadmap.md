@@ -485,8 +485,8 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     graphs.
   - Tests: unknown pair, wrong-mode pair, Flux control capability absence,
     dynamic node update, stale imported graph, and mocked Studio mode gating.
-  - Status 2026-08-07: implementation and source gates are complete in both
-    working trees; paired commit references are still pending. Auto now requires
+  - Status 2026-08-07: implementation and source gates are complete in paired
+    backend `91c9a36` and client `28b12b7`. Auto now requires
     the pair in both its requirements and execution-profile registries, rejects
     stale plan/form identity mismatches at execution, and cannot be promoted by
     installed artifacts, history, or client-supplied proof. The client treats
@@ -549,8 +549,8 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       class; repeated custom-sidecar updates without registry mutation; existing
       Auto exact-pair behavior unchanged.
     - Status 2026-08-07: implementation and source gates are complete for the
-      eleven registered built-in classes in both
-      working trees; paired commit references are pending. The backend now uses
+      eleven registered built-in classes in paired backend `91c9a36` and client
+      `28b12b7`. The backend now uses
       one immutable contract resolver and one actionable model-type resolver
       across all six nodes. Runtime recovery rejects mixed selected/connected
       identities, while SDXL's valid bundle-only ControlNet contract remains
@@ -613,8 +613,8 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       rebasing, source/revision commit actions, and switching back to a normal
       transient signal. Assets and model weights: none.
     - Status 2026-08-09: implementation and all source, contract, browser, bundle,
-      and fresh-backend HTTP gates are complete; paired commit references remain
-      pending. The identity is a content checksum used for recovery and run
+      and fresh-backend HTTP gates are complete in paired backend `91c9a36` and
+      client `28b12b7`. The identity is a content checksum used for recovery and run
       hashing, not authorization. Its executable-metadata manifest detects
       bounded Python and loader-config drift but deliberately does not claim
       atomic custom-code execution or model-weight proof. Executable custom
@@ -1681,10 +1681,10 @@ Add references only after the corresponding evidence exists.
 
 | Segment | Backend reference | Client reference | Live proof | Dataset revision | Status |
 | --- | --- | --- | --- | --- | --- |
-| P0.1 | Pending | Pending | Not required | Not required | Implementation and gates complete; paired commits pending |
+| P0.1 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: exact-pair capability and stale-form execution checks are implemented and passed the recorded complete backend/client and browser gates. |
 | P0.2 | `8fb2cb9` | `c3e8a17` | Not required | Not required | Complete: exact executable resource-plan targeting, bounded receipt binding, mixed/disconnected/zero-target rejection, and client fail-closed readiness/apply/run checks passed the complete backend/client and mocked-browser gates; no model or asset execution was needed. |
-| P0.3a.1 | Pending | Pending | Not required | Not required | Built-in implementation and gates complete; paired commits pending |
-| P0.3a.2 | Pending | Pending | Not required | Not required | Safe contract identity/preview implementation and gates complete; paired commits pending; executable custom admission moved to P1.1 |
+| P0.3a.1 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: registered Modular dynamic action safety and its backend/client gates are recorded in the paired implementation commits. |
+| P0.3a.2 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: safe declarative custom contract identity/preview and its backend/client/HTTP gates are recorded; executable custom admission remains deferred to P1.1. |
 | P0.3b | `91c9a36` (revalidated at `8fb2cb9`) | `28b12b7`; Win32 checkpoint `d226c4b` (revalidated at `c3e8a17`) | Not required | Not required | Complete: P0.3b.1-.7 implementation, complete backend/client gates, reviewed Windows visual baselines, exact bundle mirror, and fresh HTTP smoke passed; live qualification is not part of this segment. |
 | P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, and the Wan I2V split route are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain |
 | P0.3d | Pending | Pending | Not required | Not required | Planned |
