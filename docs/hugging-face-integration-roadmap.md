@@ -1192,6 +1192,27 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     - Tests: graph equivalence for every migrated pair, model switching,
       dynamic parameter refresh, input/output normalization, readiness, Auto
       fail-closed behavior, and removal of the corresponding class-name branch.
+    - [x] `FluxKreaPipeline:text_to_image`: backend commit `96f70cb` moves its
+      execution profile, capability, Auto resource contract, generic roles,
+      topology, field bindings, and receipt hash into the specification
+      registry. Client commit `80ac243` removes Krea from the Flux-family graph
+      switch and resolves the direct loader and `FluxPipeline` class from the
+      exact backend specification/profile. Schnell, Dev, and Krea retain the
+      same managed node IDs and edge shape while their artifacts and receipt
+      identities remain distinct. The focused backend matrix passed 66 tests
+      with 321 subtests; the exact full backend tree passed 1,121 tests with 4
+      skips and 1,762 subtests. The client execution-spec matrix passed 136/136,
+      the complete `npm run check` passed, and the complete mocked Studio browser
+      suite passed 87/87. The production bundle was 522633/523264 gzip bytes,
+      503 bytes below the stricter 523136-byte safety target. The mirror matched
+      all 26 generated files byte-for-byte and preserved 317 backend-owned
+      Gallery files. Ruff E9/F, package compatibility, preflight, formatting,
+      lint, type, and diff checks passed. This is static, unit, contract, mocked-
+      browser, build, and local preflight evidence only; no Krea download, model
+      execution, generated media, or live workload qualification occurred.
+    - [ ] Continue one exact model/mode pair per paired commit; Krea completion
+      does not qualify the remaining Kontext, Fill, Depth, Canny, Redux, Klein,
+      Qwen, Wan, LTX, ACE, or modular overlays.
 - [ ] **P0.4 Proof receipts and current mismatch cleanup**
   - Backend: bind history to profile/schema version, graph and loader topology,
     auxiliary repositories, adapters, LoRAs, ControlNets, runtime profile, and
@@ -1769,7 +1790,7 @@ Add references only after the corresponding evidence exists.
 | P0.3b | `91c9a36` (revalidated at `8fb2cb9`) | `28b12b7`; Win32 checkpoint `d226c4b` (revalidated at `c3e8a17`) | Not required | Not required | Complete: P0.3b.1-.7 implementation, complete backend/client gates, reviewed Windows visual baselines, exact bundle mirror, and fresh HTTP smoke passed; live qualification is not part of this segment. |
 | P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2/.4 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, the Wan I2V split route, modern Flux true-CFG forwarding, and eleven contract-only standard image adapters are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain. |
 | P0.3d | `fd258d8` | `642ea9c` | Not required | Not required | Complete: backend-owned versioned Flux Schnell/Dev specifications, strict client parsing, generic graph materialization, exact proof/runtime receipt binding, complete backend/client/browser gates, byte-exact mirror verification, and local HTTP smoke passed. No model or media execution was required. |
-| P0.3e | Pending; add one row per migrated pair | Pending; add one row per migrated pair | Not required | Not required | Planned |
+| P0.3e | `96f70cb` (Flux Krea T2I); add one row/reference per remaining pair | `80ac243` (Flux Krea T2I); add one row/reference per remaining pair | Not required | Not required | In progress: the exact Flux Krea text-to-image pair is backend-specification-owned and passed complete backend/client/mocked-browser gates. Remaining exact pairs and declarative overlays are pending. |
 | P0.4 | Pending | `12847d0` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Broader backend history/profile receipt binding and the remaining P0.4 mismatch cleanup remain. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
