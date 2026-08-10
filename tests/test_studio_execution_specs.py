@@ -54,6 +54,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxSchnellPipeline", "text_to_image"),
                 ("FluxDevPipeline", "text_to_image"),
                 ("FluxKreaPipeline", "text_to_image"),
+                ("FluxDepthPipeline", "control_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -62,6 +63,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[0]["roles"], specs[2]["roles"])
         self.assertEqual(specs[0]["edges"], specs[2]["edges"])
         self.assertEqual(specs[0]["bindings"], specs[2]["bindings"])
+        self.assertEqual(
+            [item[0] for item in specs[3]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "diffusersImagePipeline",
+                "loadImage",
+                "diffusersImageControl",
+                "preview",
+            ],
+        )
+        self.assertIn(("loadImage", "file", "controlImage"), specs[3]["bindings"])
+        self.assertIn(
+            ("loadImage", "image", "diffusersImageControl", "control_image"),
+            specs[3]["edges"],
+        )
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -161,6 +178,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
             with self.subTest(malformed=malformed):
                 with self.assertRaisesRegex(RuntimeError, "Studio execution specification"):
                     server._coerce_runtime_hints({**hints, "studioExecutionSpec": malformed})
+
+    def test_control_image_receipt_requires_the_exact_source_route(self):
+        spec = studio_execution_spec_for_pair("FluxDepthPipeline", "control_image")
+        self.assertIsNotNone(spec)
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+        control_id = hints["studioExecutionSpec"]["nodes"]["diffusersImageControl"]
+        graph["nodes"][control_id]["params"]["control_image"].pop("sourceId")
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
 
 
 if __name__ == "__main__":

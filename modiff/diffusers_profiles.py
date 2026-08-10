@@ -20,6 +20,7 @@ from modiff.optional_runtimes import (
     public_optional_runtime_profiles,
 )
 from modiff.studio_execution_specs import (
+    FLUX_DEPTH_REPO as FLUX_DEPTH_REPO,
     FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
     FLUX_DEV_REPO,
     FLUX_KREA_REPO as FLUX_KREA_REPO,
@@ -35,7 +36,6 @@ ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
-FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
@@ -520,9 +520,6 @@ DIFFUSERS_EXECUTION_PROFILES.update(
         ),
         "flux-fill:direct": _flux_execution_profile(
             "flux-fill:direct", "FluxFillPipeline", ("inpaint", "outpaint"), "FluxFillPipeline", FLUX_FILL_REPO
-        ),
-        "flux-depth:direct": _flux_execution_profile(
-            "flux-depth:direct", "FluxDepthPipeline", ("control_image",), "FluxControlPipeline", FLUX_DEPTH_REPO
         ),
         "flux-canny:direct": _flux_execution_profile(
             "flux-canny:direct",

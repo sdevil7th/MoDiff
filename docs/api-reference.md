@@ -116,8 +116,10 @@ map. Graph admission checks that those exact nodes are executable and that all
 declared edges and bindings remain present. The receipt and checksum are
 consistency identifiers, not authorization tokens or live-model evidence.
 The current schema-v1 catalog covers Flux Schnell, Flux Dev, and Flux Krea
-text-to-image. They share one generic image topology; their exact profile,
-artifact, resource policy, and receipt identity remain distinct.
+text-to-image plus Flux Depth control-image. The text-to-image pairs share one
+generic image topology. Flux Depth declares its separate generic image-loader,
+control-image loader, control generator, and preview route. Every pair keeps a
+distinct exact profile, artifact, resource policy, and receipt identity.
 
 ### Auto resource compatibility
 

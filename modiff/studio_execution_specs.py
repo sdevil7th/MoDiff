@@ -20,6 +20,7 @@ FLUX_SCHNELL_REPO = "black-forest-labs/FLUX.1-schnell"
 FLUX_DEV_REPO = "black-forest-labs/FLUX.1-dev"
 FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
 FLUX_KREA_REPO = "black-forest-labs/FLUX.1-Krea-dev"
+FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -48,7 +49,7 @@ _GRAPH_EDGES = (
     ("diffusersImagePipeline", "pipeline", "diffusersImageGenerate", "pipeline"),
     ("diffusersImageGenerate", "images", "preview", "image"),
 )
-_GRAPH_BINDINGS = (
+_IMAGE_PIPELINE_BINDINGS = (
     ("diffusersQuantization", "backend", "quantizationMode"),
     ("diffusersQuantization", "components", "quantizedComponents"),
     ("diffusersQuantization", "dtype", "dtype"),
@@ -72,6 +73,8 @@ _GRAPH_BINDINGS = (
     ("diffusersImagePipeline", "quantized_components", "pipelineQuantizedComponents"),
     ("diffusersImagePipeline", "auto_offload", "autoOffload"),
     ("diffusersImagePipeline", "offload_mode", "offloadMode"),
+)
+_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageGenerate", "prompt", "prompt"),
     ("diffusersImageGenerate", "negative_prompt", "negativePrompt"),
     ("diffusersImageGenerate", "width", "width"),
@@ -82,6 +85,35 @@ _GRAPH_BINDINGS = (
     ("diffusersImageGenerate", "strength", "strength"),
     ("diffusersImageGenerate", "output_type", "outputType"),
     ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
+)
+_CONTROL_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("diffusersImageControl", "modules.DiffusersImage.ControlGenerate", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_CONTROL_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageControl", "pipeline"),
+    ("loadImage", "image", "diffusersImageControl", "control_image"),
+    ("diffusersImageControl", "images", "preview", "image"),
+)
+_CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("loadImage", "file", "controlImage"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("diffusersImageControl", "prompt", "prompt"),
+    ("diffusersImageControl", "negative_prompt", "negativePrompt"),
+    ("diffusersImageControl", "width", "width"),
+    ("diffusersImageControl", "height", "height"),
+    ("diffusersImageControl", "seed", "seed"),
+    ("diffusersImageControl", "num_inference_steps", "steps"),
+    ("diffusersImageControl", "guidance_scale", "guidanceScale"),
+    ("diffusersImageControl", "strength", "strength"),
+    ("diffusersImageControl", "output_type", "outputType"),
+    ("diffusersImageControl", "max_sequence_length", "maxSequenceLength"),
 )
 _AUTO_FIELDS = (
     "resolvedArtifact",
@@ -98,7 +130,7 @@ _AUTO_FIELDS = (
     "layerwiseCasting",
     "channelsLast",
 )
-_BINDING_SOURCES = frozenset(item[2] for item in _GRAPH_BINDINGS)
+_BINDING_SOURCES = frozenset(item[2] for item in (*_GRAPH_BINDINGS, *_CONTROL_GRAPH_BINDINGS))
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
 
 
@@ -113,15 +145,17 @@ def _profile(
     max_low_memory_side: int,
     max_low_memory_steps: int,
     compatible_repos: tuple[str, ...] = (),
+    mode: str = "text_to_image",
+    pipeline_class: str = "FluxPipeline",
 ) -> dict[str, Any]:
     return {
         "id": profile_id,
         "model_type": model_type,
-        "modes": ("text_to_image",),
+        "modes": (mode,),
         "loader_module": "modules.DiffusersImage",
         "loader_action": "LoadPipeline",
         "execution_path": "direct-diffusers-image",
-        "pipeline_class": "FluxPipeline",
+        "pipeline_class": pipeline_class,
         "default_repo": repo,
         "fallback_repo": None,
         "quantizable_components": ("transformer", "text_encoder_2"),
@@ -406,6 +440,94 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "guardedReason": "FLUX Krea has broad guarded Auto coverage through on-load float8 quantization and Diffusers offload.",
         },
     },
+    "flux-depth:control-image:v1": {
+        "modelType": "FluxDepthPipeline",
+        "mode": "control_image",
+        "profile": _profile(
+            "flux-depth:direct",
+            "FluxDepthPipeline",
+            FLUX_DEPTH_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            mode="control_image",
+            pipeline_class="FluxControlPipeline",
+        ),
+        "capability": {
+            **_capability(
+                "FluxDepthPipeline",
+                "FLUX.1 Depth dev",
+                "FLUX.1-Depth-dev",
+                FLUX_DEPTH_REPO,
+                width=1024,
+                steps=28,
+                guidance=3.5,
+                low_vram_mode=OFFLOAD_MODE_GROUP_DISK,
+                low_vram_width=768,
+                low_vram_steps=20,
+                execution_status="expert_only",
+            ),
+            "supportsImageInput": True,
+            "supportsControlImage": True,
+            "modes": ["control_image"],
+        },
+        "autoRequirements": {
+            "supportedTasks": ["control_image"],
+            "defaultRepo": FLUX_DEPTH_REPO,
+            "qualityDefaults": {
+                "width": 768,
+                "height": 768,
+                "steps": 24,
+                "guidanceScale": 10,
+                "maxSequenceLength": 256,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 60 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "onLoadQuantization": {
+                "accelerator": "cuda",
+                "vramBytes": 16 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+                "quantizationMode": "quanto_float8",
+                "quantizedComponents": ["transformer", "text_encoder_2"],
+            },
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+            "requiredPackages": [
+                "diffusers",
+                "transformers",
+                "accelerate",
+                "torch",
+                "optimum-quanto",
+            ],
+            "guardedReason": "FLUX Depth has guarded Auto coverage through generic control-image Diffusers nodes.",
+        },
+        "roles": _CONTROL_GRAPH_ROLES,
+        "edges": _CONTROL_GRAPH_EDGES,
+        "bindings": _CONTROL_GRAPH_BINDINGS,
+    },
 }
 
 
@@ -444,9 +566,9 @@ def _public_spec(spec_id: str, definition: dict[str, Any]) -> dict[str, Any]:
         "executionPath": profile["execution_path"],
         "pipelineClass": profile["pipeline_class"],
         "defaultRepo": profile["default_repo"],
-        "roles": _GRAPH_ROLES,
-        "edges": _GRAPH_EDGES,
-        "bindings": _GRAPH_BINDINGS,
+        "roles": definition.get("roles", _GRAPH_ROLES),
+        "edges": definition.get("edges", _GRAPH_EDGES),
+        "bindings": definition.get("bindings", _GRAPH_BINDINGS),
         "autoFields": _AUTO_FIELDS,
         "actions": (),
     }
