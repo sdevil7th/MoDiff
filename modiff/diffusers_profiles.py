@@ -14,6 +14,7 @@ from modiff.modular_workflow_contracts import (
     FLUX_MODULAR_CONTROL_UNSUPPORTED,
     SDXL_MODULAR_INPAINT_UNSUPPORTED,
 )
+from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     public_optional_runtime_profiles,
@@ -643,6 +644,145 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
         "runnableModes": ["image_to_video"],
     },
 ]
+
+
+# These adapters have a reviewed generic loader/action contract, but no Auto
+# execution profile or public template.  Keep that distinction explicit: a
+# contract-only capability lets Expert clients discover the exact backend
+# class, modes, repository, and input shape without making the pair eligible
+# for Auto selection or presenting static/mock evidence as live qualification.
+#
+# The registry tests compare this table with the task-module adapter maps and
+# the immutable artifact catalog.  A new class therefore cannot be published
+# here by copying a Diffusers name alone.
+CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
+    # Standard image adapters.  The final eleven were admitted by P0.3c.4;
+    # FLUX img2img/inpaint were already implemented but likewise unprofiled.
+    ("StableDiffusionXLPipeline", "image", "stabilityai/stable-diffusion-xl-base-1.0", ("text_to_image",)),
+    (
+        "StableDiffusionXLImg2ImgPipeline",
+        "image",
+        "stabilityai/stable-diffusion-xl-base-1.0",
+        ("edit_image",),
+    ),
+    (
+        "StableDiffusionXLInpaintPipeline",
+        "image",
+        "stabilityai/stable-diffusion-xl-base-1.0",
+        ("inpaint", "outpaint"),
+    ),
+    ("QwenImageImg2ImgPipeline", "image", QWEN_IMAGE_2512_REPO, ("edit_image",)),
+    ("QwenImageInpaintPipeline", "image", QWEN_IMAGE_2512_REPO, ("inpaint", "outpaint")),
+    ("QwenImageEditPipeline", "image", "Qwen/Qwen-Image-Edit", ("edit_image",)),
+    (
+        "QwenImageEditPlusPipeline",
+        "image",
+        "Qwen/Qwen-Image-Edit-2511",
+        ("edit_image", "multi_image_reference_edit"),
+    ),
+    ("ZImageImg2ImgPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("edit_image",)),
+    ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
+    ("FluxImg2ImgPipeline", "image", FLUX_DEV_REPO, ("edit_image",)),
+    ("FluxInpaintPipeline", "image", FLUX_DEV_REPO, ("inpaint",)),
+    (
+        "FluxKontextInpaintPipeline",
+        "image",
+        FLUX_KONTEXT_REPO,
+        ("inpaint", "outpaint"),
+    ),
+    ("Flux2KleinInpaintPipeline", "image", FLUX2_KLEIN_REPO, ("inpaint", "outpaint")),
+    # Implemented generic video adapters which intentionally have no execution
+    # profile yet.  Qualification and templates remain later remote work.
+    ("Wan22Pipeline", "video", "Wan-AI/Wan2.2-T2V-A14B-Diffusers", ("text_to_video",)),
+    (
+        "WanAnimatePipeline",
+        "video",
+        "Wan-AI/Wan2.2-Animate-14B-Diffusers",
+        ("character_animate", "character_replace"),
+    ),
+    (
+        "LTXI2VLongMultiPromptPipeline",
+        "video",
+        LTX_VIDEO_REPO,
+        ("image_to_video",),
+    ),
+    (
+        "LTX2ConditionPipeline",
+        "video",
+        "Lightricks/LTX-2",
+        ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
+    ),
+    (
+        "HunyuanVideoFramepackPipeline",
+        "video",
+        "lllyasviel/FramePackI2V_HY",
+        ("image_to_video",),
+    ),
+    # Stable Audio already runs through the generic Diffusers audio facade; it
+    # remains Expert/contract-only until its graph and live resource envelope
+    # are qualified.
+    ("StableAudioPipeline", "audio", "stabilityai/stable-audio-open-1.0", ("text_to_audio",)),
+)
+
+
+_CONTRACT_ONLY_BACKEND_PATHS = {
+    "image": "modules.DiffusersImage.LoadPipeline",
+    "video": "modules.DiffusersVideo.LoadPipeline",
+    "audio": "modules.DiffusersAudio.LoadPipeline",
+}
+
+_CONTRACT_ONLY_INPUT_CONTRACTS = {
+    "edit_image": {"requiredImages": ["referenceImages"]},
+    "multi_image_reference_edit": {"requiredImages": ["referenceImages"]},
+    "inpaint": {"requiredImages": ["referenceImages", "maskImage"]},
+    "outpaint": {"requiredImages": ["referenceImages"]},
+    "image_to_video": {"requiredImages": ["referenceImages"]},
+    "video_to_video": {"requiredVideos": ["sourceVideo"]},
+    "reference_to_video": {"requiredImages": ["referenceImages"]},
+    "character_animate": {
+        "requiredImages": ["referenceImages"],
+        "requiredVideos": ["poseVideo", "faceVideo"],
+    },
+    "character_replace": {
+        "requiredImages": ["referenceImages"],
+        "requiredVideos": ["poseVideo", "faceVideo", "backgroundVideo", "maskVideo"],
+    },
+}
+
+
+def _contract_only_pipeline_capability(
+    pipeline_class: str,
+    media_kind: str,
+    default_repo: str,
+    modes: tuple[str, ...],
+) -> dict:
+    revision = require_catalog_revision(default_repo)
+    return {
+        "modelType": pipeline_class,
+        "label": pipeline_class,
+        "mediaKind": media_kind,
+        "defaultRepo": default_repo,
+        "pipelineClasses": [pipeline_class],
+        "backendPath": _CONTRACT_ONLY_BACKEND_PATHS[media_kind],
+        "executionKind": "standard",
+        "runnableModes": list(modes),
+        "inputContracts": {
+            mode: dict(_CONTRACT_ONLY_INPUT_CONTRACTS[mode])
+            for mode in modes
+            if mode in _CONTRACT_ONLY_INPUT_CONTRACTS
+        },
+        "qualificationStatus": "contract_only",
+        "revisionCandidates": [revision],
+        "autoEligible": False,
+        "templateEligible": False,
+        "galleryEligible": False,
+    }
+
+
+EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
+    _contract_only_pipeline_capability(*contract)
+    for contract in CONTRACT_ONLY_DIFFUSERS_PIPELINES
+)
 
 
 def optional_runtime_requirement_for_profiles(

@@ -75,6 +75,24 @@ substituting capacity used. `GET /runtime/options` returns the live node option 
 device and package compatibility filtering. Both are observations, not proof
 that a real model workload completed.
 
+### Contract-only Diffusers capabilities
+
+`GET /model_capabilities` publishes reviewed but unqualified generic adapters
+under `experimentalCapabilities`. A record whose `qualificationStatus` is
+`contract_only` identifies one exact standard Diffusers pipeline class, its
+generic `backendPath`, immutable `defaultRepo`/`revisionCandidates`, exact
+`runnableModes`, backend-owned parameter aliases, and mode input contracts.
+It also reports `autoEligible: false`, `templateEligible: false`, and
+`galleryEligible: false`.
+
+Contract-only means that the loader/action and fake-call contract are present;
+it is not evidence of a completed model run. These records have no
+`executionProfiles` or `optionalRuntimeRequirement`, do not enter the primary
+supported `capabilities` list, and cannot be selected by Auto. Expert users can
+still inspect the same generic node fields from `/nodes`. Templates, resource
+qualification, live media, and Gallery publication require later graph and
+remote qualification gates.
+
 ### Auto resource compatibility
 
 `POST /auto_resource/plan` and every item returned by

@@ -1097,11 +1097,29 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         packages), preflight, and diff checks passed. Tests inspected the pinned
         upstream signatures and executed every new adapter through fake
         pipelines; no model, artifact, media, network, or GPU execution occurred.
-    - [ ] **P0.3c.5 Contract-only exposure:** publish newly complete modes and
+    - [x] **P0.3c.5 Contract-only exposure:** publish newly complete modes and
       already implemented but unprofiled video/audio adapters as
       `contract_only`, with backend-driven parameters and no Auto eligibility.
       Add templates only after graph-contract validation; generation and public
       Gallery media run later on the qualification machine.
+      - Status 2026-08-11: `/model_capabilities` now publishes every registered
+        but unprofiled generic Diffusers adapter as an exact experimental
+        `contract_only` record: 13 standard image adapters, five video adapters,
+        and Stable Audio. Each record names one generic loader, exact pipeline
+        class/mode set, reviewed repository and immutable catalog revision,
+        backend parameter aliases, and mode input contract. Contract-only
+        records explicitly disable Auto, template, and Gallery eligibility;
+        they have no execution profile or optional-runtime execution
+        requirement and remain outside the primary supported capability list.
+      - Evidence 2026-08-11: the adapter/profile/upstream-truth matrix passed
+        267 tests with 2 skips and 777 subtests. The complete backend gate
+        passed 1117 tests with 4 skips and 1759 subtests, with only the existing
+        upstream Diffusers deprecation warning. Ruff E9/F, dependency
+        validation (78 compatible packages), preflight, `py_compile`, and diff
+        checks passed. Registry closure tests prove the published set is
+        exactly the image/video/audio adapter set minus profiled classes and
+        that every artifact is immutably cataloged. No model, artifact, media,
+        network, GPU execution, template, or Gallery asset was used or changed.
     - [ ] **P0.3c.6 Paired checkpoint:** run focused and complete backend/client
       gates, mirror the reviewed client bundle, perform a fresh HTTP smoke, and
       update the support matrix. No large-model or media qualification is part

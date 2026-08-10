@@ -2,7 +2,16 @@ import json
 import unittest
 
 import modules as module_registry
+from modiff.auto_resource import AUTO_MODEL_REQUIREMENTS
+from modiff.diffusers_profiles import (
+    CONTRACT_ONLY_DIFFUSERS_PIPELINES,
+    DIFFUSERS_EXECUTION_PROFILES,
+)
+from modiff.model_artifact_catalog import catalog_revision
 from modiff.server import WebServer
+from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
+from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+from modules.DiffusersVideo.main import VIDEO_PIPELINE_ADAPTERS
 
 
 class FakeRequest:
@@ -14,7 +23,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 6)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 25)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -134,6 +143,71 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("inpaint", blocked["runnableModes"])
         self.assertFalse(blocked["inpaintContract"]["available"])
         self.assertEqual(blocked["inpaintContract"]["status"], "blocked")
+
+    async def test_contract_only_capabilities_close_registered_unprofiled_adapters(self):
+        response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
+        payload = json.loads(response.text)
+        published = {
+            item["modelType"]: item
+            for item in payload["experimentalCapabilities"]
+            if item.get("qualificationStatus") == "contract_only"
+        }
+
+        profiled_classes = {
+            profile.pipeline_class for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+        }
+        adapters_by_media = {
+            "image": IMAGE_PIPELINE_ADAPTERS,
+            "video": VIDEO_PIPELINE_ADAPTERS,
+            "audio": AUDIO_PIPELINE_ADAPTERS,
+        }
+        expected_classes = {
+            pipeline_class
+            for adapters in adapters_by_media.values()
+            for pipeline_class in adapters
+            if pipeline_class not in profiled_classes
+        }
+        declared_classes = {
+            pipeline_class
+            for pipeline_class, _media_kind, _repo, _modes in CONTRACT_ONLY_DIFFUSERS_PIPELINES
+        }
+        self.assertEqual(declared_classes, expected_classes)
+        self.assertEqual(set(published), expected_classes)
+        self.assertTrue(expected_classes.isdisjoint(AUTO_MODEL_REQUIREMENTS))
+        self.assertTrue(
+            expected_classes.isdisjoint(
+                capability["modelType"] for capability in payload["capabilities"]
+            )
+        )
+
+        for pipeline_class, media_kind, repository, declared_modes in CONTRACT_ONLY_DIFFUSERS_PIPELINES:
+            with self.subTest(pipeline_class=pipeline_class):
+                adapter = adapters_by_media[media_kind][pipeline_class]
+                adapter_modes = (
+                    adapter.mode_options
+                    if media_kind == "image"
+                    else adapter.modes
+                )
+                capability = published[pipeline_class]
+                self.assertEqual(tuple(declared_modes), tuple(adapter_modes))
+                self.assertEqual(repository, adapter.default_repo)
+                self.assertEqual(capability["pipelineClasses"], [pipeline_class])
+                self.assertEqual(capability["runnableModes"], list(adapter_modes))
+                self.assertEqual(capability["mediaKind"], media_kind)
+                self.assertEqual(
+                    capability["backendPath"],
+                    f"modules.Diffusers{media_kind.title()}.LoadPipeline",
+                )
+                self.assertEqual(capability["artifactCandidates"], [adapter.default_repo])
+                self.assertEqual(
+                    capability["revisionCandidates"],
+                    [catalog_revision(adapter.default_repo)],
+                )
+                self.assertFalse(capability["autoEligible"])
+                self.assertFalse(capability["templateEligible"])
+                self.assertFalse(capability["galleryEligible"])
+                self.assertEqual(capability["executionProfiles"], [])
+                self.assertNotIn("optionalRuntimeRequirement", capability)
 
 
 if __name__ == "__main__":
