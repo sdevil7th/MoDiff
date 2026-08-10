@@ -28,6 +28,7 @@ from modiff.studio_execution_specs import (
     FLUX_KREA_REPO as FLUX_KREA_REPO,
     FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
+    WAN_22_TI2V_5B_REPO as WAN_22_TI2V_5B_REPO,
     studio_execution_profile_definitions,
 )
 
@@ -43,7 +44,6 @@ FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
-WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 
 VERIFIED_REPAIR_SOURCES = {
     FLUX_CANNY_REPO: FLUX_CANNY_VERIFIED_REPAIR_REPO,
@@ -377,30 +377,6 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
         max_low_memory_side=832,
         max_low_memory_steps=40,
-        live_proof=False,
-    ),
-    "wan-22-ti2v-5b:direct": DiffusersExecutionProfile(
-        id="wan-22-ti2v-5b:direct",
-        model_type="WanTI2VPipeline",
-        modes=("text_to_video",),
-        loader_module="modules.DiffusersVideo",
-        loader_action="LoadPipeline",
-        execution_path="direct-diffusers-video",
-        pipeline_class="WanTI2VPipeline",
-        default_repo=WAN_22_TI2V_5B_REPO,
-        fallback_repo=None,
-        quantizable_components=("transformer", "text_encoder"),
-        default_quantized_components=(),
-        supported_offload_modes=(
-            OFFLOAD_MODE_NONE,
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-        ),
-        retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
-        max_low_memory_side=1280,
-        max_low_memory_steps=50,
         live_proof=False,
     ),
     "ltx-video:direct": DiffusersExecutionProfile(

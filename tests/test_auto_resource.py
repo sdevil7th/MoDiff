@@ -1397,6 +1397,7 @@ class AutoResourcePlanTests(unittest.TestCase):
             "WanVACEPipeline",
             "WanVideoPipeline",
             "WanVideoPipeline:text_to_video",
+            "WanTI2VPipeline",
             "LTXVideoPipeline",
             "AceStepAudioPipeline",
             "FluxSchnellPipeline",

@@ -24,6 +24,7 @@ FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
+WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -148,6 +149,62 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageEdit", "output_type", "outputType"),
     ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
 )
+_VIDEO_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("wanPipeline", "modules.DiffusersVideo.LoadPipeline", -520, -80),
+    ("wanGenerate", "modules.DiffusersVideo.Generate", -120, -80),
+    ("videoExport", "modules.Video.Export", 980, -80),
+)
+_VIDEO_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "wanPipeline", "execution_recipe"),
+    ("wanPipeline", "pipeline", "wanGenerate", "pipeline"),
+    ("wanGenerate", "video_out", "videoExport", "video"),
+)
+_VIDEO_GRAPH_BINDINGS = (
+    ("diffusersQuantization", "backend", "quantizationMode"),
+    ("diffusersQuantization", "components", "quantizedComponents"),
+    ("diffusersQuantization", "dtype", "dtype"),
+    ("diffusersRecipe", "device_map", "deviceMapNone"),
+    ("diffusersRecipe", "offload_mode", "offloadMode"),
+    ("diffusersRecipe", "device", "device"),
+    ("diffusersRecipe", "attention_backend", "nativeFlashAttention"),
+    ("diffusersRecipe", "attention_components", "transformer"),
+    ("diffusersRecipe", "vae_slicing", "true"),
+    ("diffusersRecipe", "vae_tiling", "videoVaeTiling"),
+    ("diffusersRecipe", "regional_compile", "regionalCompile"),
+    ("diffusersRecipe", "denoiser_cache", "denoiserCache"),
+    ("diffusersRecipe", "layerwise_casting", "layerwiseCasting"),
+    ("diffusersRecipe", "channels_last", "channelsLast"),
+    ("wanPipeline", "model_id", "artifact"),
+    ("wanPipeline", "pipeline_class", "pipelineClass"),
+    ("wanPipeline", "revision", "empty"),
+    ("wanPipeline", "dtype", "dtype"),
+    ("wanPipeline", "device", "device"),
+    ("wanPipeline", "auto_offload", "autoOffload"),
+    ("wanPipeline", "offload_mode", "offloadMode"),
+    ("wanGenerate", "prompt", "prompt"),
+    ("wanGenerate", "mode", "mode"),
+    ("wanGenerate", "negative_prompt", "negativePrompt"),
+    ("wanGenerate", "width", "width"),
+    ("wanGenerate", "height", "height"),
+    ("wanGenerate", "seed", "seed"),
+    ("wanGenerate", "num_frames", "numFrames"),
+    ("wanGenerate", "num_inference_steps", "steps"),
+    ("wanGenerate", "guidance_scale", "guidanceScale"),
+    ("wanGenerate", "scheduler_flow_shift", "shift"),
+    ("wanGenerate", "conditioning_scale", "conditioningScale"),
+    ("wanGenerate", "strength", "strength"),
+    ("wanGenerate", "denoise_strength", "strength"),
+    ("wanGenerate", "frame_rate", "fps"),
+    ("wanGenerate", "guidance_scale_2", "guidanceScale2"),
+    ("wanGenerate", "use_guidance_scale_2", "useGuidanceScale2"),
+    ("wanGenerate", "output_type", "outputType"),
+    ("wanGenerate", "max_sequence_length", "maxSequenceLength"),
+    ("wanGenerate", "attention_kwargs_json", "attentionKwargsJson"),
+    ("videoExport", "fps", "fps"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -164,7 +221,8 @@ _AUTO_FIELDS = (
     "channelsLast",
 )
 _BINDING_SOURCES = frozenset(
-    item[2] for item in (*_GRAPH_BINDINGS, *_CONTROL_GRAPH_BINDINGS, *_EDIT_GRAPH_BINDINGS)
+    item[2]
+    for item in (*_GRAPH_BINDINGS, *_CONTROL_GRAPH_BINDINGS, *_EDIT_GRAPH_BINDINGS, *_VIDEO_GRAPH_BINDINGS)
 )
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
 
@@ -749,6 +807,116 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
         "bindings": _EDIT_GRAPH_BINDINGS,
+    },
+    "wan-22-ti2v-5b:text-to-video:v1": {
+        "modelType": "WanTI2VPipeline",
+        "mode": "text_to_video",
+        "profile": {
+            "id": "wan-22-ti2v-5b:direct",
+            "model_type": "WanTI2VPipeline",
+            "modes": ("text_to_video",),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-video",
+            "pipeline_class": "WanTI2VPipeline",
+            "default_repo": WAN_22_TI2V_5B_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 1280,
+            "max_low_memory_steps": 50,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "WanTI2VPipeline",
+            "label": "Wan 2.2 TI2V 5B",
+            "displayName": "Wan2.2-TI2V-5B-Diffusers",
+            "family": "Wan Video",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": WAN_22_TI2V_5B_REPO,
+            "artifactLabel": "Diffusers repo",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 1280, "height": 704, "aspectRatio": "16:9"},
+            "recommendedSteps": 50,
+            "recommendedGuidance": 5.0,
+            "guidanceLabel": "Guidance",
+            "supportsImageInput": False,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": True,
+            "supportsVideoInput": False,
+            "supportsVideoMask": False,
+            "outputKind": "video",
+            "recommendedFrames": 121,
+            "recommendedFps": 24,
+            "conditioningScale": 1.0,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_MODEL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                "steps": 50,
+                "width": 1280,
+                "height": 704,
+                "numFrames": 121,
+            },
+            "modes": ["text_to_video"],
+            "executionStatus": "supported_with_model",
+            "notes": [
+                "Uses the official dense Wan 2.2 5B high-compression video model for five-second 720p shots.",
+                "The current Diffusers WanPipeline exposes text-to-video; A14B remains the image-to-video adapter.",
+                "Human review remains required before generated examples are promoted to the gallery.",
+            ],
+            "modeRequirements": {},
+        },
+        "autoRequirements": {
+            "supportedTasks": ["text_to_video"],
+            "defaultRepo": WAN_22_TI2V_5B_REPO,
+            "executionPath": "direct-diffusers-video",
+            "pipelineClass": "WanTI2VPipeline",
+            "qualityDefaults": {
+                "width": 1280,
+                "height": 704,
+                "steps": 50,
+                "guidanceScale": 5,
+                "numFrames": 121,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 40 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "supportedOffloadModes": list(_DIRECT_OFFLOAD_MODES),
+            "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+            "guardedReason": "Wan 2.2 TI2V 5B uses the generic Diffusers video graph with an exact direct loader contract.",
+        },
+        "roles": _VIDEO_GRAPH_ROLES,
+        "edges": _VIDEO_GRAPH_EDGES,
+        "bindings": _VIDEO_GRAPH_BINDINGS,
     },
 }
 
