@@ -408,15 +408,15 @@ image, video, and audio task nodes; none justifies a model-named node.
 
 | Family | Existing generic coverage | Confirmed pinned classes/actions not yet covered or exposed |
 | --- | --- | --- |
-| SDXL | Modular core/control plus a nonadvertised base-inpaint state flow | Standard text-to-image, img2img, inpaint, and instruct-pix2pix adapters; Modular base-inpaint exposure/qualification, IP-Adapter, Union, ControlNet-inpaint, and other combined actions |
-| Qwen Image | standard text-to-image, standard Edit inpaint/outpaint, Modular control text-to-image and edit paths | standard img2img, inpaint, ControlNet, ControlNet inpaint, Edit, Edit Plus, and Layered adapters; Modular img2img/inpaint combinations |
-| Z-Image | standard and Modular text-to-image | standard img2img, inpaint, ControlNet, ControlNet inpaint, and Omni adapters; Modular img2img exposure |
-| Flux | text/image edit, fill, base control, ControlNet, Kontext, Redux | control-img2img, control-inpaint, ControlNet-img2img, ControlNet-inpaint, and Kontext-inpaint; accurate true-CFG/negative-prompt mapping |
-| Flux2 | Klein text/image edit and multi-reference | Klein inpaint, KV, and full Flux2 after artifact/runtime review |
-| Wan | five standard video adapters and Modular T2V/I2V | first/last-frame profile; the three Expert-only VACE video/reference/color modes; a truthful VACE first-frame adapter that synthesizes the required video-and-mask state; public profiles for Animate |
-| LTX/LTX2 | LTX condition modes, long-prompt I2V, and LTX2 condition modes | latent upsample; LTX2 in-context, HDR, and latent-upsample actions; public profiles for already implemented long/LTX2 adapters |
-| Hunyuan Video | FramePack adapter | base text-to-video, image-to-video, and SkyReels image-to-video; public FramePack profile |
-| Audio | ACE-Step and an implemented Stable Audio adapter | public Stable Audio profile; exact ACE mode-to-task/input contracts, with unsupported `extract`, `lego`, and `complete` choices hidden until their missing inputs exist |
+| SDXL | Modular core/control plus a nonadvertised base-inpaint state flow; standard text, img2img, and inpaint adapters published contract-only | instruct-pix2pix; Modular base-inpaint exposure/qualification, IP-Adapter, Union, ControlNet-inpaint, and other combined actions |
+| Qwen Image | standard text-to-image and Edit inpaint/outpaint; contract-only standard img2img, inpaint, Edit, and Edit Plus; Modular control text-to-image and edit paths | standard ControlNet, ControlNet inpaint, and Layered adapters; Modular img2img/inpaint combinations |
+| Z-Image | standard and Modular text-to-image plus contract-only standard img2img/inpaint | standard ControlNet, ControlNet inpaint, and Omni adapters; Modular img2img exposure |
+| Flux | text/image edit, fill, base control, ControlNet, Kontext, Redux, contract-only img2img/inpaint/Kontext-inpaint, and exact true-CFG forwarding | control-img2img, control-inpaint, ControlNet-img2img, and ControlNet-inpaint |
+| Flux2 | Klein text/image edit and multi-reference plus contract-only Klein inpaint | KV and full Flux2 after artifact/runtime review |
+| Wan | five profiled standard video adapters, Modular T2V/I2V, and contract-only Wan 2.2 T2V/Animate adapters | first/last-frame profile; the three Expert-only VACE video/reference/color modes; a truthful VACE first-frame adapter that synthesizes the required video-and-mask state; live qualification for Animate |
+| LTX/LTX2 | profiled LTX condition modes plus contract-only long-prompt I2V and LTX2 condition adapters | latent upsample; LTX2 in-context, HDR, and latent-upsample actions; live execution qualification for long/LTX2 |
+| Hunyuan Video | FramePack adapter published contract-only | base text-to-video, image-to-video, and SkyReels image-to-video; live FramePack qualification |
+| Audio | ACE-Step plus Stable Audio published contract-only | live Stable Audio qualification; unsupported ACE `extract`, `lego`, and `complete` choices remain hidden until their missing inputs exist |
 
 All entries begin `contract_only`. Real output, resource envelopes, Auto
 qualification, and Gallery publication remain separate remote-machine work.
@@ -1120,10 +1120,32 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         exactly the image/video/audio adapter set minus profiled classes and
         that every artifact is immutably cataloged. No model, artifact, media,
         network, GPU execution, template, or Gallery asset was used or changed.
-    - [ ] **P0.3c.6 Paired checkpoint:** run focused and complete backend/client
+    - [x] **P0.3c.6 Paired checkpoint:** run focused and complete backend/client
       gates, mirror the reviewed client bundle, perform a fresh HTTP smoke, and
       update the support matrix. No large-model or media qualification is part
       of this phase.
+      - Evidence 2026-08-11: paired backend `896661a8dc13` and client
+        `d226c4bbc2e0` passed the checkpoint. The backend adapter/profile truth
+        matrix passed 267 tests with 2 skips and 777 subtests; the full backend
+        gate passed 1117 tests with 4 skips and 1759 subtests plus the existing
+        upstream deprecation warning. Ruff E9/F, dependency validation,
+        preflight, and diff checks passed. The unchanged client passed full
+        `npm run check`, 2/2 shared-control browser tests, and all 86 mocked
+        Studio browser tests. Its production bundle remained 523003/523264
+        gzip bytes, 133 bytes inside the stricter 523136-byte safety target.
+      - The 26-file client build was verified byte-for-byte against `web/` with
+        no extra generated deployment files; all 317 preserved local Gallery
+        files remained untouched. Exact deployed hashes were
+        `index.js`=`4eb4230f9e3779c89a49a7155ffc56984e47d0c492d604780cafad3ac3e5e133`,
+        `studio-templates.js`=`e8552942199e04fe3980da5b91550f7e9964af7894bc43e781d2bceaa62554d4`,
+        and `graph-vendor.js`=`76e8c330da63ee5806ef230e2567ed978fca7005efd1cf679b8c5d99e8bfd337`.
+        A fresh supervised HTTP smoke returned `200` for `/` and
+        `/assets/index.js`, `/health` reported ready, and schema-v2
+        `/model_capabilities` returned 20 supported, 25 experimental, and 19
+        contract-only records with zero Auto-eligible or profiled contract-only
+        entries. The owned process tree was stopped and port 8088 was free.
+        No model download, inference, GPU workload, generated media, template,
+        or Gallery publication occurred.
   - [ ] **P0.3d Backend-owned Studio execution specifications**
     - Backend: make one exact-pair registry the source for execution profiles,
       capabilities, Auto requirements, loader choices, workflow validation,
