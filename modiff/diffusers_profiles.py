@@ -28,6 +28,7 @@ from modiff.studio_execution_specs import (
     FLUX_KREA_REPO as FLUX_KREA_REPO,
     FLUX_KONTEXT_NVFP4_REPO as FLUX_KONTEXT_NVFP4_REPO,
     FLUX_KONTEXT_REPO as FLUX_KONTEXT_REPO,
+    FLUX_FILL_REPO as FLUX_FILL_REPO,
     FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
     WAN_22_I2V_A14B_REPO as WAN_22_I2V_A14B_REPO,
@@ -41,7 +42,6 @@ QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
-FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
@@ -439,9 +439,6 @@ DIFFUSERS_EXECUTION_PROFILES.update(
             "Flux2KleinPipeline",
             FLUX2_KLEIN_REPO,
             live_proof=True,
-        ),
-        "flux-fill:direct": _flux_execution_profile(
-            "flux-fill:direct", "FluxFillPipeline", ("inpaint", "outpaint"), "FluxFillPipeline", FLUX_FILL_REPO
         ),
     }
 )

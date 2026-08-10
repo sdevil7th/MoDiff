@@ -26,6 +26,7 @@ FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
+FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -153,6 +154,40 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageEdit", "output_type", "outputType"),
     ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
 )
+_INPAINT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("loadMask", "modules.Image.Load", -520, 560),
+    ("diffusersImageInpaint", "modules.DiffusersImage.Inpaint", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_INPAINT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageInpaint", "pipeline"),
+    ("loadImage", "image", "diffusersImageInpaint", "image"),
+    ("loadMask", "image", "diffusersImageInpaint", "mask_image"),
+    ("diffusersImageInpaint", "images", "preview", "image"),
+)
+_INPAINT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadMask", "file", "maskImage"),
+    ("loadMask", "alpha_channel", "removeAlpha"),
+    ("diffusersImageInpaint", "prompt", "prompt"),
+    ("diffusersImageInpaint", "negative_prompt", "negativePrompt"),
+    ("diffusersImageInpaint", "width", "width"),
+    ("diffusersImageInpaint", "height", "height"),
+    ("diffusersImageInpaint", "seed", "seed"),
+    ("diffusersImageInpaint", "num_inference_steps", "steps"),
+    ("diffusersImageInpaint", "guidance_scale", "guidanceScale"),
+    ("diffusersImageInpaint", "strength", "strength"),
+    ("diffusersImageInpaint", "reference_strength", "conditioningScale"),
+    ("diffusersImageInpaint", "output_type", "outputType"),
+    ("diffusersImageInpaint", "max_sequence_length", "maxSequenceLength"),
+)
 _VIDEO_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -254,6 +289,7 @@ _BINDING_SOURCES = frozenset(
         *_GRAPH_BINDINGS,
         *_CONTROL_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
+        *_INPAINT_GRAPH_BINDINGS,
         *_VIDEO_GRAPH_BINDINGS,
         *_I2V_GRAPH_BINDINGS,
     )
@@ -949,6 +985,82 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
         "bindings": _EDIT_GRAPH_BINDINGS,
+    },
+    "flux-fill:inpaint:v1": {
+        "modelType": "FluxFillPipeline",
+        "mode": "inpaint",
+        "profile": {
+            "id": "flux-fill:direct",
+            "model_type": "FluxFillPipeline",
+            "modes": ("inpaint", "outpaint"),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "FluxFillPipeline",
+            "default_repo": FLUX_FILL_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder_2"),
+            "default_quantized_components": ("transformer",),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "autoRequirements": {
+            "supportedTasks": ["inpaint", "outpaint"],
+            "defaultRepo": FLUX_FILL_REPO,
+            "executionPath": "direct-diffusers-image",
+            "pipelineClass": "FluxFillPipeline",
+            "qualityDefaults": {
+                "width": 768,
+                "height": 768,
+                "steps": 24,
+                "guidanceScale": 30,
+                "maxSequenceLength": 256,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 48 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 64 * _GIB,
+                "diskFreeBytes": 60 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "onLoadQuantization": {
+                "accelerator": "cuda",
+                "vramBytes": 16 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 45 * _GIB,
+                "quantizationMode": "quanto_float8",
+                "quantizedComponents": ["transformer", "text_encoder_2"],
+            },
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+                OFFLOAD_MODE_NONE,
+            ],
+            "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
+            "guardedReason": (
+                "FLUX Fill has guarded Auto coverage through generic Diffusers inpaint/outpaint nodes and "
+                "on-load quantization."
+            ),
+        },
+        "roles": _INPAINT_GRAPH_ROLES,
+        "edges": _INPAINT_GRAPH_EDGES,
+        "bindings": _INPAINT_GRAPH_BINDINGS,
     },
     "wan-22-i2v-a14b:image-to-video:v1": {
         "modelType": "WanImageToVideoPipeline",

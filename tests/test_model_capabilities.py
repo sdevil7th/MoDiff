@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 11)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 12)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -65,6 +65,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "FluxKontextPipeline",
+            "FluxFillPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "WanVideoPipeline",
@@ -116,6 +117,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(kontext_multi_spec["pipelineClass"], "FluxKontextPipeline")
         self.assertNotEqual(kontext_multi_spec["contentHash"], kontext_spec["contentHash"])
 
+        fill_spec = by_model["FluxFillPipeline"]["studioExecutionSpecs"][0]
+        self.assertEqual(by_model["FluxFillPipeline"]["modes"], ["inpaint", "outpaint"])
+        self.assertEqual(by_model["FluxFillPipeline"]["studioExecutionSpecModes"], ["inpaint"])
+        self.assertEqual(fill_spec["pipelineClass"], "FluxFillPipeline")
+        self.assertIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
+        self.assertIn("loadMask", [item[0] for item in fill_spec["roles"]])
+
         i2v_spec = by_model["WanImageToVideoPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(i2v_spec["mode"], "image_to_video")
         self.assertEqual(i2v_spec["pipelineClass"], "WanImageToVideoPipeline")
@@ -133,6 +141,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "FluxKontextPipeline",
+            "FluxFillPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "WanVideoPipeline",

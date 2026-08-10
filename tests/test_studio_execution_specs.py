@@ -59,6 +59,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxReduxPipeline", "edit_image"),
                 ("FluxKontextPipeline", "edit_image"),
                 ("FluxKontextPipeline", "multi_image_reference_edit"),
+                ("FluxFillPipeline", "inpaint"),
                 ("WanImageToVideoPipeline", "image_to_video"),
                 ("WanTI2VPipeline", "text_to_video"),
                 ("WanVideoPipeline", "text_to_video"),
@@ -112,26 +113,43 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[7]["pipelineClass"], "FluxKontextPipeline")
         self.assertEqual(
             [item[0] for item in specs[8]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "diffusersImagePipeline",
+                "loadImage",
+                "loadMask",
+                "diffusersImageInpaint",
+                "preview",
+            ],
+        )
+        self.assertIn(("loadMask", "file", "maskImage"), specs[8]["bindings"])
+        self.assertIn(("loadMask", "alpha_channel", "removeAlpha"), specs[8]["bindings"])
+        self.assertIn(("diffusersImageInpaint", "reference_strength", "conditioningScale"), specs[8]["bindings"])
+        self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), specs[8]["edges"])
+        self.assertEqual(specs[8]["pipelineClass"], "FluxFillPipeline")
+        self.assertEqual(
+            [item[0] for item in specs[9]["roles"]],
             ["diffusersQuantization", "diffusersRecipe", "wanPipeline", "wanGenerate", "videoExport", "loadImage"],
         )
-        self.assertIn(("diffusersQuantization", "components", "dualQuantizedComponents"), specs[8]["bindings"])
-        self.assertIn(("loadImage", "file", "referenceImages"), specs[8]["bindings"])
-        self.assertIn(("loadImage", "image", "wanGenerate", "reference_images"), specs[8]["edges"])
-        self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[8]["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "dualQuantizedComponents"), specs[9]["bindings"])
+        self.assertIn(("loadImage", "file", "referenceImages"), specs[9]["bindings"])
+        self.assertIn(("loadImage", "image", "wanGenerate", "reference_images"), specs[9]["edges"])
+        self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[9]["bindings"])
         self.assertEqual(
-            DIFFUSERS_EXECUTION_PROFILES[specs[8]["executionProfileId"]].default_quantized_components,
+            DIFFUSERS_EXECUTION_PROFILES[specs[9]["executionProfileId"]].default_quantized_components,
             ("transformer", "transformer_2"),
         )
         self.assertEqual(
-            [item[0] for item in specs[9]["roles"]],
+            [item[0] for item in specs[10]["roles"]],
             ["diffusersQuantization", "diffusersRecipe", "wanPipeline", "wanGenerate", "videoExport"],
         )
-        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[9]["bindings"])
-        self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[9]["edges"])
-        self.assertEqual(specs[10]["pipelineClass"], "WanPipeline")
-        self.assertEqual(specs[10]["roles"], specs[9]["roles"])
-        self.assertEqual(specs[10]["edges"], specs[9]["edges"])
-        self.assertEqual(specs[10]["bindings"], specs[9]["bindings"])
+        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[10]["bindings"])
+        self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[10]["edges"])
+        self.assertEqual(specs[11]["pipelineClass"], "WanPipeline")
+        self.assertEqual(specs[11]["roles"], specs[10]["roles"])
+        self.assertEqual(specs[11]["edges"], specs[10]["edges"])
+        self.assertEqual(specs[11]["bindings"], specs[10]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -238,6 +256,15 @@ class StudioExecutionSpecTests(unittest.TestCase):
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
         self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxKontextPipeline"]["supportedTasks"], ["edit_image"])
+
+    def test_partial_flux_fill_migration_seals_inpaint_without_claiming_outpaint(self):
+        spec = studio_execution_spec_for_pair("FluxFillPipeline", "inpaint")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["pipelineClass"], "FluxFillPipeline")
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+        self.assertIsNone(studio_execution_spec_for_pair("FluxFillPipeline", "outpaint"))
+        self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxFillPipeline"]["supportedTasks"], ["inpaint", "outpaint"])
 
     def test_runtime_hint_parser_rejects_malformed_new_receipts_without_legacy_fallback(self):
         server = WebServer(module_registry.MODULE_MAP)
