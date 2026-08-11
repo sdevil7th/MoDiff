@@ -291,6 +291,23 @@ _V2V_GRAPH_BINDINGS = _VIDEO_GRAPH_BINDINGS + (
     ("normalizeVideo", "height", "height"),
     ("normalizeVideo", "num_frames", "numFrames"),
 )
+_VACE_INPAINT_GRAPH_ROLES = _V2V_GRAPH_ROLES + (
+    ("loadMaskVideo", "modules.Video.Load", -520, 520),
+    ("alignMaskVideo", "modules.VideoConditioning.AlignMask", -160, 520),
+)
+_VACE_INPAINT_GRAPH_EDGES = _V2V_GRAPH_EDGES + (
+    ("normalizeVideo", "output", "alignMaskVideo", "video"),
+    ("loadMaskVideo", "video", "alignMaskVideo", "mask"),
+    ("alignMaskVideo", "output", "wanGenerate", "mask"),
+)
+_VACE_INPAINT_GRAPH_BINDINGS = tuple(
+    (role, param, "wanVaceRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+    for role, param, source in _V2V_GRAPH_BINDINGS
+) + (
+    ("loadMaskVideo", "file", "maskVideo"),
+    ("alignMaskVideo", "threshold", "maskThreshold127"),
+    ("alignMaskVideo", "grow_pixels", "inpaintMaskGrow96"),
+)
 _LTX_T2V_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -465,6 +482,7 @@ _BINDING_SOURCES = frozenset(
         *_WAN_VACE_GRAPH_BINDINGS,
         *_I2V_GRAPH_BINDINGS,
         *_V2V_GRAPH_BINDINGS,
+        *_VACE_INPAINT_GRAPH_BINDINGS,
         *_LTX_T2V_GRAPH_BINDINGS,
         *_LTX_I2V_GRAPH_BINDINGS,
         *_LTX_V2V_GRAPH_BINDINGS,
@@ -2058,6 +2076,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _VIDEO_GRAPH_ROLES,
         "edges": _VIDEO_GRAPH_EDGES,
         "bindings": _WAN_VACE_GRAPH_BINDINGS,
+    },
+    "wan-vace-1.3b:video-inpaint:v1": {
+        "modelType": "WanVACEPipeline",
+        "mode": "video_inpaint",
+        "profile": {
+            "id": "wan-vace:direct",
+            "model_type": "WanVACEPipeline",
+            "modes": ("text_to_video", "video_inpaint", "video_outpaint", "control_to_video"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-wan-vace",
+            "pipeline_class": "WanVACEPipeline",
+            "default_repo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _VACE_INPAINT_GRAPH_ROLES,
+        "edges": _VACE_INPAINT_GRAPH_EDGES,
+        "bindings": _VACE_INPAINT_GRAPH_BINDINGS,
     },
 }
 

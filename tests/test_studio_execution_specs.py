@@ -79,6 +79,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("AceStepAudioPipeline", "audio_repaint"),
                 ("QwenImageEditModularPipeline", "inpaint"),
                 ("WanVACEPipeline", "text_to_video"),
+                ("WanVACEPipeline", "video_inpaint"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -289,6 +290,26 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("wanPipeline", "revision", "wanVaceRevision"), specs[27]["bindings"])
         self.assertIn(("wanGenerate", "mode", "mode"), specs[27]["bindings"])
         self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[27]["bindings"])
+        self.assertEqual(
+            [item[0] for item in specs[28]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "wanPipeline",
+                "wanGenerate",
+                "videoExport",
+                "loadVideo",
+                "normalizeVideo",
+                "loadMaskVideo",
+                "alignMaskVideo",
+            ],
+        )
+        self.assertIn(("normalizeVideo", "output", "alignMaskVideo", "video"), specs[28]["edges"])
+        self.assertIn(("loadMaskVideo", "video", "alignMaskVideo", "mask"), specs[28]["edges"])
+        self.assertIn(("alignMaskVideo", "output", "wanGenerate", "mask"), specs[28]["edges"])
+        self.assertIn(("loadMaskVideo", "file", "maskVideo"), specs[28]["bindings"])
+        self.assertIn(("alignMaskVideo", "threshold", "maskThreshold127"), specs[28]["bindings"])
+        self.assertIn(("alignMaskVideo", "grow_pixels", "inpaintMaskGrow96"), specs[28]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -450,6 +471,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("wanPipeline", "revision", "wanVaceRevision"), spec["bindings"])
         self.assertIn(("wanPipeline", "pipeline", "wanGenerate", "pipeline"), spec["edges"])
         self.assertIn(("wanGenerate", "mode", "mode"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_wan_vace_video_inpaint_seals_source_and_mask_conditioning(self):
+        spec = studio_execution_spec_for_pair("WanVACEPipeline", "video_inpaint")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "wan-vace:direct")
+        self.assertIn(("loadVideo", "video", "normalizeVideo", "video"), spec["edges"])
+        self.assertIn(("loadMaskVideo", "video", "alignMaskVideo", "mask"), spec["edges"])
+        self.assertIn(("alignMaskVideo", "output", "wanGenerate", "mask"), spec["edges"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
