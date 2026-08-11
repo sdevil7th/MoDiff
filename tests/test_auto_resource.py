@@ -26,6 +26,7 @@ from modiff.auto_resource import (  # noqa: E402
     _validate_snapshot_shards,
     auto_resource_history_key,
     build_auto_resource_plan,
+    matching_auto_resource_success_history,
     record_auto_resource_failure,
     record_auto_resource_success,
 )
@@ -1443,6 +1444,7 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "executionProfileId": "z-image:auto",
             },
             "modelDependencies": [],
+            "controlledArtifacts": [],
             "attentionBackend": "auto",
             "regionalCompile": False,
             "denoiserCache": "none",
@@ -1488,12 +1490,91 @@ class AutoResourcePlanTests(unittest.TestCase):
                     }
                 ],
             ),
+            (
+                "controlledArtifacts",
+                [
+                    {
+                        "schemaVersion": 1,
+                        "kind": "diffusers_lora",
+                        "module": "modules.DiffusersImage",
+                        "action": "LoadAdapter",
+                        "artifact": {
+                            "source": "hub",
+                            "repository": "example/style",
+                            "revision": "a" * 40,
+                            "weightName": "style.safetensors",
+                            "sha256": "b" * 64,
+                        },
+                        "adapterName": "style",
+                        "scale": 0.75,
+                        "scheduler": None,
+                        "replaceExisting": True,
+                        "descriptorSha256": "c" * 64,
+                    }
+                ],
+            ),
         ):
             self.assertNotEqual(
                 baseline,
                 auto_resource_history_key({**base, field: value}, runtime_fingerprint=runtime),
                 field,
             )
+
+    def test_controlled_artifact_history_is_reusable_only_for_the_exact_receipt(self):
+        runtime = self._runtime()
+        receipt = {
+            "schemaVersion": 1,
+            "kind": "diffusers_lora",
+            "module": "modules.DiffusersImage",
+            "action": "LoadAdapter",
+            "artifact": {
+                "source": "hub",
+                "repository": "example/style",
+                "revision": "a" * 40,
+                "weightName": "style.safetensors",
+                "sha256": "b" * 64,
+            },
+            "adapterName": "style",
+            "scale": 0.75,
+            "scheduler": None,
+            "replaceExisting": True,
+            "descriptorSha256": "c" * 64,
+        }
+        candidate = {
+            "id": "flux-style",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "artifact": FLUX_SCHNELL_REPO,
+            "controlledArtifacts": [receipt],
+        }
+        with tempfile.TemporaryDirectory() as data_dir:
+            record_auto_resource_success(
+                data_dir,
+                runtime_fingerprint=runtime,
+                runtime_hints={"resourceMode": "auto", "autoResourcePlan": candidate},
+            )
+            exact = matching_auto_resource_success_history(
+                data_dir,
+                candidate=candidate,
+                runtime_fingerprint=runtime,
+            )
+            changed = json.loads(json.dumps(candidate))
+            changed["controlledArtifacts"][0]["scale"] = 1.0
+            changed["controlledArtifacts"][0]["descriptorSha256"] = "d" * 64
+            stale = matching_auto_resource_success_history(
+                data_dir,
+                candidate=changed,
+                runtime_fingerprint=runtime,
+            )
+            base_only = matching_auto_resource_success_history(
+                data_dir,
+                candidate={key: value for key, value in candidate.items() if key != "controlledArtifacts"},
+                runtime_fingerprint=runtime,
+            )
+
+        self.assertIsNotNone(exact)
+        self.assertIsNone(stale)
+        self.assertIsNone(base_only)
 
     def test_auto_history_rejects_stale_profile_and_schema_receipts(self):
         hardware = self._hardware()

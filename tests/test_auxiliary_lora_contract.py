@@ -12,6 +12,7 @@ from safetensors.numpy import save_file
 from modiff.auxiliary_lora import (
     LORA_DESCRIPTOR_SCHEMA,
     build_lora_descriptor,
+    controlled_lora_receipts_from_graph,
     resolve_lora_descriptor,
 )
 from modules.ModularDiffusers.adapters import Lora
@@ -66,6 +67,95 @@ def _resign_descriptor(descriptor):
 
 
 class AuxiliaryLoraContractTests(unittest.TestCase):
+    def test_executable_graph_receipts_bind_order_and_ignore_disconnected_adapters(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first.safetensors"
+            second = root / "second.safetensors"
+            disconnected = root / "disconnected.safetensors"
+            _write_tiny_safetensors(first, 1)
+            _write_tiny_safetensors(second, 2)
+            _write_tiny_safetensors(disconnected, 3)
+
+            def direct_node(path, name, scale, replace_existing):
+                return {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadAdapter",
+                    "params": {
+                        "adapter_path": {"value": {"source": "local", "value": str(path)}},
+                        "weight_name": {"value": path.name},
+                        "adapter_name": {"value": name},
+                        "scale": {"value": scale},
+                        "replace_existing": {"value": replace_existing},
+                    },
+                }
+
+            graph = {
+                "nodes": {
+                    "pipeline": {"module": "unit", "action": "Pipeline", "params": {}},
+                    "first": direct_node(first, "first", 0.5, True),
+                    "second": direct_node(second, "second", 0.25, False),
+                    "disconnected": direct_node(disconnected, "unused", 1, True),
+                    "generate": {"module": "unit", "action": "Generate", "params": {}},
+                },
+                "paths": [["pipeline", "first", "second", "generate"]],
+            }
+            receipts = controlled_lora_receipts_from_graph(graph)
+            reversed_receipts = controlled_lora_receipts_from_graph(
+                {**graph, "paths": [["pipeline", "second", "first", "generate"]]}
+            )
+            expected_first_digest = hashlib.sha256(first.read_bytes()).hexdigest()
+
+        self.assertEqual([item["adapterName"] for item in receipts], ["first", "second"])
+        self.assertEqual([item["replaceExisting"] for item in receipts], [True, False])
+        self.assertEqual(receipts[0]["artifact"]["sha256"], expected_first_digest)
+        self.assertNotIn(str(root), json.dumps(receipts))
+        self.assertEqual([item["adapterName"] for item in reversed_receipts], ["second", "first"])
+
+    def test_modular_graph_receipt_matches_the_runtime_descriptor_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "style.safetensors"
+            _write_tiny_safetensors(weight)
+            graph = {
+                "nodes": {
+                    "adapter": {
+                        "module": "modules.ModularDiffusers",
+                        "action": "Lora",
+                        "params": {
+                            "model": {"value": {"source": "local", "value": str(weight)}},
+                            "weight_name": {"value": weight.name},
+                            "scale": {"value": 0.75},
+                        },
+                    }
+                },
+                "paths": [["adapter"]],
+            }
+            receipt = controlled_lora_receipts_from_graph(graph)[0]
+            descriptor = Lora("adapter").execute(
+                {"source": "local", "value": str(weight)},
+                0.75,
+                weight_name=weight.name,
+            )["lora"]
+
+        self.assertEqual(receipt["descriptorSha256"], descriptor["descriptor_sha256"])
+        self.assertEqual(receipt["adapterName"], "style_adapter")
+        self.assertIsNone(receipt["replaceExisting"])
+
+    def test_empty_direct_image_adapter_is_the_same_noop_as_the_loader(self):
+        graph = {
+            "nodes": {
+                "adapter": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadAdapter",
+                    "params": {
+                        "adapter_path": {"value": {"source": "hub", "value": ""}},
+                    },
+                }
+            },
+            "paths": [["adapter"]],
+        }
+        self.assertEqual(controlled_lora_receipts_from_graph(graph), [])
+
     def test_local_file_produces_one_versioned_content_identity(self):
         with tempfile.TemporaryDirectory() as directory:
             weight = Path(directory) / "style.safetensors"

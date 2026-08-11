@@ -201,6 +201,22 @@ resolves `candidateId` back to that bounded candidate list and applies the
 canonical candidate fields. It rejects missing, duplicate, stale, cross-pair,
 cross-profile, unqualified, unsupported, or unreviewed retry candidates.
 
+Immediately before Auto admission, the worker derives
+`controlledArtifacts` from executable graph paths rather than trusting a
+submitted receipt. Each supported Modular, direct-image, or direct-audio LoRA
+node is resolved through the exact Safetensors contract and contributes its
+module/action, safe Hub-or-local content identity, adapter name, scale,
+scheduler contract, replacement policy, and descriptor digest. Disconnected
+adapter nodes do not contribute. The worker copies the derived ordered list to
+the selected plan and every candidate before comparing them, and a submitted
+`controlledArtifacts` field is discarded. Local absolute roots are represented
+only by the descriptor digest and are not exposed in public runtime events. A
+candidate whose readiness came from local history must also have exact current
+history for this derived receipt; base-only evidence is downgraded before Auto
+admission instead of being represented as live proof. Qualification proof
+remains advisory for an otherwise valid executable graph. Independently safe
+or passed candidates do not depend on that local history check.
+
 Plan application considers only executable loader IDs referenced by graph
 `paths`. Direct loaders must already expose the profile's exact
 `pipeline_class`; modular `ModelsLoader` nodes must already expose the exact
@@ -215,16 +231,23 @@ Auto admission and retry failures use bounded, non-echoing messages with the
 `auto_resource_pair_undeclared`, `auto_resource_pair_mismatch`,
 `auto_resource_candidate_mismatch`, and `auto_resource_target_mismatch`.
 Clients should refresh Auto for these failures; structurally valid manual
-configurations remain available through Expert mode.
+configurations remain available through Expert mode. Controlled LoRA
+resolution failures use the same bounded non-echoing envelope with stable code
+`controlled_artifact_mismatch` and never copy a submitted repository or local
+path into the public error.
 
-Local Auto history version 6 binds successful and failed evidence to the Auto
+Local Auto history version 7 binds successful and failed evidence to the Auto
 schema version, exact execution-profile ID, loader/path/class identity,
 optional-runtime profile and delivery contract, artifact revision, optimization
 recipe, specification-owned graph contract, immutable model-dependency
-receipt, workload shape, and runtime hardware fingerprint. Evidence from an
+receipt, ordered controlled-LoRA receipt, workload shape, and runtime hardware
+fingerprint. Evidence from an
 older history schema or a replaced execution, optional-runtime, graph, or
-model-dependency specification is retained on disk for inspection but cannot
-promote a current candidate to `live_proven`.
+model-dependency/controlled-artifact specification is retained on disk for
+inspection but cannot promote a current candidate to `live_proven`. Because
+the planner does not infer graph-authored controlled blocks, a nonempty
+controlled-artifact history receipt is deliberately not reused by a later
+base-only plan.
 
 A specification-owned Auto candidate requires the matching
 `runtimeHints.studioExecutionSpec` receipt at execution. The receipt maps the

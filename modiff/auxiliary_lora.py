@@ -79,6 +79,11 @@ _DESCRIPTOR_KEYS = {
 _HUB_ARTIFACT_KEYS = {"source", "repository", "revision", "weight_name", "sha256"}
 _LOCAL_ARTIFACT_KEYS = {"source", "root", "weight_name", "sha256"}
 _SCHEDULER_KEYS = {"class_name", "config"}
+_CONTROLLED_LORA_NODE_CONTRACTS = {
+    ("modules.ModularDiffusers", "Lora"): ("model", None, 1.0),
+    ("modules.DiffusersImage", "LoadAdapter"): ("adapter_path", "default", 1.0),
+    ("modules.DiffusersAudio", "LoadAdapter"): ("adapter_path", "audio_style", 0.7),
+}
 
 
 @dataclass(frozen=True)
@@ -660,6 +665,154 @@ def build_lora_descriptor(
         "scheduler": scheduler,
     }
     return {**payload, "descriptor_sha256": _descriptor_digest(payload)}
+
+
+def _graph_param_value(node: Mapping[str, Any], key: str, default: Any = None) -> Any:
+    params = node.get("params")
+    if not isinstance(params, Mapping):
+        return default
+    param = params.get(key)
+    if not isinstance(param, Mapping):
+        return default
+    return param.get("value", param.get("default", default))
+
+
+def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
+    """Validate executable controlled LoRA nodes and return exact safe receipts.
+
+    The API graph is the authority here: caller-supplied runtime receipts are
+    deliberately ignored.  Node IDs are used only to reproduce the Modular
+    adapter name; local filesystem roots remain represented by the descriptor
+    digest and are never copied into the public receipt.
+    """
+
+    if not isinstance(graph, Mapping):
+        return []
+    nodes = graph.get("nodes")
+    paths = graph.get("paths")
+    if not isinstance(nodes, Mapping) or not isinstance(paths, list):
+        return []
+    nodes_by_id = {str(node_id): node for node_id, node in nodes.items()}
+
+    executable_ids: list[str] = []
+    seen_ids: set[str] = set()
+    for path in paths:
+        if not isinstance(path, list):
+            continue
+        for raw_node_id in path:
+            node_id = str(raw_node_id)
+            if node_id not in seen_ids:
+                seen_ids.add(node_id)
+                executable_ids.append(node_id)
+
+    controlled_ids = [
+        node_id
+        for node_id in executable_ids
+        if isinstance(nodes_by_id.get(node_id), Mapping)
+        and (nodes_by_id[node_id].get("module"), nodes_by_id[node_id].get("action"))
+        in _CONTROLLED_LORA_NODE_CONTRACTS
+    ]
+    if len(controlled_ids) > MAX_LORA_ADAPTERS:
+        raise ValueError(f"At most {MAX_LORA_ADAPTERS} executable LoRA adapters are supported.")
+
+    receipts: list[dict[str, Any]] = []
+    for node_id in controlled_ids:
+        node = nodes_by_id[node_id]
+        module = node.get("module")
+        action = node.get("action")
+        selection_key, default_adapter_name, default_scale = _CONTROLLED_LORA_NODE_CONTRACTS[
+            (module, action)
+        ]
+        selection = _graph_param_value(node, selection_key)
+        image_selection_is_empty = module == "modules.DiffusersImage" and (
+            selection is None
+            or isinstance(selection, str)
+            and not selection.strip()
+            or isinstance(selection, Mapping)
+            and isinstance(selection.get("value"), str)
+            and not selection["value"].strip()
+        )
+        if image_selection_is_empty:
+            # The direct-image adapter explicitly supports a no-op empty
+            # selection. It contributes no execution artifact receipt.
+            continue
+        if isinstance(selection, str):
+            selection = {
+                "source": "local" if module == "modules.DiffusersAudio" else "hub",
+                "value": selection,
+            }
+
+        weight_name = _graph_param_value(
+            node,
+            "weight_name",
+            "adapter_model.safetensors" if module == "modules.DiffusersAudio" else None,
+        )
+        if module == "modules.ModularDiffusers":
+            requested_weight = str(weight_name or "")
+            name_seed = PurePosixPath(requested_weight.replace("\\", "/")).stem
+            if not name_seed and isinstance(selection, Mapping):
+                name_seed = PurePosixPath(
+                    str(selection.get("value") or "").replace("\\", "/")
+                ).stem
+            adapter_name = f"{name_seed or 'lora'}_{node_id}"
+        else:
+            adapter_name = _graph_param_value(node, "adapter_name", default_adapter_name)
+
+        descriptor = build_lora_descriptor(
+            selection=selection,
+            weight_name=weight_name,
+            revision=_graph_param_value(node, "revision", ""),
+            expected_sha256=_graph_param_value(node, "expected_sha256", ""),
+            adapter_name=adapter_name,
+            scale=_graph_param_value(node, "scale", default_scale),
+            scheduler_class=(
+                _graph_param_value(node, "scheduler_class", "")
+                if module == "modules.ModularDiffusers"
+                else ""
+            ),
+            scheduler_config=(
+                _graph_param_value(node, "scheduler_config", "{}")
+                if module == "modules.ModularDiffusers"
+                else None
+            ),
+        )
+        if module == "modules.DiffusersImage" and not -2 <= descriptor["scale"] <= 2:
+            raise ValueError("Diffusers image adapter scale must be between -2 and 2.")
+        if module == "modules.DiffusersAudio" and not 0 <= descriptor["scale"] <= 2:
+            raise ValueError("Diffusers audio adapter scale must be between 0 and 2.")
+
+        replace_existing = None
+        if module != "modules.ModularDiffusers":
+            replace_existing = _graph_param_value(node, "replace_existing", True)
+            if type(replace_existing) is not bool:
+                raise TypeError("Diffusers adapter replace_existing must be a boolean.")
+
+        artifact = descriptor["artifact"]
+        safe_artifact = {
+            "source": artifact["source"],
+            "weightName": artifact["weight_name"],
+            "sha256": artifact["sha256"],
+        }
+        if artifact["source"] == "hub":
+            safe_artifact.update(
+                repository=artifact["repository"],
+                revision=artifact["revision"],
+            )
+        receipts.append(
+            {
+                "schemaVersion": 1,
+                "kind": "diffusers_lora",
+                "module": module,
+                "action": action,
+                "artifact": safe_artifact,
+                "adapterName": descriptor["adapter_name"],
+                "scale": descriptor["scale"],
+                "scheduler": descriptor["scheduler"],
+                "replaceExisting": replace_existing,
+                "descriptorSha256": descriptor["descriptor_sha256"],
+            }
+        )
+    return receipts
 
 
 def resolve_lora_descriptor(value: Any) -> ResolvedLoraDescriptor:

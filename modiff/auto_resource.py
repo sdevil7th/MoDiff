@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+import math
 import os
 import time
 from pathlib import Path
@@ -71,7 +72,7 @@ WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 6
+AUTO_HISTORY_VERSION = 7
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -905,6 +906,7 @@ def _candidate_history_signature(
         "optionalRuntime": _candidate_optional_runtime_signature(candidate),
         "studioExecutionSpec": _candidate_studio_execution_spec_signature(candidate),
         "modelDependencies": _candidate_model_dependencies_signature(candidate),
+        "controlledArtifacts": _candidate_controlled_artifacts_signature(candidate),
         "workload": workload,
     }
 
@@ -984,6 +986,105 @@ def _candidate_model_dependencies_signature(candidate: dict[str, Any]) -> list[d
     return sorted(output, key=lambda dependency: (dependency["kind"], dependency["id"], dependency["repo"]))
 
 
+def _candidate_controlled_artifacts_signature(candidate: dict[str, Any]) -> list[dict[str, Any]] | None:
+    receipts = candidate.get("controlledArtifacts")
+    if receipts is None:
+        return []
+    if not isinstance(receipts, list) or len(receipts) > 32:
+        return None
+    output = []
+    for receipt in receipts:
+        if not isinstance(receipt, dict) or set(receipt) != {
+            "schemaVersion",
+            "kind",
+            "module",
+            "action",
+            "artifact",
+            "adapterName",
+            "scale",
+            "scheduler",
+            "replaceExisting",
+            "descriptorSha256",
+        }:
+            return None
+        module = receipt.get("module")
+        action = receipt.get("action")
+        if not isinstance(module, str) or not isinstance(action, str) or (module, action) not in {
+            ("modules.ModularDiffusers", "Lora"),
+            ("modules.DiffusersImage", "LoadAdapter"),
+            ("modules.DiffusersAudio", "LoadAdapter"),
+        }:
+            return None
+        artifact = receipt.get("artifact")
+        if not isinstance(artifact, dict):
+            return None
+        source = artifact.get("source")
+        expected_artifact_keys = (
+            {"source", "repository", "revision", "weightName", "sha256"}
+            if source == "hub"
+            else {"source", "weightName", "sha256"}
+            if source == "local"
+            else None
+        )
+        scale = receipt.get("scale")
+        descriptor_sha256 = receipt.get("descriptorSha256")
+        if (
+            receipt.get("schemaVersion") != 1
+            or receipt.get("kind") != "diffusers_lora"
+            or set(artifact) != expected_artifact_keys
+            or not all(
+                isinstance(artifact.get(key), str)
+                and artifact[key]
+                and len(artifact[key]) <= 1024
+                for key in artifact
+            )
+            or not isinstance(receipt.get("adapterName"), str)
+            or not receipt["adapterName"]
+            or len(receipt["adapterName"]) > 256
+            or any(ord(character) < 32 for character in receipt["adapterName"])
+            or isinstance(scale, bool)
+            or type(scale) not in {int, float}
+            or not math.isfinite(float(scale))
+            or not -20 <= float(scale) <= 20
+            or receipt.get("replaceExisting") is not None
+            and type(receipt.get("replaceExisting")) is not bool
+            or not isinstance(descriptor_sha256, str)
+            or len(descriptor_sha256) != 64
+            or any(character not in "0123456789abcdef" for character in descriptor_sha256)
+            or len(artifact.get("sha256", "")) != 64
+            or any(character not in "0123456789abcdef" for character in artifact.get("sha256", ""))
+            or source == "hub"
+            and (
+                len(artifact.get("revision", "")) != 40
+                or any(character not in "0123456789abcdef" for character in artifact.get("revision", ""))
+            )
+        ):
+            return None
+        scheduler = receipt.get("scheduler")
+        if scheduler is not None and (
+            not isinstance(scheduler, dict)
+            or set(scheduler) != {"class_name", "config"}
+            or not isinstance(scheduler.get("class_name"), str)
+            or len(scheduler["class_name"]) > 128
+            or not isinstance(scheduler.get("config"), dict)
+        ):
+            return None
+        try:
+            encoded = json.dumps(
+                receipt,
+                allow_nan=False,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        except (RecursionError, TypeError, ValueError):
+            return None
+        if len(encoded.encode("utf-8")) > 32 * 1024:
+            return None
+        output.append(json.loads(encoded))
+    return output
+
+
 def _candidate_workload_signature(candidate: dict[str, Any]) -> dict[str, Any]:
     """Return only workload fields that affect this media kind's resource proof."""
 
@@ -1044,6 +1145,7 @@ def _runtime_candidate_from_hints(runtime_hints: dict[str, Any] | None) -> dict[
         "loaderModule": runtime_hints.get("loaderModule"),
         "loaderAction": runtime_hints.get("loaderAction"),
         "executionPath": runtime_hints.get("executionPath"),
+        "controlledArtifacts": runtime_hints.get("controlledArtifacts"),
         "generation": runtime_hints.get("generation") if isinstance(runtime_hints.get("generation"), dict) else {},
         "artifactResolution": runtime_hints.get("artifactResolution") if isinstance(runtime_hints.get("artifactResolution"), dict) else {},
     }
@@ -1091,6 +1193,7 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
             else None
         ),
         "modelDependencies": _candidate_model_dependencies_signature(candidate),
+        "controlledArtifacts": _candidate_controlled_artifacts_signature(candidate),
         "generation": candidate.get("generation") if isinstance(candidate.get("generation"), dict) else {},
     }
 
@@ -2524,6 +2627,7 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "optionalRuntimeRequirement",
         "studioExecutionSpecContract",
         "modelDependencies",
+        "controlledArtifacts",
     ):
         if candidate.get(key) is None and stored.get(key) is not None:
             candidate[key] = stored[key]
@@ -2549,6 +2653,30 @@ def _history_signatures_are_compatible(current: dict[str, Any], stored: dict[str
     # could not record. Every dimension the older receipt did record must still
     # match; missing new dimensions are accepted only for this migration path.
     return all(key in current_workload and current_workload[key] == value for key, value in stored_workload.items())
+
+
+def matching_auto_resource_success_history(
+    data_dir: str | os.PathLike[str],
+    *,
+    candidate: dict[str, Any],
+    runtime_fingerprint: dict[str, Any] | None,
+    history: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Return only exact current-schema success evidence for one runtime candidate."""
+
+    current = _candidate_history_signature(candidate, runtime_fingerprint=runtime_fingerprint)
+    key = auto_resource_history_key(candidate, runtime_fingerprint=runtime_fingerprint)
+    history = history if isinstance(history, dict) else read_auto_resource_history(data_dir)
+    entries = history.get("entries") if isinstance(history.get("entries"), dict) else {}
+    entry = entries.get(key) if isinstance(entries.get(key), dict) else None
+    if (
+        not entry
+        or not entry.get("successCount")
+        or int(entry.get("lastFailureAt") or 0) > int(entry.get("lastSuccessAt") or 0)
+        or _normalized_history_entry_signature(entry) != current
+    ):
+        return None
+    return deepcopy(entry)
 
 
 def _compatible_success_history_entry(

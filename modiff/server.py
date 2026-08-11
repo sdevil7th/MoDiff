@@ -396,6 +396,7 @@ def byte_range_response(request, body, *, content_type, charset=None, filename=N
 
 
 from modiff.config import CONFIG
+from modiff.auxiliary_lora import controlled_lora_receipts_from_graph
 from modiff.diffusers_offload import (
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
@@ -421,6 +422,7 @@ from modiff.auto_resource import (
     build_auto_resource_plan,
     build_auto_resource_plans,
     clear_auto_resource_history,
+    matching_auto_resource_success_history,
     read_auto_resource_history,
     record_auto_resource_failure,
     record_auto_resource_success,
@@ -6745,6 +6747,71 @@ class WebServer:
         return error
 
     @staticmethod
+    def _controlled_artifact_contract_error():
+        error = RuntimeError(
+            "A controlled workflow artifact does not match its exact executable receipt. "
+            "Repair or rebuild the workflow before running it."
+        )
+        setattr(error, "modiff_error_code", "controlled_artifact_mismatch")
+        setattr(error, "modiff_category", "model")
+        setattr(
+            error,
+            "modiff_recovery_hint",
+            "Repair the pinned adapter in Model Manager or rebuild the controlled workflow block.",
+        )
+        return error
+
+    def _bind_controlled_artifact_receipts(self, graph, runtime_hints):
+        if not isinstance(runtime_hints, dict):
+            return []
+        try:
+            receipts = controlled_lora_receipts_from_graph(graph)
+        except Exception as exc:
+            raise self._controlled_artifact_contract_error() from exc
+        runtime_hints["controlledArtifacts"] = deepcopy(receipts)
+        if runtime_hints.get("resourceMode") == "auto":
+            selected = runtime_hints.get("autoResourcePlan")
+            if isinstance(selected, dict):
+                selected["controlledArtifacts"] = deepcopy(receipts)
+            candidates = runtime_hints.get("autoResourceCandidates")
+            if isinstance(candidates, list):
+                for candidate in candidates:
+                    if isinstance(candidate, dict):
+                        candidate["controlledArtifacts"] = deepcopy(receipts)
+            if receipts:
+                runtime_fingerprint = self._runtime_fingerprint()
+                auto_history = read_auto_resource_history(self.data_dir)
+                candidates_to_check = [selected] if isinstance(selected, dict) else []
+                candidates_to_check.extend(
+                    candidate
+                    for candidate in (candidates if isinstance(candidates, list) else [])
+                    if isinstance(candidate, dict)
+                )
+                for candidate in candidates_to_check:
+                    proof = candidate.get("proof")
+                    if not isinstance(proof, dict) or proof.get("status") != "live_proven":
+                        continue
+                    exact_history = matching_auto_resource_success_history(
+                        self.data_dir,
+                        candidate=candidate,
+                        runtime_fingerprint=runtime_fingerprint,
+                        history=auto_history,
+                    )
+                    if exact_history is None:
+                        candidate["proof"] = {
+                            **proof,
+                            "status": "skipped",
+                            "source": "controlled_artifact_history_required",
+                            "message": (
+                                "Earlier base-only Auto evidence does not qualify this exact controlled artifact set."
+                            ),
+                        }
+                        candidate["successHistory"] = None
+                    else:
+                        candidate["successHistory"] = exact_history
+        return receipts
+
+    @staticmethod
     def _normalize_retry_plan_triggers(plan):
         # These are the stable resource-pressure classifications for which a
         # loader recipe change can be corrective. Keep this narrower than the
@@ -6846,6 +6913,8 @@ class WebServer:
             for key in self._auto_candidate_execution_fields()
             if plan.get(key) != candidate.get(key)
         ]
+        if plan.get("controlledArtifacts") != candidate.get("controlledArtifacts"):
+            mismatches.append("controlledArtifacts")
         if mismatches:
             raise self._auto_resource_contract_error(
                 "Auto candidate recipe does not match the current candidate list. Refresh Auto before running this workflow.",
@@ -8043,6 +8112,7 @@ class WebServer:
             "denoiserCache": candidate.get("denoiserCache") or runtime_hints.get("denoiserCache"),
             "channelsLast": candidate.get("channelsLast") or runtime_hints.get("channelsLast"),
             "layerwiseCasting": candidate.get("layerwiseCasting") or runtime_hints.get("layerwiseCasting"),
+            "controlledArtifacts": runtime_hints.get("controlledArtifacts") or [],
         }
         return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
@@ -8602,11 +8672,11 @@ class WebServer:
 
         graph_execution_time = time.time()
         base_runtime_hints = self._coerce_runtime_hints(graph.get("runtimeHints"))
-        if base_runtime_hints is not None:
-            graph["runtimeHints"] = deepcopy(base_runtime_hints)
         assert_studio_execution_graph(graph, base_runtime_hints)
         if isinstance(base_runtime_hints, dict):
+            self._bind_controlled_artifact_receipts(graph, base_runtime_hints)
             base_runtime_hints["loaderContract"] = self._graph_loader_contract(nodes)
+            graph["runtimeHints"] = deepcopy(base_runtime_hints)
         auto_runtime_preparation = self._prepare_auto_runtime_for_graph(base_runtime_hints)
         if self.current_task and auto_runtime_preparation is not None:
             self.current_task["autoRuntimePreparation"] = auto_runtime_preparation

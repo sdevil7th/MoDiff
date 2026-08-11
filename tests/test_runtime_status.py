@@ -966,6 +966,131 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             self.server._coerce_runtime_hints({"modelDependencies": [malformed]})
         self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
 
+    def test_controlled_artifact_receipts_are_server_derived_and_candidate_bound(self):
+        receipt = {
+            "schemaVersion": 1,
+            "kind": "diffusers_lora",
+            "module": "modules.DiffusersImage",
+            "action": "LoadAdapter",
+            "artifact": {
+                "source": "hub",
+                "repository": "example/style",
+                "revision": "a" * 40,
+                "weightName": "style.safetensors",
+                "sha256": "b" * 64,
+            },
+            "adapterName": "style",
+            "scale": 0.75,
+            "scheduler": None,
+            "replaceExisting": True,
+            "descriptorSha256": "c" * 64,
+        }
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-with-style",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+            "controlledArtifacts": [{"untrusted": True}],
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": candidate["modelType"],
+                "mode": candidate["mode"],
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+                "controlledArtifacts": [{"untrusted": True}],
+            }
+        )
+        self.assertNotIn("controlledArtifacts", hints)
+        self.assertNotIn("controlledArtifacts", hints["autoResourcePlan"])
+        self.assertNotIn("controlledArtifacts", hints["autoResourceCandidates"][0])
+        baseline_cache_signature = self.server._auto_candidate_cache_signature(hints)
+
+        with patch("modiff.server.controlled_lora_receipts_from_graph", return_value=[receipt]):
+            self.assertEqual(
+                self.server._bind_controlled_artifact_receipts({"nodes": {}, "paths": []}, hints),
+                [receipt],
+            )
+        self.assertEqual(hints["controlledArtifacts"], [receipt])
+        self.assertEqual(hints["autoResourcePlan"]["controlledArtifacts"], [receipt])
+        self.assertEqual(hints["autoResourceCandidates"][0]["controlledArtifacts"], [receipt])
+        self.assertNotEqual(self.server._auto_candidate_cache_signature(hints), baseline_cache_signature)
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
+        base_history_hints = copy.deepcopy(hints)
+        for history_candidate in (
+            base_history_hints["autoResourcePlan"],
+            base_history_hints["autoResourceCandidates"][0],
+        ):
+            history_candidate["proof"] = {
+                "status": "live_proven",
+                "source": "auto_resource_history",
+            }
+        with (
+            patch("modiff.server.controlled_lora_receipts_from_graph", return_value=[receipt]),
+            patch("modiff.server.matching_auto_resource_success_history", return_value=None),
+            patch.object(self.server, "_runtime_fingerprint", return_value={"fingerprint": "unit"}),
+        ):
+            self.server._bind_controlled_artifact_receipts(
+                {"nodes": {}, "paths": []},
+                base_history_hints,
+            )
+        self.assertEqual(base_history_hints["autoResourcePlan"]["proof"]["status"], "skipped")
+        self.assertEqual(
+            base_history_hints["autoResourceCandidates"][0]["proof"]["source"],
+            "controlled_artifact_history_required",
+        )
+        # Qualification proof is advisory at execution, but base-only history
+        # can no longer be represented as live proof for this adapter set.
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(base_history_hints))
+
+        exact_history_hints = copy.deepcopy(hints)
+        for history_candidate in (
+            exact_history_hints["autoResourcePlan"],
+            exact_history_hints["autoResourceCandidates"][0],
+        ):
+            history_candidate["proof"] = {
+                "status": "live_proven",
+                "source": "auto_resource_history",
+            }
+        with (
+            patch("modiff.server.controlled_lora_receipts_from_graph", return_value=[receipt]),
+            patch(
+                "modiff.server.matching_auto_resource_success_history",
+                return_value={"successCount": 1, "lastSuccessAt": 1},
+            ),
+            patch.object(self.server, "_runtime_fingerprint", return_value={"fingerprint": "unit"}),
+        ):
+            self.server._bind_controlled_artifact_receipts(
+                {"nodes": {}, "paths": []},
+                exact_history_hints,
+            )
+        self.assertEqual(exact_history_hints["autoResourcePlan"]["proof"]["status"], "live_proven")
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(exact_history_hints))
+
+        hints["autoResourceCandidates"][0]["controlledArtifacts"][0]["scale"] = 1.0
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._assert_auto_resource_candidate_ready(hints)
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_controlled_artifact_validation_errors_are_bounded_and_redacted(self):
+        marker = "CONTROLLED_ARTIFACT_SECRET_" + "x" * 2048
+        with patch(
+            "modiff.server.controlled_lora_receipts_from_graph",
+            side_effect=ValueError(marker),
+        ):
+            with self.assertRaises(RuntimeError) as raised:
+                self.server._bind_controlled_artifact_receipts(
+                    {"nodes": {}, "paths": []},
+                    {"resourceMode": "auto"},
+                )
+        self.assertEqual(raised.exception.modiff_error_code, "controlled_artifact_mismatch")
+        self.assertNotIn(marker, str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+
     def test_auto_target_errors_do_not_echo_oversized_untrusted_values(self):
         marker = "PUBLIC_SECRET_MARKER_" + "x" * 2048
         candidate = {
