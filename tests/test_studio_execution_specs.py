@@ -77,6 +77,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("AceStepAudioPipeline", "audio_variation"),
                 ("AceStepAudioPipeline", "audio_continuation"),
                 ("AceStepAudioPipeline", "audio_repaint"),
+                ("QwenImageEditModularPipeline", "inpaint"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -263,6 +264,23 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("audioGenerate", "task_type", "repaint"), specs[25]["bindings"])
         self.assertIn(("loadAudio", "file", "sourceAudio"), specs[25]["bindings"])
         self.assertNotEqual(specs[25]["contentHash"], specs[24]["contentHash"])
+        self.assertEqual(
+            [item[0] for item in specs[26]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "diffusersImagePipeline",
+                "loadImage",
+                "loadMask",
+                "diffusersImageInpaint",
+                "preview",
+            ],
+        )
+        self.assertEqual(specs[26]["executionProfileId"], "qwen-edit:direct-inpaint")
+        self.assertEqual(specs[26]["pipelineClass"], "QwenImageEditInpaintPipeline")
+        self.assertIn(("loadImage", "file", "referenceImages"), specs[26]["bindings"])
+        self.assertIn(("loadMask", "file", "maskImage"), specs[26]["bindings"])
+        self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), specs[26]["edges"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -403,6 +421,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
             self.assertIn(("audioGenerate", "sample_rate", "sampleRate48000"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
+
+    def test_qwen_image_edit_inpaint_seals_the_exact_direct_mask_route(self):
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "inpaint")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "qwen-edit:direct-inpaint")
+        self.assertEqual(spec["pipelineClass"], "QwenImageEditInpaintPipeline")
+        self.assertIn(("loadImage", "image", "diffusersImageInpaint", "image"), spec["edges"])
+        self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), spec["edges"])
+        self.assertIn(("diffusersImageInpaint", "strength", "strength"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_flux_kontext_modes_have_distinct_exact_receipts_and_only_edit_has_auto_requirements(self):
         edit = studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")

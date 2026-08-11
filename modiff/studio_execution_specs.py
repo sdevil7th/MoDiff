@@ -1998,6 +1998,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "edges": _AUDIO_REPAINT_GRAPH_EDGES,
         "bindings": _AUDIO_REPAINT_GRAPH_BINDINGS,
     },
+    "qwen-image-edit:inpaint:v1": {
+        "modelType": "QwenImageEditModularPipeline",
+        "mode": "inpaint",
+        "profile": {
+            "id": "qwen-edit:direct-inpaint",
+            "model_type": "QwenImageEditModularPipeline",
+            "modes": ("inpaint", "outpaint"),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "QwenImageEditInpaintPipeline",
+            "default_repo": "Qwen/Qwen-Image-Edit",
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": ("transformer", "text_encoder"),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _INPAINT_GRAPH_ROLES,
+        "edges": _INPAINT_GRAPH_EDGES,
+        "bindings": _INPAINT_GRAPH_BINDINGS,
+    },
 }
 
 
