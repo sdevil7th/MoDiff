@@ -76,6 +76,89 @@ class VideoModeMediaContract:
     reference_images: str
 
 
+_VIDEO_DYNAMIC_FIELDS = (
+    "video",
+    "mask",
+    "reference_images",
+    "conditioning_scale",
+    "strength",
+    "denoise_strength",
+    "frame_rate",
+    "last_image",
+    "framepack_sampling",
+    "latent_window_size",
+    "true_cfg_scale",
+    "secondary_guidance_scale",
+    "scheduler_flow_shift",
+    "guidance_scale_2",
+    "use_guidance_scale_2",
+    "pose_video",
+    "face_video",
+    "background_video",
+    "segment_frame_length",
+    "previous_conditioning_frames",
+    "motion_encode_batch_size",
+    "temporal_tile_size",
+    "temporal_overlap",
+    "temporal_overlap_condition_strength",
+    "adain_factor",
+    "prompt_segments_json",
+)
+_VIDEO_INPUT_FIELDS = frozenset(
+    {
+        "video",
+        "mask",
+        "reference_images",
+        "last_image",
+        "pose_video",
+        "face_video",
+        "background_video",
+    }
+)
+
+
+def _studio_identity_binding(form_field: str) -> dict[str, Any]:
+    groups = {
+        "strength": "video-strength",
+        "conditioningScale": "video-conditioning-scale",
+    }
+    if form_field not in groups:
+        raise ValueError("Video field bindings must target a reviewed Studio form field.")
+    return {
+        "schemaVersion": 1,
+        "group": groups[form_field],
+        "formFields": [form_field],
+        "transform": "identity",
+    }
+
+
+@dataclass(frozen=True)
+class VideoModeFieldContract:
+    visible_fields: tuple[str, ...] = ()
+    required_fields: tuple[str, ...] = ()
+    strength_form_field: str = "strength"
+
+    def __post_init__(self) -> None:
+        visible = set(self.visible_fields)
+        required = set(self.required_fields)
+        allowed = set(_VIDEO_DYNAMIC_FIELDS)
+        if len(visible) != len(self.visible_fields) or not visible.issubset(allowed):
+            raise ValueError("Video mode contracts must declare unique reviewed visibility fields.")
+        if len(required) != len(self.required_fields) or not required.issubset(visible & _VIDEO_INPUT_FIELDS):
+            raise ValueError("Video mode contracts may require only visible reviewed input fields.")
+        if self.strength_form_field not in {"strength", "conditioningScale"}:
+            raise ValueError("Video strength bindings must target a reviewed Studio form field.")
+
+    def field_param_overlay(self) -> dict[str, dict[str, Any]]:
+        visible = set(self.visible_fields)
+        required = set(self.required_fields)
+        overlay = {field: {"hidden": field not in visible} for field in _VIDEO_DYNAMIC_FIELDS}
+        for field in _VIDEO_INPUT_FIELDS:
+            overlay[field]["required"] = field in required
+        overlay["strength"]["fieldOptions"] = {"studioBinding": _studio_identity_binding(self.strength_form_field)}
+        return overlay
+
+
 WAN_VACE_MODE_MEDIA_CONTRACTS = {
     "text_to_video": VideoModeMediaContract("forbidden", "forbidden", "forbidden"),
     "video_to_video": VideoModeMediaContract("required", "forbidden", "optional"),
@@ -183,6 +266,151 @@ VIDEO_PIPELINE_ADAPTERS = {
         max_prompt_tokens=256,
     ),
 }
+
+
+def _video_field_contract(
+    *visible_fields: str,
+    required_fields: tuple[str, ...] = (),
+    strength_form_field: str = "strength",
+) -> VideoModeFieldContract:
+    return VideoModeFieldContract(
+        visible_fields=visible_fields,
+        required_fields=required_fields,
+        strength_form_field=strength_form_field,
+    )
+
+
+_VACE_GUIDANCE_FIELDS = ("conditioning_scale", "guidance_scale_2", "use_guidance_scale_2")
+_ANIMATE_FIELDS = (
+    "reference_images",
+    "pose_video",
+    "face_video",
+    "segment_frame_length",
+    "previous_conditioning_frames",
+    "motion_encode_batch_size",
+)
+_LTX_LONG_FIELDS = (
+    "reference_images",
+    "strength",
+    "frame_rate",
+    "temporal_tile_size",
+    "temporal_overlap",
+    "temporal_overlap_condition_strength",
+    "adain_factor",
+    "prompt_segments_json",
+)
+VIDEO_MODE_FIELD_CONTRACTS = {
+    "WanVACEPipeline": {
+        "text_to_video": _video_field_contract(*_VACE_GUIDANCE_FIELDS),
+        "video_to_video": _video_field_contract(
+            "video", "reference_images", *_VACE_GUIDANCE_FIELDS, required_fields=("video",)
+        ),
+        "video_inpaint": _video_field_contract(
+            "video",
+            "mask",
+            "reference_images",
+            *_VACE_GUIDANCE_FIELDS,
+            required_fields=("video", "mask"),
+        ),
+        "video_outpaint": _video_field_contract(
+            "video",
+            "mask",
+            "reference_images",
+            *_VACE_GUIDANCE_FIELDS,
+            required_fields=("video", "mask"),
+        ),
+        "reference_to_video": _video_field_contract(
+            "reference_images",
+            *_VACE_GUIDANCE_FIELDS,
+            required_fields=("reference_images",),
+        ),
+        "control_to_video": _video_field_contract(
+            "video", "reference_images", *_VACE_GUIDANCE_FIELDS, required_fields=("video",)
+        ),
+        "video_color_edit": _video_field_contract(
+            "video", "reference_images", *_VACE_GUIDANCE_FIELDS, required_fields=("video",)
+        ),
+    },
+    "WanVideoToVideoPipeline": {
+        mode: _video_field_contract("video", "strength", required_fields=("video",))
+        for mode in ("video_to_video", "video_color_edit")
+    },
+    "WanPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
+    "Wan22Pipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
+    "WanTI2VPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
+    "WanImageToVideoPipeline": {
+        "image_to_video": _video_field_contract(
+            "reference_images",
+            "last_image",
+            "secondary_guidance_scale",
+            required_fields=("reference_images",),
+        )
+    },
+    "WanAnimatePipeline": {
+        "character_animate": _video_field_contract(
+            *_ANIMATE_FIELDS,
+            required_fields=("reference_images", "pose_video", "face_video"),
+        ),
+        "character_replace": _video_field_contract(
+            *_ANIMATE_FIELDS,
+            "background_video",
+            "mask",
+            required_fields=("reference_images", "pose_video", "face_video", "background_video", "mask"),
+        ),
+    },
+    "LTXConditionPipeline": {
+        "text_to_video": _video_field_contract("frame_rate"),
+        "image_to_video": _video_field_contract(
+            "reference_images", "strength", "frame_rate", required_fields=("reference_images",)
+        ),
+        "video_to_video": _video_field_contract(
+            "video",
+            "strength",
+            "denoise_strength",
+            "frame_rate",
+            required_fields=("video",),
+            strength_form_field="conditioningScale",
+        ),
+        "reference_to_video": _video_field_contract(
+            "reference_images", "strength", "frame_rate", required_fields=("reference_images",)
+        ),
+    },
+    "LTXI2VLongMultiPromptPipeline": {
+        "image_to_video": _video_field_contract(*_LTX_LONG_FIELDS, required_fields=("reference_images",))
+    },
+    "LTX2ConditionPipeline": {
+        "text_to_video": _video_field_contract("frame_rate"),
+        "image_to_video": _video_field_contract(
+            "reference_images", "strength", "frame_rate", required_fields=("reference_images",)
+        ),
+        "video_to_video": _video_field_contract(
+            "video", "strength", "frame_rate", required_fields=("video",), strength_form_field="conditioningScale"
+        ),
+        "reference_to_video": _video_field_contract(
+            "reference_images", "strength", "frame_rate", required_fields=("reference_images",)
+        ),
+    },
+    "HunyuanVideoFramepackPipeline": {
+        "image_to_video": _video_field_contract(
+            "reference_images",
+            "last_image",
+            "framepack_sampling",
+            "latent_window_size",
+            "true_cfg_scale",
+            required_fields=("reference_images",),
+        )
+    },
+}
+
+
+def get_video_mode_field_contract(adapter: VideoPipelineAdapter, mode: str) -> VideoModeFieldContract:
+    contracts = VIDEO_MODE_FIELD_CONTRACTS.get(adapter.pipeline_class)
+    if contracts is None or tuple(contracts) != adapter.modes:
+        raise RuntimeError(f"Video adapter {adapter.pipeline_class} has an incomplete reviewed field contract.")
+    contract = contracts.get(mode)
+    if contract is None:
+        raise ValueError(f"{adapter.pipeline_class} does not support video mode {mode}.")
+    return contract
 
 
 VIDEO_PIPELINE_LOAD_HANDLERS = {
@@ -475,17 +703,13 @@ def _validate_media_sequence(
     if frames is None:
         return []
     families = [
-        _media_frame_container_family(frame, field_name=field_name, index=index)
-        for index, frame in enumerate(frames)
+        _media_frame_container_family(frame, field_name=field_name, index=index) for index, frame in enumerate(frames)
     ]
     if any(family != families[0] for family in families[1:]):
         received = ", ".join(dict.fromkeys(families))
-        raise ValueError(
-            f"Wan VACE {field_name} frames must use one container family; received {received}."
-        )
+        raise ValueError(f"Wan VACE {field_name} frames must use one container family; received {received}.")
     sizes = [
-        _media_frame_spatial_size(frame, field_name=field_name, index=index)
-        for index, frame in enumerate(frames)
+        _media_frame_spatial_size(frame, field_name=field_name, index=index) for index, frame in enumerate(frames)
     ]
     if uniform_spatial_size and any(size != sizes[0] for size in sizes[1:]):
         raise ValueError(f"Wan VACE {field_name} frames must all have the same spatial dimensions.")
@@ -507,9 +731,7 @@ def _normalize_wan_vace_reference_images(value: Any) -> list[Image.Image] | None
     if not all(isinstance(reference, Image.Image) for reference in references):
         raise ValueError("Wan VACE reference images must be actual PIL images.")
     if len(references) > WAN_VACE_MAX_REFERENCE_IMAGES:
-        raise ValueError(
-            f"Wan VACE accepts at most {WAN_VACE_MAX_REFERENCE_IMAGES} reference images per video."
-        )
+        raise ValueError(f"Wan VACE accepts at most {WAN_VACE_MAX_REFERENCE_IMAGES} reference images per video.")
     return references
 
 
@@ -690,8 +912,7 @@ def _validate_wan_vace_media_contract(mode: str, kwargs: dict[str, Any]) -> dict
     reference_pixels = sum(width * height for width, height in reference_sizes)
     if reference_pixels > WAN_VACE_MAX_REFERENCE_PIXELS:
         raise ValueError(
-            "Wan VACE reference images exceed the "
-            f"{WAN_VACE_MAX_REFERENCE_PIXELS}-pixel cumulative input limit."
+            f"Wan VACE reference images exceed the {WAN_VACE_MAX_REFERENCE_PIXELS}-pixel cumulative input limit."
         )
 
     if media["video"] is not None and media["mask"] is not None:
@@ -1289,9 +1510,18 @@ class Generate(WanVACEGenerate):
             "options": sorted({mode for adapter in VIDEO_PIPELINE_ADAPTERS.values() for mode in adapter.modes}),
             "default": "text_to_video",
             "fieldOptions": {"noValidation": True},
+            "onChange": "update_adapter_modes",
         },
         "frame_rate": {"label": "Frame rate", "type": "int", "default": 25, "min": 1, "max": 60},
-        "strength": {"label": "Condition strength", "type": "float", "default": 1.0, "min": 0, "max": 1, "step": 0.05},
+        "strength": {
+            "label": "Condition strength",
+            "type": "float",
+            "default": 1.0,
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "fieldOptions": {"studioBinding": _studio_identity_binding("strength")},
+        },
         "denoise_strength": {
             "label": "Denoise strength",
             "type": "float",
@@ -1393,10 +1623,13 @@ class Generate(WanVACEGenerate):
             raise ValueError("The connected video pipeline published a stale or mismatched adapter contract.")
         current_mode = values.get("mode")
         selected_mode = current_mode if current_mode in adapter.modes else adapter.modes[0]
+        field_contract = get_video_mode_field_contract(adapter, selected_mode)
         self.set_field_params(
             "mode",
             {"options": list(adapter.modes), "default": adapter.modes[0], "value": selected_mode},
         )
+        for field, params in field_contract.field_param_overlay().items():
+            self.set_field_params(field, params)
 
     def _execute_with_adapter(self, **kwargs):
         pipeline = kwargs.get("pipeline")

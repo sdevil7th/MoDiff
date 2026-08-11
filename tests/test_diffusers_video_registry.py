@@ -28,6 +28,7 @@ from modules.DiffusersVideo.main import (
     VIDEO_PIPELINE_ADAPTERS,
     VIDEO_PIPELINE_EXECUTE_HANDLERS,
     VIDEO_PIPELINE_LOAD_HANDLERS,
+    VIDEO_MODE_FIELD_CONTRACTS,
     WAN_VACE_MODE_MEDIA_CONTRACTS,
     _pipeline_adapter,
     _resolve_adapter_model_selection,
@@ -516,12 +517,26 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             },
             None,
         )
-        generator.set_field_params.assert_called_once_with(
-            "mode",
+        updates = {call.args[0]: call.args[1] for call in generator.set_field_params.call_args_list}
+        self.assertEqual(
+            updates["mode"],
             {"options": ["image_to_video"], "default": "image_to_video", "value": "image_to_video"},
+        )
+        self.assertEqual(updates["reference_images"], {"hidden": False, "required": True})
+        self.assertEqual(updates["video"], {"hidden": True, "required": False})
+        self.assertEqual(updates["framepack_sampling"], {"hidden": False})
+        self.assertEqual(
+            updates["strength"]["fieldOptions"]["studioBinding"],
+            {
+                "schemaVersion": 1,
+                "group": "video-strength",
+                "formFields": ["strength"],
+                "transform": "identity",
+            },
         )
         self.assertEqual(LoadPipeline.params["pipeline_class"]["onChange"], "select_adapter")
         self.assertEqual(LoadPipeline.params["model_id"]["onChange"], "select_adapter")
+        self.assertEqual(Generate.params["mode"]["onChange"], "update_adapter_modes")
         self.assertEqual(
             Generate.params["pipeline"]["onSignal"],
             [
@@ -683,6 +698,80 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 None,
             )
         generator.set_field_params.assert_not_called()
+
+    def test_video_field_contracts_cover_every_adapter_mode_and_update_selected_fields(self):
+        self.assertEqual(set(VIDEO_MODE_FIELD_CONTRACTS), set(VIDEO_PIPELINE_ADAPTERS))
+        for pipeline_class, adapter in VIDEO_PIPELINE_ADAPTERS.items():
+            with self.subTest(pipeline_class=pipeline_class):
+                self.assertEqual(tuple(VIDEO_MODE_FIELD_CONTRACTS[pipeline_class]), adapter.modes)
+
+        cases = (
+            (
+                "WanVACEPipeline",
+                "video_inpaint",
+                {
+                    "video": {"hidden": False, "required": True},
+                    "mask": {"hidden": False, "required": True},
+                    "reference_images": {"hidden": False, "required": False},
+                    "framepack_sampling": {"hidden": True},
+                },
+                "strength",
+            ),
+            (
+                "LTXConditionPipeline",
+                "video_to_video",
+                {
+                    "video": {"hidden": False, "required": True},
+                    "reference_images": {"hidden": True, "required": False},
+                    "strength": {"hidden": False},
+                    "denoise_strength": {"hidden": False},
+                },
+                "conditioningScale",
+            ),
+            (
+                "WanAnimatePipeline",
+                "character_replace",
+                {
+                    "reference_images": {"hidden": False, "required": True},
+                    "pose_video": {"hidden": False, "required": True},
+                    "face_video": {"hidden": False, "required": True},
+                    "background_video": {"hidden": False, "required": True},
+                    "mask": {"hidden": False, "required": True},
+                    "strength": {"hidden": True},
+                },
+                "strength",
+            ),
+        )
+        for pipeline_class, mode, expected_fields, strength_form_field in cases:
+            with self.subTest(pipeline_class=pipeline_class, mode=mode):
+                adapter = VIDEO_PIPELINE_ADAPTERS[pipeline_class]
+                node = Generate(f"field-contract-{pipeline_class}-{mode}")
+                node.set_field_params = MagicMock()
+                node.update_adapter_modes(
+                    {
+                        "mode": mode,
+                        "video_contract": {
+                            "schemaVersion": 1,
+                            "library": "diffusers",
+                            "mediaKind": "video",
+                            "pipelineClass": pipeline_class,
+                            "modes": list(adapter.modes),
+                        },
+                    },
+                    {"key": "mode"},
+                )
+                updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+                for field, expected in expected_fields.items():
+                    self.assertEqual(
+                        {key: updates[field][key] for key in expected},
+                        expected,
+                    )
+                strength_binding = updates["strength"]["fieldOptions"]["studioBinding"]
+                self.assertEqual(strength_binding["formFields"], [strength_form_field])
+                self.assertEqual(
+                    strength_binding["group"],
+                    "video-conditioning-scale" if strength_form_field == "conditioningScale" else "video-strength",
+                )
 
     def test_wan_vace_declares_the_reviewed_mode_media_matrix(self):
         adapter = VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"]
