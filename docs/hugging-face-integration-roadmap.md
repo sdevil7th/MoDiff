@@ -1956,6 +1956,33 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     levels accurately.
   - Tests: Z-Image loader identity, Qwen mode mappings, Wan profile closure,
     Flux Kontext multi-reference, receipt invalidation, and all checked-in graphs.
+  - [x] Auto schema/profile history receipt binding. Backend commit `bf0af6b`
+    corrects the schema-v2 planner so every declared candidate publishes its
+    exact `executionProfileId` and owning `autoResourceSchemaVersion`; runtime
+    admission now requires both values to match the current backend contract.
+    History schema v3 binds local success/failure evidence to those identities,
+    so an older history schema, replaced execution profile, or changed planner
+    schema cannot promote a current candidate to `live_proven`. Client commit
+    `4cad1b2` preserves the typed receipt and adds the positive response-boundary
+    contract. This also closes the cross-repository P0.2 regression in which
+    the frozen client correctly rejected real backend candidates because their
+    required profile ID was absent while complete mocked fixtures supplied it.
+    The focused backend matrix passed 169 tests with 298 subtests; the complete
+    backend gate passed 1,138 tests with 4 skips, the existing Diffusers
+    deprecation warning, and 1,772 subtests. The focused client request suite
+    passed 12/12, the complete `npm run check` passed, and the complete mocked
+    Studio browser suite passed 87/87 in 221.6 seconds. The production bundle
+    remained 523109/523264 gzip bytes, 27 bytes below the stricter 523136-byte
+    target. Ruff E9/F, `py_compile`, `uv pip check` (78 packages), preflight,
+    type, formatting, lint, and diff checks passed. All 26 generated client
+    files remained byte-identical and 317 Gallery files were preserved. A fresh
+    backend returned ready health and HTTP 200 for `/`; a real Flux plan
+    returned two schema-v2 candidates, both bound to `flux-schnell:direct` and
+    candidate schema 2. The served entry SHA-256 was
+    `6c1c05f0b199746275d7ef008078a1f0ebea2bfce149b531e7a533f1637e271d`.
+    Its exact five-process tree was stopped and ports 8088/8089 were free. This
+    is static/unit/contract/mocked-browser/local-HTTP evidence only; no model
+    download, inference, generated media, or live workload qualification ran.
   - [ ] Controlled-workflow finalization-proof closure.
     - [x] Bounded schema-v2 upscaler repair: exclude field-level `disabled`
       from the proof because it is transient UI/signal state and is not consumed
@@ -2519,14 +2546,14 @@ Add references only after the corresponding evidence exists.
 | Segment | Backend reference | Client reference | Live proof | Dataset revision | Status |
 | --- | --- | --- | --- | --- | --- |
 | P0.1 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: exact-pair capability and stale-form execution checks are implemented and passed the recorded complete backend/client and browser gates. |
-| P0.2 | `8fb2cb9` | `c3e8a17` | Not required | Not required | Complete: exact executable resource-plan targeting, bounded receipt binding, mixed/disconnected/zero-target rejection, and client fail-closed readiness/apply/run checks passed the complete backend/client and mocked-browser gates; no model or asset execution was needed. |
+| P0.2 | `8fb2cb9`; corrected by `bf0af6b` | `c3e8a17`; corrected by `4cad1b2` | Not required | Not required | Complete: exact executable resource-plan targeting, bounded receipt binding, mixed/disconnected/zero-target rejection, and client fail-closed readiness/apply/run checks passed the complete backend/client and mocked-browser gates. The corrective pair makes the real schema-v2 backend publish the profile/schema fields already required by the client and binds them at admission; no model or asset execution was needed. |
 | P0.3a.1 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: registered Modular dynamic action safety and its backend/client gates are recorded in the paired implementation commits. |
 | P0.3a.2 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: safe declarative custom contract identity/preview and its backend/client/HTTP gates are recorded; executable custom admission remains deferred to P1.1. |
 | P0.3b | `91c9a36` (revalidated at `8fb2cb9`) | `28b12b7`; Win32 checkpoint `d226c4b` (revalidated at `c3e8a17`) | Not required | Not required | Complete: P0.3b.1-.7 implementation, complete backend/client gates, reviewed Windows visual baselines, exact bundle mirror, and fresh HTTP smoke passed; live qualification is not part of this segment. |
 | P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2/.4 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, the Wan I2V split route, modern Flux true-CFG forwarding, and eleven contract-only standard image adapters are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain. |
 | P0.3d | `fd258d8` | `642ea9c` | Not required | Not required | Complete: backend-owned versioned Flux Schnell/Dev specifications, strict client parsing, generic graph materialization, exact proof/runtime receipt binding, complete backend/client/browser gates, byte-exact mirror verification, and local HTTP smoke passed. No model or media execution was required. |
 | P0.3e | `96f70cb` (Flux Krea T2I), `a299d1d` (Flux Depth control-image), `14fef9f` (Flux Canny control-image), `6be23e7` (Flux Redux edit-image), `5f4d437` (Flux Kontext edit-image), `119c720` (Flux Kontext multi-reference edit), `544c54f` (Flux Fill inpaint), `634c485` (Flux Fill outpaint), `441cd00` (Flux2 Klein T2I), `ab3bd34` (Flux2 Klein edit-image), `4527764` (Flux2 Klein multi-reference edit), `276dd1f` (Wan TI2V text-to-video; corrected by `6983ce6`), `6983ce6` (Wan I2V image-to-video), `92cd1f5` (Wan 2.1 text-to-video), `93b1e17` (Wan 2.1 video-to-video), `09b1d4b` (Wan 2.1 color edit), `7736dd3` (LTX text-to-video), `7b8d5c1` (LTX image-to-video), `e83c760` (LTX video-to-video), `0bdc364` (LTX reference-to-video), `adcaf48` (ACE-Step text-to-audio), `5f6ffdc` (ACE-Step audio variation), `10b9b1c` (ACE-Step audio continuation), `60b87a1` (ACE-Step audio repaint), `de2160f` (Qwen Image Edit inpaint), `823357d` (Qwen Image Edit outpaint and bundle), `69a8561` (Wan VACE text-to-video; corrected by `2616014`, bundle `69247d0`), `0e9c3f2` (Wan VACE video inpaint and bundle), `b004af1` (Wan VACE video outpaint and bundle), `ed07f34` (Wan VACE control-to-video and bundle); add one row/reference per remaining pair | `80ac243` (Flux Krea T2I), `2de0c68` (Flux Depth control-image), `784e3c7` (Flux Canny control-image), `b709126` (Flux Redux edit-image), `8ae0dd9` (Flux Kontext edit-image), `d956a42` (Flux Kontext multi-reference edit), `38f8d81` (Flux Fill inpaint), `4c0bd05` (Flux Fill outpaint), `931621d` (Flux2 Klein T2I), `84e1d8f` (Flux2 Klein edit-image), `7180694` (Flux2 Klein multi-reference edit), `049addb` (Wan TI2V text-to-video; corrected by `60f4036`), `60f4036` (Wan I2V image-to-video), `0e359ce` (Wan 2.1 text-to-video), `651eeb3` (Wan 2.1 video-to-video), `2525937` (Wan 2.1 color edit), `9f2122f` (LTX text-to-video), `709ddd3` (LTX image-to-video), `8bd95e6` (LTX video-to-video), `cddd140` (LTX reference-to-video), `5f91ed9` (ACE-Step text-to-audio), `2a776c0` (ACE-Step audio variation), `7e69367` (ACE-Step audio continuation), `62dfe17` (ACE-Step audio repaint), `f28ff89` (Qwen Image Edit inpaint), `de2eba1` (Qwen Image Edit outpaint), `8f05541` (Wan VACE text-to-video; corrected by `4c9d40c`), `3f79ca2` (Wan VACE video inpaint), `fce224e` (Wan VACE video outpaint), `72ed446` (Wan VACE control-to-video); add one row/reference per remaining pair | Not required | Not required | In progress: the exact Flux Krea text-to-image, Flux Depth/Canny control-image, Flux Redux edit-image, both Flux Kontext edit modes, both Flux Fill modes, all three Flux2 Klein modes, Wan TI2V/I2V, all three Wan 2.1 modes, all four advertised Wan VACE modes, all four LTX modes, all four ACE-Step audio modes, and Qwen Image Edit inpaint/outpaint are backend-specification-owned and passed complete backend/client/mocked-browser gates. Remaining exact pairs and declarative overlays are pending. |
-| P0.4 | Pending | `12847d0` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Broader backend history/profile receipt binding and the remaining P0.4 mismatch cleanup remain. |
+| P0.4 | `bf0af6b` (Auto schema/profile history binding); add remaining receipts | `12847d0`, `4cad1b2` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Auto candidates/history now bind the planner schema and exact execution profile. Graph/topology, auxiliary repository, adapter/LoRA/ControlNet, runtime-profile, artifact-revision, and remaining mismatch closure are pending. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
