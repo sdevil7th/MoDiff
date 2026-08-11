@@ -123,10 +123,11 @@ The current schema-v1 catalog covers the migrated Flux Schnell, Dev, Krea,
 Flux2 Klein, Depth, Canny, Redux, Kontext, and Fill image pairs; Wan 2.2 I2V
 and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition
 modes; all four advertised Wan VACE modes; all four ACE-Step audio modes;
-direct Qwen Image and Z-Image text-to-image; and Qwen Image Edit direct inpaint,
-direct outpaint, and Modular `edit_image`. Related pairs reuse generic image,
-video, or audio topologies while keeping distinct exact profiles, artifacts,
-resource policies, form bindings, and receipt identities.
+direct Qwen Image and Z-Image text-to-image; Qwen Image Edit direct inpaint,
+direct outpaint, and Modular `edit_image`; and Qwen Image Edit Plus Modular
+`edit_image` and `multi_image_reference_edit`. Related pairs reuse generic
+image, video, or audio topologies while keeping distinct exact profiles,
+artifacts, resource policies, form bindings, and receipt identities.
 
 ACE-Step text-to-audio,
 variation, continuation, and repaint use the generic Diffusers runtime recipe, audio
@@ -140,6 +141,9 @@ generated canvas/mask node and all boundary-placement bindings. Modular Edit
 seals the reviewed Models Loader, prompt encoder, source-image VAE encoder,
 denoiser, latent decoder, preview, typed route-state edges, and exact dynamic
 form bindings issued for `QwenImageEditModularPipeline`.
+Qwen Image Edit Plus reuses that reviewed seven-role Modular edit contract for
+both advertised modes while publishing a distinct receipt per mode and binding
+the `QwenImageEditPlusModularPipeline` profile and immutable default artifact.
 Wan VACE text-to-video seals the reviewed direct VACE profile and shared
 quantization, runtime-recipe, video loader/generator, and export route. Video
 inpaint and outpaint additionally seal the source-video normalization and
