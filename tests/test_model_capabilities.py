@@ -200,11 +200,19 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "modules.DiffusersImage.LoadPipeline",
         )
         self.assertEqual(z_image["executionProfiles"][0]["execution_path"], "direct-diffusers-image")
+        self.assertNotIn("expert_quantization_modes", z_image["executionProfiles"][0])
         self.assertEqual(z_image["studioExecutionSpecModes"], ["text_to_image"])
         self.assertEqual(z_image["studioExecutionSpecs"][0]["id"], "z-image:text-to-image:v1")
         self.assertEqual(z_image["studioExecutionSpecs"][0]["pipelineClass"], "ZImagePipeline")
 
         qwen_image = by_model["QwenImageModularPipeline"]
+        self.assertTrue(
+            all(profile["expert_quantization_modes"] == ["bnb_4bit"] for profile in qwen_image["executionProfiles"])
+        )
+        self.assertEqual(
+            by_model["FluxSchnellPipeline"]["executionProfiles"][0]["expert_quantization_modes"],
+            ["bnb_4bit", "bnb_8bit", "quanto_float8", "torchao_float8"],
+        )
         self.assertEqual(qwen_image["studioExecutionSpecModes"], ["control_image", "text_to_image"])
         qwen_text_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "text_to_image")
         qwen_control_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "control_image")

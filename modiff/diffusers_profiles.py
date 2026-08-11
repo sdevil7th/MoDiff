@@ -200,6 +200,7 @@ class DiffusersExecutionProfile:
     # ``optional_overlay`` and make first-use status an execution prerequisite.
     optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
     compatible_repos: tuple[str, ...] = ()
+    expert_quantization_modes: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
     expert_quantization_policy: ExpertQuantizationPolicy | None = None
     expert_mps_policy: ExpertMpsPolicy | None = None
@@ -223,6 +224,17 @@ class DiffusersExecutionProfile:
                 f"{self.loader_module}.{self.loader_action} does not match execution path "
                 f"{self.execution_path!r}."
             )
+        reviewed_quantization_modes = {
+            "bnb_4bit",
+            "bnb_8bit",
+            "quanto_float8",
+            "torchao_float8",
+        }
+        if (
+            len(set(self.expert_quantization_modes)) != len(self.expert_quantization_modes)
+            or not set(self.expert_quantization_modes).issubset(reviewed_quantization_modes)
+        ):
+            raise ValueError(f"Diffusers execution profile {self.id!r} has invalid Expert quantization modes.")
 
     @property
     def backend_path(self) -> str:
@@ -250,6 +262,8 @@ class DiffusersExecutionProfile:
             public.pop("expert_cuda_policy")
         if not self.expert_quantization_policy:
             public.pop("expert_quantization_policy")
+        if not self.expert_quantization_modes:
+            public.pop("expert_quantization_modes")
         if not self.expert_mps_policy:
             public.pop("expert_mps_policy")
         public["backend_path"] = self.backend_path
@@ -459,6 +473,7 @@ for profile_id in (
         DIFFUSERS_EXECUTION_PROFILES[profile_id],
         expert_cuda_policy=QWEN_EXPERT_CUDA_POLICY,
         expert_quantization_policy=QWEN_EXPERT_QUANTIZATION_POLICY,
+        expert_quantization_modes=("bnb_4bit",),
         expert_mps_policy=(
             MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY
             if profile_id == "qwen-image:t2i-direct"

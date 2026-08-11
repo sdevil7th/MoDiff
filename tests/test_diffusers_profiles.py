@@ -1,3 +1,4 @@
+from dataclasses import replace
 import unittest
 
 from modiff.diffusers_profiles import (
@@ -149,6 +150,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "double_quant": True,
             },
         )
+        self.assertEqual(public["expert_quantization_modes"], ["bnb_4bit"])
         self.assertEqual(
             public["expert_mps_policy"],
             {
@@ -185,6 +187,31 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 )
                 self.assertIs(profile.expert_mps_policy, expected)
                 self.assertEqual("expert_mps_policy" in profile.to_public_dict(), expected is not None)
+
+    def test_only_reviewed_image_profiles_publish_expert_quantization_choices(self):
+        flux_modes = ("bnb_4bit", "bnb_8bit", "quanto_float8", "torchao_float8")
+        qwen_ids = {
+            "qwen-image:t2i-direct",
+            "qwen-image:modular",
+            "qwen-edit:direct-inpaint",
+            "qwen-edit:modular",
+            "qwen-edit-plus:modular",
+            "qwen-layered:modular",
+        }
+        for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
+            expected = ("bnb_4bit",) if profile_id in qwen_ids else flux_modes if profile.model_type.startswith("Flux") else ()
+            with self.subTest(profile=profile_id):
+                self.assertEqual(profile.expert_quantization_modes, expected)
+                self.assertEqual(
+                    profile.to_public_dict().get("expert_quantization_modes"),
+                    list(expected) if expected else None,
+                )
+
+    def test_execution_profile_rejects_unreviewed_expert_quantization_choices(self):
+        profile = DIFFUSERS_EXECUTION_PROFILES["z-image:auto"]
+        for modes in (("unknown",), ("bnb_4bit", "bnb_4bit")):
+            with self.subTest(modes=modes), self.assertRaisesRegex(ValueError, "invalid Expert quantization modes"):
+                replace(profile, expert_quantization_modes=modes)
 
     def test_expert_cuda_policy_rejects_unreviewed_or_unbounded_values(self):
         cases = (

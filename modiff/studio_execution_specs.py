@@ -779,6 +779,12 @@ _MODULAR_CONTROL_PROFILE = {
     "compatible_repos": (),
 }
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
+_EXPERT_IMAGE_QUANTIZATION_MODES = (
+    "bnb_4bit",
+    "bnb_8bit",
+    "quanto_float8",
+    "torchao_float8",
+)
 
 
 def _profile(
@@ -2608,6 +2614,21 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "bindings": _MODULAR_CONTROL_GRAPH_BINDINGS,
     },
 }
+
+_EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
+    "flux-canny:direct",
+    "flux-depth:direct",
+    "flux-dev:direct",
+    "flux-fill:direct",
+    "flux-kontext:direct",
+    "flux-krea:direct",
+    "flux-redux:direct",
+    "flux-schnell:direct",
+    "flux2-klein:direct",
+}
+for _definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
+    if _definition["profile"]["id"] in _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS:
+        _definition["profile"]["expert_quantization_modes"] = _EXPERT_IMAGE_QUANTIZATION_MODES
 
 
 def _ordered_value(value: Any) -> Any:
