@@ -1589,6 +1589,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "edges": _V2V_GRAPH_EDGES,
         "bindings": _V2V_GRAPH_BINDINGS,
     },
+    "wan-21-t2v-1.3b:video-color-edit:v1": {
+        "modelType": "WanVideoPipeline",
+        "mode": "video_color_edit",
+        "profile": {
+            "id": "wan-video-to-video:direct",
+            "model_type": "WanVideoPipeline",
+            "modes": ("video_to_video", "video_color_edit"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-video",
+            "pipeline_class": "WanVideoToVideoPipeline",
+            "default_repo": WAN_T2V_1_3B_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 30,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _V2V_GRAPH_ROLES,
+        "edges": _V2V_GRAPH_EDGES,
+        "bindings": _V2V_GRAPH_BINDINGS,
+    },
 }
 
 

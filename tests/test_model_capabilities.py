@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 17)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 18)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -207,13 +207,21 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(wan_v2v["modes"], ["video_to_video", "video_color_edit"])
         wan_t2v = next(profile for profile in wan_video["executionProfiles"] if profile["id"] == "wan-text-to-video:direct")
         self.assertEqual(wan_t2v["modes"], ["text_to_video"])
-        self.assertEqual(wan_video["studioExecutionSpecModes"], ["text_to_video", "video_to_video"])
+        self.assertEqual(
+            wan_video["studioExecutionSpecModes"],
+            ["text_to_video", "video_color_edit", "video_to_video"],
+        )
         wan_text_spec = next(item for item in wan_video["studioExecutionSpecs"] if item["mode"] == "text_to_video")
         wan_video_spec = next(item for item in wan_video["studioExecutionSpecs"] if item["mode"] == "video_to_video")
+        wan_color_spec = next(item for item in wan_video["studioExecutionSpecs"] if item["mode"] == "video_color_edit")
         self.assertEqual(wan_text_spec["pipelineClass"], "WanPipeline")
         self.assertEqual(wan_video_spec["pipelineClass"], "WanVideoToVideoPipeline")
+        self.assertEqual(wan_color_spec["pipelineClass"], "WanVideoToVideoPipeline")
         self.assertIn("loadVideo", [item[0] for item in wan_video_spec["roles"]])
         self.assertIn("normalizeVideo", [item[0] for item in wan_video_spec["roles"]])
+        self.assertEqual(wan_color_spec["roles"], wan_video_spec["roles"])
+        self.assertEqual(wan_color_spec["edges"], wan_video_spec["edges"])
+        self.assertEqual(wan_color_spec["bindings"], wan_video_spec["bindings"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],
