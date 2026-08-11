@@ -26,9 +26,12 @@ from modiff.diffusers_offload import (
 from modiff.diffusers_profiles import (
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     execution_profiles_for_execution,
+    optional_runtime_profile_ids_for_execution,
     public_execution_profiles,
 )
 from modiff.model_artifact_catalog import catalog_revision
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
+from modiff.studio_execution_specs import studio_execution_spec_for_pair, studio_model_dependencies_for_pair
 from modules.ModularDiffusers.denoise import embeddings_are_missing, embeddings_missing_error
 from modules.ModularDiffusers.embeddings import extract_prompt_embeddings
 from modules.ModularDiffusers.loaders import normalize_quant_config_input
@@ -61,6 +64,29 @@ def resource_plan_target(model_type, mode):
         "executionPath": profile.execution_path,
         "pipelineClass": profile.pipeline_class,
     }
+
+
+def auto_resource_plan_target(model_type, mode):
+    target = {
+        **resource_plan_target(model_type, mode),
+        "modelDependencies": studio_model_dependencies_for_pair(model_type, mode),
+        "optionalRuntimeProfileIds": list(
+            optional_runtime_profile_ids_for_execution(model_type, mode)
+        ),
+        "optionalRuntimeRequirement": optional_runtime_requirement_for_execution(
+            model_type,
+            mode,
+        ),
+    }
+    specification = studio_execution_spec_for_pair(model_type, mode)
+    if specification is not None:
+        target["studioExecutionSpecContract"] = {
+            "schemaVersion": specification["schemaVersion"],
+            "id": specification["id"],
+            "contentHash": specification["contentHash"],
+            "executionProfileId": specification["executionProfileId"],
+        }
+    return target
 
 
 class FakePipelineState:
@@ -1767,6 +1793,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             "runtimeHints": {
                 **resource_plan_target("ZImageModularPipeline", "text_to_image"),
                 "source": "studio",
+                "resourceMode": "expert",
                 "device": "cuda:0",
                 "offloadMode": OFFLOAD_MODE_GROUP_CPU,
                 "resourceRetryModes": [OFFLOAD_MODE_GROUP_DISK],
@@ -1792,6 +1819,48 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(completed["deterministicMode"]["seed"], 17)
         self.assertEqual(completed["deterministicMode"]["application"], 2)
         self.assertEqual(graph["nodes"]["loader-node"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_GROUP_DISK)
+
+    def test_auto_retry_modes_come_from_exact_profile_and_expert_modes_remain_explicit(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        auto_hints = {
+            **auto_resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "resourceMode": "auto",
+            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "resourceRetryModes": [OFFLOAD_MODE_GROUP_CPU],
+        }
+
+        self.assertEqual(
+            WebServer._resource_retry_modes(server, auto_hints),
+            [OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK],
+        )
+        self.assertEqual(
+            [plan["offloadMode"] for plan in WebServer._coerce_retry_plan_list(server, auto_hints)],
+            [OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK],
+        )
+        self.assertEqual(
+            WebServer._resource_retry_modes(
+                server,
+                {
+                    **auto_resource_plan_target("ZImageModularPipeline", "text_to_image"),
+                    "resourceMode": "auto",
+                    "offloadMode": OFFLOAD_MODE_GROUP_CPU,
+                },
+            ),
+            [OFFLOAD_MODE_GROUP_DISK],
+        )
+        self.assertEqual(
+            WebServer._resource_retry_modes(
+                server,
+                {
+                    "resourceMode": "expert",
+                    "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                    "resourceRetryModes": [OFFLOAD_MODE_GROUP_CPU],
+                },
+            ),
+            [OFFLOAD_MODE_GROUP_CPU],
+        )
 
 
 if __name__ == "__main__":

@@ -6662,12 +6662,19 @@ class WebServer:
             OFFLOAD_MODE_GROUP_CPU,
             OFFLOAD_MODE_GROUP_DISK,
         ]
-        requested = runtime_hints.get("resourceRetryModes")
-        modes = requested if isinstance(requested, list) else allowed
+        if runtime_hints.get("resourceMode") == "auto":
+            selected = runtime_hints.get("autoResourcePlan")
+            target = selected if isinstance(selected, dict) else runtime_hints
+            profile = self._resource_plan_execution_profile(target, runtime_hints=runtime_hints)
+            modes = list(profile.retry_offload_modes)
+        else:
+            requested = runtime_hints.get("resourceRetryModes")
+            modes = requested if isinstance(requested, list) else allowed
         modes = [mode for mode in modes if mode in allowed]
         current_mode = runtime_hints.get("offloadMode")
-        if current_mode in modes:
-            return modes[modes.index(current_mode) + 1 :]
+        if current_mode in allowed:
+            current_index = allowed.index(current_mode)
+            return [mode for mode in modes if allowed.index(mode) > current_index]
         return modes
 
     def _coerce_retry_plan_list(self, runtime_hints):

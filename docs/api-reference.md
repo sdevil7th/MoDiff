@@ -217,7 +217,11 @@ state. Auto retry plans carry `candidateId`, `modelType`, `mode`,
 `loaderModule`, `loaderAction`, `executionPath`, and `pipelineClass`; the worker
 resolves `candidateId` back to that bounded candidate list and applies the
 canonical candidate fields. It rejects missing, duplicate, stale, cross-pair,
-cross-profile, unqualified, unsupported, or unreviewed retry candidates.
+cross-profile, unqualified, unsupported, or unreviewed retry candidates. When
+no candidate-bound retry plan is supplied, Auto ignores a submitted
+`resourceRetryModes` list and derives later offload modes from the selected
+exact execution profile in canonical memory-pressure order. Expert mode may
+still submit its bounded `resourceRetryModes` list.
 
 Immediately before Auto admission, the worker derives
 `controlledArtifacts` from executable graph paths rather than trusting a
