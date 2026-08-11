@@ -193,6 +193,35 @@ _INPAINT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageInpaint", "output_type", "outputType"),
     ("diffusersImageInpaint", "max_sequence_length", "maxSequenceLength"),
 )
+_QWEN_OUTPAINT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("qwenOutpaintCanvas", "modules.DiffusersImage.OutpaintCanvas", -520, 300),
+    ("diffusersImageInpaint", "modules.DiffusersImage.Inpaint", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_QWEN_OUTPAINT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageInpaint", "pipeline"),
+    ("loadImage", "image", "qwenOutpaintCanvas", "image"),
+    ("qwenOutpaintCanvas", "canvas", "diffusersImageInpaint", "image"),
+    ("qwenOutpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"),
+    ("diffusersImageInpaint", "images", "preview", "image"),
+)
+_QWEN_OUTPAINT_GRAPH_BINDINGS = tuple(item for item in _INPAINT_GRAPH_BINDINGS if item[0] != "loadMask") + (
+    ("qwenOutpaintCanvas", "width", "width"),
+    ("qwenOutpaintCanvas", "height", "height"),
+    ("qwenOutpaintCanvas", "left", "outpaintLeft"),
+    ("qwenOutpaintCanvas", "right", "outpaintRight"),
+    ("qwenOutpaintCanvas", "top", "outpaintTop"),
+    ("qwenOutpaintCanvas", "bottom", "outpaintBottom"),
+    ("qwenOutpaintCanvas", "overlap", "outpaintOverlap"),
+    ("qwenOutpaintCanvas", "feather", "outpaintFeather"),
+    ("qwenOutpaintCanvas", "fill_color", "outpaintFillColor"),
+)
 _VIDEO_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -496,6 +525,7 @@ _BINDING_SOURCES = frozenset(
         *_CONTROL_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
+        *_QWEN_OUTPAINT_GRAPH_BINDINGS,
         *_VIDEO_GRAPH_BINDINGS,
         *_WAN_VACE_GRAPH_BINDINGS,
         *_I2V_GRAPH_BINDINGS,
@@ -2174,6 +2204,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _VACE_CONTROL_GRAPH_ROLES,
         "edges": _VACE_CONTROL_GRAPH_EDGES,
         "bindings": _VACE_CONTROL_GRAPH_BINDINGS,
+    },
+    "qwen-image-edit:outpaint:v1": {
+        "modelType": "QwenImageEditModularPipeline",
+        "mode": "outpaint",
+        "profile": {
+            "id": "qwen-edit:direct-inpaint",
+            "model_type": "QwenImageEditModularPipeline",
+            "modes": ("inpaint", "outpaint"),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "QwenImageEditInpaintPipeline",
+            "default_repo": "Qwen/Qwen-Image-Edit",
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": ("transformer", "text_encoder"),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _QWEN_OUTPAINT_GRAPH_ROLES,
+        "edges": _QWEN_OUTPAINT_GRAPH_EDGES,
+        "bindings": _QWEN_OUTPAINT_GRAPH_BINDINGS,
     },
 }
 

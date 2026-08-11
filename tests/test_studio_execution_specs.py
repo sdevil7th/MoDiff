@@ -82,6 +82,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("WanVACEPipeline", "video_inpaint"),
                 ("WanVACEPipeline", "video_outpaint"),
                 ("WanVACEPipeline", "control_to_video"),
+                ("QwenImageEditModularPipeline", "outpaint"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -335,6 +336,26 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("normalizeVideo", "num_frames", "numFrames"), specs[30]["bindings"])
         self.assertNotIn(("loadVideo", "file", "sourceVideo"), specs[30]["bindings"])
         self.assertNotIn(("loadMaskVideo", "file", "maskVideo"), specs[30]["bindings"])
+        self.assertEqual(
+            [item[0] for item in specs[31]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "diffusersImagePipeline",
+                "loadImage",
+                "qwenOutpaintCanvas",
+                "diffusersImageInpaint",
+                "preview",
+            ],
+        )
+        self.assertIn(("loadImage", "image", "qwenOutpaintCanvas", "image"), specs[31]["edges"])
+        self.assertIn(("qwenOutpaintCanvas", "canvas", "diffusersImageInpaint", "image"), specs[31]["edges"])
+        self.assertIn(
+            ("qwenOutpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"),
+            specs[31]["edges"],
+        )
+        self.assertIn(("qwenOutpaintCanvas", "overlap", "outpaintOverlap"), specs[31]["bindings"])
+        self.assertNotIn(("loadMask", "file", "maskImage"), specs[31]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -484,6 +505,21 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("loadImage", "image", "diffusersImageInpaint", "image"), spec["edges"])
         self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), spec["edges"])
         self.assertIn(("diffusersImageInpaint", "strength", "strength"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "qwen-edit:direct-inpaint")
+        self.assertEqual(spec["pipelineClass"], "QwenImageEditInpaintPipeline")
+        self.assertIn(("loadImage", "image", "qwenOutpaintCanvas", "image"), spec["edges"])
+        self.assertIn(("qwenOutpaintCanvas", "canvas", "diffusersImageInpaint", "image"), spec["edges"])
+        self.assertIn(
+            ("qwenOutpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"),
+            spec["edges"],
+        )
+        self.assertIn(("qwenOutpaintCanvas", "fill_color", "outpaintFillColor"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
