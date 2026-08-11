@@ -546,6 +546,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         node.update_audio_contract({"audio_contract": contract}, {"key": "pipeline"})
 
         updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+        self.assertEqual(updates, contract["fieldParams"])
         self.assertEqual(updates["task_type"]["options"], ["cover"])
         self.assertEqual(updates["task_type"]["default"], "cover")
         self.assertTrue(updates["source_audio"]["required"])
@@ -560,6 +561,18 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             if call.args[0] == "audio_duration" and "hidden" in call.args[1]
         )
         self.assertFalse(variation_duration_visibility)
+
+        node.set_field_params.reset_mock()
+        tampered_contract = {
+            **contract,
+            "fieldParams": {
+                **contract["fieldParams"],
+                "lyrics": {"hidden": True},
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "stale or mismatched task contract"):
+            node.update_audio_contract({"audio_contract": tampered_contract}, {"key": "pipeline"})
+        node.set_field_params.assert_not_called()
 
         for mode in ("audio_continuation", "audio_repaint"):
             node.set_field_params.reset_mock()
@@ -576,6 +589,15 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             )
             with self.subTest(mode=mode):
                 self.assertTrue(duration_visibility)
+
+        for adapter in AUDIO_PIPELINE_ADAPTERS.values():
+            for mode_contract in adapter.mode_contracts:
+                node.set_field_params.reset_mock()
+                signal = mode_contract.signal_value(adapter.pipeline_class, adapter.default_repo)
+                node.update_audio_contract({"audio_contract": signal}, {"key": "pipeline"})
+                updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+                with self.subTest(pipeline=adapter.pipeline_class, mode=mode_contract.mode):
+                    self.assertEqual(updates, signal["fieldParams"])
 
     def test_loader_mode_cache_hit_is_retagged_without_reloading(self):
         pipeline = SimpleNamespace()
@@ -1285,6 +1307,15 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
 
         self.assertFalse(Generate.params["source_audio"]["required"])
         self.assertFalse(Generate.params["reference_audio"]["required"])
+        default_overlay = AUDIO_PIPELINE_ADAPTERS["AceStepPipeline"].contract_for_mode(
+            "text_to_audio"
+        ).field_param_overlay()
+        for field, params in default_overlay.items():
+            for key in ("hidden", "required", "max"):
+                if key in params:
+                    with self.subTest(field=field, key=key):
+                        value = Generate.params[field].get(key, False) if key == "hidden" else Generate.params[field][key]
+                        self.assertEqual(value, params[key])
         self.assertTrue(Generate.params["lora_scale"]["hidden"])
         self.assertIn("per-call multiplier", Generate.params["lora_scale"]["description"])
         self.assertIn("ignored by ACE-Step", Generate.params["stable_audio_steps"]["description"])

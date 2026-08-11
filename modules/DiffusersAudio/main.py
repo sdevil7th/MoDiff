@@ -49,6 +49,44 @@ AUDIO_SAMPLE_RATE_OPTIONS = {
     "96000": "96 kHz",
 }
 
+_AUDIO_CONTRACT_VISIBILITY_FIELDS = (
+    "negative_prompt",
+    "stable_audio_steps",
+    "stable_audio_guidance",
+    "num_waveforms",
+    "lyrics",
+    "vocal_language",
+    "num_inference_steps",
+    "guidance_scale",
+    "shift",
+    "bpm",
+    "keyscale",
+    "timesignature",
+    "audio_duration",
+    "extension_duration",
+    "return_continuation_tail",
+    "repainting_start",
+    "repainting_end",
+    "audio_cover_strength",
+)
+_ACE_COMMON_VISIBLE_FIELDS = (
+    "lyrics",
+    "vocal_language",
+    "num_inference_steps",
+    "guidance_scale",
+    "shift",
+    "bpm",
+    "keyscale",
+    "timesignature",
+)
+_STABLE_AUDIO_VISIBLE_FIELDS = (
+    "negative_prompt",
+    "stable_audio_steps",
+    "stable_audio_guidance",
+    "num_waveforms",
+    "audio_duration",
+)
+
 
 @dataclass(frozen=True)
 class AudioModeContract:
@@ -57,9 +95,40 @@ class AudioModeContract:
     upstream_task_type: str
     source_audio: str
     reference_audio: str
+    visible_fields: tuple[str, ...]
     validate_repaint_interval: bool = False
     max_duration_seconds: float | None = None
     max_extension_seconds: float | None = None
+
+    def __post_init__(self) -> None:
+        if len(set(self.visible_fields)) != len(self.visible_fields) or any(
+            field not in _AUDIO_CONTRACT_VISIBILITY_FIELDS for field in self.visible_fields
+        ):
+            raise ValueError("Audio mode contracts must declare unique reviewed visibility fields.")
+
+    def field_param_overlay(self) -> dict[str, dict[str, Any]]:
+        overlay = {
+            field: {"hidden": field not in self.visible_fields}
+            for field in _AUDIO_CONTRACT_VISIBILITY_FIELDS
+        }
+        overlay["task_type"] = {
+            "options": [self.task_type],
+            "default": self.task_type,
+            "value": self.task_type,
+        }
+        overlay["source_audio"] = {
+            "required": self.source_audio == "required",
+            "hidden": self.source_audio == "forbidden",
+        }
+        overlay["reference_audio"] = {
+            "required": self.reference_audio == "required",
+            "hidden": self.reference_audio == "forbidden",
+        }
+        overlay["audio_duration"]["max"] = self.max_duration_seconds or ACE_MAX_DURATION_SECONDS
+        overlay["extension_duration"]["max"] = (
+            self.max_extension_seconds or ACE_CONTINUATION_MAX_EXTENSION_SECONDS
+        )
+        return overlay
 
     def signal_value(self, pipeline_class: str, repository: str) -> dict[str, Any]:
         return {
@@ -76,6 +145,7 @@ class AudioModeContract:
             "validateRepaintInterval": self.validate_repaint_interval,
             "maxDurationSeconds": self.max_duration_seconds,
             "maxExtensionSeconds": self.max_extension_seconds,
+            "fieldParams": self.field_param_overlay(),
         }
 
 
@@ -118,6 +188,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 "text2music",
                 "forbidden",
                 "forbidden",
+                visible_fields=(*_ACE_COMMON_VISIBLE_FIELDS, "audio_duration"),
                 max_duration_seconds=ACE_MAX_DURATION_SECONDS,
             ),
             AudioModeContract(
@@ -126,6 +197,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 "cover",
                 "required",
                 "forbidden",
+                visible_fields=(*_ACE_COMMON_VISIBLE_FIELDS, "audio_duration", "audio_cover_strength"),
                 max_duration_seconds=ACE_MAX_DURATION_SECONDS,
             ),
             AudioModeContract(
@@ -134,6 +206,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 "repaint",
                 "required",
                 "forbidden",
+                visible_fields=(*_ACE_COMMON_VISIBLE_FIELDS, "extension_duration", "return_continuation_tail"),
                 max_duration_seconds=ACE_MAX_DURATION_SECONDS,
                 max_extension_seconds=ACE_CONTINUATION_MAX_EXTENSION_SECONDS,
             ),
@@ -143,6 +216,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 "repaint",
                 "required",
                 "forbidden",
+                visible_fields=(*_ACE_COMMON_VISIBLE_FIELDS, "repainting_start", "repainting_end"),
                 validate_repaint_interval=True,
                 max_duration_seconds=ACE_MAX_DURATION_SECONDS,
             ),
@@ -165,6 +239,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 "text2audio",
                 "forbidden",
                 "forbidden",
+                visible_fields=_STABLE_AUDIO_VISIBLE_FIELDS,
                 max_duration_seconds=47,
             ),
         ),
@@ -1579,7 +1654,13 @@ class Generate(NodeBase):
             "fieldOptions": {"noValidation": True},
         },
         "prompt": {"label": "Prompt", "display": "textarea", "type": "text", "default": ""},
-        "negative_prompt": {"label": "Negative Prompt", "display": "textarea", "type": "text", "default": ""},
+        "negative_prompt": {
+            "label": "Negative Prompt",
+            "display": "textarea",
+            "type": "text",
+            "default": "",
+            "hidden": True,
+        },
         "lyrics": {"label": "Lyrics", "display": "textarea", "type": "text", "default": ""},
         "audio_duration": {
             "label": "Duration",
@@ -1596,6 +1677,7 @@ class Generate(NodeBase):
             "min": 1,
             "max": ACE_CONTINUATION_MAX_EXTENSION_SECONDS,
             "step": 0.5,
+            "hidden": True,
         },
         "vocal_language": {"label": "Language", "type": "string", "default": "en"},
         "num_inference_steps": {
@@ -1648,15 +1730,36 @@ class Generate(NodeBase):
         "bpm": {"label": "BPM", "type": "int", "default": 0, "min": 0, "max": 400},
         "keyscale": {"label": "Key", "type": "string", "default": ""},
         "timesignature": {"label": "Time", "type": "string", "default": "4"},
-        "source_audio": {"label": "Source Audio", "display": "input", "type": ["audio", "str"], "required": False},
+        "source_audio": {
+            "label": "Source Audio",
+            "display": "input",
+            "type": ["audio", "str"],
+            "required": False,
+            "hidden": True,
+        },
         "reference_audio": {
             "label": "Reference Audio",
             "display": "input",
             "type": ["audio", "str"],
             "required": False,
+            "hidden": True,
         },
-        "repainting_start": {"label": "Repaint Start", "type": "float", "default": 0.0, "min": 0, "step": 0.01},
-        "repainting_end": {"label": "Repaint End", "type": "float", "default": 0.0, "min": 0, "step": 0.01},
+        "repainting_start": {
+            "label": "Repaint Start",
+            "type": "float",
+            "default": 0.0,
+            "min": 0,
+            "step": 0.01,
+            "hidden": True,
+        },
+        "repainting_end": {
+            "label": "Repaint End",
+            "type": "float",
+            "default": 0.0,
+            "min": 0,
+            "step": 0.01,
+            "hidden": True,
+        },
         "audio_cover_strength": {
             "label": "Cover Strength",
             "display": "slider",
@@ -1665,8 +1768,14 @@ class Generate(NodeBase):
             "min": 0,
             "max": 1,
             "step": 0.01,
+            "hidden": True,
         },
-        "return_continuation_tail": {"label": "Return Tail Only", "type": "bool", "default": True},
+        "return_continuation_tail": {
+            "label": "Return Tail Only",
+            "type": "bool",
+            "default": True,
+            "hidden": True,
+        },
         "sample_rate": {
             "label": "Sample Rate",
             "type": "int",
@@ -1679,6 +1788,7 @@ class Generate(NodeBase):
             "default": 100,
             "min": 1,
             "max": 300,
+            "hidden": True,
             "description": "StableAudioPipeline-only denoising steps; ignored by ACE-Step.",
         },
         "stable_audio_guidance": {
@@ -1687,6 +1797,7 @@ class Generate(NodeBase):
             "default": 7,
             "min": 0,
             "max": 20,
+            "hidden": True,
             "description": "StableAudioPipeline-only classifier-free guidance; ignored by ACE-Step.",
         },
         "num_waveforms": {
@@ -1695,6 +1806,7 @@ class Generate(NodeBase):
             "default": 1,
             "min": 1,
             "max": 8,
+            "hidden": True,
             "description": "Number of StableAudioPipeline waveforms; ignored by ACE-Step.",
         },
         "audio": {"label": "Audio", "display": "output", "type": "audio"},
@@ -1742,53 +1854,8 @@ class Generate(NodeBase):
         if signal_value != expected_signal:
             raise ValueError("The connected audio pipeline published a stale or mismatched task contract.")
 
-        self.set_field_params(
-            "task_type",
-            {"options": [contract.task_type], "default": contract.task_type, "value": contract.task_type},
-        )
-        self.set_field_params(
-            "source_audio",
-            {"required": contract.source_audio == "required", "hidden": contract.source_audio == "forbidden"},
-        )
-        self.set_field_params(
-            "reference_audio",
-            {
-                "required": contract.reference_audio == "required",
-                "hidden": contract.reference_audio == "forbidden",
-            },
-        )
-
-        stable = adapter.pipeline_class == "StableAudioPipeline"
-        field_visibility = {
-            "negative_prompt": not stable,
-            "stable_audio_steps": not stable,
-            "stable_audio_guidance": not stable,
-            "num_waveforms": not stable,
-            "lyrics": stable,
-            "vocal_language": stable,
-            "num_inference_steps": stable,
-            "guidance_scale": stable,
-            "shift": stable,
-            "bpm": stable,
-            "keyscale": stable,
-            "timesignature": stable,
-            "audio_duration": contract.mode in {"audio_continuation", "audio_repaint"},
-            "extension_duration": contract.mode != "audio_continuation",
-            "return_continuation_tail": contract.mode != "audio_continuation",
-            "repainting_start": contract.mode != "audio_repaint",
-            "repainting_end": contract.mode != "audio_repaint",
-            "audio_cover_strength": contract.mode != "audio_variation",
-        }
-        for field, hidden in field_visibility.items():
-            self.set_field_params(field, {"hidden": hidden})
-        if contract.max_duration_seconds is not None:
-            self.set_field_params("audio_duration", {"max": contract.max_duration_seconds})
-        else:
-            self.set_field_params("audio_duration", {"max": ACE_MAX_DURATION_SECONDS})
-        self.set_field_params(
-            "extension_duration",
-            {"max": contract.max_extension_seconds or ACE_CONTINUATION_MAX_EXTENSION_SECONDS},
-        )
+        for field, params in expected_signal["fieldParams"].items():
+            self.set_field_params(field, params)
 
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")

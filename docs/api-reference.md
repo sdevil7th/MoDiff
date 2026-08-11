@@ -442,6 +442,15 @@ workflow, run identity, or canvas epoch no longer owns the visible document.
 The extra fields are additive so older single-document clients remain wire
 compatible.
 
+Diffusers audio loaders publish an exact schema-versioned `audio_contract`
+signal for the selected pipeline class and task mode. Its `fieldParams` member
+is the reviewed field overlay for the generic audio `Generate` node, including
+visibility, required state, task choices, and duration bounds. The receiving
+field action reconstructs the canonical contract and requires an exact match
+before emitting `set_field_params`; it does not trust a stored or client-edited
+overlay. Clients apply that backend-authored update generically and must not
+derive audio fields from pipeline or model names.
+
 `GET /queue` is the reconnect-safe task snapshot. It includes queued work, the
 current task, structured node/phase progress when available, and a bounded set
 of compact recent terminal receipts. Current and queued graph runs retain the
