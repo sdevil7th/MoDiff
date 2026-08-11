@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 33)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 34)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -73,6 +73,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "LTXVideoPipeline",
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
+            "QwenImageModularPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],
@@ -202,6 +203,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(z_image["studioExecutionSpecModes"], ["text_to_image"])
         self.assertEqual(z_image["studioExecutionSpecs"][0]["id"], "z-image:text-to-image:v1")
         self.assertEqual(z_image["studioExecutionSpecs"][0]["pipelineClass"], "ZImagePipeline")
+
+        qwen_image = by_model["QwenImageModularPipeline"]
+        self.assertEqual(qwen_image["studioExecutionSpecModes"], ["text_to_image"])
+        self.assertEqual(qwen_image["studioExecutionSpecs"][0]["id"], "qwen-image-2512:text-to-image:v1")
+        self.assertEqual(qwen_image["studioExecutionSpecs"][0]["pipelineClass"], "QwenImagePipeline")
 
         wan = by_model["WanVACEPipeline"]
         self.assertEqual(wan["mediaKind"], "video")

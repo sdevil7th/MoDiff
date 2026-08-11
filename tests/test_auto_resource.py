@@ -337,6 +337,15 @@ class AutoResourcePlanTests(unittest.TestCase):
         for candidate in plan["candidates"]:
             self.assertEqual(candidate["autoResourceSchemaVersion"], plan["schemaVersion"])
             self.assertEqual(candidate["executionProfileId"], "qwen-image:t2i-direct")
+            self.assertEqual(
+                candidate["studioExecutionSpecContract"],
+                {
+                    "schemaVersion": 1,
+                    "id": "qwen-image-2512:text-to-image:v1",
+                    "contentHash": "studio-spec-v1-f53ab380",
+                    "executionProfileId": "qwen-image:t2i-direct",
+                },
+            )
         self.assertEqual(plan["compatibility"]["state"], "ready")
         self.assertEqual(plan["compatibility"]["source"], "backend_auto_planner")
 

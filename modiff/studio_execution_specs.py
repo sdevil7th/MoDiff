@@ -2313,6 +2313,39 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "compatible_repos": (),
         },
     },
+    "qwen-image-2512:text-to-image:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "text_to_image",
+        "profile": {
+            "id": "qwen-image:t2i-direct",
+            "model_type": "QwenImageModularPipeline",
+            "modes": ("text_to_image",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "QwenImagePipeline",
+            "default_repo": "Qwen/Qwen-Image-2512",
+            "fallback_repo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": (),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 1328,
+            "max_low_memory_steps": 50,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+    },
 }
 
 

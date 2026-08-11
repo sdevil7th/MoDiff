@@ -121,6 +121,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("WanVACEPipeline", "control_to_video"),
                 ("QwenImageEditModularPipeline", "outpaint"),
                 ("ZImageModularPipeline", "text_to_image"),
+                ("QwenImageModularPipeline", "text_to_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -525,6 +526,23 @@ class StudioExecutionSpecTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(RuntimeError, "node identity"):
             assert_studio_execution_graph(graph, hints)
+
+    def test_qwen_image_text_to_image_seals_the_exact_direct_image_route(self):
+        spec = studio_execution_spec_for_pair("QwenImageModularPipeline", "text_to_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["id"], "qwen-image-2512:text-to-image:v1")
+        self.assertEqual(spec["executionProfileId"], "qwen-image:t2i-direct")
+        self.assertEqual(spec["loaderModule"], "modules.DiffusersImage")
+        self.assertEqual(spec["loaderAction"], "LoadPipeline")
+        self.assertEqual(spec["executionPath"], "direct-diffusers-image")
+        self.assertEqual(spec["pipelineClass"], "QwenImagePipeline")
+        self.assertEqual(spec["defaultRepo"], "Qwen/Qwen-Image-2512")
+        z_image = studio_execution_spec_for_pair("ZImageModularPipeline", "text_to_image")
+        self.assertEqual(spec["roles"], z_image["roles"])
+        self.assertEqual(spec["edges"], z_image["edges"])
+        self.assertEqual(spec["bindings"], z_image["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_wan_modes_have_exact_receipts_and_v2v_modes_share_the_reviewed_recipe(self):
         text = studio_execution_spec_for_pair("WanVideoPipeline", "text_to_video")
