@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 23)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 24)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -248,8 +248,9 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ltx_reference_spec["edges"], ltx_image_spec["edges"])
         self.assertEqual(ltx_reference_spec["bindings"], ltx_image_spec["bindings"])
         ace = by_model["AceStepAudioPipeline"]
-        self.assertEqual(ace["studioExecutionSpecModes"], ["text_to_audio"])
-        ace_text_spec = ace["studioExecutionSpecs"][0]
+        self.assertEqual(ace["studioExecutionSpecModes"], ["audio_variation", "text_to_audio"])
+        ace_text_spec = next(item for item in ace["studioExecutionSpecs"] if item["mode"] == "text_to_audio")
+        ace_variation_spec = next(item for item in ace["studioExecutionSpecs"] if item["mode"] == "audio_variation")
         self.assertEqual(ace_text_spec["pipelineClass"], "AceStepPipeline")
         self.assertEqual(
             [item[0] for item in ace_text_spec["roles"]],
@@ -257,6 +258,15 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIn(["audioGenerate", "task_type", "text2music"], ace_text_spec["bindings"])
         self.assertIn(["audioGenerate", "audio", "audioExport", "audio"], ace_text_spec["edges"])
+        self.assertEqual(ace_variation_spec["pipelineClass"], "AceStepPipeline")
+        self.assertIn("loadAudio", [item[0] for item in ace_variation_spec["roles"]])
+        self.assertIn(["loadAudio", "file", "sourceAudio"], ace_variation_spec["bindings"])
+        self.assertIn(["audioGenerate", "task_type", "cover"], ace_variation_spec["bindings"])
+        self.assertIn(
+            ["loadAudio", "audio", "audioGenerate", "source_audio"],
+            ace_variation_spec["edges"],
+        )
+        self.assertNotEqual(ace_variation_spec["contentHash"], ace_text_spec["contentHash"])
         self.assertEqual(
             ace["runnableModes"],
             ["audio_continuation", "audio_repaint", "audio_variation", "text_to_audio"],
