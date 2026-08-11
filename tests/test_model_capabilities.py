@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 20)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 21)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -225,7 +225,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(wan_color_spec["edges"], wan_video_spec["edges"])
         self.assertEqual(wan_color_spec["bindings"], wan_video_spec["bindings"])
         ltx = by_model["LTXVideoPipeline"]
-        self.assertEqual(ltx["studioExecutionSpecModes"], ["image_to_video", "text_to_video"])
+        self.assertEqual(
+            ltx["studioExecutionSpecModes"],
+            ["image_to_video", "text_to_video", "video_to_video"],
+        )
         for ltx_spec in ltx["studioExecutionSpecs"]:
             self.assertEqual(ltx_spec["pipelineClass"], "LTXConditionPipeline")
             self.assertIn(["diffusersRecipe", "attention_backend", "nativeMath"], ltx_spec["bindings"])
@@ -233,6 +236,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         ltx_image_spec = next(item for item in ltx["studioExecutionSpecs"] if item["mode"] == "image_to_video")
         self.assertIn("loadImage", [item[0] for item in ltx_image_spec["roles"]])
         self.assertIn(["loadImage", "image", "wanGenerate", "reference_images"], ltx_image_spec["edges"])
+        ltx_video_spec = next(item for item in ltx["studioExecutionSpecs"] if item["mode"] == "video_to_video")
+        self.assertIn("loadVideo", [item[0] for item in ltx_video_spec["roles"]])
+        self.assertIn(["normalizeVideo", "output", "wanGenerate", "video"], ltx_video_spec["edges"])
+        self.assertIn(["wanGenerate", "strength", "conditioningScale"], ltx_video_spec["bindings"])
+        self.assertIn(["wanGenerate", "denoise_strength", "strength"], ltx_video_spec["bindings"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],
