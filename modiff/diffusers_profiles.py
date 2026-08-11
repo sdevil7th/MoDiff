@@ -32,6 +32,8 @@ from modiff.studio_execution_specs import (
     FLUX2_KLEIN_REPO as FLUX2_KLEIN_REPO,
     FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
+    ACE_STEP_LORA_BASE_REPO as ACE_STEP_LORA_BASE_REPO,
+    ACE_STEP_REPO as ACE_STEP_REPO,
     LTX_VIDEO_FALLBACK_REPO as LTX_VIDEO_FALLBACK_REPO,
     LTX_VIDEO_REPO as LTX_VIDEO_REPO,
     WAN_22_I2V_A14B_REPO as WAN_22_I2V_A14B_REPO,
@@ -43,8 +45,6 @@ from modiff.studio_execution_specs import (
 
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
-ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
-ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 
 VERIFIED_REPAIR_SOURCES = {
     FLUX_CANNY_REPO: FLUX_CANNY_VERIFIED_REPAIR_REPO,
@@ -308,31 +308,6 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         max_low_memory_side=832,
         max_low_memory_steps=24,
         live_proof=False,
-    ),
-    "ace-step-audio:direct": DiffusersExecutionProfile(
-        id="ace-step-audio:direct",
-        model_type="AceStepAudioPipeline",
-        modes=("text_to_audio", "audio_variation", "audio_continuation", "audio_repaint"),
-        loader_module="modules.DiffusersAudio",
-        loader_action="LoadPipeline",
-        execution_path="direct-diffusers-audio",
-        pipeline_class="AceStepPipeline",
-        default_repo=ACE_STEP_REPO,
-        fallback_repo=None,
-        quantizable_components=(),
-        default_quantized_components=(),
-        supported_offload_modes=(
-            OFFLOAD_MODE_NONE,
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-        ),
-        retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
-        max_low_memory_side=None,
-        max_low_memory_steps=8,
-        live_proof=False,
-        compatible_repos=(ACE_STEP_LORA_BASE_REPO,),
     ),
 }
 

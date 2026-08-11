@@ -33,6 +33,8 @@ WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
+ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
+ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -315,6 +317,62 @@ _LTX_V2V_GRAPH_BINDINGS = tuple(
     ("normalizeVideo", "height", "height"),
     ("normalizeVideo", "num_frames", "numFrames"),
 )
+_AUDIO_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("audioPipeline", "modules.DiffusersAudio.LoadPipeline", -520, -80),
+    ("audioGenerate", "modules.DiffusersAudio.Generate", -120, -80),
+    ("audioExport", "modules.Audio.Export", 1060, -80),
+)
+_AUDIO_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "audioPipeline", "execution_recipe"),
+    ("audioPipeline", "pipeline", "audioGenerate", "pipeline"),
+    ("audioGenerate", "audio", "audioExport", "audio"),
+)
+_AUDIO_GRAPH_BINDINGS = (
+    ("diffusersQuantization", "backend", "quantizationMode"),
+    ("diffusersQuantization", "components", "quantizedComponents"),
+    ("diffusersQuantization", "dtype", "dtype"),
+    ("diffusersRecipe", "device_map", "deviceMapNone"),
+    ("diffusersRecipe", "offload_mode", "offloadMode"),
+    ("diffusersRecipe", "device", "device"),
+    ("diffusersRecipe", "attention_backend", "attentionBackend"),
+    ("diffusersRecipe", "attention_components", "empty"),
+    ("diffusersRecipe", "vae_slicing", "true"),
+    ("diffusersRecipe", "vae_tiling", "true"),
+    ("diffusersRecipe", "regional_compile", "regionalCompile"),
+    ("diffusersRecipe", "denoiser_cache", "denoiserCache"),
+    ("diffusersRecipe", "layerwise_casting", "layerwiseCasting"),
+    ("diffusersRecipe", "channels_last", "channelsLast"),
+    ("audioPipeline", "model_id", "artifact"),
+    ("audioPipeline", "pipeline_class", "pipelineClass"),
+    ("audioPipeline", "mode", "mode"),
+    ("audioPipeline", "dtype", "dtype"),
+    ("audioPipeline", "device", "device"),
+    ("audioPipeline", "auto_offload", "autoOffload"),
+    ("audioPipeline", "offload_mode", "offloadMode"),
+    ("audioGenerate", "task_type", "text2music"),
+    ("audioGenerate", "prompt", "prompt"),
+    ("audioGenerate", "negative_prompt", "negativePrompt"),
+    ("audioGenerate", "lyrics", "lyrics"),
+    ("audioGenerate", "audio_duration", "audioDuration"),
+    ("audioGenerate", "extension_duration", "extensionDuration"),
+    ("audioGenerate", "vocal_language", "vocalLanguage"),
+    ("audioGenerate", "seed", "seed"),
+    ("audioGenerate", "num_inference_steps", "steps"),
+    ("audioGenerate", "guidance_scale", "guidanceScale"),
+    ("audioGenerate", "shift", "shift"),
+    ("audioGenerate", "bpm", "bpmNormalized"),
+    ("audioGenerate", "keyscale", "keyscale"),
+    ("audioGenerate", "timesignature", "timesignature"),
+    ("audioGenerate", "repainting_start", "repaintingStart"),
+    ("audioGenerate", "repainting_end", "repaintingEnd"),
+    ("audioGenerate", "audio_cover_strength", "audioCoverStrength"),
+    ("audioGenerate", "return_continuation_tail", "false"),
+    ("audioGenerate", "sample_rate", "sampleRate48000"),
+    ("audioExport", "sample_rate", "sampleRate48000"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -343,6 +401,7 @@ _BINDING_SOURCES = frozenset(
         *_LTX_T2V_GRAPH_BINDINGS,
         *_LTX_I2V_GRAPH_BINDINGS,
         *_LTX_V2V_GRAPH_BINDINGS,
+        *_AUDIO_GRAPH_BINDINGS,
     )
 )
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
@@ -1753,6 +1812,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _I2V_GRAPH_ROLES,
         "edges": _I2V_GRAPH_EDGES,
         "bindings": _LTX_I2V_GRAPH_BINDINGS,
+    },
+    "ace-step-v1.5-xl-turbo:text-to-audio:v1": {
+        "modelType": "AceStepAudioPipeline",
+        "mode": "text_to_audio",
+        "profile": {
+            "id": "ace-step-audio:direct",
+            "model_type": "AceStepAudioPipeline",
+            "modes": ("text_to_audio", "audio_variation", "audio_continuation", "audio_repaint"),
+            "loader_module": "modules.DiffusersAudio",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-audio",
+            "pipeline_class": "AceStepPipeline",
+            "default_repo": ACE_STEP_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": None,
+            "max_low_memory_steps": 8,
+            "live_proof": False,
+            "compatible_repos": (ACE_STEP_LORA_BASE_REPO,),
+        },
+        "roles": _AUDIO_GRAPH_ROLES,
+        "edges": _AUDIO_GRAPH_EDGES,
+        "bindings": _AUDIO_GRAPH_BINDINGS,
     },
 }
 

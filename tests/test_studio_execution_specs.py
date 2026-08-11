@@ -73,6 +73,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTXVideoPipeline", "image_to_video"),
                 ("LTXVideoPipeline", "video_to_video"),
                 ("LTXVideoPipeline", "reference_to_video"),
+                ("AceStepAudioPipeline", "text_to_audio"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -220,6 +221,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[21]["edges"], specs[19]["edges"])
         self.assertEqual(specs[21]["bindings"], specs[19]["bindings"])
         self.assertEqual(specs[21]["pipelineClass"], "LTXConditionPipeline")
+        self.assertEqual(
+            [item[0] for item in specs[22]["roles"]],
+            ["diffusersQuantization", "diffusersRecipe", "audioPipeline", "audioGenerate", "audioExport"],
+        )
+        self.assertIn(("audioGenerate", "task_type", "text2music"), specs[22]["bindings"])
+        self.assertIn(("audioGenerate", "audio", "audioExport", "audio"), specs[22]["edges"])
+        self.assertEqual(specs[22]["pipelineClass"], "AceStepPipeline")
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -329,6 +337,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
             self.assertEqual(spec["pipelineClass"], "LTXConditionPipeline")
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
+
+    def test_ace_text_to_audio_seals_the_exact_generic_audio_route(self):
+        spec = studio_execution_spec_for_pair("AceStepAudioPipeline", "text_to_audio")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "ace-step-audio:direct")
+        self.assertEqual(spec["pipelineClass"], "AceStepPipeline")
+        self.assertEqual(spec["defaultRepo"], "ACE-Step/acestep-v15-xl-turbo-diffusers")
+        self.assertIn(("audioGenerate", "task_type", "text2music"), spec["bindings"])
+        self.assertIn(("audioGenerate", "sample_rate", "sampleRate48000"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_flux_kontext_modes_have_distinct_exact_receipts_and_only_edit_has_auto_requirements(self):
         edit = studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")

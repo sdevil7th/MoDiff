@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 22)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 23)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -71,6 +71,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "WanTI2VPipeline",
             "WanVideoPipeline",
             "LTXVideoPipeline",
+            "AceStepAudioPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],
@@ -170,6 +171,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "WanTI2VPipeline",
             "WanVideoPipeline",
             "LTXVideoPipeline",
+            "AceStepAudioPipeline",
         ):
             capability = by_model[model_type]
             self.assertEqual(
@@ -245,6 +247,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ltx_reference_spec["roles"], ltx_image_spec["roles"])
         self.assertEqual(ltx_reference_spec["edges"], ltx_image_spec["edges"])
         self.assertEqual(ltx_reference_spec["bindings"], ltx_image_spec["bindings"])
+        ace = by_model["AceStepAudioPipeline"]
+        self.assertEqual(ace["studioExecutionSpecModes"], ["text_to_audio"])
+        ace_text_spec = ace["studioExecutionSpecs"][0]
+        self.assertEqual(ace_text_spec["pipelineClass"], "AceStepPipeline")
+        self.assertEqual(
+            [item[0] for item in ace_text_spec["roles"]],
+            ["diffusersQuantization", "diffusersRecipe", "audioPipeline", "audioGenerate", "audioExport"],
+        )
+        self.assertIn(["audioGenerate", "task_type", "text2music"], ace_text_spec["bindings"])
+        self.assertIn(["audioGenerate", "audio", "audioExport", "audio"], ace_text_spec["edges"])
+        self.assertEqual(
+            ace["runnableModes"],
+            ["audio_continuation", "audio_repaint", "audio_variation", "text_to_audio"],
+        )
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],
