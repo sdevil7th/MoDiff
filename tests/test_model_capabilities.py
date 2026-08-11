@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 18)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 19)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -70,6 +70,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "WanVideoPipeline",
+            "LTXVideoPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],
@@ -168,6 +169,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "WanVideoPipeline",
+            "LTXVideoPipeline",
         ):
             capability = by_model[model_type]
             self.assertEqual(
@@ -222,6 +224,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(wan_color_spec["roles"], wan_video_spec["roles"])
         self.assertEqual(wan_color_spec["edges"], wan_video_spec["edges"])
         self.assertEqual(wan_color_spec["bindings"], wan_video_spec["bindings"])
+        ltx = by_model["LTXVideoPipeline"]
+        self.assertEqual(ltx["studioExecutionSpecModes"], ["text_to_video"])
+        ltx_spec = ltx["studioExecutionSpecs"][0]
+        self.assertEqual(ltx_spec["pipelineClass"], "LTXConditionPipeline")
+        self.assertIn(["diffusersRecipe", "attention_backend", "nativeMath"], ltx_spec["bindings"])
+        self.assertNotIn(["wanGenerate", "scheduler_flow_shift", "shift"], ltx_spec["bindings"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],

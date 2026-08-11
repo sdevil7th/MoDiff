@@ -32,6 +32,8 @@ from modiff.studio_execution_specs import (
     FLUX2_KLEIN_REPO as FLUX2_KLEIN_REPO,
     FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
+    LTX_VIDEO_FALLBACK_REPO as LTX_VIDEO_FALLBACK_REPO,
+    LTX_VIDEO_REPO as LTX_VIDEO_REPO,
     WAN_22_I2V_A14B_REPO as WAN_22_I2V_A14B_REPO,
     WAN_22_TI2V_5B_REPO as WAN_22_TI2V_5B_REPO,
     WAN_T2V_1_3B_REPO as WAN_T2V_1_3B_REPO,
@@ -43,8 +45,6 @@ QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
-LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
-LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 
 VERIFIED_REPAIR_SOURCES = {
     FLUX_CANNY_REPO: FLUX_CANNY_VERIFIED_REPAIR_REPO,
@@ -307,30 +307,6 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         retry_offload_modes=(OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
         max_low_memory_side=832,
         max_low_memory_steps=24,
-        live_proof=False,
-    ),
-    "ltx-video:direct": DiffusersExecutionProfile(
-        id="ltx-video:direct",
-        model_type="LTXVideoPipeline",
-        modes=("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
-        loader_module="modules.DiffusersVideo",
-        loader_action="LoadPipeline",
-        execution_path="direct-diffusers-video",
-        pipeline_class="LTXConditionPipeline",
-        default_repo=LTX_VIDEO_REPO,
-        fallback_repo=LTX_VIDEO_FALLBACK_REPO,
-        quantizable_components=("transformer", "text_encoder"),
-        default_quantized_components=(),
-        supported_offload_modes=(
-            OFFLOAD_MODE_NONE,
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-        ),
-        retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
-        max_low_memory_side=704,
-        max_low_memory_steps=8,
         live_proof=False,
     ),
     "ace-step-audio:direct": DiffusersExecutionProfile(
