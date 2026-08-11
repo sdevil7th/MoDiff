@@ -130,6 +130,15 @@ execution profile named by the selected exact specification. Auto admission
 continues to use the backend resource plan rather than this Expert-facing
 estimate.
 
+An execution profile may additionally publish
+`expert_quantization_policy` with `schema_version: 1`. The policy declares the
+exact Expert quantization and offload modes plus the generic Modular Diffusers
+quantization node and its reviewed component configuration. Studio applies the
+policy only when the selected specification names that exact execution profile;
+direct execution paths continue to derive their required loader fields from the
+specification bindings. Missing, malformed, or registry-incompatible policy
+data never falls back to a model-family or pipeline-name rule.
+
 The current schema-v1 catalog covers the migrated Flux Schnell, Dev, Krea,
 Flux2 Klein, Depth, Canny, Redux, Kontext, and Fill image pairs; Wan 2.2 I2V
 and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition

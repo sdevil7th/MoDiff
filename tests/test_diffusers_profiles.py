@@ -4,7 +4,9 @@ from modiff.diffusers_profiles import (
     ACE_STEP_LORA_BASE_REPO,
     DIFFUSERS_EXECUTION_PROFILES,
     ExpertCudaPolicy,
+    ExpertQuantizationPolicy,
     QWEN_EXPERT_CUDA_POLICY,
+    QWEN_EXPERT_QUANTIZATION_POLICY,
 )
 from modiff.model_artifact_catalog import catalog_revision
 from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
@@ -88,7 +90,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         self.assertEqual(profile.execution_path, "direct-diffusers-image")
         self.assertEqual(profile.pipeline_class, "ZImagePipeline")
 
-    def test_qwen_profiles_publish_one_reviewed_expert_cuda_policy(self):
+    def test_qwen_profiles_publish_reviewed_expert_resource_policies(self):
         qwen_profile_ids = {
             "qwen-image:t2i-direct",
             "qwen-image:modular",
@@ -104,8 +106,16 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                     profile.expert_cuda_policy,
                     QWEN_EXPERT_CUDA_POLICY if profile_id in qwen_profile_ids else None,
                 )
+                self.assertIs(
+                    profile.expert_quantization_policy,
+                    QWEN_EXPERT_QUANTIZATION_POLICY if profile_id in qwen_profile_ids else None,
+                )
                 self.assertEqual(
                     "expert_cuda_policy" in profile.to_public_dict(),
+                    profile_id in qwen_profile_ids,
+                )
+                self.assertEqual(
+                    "expert_quantization_policy" in profile.to_public_dict(),
                     profile_id in qwen_profile_ids,
                 )
 
@@ -119,6 +129,20 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "offloaded_vram_bytes": 10 * 1024**3,
                 "resident_vram_bytes": 80 * 1024**3,
                 "quantized_resident_vram_bytes": [["bnb_4bit", 24 * 1024**3]],
+            },
+        )
+        self.assertEqual(
+            public["expert_quantization_policy"],
+            {
+                "schema_version": 1,
+                "quantization_mode": "bnb_4bit",
+                "offload_mode": "model_cpu",
+                "modular_node": "modules.ModularDiffusers.QuantizationConfigNode",
+                "subfolder": "transformer",
+                "component": "qwen_low_vram",
+                "four_bit_quant_type": "nf4",
+                "compute_dtype": "bfloat16",
+                "double_quant": True,
             },
         )
 
@@ -145,6 +169,35 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             with self.subTest(update=update):
                 with self.assertRaisesRegex(ValueError, "Invalid reviewed Expert CUDA policy"):
                     ExpertCudaPolicy(**{**values, **update})
+
+    def test_expert_quantization_policy_rejects_unreviewed_values(self):
+        cases = (
+            {"schema_version": 2},
+            {"quantization_mode": "bnb_8bit"},
+            {"offload_mode": "none"},
+            {"modular_node": "../../unsafe"},
+            {"subfolder": "../transformer"},
+            {"component": "qwen/unsafe"},
+            {"four_bit_quant_type": "int4"},
+            {"compute_dtype": "float64"},
+            {"double_quant": 1},
+        )
+        values = {
+            "schema_version": 1,
+            "quantization_mode": "bnb_4bit",
+            "offload_mode": "model_cpu",
+            "modular_node": "modules.ModularDiffusers.QuantizationConfigNode",
+            "subfolder": "transformer",
+            "component": "qwen_low_vram",
+            "four_bit_quant_type": "nf4",
+            "compute_dtype": "bfloat16",
+            "double_quant": True,
+        }
+
+        for update in cases:
+            with self.subTest(update=update):
+                with self.assertRaisesRegex(ValueError, "Invalid reviewed Expert quantization policy"):
+                    ExpertQuantizationPolicy(**{**values, **update})
 
     def test_ace_lora_template_base_is_an_exact_reviewed_compatible_artifact(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["ace-step-audio:direct"]

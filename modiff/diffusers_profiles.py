@@ -104,6 +104,53 @@ QWEN_EXPERT_CUDA_POLICY = ExpertCudaPolicy(
 
 
 @dataclass(frozen=True)
+class ExpertQuantizationPolicy:
+    schema_version: int
+    quantization_mode: str
+    offload_mode: str
+    modular_node: str
+    subfolder: str
+    component: str
+    four_bit_quant_type: str
+    compute_dtype: str
+    double_quant: bool
+
+    def __post_init__(self) -> None:
+        token = re.compile(r"[a-z][a-z0-9_]{0,63}")
+        if (
+            self.schema_version != 1
+            or self.quantization_mode != "bnb_4bit"
+            or self.offload_mode
+            not in {
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            }
+            or re.fullmatch(r"modules\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+", self.modular_node) is None
+            or token.fullmatch(self.subfolder) is None
+            or token.fullmatch(self.component) is None
+            or self.four_bit_quant_type not in {"nf4", "fp4"}
+            or self.compute_dtype not in {"float32", "float16", "bfloat16"}
+            or not isinstance(self.double_quant, bool)
+        ):
+            raise ValueError("Invalid reviewed Expert quantization policy.")
+
+
+QWEN_EXPERT_QUANTIZATION_POLICY = ExpertQuantizationPolicy(
+    schema_version=1,
+    quantization_mode="bnb_4bit",
+    offload_mode=OFFLOAD_MODE_MODEL_CPU,
+    modular_node="modules.ModularDiffusers.QuantizationConfigNode",
+    subfolder="transformer",
+    component="qwen_low_vram",
+    four_bit_quant_type="nf4",
+    compute_dtype="bfloat16",
+    double_quant=True,
+)
+
+
+@dataclass(frozen=True)
 class DiffusersExecutionProfile:
     id: str
     model_type: str
@@ -132,6 +179,7 @@ class DiffusersExecutionProfile:
     optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
     compatible_repos: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
+    expert_quantization_policy: ExpertQuantizationPolicy | None = None
 
     def __post_init__(self) -> None:
         expected_loader = {
@@ -177,6 +225,8 @@ class DiffusersExecutionProfile:
             }
         else:
             public.pop("expert_cuda_policy")
+        if not self.expert_quantization_policy:
+            public.pop("expert_quantization_policy")
         public["backend_path"] = self.backend_path
         if observe_optional_runtime:
             # Lazy to keep the declarative profile module independent of
@@ -383,6 +433,7 @@ for profile_id in (
     DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
         DIFFUSERS_EXECUTION_PROFILES[profile_id],
         expert_cuda_policy=QWEN_EXPERT_CUDA_POLICY,
+        expert_quantization_policy=QWEN_EXPERT_QUANTIZATION_POLICY,
     )
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES = [
