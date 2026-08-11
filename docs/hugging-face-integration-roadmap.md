@@ -2124,6 +2124,24 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       mocked-browser, build, and local preflight evidence only; no model
       download, inference, generated media, or live workload qualification
       occurred.
+    - [x] Runtime diagnostic-classifier cleanup. Backend commit `85e80f3`
+      removes client `modelFamily` and `lowVramMode` from the admitted runtime
+      hint contract and its CUDA diagnostic projection; exact model type,
+      execution profile, selected recipe, and graph receipt remain the reviewed
+      execution identities. Client commit `e464cb7` deletes the Qwen-named
+      low-memory classifier and stops submitting both duplicate labels. The
+      focused backend runtime/resource matrix passed 177 tests with 307
+      subtests, and the complete backend gate passed 1,164 tests with 4 skips
+      and 1,888 subtests with only the existing Diffusers deprecation warning.
+      The focused client template/provenance/run matrix passed 123/123,
+      `npm run check` passed, the exact Auto submission browser path passed 1/1,
+      and the complete mocked Studio suite passed 89/89 in 280 seconds. The
+      production bundle was 522389/523264 gzip bytes, 747 bytes below the
+      stricter 523136-byte safety target. Ruff 0.12.7 E9/F, `py_compile`, `uv
+      pip check` (78 packages), preflight, formatting, lint, type, and diff
+      checks passed. This is static, unit, contract, mocked-browser, build, and
+      local preflight evidence only; no model download, inference, generated
+      media, or live workload qualification occurred.
     - [ ] Move the remaining non-audio dynamic field visibility and non-path
       resource metadata out of frontend/node model switches and into reviewed
       declarative overlays.
