@@ -2325,6 +2325,18 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       frame limits into backend execution specifications remains part of the
       parent metadata-ownership audit. No model download, inference, generated
       media, or live qualification occurred.
+    - [x] Generic Modular readiness identity. Client commit `a32b37a`
+      removes the last `Qwen Image` family check from managed Run readiness.
+      An existing/restored graph is classified from its generic managed
+      ModelsLoader, prompt, and denoise roles; before a graph exists, readiness
+      uses the exact backend execution profile's `modular-diffusers` path.
+      The focused 43/43 graph-visual matrix includes the legacy restore path,
+      the complete `npm run check` passed, and the complete mocked Studio suite
+      passed 96/96 in 291.9 seconds. The production bundle was
+      522707/523264 gzip bytes, 429 bytes below the stricter 523136-byte safety
+      target. Formatting, lint, type, unit/contract, build, bundle, browser,
+      and diff checks passed. No model download, inference, generated media,
+      or live qualification occurred.
     - [ ] Audit and replace the remaining client presentation/resource
       fallbacks and legacy graph-construction model switches with exact
       reviewed specification metadata. Keep template recipe identity and
@@ -3172,6 +3184,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e Guider overlay | `51206e6` | `d1b2f88` | Not required | Not required | Complete: reviewed per-pipeline Guider choices, exact execution validation, scalar/multi-select dynamic option preservation, the complete backend/client gates, and the focused signal-relay mocked-browser contract passed. This closes the Guider portion of the parent P0.3e remaining-work summary. |
 | P0.3e Scheduler overlay | `6779a19` | `140cab2` | Not required | Not required | Complete: pinned-upstream scheduler compatibility metadata, live-component and exact-constructor validation, complete backend/client gates, and the focused generic signal-relay mocked-browser contract passed. This closes the Scheduler portion of the parent P0.3e remaining-work summary. |
 | P0.3e readiness overlay | `03c358b` (compatible exact-specification contract) | `7a02806` | Not required | Not required | Complete: readiness consumes the live managed loader identity or the unique authoritative execution specification, validates every exact role generically, and no longer routes the removed capability checks by model or pipeline name. Focused 67/67, complete client, exact browser, and final 88/88 mocked Studio gates passed; the bundle remained inside both limits. |
+| P0.3e Modular readiness identity | Not required (uses the existing exact execution profile contract) | `a32b37a` | Not required | Not required | Complete: managed Run readiness identifies restored Modular graphs from generic managed roles and new graphs from the exact execution path, with no model-family branch. Focused 43/43, complete client, and final 96/96 mocked Studio gates passed; the bundle remained 429 bytes inside the stricter safety target. |
 | P0.3e audio field overlay | `2a98856` | `fba496c` | Not required | Not required | Complete: reviewed audio pipeline/mode contracts publish the exact generic Generate field overlay; the backend rejects tampered overlays and the client no longer derives audio visibility from pipeline names. Complete backend/client and final 89/89 mocked Studio gates passed; no live audio execution was required. |
 | P0.3e video field overlay | `b32241b` | `947f7d9` | Not required | Not required | Complete: every reviewed generic video adapter/mode owns its field visibility, required inputs, adapter controls, and strength binding; the exact backend action rejects stale contracts and the client no longer identifies LTX to choose the strength control. Complete backend/client and final 90/90 mocked Studio gates passed; no live video execution was required. |
 | P0.3e Expert CUDA resource policy | `b1f514f` | `0259624` | Not required | Not required | Complete: exact Qwen execution profiles own the bounded dtype/offloaded/resident/quantized CUDA estimates, the client consumes only the policy attached to the selected exact specification, and no model-family fallback remains for these checks. Complete backend/client and final 91/91 mocked Studio gates passed; no live model execution was required. |
