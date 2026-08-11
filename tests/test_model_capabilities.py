@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 30)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 31)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -311,9 +311,17 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         wan_vace = by_model["WanVACEPipeline"]
         self.assertEqual(
             wan_vace["studioExecutionSpecModes"],
-            ["text_to_video", "video_inpaint", "video_outpaint"],
+            ["control_to_video", "text_to_video", "video_inpaint", "video_outpaint"],
         )
-        wan_vace_text_spec, wan_vace_inpaint_spec, wan_vace_outpaint_spec = wan_vace["studioExecutionSpecs"]
+        wan_vace_text_spec, wan_vace_inpaint_spec, wan_vace_outpaint_spec, wan_vace_control_spec = wan_vace[
+            "studioExecutionSpecs"
+        ]
+        self.assertEqual(wan_vace_control_spec["mode"], "control_to_video")
+        self.assertIn(["loadControlVideo", "file", "controlVideo"], wan_vace_control_spec["bindings"])
+        self.assertIn(
+            ["normalizeVideo", "output", "wanGenerate", "video"],
+            wan_vace_control_spec["edges"],
+        )
         self.assertEqual(wan_vace_text_spec["executionProfileId"], "wan-vace:direct")
         self.assertEqual(wan_vace_text_spec["executionPath"], "direct-wan-vace")
         self.assertEqual(wan_vace_text_spec["pipelineClass"], "WanVACEPipeline")

@@ -312,6 +312,20 @@ _VACE_OUTPAINT_GRAPH_BINDINGS = tuple(
     (role, param, "outpaintMaskGrow0") if role == "alignMaskVideo" and param == "grow_pixels" else (role, param, source)
     for role, param, source in _VACE_INPAINT_GRAPH_BINDINGS
 )
+_VACE_CONTROL_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
+    ("loadControlVideo", "modules.Video.Load", -520, 260),
+    ("normalizeVideo", "modules.VideoConditioning.Normalize", -160, 260),
+)
+_VACE_CONTROL_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (
+    ("loadControlVideo", "video", "normalizeVideo", "video"),
+    ("normalizeVideo", "output", "wanGenerate", "video"),
+)
+_VACE_CONTROL_GRAPH_BINDINGS = _WAN_VACE_GRAPH_BINDINGS + (
+    ("loadControlVideo", "file", "controlVideo"),
+    ("normalizeVideo", "width", "width"),
+    ("normalizeVideo", "height", "height"),
+    ("normalizeVideo", "num_frames", "numFrames"),
+)
 _LTX_T2V_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -488,6 +502,7 @@ _BINDING_SOURCES = frozenset(
         *_V2V_GRAPH_BINDINGS,
         *_VACE_INPAINT_GRAPH_BINDINGS,
         *_VACE_OUTPAINT_GRAPH_BINDINGS,
+        *_VACE_CONTROL_GRAPH_BINDINGS,
         *_LTX_T2V_GRAPH_BINDINGS,
         *_LTX_I2V_GRAPH_BINDINGS,
         *_LTX_V2V_GRAPH_BINDINGS,
@@ -2133,6 +2148,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _VACE_INPAINT_GRAPH_ROLES,
         "edges": _VACE_INPAINT_GRAPH_EDGES,
         "bindings": _VACE_OUTPAINT_GRAPH_BINDINGS,
+    },
+    "wan-vace-1.3b:control-to-video:v1": {
+        "modelType": "WanVACEPipeline",
+        "mode": "control_to_video",
+        "profile": {
+            "id": "wan-vace:direct",
+            "model_type": "WanVACEPipeline",
+            "modes": ("text_to_video", "video_inpaint", "video_outpaint", "control_to_video"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-wan-vace",
+            "pipeline_class": "WanVACEPipeline",
+            "default_repo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _VACE_CONTROL_GRAPH_ROLES,
+        "edges": _VACE_CONTROL_GRAPH_EDGES,
+        "bindings": _VACE_CONTROL_GRAPH_BINDINGS,
     },
 }
 

@@ -81,6 +81,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("WanVACEPipeline", "text_to_video"),
                 ("WanVACEPipeline", "video_inpaint"),
                 ("WanVACEPipeline", "video_outpaint"),
+                ("WanVACEPipeline", "control_to_video"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -316,6 +317,24 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("alignMaskVideo", "grow_pixels", "outpaintMaskGrow0"), specs[29]["bindings"])
         self.assertNotIn(("alignMaskVideo", "grow_pixels", "inpaintMaskGrow96"), specs[29]["bindings"])
         self.assertNotEqual(specs[29]["contentHash"], specs[28]["contentHash"])
+        self.assertEqual(
+            [item[0] for item in specs[30]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "wanPipeline",
+                "wanGenerate",
+                "videoExport",
+                "loadControlVideo",
+                "normalizeVideo",
+            ],
+        )
+        self.assertIn(("loadControlVideo", "video", "normalizeVideo", "video"), specs[30]["edges"])
+        self.assertIn(("normalizeVideo", "output", "wanGenerate", "video"), specs[30]["edges"])
+        self.assertIn(("loadControlVideo", "file", "controlVideo"), specs[30]["bindings"])
+        self.assertIn(("normalizeVideo", "num_frames", "numFrames"), specs[30]["bindings"])
+        self.assertNotIn(("loadVideo", "file", "sourceVideo"), specs[30]["bindings"])
+        self.assertNotIn(("loadMaskVideo", "file", "maskVideo"), specs[30]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -498,6 +517,19 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("normalizeVideo", "output", "alignMaskVideo", "video"), spec["edges"])
         self.assertIn(("alignMaskVideo", "output", "wanGenerate", "mask"), spec["edges"])
         self.assertIn(("alignMaskVideo", "grow_pixels", "outpaintMaskGrow0"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_wan_vace_control_to_video_seals_control_normalization(self):
+        spec = studio_execution_spec_for_pair("WanVACEPipeline", "control_to_video")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "wan-vace:direct")
+        self.assertIn(("loadControlVideo", "video", "normalizeVideo", "video"), spec["edges"])
+        self.assertIn(("normalizeVideo", "output", "wanGenerate", "video"), spec["edges"])
+        self.assertIn(("loadControlVideo", "file", "controlVideo"), spec["bindings"])
+        self.assertIn(("normalizeVideo", "width", "width"), spec["bindings"])
+        self.assertIn(("normalizeVideo", "height", "height"), spec["bindings"])
+        self.assertIn(("normalizeVideo", "num_frames", "numFrames"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
