@@ -125,7 +125,9 @@ and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition
 modes; all four advertised Wan VACE modes; all four ACE-Step audio modes;
 direct Qwen Image and Z-Image text-to-image; Qwen Image Edit direct inpaint,
 direct outpaint, and Modular `edit_image`; and Qwen Image Edit Plus Modular
-`edit_image` and `multi_image_reference_edit`. Related pairs reuse generic
+`edit_image` and `multi_image_reference_edit`; Qwen Layered Modular
+`layer_decomposition`; and Qwen Image Modular `control_image`. This covers all
+39 currently declared execution-profile pairs. Related pairs reuse generic
 image, video, or audio topologies while keeping distinct exact profiles,
 artifacts, resource policies, form bindings, and receipt identities.
 
@@ -144,6 +146,12 @@ form bindings issued for `QwenImageEditModularPipeline`.
 Qwen Image Edit Plus reuses that reviewed seven-role Modular edit contract for
 both advertised modes while publishing a distinct receipt per mode and binding
 the `QwenImageEditPlusModularPipeline` profile and immutable default artifact.
+Qwen Layered seals its seven-role source-image, prompt, VAE encode, denoise,
+decode, and preview route with the reviewed layer-count and resolution bindings.
+Qwen Image Control seals an eight-role graph with the pinned Qwen ControlNet
+Union component loader, control-image adapter, typed ControlNet bundle, and
+route-state chain through denoise and decode. Its Hub selector and immutable
+revision are bound independently from the base Qwen Image artifact.
 Wan VACE text-to-video seals the reviewed direct VACE profile and shared
 quantization, runtime-recipe, video loader/generator, and export route. Video
 inpaint and outpaint additionally seal the source-video normalization and
