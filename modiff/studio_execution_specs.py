@@ -27,6 +27,7 @@ FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
+FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -1092,6 +1093,118 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _INPAINT_GRAPH_ROLES,
         "edges": _INPAINT_GRAPH_EDGES,
         "bindings": _INPAINT_GRAPH_BINDINGS,
+    },
+    "flux2-klein:text-to-image:v1": {
+        "modelType": "Flux2KleinPipeline",
+        "mode": "text_to_image",
+        "profile": {
+            "id": "flux2-klein:direct",
+            "model_type": "Flux2KleinPipeline",
+            "modes": ("text_to_image", "edit_image", "multi_image_reference_edit"),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "Flux2KleinPipeline",
+            "default_repo": FLUX2_KLEIN_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder_2"),
+            "default_quantized_components": ("transformer",),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": True,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "Flux2KleinPipeline",
+            "label": "FLUX.2 Klein 4B",
+            "displayName": "FLUX.2-klein-4B",
+            "family": "FLUX Image",
+            "defaultRepo": FLUX2_KLEIN_REPO,
+            "artifactLabel": "Diffusers repo",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+            "recommendedSteps": 4,
+            "recommendedGuidance": 1.0,
+            "guidanceLabel": "Guidance",
+            "supportsImageInput": True,
+            "supportsMask": False,
+            "supportsMultiImage": True,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": True,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_MODEL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                "steps": 4,
+                "width": 768,
+                "height": 768,
+            },
+            "modes": ["text_to_image", "edit_image", "multi_image_reference_edit"],
+            "executionStatus": "supported_with_model",
+            "modeRequirements": {
+                "edit_image": {
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires one source/reference image.",
+                },
+                "multi_image_reference_edit": {
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires two or more reference images.",
+                },
+            },
+            "notes": [
+                "Qualified through the generic Diffusers image facade for text, single-reference, and multi-reference generation."
+            ],
+        },
+        "autoRequirements": {
+            "supportedTasks": ["text_to_image", "edit_image", "multi_image_reference_edit"],
+            "defaultRepo": FLUX2_KLEIN_REPO,
+            "executionPath": "direct-diffusers-image",
+            "pipelineClass": "Flux2KleinPipeline",
+            "qualityDefaults": {
+                "width": 1024,
+                "height": 1024,
+                "steps": 4,
+                "guidanceScale": 1,
+                "maxSequenceLength": 512,
+            },
+            "minimum": {
+                "accelerator": "cuda",
+                "vramBytes": 13 * _GIB,
+                "systemRamBytes": 24 * _GIB,
+                "diskFreeBytes": 25 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "cuda",
+                "vramBytes": 20 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 35 * _GIB,
+            },
+            "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+            "supportedOffloadModes": [
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ],
+            "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+        },
+        "roles": _GRAPH_ROLES,
+        "edges": _GRAPH_EDGES,
+        "bindings": _GRAPH_BINDINGS,
     },
     "wan-22-i2v-a14b:image-to-video:v1": {
         "modelType": "WanImageToVideoPipeline",

@@ -61,6 +61,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxKontextPipeline", "multi_image_reference_edit"),
                 ("FluxFillPipeline", "inpaint"),
                 ("FluxFillPipeline", "outpaint"),
+                ("Flux2KleinPipeline", "text_to_image"),
                 ("WanImageToVideoPipeline", "image_to_video"),
                 ("WanTI2VPipeline", "text_to_video"),
                 ("WanVideoPipeline", "text_to_video"),
@@ -134,28 +135,32 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[9]["bindings"], specs[8]["bindings"])
         self.assertEqual(specs[9]["pipelineClass"], "FluxFillPipeline")
         self.assertNotEqual(specs[9]["contentHash"], specs[8]["contentHash"])
+        self.assertEqual(specs[10]["roles"], specs[0]["roles"])
+        self.assertEqual(specs[10]["edges"], specs[0]["edges"])
+        self.assertEqual(specs[10]["bindings"], specs[0]["bindings"])
+        self.assertEqual(specs[10]["pipelineClass"], "Flux2KleinPipeline")
         self.assertEqual(
-            [item[0] for item in specs[10]["roles"]],
+            [item[0] for item in specs[11]["roles"]],
             ["diffusersQuantization", "diffusersRecipe", "wanPipeline", "wanGenerate", "videoExport", "loadImage"],
         )
-        self.assertIn(("diffusersQuantization", "components", "dualQuantizedComponents"), specs[10]["bindings"])
-        self.assertIn(("loadImage", "file", "referenceImages"), specs[10]["bindings"])
-        self.assertIn(("loadImage", "image", "wanGenerate", "reference_images"), specs[10]["edges"])
-        self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[10]["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "dualQuantizedComponents"), specs[11]["bindings"])
+        self.assertIn(("loadImage", "file", "referenceImages"), specs[11]["bindings"])
+        self.assertIn(("loadImage", "image", "wanGenerate", "reference_images"), specs[11]["edges"])
+        self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[11]["bindings"])
         self.assertEqual(
-            DIFFUSERS_EXECUTION_PROFILES[specs[10]["executionProfileId"]].default_quantized_components,
+            DIFFUSERS_EXECUTION_PROFILES[specs[11]["executionProfileId"]].default_quantized_components,
             ("transformer", "transformer_2"),
         )
         self.assertEqual(
-            [item[0] for item in specs[11]["roles"]],
+            [item[0] for item in specs[12]["roles"]],
             ["diffusersQuantization", "diffusersRecipe", "wanPipeline", "wanGenerate", "videoExport"],
         )
-        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[11]["bindings"])
-        self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[11]["edges"])
-        self.assertEqual(specs[12]["pipelineClass"], "WanPipeline")
-        self.assertEqual(specs[12]["roles"], specs[11]["roles"])
-        self.assertEqual(specs[12]["edges"], specs[11]["edges"])
-        self.assertEqual(specs[12]["bindings"], specs[11]["bindings"])
+        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[12]["bindings"])
+        self.assertIn(("wanGenerate", "video_out", "videoExport", "video"), specs[12]["edges"])
+        self.assertEqual(specs[13]["pipelineClass"], "WanPipeline")
+        self.assertEqual(specs[13]["roles"], specs[12]["roles"])
+        self.assertEqual(specs[13]["edges"], specs[12]["edges"])
+        self.assertEqual(specs[13]["bindings"], specs[12]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -276,6 +281,20 @@ class StudioExecutionSpecTests(unittest.TestCase):
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
         self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxFillPipeline"]["supportedTasks"], ["inpaint", "outpaint"])
+
+    def test_flux2_klein_text_to_image_is_exact_without_claiming_edit_siblings(self):
+        spec = studio_execution_spec_for_pair("Flux2KleinPipeline", "text_to_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["pipelineClass"], "Flux2KleinPipeline")
+        self.assertEqual(spec["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["roles"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+        self.assertIsNone(studio_execution_spec_for_pair("Flux2KleinPipeline", "edit_image"))
+        self.assertIsNone(studio_execution_spec_for_pair("Flux2KleinPipeline", "multi_image_reference_edit"))
+        self.assertEqual(
+            AUTO_MODEL_REQUIREMENTS["Flux2KleinPipeline"]["supportedTasks"],
+            ["text_to_image", "edit_image", "multi_image_reference_edit"],
+        )
 
     def test_runtime_hint_parser_rejects_malformed_new_receipts_without_legacy_fallback(self):
         server = WebServer(module_registry.MODULE_MAP)

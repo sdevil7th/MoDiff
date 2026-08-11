@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 13)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 14)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -66,6 +66,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "FluxReduxPipeline",
             "FluxKontextPipeline",
             "FluxFillPipeline",
+            "Flux2KleinPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "WanVideoPipeline",
@@ -128,6 +129,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
         self.assertIn("loadMask", [item[0] for item in fill_spec["roles"]])
 
+        klein_spec = by_model["Flux2KleinPipeline"]["studioExecutionSpecs"][0]
+        self.assertEqual(klein_spec["id"], "flux2-klein:text-to-image:v1")
+        self.assertEqual(klein_spec["mode"], "text_to_image")
+        self.assertEqual(klein_spec["pipelineClass"], "Flux2KleinPipeline")
+        self.assertEqual(by_model["Flux2KleinPipeline"]["studioExecutionSpecModes"], ["text_to_image"])
+
         i2v_spec = by_model["WanImageToVideoPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(i2v_spec["mode"], "image_to_video")
         self.assertEqual(i2v_spec["pipelineClass"], "WanImageToVideoPipeline")
@@ -146,6 +153,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "FluxReduxPipeline",
             "FluxKontextPipeline",
             "FluxFillPipeline",
+            "Flux2KleinPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "WanVideoPipeline",

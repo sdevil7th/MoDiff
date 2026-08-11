@@ -25,7 +25,6 @@ from modiff.diffusers_profiles import (
     FLUX_KREA_REPO as FLUX_KREA_REPO,
     FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
-    FLUX2_KLEIN_REPO,
     LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
@@ -332,18 +331,6 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
             OFFLOAD_MODE_NONE,
         ],
         "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "scipy"],
-    },
-    "Flux2KleinPipeline": {
-        "supportedTasks": ["text_to_image", "edit_image", "multi_image_reference_edit"],
-        "defaultRepo": FLUX2_KLEIN_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "Flux2KleinPipeline",
-        "qualityDefaults": {"width": 1024, "height": 1024, "steps": 4, "guidanceScale": 1, "maxSequenceLength": 512},
-        "minimum": {"accelerator": "cuda", "vramBytes": 13 * GIB, "systemRamBytes": 24 * GIB, "diskFreeBytes": 25 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 20 * GIB, "systemRamBytes": 32 * GIB, "diskFreeBytes": 35 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "supportedOffloadModes": [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
     },
 }
 

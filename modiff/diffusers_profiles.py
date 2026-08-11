@@ -29,6 +29,7 @@ from modiff.studio_execution_specs import (
     FLUX_KONTEXT_NVFP4_REPO as FLUX_KONTEXT_NVFP4_REPO,
     FLUX_KONTEXT_REPO as FLUX_KONTEXT_REPO,
     FLUX_FILL_REPO as FLUX_FILL_REPO,
+    FLUX2_KLEIN_REPO as FLUX2_KLEIN_REPO,
     FLUX_REDUX_REPO as FLUX_REDUX_REPO,
     FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
     WAN_22_I2V_A14B_REPO as WAN_22_I2V_A14B_REPO,
@@ -42,7 +43,6 @@ QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
-FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 
@@ -388,58 +388,6 @@ DIFFUSERS_EXECUTION_PROFILES.update(
     {
         profile_id: DiffusersExecutionProfile(**definition)
         for profile_id, definition in studio_execution_profile_definitions().items()
-    }
-)
-
-
-def _flux_execution_profile(
-    profile_id: str,
-    model_type: str,
-    modes: tuple[str, ...],
-    pipeline_class: str,
-    repo: str,
-    *,
-    live_proof: bool = False,
-    compatible_repos: tuple[str, ...] = (),
-) -> DiffusersExecutionProfile:
-    """Build the shared generic-image execution contract for FLUX variants."""
-
-    return DiffusersExecutionProfile(
-        id=profile_id,
-        model_type=model_type,
-        modes=modes,
-        loader_module="modules.DiffusersImage",
-        loader_action="LoadPipeline",
-        execution_path="direct-diffusers-image",
-        pipeline_class=pipeline_class,
-        default_repo=repo,
-        fallback_repo=None,
-        quantizable_components=("transformer", "text_encoder_2"),
-        default_quantized_components=("transformer",),
-        supported_offload_modes=(
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-        ),
-        retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
-        max_low_memory_side=768,
-        max_low_memory_steps=24,
-        live_proof=live_proof,
-        compatible_repos=compatible_repos,
-    )
-
-
-DIFFUSERS_EXECUTION_PROFILES.update(
-    {
-        "flux2-klein:direct": _flux_execution_profile(
-            "flux2-klein:direct",
-            "Flux2KleinPipeline",
-            ("text_to_image", "edit_image", "multi_image_reference_edit"),
-            "Flux2KleinPipeline",
-            FLUX2_KLEIN_REPO,
-            live_proof=True,
-        ),
     }
 )
 

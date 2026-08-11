@@ -1108,46 +1108,6 @@ STUDIO_MODEL_CAPABILITIES = {
             "inpaint": {"requiredImages": ["referenceImages", "maskImage"], "note": "Requires source and mask images."}
         },
     },
-    "Flux2KleinPipeline": {
-        "modelType": "Flux2KleinPipeline",
-        "label": "FLUX.2 Klein 4B",
-        "displayName": "FLUX.2-klein-4B",
-        "family": "FLUX Image",
-        "defaultRepo": "black-forest-labs/FLUX.2-klein-4B",
-        "artifactLabel": "Diffusers repo",
-        "defaultDtype": "bfloat16",
-        "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
-        "recommendedSteps": 4,
-        "recommendedGuidance": 1.0,
-        "guidanceLabel": "Guidance",
-        "supportsImageInput": True,
-        "supportsMask": False,
-        "supportsMultiImage": True,
-        "supportsControlImage": False,
-        "supportsLayers": False,
-        "supportsLora": True,
-        "offloadSupport": DIRECT_OFFLOAD_SUPPORT,
-        "lowVram": {
-            "dtype": "bfloat16",
-            "autoOffload": True,
-            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
-            "steps": 4,
-            "width": 768,
-            "height": 768,
-        },
-        "modes": ["text_to_image", "edit_image", "multi_image_reference_edit"],
-        "executionStatus": "supported_with_model",
-        "modeRequirements": {
-            "edit_image": {"requiredImages": ["referenceImages"], "note": "Requires one source/reference image."},
-            "multi_image_reference_edit": {
-                "requiredImages": ["referenceImages"],
-                "note": "Requires two or more reference images.",
-            },
-        },
-        "notes": [
-            "Qualified through the generic Diffusers image facade for text, single-reference, and multi-reference generation."
-        ],
-    },
 }
 
 # The migrated exact pairs are generated from the execution-spec registry.
