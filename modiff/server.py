@@ -7234,7 +7234,52 @@ class WebServer:
                 + ", ".join(hint_mismatches)
                 + ". Refresh Auto before running this workflow."
             )
+        if hints.get("resourceMode") == "auto" or any(
+            key in plan for key in ("optionalRuntimeProfileIds", "optionalRuntimeRequirement")
+        ):
+            expected_profile_ids = list(
+                optional_runtime_profile_ids_for_execution(model_type, mode)
+            )
+            expected_requirement = WebServer._optional_runtime_contract_signature(
+                optional_runtime_requirement_for_execution(model_type, mode)
+            )
+            if (
+                plan.get("optionalRuntimeProfileIds") != expected_profile_ids
+                or WebServer._optional_runtime_contract_signature(
+                    plan.get("optionalRuntimeRequirement")
+                )
+                != expected_requirement
+            ):
+                raise WebServer._auto_resource_contract_error(
+                    "Auto resource plan optional-runtime receipt does not match its execution profile. "
+                    "Refresh Auto before running this workflow."
+                )
         return profile
+
+    @staticmethod
+    def _optional_runtime_contract_signature(requirement):
+        if not isinstance(requirement, dict):
+            return None
+        profile_ids = requirement.get("profileIds")
+        execution_profile_ids = requirement.get("executionProfileIds")
+        if (
+            isinstance(requirement.get("schemaVersion"), bool)
+            or not isinstance(requirement.get("schemaVersion"), int)
+            or not isinstance(requirement.get("delivery"), str)
+            or type(requirement.get("requiredNow")) is not bool
+            or not isinstance(profile_ids, list)
+            or any(not isinstance(item, str) for item in profile_ids)
+            or not isinstance(execution_profile_ids, list)
+            or any(not isinstance(item, str) for item in execution_profile_ids)
+        ):
+            return None
+        return {
+            "schemaVersion": requirement["schemaVersion"],
+            "delivery": requirement["delivery"],
+            "requiredNow": requirement["requiredNow"],
+            "profileIds": list(profile_ids),
+            "executionProfileIds": list(execution_profile_ids),
+        }
 
     @staticmethod
     def _resource_plan_node_matches_profile(node, profile):

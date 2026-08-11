@@ -172,7 +172,11 @@ target:
 - `modelType` and `mode` identify the declared model/task pair;
 - `loaderModule` and `loaderAction` identify the loader node contract;
 - `executionPath` identifies the reviewed execution adapter; and
-- `pipelineClass` identifies the profile's canonical pipeline implementation.
+- `pipelineClass` identifies the profile's canonical pipeline implementation;
+- `optionalRuntimeProfileIds` identifies the exact reviewed optional-runtime
+  profiles owned by that execution profile; and
+- `optionalRuntimeRequirement` binds their requirement schema, delivery mode,
+  current-required flag, profile IDs, and execution-profile IDs.
 
 The response `modelRequirements` map is also exact-pair data. Its keys are
 `<modelType>:<mode>`, and every value carries the same
@@ -205,12 +209,13 @@ Auto admission and retry failures use bounded, non-echoing messages with the
 Clients should refresh Auto for these failures; structurally valid manual
 configurations remain available through Expert mode.
 
-Local Auto history version 3 binds successful and failed evidence to the Auto
+Local Auto history version 4 binds successful and failed evidence to the Auto
 schema version, exact execution-profile ID, loader/path/class identity,
-artifact revision, optimization recipe, workload shape, and runtime hardware
-fingerprint. Evidence from an older history schema or a replaced execution
-profile is retained on disk for inspection but cannot promote a current
-candidate to `live_proven`.
+optional-runtime profile and delivery contract, artifact revision, optimization
+recipe, workload shape, and runtime hardware fingerprint. Evidence from an
+older history schema or a replaced execution/optional-runtime profile is
+retained on disk for inspection but cannot promote a current candidate to
+`live_proven`.
 
 ### Optional model runtime metadata
 

@@ -1394,6 +1394,16 @@ class AutoResourcePlanTests(unittest.TestCase):
             "loaderModule": "modules.DiffusersImage",
             "loaderAction": "LoadPipeline",
             "executionPath": "direct-diffusers-image",
+            "optionalRuntimeProfileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+            "optionalRuntimeRequirement": {
+                "schemaVersion": 1,
+                "delivery": "base",
+                "requiredNow": False,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["z-image:auto"],
+                "state": "base_satisfied",
+                "reason": "base_runtime_contract",
+            },
             "attentionBackend": "auto",
             "regionalCompile": False,
             "denoiserCache": "none",
@@ -1412,6 +1422,15 @@ class AutoResourcePlanTests(unittest.TestCase):
             ("loaderModule", "modules.ModularDiffusers"),
             ("loaderAction", "ModelsLoader"),
             ("executionPath", "modular-diffusers"),
+            ("optionalRuntimeProfileIds", []),
+            (
+                "optionalRuntimeRequirement",
+                {
+                    **base["optionalRuntimeRequirement"],
+                    "delivery": "optional_overlay",
+                    "requiredNow": True,
+                },
+            ),
         ):
             self.assertNotEqual(
                 baseline,
@@ -1436,15 +1455,34 @@ class AutoResourcePlanTests(unittest.TestCase):
             "loaderAction": "LoadPipeline",
             "executionPath": "direct-diffusers-image",
             "pipelineClass": "ZImagePipeline",
+            "optionalRuntimeProfileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+            "optionalRuntimeRequirement": {
+                "schemaVersion": 1,
+                "delivery": "base",
+                "requiredNow": False,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["z-image:auto"],
+            },
             "generation": {"width": 1024, "height": 1024, "steps": 8},
             "installed": True,
             "requirementsMissing": [],
             "proof": {"status": "declared_safe"},
         }
         for changed, history_schema_version in (
-            ({**current, "executionProfileId": "z-image:replacement"}, 3),
-            ({**current, "autoResourceSchemaVersion": 3}, 3),
-            (current, 2),
+            ({**current, "executionProfileId": "z-image:replacement"}, 4),
+            ({**current, "autoResourceSchemaVersion": 3}, 4),
+            ({**current, "optionalRuntimeProfileIds": []}, 4),
+            (
+                {
+                    **current,
+                    "optionalRuntimeRequirement": {
+                        **current["optionalRuntimeRequirement"],
+                        "executionProfileIds": ["z-image:replacement"],
+                    },
+                },
+                4,
+            ),
+            (current, 3),
         ):
             stale_signature = _candidate_history_signature(changed, hardware=hardware)
             stale_signature["historySchemaVersion"] = history_schema_version

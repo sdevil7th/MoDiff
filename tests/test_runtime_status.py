@@ -28,7 +28,11 @@ sys.modules.setdefault(
 
 from modiff import preflight  # noqa: E402
 from modiff.auto_resource import build_auto_resource_plan  # noqa: E402
-from modiff.diffusers_profiles import execution_profiles_for_execution  # noqa: E402
+from modiff.diffusers_profiles import (  # noqa: E402
+    execution_profiles_for_execution,
+    optional_runtime_profile_ids_for_execution,
+)
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution  # noqa: E402
 from modiff.server import WebServer  # noqa: E402
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
 
@@ -48,6 +52,13 @@ def resource_plan_target(model_type, mode):
         "loaderAction": profile.loader_action,
         "executionPath": profile.execution_path,
         "pipelineClass": profile.pipeline_class,
+        "optionalRuntimeProfileIds": list(
+            optional_runtime_profile_ids_for_execution(model_type, mode)
+        ),
+        "optionalRuntimeRequirement": optional_runtime_requirement_for_execution(
+            model_type,
+            mode,
+        ),
     }
 
 
@@ -740,6 +751,14 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(candidate["autoResourceSchemaVersion"], plan["schemaVersion"])
         self.assertEqual(candidate["executionProfileId"], "flux-schnell:direct")
+        self.assertEqual(
+            candidate["optionalRuntimeProfileIds"],
+            ["huggingface-transformers-peft-5.14.1-0.20.0"],
+        )
+        self.assertEqual(
+            candidate["optionalRuntimeRequirement"]["executionProfileIds"],
+            ["flux-schnell:direct"],
+        )
         self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
 
     def test_auto_execution_requires_exact_candidate_id_and_list_binding(self):
@@ -817,6 +836,14 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         for candidate in (
             {**base, "executionProfileId": "flux-schnell:replacement"},
             {**base, "autoResourceSchemaVersion": 3},
+            {**base, "optionalRuntimeProfileIds": []},
+            {
+                **base,
+                "optionalRuntimeRequirement": {
+                    **base["optionalRuntimeRequirement"],
+                    "executionProfileIds": ["flux-schnell:replacement"],
+                },
+            },
         ):
             with self.subTest(candidate=candidate):
                 hints = self.server._coerce_runtime_hints(

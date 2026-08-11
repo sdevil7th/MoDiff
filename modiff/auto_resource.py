@@ -66,7 +66,7 @@ WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 3
+AUTO_HISTORY_VERSION = 4
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -896,7 +896,42 @@ def _candidate_history_signature(
         "loaderModule": str(candidate.get("loaderModule") or ""),
         "loaderAction": str(candidate.get("loaderAction") or ""),
         "executionPath": str(candidate.get("executionPath") or ""),
+        "optionalRuntime": _candidate_optional_runtime_signature(candidate),
         "workload": workload,
+    }
+
+
+def _candidate_optional_runtime_signature(candidate: dict[str, Any]) -> dict[str, Any] | None:
+    profile_ids = candidate.get("optionalRuntimeProfileIds")
+    requirement = candidate.get("optionalRuntimeRequirement")
+    if (
+        not isinstance(profile_ids, list)
+        or any(not isinstance(item, str) for item in profile_ids)
+        or not isinstance(requirement, dict)
+    ):
+        return None
+    requirement_profile_ids = requirement.get("profileIds")
+    execution_profile_ids = requirement.get("executionProfileIds")
+    if (
+        isinstance(requirement.get("schemaVersion"), bool)
+        or not isinstance(requirement.get("schemaVersion"), int)
+        or not isinstance(requirement.get("delivery"), str)
+        or type(requirement.get("requiredNow")) is not bool
+        or not isinstance(requirement_profile_ids, list)
+        or any(not isinstance(item, str) for item in requirement_profile_ids)
+        or not isinstance(execution_profile_ids, list)
+        or any(not isinstance(item, str) for item in execution_profile_ids)
+    ):
+        return None
+    return {
+        "profileIds": list(profile_ids),
+        "requirement": {
+            "schemaVersion": requirement["schemaVersion"],
+            "delivery": requirement["delivery"],
+            "requiredNow": requirement["requiredNow"],
+            "profileIds": list(requirement_profile_ids),
+            "executionProfileIds": list(execution_profile_ids),
+        },
     }
 
 
@@ -991,6 +1026,16 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "loaderModule": candidate.get("loaderModule"),
         "loaderAction": candidate.get("loaderAction"),
         "executionPath": candidate.get("executionPath"),
+        "optionalRuntimeProfileIds": (
+            candidate.get("optionalRuntimeProfileIds")
+            if isinstance(candidate.get("optionalRuntimeProfileIds"), list)
+            else None
+        ),
+        "optionalRuntimeRequirement": (
+            candidate.get("optionalRuntimeRequirement")
+            if isinstance(candidate.get("optionalRuntimeRequirement"), dict)
+            else None
+        ),
         "generation": candidate.get("generation") if isinstance(candidate.get("generation"), dict) else {},
     }
 
@@ -2420,6 +2465,8 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "loaderModule",
         "loaderAction",
         "executionPath",
+        "optionalRuntimeProfileIds",
+        "optionalRuntimeRequirement",
     ):
         if candidate.get(key) is None and stored.get(key) is not None:
             candidate[key] = stored[key]
