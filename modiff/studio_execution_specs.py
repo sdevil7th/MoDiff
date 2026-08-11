@@ -269,6 +269,20 @@ _I2V_GRAPH_BINDINGS = tuple(
     ("loadImage", "file", "referenceImages"),
     ("loadImage", "alpha_channel", "alphaMode"),
 )
+_V2V_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
+    ("loadVideo", "modules.Video.Load", -520, 260),
+    ("normalizeVideo", "modules.VideoConditioning.Normalize", -160, 260),
+)
+_V2V_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (
+    ("loadVideo", "video", "normalizeVideo", "video"),
+    ("normalizeVideo", "output", "wanGenerate", "video"),
+)
+_V2V_GRAPH_BINDINGS = _VIDEO_GRAPH_BINDINGS + (
+    ("loadVideo", "file", "sourceVideo"),
+    ("normalizeVideo", "width", "width"),
+    ("normalizeVideo", "height", "height"),
+    ("normalizeVideo", "num_frames", "numFrames"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -293,6 +307,7 @@ _BINDING_SOURCES = frozenset(
         *_INPAINT_GRAPH_BINDINGS,
         *_VIDEO_GRAPH_BINDINGS,
         *_I2V_GRAPH_BINDINGS,
+        *_V2V_GRAPH_BINDINGS,
     )
 )
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
@@ -1547,6 +1562,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _VIDEO_GRAPH_ROLES,
         "edges": _VIDEO_GRAPH_EDGES,
         "bindings": _VIDEO_GRAPH_BINDINGS,
+    },
+    "wan-21-t2v-1.3b:video-to-video:v1": {
+        "modelType": "WanVideoPipeline",
+        "mode": "video_to_video",
+        "profile": {
+            "id": "wan-video-to-video:direct",
+            "model_type": "WanVideoPipeline",
+            "modes": ("video_to_video", "video_color_edit"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-video",
+            "pipeline_class": "WanVideoToVideoPipeline",
+            "default_repo": WAN_T2V_1_3B_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 30,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _V2V_GRAPH_ROLES,
+        "edges": _V2V_GRAPH_EDGES,
+        "bindings": _V2V_GRAPH_BINDINGS,
     },
 }
 

@@ -67,6 +67,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("WanImageToVideoPipeline", "image_to_video"),
                 ("WanTI2VPipeline", "text_to_video"),
                 ("WanVideoPipeline", "text_to_video"),
+                ("WanVideoPipeline", "video_to_video"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -171,6 +172,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[15]["roles"], specs[14]["roles"])
         self.assertEqual(specs[15]["edges"], specs[14]["edges"])
         self.assertEqual(specs[15]["bindings"], specs[14]["bindings"])
+        self.assertEqual(
+            [item[0] for item in specs[16]["roles"]],
+            [
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "wanPipeline",
+                "wanGenerate",
+                "videoExport",
+                "loadVideo",
+                "normalizeVideo",
+            ],
+        )
+        self.assertIn(("loadVideo", "file", "sourceVideo"), specs[16]["bindings"])
+        self.assertIn(("loadVideo", "video", "normalizeVideo", "video"), specs[16]["edges"])
+        self.assertIn(("normalizeVideo", "output", "wanGenerate", "video"), specs[16]["edges"])
+        self.assertEqual(specs[16]["pipelineClass"], "WanVideoToVideoPipeline")
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -255,13 +272,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
 
-    def test_partial_wan_migration_seals_text_to_video_without_claiming_sibling_modes(self):
-        spec = studio_execution_spec_for_pair("WanVideoPipeline", "text_to_video")
-        self.assertIsNotNone(spec)
-        self.assertEqual(spec["pipelineClass"], "WanPipeline")
-        graph, hints = executable_graph_for_spec(spec)
-        assert_studio_execution_graph(graph, hints)
-        self.assertIsNone(studio_execution_spec_for_pair("WanVideoPipeline", "video_to_video"))
+    def test_partial_wan_migration_seals_text_and_video_to_video_without_claiming_color_edit(self):
+        text = studio_execution_spec_for_pair("WanVideoPipeline", "text_to_video")
+        video = studio_execution_spec_for_pair("WanVideoPipeline", "video_to_video")
+        self.assertIsNotNone(text)
+        self.assertIsNotNone(video)
+        self.assertEqual(text["pipelineClass"], "WanPipeline")
+        self.assertEqual(video["pipelineClass"], "WanVideoToVideoPipeline")
+        for spec in (text, video):
+            graph, hints = executable_graph_for_spec(spec)
+            assert_studio_execution_graph(graph, hints)
         self.assertIsNone(studio_execution_spec_for_pair("WanVideoPipeline", "video_color_edit"))
 
     def test_flux_kontext_modes_have_distinct_exact_receipts_and_only_edit_has_auto_requirements(self):
