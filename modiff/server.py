@@ -471,6 +471,8 @@ from modiff.studio_execution_specs import (
     assert_studio_execution_graph,
     studio_capability_definitions,
     studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
+    studio_model_requirements_for_pair,
     validate_studio_execution_specs,
 )
 from modiff.modelstore import modelstore
@@ -702,30 +704,14 @@ STUDIO_MODEL_CAPABILITIES = {
         },
         "modes": ["text_to_image", "control_image"],
         "executionStatus": "supported_with_model",
-        "additionalRequirements": [
-            {
-                "id": "qwen-controlnet-union",
-                "label": "Qwen ControlNet Union",
-                "repo": "InstantX/Qwen-Image-ControlNet-Union",
-                "revision": "b13036f066d6dee7c20513e263d3d673055e9de8",
-                "kind": "controlnet",
-                "requiredForModes": ["control_image"],
-                "description": "Required for Qwen Image Control image workflows.",
-            }
-        ],
+        "additionalRequirements": studio_model_requirements_for_pair(
+            "QwenImageModularPipeline", "control_image"
+        ),
         "modeRequirements": {
             "control_image": {
-                "modelRequirements": [
-                    {
-                        "id": "qwen-controlnet-union",
-                        "label": "Qwen ControlNet Union",
-                        "repo": "InstantX/Qwen-Image-ControlNet-Union",
-                        "revision": "b13036f066d6dee7c20513e263d3d673055e9de8",
-                        "kind": "controlnet",
-                        "requiredForModes": ["control_image"],
-                        "description": "Required for Qwen Image Control image workflows.",
-                    }
-                ],
+                "modelRequirements": studio_model_requirements_for_pair(
+                    "QwenImageModularPipeline", "control_image"
+                ),
                 "requiredImages": ["controlImage"],
                 "note": "Requires the Qwen ControlNet Union model plus one control image.",
             }
@@ -6222,30 +6208,13 @@ class WebServer:
                     hints.pop(key, None)
 
         if "modelDependencies" in hints and hints["modelDependencies"] is not None:
-            dependencies = hints["modelDependencies"]
-            if isinstance(dependencies, list):
-                if len(dependencies) > 32:
-                    raise self._auto_resource_contract_error(
-                        "Model dependency list exceeds the supported execution contract. Refresh the workflow before running it.",
-                        code="auto_resource_candidate_mismatch",
-                    )
-                hints["modelDependencies"] = [
-                    self._project_bounded_runtime_container(
-                        {key: item[key] for key in ("id", "kind", "repo") if key in item},
-                        expected_type=dict,
-                        max_depth=2,
-                        max_entries=16,
-                        max_items=8,
-                        max_keys=8,
-                        max_string_chars=512,
-                        max_total_chars=2048,
-                        max_serialized_chars=4096,
-                    )
-                    for item in dependencies
-                    if isinstance(item, dict) and isinstance(item.get("repo"), str) and item.get("repo")
-                ]
-            else:
-                hints.pop("modelDependencies", None)
+            dependencies = self._model_dependencies_signature(hints["modelDependencies"])
+            if dependencies is None:
+                raise self._auto_resource_contract_error(
+                    "Model dependency receipt is malformed. Refresh Auto before running this workflow.",
+                    code="auto_resource_candidate_mismatch",
+                )
+            hints["modelDependencies"] = dependencies
 
         if (
             "resourcePlan" in hints
@@ -7281,6 +7250,21 @@ class WebServer:
                     "Auto resource plan graph receipt does not match the current Studio execution specification. "
                     "Refresh Auto before running this workflow."
                 )
+        if hints.get("resourceMode") == "auto" or "modelDependencies" in plan:
+            expected_dependencies = WebServer._model_dependencies_signature(
+                studio_model_dependencies_for_pair(model_type, mode)
+            )
+            if (
+                WebServer._model_dependencies_signature(plan.get("modelDependencies"))
+                != expected_dependencies
+                or "modelDependencies" in hints
+                and WebServer._model_dependencies_signature(hints.get("modelDependencies"))
+                != expected_dependencies
+            ):
+                raise WebServer._auto_resource_contract_error(
+                    "Auto resource plan model dependencies do not match the current reviewed artifact contract. "
+                    "Refresh Auto before running this workflow."
+                )
         return profile
 
     @staticmethod
@@ -7326,6 +7310,31 @@ class WebServer:
             "contentHash": contract["contentHash"],
             "executionProfileId": contract["executionProfileId"],
         }
+
+    @staticmethod
+    def _model_dependencies_signature(dependencies):
+        if not isinstance(dependencies, list) or len(dependencies) > 32:
+            return None
+        output = []
+        for dependency in dependencies:
+            if not isinstance(dependency, dict) or set(dependency) != {
+                "id",
+                "kind",
+                "repo",
+                "revision",
+            }:
+                return None
+            if not all(
+                isinstance(dependency.get(key), str)
+                and dependency[key]
+                and len(dependency[key]) <= 512
+                for key in dependency
+            ):
+                return None
+            output.append({key: dependency[key] for key in ("id", "kind", "repo", "revision")})
+        if len({dependency["id"] for dependency in output}) != len(output):
+            return None
+        return sorted(output, key=lambda dependency: (dependency["kind"], dependency["id"], dependency["repo"]))
 
     @staticmethod
     def _resource_plan_node_matches_profile(node, profile):

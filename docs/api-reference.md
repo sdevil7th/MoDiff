@@ -178,13 +178,19 @@ target:
 - `optionalRuntimeRequirement` binds their requirement schema, delivery mode,
   current-required flag, profile IDs, and execution-profile IDs; and
 - `studioExecutionSpecContract`, when the pair is specification-owned, binds
-  the versioned graph-specification ID, content hash, and execution-profile ID.
+  the versioned graph-specification ID, content hash, and execution-profile ID;
+  and
+- `modelDependencies` is an exact bounded list of `id`, `kind`, `repo`, and
+  immutable `revision` receipts for auxiliary or internally loaded model
+  artifacts required by that model/task pair. Pairs with none publish `[]`.
 
 The response `modelRequirements` map is also exact-pair data. Its keys are
 `<modelType>:<mode>`, and every value carries the same
 `loaderModule`/`loaderAction`/`executionPath` target resolved from one unique
 execution profile. A model-only aggregate is not returned because different
-operations for one Studio model can intentionally use different loaders.
+operations for one Studio model can intentionally use different loaders. Each
+entry also carries the same exact `modelDependencies` receipt published on its
+candidates.
 
 For an Auto graph run, `runtimeHints.autoResourceCandidateId` must equal the
 selected plan `id`, and `runtimeHints.autoResourceCandidates` must contain
@@ -211,13 +217,14 @@ Auto admission and retry failures use bounded, non-echoing messages with the
 Clients should refresh Auto for these failures; structurally valid manual
 configurations remain available through Expert mode.
 
-Local Auto history version 5 binds successful and failed evidence to the Auto
+Local Auto history version 6 binds successful and failed evidence to the Auto
 schema version, exact execution-profile ID, loader/path/class identity,
 optional-runtime profile and delivery contract, artifact revision, optimization
-recipe, specification-owned graph contract, workload shape, and runtime
-hardware fingerprint. Evidence from an older history schema or a replaced
-execution, optional-runtime, or graph specification is retained on disk for
-inspection but cannot promote a current candidate to `live_proven`.
+recipe, specification-owned graph contract, immutable model-dependency
+receipt, workload shape, and runtime hardware fingerprint. Evidence from an
+older history schema or a replaced execution, optional-runtime, graph, or
+model-dependency specification is retained on disk for inspection but cannot
+promote a current candidate to `live_proven`.
 
 A specification-owned Auto candidate requires the matching
 `runtimeHints.studioExecutionSpec` receipt at execution. The receipt maps the

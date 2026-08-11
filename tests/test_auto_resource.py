@@ -9,6 +9,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from modiff.auto_resource import (  # noqa: E402
+    AUTO_HISTORY_VERSION,
     AUTO_MODEL_REQUIREMENTS,
     FLUX_KONTEXT_NVFP4_REPO,
     QWEN_IMAGE_EDIT_PREQUANTIZED_REPO,
@@ -809,6 +810,37 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["resolvedArtifact"], QWEN_IMAGE_2512_REPO)
         self.assertEqual(selected["offloadMode"], "none")
         self.assertEqual(selected["deviceMap"], "cuda")
+        self.assertEqual(
+            selected["modelDependencies"],
+            [
+                {
+                    "id": "qwen-controlnet-union",
+                    "kind": "controlnet",
+                    "repo": "InstantX/Qwen-Image-ControlNet-Union",
+                    "revision": "b13036f066d6dee7c20513e263d3d673055e9de8",
+                }
+            ],
+        )
+
+    def test_flux_redux_candidate_binds_the_reviewed_base_pipeline_revision(self):
+        plan = self._plan(
+            {"form": {"modelType": "FluxReduxPipeline", "mode": "edit_image"}},
+            runtime=self._runtime(vram_gib=98, free_gib=96),
+            repos=[AUTO_MODEL_REQUIREMENTS["FluxReduxPipeline"]["defaultRepo"]],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertEqual(
+            plan["candidates"][0]["modelDependencies"],
+            [
+                {
+                    "id": "flux-redux-base",
+                    "kind": "base",
+                    "repo": "black-forest-labs/FLUX.1-dev",
+                    "revision": "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+                }
+            ],
+        )
 
     def test_qwen_control_lower_memory_runtime_keeps_model_cpu_offload(self):
         plan = self._plan(
@@ -1410,6 +1442,7 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "contentHash": "studio-spec-v1-00000000",
                 "executionProfileId": "z-image:auto",
             },
+            "modelDependencies": [],
             "attentionBackend": "auto",
             "regionalCompile": False,
             "denoiserCache": "none",
@@ -1443,6 +1476,17 @@ class AutoResourcePlanTests(unittest.TestCase):
                     **base["studioExecutionSpecContract"],
                     "contentHash": "studio-spec-v1-11111111",
                 },
+            ),
+            (
+                "modelDependencies",
+                [
+                    {
+                        "id": "replacement",
+                        "kind": "base",
+                        "repo": "example/replacement",
+                        "revision": "0123456789abcdef",
+                    }
+                ],
             ),
         ):
             self.assertNotEqual(
@@ -1482,15 +1526,16 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "contentHash": "studio-spec-v1-00000000",
                 "executionProfileId": "z-image:auto",
             },
+            "modelDependencies": [],
             "generation": {"width": 1024, "height": 1024, "steps": 8},
             "installed": True,
             "requirementsMissing": [],
             "proof": {"status": "declared_safe"},
         }
         for changed, history_schema_version in (
-            ({**current, "executionProfileId": "z-image:replacement"}, 5),
-            ({**current, "autoResourceSchemaVersion": 3}, 5),
-            ({**current, "optionalRuntimeProfileIds": []}, 5),
+            ({**current, "executionProfileId": "z-image:replacement"}, AUTO_HISTORY_VERSION),
+            ({**current, "autoResourceSchemaVersion": 3}, AUTO_HISTORY_VERSION),
+            ({**current, "optionalRuntimeProfileIds": []}, AUTO_HISTORY_VERSION),
             (
                 {
                     **current,
@@ -1499,7 +1544,7 @@ class AutoResourcePlanTests(unittest.TestCase):
                         "executionProfileIds": ["z-image:replacement"],
                     },
                 },
-                5,
+                AUTO_HISTORY_VERSION,
             ),
             (
                 {
@@ -1509,9 +1554,23 @@ class AutoResourcePlanTests(unittest.TestCase):
                         "contentHash": "studio-spec-v1-11111111",
                     },
                 },
-                5,
+                AUTO_HISTORY_VERSION,
             ),
-            (current, 4),
+            (
+                {
+                    **current,
+                    "modelDependencies": [
+                        {
+                            "id": "replacement",
+                            "kind": "base",
+                            "repo": "example/replacement",
+                            "revision": "0123456789abcdef",
+                        }
+                    ],
+                },
+                AUTO_HISTORY_VERSION,
+            ),
+            (current, AUTO_HISTORY_VERSION - 1),
         ):
             stale_signature = _candidate_history_signature(changed, hardware=hardware)
             stale_signature["historySchemaVersion"] = history_schema_version
@@ -1617,6 +1676,15 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(edit["loaderModule"], "modules.ModularDiffusers")
         self.assertEqual(edit["loaderAction"], "ModelsLoader")
         self.assertEqual(edit["executionPath"], "modular-diffusers")
+        self.assertEqual(
+            requirements["QwenImageModularPipeline:control_image"]["modelDependencies"][0]["revision"],
+            "b13036f066d6dee7c20513e263d3d673055e9de8",
+        )
+        self.assertEqual(
+            requirements["FluxReduxPipeline:edit_image"]["modelDependencies"][0]["revision"],
+            "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+        )
+        self.assertEqual(requirements["FluxSchnellPipeline:text_to_image"]["modelDependencies"], [])
         for key, specification in requirements.items():
             with self.subTest(key=key):
                 self.assertIn(":", key)

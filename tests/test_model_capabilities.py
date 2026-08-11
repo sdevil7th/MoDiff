@@ -109,6 +109,18 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(by_model["FluxReduxPipeline"]["modes"], ["edit_image"])
         self.assertEqual(redux_spec["mode"], "edit_image")
         self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
+        redux_requirement = by_model["FluxReduxPipeline"]["modeRequirements"]["edit_image"][
+            "modelRequirements"
+        ][0]
+        self.assertEqual(redux_requirement["repo"], "black-forest-labs/FLUX.1-dev")
+        self.assertEqual(
+            redux_requirement["revision"],
+            "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+        )
+        self.assertEqual(
+            by_model["FluxReduxPipeline"]["additionalRequirements"][0],
+            redux_requirement,
+        )
 
         kontext_specs = by_model["FluxKontextPipeline"]["studioExecutionSpecs"]
         kontext_spec = next(item for item in kontext_specs if item["mode"] == "edit_image")

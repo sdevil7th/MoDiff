@@ -34,7 +34,10 @@ from modiff.diffusers_profiles import (  # noqa: E402
 )
 from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution  # noqa: E402
 from modiff.server import WebServer  # noqa: E402
-from modiff.studio_execution_specs import studio_execution_spec_for_pair  # noqa: E402
+from modiff.studio_execution_specs import (  # noqa: E402
+    studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
+)
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
 
 
@@ -53,6 +56,7 @@ def resource_plan_target(model_type, mode):
         "loaderAction": profile.loader_action,
         "executionPath": profile.execution_path,
         "pipelineClass": profile.pipeline_class,
+        "modelDependencies": studio_model_dependencies_for_pair(model_type, mode),
         "optionalRuntimeProfileIds": list(
             optional_runtime_profile_ids_for_execution(model_type, mode)
         ),
@@ -898,6 +902,69 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                     self.server._assert_auto_resource_candidate_ready(hints)
                 self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
                 self.assertLess(len(str(raised.exception)), 256)
+
+    def test_auto_execution_binds_exact_model_dependency_receipts(self):
+        base = {
+            **resource_plan_target("QwenImageModularPipeline", "control_image"),
+            "id": "qwen-control",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "control_image",
+            "proof": {"status": "declared_safe"},
+        }
+        valid = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": base["modelType"],
+                "mode": base["mode"],
+                "modelDependencies": base["modelDependencies"],
+                "autoResourceCandidateId": base["id"],
+                "autoResourcePlan": base,
+                "autoResourceCandidates": [base],
+            }
+        )
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(valid))
+
+        stale_dependency = {
+            **base["modelDependencies"][0],
+            "revision": "0000000000000000000000000000000000000000",
+        }
+        cases = (
+            ({key: value for key, value in base.items() if key != "modelDependencies"}, None),
+            ({**base, "modelDependencies": [stale_dependency]}, None),
+            (
+                {
+                    **base,
+                    "modelDependencies": [{**base["modelDependencies"][0], "extra": True}],
+                },
+                None,
+            ),
+            (base, [stale_dependency]),
+        )
+        for candidate, hint_dependencies in cases:
+            with self.subTest(candidate=candidate, hints=hint_dependencies):
+                payload = {
+                    "resourceMode": "auto",
+                    "modelType": base["modelType"],
+                    "mode": base["mode"],
+                    "autoResourceCandidateId": candidate["id"],
+                    "autoResourcePlan": candidate,
+                    "autoResourceCandidates": [candidate],
+                }
+                if hint_dependencies is not None:
+                    payload["modelDependencies"] = hint_dependencies
+                hints = self.server._coerce_runtime_hints(payload)
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
+                self.assertLess(len(str(raised.exception)), 256)
+
+        malformed = {
+            **base["modelDependencies"][0],
+            "extra": True,
+        }
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints({"modelDependencies": [malformed]})
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
 
     def test_auto_target_errors_do_not_echo_oversized_untrusted_values(self):
         marker = "PUBLIC_SECRET_MARKER_" + "x" * 2048

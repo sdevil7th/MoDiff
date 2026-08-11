@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 import os
 import time
@@ -43,6 +44,7 @@ from modiff.optional_runtime_execution import optional_runtime_requirement_for_e
 from modiff.studio_execution_specs import (
     studio_auto_model_requirements,
     studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
 )
 
 
@@ -69,7 +71,7 @@ WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 5
+AUTO_HISTORY_VERSION = 6
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -385,6 +387,7 @@ def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | 
         "defaultRepo": profile.default_repo,
         "fallbackRepo": profile.fallback_repo,
         "compatibleRepos": list(profile.compatible_repos),
+        "modelDependencies": studio_model_dependencies_for_pair(normalized_model, normalized_mode),
     }
     allowed_lower_memory_repos = {
         repo
@@ -901,6 +904,7 @@ def _candidate_history_signature(
         "executionPath": str(candidate.get("executionPath") or ""),
         "optionalRuntime": _candidate_optional_runtime_signature(candidate),
         "studioExecutionSpec": _candidate_studio_execution_spec_signature(candidate),
+        "modelDependencies": _candidate_model_dependencies_signature(candidate),
         "workload": workload,
     }
 
@@ -962,6 +966,22 @@ def _candidate_studio_execution_spec_signature(candidate: dict[str, Any]) -> dic
         "contentHash": contract["contentHash"],
         "executionProfileId": contract["executionProfileId"],
     }
+
+
+def _candidate_model_dependencies_signature(candidate: dict[str, Any]) -> list[dict[str, str]] | None:
+    dependencies = candidate.get("modelDependencies")
+    if not isinstance(dependencies, list) or len(dependencies) > 32:
+        return None
+    output = []
+    for dependency in dependencies:
+        if not isinstance(dependency, dict) or set(dependency) != {"id", "kind", "repo", "revision"}:
+            return None
+        if not all(isinstance(dependency.get(key), str) and dependency[key] for key in dependency):
+            return None
+        output.append({key: dependency[key] for key in ("id", "kind", "repo", "revision")})
+    if len({dependency["id"] for dependency in output}) != len(output):
+        return None
+    return sorted(output, key=lambda dependency: (dependency["kind"], dependency["id"], dependency["repo"]))
 
 
 def _candidate_workload_signature(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -1070,6 +1090,7 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
             if isinstance(candidate.get("studioExecutionSpecContract"), dict)
             else None
         ),
+        "modelDependencies": _candidate_model_dependencies_signature(candidate),
         "generation": candidate.get("generation") if isinstance(candidate.get("generation"), dict) else {},
     }
 
@@ -2502,6 +2523,7 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "optionalRuntimeProfileIds",
         "optionalRuntimeRequirement",
         "studioExecutionSpecContract",
+        "modelDependencies",
     ):
         if candidate.get(key) is None and stored.get(key) is not None:
             candidate[key] = stored[key]
@@ -2950,6 +2972,7 @@ def build_auto_resource_plan(
         candidate["exactPairDeclared"] = exact_pair_declared
         candidate["optionalRuntimeProfileIds"] = list(optional_runtime_profile_ids)
         candidate["optionalRuntimeRequirement"] = dict(optional_runtime_requirement)
+        candidate["modelDependencies"] = deepcopy((exact_pair_requirements or {}).get("modelDependencies") or [])
         if studio_execution_spec_contract is not None:
             candidate["studioExecutionSpecContract"] = dict(studio_execution_spec_contract)
 

@@ -11,6 +11,7 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_NONE,
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
+from modiff.model_artifact_catalog import require_catalog_revision
 
 
 STUDIO_EXECUTION_SPEC_SCHEMA_VERSION = 1
@@ -35,6 +36,43 @@ LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
+QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
+
+_STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    ("QwenImageModularPipeline", "control_image"): (
+        {
+            "id": "qwen-controlnet-union",
+            "label": "Qwen ControlNet Union",
+            "repo": QWEN_CONTROLNET_REPO,
+            "revision": require_catalog_revision(QWEN_CONTROLNET_REPO),
+            "kind": "controlnet",
+            "requiredForModes": ["control_image"],
+            "description": "Required for Qwen Image Control image workflows.",
+        },
+    ),
+    ("FluxReduxPipeline", "edit_image"): (
+        {
+            "id": "flux-redux-base",
+            "label": "FLUX.1-dev base pipeline",
+            "repo": FLUX_DEV_REPO,
+            "revision": require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline"),
+            "kind": "base",
+            "requiredForModes": ["edit_image"],
+            "description": "Redux supplies reference embeddings to the app-installed FLUX.1-dev base pipeline.",
+        },
+    ),
+}
+
+
+def studio_model_requirements_for_pair(model_type: str, mode: str) -> list[dict[str, Any]]:
+    return deepcopy(list(_STUDIO_MODEL_DEPENDENCY_REQUIREMENTS.get((model_type, mode), ())))
+
+
+def studio_model_dependencies_for_pair(model_type: str, mode: str) -> list[dict[str, str]]:
+    return [
+        {key: requirement[key] for key in ("id", "kind", "repo", "revision")}
+        for requirement in studio_model_requirements_for_pair(model_type, mode)
+    ]
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -1075,6 +1113,18 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "artifactCandidates": [FLUX_REDUX_REPO, FLUX_DEV_REPO],
             "supportsImageInput": True,
             "modes": ["edit_image"],
+            "additionalRequirements": studio_model_requirements_for_pair(
+                "FluxReduxPipeline", "edit_image"
+            ),
+            "modeRequirements": {
+                "edit_image": {
+                    "modelRequirements": studio_model_requirements_for_pair(
+                        "FluxReduxPipeline", "edit_image"
+                    ),
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires reference images plus the reviewed FLUX.1-dev base pipeline.",
+                }
+            },
         },
         "autoRequirements": {
             "supportedTasks": ["edit_image"],

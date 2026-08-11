@@ -11,6 +11,8 @@ from modiff.studio_execution_specs import (
     STUDIO_EXECUTION_SPEC_DEFINITIONS,
     assert_studio_execution_graph,
     studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
+    studio_model_requirements_for_pair,
     validate_studio_execution_specs,
 )
 
@@ -46,6 +48,41 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_model_dependencies_are_pair_specific_immutable_artifact_receipts(self):
+        qwen = studio_model_dependencies_for_pair(
+            "QwenImageModularPipeline",
+            "control_image",
+        )
+        redux = studio_model_dependencies_for_pair("FluxReduxPipeline", "edit_image")
+
+        self.assertEqual(
+            qwen,
+            [
+                {
+                    "id": "qwen-controlnet-union",
+                    "kind": "controlnet",
+                    "repo": "InstantX/Qwen-Image-ControlNet-Union",
+                    "revision": "b13036f066d6dee7c20513e263d3d673055e9de8",
+                }
+            ],
+        )
+        self.assertEqual(
+            redux,
+            [
+                {
+                    "id": "flux-redux-base",
+                    "kind": "base",
+                    "repo": "black-forest-labs/FLUX.1-dev",
+                    "revision": "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+                }
+            ],
+        )
+        self.assertEqual(
+            studio_model_requirements_for_pair("FluxReduxPipeline", "edit_image")[0]["requiredForModes"],
+            ["edit_image"],
+        )
+        self.assertEqual(studio_model_dependencies_for_pair("FluxReduxPipeline", "text_to_image"), [])
+
     def test_flux_registry_owns_profile_capability_and_auto_contracts(self):
         specs = validate_studio_execution_specs(module_registry.MODULE_MAP)
         self.assertEqual(
