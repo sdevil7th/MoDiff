@@ -298,6 +298,10 @@ _LTX_T2V_GRAPH_BINDINGS = tuple(
     for role, param, source in _VIDEO_GRAPH_BINDINGS
     if not (role == "wanGenerate" and param == "scheduler_flow_shift")
 )
+_LTX_I2V_GRAPH_BINDINGS = _LTX_T2V_GRAPH_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -324,6 +328,7 @@ _BINDING_SOURCES = frozenset(
         *_I2V_GRAPH_BINDINGS,
         *_V2V_GRAPH_BINDINGS,
         *_LTX_T2V_GRAPH_BINDINGS,
+        *_LTX_I2V_GRAPH_BINDINGS,
     )
 )
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
@@ -1656,6 +1661,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _VIDEO_GRAPH_ROLES,
         "edges": _VIDEO_GRAPH_EDGES,
         "bindings": _LTX_T2V_GRAPH_BINDINGS,
+    },
+    "ltx-video-0.9.8-13b-distilled:image-to-video:v1": {
+        "modelType": "LTXVideoPipeline",
+        "mode": "image_to_video",
+        "profile": {
+            "id": "ltx-video:direct",
+            "model_type": "LTXVideoPipeline",
+            "modes": ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-video",
+            "pipeline_class": "LTXConditionPipeline",
+            "default_repo": LTX_VIDEO_REPO,
+            "fallback_repo": LTX_VIDEO_FALLBACK_REPO,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 704,
+            "max_low_memory_steps": 8,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _I2V_GRAPH_ROLES,
+        "edges": _I2V_GRAPH_EDGES,
+        "bindings": _LTX_I2V_GRAPH_BINDINGS,
     },
 }
 
