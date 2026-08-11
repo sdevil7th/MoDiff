@@ -426,6 +426,15 @@ _AUDIO_CONTINUATION_GRAPH_BINDINGS = (
     ("audioLoudnessMatch", "max_adjustment_db", "maxAdjustment12"),
     ("audioJoin", "boundary_fade_seconds", "boundaryFade001"),
 )
+_AUDIO_REPAINT_GRAPH_ROLES = _AUDIO_VARIATION_GRAPH_ROLES
+_AUDIO_REPAINT_GRAPH_EDGES = _AUDIO_VARIATION_GRAPH_EDGES
+_AUDIO_REPAINT_GRAPH_BINDINGS = (
+    ("loadAudio", "file", "sourceAudio"),
+    *(
+        (role, param, "repaint") if role == "audioGenerate" and param == "task_type" else (role, param, source)
+        for role, param, source in _AUDIO_GRAPH_BINDINGS
+    ),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -457,6 +466,7 @@ _BINDING_SOURCES = frozenset(
         *_AUDIO_GRAPH_BINDINGS,
         *_AUDIO_VARIATION_GRAPH_BINDINGS,
         *_AUDIO_CONTINUATION_GRAPH_BINDINGS,
+        *_AUDIO_REPAINT_GRAPH_BINDINGS,
     )
 )
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
@@ -1957,6 +1967,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _AUDIO_CONTINUATION_GRAPH_ROLES,
         "edges": _AUDIO_CONTINUATION_GRAPH_EDGES,
         "bindings": _AUDIO_CONTINUATION_GRAPH_BINDINGS,
+    },
+    "ace-step-v1.5-xl-turbo:audio-repaint:v1": {
+        "modelType": "AceStepAudioPipeline",
+        "mode": "audio_repaint",
+        "profile": {
+            "id": "ace-step-audio:direct",
+            "model_type": "AceStepAudioPipeline",
+            "modes": ("text_to_audio", "audio_variation", "audio_continuation", "audio_repaint"),
+            "loader_module": "modules.DiffusersAudio",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-audio",
+            "pipeline_class": "AceStepPipeline",
+            "default_repo": ACE_STEP_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": None,
+            "max_low_memory_steps": 8,
+            "live_proof": False,
+            "compatible_repos": (ACE_STEP_LORA_BASE_REPO,),
+        },
+        "roles": _AUDIO_REPAINT_GRAPH_ROLES,
+        "edges": _AUDIO_REPAINT_GRAPH_EDGES,
+        "bindings": _AUDIO_REPAINT_GRAPH_BINDINGS,
     },
 }
 

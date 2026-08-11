@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 25)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 26)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -250,13 +250,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         ace = by_model["AceStepAudioPipeline"]
         self.assertEqual(
             ace["studioExecutionSpecModes"],
-            ["audio_continuation", "audio_variation", "text_to_audio"],
+            ["audio_continuation", "audio_repaint", "audio_variation", "text_to_audio"],
         )
         ace_text_spec = next(item for item in ace["studioExecutionSpecs"] if item["mode"] == "text_to_audio")
         ace_variation_spec = next(item for item in ace["studioExecutionSpecs"] if item["mode"] == "audio_variation")
         ace_continuation_spec = next(
             item for item in ace["studioExecutionSpecs"] if item["mode"] == "audio_continuation"
         )
+        ace_repaint_spec = next(item for item in ace["studioExecutionSpecs"] if item["mode"] == "audio_repaint")
         self.assertEqual(ace_text_spec["pipelineClass"], "AceStepPipeline")
         self.assertEqual(
             [item[0] for item in ace_text_spec["roles"]],
@@ -285,6 +286,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ace_continuation_spec["edges"],
         )
         self.assertNotEqual(ace_continuation_spec["contentHash"], ace_variation_spec["contentHash"])
+        self.assertEqual(ace_repaint_spec["roles"], ace_variation_spec["roles"])
+        self.assertEqual(ace_repaint_spec["edges"], ace_variation_spec["edges"])
+        self.assertIn(["audioGenerate", "task_type", "repaint"], ace_repaint_spec["bindings"])
+        self.assertNotEqual(ace_repaint_spec["contentHash"], ace_continuation_spec["contentHash"])
         self.assertEqual(
             ace["runnableModes"],
             ["audio_continuation", "audio_repaint", "audio_variation", "text_to_audio"],
