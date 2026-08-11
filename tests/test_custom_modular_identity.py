@@ -235,6 +235,12 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 "invalid or duplicate loader component",
                 {**valid, "loader_component_outputs": ["image_encoder", "image_encoder"]},
             ),
+            ("at most 64 layer block", {**valid, "layer_block_options": "transformer_blocks"}),
+            ("invalid or duplicate layer block", {**valid, "layer_block_options": [{}]}),
+            (
+                "invalid or duplicate layer block",
+                {**valid, "layer_block_options": ["transformer_blocks", "transformer_blocks"]},
+            ),
         )
         for expected_message, document in invalid_documents:
             with self.subTest(expected_message=expected_message), tempfile.TemporaryDirectory() as directory:

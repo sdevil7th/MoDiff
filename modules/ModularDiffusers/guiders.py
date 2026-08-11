@@ -1,11 +1,13 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
+from collections.abc import Mapping
 
 from diffusers import LayerSkipConfig, SmoothedEnergyGuidanceConfig
 
 from modiff.NodeBase import NodeBase
 
-from . import FLUX_BLOCKS, QWEN_IMAGE_BLOCKS, SDXL_BLOCKS
+from . import MODULAR_LAYER_BLOCK_OPTIONS
+from .pipeline_schema import MAX_LAYER_BLOCK_OPTIONS
 
 
 logger = logging.getLogger("modiff")
@@ -410,20 +412,33 @@ class Layers(NodeBase):
                 "action": "value",
                 "target": "blocks_select",
                 "prop": "options",
-                "data": {
-                    "StableDiffusionXLModularPipeline": SDXL_BLOCKS,
-                    "QwenImageModularPipeline": QWEN_IMAGE_BLOCKS,
-                    "QwenImageEditModularPipeline": QWEN_IMAGE_BLOCKS,
-                    "QwenImageEditPlusModularPipeline": QWEN_IMAGE_BLOCKS,
-                    "FluxModularPipeline": FLUX_BLOCKS,
-                    "FluxKontextModularPipeline": FLUX_BLOCKS,
-                },
+                "data": MODULAR_LAYER_BLOCK_OPTIONS,
             },
         },
     }
 
-    def set_blocks(self, values, ref):
+    def _selected_blocks(self, values):
+        if not isinstance(values, Mapping):
+            raise TypeError("Layers values must be a mapping.")
         blocks_select = values.get("blocks_select", [])
+        if (
+            not isinstance(blocks_select, list)
+            or len(blocks_select) > MAX_LAYER_BLOCK_OPTIONS
+            or any(not isinstance(block, str) or not block or block != block.strip() for block in blocks_select)
+            or len(blocks_select) != len(set(blocks_select))
+        ):
+            raise ValueError("Layers requires a bounded list of unique block names.")
+        if not blocks_select:
+            return ()
+
+        model_type = self.get_signal_value("layers_config")
+        allowed_blocks = MODULAR_LAYER_BLOCK_OPTIONS.get(model_type) if isinstance(model_type, str) else None
+        if not isinstance(allowed_blocks, list) or any(block not in allowed_blocks for block in blocks_select):
+            raise ValueError("Layers requires block names allowed by the connected reviewed Modular pipeline.")
+        return tuple(blocks_select)
+
+    def set_blocks(self, values, ref):
+        blocks_select = self._selected_blocks(values)
 
         params = {}
 
@@ -437,15 +452,13 @@ class Layers(NodeBase):
 
     def execute(self, **kwargs):
         layer_configs = []
+        blocks_select = self._selected_blocks(kwargs)
+        supplied_blocks = {block for block in kwargs if block != "blocks_select"}
+        if supplied_blocks != set(blocks_select):
+            raise ValueError("Layers inputs must exactly match the reviewed selected block names.")
 
-        for block in kwargs:
-            if block == "blocks_select":
-                continue
-
+        for block in blocks_select:
             config = kwargs.get(block, {})
-
-            if not isinstance(block, str) or not block or block != block.strip():
-                raise ValueError("Layer block names must be non-empty FQNs without surrounding whitespace.")
             if not isinstance(config, dict):
                 raise TypeError(f"Layer configuration for {block!r} must be a mapping.")
 

@@ -8,12 +8,14 @@ from diffusers import ComponentSpec, ComponentsManager, ModularPipeline
 from diffusers.modular_pipelines import InputParam, LoopSequentialPipelineBlocks, ModularPipelineBlocks, OutputParam
 
 from modiff.diffusers_profiles import public_execution_profiles, public_experimental_pipelines
+from modules import MODULE_MAP
 from modules.ModularDiffusers.modular_utils import (
     get_all_model_types,
+    get_modular_layer_block_options,
     get_model_type_metadata,
     require_modiff_node_contract,
 )
-from modules.ModularDiffusers import FLUX_BLOCKS, QWEN_IMAGE_BLOCKS, SDXL_BLOCKS
+from modules.ModularDiffusers import FLUX_BLOCKS, MODULAR_LAYER_BLOCK_OPTIONS, QWEN_IMAGE_BLOCKS, SDXL_BLOCKS
 from modules.ModularDiffusers.controlnet import Controlnet
 from modules.ModularDiffusers.denoise import Denoise
 from modules.ModularDiffusers.dynamic_node import DynamicBlockNode
@@ -280,11 +282,13 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             default_repo="local/fixture",
             default_dtype="bfloat16",
             loader_component_outputs=("image_encoder",),
+            layer_block_options=("transformer_blocks",),
         )
 
         restored = MoDiffPipelineConfig.from_dict(config.to_dict())
         self.assertEqual(restored.to_dict(), config.to_dict())
         self.assertEqual(restored.loader_component_outputs, ("image_encoder",))
+        self.assertEqual(restored.layer_block_options, ("transformer_blocks",))
         self.assertEqual(restored.node_params["encode"]["block_name"], "text_encoder")
         self.assertIn("prompt", restored.node_params["encode"]["params"])
 
@@ -313,6 +317,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "list or tuple"):
             MoDiffPipelineConfig(node_specs={}, loader_component_outputs="image_encoder")
+        with self.assertRaisesRegex(ValueError, "list or tuple"):
+            MoDiffPipelineConfig(node_specs={}, layer_block_options="transformer_blocks")
 
     def test_required_pipeline_registry_matches_installed_diffusers(self):
         required = {
@@ -777,12 +783,37 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertTrue(all(value.endswith(".transformer_blocks") for value in SDXL_BLOCKS))
         self.assertTrue(all(value == value.strip() for value in [*SDXL_BLOCKS, *QWEN_IMAGE_BLOCKS, *FLUX_BLOCKS]))
 
+        expected = {
+            "StableDiffusionXLModularPipeline": SDXL_BLOCKS,
+            "QwenImageModularPipeline": QWEN_IMAGE_BLOCKS,
+            "QwenImageEditModularPipeline": QWEN_IMAGE_BLOCKS,
+            "QwenImageEditPlusModularPipeline": QWEN_IMAGE_BLOCKS,
+            "FluxModularPipeline": FLUX_BLOCKS,
+            "FluxKontextModularPipeline": FLUX_BLOCKS,
+        }
+        self.assertEqual(get_modular_layer_block_options(), expected)
+        self.assertEqual(MODULAR_LAYER_BLOCK_OPTIONS, expected)
+        self.assertEqual(Layers.params["layers_config"]["onSignal"]["data"], expected)
+        self.assertEqual(
+            MODULE_MAP["modules.ModularDiffusers"]["Layers"]["params"]["layers_config"]["onSignal"]["data"],
+            expected,
+        )
+        for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
+            self.assertEqual(
+                get_model_type_metadata(model_type)["layer_block_options"],
+                expected.get(model_type, []),
+            )
+        layer_source = inspect.getsource(Layers)
+        self.assertNotIn("QwenImageModularPipeline", layer_source)
+        self.assertNotIn("FluxModularPipeline", layer_source)
+
     def test_layers_preserve_exact_stack_fqn_and_validate_indices(self):
         node = object.__new__(Layers)
-        output = node.execute(
-            blocks_select=["transformer_blocks"],
-            transformer_blocks={"indices": "0, 18", "dropout": 0.5},
-        )
+        with patch.object(Layers, "get_signal_value", return_value="QwenImageModularPipeline"):
+            output = node.execute(
+                blocks_select=["transformer_blocks"],
+                transformer_blocks={"indices": "0, 18", "dropout": 0.5},
+            )
 
         self.assertEqual(
             output["layers_config"],
@@ -797,8 +828,34 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 }
             ],
         )
-        with self.assertRaisesRegex(ValueError, "comma-separated integers"):
-            node.execute(transformer_blocks={"indices": "zero"})
+        with patch.object(Layers, "get_signal_value", return_value="QwenImageModularPipeline"):
+            with self.assertRaisesRegex(ValueError, "comma-separated integers"):
+                node.execute(blocks_select=["transformer_blocks"], transformer_blocks={"indices": "zero"})
+
+    def test_layers_field_action_and_execution_require_the_connected_reviewed_allowlist(self):
+        node = object.__new__(Layers)
+        node.send_node_definition = MagicMock()
+
+        with patch.object(Layers, "get_signal_value", return_value="FluxModularPipeline"):
+            node.set_blocks({"blocks_select": ["single_transformer_blocks"]}, None)
+            node.send_node_definition.assert_called_once()
+            with self.assertRaisesRegex(ValueError, "exactly match"):
+                node.execute(
+                    blocks_select=["single_transformer_blocks"],
+                    single_transformer_blocks={"indices": "1"},
+                    transformer_blocks={"indices": "2"},
+                )
+
+        for model_type, block in (
+            (None, "transformer_blocks"),
+            ({}, "transformer_blocks"),
+            ("QwenImageModularPipeline", "single_transformer_blocks"),
+            ("QwenImageLayeredModularPipeline", "transformer_blocks"),
+        ):
+            with self.subTest(model_type=model_type, block=block):
+                with patch.object(Layers, "get_signal_value", return_value=model_type):
+                    with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                        node.execute(blocks_select=[block], **{block: {"indices": "0"}})
 
     def test_layer_dependent_guiders_require_an_explicit_nonempty_selection(self):
         node = object.__new__(Guider)

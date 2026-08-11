@@ -27,6 +27,21 @@ logger = logging.getLogger("modiff")
 _CANONICAL_INTEGER_TEXT = re.compile(r"^(?:0|-?[1-9][0-9]*)$")
 _MIN_MODULAR_SEED = 0
 _MAX_MODULAR_SEED = 4294967295
+SDXL_LAYER_BLOCK_OPTIONS = (
+    "down_blocks.1.attentions.0.transformer_blocks",
+    "down_blocks.1.attentions.1.transformer_blocks",
+    "down_blocks.2.attentions.0.transformer_blocks",
+    "down_blocks.2.attentions.1.transformer_blocks",
+    "mid_block.attentions.0.transformer_blocks",
+    "up_blocks.0.attentions.0.transformer_blocks",
+    "up_blocks.0.attentions.1.transformer_blocks",
+    "up_blocks.0.attentions.2.transformer_blocks",
+    "up_blocks.1.attentions.0.transformer_blocks",
+    "up_blocks.1.attentions.1.transformer_blocks",
+    "up_blocks.1.attentions.2.transformer_blocks",
+)
+QWEN_IMAGE_LAYER_BLOCK_OPTIONS = ("transformer_blocks",)
+FLUX_LAYER_BLOCK_OPTIONS = ("transformer_blocks", "single_transformer_blocks")
 
 
 def _normalize_modular_integer(value):
@@ -292,6 +307,7 @@ SDXL_PIPELINE_CONFIG = PipelineConfig(
     label="Stable Diffusion XL",
     default_repo="stabilityai/stable-diffusion-xl-base-1.0",
     default_dtype="float16",
+    layer_block_options=SDXL_LAYER_BLOCK_OPTIONS,
 )
 
 
@@ -412,6 +428,7 @@ QWEN_IMAGE_PIPELINE_CONFIG = PipelineConfig(
     label="Qwen-Image-2512",
     default_repo="Qwen/Qwen-Image-2512",
     default_dtype="bfloat16",
+    layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
 )
 
 
@@ -503,6 +520,7 @@ QWEN_IMAGE_EDIT_PIPELINE_CONFIG = PipelineConfig(
     label="Qwen-Image-Edit",
     default_repo="Qwen/Qwen-Image-Edit",
     default_dtype="bfloat16",
+    layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
 )
 
 
@@ -592,6 +610,7 @@ QWEN_IMAGE_EDIT_PLUS_PIPELINE_CONFIG = PipelineConfig(
     label="Qwen-Image-Edit-2511",
     default_repo="Qwen/Qwen-Image-Edit-2511",
     default_dtype="bfloat16",
+    layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
 )
 
 # =============================================================================
@@ -820,6 +839,7 @@ FLUX_PIPELINE_CONFIG = PipelineConfig(
     label="Flux",
     default_repo="black-forest-labs/FLUX.1-dev",
     default_dtype="bfloat16",
+    layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
 )
 
 
@@ -903,6 +923,7 @@ FLUX_KONTEXT_PIPELINE_CONFIG = PipelineConfig(
     label="Flux Kontext",
     default_repo="black-forest-labs/FLUX.1-Kontext-dev",
     default_dtype="bfloat16",
+    layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
 )
 
 # =============================================================================
@@ -1559,12 +1580,23 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
                 "default_repo": config.default_repo,
                 "default_dtype": config.default_dtype,
                 "loader_component_outputs": list(config.loader_component_outputs),
+                "layer_block_options": list(config.layer_block_options),
                 "node_params": config.node_params,
             }
             if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
                 metadata["execution_status"] = CUSTOM_PIPELINE_EXECUTION_STATUS
             return metadata
     return None
+
+
+def get_modular_layer_block_options() -> Dict[str, list[str]]:
+    """Return exact model-type-to-transformer-block choices from reviewed configs."""
+
+    return {
+        pipeline_cls.__name__: list(config.layer_block_options)
+        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        if config.layer_block_options
+    }
 
 
 def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, resolve_blocks=True):
