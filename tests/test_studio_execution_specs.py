@@ -128,6 +128,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageEditPlusModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
                 ("QwenImageLayeredModularPipeline", "layer_decomposition"),
+                ("QwenImageModularPipeline", "control_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -673,6 +674,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertNotIn("route_state_out", [item[1] for item in spec["edges"]])
         self.assertIn(("loadImage", "alpha_channel", "addAlpha"), spec["bindings"])
         self.assertIn(("denoise", "layers", "layers"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_qwen_control_seals_the_exact_auxiliary_loader_and_route_state_chain(self):
+        spec = studio_execution_spec_for_pair("QwenImageModularPipeline", "control_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "qwen-image:modular")
+        self.assertEqual(spec["executionPath"], "modular-diffusers")
+        self.assertEqual(spec["pipelineClass"], "QwenImageModularPipeline")
+        self.assertEqual(len(spec["roles"]), 8)
+        self.assertEqual(len(spec["edges"]), 13)
+        self.assertEqual(len(spec["bindings"]), 32)
+        self.assertIn(("controlnetModel", "model_id", "repo"), spec["bindings"])
+        self.assertIn(("controlnetModel", "revision", "revision"), spec["bindings"])
+        self.assertIn(("controlnet", "route_state_out", "denoise", "route_state_in"), spec["edges"])
+        self.assertIn(("denoise", "route_state_out", "decode", "route_state_in"), spec["edges"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 

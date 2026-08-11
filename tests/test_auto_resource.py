@@ -848,6 +848,8 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["resolvedArtifact"], QWEN_IMAGE_2512_REPO)
         self.assertEqual(selected["offloadMode"], "none")
         self.assertEqual(selected["deviceMap"], "cuda")
+        self.assertEqual(selected["studioExecutionSpecContract"]["executionProfileId"], "qwen-image:modular")
+        self.assertEqual(selected["studioExecutionSpecContract"]["id"], "qwen-image-2512:control-image:v1")
         self.assertEqual(
             selected["modelDependencies"],
             [

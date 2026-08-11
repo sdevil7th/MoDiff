@@ -1459,7 +1459,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             )
         )
 
-    def test_unqualified_auto_plan_still_requires_an_executable_exact_loader(self):
+    def test_auto_plan_requires_the_exact_studio_receipt_before_loader_application(self):
         candidate = {
             **resource_plan_target("QwenImageModularPipeline", "control_image"),
             "id": "qwen-control-unqualified",
@@ -1493,7 +1493,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch.object(self.server, "_prepare_auto_runtime_for_graph", return_value=None),
-            self.assertRaisesRegex(RuntimeError, "matched zero exact loader identities"),
+            self.assertRaisesRegex(RuntimeError, "Studio execution specification receipt is required"),
         ):
             self.server._execute_graph(graph)
 
