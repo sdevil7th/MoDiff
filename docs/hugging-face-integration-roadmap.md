@@ -2165,9 +2165,32 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       This is static, unit, contract, mocked-browser, build, and local preflight
       evidence only; no model download, video execution, generated media, or
       live workload qualification occurred.
+    - [x] Expert CUDA resource-policy overlay. Backend commit `b1f514f`
+      adds a bounded schema-v1 policy to each exact Qwen execution profile for
+      blocked CUDA dtypes, the recommended replacement dtype, projected
+      offloaded/resident VRAM, and per-quantization resident overrides. Other
+      profiles omit the policy rather than publishing a nullable or inferred
+      contract. Client commit `0259624` strictly parses the bounded policy and
+      consumes it only from the unique execution profile named by the selected
+      exact specification; the Qwen-family and 10/24/80 GiB readiness branches
+      are removed. A deliberately different 12 GiB unit receipt and a
+      float16-blocking mocked-browser receipt prove that the backend profile,
+      not a retained client constant, controls the result. The focused backend
+      matrix passed 131 tests with 367 subtests, and the complete backend gate
+      passed 1,167 tests with 4 skips and 1,932 subtests with only the existing
+      Diffusers deprecation warning. The focused client graph/request/readiness
+      matrix passed 137/137, `npm run check` passed, the exact policy browser
+      contract passed 1/1, and the complete mocked Studio suite passed 91/91.
+      The production bundle was 522840/523264 gzip bytes, 296 bytes below the
+      stricter 523136-byte safety target. Ruff 0.12.7 E9/F, `py_compile`, `uv
+      pip check` (78 packages), preflight, formatting, lint, type, build,
+      bundle, and diff checks passed. This is static, unit, contract,
+      mocked-browser, build, and local preflight evidence only; no model
+      download, inference, generated media, or live workload qualification
+      occurred.
     - [ ] Move the remaining image/Modular dynamic field visibility and
-      non-path resource metadata out of frontend/node model switches and into
-      reviewed declarative overlays.
+      residual quantization/MPS resource metadata out of frontend/node model
+      switches and into reviewed declarative overlays.
 - [ ] **P0.4 Proof receipts and current mismatch cleanup**
   - Backend: bind history to profile/schema version, graph and loader topology,
     auxiliary repositories, adapters, LoRAs, ControlNets, runtime profile, and
@@ -3012,6 +3035,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e readiness overlay | `03c358b` (compatible exact-specification contract) | `7a02806` | Not required | Not required | Complete: readiness consumes the live managed loader identity or the unique authoritative execution specification, validates every exact role generically, and no longer routes the removed capability checks by model or pipeline name. Focused 67/67, complete client, exact browser, and final 88/88 mocked Studio gates passed; the bundle remained inside both limits. |
 | P0.3e audio field overlay | `2a98856` | `fba496c` | Not required | Not required | Complete: reviewed audio pipeline/mode contracts publish the exact generic Generate field overlay; the backend rejects tampered overlays and the client no longer derives audio visibility from pipeline names. Complete backend/client and final 89/89 mocked Studio gates passed; no live audio execution was required. |
 | P0.3e video field overlay | `b32241b` | `947f7d9` | Not required | Not required | Complete: every reviewed generic video adapter/mode owns its field visibility, required inputs, adapter controls, and strength binding; the exact backend action rejects stale contracts and the client no longer identifies LTX to choose the strength control. Complete backend/client and final 90/90 mocked Studio gates passed; no live video execution was required. |
+| P0.3e Expert CUDA resource policy | `b1f514f` | `0259624` | Not required | Not required | Complete: exact Qwen execution profiles own the bounded dtype/offloaded/resident/quantized CUDA estimates, the client consumes only the policy attached to the selected exact specification, and no model-family fallback remains for these checks. Complete backend/client and final 91/91 mocked Studio gates passed; no live model execution was required. |
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification); add remaining receipts | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Auto candidates/history now bind the planner schema, exact execution profile, primary artifact revision, optional-runtime delivery contract, the exact backend-owned topology for all 39 current pairs, the exact Qwen ControlNet Union and FLUX Redux base dependencies, and server-derived executable Modular/direct-image/direct-audio LoRA receipts. Client plan-time controlled-artifact proof labeling, future controlled/auxiliary artifact families, remaining mismatch closure, and live qualification are pending. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
