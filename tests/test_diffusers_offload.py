@@ -52,6 +52,8 @@ def resource_plan_target(model_type, mode):
         raise AssertionError(f"Expected one execution profile for {model_type}:{mode}, got {len(profiles)}")
     profile = profiles[0]
     return {
+        "autoResourceSchemaVersion": 2,
+        "executionProfileId": profile.id,
         "modelType": model_type,
         "mode": mode,
         "loaderModule": profile.loader_module,

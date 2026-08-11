@@ -166,6 +166,8 @@ Every declared schema-version-2 Auto candidate, including
 `selectedCandidate` and `nextCandidate`, carries one exact backend-owned loader
 target:
 
+- `autoResourceSchemaVersion` repeats the owning plan schema for durable
+  history and retry binding;
 - `executionProfileId` identifies the exact reviewed execution profile;
 - `modelType` and `mode` identify the declared model/task pair;
 - `loaderModule` and `loaderAction` identify the loader node contract;
@@ -202,6 +204,13 @@ Auto admission and retry failures use bounded, non-echoing messages with the
 `auto_resource_candidate_mismatch`, and `auto_resource_target_mismatch`.
 Clients should refresh Auto for these failures; structurally valid manual
 configurations remain available through Expert mode.
+
+Local Auto history version 3 binds successful and failed evidence to the Auto
+schema version, exact execution-profile ID, loader/path/class identity,
+artifact revision, optimization recipe, workload shape, and runtime hardware
+fingerprint. Evidence from an older history schema or a replaced execution
+profile is retained on disk for inspection but cannot promote a current
+candidate to `live_proven`.
 
 ### Optional model runtime metadata
 

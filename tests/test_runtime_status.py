@@ -27,6 +27,7 @@ sys.modules.setdefault(
 )
 
 from modiff import preflight  # noqa: E402
+from modiff.auto_resource import build_auto_resource_plan  # noqa: E402
 from modiff.diffusers_profiles import execution_profiles_for_execution  # noqa: E402
 from modiff.server import WebServer  # noqa: E402
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
@@ -41,6 +42,8 @@ def resource_plan_target(model_type, mode):
         raise AssertionError(f"Expected one execution profile for {model_type}:{mode}, got {len(profiles)}")
     profile = profiles[0]
     return {
+        "autoResourceSchemaVersion": 2,
+        "executionProfileId": profile.id,
         "loaderModule": profile.loader_module,
         "loaderAction": profile.loader_action,
         "executionPath": profile.execution_path,
@@ -716,6 +719,29 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
 
+    def test_generated_schema_v2_plan_is_accepted_by_runtime_admission(self):
+        plan = build_auto_resource_plan(
+            {"form": {"modelType": "FluxSchnellPipeline", "mode": "text_to_image"}},
+            runtime_fingerprint={"resourceFingerprint": "runtime-admission"},
+            local_models=[],
+            data_dir=self.temp_dir.name,
+        )
+        candidate = plan["candidates"][0]
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": plan["candidates"],
+            }
+        )
+
+        self.assertEqual(candidate["autoResourceSchemaVersion"], plan["schemaVersion"])
+        self.assertEqual(candidate["executionProfileId"], "flux-schnell:direct")
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
     def test_auto_execution_requires_exact_candidate_id_and_list_binding(self):
         candidate = {
             **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
@@ -779,6 +805,34 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             self.server._assert_auto_resource_candidate_ready(hints)
 
         self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_auto_execution_rejects_stale_profile_and_schema_receipts(self):
+        base = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "stale-receipt",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        for candidate in (
+            {**base, "executionProfileId": "flux-schnell:replacement"},
+            {**base, "autoResourceSchemaVersion": 3},
+        ):
+            with self.subTest(candidate=candidate):
+                hints = self.server._coerce_runtime_hints(
+                    {
+                        "resourceMode": "auto",
+                        "modelType": "FluxSchnellPipeline",
+                        "mode": "text_to_image",
+                        "autoResourceCandidateId": candidate["id"],
+                        "autoResourcePlan": candidate,
+                        "autoResourceCandidates": [candidate],
+                    }
+                )
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
+                self.assertLess(len(str(raised.exception)), 256)
 
     def test_auto_target_errors_do_not_echo_oversized_untrusted_values(self):
         marker = "PUBLIC_SECRET_MARKER_" + "x" * 2048

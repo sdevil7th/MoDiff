@@ -66,7 +66,7 @@ WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 2
+AUTO_HISTORY_VERSION = 3
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -867,12 +867,16 @@ def _candidate_history_signature(
     *,
     runtime_fingerprint: dict[str, Any] | None = None,
     hardware: dict[str, Any] | None = None,
+    history_schema_version: int = AUTO_HISTORY_VERSION,
 ) -> dict[str, Any]:
     resolution = candidate.get("artifactResolution") if isinstance(candidate.get("artifactResolution"), dict) else {}
     resolved = resolution.get("resolved") if isinstance(resolution.get("resolved"), dict) else {}
     workload = _candidate_workload_signature(candidate)
     return {
+        "historySchemaVersion": history_schema_version,
+        "autoResourceSchemaVersion": _safe_int(candidate.get("autoResourceSchemaVersion")) or 0,
         "hardwareFingerprint": _hardware_history_key(runtime_fingerprint, hardware),
+        "executionProfileId": str(candidate.get("executionProfileId") or ""),
         "modelType": str(candidate.get("modelType") or ""),
         "mode": str(candidate.get("mode") or ""),
         "artifact": str(candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo") or ""),
@@ -966,6 +970,8 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
     resolved = resolution.get("resolved") if isinstance(resolution.get("resolved"), dict) else {}
     return {
         "id": candidate.get("id"),
+        "autoResourceSchemaVersion": candidate.get("autoResourceSchemaVersion"),
+        "executionProfileId": candidate.get("executionProfileId"),
         "modelType": candidate.get("modelType"),
         "mode": candidate.get("mode"),
         "artifact": candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo"),
@@ -2393,6 +2399,8 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         return None
     candidate = _clone_candidate(candidate)
     for key in (
+        "autoResourceSchemaVersion",
+        "executionProfileId",
         "modelType",
         "mode",
         "artifact",
@@ -2417,7 +2425,11 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
             candidate[key] = stored[key]
     hardware_fingerprint = stored.get("hardwareFingerprint")
     hardware = {"runtimeFingerprint": hardware_fingerprint} if hardware_fingerprint else None
-    return _candidate_history_signature(candidate, hardware=hardware)
+    return _candidate_history_signature(
+        candidate,
+        hardware=hardware,
+        history_schema_version=_safe_int(stored.get("historySchemaVersion")) or 0,
+    )
 
 
 def _history_signatures_are_compatible(current: dict[str, Any], stored: dict[str, Any]) -> bool:
@@ -2837,7 +2849,11 @@ def build_auto_resource_plan(
         model_type,
         mode,
     )
+    execution_profile_id = str((exact_pair_requirements or {}).get("executionProfileId") or "")
     for candidate in candidates:
+        candidate["autoResourceSchemaVersion"] = AUTO_RESOURCE_SCHEMA_VERSION
+        if exact_pair_declared:
+            candidate["executionProfileId"] = execution_profile_id
         candidate["exactPairDeclared"] = exact_pair_declared
         candidate["optionalRuntimeProfileIds"] = list(optional_runtime_profile_ids)
         candidate["optionalRuntimeRequirement"] = dict(optional_runtime_requirement)

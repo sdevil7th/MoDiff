@@ -414,6 +414,7 @@ from modiff.diffusers_profiles import (
 from modiff.hardware import format_hardware_summary, get_hardware_snapshot, legacy_torch_status
 from modiff.runtime_profile import runtime_profile
 from modiff.auto_resource import (
+    AUTO_RESOURCE_SCHEMA_VERSION,
     PROVEN_PROOF_STATUSES,
     artifact_cache_status,
     auto_resource_pair_is_declared,
@@ -6735,7 +6736,19 @@ class WebServer:
                 "pipelineClass",
             )
         }
-        if not all(isinstance(value, str) and value for value in target.values()):
+        target.update(
+            (key, target_source[key])
+            for key in ("autoResourceSchemaVersion", "executionProfileId")
+            if key in target_source
+        )
+        if not all(isinstance(target[key], str) and target[key] for key in (
+            "modelType",
+            "mode",
+            "loaderModule",
+            "loaderAction",
+            "executionPath",
+            "pipelineClass",
+        )):
             return []
         return [
             {
@@ -6786,6 +6799,7 @@ class WebServer:
     @staticmethod
     def _auto_candidate_execution_fields():
         return (
+            "autoResourceSchemaVersion",
             "executionProfileId",
             "modelType",
             "mode",
@@ -7191,6 +7205,13 @@ class WebServer:
             "executionPath": profile.execution_path,
             "pipelineClass": profile.pipeline_class,
         }
+        if hints.get("resourceMode") == "auto" or any(
+            key in plan for key in ("autoResourceSchemaVersion", "executionProfileId")
+        ):
+            expected.update(
+                autoResourceSchemaVersion=AUTO_RESOURCE_SCHEMA_VERSION,
+                executionProfileId=profile.id,
+            )
         mismatches = [
             key
             for key, value in expected.items()
@@ -7279,6 +7300,8 @@ class WebServer:
         allowed = {
             "index",
             "reason",
+            "autoResourceSchemaVersion",
+            "executionProfileId",
             "modelType",
             "mode",
             "loaderModule",

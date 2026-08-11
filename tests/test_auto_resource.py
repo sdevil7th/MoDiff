@@ -16,6 +16,7 @@ from modiff.auto_resource import (  # noqa: E402
     READY_PROOF_STATUSES,
     WAN_VACE_REPO,
     Z_IMAGE_REPO,
+    _apply_history_to_candidates,
     _auto_requirements_for_pair,
     _candidate_history_signature,
     _requirements_missing_for_dict,
@@ -330,6 +331,10 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertFalse(selected["requiresLocalProbe"])
         self.assertEqual(plan["readiness"], "ready")
         self.assertEqual(plan["schemaVersion"], 2)
+        self.assertTrue(plan["candidates"])
+        for candidate in plan["candidates"]:
+            self.assertEqual(candidate["autoResourceSchemaVersion"], plan["schemaVersion"])
+            self.assertEqual(candidate["executionProfileId"], "qwen-image:t2i-direct")
         self.assertEqual(plan["compatibility"]["state"], "ready")
         self.assertEqual(plan["compatibility"]["source"], "backend_auto_planner")
 
@@ -1379,6 +1384,8 @@ class AutoResourcePlanTests(unittest.TestCase):
     def test_auto_history_key_is_exact_optimization_recipe_specific(self):
         runtime = self._runtime()
         base = {
+            "autoResourceSchemaVersion": 2,
+            "executionProfileId": "z-image:auto",
             "modelType": "ZImageModularPipeline",
             "mode": "text_to_image",
             "resolvedArtifact": Z_IMAGE_REPO,
@@ -1400,6 +1407,8 @@ class AutoResourcePlanTests(unittest.TestCase):
             ("denoiserCache", "first_block"),
             ("channelsLast", True),
             ("layerwiseCasting", True),
+            ("autoResourceSchemaVersion", 3),
+            ("executionProfileId", "z-image:replacement"),
             ("loaderModule", "modules.ModularDiffusers"),
             ("loaderAction", "ModelsLoader"),
             ("executionPath", "modular-diffusers"),
@@ -1409,6 +1418,53 @@ class AutoResourcePlanTests(unittest.TestCase):
                 auto_resource_history_key({**base, field: value}, runtime_fingerprint=runtime),
                 field,
             )
+
+    def test_auto_history_rejects_stale_profile_and_schema_receipts(self):
+        hardware = self._hardware()
+        current = {
+            "id": "z-image-native",
+            "autoResourceSchemaVersion": 2,
+            "executionProfileId": "z-image:auto",
+            "modelType": "ZImageModularPipeline",
+            "mode": "text_to_image",
+            "resolvedArtifact": Z_IMAGE_REPO,
+            "dtype": "bfloat16",
+            "quantizationMode": "none",
+            "quantizedComponents": [],
+            "offloadMode": "none",
+            "loaderModule": "modules.DiffusersImage",
+            "loaderAction": "LoadPipeline",
+            "executionPath": "direct-diffusers-image",
+            "pipelineClass": "ZImagePipeline",
+            "generation": {"width": 1024, "height": 1024, "steps": 8},
+            "installed": True,
+            "requirementsMissing": [],
+            "proof": {"status": "declared_safe"},
+        }
+        for changed, history_schema_version in (
+            ({**current, "executionProfileId": "z-image:replacement"}, 3),
+            ({**current, "autoResourceSchemaVersion": 3}, 3),
+            (current, 2),
+        ):
+            stale_signature = _candidate_history_signature(changed, hardware=hardware)
+            stale_signature["historySchemaVersion"] = history_schema_version
+            output = _apply_history_to_candidates(
+                [current],
+                history={
+                    "version": 2,
+                    "entries": {
+                        "stale": {
+                            "signature": stale_signature,
+                            "candidate": changed,
+                            "successCount": 1,
+                            "lastSuccessAt": 1,
+                        }
+                    },
+                },
+                hardware=hardware,
+            )[0]
+            self.assertNotEqual(output["proof"]["status"], "live_proven")
+            self.assertIsNone(output["successHistory"])
 
     def test_each_current_studio_model_has_requirements_metadata(self):
         expected = {
