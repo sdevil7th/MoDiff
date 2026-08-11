@@ -72,6 +72,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTXVideoPipeline", "text_to_video"),
                 ("LTXVideoPipeline", "image_to_video"),
                 ("LTXVideoPipeline", "video_to_video"),
+                ("LTXVideoPipeline", "reference_to_video"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -215,6 +216,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("wanGenerate", "denoise_strength", "strength"), specs[20]["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[20]["bindings"])
         self.assertEqual(specs[20]["pipelineClass"], "LTXConditionPipeline")
+        self.assertEqual(specs[21]["roles"], specs[19]["roles"])
+        self.assertEqual(specs[21]["edges"], specs[19]["edges"])
+        self.assertEqual(specs[21]["bindings"], specs[19]["bindings"])
+        self.assertEqual(specs[21]["pipelineClass"], "LTXConditionPipeline")
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -317,14 +322,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
 
-    def test_ltx_text_image_and_video_modes_seal_portable_attention_without_claiming_reference(self):
-        for mode in ("text_to_video", "image_to_video", "video_to_video"):
+    def test_all_ltx_modes_seal_portable_attention_with_exact_receipts(self):
+        for mode in ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"):
             spec = studio_execution_spec_for_pair("LTXVideoPipeline", mode)
             self.assertIsNotNone(spec)
             self.assertEqual(spec["pipelineClass"], "LTXConditionPipeline")
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
-        self.assertIsNone(studio_execution_spec_for_pair("LTXVideoPipeline", "reference_to_video"))
 
     def test_flux_kontext_modes_have_distinct_exact_receipts_and_only_edit_has_auto_requirements(self):
         edit = studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")

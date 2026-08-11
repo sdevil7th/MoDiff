@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 21)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 22)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -227,7 +227,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         ltx = by_model["LTXVideoPipeline"]
         self.assertEqual(
             ltx["studioExecutionSpecModes"],
-            ["image_to_video", "text_to_video", "video_to_video"],
+            ["image_to_video", "reference_to_video", "text_to_video", "video_to_video"],
         )
         for ltx_spec in ltx["studioExecutionSpecs"]:
             self.assertEqual(ltx_spec["pipelineClass"], "LTXConditionPipeline")
@@ -241,6 +241,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(["normalizeVideo", "output", "wanGenerate", "video"], ltx_video_spec["edges"])
         self.assertIn(["wanGenerate", "strength", "conditioningScale"], ltx_video_spec["bindings"])
         self.assertIn(["wanGenerate", "denoise_strength", "strength"], ltx_video_spec["bindings"])
+        ltx_reference_spec = next(item for item in ltx["studioExecutionSpecs"] if item["mode"] == "reference_to_video")
+        self.assertEqual(ltx_reference_spec["roles"], ltx_image_spec["roles"])
+        self.assertEqual(ltx_reference_spec["edges"], ltx_image_spec["edges"])
+        self.assertEqual(ltx_reference_spec["bindings"], ltx_image_spec["bindings"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],
