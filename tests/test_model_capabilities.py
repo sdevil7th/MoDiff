@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 27)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 28)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -308,6 +308,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["loadMask", "image", "diffusersImageInpaint", "mask_image"],
             qwen_inpaint_spec["edges"],
         )
+        wan_vace = by_model["WanVACEPipeline"]
+        self.assertEqual(wan_vace["studioExecutionSpecModes"], ["text_to_video"])
+        wan_vace_text_spec = wan_vace["studioExecutionSpecs"][0]
+        self.assertEqual(wan_vace_text_spec["executionProfileId"], "wan-vace:direct")
+        self.assertEqual(wan_vace_text_spec["executionPath"], "direct-wan-vace")
+        self.assertEqual(wan_vace_text_spec["pipelineClass"], "WanVACEPipeline")
+        self.assertIn(["wanGenerate", "mode", "mode"], wan_vace_text_spec["bindings"])
 
         ltx = by_model["LTXVideoPipeline"]
         self.assertEqual(ltx["mediaKind"], "video")

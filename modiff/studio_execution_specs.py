@@ -2028,6 +2028,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "edges": _INPAINT_GRAPH_EDGES,
         "bindings": _INPAINT_GRAPH_BINDINGS,
     },
+    "wan-vace-1.3b:text-to-video:v1": {
+        "modelType": "WanVACEPipeline",
+        "mode": "text_to_video",
+        "profile": {
+            "id": "wan-vace:direct",
+            "model_type": "WanVACEPipeline",
+            "modes": ("text_to_video", "video_inpaint", "video_outpaint", "control_to_video"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-wan-vace",
+            "pipeline_class": "WanVACEPipeline",
+            "default_repo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _VIDEO_GRAPH_ROLES,
+        "edges": _VIDEO_GRAPH_EDGES,
+        "bindings": _VIDEO_GRAPH_BINDINGS,
+    },
 }
 
 

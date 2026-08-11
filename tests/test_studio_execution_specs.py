@@ -78,6 +78,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("AceStepAudioPipeline", "audio_continuation"),
                 ("AceStepAudioPipeline", "audio_repaint"),
                 ("QwenImageEditModularPipeline", "inpaint"),
+                ("WanVACEPipeline", "text_to_video"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -281,6 +282,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("loadImage", "file", "referenceImages"), specs[26]["bindings"])
         self.assertIn(("loadMask", "file", "maskImage"), specs[26]["bindings"])
         self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), specs[26]["edges"])
+        self.assertEqual(specs[27]["roles"], specs[14]["roles"])
+        self.assertEqual(specs[27]["edges"], specs[14]["edges"])
+        self.assertEqual(specs[27]["executionProfileId"], "wan-vace:direct")
+        self.assertEqual(specs[27]["pipelineClass"], "WanVACEPipeline")
+        self.assertIn(("wanGenerate", "mode", "mode"), specs[27]["bindings"])
+        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), specs[27]["bindings"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -430,6 +437,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("loadImage", "image", "diffusersImageInpaint", "image"), spec["edges"])
         self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), spec["edges"])
         self.assertIn(("diffusersImageInpaint", "strength", "strength"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_wan_vace_text_to_video_seals_the_exact_generic_video_route(self):
+        spec = studio_execution_spec_for_pair("WanVACEPipeline", "text_to_video")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "wan-vace:direct")
+        self.assertEqual(spec["executionPath"], "direct-wan-vace")
+        self.assertEqual(spec["pipelineClass"], "WanVACEPipeline")
+        self.assertIn(("wanPipeline", "pipeline", "wanGenerate", "pipeline"), spec["edges"])
+        self.assertIn(("wanGenerate", "mode", "mode"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
