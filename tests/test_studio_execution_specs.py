@@ -9,6 +9,7 @@ from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
 from modiff.server import STUDIO_MODEL_CAPABILITIES, WebServer
 from modiff.studio_execution_specs import (
     STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    _execution_spec_role_params,
     assert_studio_execution_graph,
     studio_execution_spec_for_pair,
     studio_model_dependencies_for_pair,
@@ -24,9 +25,10 @@ def executable_graph_for_spec(spec):
         module, action = node_key.rsplit(".", 1)
         node_id = f"node-{index}"
         node_ids[role] = node_id
+        definition = module_registry.MODULE_MAP[module][action]
         params = {
             key: {**deepcopy(value), "value": deepcopy(value.get("default"))}
-            for key, value in module_registry.MODULE_MAP[module][action]["params"].items()
+            for key, value in _execution_spec_role_params(spec, node_key, definition).items()
         }
         nodes[node_id] = {"module": module, "action": action, "params": params}
     for source_role, source_handle, target_role, target_handle in spec["edges"]:
@@ -122,6 +124,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageEditModularPipeline", "outpaint"),
                 ("ZImageModularPipeline", "text_to_image"),
                 ("QwenImageModularPipeline", "text_to_image"),
+                ("QwenImageEditModularPipeline", "edit_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -611,6 +614,30 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersImageInpaint", "strength", "strength"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_qwen_image_edit_seals_the_exact_dynamic_modular_route(self):
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "edit_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "qwen-edit:modular")
+        self.assertEqual(spec["executionPath"], "modular-diffusers")
+        self.assertEqual(spec["pipelineClass"], "QwenImageEditModularPipeline")
+        self.assertEqual(
+            [item[0] for item in spec["roles"]],
+            ["models", "prompt", "loadImage", "imageEncode", "denoise", "decode", "preview"],
+        )
+        self.assertIn(("loadImage", "image", "prompt", "image"), spec["edges"])
+        self.assertIn(("imageEncode", "route_state_out", "denoise", "route_state_in"), spec["edges"])
+        self.assertIn(("denoise", "route_state_out", "decode", "route_state_in"), spec["edges"])
+        self.assertIn(("models", "model_type", "pipelineClass"), spec["bindings"])
+        self.assertIn(("loadImage", "file", "referenceImages"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+        graph["nodes"][hints["studioExecutionSpec"]["nodes"]["denoise"]]["params"]["route_state_in"].pop(
+            "sourceId"
+        )
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")

@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 34)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 35)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -321,8 +321,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["edit_image", "multi_image_reference_edit"],
         )
         qwen_edit = by_model["QwenImageEditModularPipeline"]
-        self.assertEqual(qwen_edit["studioExecutionSpecModes"], ["inpaint", "outpaint"])
-        qwen_inpaint_spec, qwen_outpaint_spec = qwen_edit["studioExecutionSpecs"]
+        self.assertEqual(qwen_edit["studioExecutionSpecModes"], ["edit_image", "inpaint", "outpaint"])
+        qwen_inpaint_spec, qwen_outpaint_spec, qwen_edit_spec = qwen_edit["studioExecutionSpecs"]
         self.assertEqual(qwen_inpaint_spec["executionProfileId"], "qwen-edit:direct-inpaint")
         self.assertEqual(qwen_inpaint_spec["pipelineClass"], "QwenImageEditInpaintPipeline")
         self.assertIn("loadMask", [item[0] for item in qwen_inpaint_spec["roles"]])
@@ -336,6 +336,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["qwenOutpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"],
             qwen_outpaint_spec["edges"],
         )
+        self.assertEqual(qwen_edit_spec["executionProfileId"], "qwen-edit:modular")
+        self.assertEqual(qwen_edit_spec["executionPath"], "modular-diffusers")
+        self.assertEqual(qwen_edit_spec["pipelineClass"], "QwenImageEditModularPipeline")
+        self.assertIn("models", [item[0] for item in qwen_edit_spec["roles"]])
+        self.assertIn(["imageEncode", "image_latents", "denoise", "image_latents"], qwen_edit_spec["edges"])
         wan_vace = by_model["WanVACEPipeline"]
         self.assertEqual(
             wan_vace["studioExecutionSpecModes"],

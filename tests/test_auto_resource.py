@@ -630,6 +630,16 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(community["proof"]["status"], "manual_only")
         self.assertEqual(community["loaderModule"], "modules.ModularDiffusers")
         self.assertEqual(community["executionPath"], "modular-diffusers")
+        for candidate in plan["candidates"]:
+            self.assertEqual(
+                candidate["studioExecutionSpecContract"],
+                {
+                    "schemaVersion": 1,
+                    "id": "qwen-image-edit:edit-image:v1",
+                    "contentHash": "studio-spec-v1-ae6a6ce8",
+                    "executionProfileId": "qwen-edit:modular",
+                },
+            )
 
     def test_qwen_edit_unprofiled_community_artifact_cannot_become_auto_ready(self):
         hardware = self._hardware(vram_gib=15.99, free_gib=14, system_ram_gib=31.8)

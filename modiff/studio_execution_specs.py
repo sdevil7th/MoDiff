@@ -138,6 +138,47 @@ _GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageGenerate", "output_type", "outputType"),
     ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
 )
+_MODULAR_EDIT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
+    ("loadImage", "modules.Image.Load", -720, 320),
+    ("imageEncode", "modules.ModularDiffusers.ImageEncode", -360, 320),
+    ("denoise", "modules.ModularDiffusers.Denoise", 80, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 440, -80),
+    ("preview", "modules.Image.Preview", 800, -80),
+)
+_MODULAR_EDIT_GRAPH_EDGES = (
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "prompt", "image"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEncode", "image_latents", "denoise", "image_latents"),
+    ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_EDIT_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("imageEncode", "seed", "seed"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+)
 _CONTROL_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -560,6 +601,7 @@ _BINDING_SOURCES = frozenset(
     item[2]
     for item in (
         *_GRAPH_BINDINGS,
+        *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_CONTROL_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
@@ -2346,6 +2388,37 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "compatible_repos": (),
         },
     },
+    "qwen-image-edit:edit-image:v1": {
+        "modelType": "QwenImageEditModularPipeline",
+        "mode": "edit_image",
+        "profile": {
+            "id": "qwen-edit:modular",
+            "model_type": "QwenImageEditModularPipeline",
+            "modes": ("edit_image",),
+            "loader_module": "modules.ModularDiffusers",
+            "loader_action": "ModelsLoader",
+            "execution_path": "modular-diffusers",
+            "pipeline_class": "QwenImageEditModularPipeline",
+            "default_repo": "Qwen/Qwen-Image-Edit",
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": ("transformer", "text_encoder"),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _MODULAR_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+    },
 }
 
 
@@ -2435,6 +2508,46 @@ def _param_types(param: dict[str, Any]) -> set[str]:
     return set()
 
 
+_MODULAR_NODE_TYPES = {
+    "modules.ModularDiffusers.EncodePrompt": "text_encoder",
+    "modules.ModularDiffusers.ImageEmbeddings": "image_encoder",
+    "modules.ModularDiffusers.ImageEncode": "vae_encoder",
+    "modules.ModularDiffusers.Denoise": "denoise",
+    "modules.ModularDiffusers.DecodeLatents": "decoder",
+    "modules.ModularDiffusers.Controlnet": "controlnet",
+}
+
+
+def _execution_spec_role_params(
+    public: dict[str, Any],
+    node_key: str,
+    node: dict[str, Any],
+) -> dict[str, Any]:
+    params = deepcopy(node["params"])
+    node_type = _MODULAR_NODE_TYPES.get(node_key)
+    if public["executionPath"] != "modular-diffusers" or node_type is None:
+        return params
+
+    # Modular action fields are backend-issued after the Models Loader selects
+    # a reviewed pipeline. Validate the public receipt against that same
+    # authoritative contract instead of treating the deliberately small static
+    # registry definition as the executable schema.
+    from modules.ModularDiffusers.modular_utils import (
+        pipeline_class_from_model_type,
+        require_modiff_node_contract,
+    )
+
+    pipeline_class = pipeline_class_from_model_type(public["pipelineClass"])
+    _blocks, config = require_modiff_node_contract(
+        pipeline_class,
+        node_type,
+        require_blocks=False,
+        resolve_blocks=False,
+    )
+    params.update(config["params"])
+    return params
+
+
 def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, Any]]:
     """Validate every public execution-spec reference against the live node registry."""
 
@@ -2470,7 +2583,7 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
             node = modules.get(module, {}).get(action)
             if not isinstance(node, dict) or not isinstance(node.get("params"), dict):
                 raise ValueError("Studio execution specification references an unknown node.")
-            roles[role] = node
+            roles[role] = {**node, "params": _execution_spec_role_params(public, node_key, node)}
 
         connections = set()
         adjacency = {role: set() for role in roles}
