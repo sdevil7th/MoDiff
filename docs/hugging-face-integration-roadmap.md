@@ -2368,7 +2368,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       close race at 95/96; that unrelated test passed alone in 3.3 seconds and
       the unchanged complete rerun passed 96/96. No model download, inference,
       generated media, or live qualification occurred.
-- [ ] **P0.4 Proof receipts and current mismatch cleanup**
+- [x] **P0.4 Proof receipts and current mismatch cleanup**
   - Backend: bind history to profile/schema version, graph and loader topology,
     auxiliary repositories, adapters, LoRAs, ControlNets, runtime profile, and
     artifact revisions.
@@ -2504,9 +2504,33 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     523132/523264 gzip bytes, and the schema-v3 controlled-family mocked-browser
     replay passed 1/1. This is static, unit, contract, build, and mocked-browser
     evidence only: no adapter/model download, model execution, generated media,
-    or live workload qualification occurred. Client plan-time proof labeling,
-    future controlled artifact families, and generic future auxiliary
-    dependencies remain open.
+    or live workload qualification occurred. The current non-LoRA controlled
+    artifact set and client proof labeling are closed by the following bounded
+    slice; future artifact families require their own reviewed receipts.
+  - [x] Current controlled-workflow artifact receipt closure. Backend commit
+    `31cbc47` advances Auto history to schema v8 and derives every current
+    executable controlled-artifact receipt immediately before admission. It
+    retains the existing exact LoRA receipts, resolves and rehashes Spandrel
+    upscalers through their pinned Hub snapshot or redacted local-file identity,
+    and binds soundtrack/lyric auxiliary Diffusers pipelines to their exact
+    repository, immutable revision, loader class, and descriptor digest. The
+    selected primary Auto loader remains owned by its existing artifact receipt;
+    disconnected nodes are excluded, submitted receipt claims are discarded,
+    and the Spandrel loader rechecks declared revision, size, and SHA-256 before
+    loading. Client commit `54a610a` preserves exact revision/hash/size metadata
+    through each current controlled builder and labels base-only proof accurately
+    for LoRA, upscaler, soundtrack, and lyric-video contracts. Focused backend
+    tests passed 150 tests with 327 subtests; the exact backend tree passed 1,183
+    tests with 4 skips, 2,021 subtests, and only the existing Diffusers
+    deprecation warning. Ruff 0.12.7 E9/F, `uv pip check` (78 packages),
+    preflight, and diff checks passed. Focused client graph/template contracts
+    passed 112/112, the exact artifact browser cases passed 2/2, complete
+    `npm run check` passed, and the complete mocked Studio suite passed 97/97.
+    The production bundle was 523069/523264 gzip bytes, 195 bytes below the hard
+    cap and 67 bytes below the stricter 523136-byte safety target. This is static,
+    unit, contract, build, and mocked-browser evidence only: no artifact/model
+    download, model execution, generated media, or live workload qualification
+    occurred.
   - [x] Z-Image Auto execution-spec closure. Backend commit `a4efd6c` adds
     `z-image:text-to-image:v1` as the thirty-third backend-owned Studio
     execution specification and binds the existing `z-image:auto` profile to
@@ -2637,7 +2661,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     receipts. This is static, unit, contract, build, and mocked-browser evidence
     only; no model download, inference, generated media, or live workload
     qualification occurred.
-  - [ ] Controlled-workflow finalization-proof closure.
+  - [x] Controlled-workflow finalization-proof closure.
     - [x] Bounded schema-v2 upscaler repair: exclude field-level `disabled`
       from the proof because it is transient UI/signal state and is not consumed
       by graph export. A previously schema-matching, complete graph may reseal
@@ -3220,7 +3244,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e image/Modular field overlay | `98f3841` | `c88e685` | Not required | Not required | Complete: exact generic image pipeline/mode contracts drive live field visibility, Modular generic nodes refresh from selected registry metadata, stale image overlays fail closed, and the complete backend/client/final 93/93 mocked Studio gates passed; no live model execution was required. |
 | P0.3e image-path and Expert quantization-choice cleanup | `fd514f7` | `a63d882`, `5abfab9` | Not required | Not required | Complete: managed image topology and loader class now come only from the exact selected specification or existing managed binding; exact Qwen/Flux profiles own the bounded Expert quantization choices; controlled tab restore retains its execution-spec receipt. The complete backend/client gates and final 94/94 mocked Studio suite passed, with the bundle 259 bytes inside the stricter safety target. No live model execution was required. |
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
-| P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification); add remaining receipts | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Auto candidates/history now bind the planner schema, exact execution profile, primary artifact revision, optional-runtime delivery contract, the exact backend-owned topology for all 39 current pairs, the exact Qwen ControlNet Union and FLUX Redux base dependencies, and server-derived executable Modular/direct-image/direct-audio LoRA receipts. Client plan-time controlled-artifact proof labeling, future controlled/auxiliary artifact families, remaining mismatch closure, and live qualification are pending. |
+| P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
