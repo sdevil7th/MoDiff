@@ -268,19 +268,26 @@ and the selected recipe already carry the reviewed execution facts.
 
 Immediately before Auto admission, the worker derives
 `controlledArtifacts` from executable graph paths rather than trusting a
-submitted receipt. Each supported Modular, direct-image, or direct-audio LoRA
-node is resolved through the exact Safetensors contract and contributes its
+submitted receipt. Supported Modular, direct-image, and direct-audio LoRA nodes
+are resolved through the exact Safetensors contract and contribute their
 module/action, safe Hub-or-local content identity, adapter name, scale,
-scheduler contract, replacement policy, and descriptor digest. Disconnected
-adapter nodes do not contribute. The worker copies the derived ordered list to
-the selected plan and every candidate before comparing them, and a submitted
-`controlledArtifacts` field is discarded. Local absolute roots are represented
-only by the descriptor digest and are not exposed in public runtime events. A
-candidate whose readiness came from local history must also have exact current
-history for this derived receipt; base-only evidence is downgraded before Auto
-admission instead of being represented as live proof. Qualification proof
-remains advisory for an otherwise valid executable graph. Independently safe
-or passed candidates do not depend on that local history check.
+scheduler contract, replacement policy, and descriptor digest. Executable
+Spandrel upscalers contribute their pinned Hub snapshot or rehashed local-file
+identity, and the loader revalidates template-declared revision, size, and
+SHA-256 immediately before loading. Soundtrack and lyric-video branches also
+contribute the non-primary Diffusers pipeline's exact repository, immutable
+revision, class, and descriptor digest; the selected primary loader is excluded
+because its existing Auto artifact receipt already owns that identity.
+Disconnected and no-op nodes do not contribute. The worker copies the derived
+ordered list to the selected plan and every candidate before comparing them,
+and a submitted `controlledArtifacts` field is discarded. Local absolute roots
+are represented only by safe filenames/content digests and are not exposed in
+public runtime events. A candidate whose readiness came from local history must
+also have exact current schema-v8 history for this derived receipt; base-only
+evidence is downgraded before Auto admission instead of being represented as
+live proof. Qualification proof remains advisory for an otherwise valid
+executable graph. Independently safe or passed candidates do not depend on that
+local history check.
 
 Plan application considers only executable loader IDs referenced by graph
 `paths`. Direct loaders must already expose the profile's exact

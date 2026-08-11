@@ -30,7 +30,14 @@ class Upscaler(NodeBase):
         if not model_path:
             raise ValueError("Model ID is required")
 
-        if model_source == 'hub':
+        exact_artifact = isinstance(model_id, dict) and any(
+            model_id.get(key) not in (None, '') for key in ('revision', 'sha256', 'byteSize')
+        )
+        if exact_artifact:
+            from modiff.controlled_artifacts import resolve_upscaler_artifact
+
+            model_path = str(resolve_upscaler_artifact(model_id).path)
+        elif model_source == 'hub':
             from utils.huggingface import cached_file_path
 
             if model_path.endswith((".safetensors", ".pt", ".pth", ".ckpt", ".pkl", ".bin")):

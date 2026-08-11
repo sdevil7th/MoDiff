@@ -72,7 +72,7 @@ WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 7
+AUTO_HISTORY_VERSION = 8
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -994,6 +994,107 @@ def _candidate_controlled_artifacts_signature(candidate: dict[str, Any]) -> list
         return None
     output = []
     for receipt in receipts:
+        kind = receipt.get("kind") if isinstance(receipt, dict) else None
+        if kind in {"spandrel_upscaler", "diffusers_pipeline"}:
+            expected_keys = {
+                "schemaVersion",
+                "kind",
+                "module",
+                "action",
+                "artifact",
+                "descriptorSha256",
+                *({"pipelineClass"} if kind == "diffusers_pipeline" else set()),
+            }
+            artifact = receipt.get("artifact") if isinstance(receipt, dict) else None
+            source = artifact.get("source") if isinstance(artifact, dict) else None
+            expected_artifact_keys = (
+                {"source", "repository", "revision", "weightName", "sha256"}
+                if kind == "spandrel_upscaler" and source == "hub"
+                else {"source", "weightName", "sha256"}
+                if kind == "spandrel_upscaler" and source == "local"
+                else {"source", "repository", "revision"}
+                if kind == "diffusers_pipeline" and source == "hub"
+                else None
+            )
+            module_action = (receipt.get("module"), receipt.get("action")) if isinstance(receipt, dict) else None
+            expected_module_action = (
+                ("modules.Spandrel", "Upscaler")
+                if kind == "spandrel_upscaler"
+                else {
+                    ("modules.DiffusersAudio", "LoadPipeline"),
+                    ("modules.DiffusersVideo", "LoadPipeline"),
+                }
+            )
+            module_action_matches = (
+                module_action == expected_module_action
+                if kind == "spandrel_upscaler"
+                else module_action in expected_module_action
+            )
+            descriptor_sha256 = receipt.get("descriptorSha256") if isinstance(receipt, dict) else None
+            pipeline_class = receipt.get("pipelineClass") if isinstance(receipt, dict) else None
+            if (
+                not isinstance(receipt, dict)
+                or set(receipt) != expected_keys
+                or receipt.get("schemaVersion") != 1
+                or not module_action_matches
+                or not isinstance(artifact, dict)
+                or set(artifact) != expected_artifact_keys
+                or not all(
+                    isinstance(artifact.get(key), str)
+                    and artifact[key]
+                    and len(artifact[key]) <= 1024
+                    and not any(ord(character) < 32 for character in artifact[key])
+                    for key in artifact
+                )
+                or not isinstance(descriptor_sha256, str)
+                or len(descriptor_sha256) != 64
+                or any(character not in "0123456789abcdef" for character in descriptor_sha256)
+                or source == "hub"
+                and (
+                    len(artifact.get("revision", "")) != 40
+                    or any(character not in "0123456789abcdef" for character in artifact.get("revision", ""))
+                )
+                or kind == "spandrel_upscaler"
+                and (
+                    len(artifact.get("sha256", "")) != 64
+                    or any(character not in "0123456789abcdef" for character in artifact.get("sha256", ""))
+                )
+                or kind == "diffusers_pipeline"
+                and (
+                    not isinstance(pipeline_class, str)
+                    or not pipeline_class
+                    or len(pipeline_class) > 256
+                    or not pipeline_class.replace("_", "a").isalnum()
+                    or pipeline_class[0].isdigit()
+                )
+            ):
+                return None
+            try:
+                payload = {key: value for key, value in receipt.items() if key != "descriptorSha256"}
+                encoded_payload = json.dumps(
+                    payload,
+                    allow_nan=False,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                import hashlib
+
+                if hashlib.sha256(encoded_payload.encode("utf-8")).hexdigest() != descriptor_sha256:
+                    return None
+                encoded = json.dumps(
+                    receipt,
+                    allow_nan=False,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            except (RecursionError, TypeError, ValueError):
+                return None
+            if len(encoded.encode("utf-8")) > 32 * 1024:
+                return None
+            output.append(json.loads(encoded))
+            continue
         if not isinstance(receipt, dict) or set(receipt) != {
             "schemaVersion",
             "kind",

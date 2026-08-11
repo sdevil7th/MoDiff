@@ -16,6 +16,7 @@
     "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
   },
   "repositoryPins": [
+    {"repo": "nateraw/real-esrgan", "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094", "license": "bsd-3-clause", "purpose": "controlled-video-delivery-upscaler", "weightName": "RealESRGAN_x2plus.pth", "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb", "byteSize": 67061725, "verifiedAt": "2026-08-12T00:00:00+05:30"},
     {"repo": "diffusers/FLUX.2-klein-4B-modular", "revision": "62ac375aa5308588f111fcd12115f5c54a8b1f4f", "license": "not-declared", "purpose": "reviewed-dynamic-modular-block", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "lllyasviel/FramePackI2V_HY", "revision": "86cef4396041b6002c957852daac4c91aaa47c79", "license": "not-declared", "purpose": "framepack-transformer", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "hunyuanvideo-community/HunyuanVideo", "revision": "e8c2aaa66fe3742a32c11a6766aecbf07c56e773", "license": "not-declared", "purpose": "framepack-base-components", "verifiedAt": "2026-08-03T14:34:36+05:30"},

@@ -396,7 +396,7 @@ def byte_range_response(request, body, *, content_type, charset=None, filename=N
 
 
 from modiff.config import CONFIG
-from modiff.auxiliary_lora import controlled_lora_receipts_from_graph
+from modiff.controlled_artifacts import controlled_artifact_receipts_from_graph
 from modiff.diffusers_offload import (
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
@@ -6759,7 +6759,7 @@ class WebServer:
         setattr(
             error,
             "modiff_recovery_hint",
-            "Repair the pinned adapter in Model Manager or rebuild the controlled workflow block.",
+            "Repair the pinned artifact in Model Manager or rebuild the controlled workflow block.",
         )
         return error
 
@@ -6767,12 +6767,15 @@ class WebServer:
         if not isinstance(runtime_hints, dict):
             return []
         try:
-            receipts = controlled_lora_receipts_from_graph(graph)
+            selected = runtime_hints.get("autoResourcePlan")
+            receipts = controlled_artifact_receipts_from_graph(
+                graph,
+                primary_candidate=selected if isinstance(selected, dict) else None,
+            )
         except Exception as exc:
             raise self._controlled_artifact_contract_error() from exc
         runtime_hints["controlledArtifacts"] = deepcopy(receipts)
         if runtime_hints.get("resourceMode") == "auto":
-            selected = runtime_hints.get("autoResourcePlan")
             if isinstance(selected, dict):
                 selected["controlledArtifacts"] = deepcopy(receipts)
             candidates = runtime_hints.get("autoResourceCandidates")

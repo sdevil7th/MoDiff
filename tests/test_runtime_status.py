@@ -1009,7 +1009,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("controlledArtifacts", hints["autoResourceCandidates"][0])
         baseline_cache_signature = self.server._auto_candidate_cache_signature(hints)
 
-        with patch("modiff.server.controlled_lora_receipts_from_graph", return_value=[receipt]):
+        with patch("modiff.server.controlled_artifact_receipts_from_graph", return_value=[receipt]):
             self.assertEqual(
                 self.server._bind_controlled_artifact_receipts({"nodes": {}, "paths": []}, hints),
                 [receipt],
@@ -1030,7 +1030,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                 "source": "auto_resource_history",
             }
         with (
-            patch("modiff.server.controlled_lora_receipts_from_graph", return_value=[receipt]),
+            patch("modiff.server.controlled_artifact_receipts_from_graph", return_value=[receipt]),
             patch("modiff.server.matching_auto_resource_success_history", return_value=None),
             patch.object(self.server, "_runtime_fingerprint", return_value={"fingerprint": "unit"}),
         ):
@@ -1057,7 +1057,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                 "source": "auto_resource_history",
             }
         with (
-            patch("modiff.server.controlled_lora_receipts_from_graph", return_value=[receipt]),
+            patch("modiff.server.controlled_artifact_receipts_from_graph", return_value=[receipt]),
             patch(
                 "modiff.server.matching_auto_resource_success_history",
                 return_value={"successCount": 1, "lastSuccessAt": 1},
@@ -1079,7 +1079,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     def test_controlled_artifact_validation_errors_are_bounded_and_redacted(self):
         marker = "CONTROLLED_ARTIFACT_SECRET_" + "x" * 2048
         with patch(
-            "modiff.server.controlled_lora_receipts_from_graph",
+            "modiff.server.controlled_artifact_receipts_from_graph",
             side_effect=ValueError(marker),
         ):
             with self.assertRaises(RuntimeError) as raised:

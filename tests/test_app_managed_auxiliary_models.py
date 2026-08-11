@@ -2,7 +2,8 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import torch
@@ -140,6 +141,32 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
                         device="cpu",
                     )
                 loader.assert_not_called()
+
+    def test_exact_upscaler_selection_is_revalidated_before_model_load(self):
+        selection = {
+            "source": "hub",
+            "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
+            "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+            "sha256": "4" * 64,
+            "byteSize": 123,
+        }
+        node = Upscaler("exact-upscaler")
+        model = MagicMock()
+        model.eval.return_value = model
+        node.mm_add = MagicMock()
+        node.mm_exec = MagicMock(return_value=[])
+        with (
+            patch(
+                "modiff.controlled_artifacts.resolve_upscaler_artifact",
+                return_value=SimpleNamespace(path=Path("C:/managed/exact.pth")),
+            ) as resolve,
+            patch("modules.Spandrel.main.ModelLoader") as loader,
+        ):
+            loader.return_value.load_from_file.return_value = model
+            self.assertEqual(node.execute(image=object(), model_id=selection, device="cpu"), {"output": []})
+
+        resolve.assert_called_once_with(selection)
+        loader.return_value.load_from_file.assert_called_once_with("C:\\managed\\exact.pth")
 
     def test_upscaler_tiles_and_stitches_model_agnostic_integer_scale(self):
         class FakeUpscaler:
