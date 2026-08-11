@@ -249,6 +249,10 @@ _VIDEO_GRAPH_BINDINGS = (
     ("wanGenerate", "attention_kwargs_json", "attentionKwargsJson"),
     ("videoExport", "fps", "fps"),
 )
+_WAN_VACE_GRAPH_BINDINGS = tuple(
+    (role, param, "wanVaceRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+    for role, param, source in _VIDEO_GRAPH_BINDINGS
+)
 _I2V_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
     ("loadImage", "modules.Image.Load", -520, 300),
 )
@@ -458,6 +462,7 @@ _BINDING_SOURCES = frozenset(
         *_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
         *_VIDEO_GRAPH_BINDINGS,
+        *_WAN_VACE_GRAPH_BINDINGS,
         *_I2V_GRAPH_BINDINGS,
         *_V2V_GRAPH_BINDINGS,
         *_LTX_T2V_GRAPH_BINDINGS,
@@ -2052,7 +2057,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _VIDEO_GRAPH_ROLES,
         "edges": _VIDEO_GRAPH_EDGES,
-        "bindings": _VIDEO_GRAPH_BINDINGS,
+        "bindings": _WAN_VACE_GRAPH_BINDINGS,
     },
 }
 
