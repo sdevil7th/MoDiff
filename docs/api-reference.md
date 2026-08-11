@@ -122,13 +122,14 @@ consistency identifiers, not authorization tokens or live-model evidence.
 The current schema-v1 catalog covers the migrated Flux Schnell, Dev, Krea,
 Flux2 Klein, Depth, Canny, Redux, Kontext, and Fill image pairs; Wan 2.2 I2V
 and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition
-modes; and ACE-Step text-to-audio plus audio variation. Related pairs reuse generic image, video,
+modes; and ACE-Step text-to-audio, variation, and continuation. Related pairs reuse generic image, video,
 or audio topologies while keeping distinct exact profiles, artifacts, resource
-policies, form bindings, and receipt identities. ACE-Step text-to-audio and
-variation use the generic Diffusers runtime recipe, audio loader/generator,
-source-audio loader where required, and audio export nodes. Its continuation
-and repaint siblings remain deliberately unclaimed by the execution-spec
-marker until each exact topology is migrated.
+policies, form bindings, and receipt identities. ACE-Step text-to-audio,
+variation, and continuation use the generic Diffusers runtime recipe, audio
+loader/generator, source-audio loader where required, and audio export nodes;
+continuation additionally seals loudness matching and joining. Its repaint
+sibling remains deliberately unclaimed by the execution-spec marker until its
+exact topology is migrated.
 
 ### Auto resource compatibility
 

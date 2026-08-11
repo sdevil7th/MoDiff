@@ -75,6 +75,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTXVideoPipeline", "reference_to_video"),
                 ("AceStepAudioPipeline", "text_to_audio"),
                 ("AceStepAudioPipeline", "audio_variation"),
+                ("AceStepAudioPipeline", "audio_continuation"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -238,6 +239,24 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("loadAudio", "audio", "audioGenerate", "source_audio"), specs[23]["edges"])
         self.assertEqual(specs[23]["pipelineClass"], "AceStepPipeline")
         self.assertNotEqual(specs[23]["contentHash"], specs[22]["contentHash"])
+        self.assertEqual(
+            [item[0] for item in specs[24]["roles"]],
+            [
+                "loadAudio",
+                "diffusersQuantization",
+                "diffusersRecipe",
+                "audioPipeline",
+                "audioGenerate",
+                "audioExport",
+                "audioLoudnessMatch",
+                "audioJoin",
+            ],
+        )
+        self.assertIn(("audioGenerate", "task_type", "continuation"), specs[24]["bindings"])
+        self.assertIn(("audioGenerate", "return_continuation_tail", "true"), specs[24]["bindings"])
+        self.assertIn(("audioGenerate", "audio", "audioLoudnessMatch", "audio"), specs[24]["edges"])
+        self.assertIn(("audioJoin", "output", "audioExport", "audio"), specs[24]["edges"])
+        self.assertNotEqual(specs[24]["contentHash"], specs[23]["contentHash"])
         self.assertEqual(specs[0]["actions"], ())
         self.assertRegex(specs[0]["contentHash"], r"^studio-spec-v1-[0-9a-f]{8}$")
         self.assertEqual(specs, validate_studio_execution_specs(module_registry.MODULE_MAP))
@@ -348,11 +367,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
 
-    def test_ace_text_and_variation_modes_seal_exact_generic_audio_routes(self):
+    def test_ace_text_variation_and_continuation_modes_seal_exact_generic_audio_routes(self):
         text = studio_execution_spec_for_pair("AceStepAudioPipeline", "text_to_audio")
         variation = studio_execution_spec_for_pair("AceStepAudioPipeline", "audio_variation")
+        continuation = studio_execution_spec_for_pair("AceStepAudioPipeline", "audio_continuation")
         self.assertIsNotNone(text)
         self.assertIsNotNone(variation)
+        self.assertIsNotNone(continuation)
         self.assertEqual(text["executionProfileId"], "ace-step-audio:direct")
         self.assertEqual(variation["executionProfileId"], "ace-step-audio:direct")
         self.assertEqual(text["pipelineClass"], "AceStepPipeline")
@@ -362,7 +383,11 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("audioGenerate", "task_type", "cover"), variation["bindings"])
         self.assertIn(("loadAudio", "file", "sourceAudio"), variation["bindings"])
         self.assertIn(("loadAudio", "audio", "audioGenerate", "source_audio"), variation["edges"])
-        for spec in (text, variation):
+        self.assertIn(("audioGenerate", "task_type", "continuation"), continuation["bindings"])
+        self.assertIn(("audioLoudnessMatch", "reference_window_seconds", "referenceWindow15"), continuation["bindings"])
+        self.assertIn(("audioJoin", "boundary_fade_seconds", "boundaryFade001"), continuation["bindings"])
+        self.assertIn(("loadAudio", "audio", "audioJoin", "source"), continuation["edges"])
+        for spec in (text, variation, continuation):
             self.assertIn(("audioGenerate", "sample_rate", "sampleRate48000"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
