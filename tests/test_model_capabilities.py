@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 12)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 13)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -117,10 +117,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(kontext_multi_spec["pipelineClass"], "FluxKontextPipeline")
         self.assertNotEqual(kontext_multi_spec["contentHash"], kontext_spec["contentHash"])
 
-        fill_spec = by_model["FluxFillPipeline"]["studioExecutionSpecs"][0]
+        fill_specs = by_model["FluxFillPipeline"]["studioExecutionSpecs"]
+        fill_spec = next(item for item in fill_specs if item["mode"] == "inpaint")
+        fill_outpaint_spec = next(item for item in fill_specs if item["mode"] == "outpaint")
         self.assertEqual(by_model["FluxFillPipeline"]["modes"], ["inpaint", "outpaint"])
-        self.assertEqual(by_model["FluxFillPipeline"]["studioExecutionSpecModes"], ["inpaint"])
+        self.assertEqual(by_model["FluxFillPipeline"]["studioExecutionSpecModes"], ["inpaint", "outpaint"])
         self.assertEqual(fill_spec["pipelineClass"], "FluxFillPipeline")
+        self.assertEqual(fill_outpaint_spec["pipelineClass"], "FluxFillPipeline")
+        self.assertNotEqual(fill_outpaint_spec["contentHash"], fill_spec["contentHash"])
         self.assertIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
         self.assertIn("loadMask", [item[0] for item in fill_spec["roles"]])
 
