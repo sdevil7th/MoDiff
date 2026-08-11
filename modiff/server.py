@@ -6036,7 +6036,6 @@ class WebServer:
             "cudaIndex",
             "cudaMemoryFreeBytes",
             "cudaMemoryTotalBytes",
-            "modelFamily",
             "modelType",
             "mode",
             "modelRepo",
@@ -6078,7 +6077,6 @@ class WebServer:
             "enforceCudaBudget",
             "compatibilityProbe",
             "compatibilityStatus",
-            "lowVramMode",
             "requestedCudaReserveBytes",
             "requestedCudaBudgetBytes",
             "clientRunId",
@@ -6098,7 +6096,6 @@ class WebServer:
         for key in (
             "source",
             "device",
-            "modelFamily",
             "modelType",
             "mode",
             "modelRepo",
@@ -6159,7 +6156,6 @@ class WebServer:
 
         for key in (
             "autoOffload",
-            "lowVramMode",
             "enforceCudaBudget",
             "regionalCompile",
             "channelsLast",
@@ -6650,7 +6646,6 @@ class WebServer:
             "quantization_mode": runtime_hints.get("quantizationMode") if runtime_hints else None,
             "auto_offload": runtime_hints.get("autoOffload") if runtime_hints else None,
             "offload_mode": runtime_hints.get("offloadMode") if runtime_hints else None,
-            "low_vram_mode": runtime_hints.get("lowVramMode") if runtime_hints else None,
         }
 
     def _resource_retry_modes(self, runtime_hints):

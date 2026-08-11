@@ -1216,6 +1216,21 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(RuntimeError):
             self.server._coerce_runtime_hints({"resourceRetryModes": ["model_cpu"] * 100000})
 
+    def test_client_model_family_and_low_vram_classifiers_are_not_runtime_authority(self):
+        hints = self.server._coerce_runtime_hints(
+            {
+                "modelFamily": "Qwen Image",
+                "lowVramMode": True,
+                "modelType": "QwenImageModularPipeline",
+                "mode": "text_to_image",
+            }
+        )
+
+        self.assertEqual(hints["modelType"], "QwenImageModularPipeline")
+        self.assertEqual(hints["mode"], "text_to_image")
+        self.assertNotIn("modelFamily", hints)
+        self.assertNotIn("lowVramMode", hints)
+
     async def test_graph_queue_replaces_raw_deep_candidate_data_before_copying(self):
         deep = {}
         cursor = deep

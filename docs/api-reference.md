@@ -221,7 +221,9 @@ cross-profile, unqualified, unsupported, or unreviewed retry candidates. When
 no candidate-bound retry plan is supplied, Auto ignores a submitted
 `resourceRetryModes` list and derives later offload modes from the selected
 exact execution profile in canonical memory-pressure order. Expert mode may
-still submit its bounded `resourceRetryModes` list.
+still submit its bounded `resourceRetryModes` list. The worker also ignores
+client `modelFamily` and `lowVramMode` classifiers; exact model/profile identity
+and the selected recipe already carry the reviewed execution facts.
 
 Immediately before Auto admission, the worker derives
 `controlledArtifacts` from executable graph paths rather than trusting a
