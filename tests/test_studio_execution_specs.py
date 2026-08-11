@@ -425,9 +425,28 @@ class StudioExecutionSpecTests(unittest.TestCase):
 
         selected = {
             "executionProfileId": spec["executionProfileId"],
+            "studioExecutionSpecContract": {
+                "schemaVersion": spec["schemaVersion"],
+                "id": spec["id"],
+                "contentHash": spec["contentHash"],
+                "executionProfileId": spec["executionProfileId"],
+            },
         }
         hints["autoResourcePlan"] = selected
         assert_studio_execution_graph(graph, hints)
+
+        missing_receipt = dict(hints)
+        missing_receipt.pop("studioExecutionSpec")
+        with self.assertRaisesRegex(RuntimeError, "receipt is required"):
+            assert_studio_execution_graph(graph, missing_receipt)
+
+        selected["studioExecutionSpecContract"] = {
+            **selected["studioExecutionSpecContract"],
+            "contentHash": "studio-spec-v1-00000000",
+        }
+        with self.assertRaisesRegex(RuntimeError, "Auto graph contract"):
+            assert_studio_execution_graph(graph, hints)
+        selected["studioExecutionSpecContract"]["contentHash"] = spec["contentHash"]
 
         selected["executionProfileId"] = "flux-dev:direct"
         with self.assertRaisesRegex(RuntimeError, "Auto profile"):

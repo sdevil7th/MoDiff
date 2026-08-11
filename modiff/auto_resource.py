@@ -40,7 +40,10 @@ from modiff.model_artifact_catalog import (
 )
 from modiff.optional_runtimes import public_optional_runtime_profiles
 from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
-from modiff.studio_execution_specs import studio_auto_model_requirements
+from modiff.studio_execution_specs import (
+    studio_auto_model_requirements,
+    studio_execution_spec_for_pair,
+)
 
 
 GIB = 1024**3
@@ -66,7 +69,7 @@ WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 4
+AUTO_HISTORY_VERSION = 5
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -897,6 +900,7 @@ def _candidate_history_signature(
         "loaderAction": str(candidate.get("loaderAction") or ""),
         "executionPath": str(candidate.get("executionPath") or ""),
         "optionalRuntime": _candidate_optional_runtime_signature(candidate),
+        "studioExecutionSpec": _candidate_studio_execution_spec_signature(candidate),
         "workload": workload,
     }
 
@@ -932,6 +936,31 @@ def _candidate_optional_runtime_signature(candidate: dict[str, Any]) -> dict[str
             "profileIds": list(requirement_profile_ids),
             "executionProfileIds": list(execution_profile_ids),
         },
+    }
+
+
+def _candidate_studio_execution_spec_signature(candidate: dict[str, Any]) -> dict[str, Any] | None:
+    contract = candidate.get("studioExecutionSpecContract")
+    if not isinstance(contract, dict) or set(contract) != {
+        "schemaVersion",
+        "id",
+        "contentHash",
+        "executionProfileId",
+    }:
+        return None
+    if (
+        isinstance(contract.get("schemaVersion"), bool)
+        or not isinstance(contract.get("schemaVersion"), int)
+        or not isinstance(contract.get("id"), str)
+        or not isinstance(contract.get("contentHash"), str)
+        or not isinstance(contract.get("executionProfileId"), str)
+    ):
+        return None
+    return {
+        "schemaVersion": contract["schemaVersion"],
+        "id": contract["id"],
+        "contentHash": contract["contentHash"],
+        "executionProfileId": contract["executionProfileId"],
     }
 
 
@@ -1034,6 +1063,11 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "optionalRuntimeRequirement": (
             candidate.get("optionalRuntimeRequirement")
             if isinstance(candidate.get("optionalRuntimeRequirement"), dict)
+            else None
+        ),
+        "studioExecutionSpecContract": (
+            candidate.get("studioExecutionSpecContract")
+            if isinstance(candidate.get("studioExecutionSpecContract"), dict)
             else None
         ),
         "generation": candidate.get("generation") if isinstance(candidate.get("generation"), dict) else {},
@@ -2467,6 +2501,7 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "executionPath",
         "optionalRuntimeProfileIds",
         "optionalRuntimeRequirement",
+        "studioExecutionSpecContract",
     ):
         if candidate.get(key) is None and stored.get(key) is not None:
             candidate[key] = stored[key]
@@ -2896,6 +2931,17 @@ def build_auto_resource_plan(
         model_type,
         mode,
     )
+    studio_execution_spec = studio_execution_spec_for_pair(model_type, mode)
+    studio_execution_spec_contract = (
+        {
+            "schemaVersion": studio_execution_spec["schemaVersion"],
+            "id": studio_execution_spec["id"],
+            "contentHash": studio_execution_spec["contentHash"],
+            "executionProfileId": studio_execution_spec["executionProfileId"],
+        }
+        if studio_execution_spec is not None
+        else None
+    )
     execution_profile_id = str((exact_pair_requirements or {}).get("executionProfileId") or "")
     for candidate in candidates:
         candidate["autoResourceSchemaVersion"] = AUTO_RESOURCE_SCHEMA_VERSION
@@ -2904,6 +2950,8 @@ def build_auto_resource_plan(
         candidate["exactPairDeclared"] = exact_pair_declared
         candidate["optionalRuntimeProfileIds"] = list(optional_runtime_profile_ids)
         candidate["optionalRuntimeRequirement"] = dict(optional_runtime_requirement)
+        if studio_execution_spec_contract is not None:
+            candidate["studioExecutionSpecContract"] = dict(studio_execution_spec_contract)
 
     candidates = _apply_catalog_hardware_support(candidates, hardware)
     candidates = _apply_community_confirmation(candidates, form)

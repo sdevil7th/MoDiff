@@ -2426,7 +2426,17 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
     if not isinstance(runtime_hints, dict):
         return
     receipt = runtime_hints.get("studioExecutionSpec")
+    candidate = runtime_hints.get("autoResourcePlan")
+    candidate_contract = (
+        candidate.get("studioExecutionSpecContract")
+        if isinstance(candidate, dict)
+        else None
+    )
     if receipt is None:
+        if candidate_contract is not None:
+            raise RuntimeError(
+                "Studio execution specification receipt is required for this Auto graph. Rebuild the managed graph."
+            )
         return
     if not isinstance(receipt, dict):
         raise RuntimeError("Studio execution specification receipt is invalid. Rebuild the managed graph.")
@@ -2435,6 +2445,12 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
     if definition is None:
         raise RuntimeError("Studio execution specification receipt is unknown. Rebuild the managed graph.")
     spec = _public_spec(spec_id, definition)
+    expected_candidate_contract = {
+        "schemaVersion": spec["schemaVersion"],
+        "id": spec["id"],
+        "contentHash": spec["contentHash"],
+        "executionProfileId": spec["executionProfileId"],
+    }
     if (
         receipt.get("schemaVersion") != STUDIO_EXECUTION_SPEC_SCHEMA_VERSION
         or receipt.get("contentHash") != spec["contentHash"]
@@ -2442,7 +2458,8 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
         or runtime_hints.get("mode") != spec["mode"]
     ):
         raise RuntimeError("Studio execution specification receipt does not match this workflow.")
-    candidate = runtime_hints.get("autoResourcePlan")
+    if candidate_contract is not None and candidate_contract != expected_candidate_contract:
+        raise RuntimeError("Studio execution specification does not match the selected Auto graph contract.")
     if isinstance(candidate, dict) and candidate.get("executionProfileId") != spec["executionProfileId"]:
         raise RuntimeError("Studio execution specification does not match the selected Auto profile.")
     node_ids = receipt.get("nodes")

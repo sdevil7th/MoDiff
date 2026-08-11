@@ -176,7 +176,9 @@ target:
 - `optionalRuntimeProfileIds` identifies the exact reviewed optional-runtime
   profiles owned by that execution profile; and
 - `optionalRuntimeRequirement` binds their requirement schema, delivery mode,
-  current-required flag, profile IDs, and execution-profile IDs.
+  current-required flag, profile IDs, and execution-profile IDs; and
+- `studioExecutionSpecContract`, when the pair is specification-owned, binds
+  the versioned graph-specification ID, content hash, and execution-profile ID.
 
 The response `modelRequirements` map is also exact-pair data. Its keys are
 `<modelType>:<mode>`, and every value carries the same
@@ -209,13 +211,20 @@ Auto admission and retry failures use bounded, non-echoing messages with the
 Clients should refresh Auto for these failures; structurally valid manual
 configurations remain available through Expert mode.
 
-Local Auto history version 4 binds successful and failed evidence to the Auto
+Local Auto history version 5 binds successful and failed evidence to the Auto
 schema version, exact execution-profile ID, loader/path/class identity,
 optional-runtime profile and delivery contract, artifact revision, optimization
-recipe, workload shape, and runtime hardware fingerprint. Evidence from an
-older history schema or a replaced execution/optional-runtime profile is
-retained on disk for inspection but cannot promote a current candidate to
-`live_proven`.
+recipe, specification-owned graph contract, workload shape, and runtime
+hardware fingerprint. Evidence from an older history schema or a replaced
+execution, optional-runtime, or graph specification is retained on disk for
+inspection but cannot promote a current candidate to `live_proven`.
+
+A specification-owned Auto candidate requires the matching
+`runtimeHints.studioExecutionSpec` receipt at execution. The receipt maps the
+reviewed roles to the submitted node IDs; the backend then verifies the exact
+profile, node identities, typed connections, and form bindings against the
+current specification before any node executes. A legacy pair with no backend
+graph specification remains outside this receipt claim.
 
 ### Optional model runtime metadata
 

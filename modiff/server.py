@@ -6830,6 +6830,7 @@ class WebServer:
             "modelDependencies",
             "optionalRuntimeProfileIds",
             "optionalRuntimeRequirement",
+            "studioExecutionSpecContract",
             "proof",
             "readiness",
             "canAutoRun",
@@ -7254,6 +7255,32 @@ class WebServer:
                     "Auto resource plan optional-runtime receipt does not match its execution profile. "
                     "Refresh Auto before running this workflow."
                 )
+        if hints.get("resourceMode") == "auto" or "studioExecutionSpecContract" in plan:
+            specification = studio_execution_spec_for_pair(model_type, mode)
+            expected_contract = WebServer._studio_execution_spec_contract_signature(
+                specification
+            )
+            declared_contract = plan.get("studioExecutionSpecContract")
+            declared_keys_are_exact = (
+                isinstance(declared_contract, dict)
+                and set(declared_contract)
+                == {"schemaVersion", "id", "contentHash", "executionProfileId"}
+            )
+            if (
+                (expected_contract is None and declared_contract is not None)
+                or (
+                    expected_contract is not None
+                    and (
+                        not declared_keys_are_exact
+                        or WebServer._studio_execution_spec_contract_signature(declared_contract)
+                        != expected_contract
+                    )
+                )
+            ):
+                raise WebServer._auto_resource_contract_error(
+                    "Auto resource plan graph receipt does not match the current Studio execution specification. "
+                    "Refresh Auto before running this workflow."
+                )
         return profile
 
     @staticmethod
@@ -7279,6 +7306,25 @@ class WebServer:
             "requiredNow": requirement["requiredNow"],
             "profileIds": list(profile_ids),
             "executionProfileIds": list(execution_profile_ids),
+        }
+
+    @staticmethod
+    def _studio_execution_spec_contract_signature(contract):
+        if not isinstance(contract, dict):
+            return None
+        if (
+            isinstance(contract.get("schemaVersion"), bool)
+            or not isinstance(contract.get("schemaVersion"), int)
+            or not isinstance(contract.get("id"), str)
+            or not isinstance(contract.get("contentHash"), str)
+            or not isinstance(contract.get("executionProfileId"), str)
+        ):
+            return None
+        return {
+            "schemaVersion": contract["schemaVersion"],
+            "id": contract["id"],
+            "contentHash": contract["contentHash"],
+            "executionProfileId": contract["executionProfileId"],
         }
 
     @staticmethod

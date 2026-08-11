@@ -34,6 +34,7 @@ from modiff.diffusers_profiles import (  # noqa: E402
 )
 from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution  # noqa: E402
 from modiff.server import WebServer  # noqa: E402
+from modiff.studio_execution_specs import studio_execution_spec_for_pair  # noqa: E402
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
 
 
@@ -45,7 +46,7 @@ def resource_plan_target(model_type, mode):
     if len(profiles) != 1:
         raise AssertionError(f"Expected one execution profile for {model_type}:{mode}, got {len(profiles)}")
     profile = profiles[0]
-    return {
+    target = {
         "autoResourceSchemaVersion": 2,
         "executionProfileId": profile.id,
         "loaderModule": profile.loader_module,
@@ -60,6 +61,15 @@ def resource_plan_target(model_type, mode):
             mode,
         ),
     }
+    specification = studio_execution_spec_for_pair(model_type, mode)
+    if specification is not None:
+        target["studioExecutionSpecContract"] = {
+            "schemaVersion": specification["schemaVersion"],
+            "id": specification["id"],
+            "contentHash": specification["contentHash"],
+            "executionProfileId": specification["executionProfileId"],
+        }
+    return target
 
 
 def hardware_snapshot(*, ram_total=32 * GIB, cuda=True):
@@ -759,6 +769,15 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             candidate["optionalRuntimeRequirement"]["executionProfileIds"],
             ["flux-schnell:direct"],
         )
+        self.assertEqual(
+            candidate["studioExecutionSpecContract"],
+            {
+                "schemaVersion": 1,
+                "id": "flux-schnell:text-to-image:v1",
+                "contentHash": "studio-spec-v1-9cd1abb5",
+                "executionProfileId": "flux-schnell:direct",
+            },
+        )
         self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
 
     def test_auto_execution_requires_exact_candidate_id_and_list_binding(self):
@@ -842,6 +861,25 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                 "optionalRuntimeRequirement": {
                     **base["optionalRuntimeRequirement"],
                     "executionProfileIds": ["flux-schnell:replacement"],
+                },
+            },
+            {
+                **base,
+                "studioExecutionSpecContract": {
+                    **base["studioExecutionSpecContract"],
+                    "contentHash": "studio-spec-v1-00000000",
+                },
+            },
+            {
+                key: value
+                for key, value in base.items()
+                if key != "studioExecutionSpecContract"
+            },
+            {
+                **base,
+                "studioExecutionSpecContract": {
+                    **base["studioExecutionSpecContract"],
+                    "extra": True,
                 },
             },
         ):
@@ -1231,9 +1269,9 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
     def test_unqualified_auto_plan_still_requires_an_executable_exact_loader(self):
         candidate = {
-            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
-            "id": "flux-unqualified",
-            "modelType": "FluxSchnellPipeline",
+            **resource_plan_target("ZImageModularPipeline", "text_to_image"),
+            "id": "z-image-unqualified",
+            "modelType": "ZImageModularPipeline",
             "mode": "text_to_image",
             "offloadMode": "model_cpu",
             "proof": {"status": "skipped"},
@@ -1243,7 +1281,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             "paths": [["qwen"]],
             "runtimeHints": {
                 "resourceMode": "auto",
-                "modelType": "FluxSchnellPipeline",
+                "modelType": "ZImageModularPipeline",
                 "mode": "text_to_image",
                 "autoResourceCandidateId": candidate["id"],
                 "autoResourcePlan": candidate,

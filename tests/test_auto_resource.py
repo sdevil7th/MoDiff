@@ -1404,6 +1404,12 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "state": "base_satisfied",
                 "reason": "base_runtime_contract",
             },
+            "studioExecutionSpecContract": {
+                "schemaVersion": 1,
+                "id": "z-image:text-to-image:v1",
+                "contentHash": "studio-spec-v1-00000000",
+                "executionProfileId": "z-image:auto",
+            },
             "attentionBackend": "auto",
             "regionalCompile": False,
             "denoiserCache": "none",
@@ -1429,6 +1435,13 @@ class AutoResourcePlanTests(unittest.TestCase):
                     **base["optionalRuntimeRequirement"],
                     "delivery": "optional_overlay",
                     "requiredNow": True,
+                },
+            ),
+            (
+                "studioExecutionSpecContract",
+                {
+                    **base["studioExecutionSpecContract"],
+                    "contentHash": "studio-spec-v1-11111111",
                 },
             ),
         ):
@@ -1463,15 +1476,21 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
                 "executionProfileIds": ["z-image:auto"],
             },
+            "studioExecutionSpecContract": {
+                "schemaVersion": 1,
+                "id": "z-image:text-to-image:v1",
+                "contentHash": "studio-spec-v1-00000000",
+                "executionProfileId": "z-image:auto",
+            },
             "generation": {"width": 1024, "height": 1024, "steps": 8},
             "installed": True,
             "requirementsMissing": [],
             "proof": {"status": "declared_safe"},
         }
         for changed, history_schema_version in (
-            ({**current, "executionProfileId": "z-image:replacement"}, 4),
-            ({**current, "autoResourceSchemaVersion": 3}, 4),
-            ({**current, "optionalRuntimeProfileIds": []}, 4),
+            ({**current, "executionProfileId": "z-image:replacement"}, 5),
+            ({**current, "autoResourceSchemaVersion": 3}, 5),
+            ({**current, "optionalRuntimeProfileIds": []}, 5),
             (
                 {
                     **current,
@@ -1480,9 +1499,19 @@ class AutoResourcePlanTests(unittest.TestCase):
                         "executionProfileIds": ["z-image:replacement"],
                     },
                 },
-                4,
+                5,
             ),
-            (current, 3),
+            (
+                {
+                    **current,
+                    "studioExecutionSpecContract": {
+                        **current["studioExecutionSpecContract"],
+                        "contentHash": "studio-spec-v1-11111111",
+                    },
+                },
+                5,
+            ),
+            (current, 4),
         ):
             stale_signature = _candidate_history_signature(changed, hardware=hardware)
             stale_signature["historySchemaVersion"] = history_schema_version
