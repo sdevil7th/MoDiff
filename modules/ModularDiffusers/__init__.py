@@ -14,6 +14,7 @@ from .modular_utils import (
     QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
     SDXL_LAYER_BLOCK_OPTIONS,
     ModiffPipelineRegistry,
+    get_modular_guider_options,
     get_modular_layer_block_options,
 )
 
@@ -41,6 +42,7 @@ SDXL_BLOCKS = list(SDXL_LAYER_BLOCK_OPTIONS)
 QWEN_IMAGE_BLOCKS = list(QWEN_IMAGE_LAYER_BLOCK_OPTIONS)
 FLUX_BLOCKS = list(FLUX_LAYER_BLOCK_OPTIONS)
 MODULAR_LAYER_BLOCK_OPTIONS = get_modular_layer_block_options()
+MODULAR_GUIDER_OPTIONS = get_modular_guider_options()
 
 # The static node-registry parser resolves schema constants against this
 # package object. Export the Guider options so the public /nodes contract

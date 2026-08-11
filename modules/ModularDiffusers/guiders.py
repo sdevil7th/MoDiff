@@ -6,8 +6,8 @@ from diffusers import LayerSkipConfig, SmoothedEnergyGuidanceConfig
 
 from modiff.NodeBase import NodeBase
 
-from . import MODULAR_LAYER_BLOCK_OPTIONS
-from .pipeline_schema import MAX_LAYER_BLOCK_OPTIONS
+from . import MODULAR_GUIDER_OPTIONS, MODULAR_LAYER_BLOCK_OPTIONS
+from .pipeline_schema import MAX_GUIDER_OPTIONS, MAX_LAYER_BLOCK_OPTIONS
 
 
 logger = logging.getLogger("modiff")
@@ -235,16 +235,34 @@ class Guider(NodeBase):
             "label": "Guider",
             "display": "output",
             "type": "custom_guider",
-            "onSignal": {
-                "action": "signal",
-                "target": "layers_config",
-            },
+            "onSignal": [
+                {
+                    "action": "value",
+                    "target": "guider",
+                    "prop": "options",
+                    "data": MODULAR_GUIDER_OPTIONS,
+                },
+                {"action": "signal", "target": "layers_config"},
+            ],
         },
         "layers_config": {"label": "Layers", "type": "layers_config", "display": "input"},
     }
 
+    def _selected_guider(self, guider):
+        model_type = self.get_signal_value("guider_out")
+        allowed = MODULAR_GUIDER_OPTIONS.get(model_type) if isinstance(model_type, str) else None
+        if (
+            not isinstance(guider, str)
+            or not isinstance(allowed, list)
+            or len(allowed) > MAX_GUIDER_OPTIONS
+            or guider not in GUIDER_OPTIONS
+            or guider not in allowed
+        ):
+            raise ValueError("Guider requires a class allowed by the connected reviewed Modular pipeline.")
+        return guider
+
     def updateNode(self, values, ref):
-        value = values.get("guider")
+        value = self._selected_guider(values.get("guider"))
 
         params = GUIDER_CONFIGS.get(value, {})
         self.send_node_definition(params)
@@ -271,8 +289,7 @@ class Guider(NodeBase):
 
         logger.debug(f" - guider options: {guider_options}")
 
-        if guider not in GUIDER_OPTIONS:
-            raise ValueError(f"Unsupported Diffusers guider: {guider!r}.")
+        guider = self._selected_guider(guider)
 
         guider_cls = getattr(__import__("diffusers", fromlist=[guider]), guider)
 

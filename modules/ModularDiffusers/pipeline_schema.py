@@ -54,6 +54,7 @@ MAX_CUSTOM_PIPELINE_ACTIONS = 128
 MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION = 256
 MAX_LOADER_COMPONENT_OUTPUTS = 16
 MAX_LAYER_BLOCK_OPTIONS = 64
+MAX_GUIDER_OPTIONS = 16
 MAX_DENOISE_IMAGE_LATENT_DIMENSIONS = 2
 SUPPORTED_DENOISE_IMAGE_LATENT_DIMENSIONS = frozenset({"height", "width"})
 PROTOTYPE_SENSITIVE_FIELD_NAMES = frozenset({"__proto__", "prototype", "constructor"})
@@ -265,6 +266,22 @@ def _validate_pipeline_config_document(data: dict[str, Any], *, source_label: st
     if invalid_layer_block_option or len(layer_block_options) != len(set(layer_block_options)):
         raise EnvironmentError(
             f"The config file at '{source_label}' contains invalid or duplicate layer block names."
+        )
+    guider_options = data.get("guider_options", [])
+    if not isinstance(guider_options, list) or len(guider_options) > MAX_GUIDER_OPTIONS:
+        raise EnvironmentError(
+            f"The config file at '{source_label}' requires at most {MAX_GUIDER_OPTIONS} guider class names."
+        )
+    invalid_guider_option = any(
+        not isinstance(name, str)
+        or not name.strip()
+        or len(name) > 128
+        or name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+        for name in guider_options
+    )
+    if invalid_guider_option or len(guider_options) != len(set(guider_options)):
+        raise EnvironmentError(
+            f"The config file at '{source_label}' contains invalid or duplicate guider class names."
         )
     denoise_image_latent_dimensions = data.get("denoise_image_latent_dimensions", [])
     if (
@@ -1346,6 +1363,7 @@ class MoDiffPipelineConfig:
         default_dtype: str = "",
         loader_component_outputs: tuple[str, ...] = (),
         layer_block_options: tuple[str, ...] = (),
+        guider_options: tuple[str, ...] = (),
         denoise_image_latent_dimensions: tuple[str, ...] = (),
     ):
         """
@@ -1358,6 +1376,7 @@ class MoDiffPipelineConfig:
             default_dtype: Default dtype (e.g., "float16", "bfloat16")
             loader_component_outputs: Additional required component names that ModelsLoader publishes.
             layer_block_options: Exact installed transformer block paths accepted by the Layers node.
+            guider_options: Exact Diffusers guider classes accepted for this pipeline.
             denoise_image_latent_dimensions: Legacy dimension inputs retained when image latents are supplied.
         """
         # Convert all node specs to MoDiff format immediately
@@ -1398,6 +1417,22 @@ class MoDiffPipelineConfig:
         ):
             raise ValueError("layer_block_options requires bounded, unique block names.")
         self.layer_block_options = normalized_layer_blocks
+        if not isinstance(guider_options, (list, tuple)):
+            raise ValueError("guider_options requires a list or tuple of guider class names.")
+        normalized_guider_options = tuple(guider_options)
+        if (
+            len(normalized_guider_options) > MAX_GUIDER_OPTIONS
+            or any(
+                not isinstance(name, str)
+                or not name.strip()
+                or len(name) > 128
+                or name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+                for name in normalized_guider_options
+            )
+            or len(normalized_guider_options) != len(set(normalized_guider_options))
+        ):
+            raise ValueError("guider_options requires bounded, unique guider class names.")
+        self.guider_options = normalized_guider_options
         if not isinstance(denoise_image_latent_dimensions, (list, tuple)):
             raise ValueError("denoise_image_latent_dimensions requires a list or tuple of dimension names.")
         normalized_denoise_dimensions = tuple(denoise_image_latent_dimensions)
@@ -1451,6 +1486,7 @@ class MoDiffPipelineConfig:
             "default_dtype": self.default_dtype,
             "loader_component_outputs": list(self.loader_component_outputs),
             "layer_block_options": list(self.layer_block_options),
+            "guider_options": list(self.guider_options),
             "denoise_image_latent_dimensions": list(self.denoise_image_latent_dimensions),
             "node_params": self.node_params,
         }
@@ -1470,6 +1506,7 @@ class MoDiffPipelineConfig:
         instance.default_dtype = data.get("default_dtype", "")
         instance.loader_component_outputs = tuple(data.get("loader_component_outputs", ()))
         instance.layer_block_options = tuple(data.get("layer_block_options", ()))
+        instance.guider_options = tuple(data.get("guider_options", ()))
         instance.denoise_image_latent_dimensions = tuple(data.get("denoise_image_latent_dimensions", ()))
         return instance
 

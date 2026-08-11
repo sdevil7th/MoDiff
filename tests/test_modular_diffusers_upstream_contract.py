@@ -11,11 +11,18 @@ from modiff.diffusers_profiles import public_execution_profiles, public_experime
 from modules import MODULE_MAP
 from modules.ModularDiffusers.modular_utils import (
     get_all_model_types,
+    get_modular_guider_options,
     get_modular_layer_block_options,
     get_model_type_metadata,
     require_modiff_node_contract,
 )
-from modules.ModularDiffusers import FLUX_BLOCKS, MODULAR_LAYER_BLOCK_OPTIONS, QWEN_IMAGE_BLOCKS, SDXL_BLOCKS
+from modules.ModularDiffusers import (
+    FLUX_BLOCKS,
+    MODULAR_GUIDER_OPTIONS,
+    MODULAR_LAYER_BLOCK_OPTIONS,
+    QWEN_IMAGE_BLOCKS,
+    SDXL_BLOCKS,
+)
 from modules.ModularDiffusers.controlnet import Controlnet
 from modules.ModularDiffusers.denoise import Denoise, _apply_image_latent_dimension_contract
 from modules.ModularDiffusers.dynamic_node import DynamicBlockNode
@@ -42,6 +49,10 @@ _NO_EXPLICIT_GUIDER = object()
 
 class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     """Hardware-free checks for the experimental upstream API MoDiff consumes."""
+
+    def _run_guider(self, node, guider, *, model_type="QwenImageModularPipeline", **kwargs):
+        with patch.object(Guider, "get_signal_value", return_value=model_type):
+            return node.execute(guider, **kwargs)
 
     def _run_denoise_guider_contract(self, *, guider=_NO_EXPLICIT_GUIDER, pipeline_components=("guider",)):
         pipeline = MagicMock()
@@ -283,6 +294,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             default_dtype="bfloat16",
             loader_component_outputs=("image_encoder",),
             layer_block_options=("transformer_blocks",),
+            guider_options=("ClassifierFreeGuidance",),
             denoise_image_latent_dimensions=("height", "width"),
         )
 
@@ -290,6 +302,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertEqual(restored.to_dict(), config.to_dict())
         self.assertEqual(restored.loader_component_outputs, ("image_encoder",))
         self.assertEqual(restored.layer_block_options, ("transformer_blocks",))
+        self.assertEqual(restored.guider_options, ("ClassifierFreeGuidance",))
         self.assertEqual(restored.denoise_image_latent_dimensions, ("height", "width"))
         self.assertEqual(restored.node_params["encode"]["block_name"], "text_encoder")
         self.assertIn("prompt", restored.node_params["encode"]["params"])
@@ -321,6 +334,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             MoDiffPipelineConfig(node_specs={}, loader_component_outputs="image_encoder")
         with self.assertRaisesRegex(ValueError, "list or tuple"):
             MoDiffPipelineConfig(node_specs={}, layer_block_options="transformer_blocks")
+        with self.assertRaisesRegex(ValueError, "list or tuple"):
+            MoDiffPipelineConfig(node_specs={}, guider_options="ClassifierFreeGuidance")
         with self.assertRaisesRegex(ValueError, "list or tuple"):
             MoDiffPipelineConfig(node_specs={}, denoise_image_latent_dimensions="height")
 
@@ -868,6 +883,67 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertNotIn("QwenImageModularPipeline", layer_source)
         self.assertNotIn("FluxModularPipeline", layer_source)
 
+    def test_guider_options_follow_reviewed_pipeline_components_and_layer_contracts(self):
+        all_options = list(GUIDER_OPTIONS)
+        layer_guiders = set(LAYER_CONFIG_MAPPING)
+        non_layer_options = [name for name in all_options if name not in layer_guiders]
+        full_models = {
+            "StableDiffusionXLModularPipeline",
+            "QwenImageModularPipeline",
+            "QwenImageEditModularPipeline",
+            "QwenImageEditPlusModularPipeline",
+        }
+        non_layer_models = {
+            "QwenImageLayeredModularPipeline",
+            "WanImage2VideoModularPipeline",
+            "WanModularPipeline",
+            "ZImageModularPipeline",
+        }
+        expected = {
+            **{model_type: all_options for model_type in full_models},
+            **{model_type: non_layer_options for model_type in non_layer_models},
+        }
+
+        self.assertEqual(get_modular_guider_options(), expected)
+        self.assertEqual(MODULAR_GUIDER_OPTIONS, expected)
+        self.assertEqual(Guider.params["guider_out"]["onSignal"][0]["data"], expected)
+        self.assertEqual(
+            MODULE_MAP["modules.ModularDiffusers"]["Guider"]["params"]["guider_out"]["onSignal"][0]["data"],
+            expected,
+        )
+
+        registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
+        for model_type in sorted(registered):
+            with self.subTest(model_type=model_type):
+                blocks, _ = require_modiff_node_contract(getattr(diffusers, model_type), "denoise")
+                has_upstream_guider = "guider" in blocks.component_names
+                self.assertEqual(model_type in expected, has_upstream_guider)
+                self.assertEqual(get_model_type_metadata(model_type)["guider_options"], expected.get(model_type, []))
+
+        guider_source = inspect.getsource(Guider)
+        for model_type in registered:
+            self.assertNotIn(model_type, guider_source)
+
+    def test_guider_field_action_and_execution_require_the_connected_reviewed_pipeline(self):
+        node = object.__new__(Guider)
+        node.node_id = "reviewed-guider-contract"
+        node.send_node_definition = MagicMock()
+
+        with patch.object(Guider, "get_signal_value", return_value="QwenImageLayeredModularPipeline"):
+            node.updateNode({"guider": "AdaptiveProjectedMixGuidance"}, None)
+            node.send_node_definition.assert_called_once()
+            with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                node.updateNode({"guider": "SkipLayerGuidance"}, None)
+
+        for model_type in (None, {}, "FluxModularPipeline", "FutureModularPipeline"):
+            with self.subTest(model_type=model_type), patch.object(
+                Guider,
+                "get_signal_value",
+                return_value=model_type,
+            ):
+                with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                    node.execute("ClassifierFreeGuidance")
+
     def test_layers_preserve_exact_stack_fqn_and_validate_indices(self):
         node = object.__new__(Layers)
         with patch.object(Layers, "get_signal_value", return_value="QwenImageModularPipeline"):
@@ -929,13 +1005,14 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "PerturbedAttentionGuidance",
         ):
             with self.subTest(guider=guider), self.assertRaisesRegex(ValueError, "non-empty Layers connection"):
-                node.execute(guider, layers_config=[])
+                self._run_guider(node, guider, layers_config=[])
 
     def test_adaptive_projected_mix_guider_forwards_exact_typed_arguments(self):
         node = object.__new__(Guider)
         node.node_id = "adaptive-projected-mix-contract"
         with patch.object(diffusers, "AdaptiveProjectedMixGuidance", return_value="configured") as constructor:
-            result = node.execute(
+            result = self._run_guider(
+                node,
                 "AdaptiveProjectedMixGuidance",
                 guidance_scale=3.5,
                 guidance_rescale=0.25,
@@ -969,8 +1046,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         node = object.__new__(Guider)
         node.node_id = "new-guider-construction-contract"
 
-        adaptive = node.execute("AdaptiveProjectedMixGuidance")["guider_out"]
-        perturbed = node.execute(
+        adaptive = self._run_guider(node, "AdaptiveProjectedMixGuidance")["guider_out"]
+        perturbed = self._run_guider(
+            node,
             "PerturbedAttentionGuidance",
             layers_config=[{"indices": [1], "fqn": "transformer_blocks", "dropout": 1.0}],
         )["guider_out"]
@@ -987,7 +1065,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         with patch.object(diffusers, "AdaptiveProjectedMixGuidance") as constructor:
             with self.assertRaisesRegex(ValueError, "adaptive_projected_guidance_start_step must be an integer"):
-                node.execute(
+                self._run_guider(
+                    node,
                     "AdaptiveProjectedMixGuidance",
                     adaptive_projected_guidance_start_step=2.5,
                 )
@@ -997,7 +1076,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         node = object.__new__(Guider)
         node.node_id = "perturbed-attention-contract"
         with patch.object(diffusers, "PerturbedAttentionGuidance", return_value="configured") as constructor:
-            result = node.execute(
+            result = self._run_guider(
+                node,
                 "PerturbedAttentionGuidance",
                 layers_config=[
                     {
@@ -1044,14 +1124,15 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             with self.subTest(layers_config=layers_config):
                 with patch.object(diffusers, "PerturbedAttentionGuidance") as constructor:
                     with self.assertRaises((TypeError, ValueError)):
-                        node.execute("PerturbedAttentionGuidance", layers_config=layers_config)
+                        self._run_guider(node, "PerturbedAttentionGuidance", layers_config=layers_config)
                     constructor.assert_not_called()
 
     def test_guider_converts_validated_layer_mapping_to_upstream_config(self):
         node = object.__new__(Guider)
         node.node_id = "guider-contract"
         with patch.object(diffusers, "SkipLayerGuidance", return_value="configured") as constructor:
-            result = node.execute(
+            result = self._run_guider(
+                node,
                 "SkipLayerGuidance",
                 layers_config=[
                     {
@@ -1074,7 +1155,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         node = object.__new__(Guider)
         node.node_id = "frequency-guider-contract"
         with patch.object(diffusers, "FrequencyDecoupledGuidance", return_value="configured") as constructor:
-            result = node.execute("FrequencyDecoupledGuidance", guidance_scale=4.5)
+            result = self._run_guider(node, "FrequencyDecoupledGuidance", guidance_scale=4.5)
 
         self.assertEqual(result, {"guider_out": "configured"})
         self.assertEqual(constructor.call_args.kwargs["guidance_scales"], [4.5])

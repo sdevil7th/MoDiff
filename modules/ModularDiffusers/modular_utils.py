@@ -43,6 +43,22 @@ SDXL_LAYER_BLOCK_OPTIONS = (
 QWEN_IMAGE_LAYER_BLOCK_OPTIONS = ("transformer_blocks",)
 FLUX_LAYER_BLOCK_OPTIONS = ("transformer_blocks", "single_transformer_blocks")
 IMAGE_LATENT_DIMENSIONS = ("height", "width")
+ALL_GUIDER_OPTIONS = (
+    "ClassifierFreeGuidance",
+    "SkipLayerGuidance",
+    "AdaptiveProjectedGuidance",
+    "AdaptiveProjectedMixGuidance",
+    "ClassifierFreeZeroStarGuidance",
+    "AutoGuidance",
+    "SmoothedEnergyGuidance",
+    "PerturbedAttentionGuidance",
+    "TangentialClassifierFreeGuidance",
+    "FrequencyDecoupledGuidance",
+)
+LAYER_GUIDER_OPTIONS = frozenset(
+    {"SkipLayerGuidance", "AutoGuidance", "SmoothedEnergyGuidance", "PerturbedAttentionGuidance"}
+)
+NON_LAYER_GUIDER_OPTIONS = tuple(name for name in ALL_GUIDER_OPTIONS if name not in LAYER_GUIDER_OPTIONS)
 
 
 def _normalize_modular_integer(value):
@@ -309,6 +325,7 @@ SDXL_PIPELINE_CONFIG = PipelineConfig(
     default_repo="stabilityai/stable-diffusion-xl-base-1.0",
     default_dtype="float16",
     layer_block_options=SDXL_LAYER_BLOCK_OPTIONS,
+    guider_options=ALL_GUIDER_OPTIONS,
 )
 
 
@@ -430,6 +447,7 @@ QWEN_IMAGE_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Qwen/Qwen-Image-2512",
     default_dtype="bfloat16",
     layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
+    guider_options=ALL_GUIDER_OPTIONS,
 )
 
 
@@ -522,6 +540,7 @@ QWEN_IMAGE_EDIT_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Qwen/Qwen-Image-Edit",
     default_dtype="bfloat16",
     layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
+    guider_options=ALL_GUIDER_OPTIONS,
     denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
@@ -613,6 +632,7 @@ QWEN_IMAGE_EDIT_PLUS_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Qwen/Qwen-Image-Edit-2511",
     default_dtype="bfloat16",
     layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
+    guider_options=ALL_GUIDER_OPTIONS,
     denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
@@ -757,6 +777,7 @@ QWEN_IMAGE_LAYERED_PIPELINE_CONFIG = PipelineConfig(
     label="Qwen-Image-Layered",
     default_repo="Qwen/Qwen-Image-Layered",
     default_dtype="bfloat16",
+    guider_options=NON_LAYER_GUIDER_OPTIONS,
 )
 
 # =============================================================================
@@ -1099,6 +1120,7 @@ Z_IMAGE_PIPELINE_CONFIG = PipelineConfig(
     label="Z-Image",
     default_repo="Tongyi-MAI/Z-Image-Turbo",
     default_dtype="bfloat16",
+    guider_options=NON_LAYER_GUIDER_OPTIONS,
 )
 
 # =============================================================================
@@ -1169,6 +1191,7 @@ WAN_T2V_PIPELINE_CONFIG = PipelineConfig(
     label="WAN2 T2V",
     default_repo="Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
     default_dtype="bfloat16",
+    guider_options=NON_LAYER_GUIDER_OPTIONS,
 )
 
 WAN_I2V_NODE_SPECS = {
@@ -1286,6 +1309,7 @@ WAN_I2V_PIPELINE_CONFIG = PipelineConfig(
     label="WAN2 I2V",
     default_repo="Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
     default_dtype="bfloat16",
+    guider_options=NON_LAYER_GUIDER_OPTIONS,
     loader_component_outputs=("image_encoder",),
 )
 
@@ -1586,6 +1610,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
                 "default_dtype": config.default_dtype,
                 "loader_component_outputs": list(config.loader_component_outputs),
                 "layer_block_options": list(config.layer_block_options),
+                "guider_options": list(config.guider_options),
                 "denoise_image_latent_dimensions": list(config.denoise_image_latent_dimensions),
                 "node_params": config.node_params,
             }
@@ -1602,6 +1627,16 @@ def get_modular_layer_block_options() -> Dict[str, list[str]]:
         pipeline_cls.__name__: list(config.layer_block_options)
         for pipeline_cls, config in _get_registry_instance().get_all().items()
         if config.layer_block_options
+    }
+
+
+def get_modular_guider_options() -> Dict[str, list[str]]:
+    """Return exact model-type-to-guider choices from reviewed configs."""
+
+    return {
+        pipeline_cls.__name__: list(config.guider_options)
+        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        if config.guider_options
     }
 
 

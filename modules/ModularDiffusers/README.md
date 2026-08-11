@@ -73,6 +73,12 @@ from reviewed built-in pipeline metadata. Both dynamic field creation and graph
 execution require the connected model signal and reject an absent, unknown, or
 unlisted block path. A custom sidecar cannot extend this executable allowlist.
 
+The **Guider** node narrows its class selector from the same reviewed pipeline
+metadata and validates the connected model signal again at execution. Pipelines
+without an upstream Guider component expose no executable choice, and guiders
+that consume layer stacks are offered only when that pipeline has a reviewed
+Layers allowlist.
+
 The **Denoise** node also uses reviewed pipeline metadata for the narrow legacy
 case where hidden `height` and `width` values must remain available alongside
 image latents. Other and unknown pipelines discard those stale dimensions, and

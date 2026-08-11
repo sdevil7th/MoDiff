@@ -241,6 +241,12 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 "invalid or duplicate layer block",
                 {**valid, "layer_block_options": ["transformer_blocks", "transformer_blocks"]},
             ),
+            ("at most 16 guider class", {**valid, "guider_options": "ClassifierFreeGuidance"}),
+            ("invalid or duplicate guider class", {**valid, "guider_options": [{}]}),
+            (
+                "invalid or duplicate guider class",
+                {**valid, "guider_options": ["ClassifierFreeGuidance", "ClassifierFreeGuidance"]},
+            ),
             (
                 "at most 2 denoise image-latent dimension",
                 {**valid, "denoise_image_latent_dimensions": "height"},
