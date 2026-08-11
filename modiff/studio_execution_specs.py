@@ -2285,6 +2285,34 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "edges": _QWEN_OUTPAINT_GRAPH_EDGES,
         "bindings": _QWEN_OUTPAINT_GRAPH_BINDINGS,
     },
+    "z-image:text-to-image:v1": {
+        "modelType": "ZImageModularPipeline",
+        "mode": "text_to_image",
+        "profile": {
+            "id": "z-image:auto",
+            "model_type": "ZImageModularPipeline",
+            "modes": ("text_to_image",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "ZImagePipeline",
+            "default_repo": "Tongyi-MAI/Z-Image-Turbo",
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 1024,
+            "max_low_memory_steps": 8,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+    },
 }
 
 

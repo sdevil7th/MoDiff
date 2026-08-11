@@ -720,6 +720,15 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["loaderAction"], "LoadPipeline")
         self.assertEqual(selected["executionPath"], "direct-diffusers-image")
         self.assertEqual(selected["pipelineClass"], "ZImagePipeline")
+        self.assertEqual(
+            selected["studioExecutionSpecContract"],
+            {
+                "schemaVersion": 1,
+                "id": "z-image:text-to-image:v1",
+                "contentHash": "studio-spec-v1-0d3c1205",
+                "executionProfileId": "z-image:auto",
+            },
+        )
 
     def test_qwen_official_bf16_is_not_auto_ready_on_constrained_cuda_without_prequantized_artifact(self):
         plan = self._plan(

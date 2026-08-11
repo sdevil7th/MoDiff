@@ -1461,10 +1461,10 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
     def test_unqualified_auto_plan_still_requires_an_executable_exact_loader(self):
         candidate = {
-            **resource_plan_target("ZImageModularPipeline", "text_to_image"),
-            "id": "z-image-unqualified",
-            "modelType": "ZImageModularPipeline",
-            "mode": "text_to_image",
+            **resource_plan_target("QwenImageEditPlusModularPipeline", "edit_image"),
+            "id": "qwen-edit-plus-unqualified",
+            "modelType": "QwenImageEditPlusModularPipeline",
+            "mode": "edit_image",
             "offloadMode": "model_cpu",
             "proof": {"status": "skipped"},
         }
@@ -1473,8 +1473,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             "paths": [["qwen"]],
             "runtimeHints": {
                 "resourceMode": "auto",
-                "modelType": "ZImageModularPipeline",
-                "mode": "text_to_image",
+                "modelType": "QwenImageEditPlusModularPipeline",
+                "mode": "edit_image",
                 "autoResourceCandidateId": candidate["id"],
                 "autoResourcePlan": candidate,
                 "autoResourceCandidates": [candidate],

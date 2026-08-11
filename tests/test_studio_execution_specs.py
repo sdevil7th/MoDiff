@@ -120,6 +120,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("WanVACEPipeline", "video_outpaint"),
                 ("WanVACEPipeline", "control_to_video"),
                 ("QwenImageEditModularPipeline", "outpaint"),
+                ("ZImageModularPipeline", "text_to_image"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -494,6 +495,35 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "sourceId"
         )
         with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+    def test_z_image_auto_seals_the_exact_direct_image_route(self):
+        spec = studio_execution_spec_for_pair("ZImageModularPipeline", "text_to_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["id"], "z-image:text-to-image:v1")
+        self.assertEqual(spec["executionProfileId"], "z-image:auto")
+        self.assertEqual(spec["loaderModule"], "modules.DiffusersImage")
+        self.assertEqual(spec["loaderAction"], "LoadPipeline")
+        self.assertEqual(spec["executionPath"], "direct-diffusers-image")
+        self.assertEqual(spec["pipelineClass"], "ZImagePipeline")
+        self.assertEqual(spec["defaultRepo"], "Tongyi-MAI/Z-Image-Turbo")
+        self.assertEqual(spec["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["roles"])
+        self.assertEqual(spec["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["edges"])
+        self.assertEqual(spec["bindings"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+        graph["nodes"][hints["studioExecutionSpec"]["nodes"]["diffusersImagePipeline"]]["action"] = "Edit"
+        hints["autoResourcePlan"] = {
+            "executionProfileId": spec["executionProfileId"],
+            "studioExecutionSpecContract": {
+                "schemaVersion": spec["schemaVersion"],
+                "id": spec["id"],
+                "contentHash": spec["contentHash"],
+                "executionProfileId": spec["executionProfileId"],
+            },
+        }
+        with self.assertRaisesRegex(RuntimeError, "node identity"):
             assert_studio_execution_graph(graph, hints)
 
     def test_wan_modes_have_exact_receipts_and_v2v_modes_share_the_reviewed_recipe(self):
