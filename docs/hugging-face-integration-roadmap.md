@@ -2105,6 +2105,25 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       type, build, bundle, and diff checks passed. This is static, unit,
       contract, mocked-browser, and build evidence only; no model download,
       inference, or generated media occurred.
+    - [x] Auto retry-mode authority overlay. Backend commit `a1173db` ignores a
+      duplicate client `resourceRetryModes` list in Auto and derives fallback
+      offload modes from the selected exact execution profile in canonical
+      memory-pressure order; Expert retains its bounded explicit hint. Client
+      commit `52e98d2` stops submitting `supportedOffloadModes` and
+      `resourceRetryModes` in Auto while preserving the selected candidate and
+      candidate-bound retry receipts. The focused backend resource/profile
+      matrix passed 182 tests with 349 subtests, and the complete backend gate
+      passed 1,163 tests with 4 skips and 1,888 subtests with only the existing
+      Diffusers deprecation warning. The focused client request/resource matrix
+      passed 79/79, `npm run check` passed, the exact Auto submission browser
+      path passed 1/1, and the complete mocked Studio suite passed 89/89 in 273
+      seconds. The production bundle was 522530/523264 gzip bytes, 606 bytes
+      below the stricter 523136-byte safety target. Ruff 0.12.7 E9/F,
+      `py_compile`, `uv pip check` (78 packages), preflight, formatting, lint,
+      type, and diff checks passed. This is static, unit, contract,
+      mocked-browser, build, and local preflight evidence only; no model
+      download, inference, generated media, or live workload qualification
+      occurred.
     - [ ] Move the remaining non-audio dynamic field visibility and non-path
       resource metadata out of frontend/node model switches and into reviewed
       declarative overlays.
