@@ -806,19 +806,28 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
         self.assertEqual(plan["selectedCandidate"]["deviceMap"], "cuda")
 
-    def test_declared_qwen_edit_plus_profile_uses_generic_full_residency_metadata(self):
+    def test_declared_qwen_edit_plus_profiles_use_generic_full_residency_metadata(self):
         repo = "Qwen/Qwen-Image-Edit-2511"
-        plan = self._plan(
-            {"form": {"modelType": "QwenImageEditPlusModularPipeline", "mode": "edit_image", "offloadMode": "model_cpu"}},
-            runtime=self._runtime(vram_gib=98, free_gib=96),
-            repos=[repo],
-            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
-        )
+        for mode in ("edit_image", "multi_image_reference_edit"):
+            plan = self._plan(
+                {
+                    "form": {
+                        "modelType": "QwenImageEditPlusModularPipeline",
+                        "mode": mode,
+                        "offloadMode": "model_cpu",
+                    }
+                },
+                runtime=self._runtime(vram_gib=98, free_gib=96),
+                repos=[repo],
+                hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+            )
 
-        self.assertEqual(plan["status"], "ready")
-        self.assertEqual(plan["selectedCandidate"]["resolvedArtifact"], repo)
-        self.assertEqual(plan["selectedCandidate"]["offloadMode"], "none")
-        self.assertEqual(plan["selectedCandidate"]["deviceMap"], "cuda")
+            self.assertEqual(plan["status"], "ready")
+            selected = plan["selectedCandidate"]
+            self.assertEqual(selected["resolvedArtifact"], repo)
+            self.assertEqual(selected["offloadMode"], "none")
+            self.assertEqual(selected["deviceMap"], "cuda")
+            self.assertEqual(selected["studioExecutionSpecContract"]["executionProfileId"], "qwen-edit-plus:modular")
 
     def test_qwen_control_uses_native_residency_on_98_gib(self):
         plan = self._plan(

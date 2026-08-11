@@ -1461,10 +1461,10 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
     def test_unqualified_auto_plan_still_requires_an_executable_exact_loader(self):
         candidate = {
-            **resource_plan_target("QwenImageEditPlusModularPipeline", "edit_image"),
-            "id": "qwen-edit-plus-unqualified",
-            "modelType": "QwenImageEditPlusModularPipeline",
-            "mode": "edit_image",
+            **resource_plan_target("QwenImageLayeredModularPipeline", "layer_decomposition"),
+            "id": "qwen-layered-unqualified",
+            "modelType": "QwenImageLayeredModularPipeline",
+            "mode": "layer_decomposition",
             "offloadMode": "model_cpu",
             "proof": {"status": "skipped"},
         }
@@ -1473,8 +1473,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             "paths": [["qwen"]],
             "runtimeHints": {
                 "resourceMode": "auto",
-                "modelType": "QwenImageEditPlusModularPipeline",
-                "mode": "edit_image",
+                "modelType": "QwenImageLayeredModularPipeline",
+                "mode": "layer_decomposition",
                 "autoResourceCandidateId": candidate["id"],
                 "autoResourcePlan": candidate,
                 "autoResourceCandidates": [candidate],

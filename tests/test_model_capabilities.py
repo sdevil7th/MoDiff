@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 35)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 37)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -426,6 +426,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("inpaint", blocked["runnableModes"])
         self.assertFalse(blocked["inpaintContract"]["available"])
         self.assertEqual(blocked["inpaintContract"]["status"], "blocked")
+        self.assertEqual(blocked["studioExecutionSpecModes"], ["edit_image", "multi_image_reference_edit"])
+        self.assertEqual(
+            [item["executionProfileId"] for item in blocked["studioExecutionSpecs"]],
+            ["qwen-edit-plus:modular", "qwen-edit-plus:modular"],
+        )
+        self.assertTrue(all(item["executionPath"] == "modular-diffusers" for item in blocked["studioExecutionSpecs"]))
 
     async def test_contract_only_capabilities_close_registered_unprofiled_adapters(self):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())

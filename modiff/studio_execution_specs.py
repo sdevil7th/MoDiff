@@ -622,6 +622,31 @@ _BINDING_SOURCES = frozenset(
         *_AUDIO_REPAINT_GRAPH_BINDINGS,
     )
 )
+
+_MODULAR_EDIT_PLUS_PROFILE = {
+    "id": "qwen-edit-plus:modular",
+    "model_type": "QwenImageEditPlusModularPipeline",
+    "modes": ("edit_image", "multi_image_reference_edit"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "QwenImageEditPlusModularPipeline",
+    "default_repo": "Qwen/Qwen-Image-Edit-2511",
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": ("transformer", "text_encoder"),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 24,
+    "live_proof": False,
+    "compatible_repos": (),
+}
 _AUTO_FIELD_ALLOWLIST = frozenset(_AUTO_FIELDS)
 
 
@@ -2415,6 +2440,22 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "live_proof": False,
             "compatible_repos": (),
         },
+        "roles": _MODULAR_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+    },
+    "qwen-image-edit-plus:edit-image:v1": {
+        "modelType": "QwenImageEditPlusModularPipeline",
+        "mode": "edit_image",
+        "profile": _MODULAR_EDIT_PLUS_PROFILE,
+        "roles": _MODULAR_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+    },
+    "qwen-image-edit-plus:multi-image-reference-edit:v1": {
+        "modelType": "QwenImageEditPlusModularPipeline",
+        "mode": "multi_image_reference_edit",
+        "profile": _MODULAR_EDIT_PLUS_PROFILE,
         "roles": _MODULAR_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_EDIT_GRAPH_EDGES,
         "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,

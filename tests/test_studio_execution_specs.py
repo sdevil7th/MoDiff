@@ -125,6 +125,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("ZImageModularPipeline", "text_to_image"),
                 ("QwenImageModularPipeline", "text_to_image"),
                 ("QwenImageEditModularPipeline", "edit_image"),
+                ("QwenImageEditPlusModularPipeline", "edit_image"),
+                ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -638,6 +640,25 @@ class StudioExecutionSpecTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
+
+    def test_qwen_image_edit_plus_modes_seal_the_exact_dynamic_modular_route(self):
+        specs = [
+            studio_execution_spec_for_pair("QwenImageEditPlusModularPipeline", mode)
+            for mode in ("edit_image", "multi_image_reference_edit")
+        ]
+        for spec in specs:
+            self.assertIsNotNone(spec)
+            self.assertEqual(spec["executionProfileId"], "qwen-edit-plus:modular")
+            self.assertEqual(spec["executionPath"], "modular-diffusers")
+            self.assertEqual(spec["pipelineClass"], "QwenImageEditPlusModularPipeline")
+            self.assertEqual(spec["roles"], specs[0]["roles"])
+            self.assertEqual(spec["edges"], specs[0]["edges"])
+            self.assertEqual(spec["bindings"], specs[0]["bindings"])
+            graph, hints = executable_graph_for_spec(spec)
+            assert_studio_execution_graph(graph, hints)
+
+        self.assertNotEqual(specs[0]["id"], specs[1]["id"])
+        self.assertNotEqual(specs[0]["contentHash"], specs[1]["contentHash"])
 
     def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")
