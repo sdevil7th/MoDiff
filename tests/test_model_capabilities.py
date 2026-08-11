@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 15)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 16)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -132,14 +132,18 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         klein_specs = by_model["Flux2KleinPipeline"]["studioExecutionSpecs"]
         klein_text = next(item for item in klein_specs if item["mode"] == "text_to_image")
         klein_edit = next(item for item in klein_specs if item["mode"] == "edit_image")
+        klein_multi = next(item for item in klein_specs if item["mode"] == "multi_image_reference_edit")
         self.assertEqual(klein_text["id"], "flux2-klein:text-to-image:v1")
         self.assertEqual(klein_edit["id"], "flux2-klein:edit-image:v1")
+        self.assertEqual(klein_multi["id"], "flux2-klein:multi-image-reference-edit:v1")
         self.assertEqual(klein_text["pipelineClass"], "Flux2KleinPipeline")
         self.assertEqual(klein_edit["pipelineClass"], "Flux2KleinPipeline")
+        self.assertEqual(klein_multi["pipelineClass"], "Flux2KleinPipeline")
         self.assertNotEqual(klein_text["contentHash"], klein_edit["contentHash"])
+        self.assertNotEqual(klein_multi["contentHash"], klein_edit["contentHash"])
         self.assertEqual(
             by_model["Flux2KleinPipeline"]["studioExecutionSpecModes"],
-            ["edit_image", "text_to_image"],
+            ["edit_image", "multi_image_reference_edit", "text_to_image"],
         )
 
         i2v_spec = by_model["WanImageToVideoPipeline"]["studioExecutionSpecs"][0]
