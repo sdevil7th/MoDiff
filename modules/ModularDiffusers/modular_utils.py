@@ -42,6 +42,7 @@ SDXL_LAYER_BLOCK_OPTIONS = (
 )
 QWEN_IMAGE_LAYER_BLOCK_OPTIONS = ("transformer_blocks",)
 FLUX_LAYER_BLOCK_OPTIONS = ("transformer_blocks", "single_transformer_blocks")
+IMAGE_LATENT_DIMENSIONS = ("height", "width")
 
 
 def _normalize_modular_integer(value):
@@ -521,6 +522,7 @@ QWEN_IMAGE_EDIT_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Qwen/Qwen-Image-Edit",
     default_dtype="bfloat16",
     layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
 
@@ -611,6 +613,7 @@ QWEN_IMAGE_EDIT_PLUS_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Qwen/Qwen-Image-Edit-2511",
     default_dtype="bfloat16",
     layer_block_options=QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
 # =============================================================================
@@ -924,6 +927,7 @@ FLUX_KONTEXT_PIPELINE_CONFIG = PipelineConfig(
     default_repo="black-forest-labs/FLUX.1-Kontext-dev",
     default_dtype="bfloat16",
     layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
 # =============================================================================
@@ -1007,6 +1011,7 @@ FLUX_2_KLEIN_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
     label="Flux 2 Klein Distilled",
     default_repo="black-forest-labs/FLUX.2-klein-4B",
     default_dtype="bfloat16",
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
 
@@ -1581,6 +1586,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
                 "default_dtype": config.default_dtype,
                 "loader_component_outputs": list(config.loader_component_outputs),
                 "layer_block_options": list(config.layer_block_options),
+                "denoise_image_latent_dimensions": list(config.denoise_image_latent_dimensions),
                 "node_params": config.node_params,
             }
             if model_type == CUSTOM_PIPELINE_MODEL_TYPE:

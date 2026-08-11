@@ -73,6 +73,11 @@ from reviewed built-in pipeline metadata. Both dynamic field creation and graph
 execution require the connected model signal and reject an absent, unknown, or
 unlisted block path. A custom sidecar cannot extend this executable allowlist.
 
+The **Denoise** node also uses reviewed pipeline metadata for the narrow legacy
+case where hidden `height` and `width` values must remain available alongside
+image latents. Other and unknown pipelines discard those stale dimensions, and
+custom sidecar metadata cannot authorize a built-in execution exception.
+
 [Watch a separated Modular Diffusers workflow demo (MP4)](https://github.com/user-attachments/assets/4bbf74ac-404e-46bb-ae51-a84e65c25235)
 
 Type a prompt, confirm model readiness, and use **Run**. A queued task response only confirms submission; watch Queue and WebSocket progress for completion or structured failure details.

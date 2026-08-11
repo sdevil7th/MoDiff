@@ -17,7 +17,7 @@ from modules.ModularDiffusers.modular_utils import (
 )
 from modules.ModularDiffusers import FLUX_BLOCKS, MODULAR_LAYER_BLOCK_OPTIONS, QWEN_IMAGE_BLOCKS, SDXL_BLOCKS
 from modules.ModularDiffusers.controlnet import Controlnet
-from modules.ModularDiffusers.denoise import Denoise
+from modules.ModularDiffusers.denoise import Denoise, _apply_image_latent_dimension_contract
 from modules.ModularDiffusers.dynamic_node import DynamicBlockNode
 from modules.ModularDiffusers.embeddings import EncodePrompt, ImageEmbeddings
 from modules.ModularDiffusers.guiders import GUIDER_CONFIGS, GUIDER_OPTIONS, LAYER_CONFIG_MAPPING, Guider, Layers
@@ -283,12 +283,14 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             default_dtype="bfloat16",
             loader_component_outputs=("image_encoder",),
             layer_block_options=("transformer_blocks",),
+            denoise_image_latent_dimensions=("height", "width"),
         )
 
         restored = MoDiffPipelineConfig.from_dict(config.to_dict())
         self.assertEqual(restored.to_dict(), config.to_dict())
         self.assertEqual(restored.loader_component_outputs, ("image_encoder",))
         self.assertEqual(restored.layer_block_options, ("transformer_blocks",))
+        self.assertEqual(restored.denoise_image_latent_dimensions, ("height", "width"))
         self.assertEqual(restored.node_params["encode"]["block_name"], "text_encoder")
         self.assertIn("prompt", restored.node_params["encode"]["params"])
 
@@ -319,6 +321,65 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             MoDiffPipelineConfig(node_specs={}, loader_component_outputs="image_encoder")
         with self.assertRaisesRegex(ValueError, "list or tuple"):
             MoDiffPipelineConfig(node_specs={}, layer_block_options="transformer_blocks")
+        with self.assertRaisesRegex(ValueError, "list or tuple"):
+            MoDiffPipelineConfig(node_specs={}, denoise_image_latent_dimensions="height")
+
+    def test_denoise_image_latent_dimensions_come_from_reviewed_pipeline_metadata(self):
+        registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
+        retained = {
+            "Flux2KleinModularPipeline",
+            "FluxKontextModularPipeline",
+            "QwenImageEditModularPipeline",
+            "QwenImageEditPlusModularPipeline",
+        }
+
+        for model_type in sorted(registered):
+            with self.subTest(model_type=model_type):
+                expected = ["height", "width"] if model_type in retained else []
+                self.assertEqual(
+                    get_model_type_metadata(model_type)["denoise_image_latent_dimensions"],
+                    expected,
+                )
+                node_kwargs = {
+                    "image_latents": object(),
+                    "height": 640,
+                    "width": 768,
+                }
+                _apply_image_latent_dimension_contract(model_type, node_kwargs)
+                self.assertEqual(
+                    {name for name in ("height", "width") if name in node_kwargs},
+                    set(expected),
+                )
+
+        denoise_source = inspect.getsource(Denoise.execute)
+        for model_type in retained:
+            self.assertNotIn(model_type, denoise_source)
+
+    def test_denoise_image_latent_dimension_contract_is_bounded_and_fail_closed(self):
+        node_kwargs = {"image_latents": object(), "height": 640, "width": 768}
+        with patch(
+            "modules.ModularDiffusers.denoise.get_model_type_metadata",
+            return_value={"denoise_image_latent_dimensions": ["height"]},
+        ):
+            _apply_image_latent_dimension_contract("FixturePipeline", node_kwargs)
+        self.assertEqual(node_kwargs, {"image_latents": node_kwargs["image_latents"], "height": 640})
+
+        for invalid in ("height", ["depth"], ["height", "height"], ["height", "width", "depth"]):
+            with self.subTest(invalid=invalid), patch(
+                "modules.ModularDiffusers.denoise.get_model_type_metadata",
+                return_value={"denoise_image_latent_dimensions": invalid},
+            ):
+                with self.assertRaisesRegex(RuntimeError, "invalid image-latent dimension contract"):
+                    _apply_image_latent_dimension_contract(
+                        "FixturePipeline",
+                        {"image_latents": object(), "height": 640, "width": 768},
+                    )
+
+        without_latents = {"image_latents": None, "height": 640, "width": 768}
+        with patch("modules.ModularDiffusers.denoise.get_model_type_metadata") as metadata:
+            _apply_image_latent_dimension_contract("FixturePipeline", without_latents)
+        metadata.assert_not_called()
+        self.assertEqual(without_latents, {"image_latents": None, "height": 640, "width": 768})
 
     def test_required_pipeline_registry_matches_installed_diffusers(self):
         required = {

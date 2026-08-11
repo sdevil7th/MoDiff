@@ -13,6 +13,7 @@ from modiff.NodeBase import NodeBase
 
 from . import MESSAGE_DURATION, components
 from .modular_utils import (
+    get_model_type_metadata,
     normalize_modular_runtime_params,
     normalize_modular_seed,
     pipeline_class_from_model_type,
@@ -55,6 +56,27 @@ MISSING_EMBEDDINGS_MESSAGE = (
     "Prompt embeddings are missing from Encode Prompt. "
     "Update or recreate the Studio graph after the model fields finish refreshing."
 )
+
+_DENOISE_IMAGE_LATENT_DIMENSIONS = ("height", "width")
+
+
+def _apply_image_latent_dimension_contract(model_type, node_kwargs):
+    """Drop legacy dimensions unless reviewed pipeline metadata retains them."""
+
+    if node_kwargs.get("image_latents") is None:
+        return
+    metadata = get_model_type_metadata(model_type)
+    retained = metadata.get("denoise_image_latent_dimensions") if isinstance(metadata, dict) else None
+    if (
+        not isinstance(retained, list)
+        or len(retained) > len(_DENOISE_IMAGE_LATENT_DIMENSIONS)
+        or any(not isinstance(name, str) or name not in _DENOISE_IMAGE_LATENT_DIMENSIONS for name in retained)
+        or len(retained) != len(set(retained))
+    ):
+        raise RuntimeError("The registered Modular pipeline has an invalid image-latent dimension contract.")
+    for name in _DENOISE_IMAGE_LATENT_DIMENSIONS:
+        if name not in retained:
+            node_kwargs.pop(name, None)
 
 
 def embeddings_missing_error(error):
@@ -916,20 +938,8 @@ class Denoise(NodeBase):
                         raise ValueError(f"The selected Wan denoiser does not expose routed input '{name}'.")
                     node_kwargs[name] = route_runtime_inputs[name]
 
-        # Compatibility workaround: hidden height/width values may still be passed by older graphs.
-        edit_models = [
-            "Flux2KleinModularPipeline",
-            "QwenImageEditModularPipeline",
-            "QwenImageEditPlusModularPipeline",
-            "FluxKontextModularPipeline",
-        ]
-        if (
-            "image_latents" in node_kwargs
-            and node_kwargs["image_latents"] is not None
-            and self._model_type not in edit_models
-        ):
-            node_kwargs.pop("height", None)
-            node_kwargs.pop("width", None)
+        # Hidden dimensions from older graphs survive only where reviewed metadata requires them.
+        _apply_image_latent_dimension_contract(self._model_type, node_kwargs)
 
         # 5. figure out the outputs to return based on node_config["output_names"]
         outputs = {}

@@ -54,6 +54,8 @@ MAX_CUSTOM_PIPELINE_ACTIONS = 128
 MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION = 256
 MAX_LOADER_COMPONENT_OUTPUTS = 16
 MAX_LAYER_BLOCK_OPTIONS = 64
+MAX_DENOISE_IMAGE_LATENT_DIMENSIONS = 2
+SUPPORTED_DENOISE_IMAGE_LATENT_DIMENSIONS = frozenset({"height", "width"})
 PROTOTYPE_SENSITIVE_FIELD_NAMES = frozenset({"__proto__", "prototype", "constructor"})
 _IMMUTABLE_HUB_REVISION = re.compile(r"^[0-9a-f]{40}$")
 _LOCAL_EXECUTABLE_CONFIG_FILES = {
@@ -263,6 +265,25 @@ def _validate_pipeline_config_document(data: dict[str, Any], *, source_label: st
     if invalid_layer_block_option or len(layer_block_options) != len(set(layer_block_options)):
         raise EnvironmentError(
             f"The config file at '{source_label}' contains invalid or duplicate layer block names."
+        )
+    denoise_image_latent_dimensions = data.get("denoise_image_latent_dimensions", [])
+    if (
+        not isinstance(denoise_image_latent_dimensions, list)
+        or len(denoise_image_latent_dimensions) > MAX_DENOISE_IMAGE_LATENT_DIMENSIONS
+    ):
+        raise EnvironmentError(
+            f"The config file at '{source_label}' requires at most "
+            f"{MAX_DENOISE_IMAGE_LATENT_DIMENSIONS} denoise image-latent dimension names."
+        )
+    if (
+        any(
+            not isinstance(name, str) or name not in SUPPORTED_DENOISE_IMAGE_LATENT_DIMENSIONS
+            for name in denoise_image_latent_dimensions
+        )
+        or len(denoise_image_latent_dimensions) != len(set(denoise_image_latent_dimensions))
+    ):
+        raise EnvironmentError(
+            f"The config file at '{source_label}' contains invalid or duplicate denoise image-latent dimension names."
         )
     if "node_params" not in data or not isinstance(data["node_params"], dict) or not data["node_params"]:
         raise EnvironmentError(
@@ -1325,6 +1346,7 @@ class MoDiffPipelineConfig:
         default_dtype: str = "",
         loader_component_outputs: tuple[str, ...] = (),
         layer_block_options: tuple[str, ...] = (),
+        denoise_image_latent_dimensions: tuple[str, ...] = (),
     ):
         """
         Args:
@@ -1336,6 +1358,7 @@ class MoDiffPipelineConfig:
             default_dtype: Default dtype (e.g., "float16", "bfloat16")
             loader_component_outputs: Additional required component names that ModelsLoader publishes.
             layer_block_options: Exact installed transformer block paths accepted by the Layers node.
+            denoise_image_latent_dimensions: Legacy dimension inputs retained when image latents are supplied.
         """
         # Convert all node specs to MoDiff format immediately
         self.node_specs = node_specs
@@ -1375,6 +1398,19 @@ class MoDiffPipelineConfig:
         ):
             raise ValueError("layer_block_options requires bounded, unique block names.")
         self.layer_block_options = normalized_layer_blocks
+        if not isinstance(denoise_image_latent_dimensions, (list, tuple)):
+            raise ValueError("denoise_image_latent_dimensions requires a list or tuple of dimension names.")
+        normalized_denoise_dimensions = tuple(denoise_image_latent_dimensions)
+        if (
+            len(normalized_denoise_dimensions) > MAX_DENOISE_IMAGE_LATENT_DIMENSIONS
+            or any(
+                not isinstance(name, str) or name not in SUPPORTED_DENOISE_IMAGE_LATENT_DIMENSIONS
+                for name in normalized_denoise_dimensions
+            )
+            or len(normalized_denoise_dimensions) != len(set(normalized_denoise_dimensions))
+        ):
+            raise ValueError("denoise_image_latent_dimensions requires bounded, unique supported dimension names.")
+        self.denoise_image_latent_dimensions = normalized_denoise_dimensions
 
     @property
     def node_params(self) -> dict[str, Any]:
@@ -1415,6 +1451,7 @@ class MoDiffPipelineConfig:
             "default_dtype": self.default_dtype,
             "loader_component_outputs": list(self.loader_component_outputs),
             "layer_block_options": list(self.layer_block_options),
+            "denoise_image_latent_dimensions": list(self.denoise_image_latent_dimensions),
             "node_params": self.node_params,
         }
 
@@ -1433,6 +1470,7 @@ class MoDiffPipelineConfig:
         instance.default_dtype = data.get("default_dtype", "")
         instance.loader_component_outputs = tuple(data.get("loader_component_outputs", ()))
         instance.layer_block_options = tuple(data.get("layer_block_options", ()))
+        instance.denoise_image_latent_dimensions = tuple(data.get("denoise_image_latent_dimensions", ()))
         return instance
 
     def to_json_string(self) -> str:

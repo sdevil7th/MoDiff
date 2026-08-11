@@ -241,6 +241,22 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 "invalid or duplicate layer block",
                 {**valid, "layer_block_options": ["transformer_blocks", "transformer_blocks"]},
             ),
+            (
+                "at most 2 denoise image-latent dimension",
+                {**valid, "denoise_image_latent_dimensions": "height"},
+            ),
+            (
+                "invalid or duplicate denoise image-latent dimension",
+                {**valid, "denoise_image_latent_dimensions": [{}]},
+            ),
+            (
+                "invalid or duplicate denoise image-latent dimension",
+                {**valid, "denoise_image_latent_dimensions": ["height", "height"]},
+            ),
+            (
+                "invalid or duplicate denoise image-latent dimension",
+                {**valid, "denoise_image_latent_dimensions": ["depth"]},
+            ),
         )
         for expected_message, document in invalid_documents:
             with self.subTest(expected_message=expected_message), tempfile.TemporaryDirectory() as directory:
