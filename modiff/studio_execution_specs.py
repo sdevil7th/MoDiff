@@ -308,6 +308,10 @@ _VACE_INPAINT_GRAPH_BINDINGS = tuple(
     ("alignMaskVideo", "threshold", "maskThreshold127"),
     ("alignMaskVideo", "grow_pixels", "inpaintMaskGrow96"),
 )
+_VACE_OUTPAINT_GRAPH_BINDINGS = tuple(
+    (role, param, "outpaintMaskGrow0") if role == "alignMaskVideo" and param == "grow_pixels" else (role, param, source)
+    for role, param, source in _VACE_INPAINT_GRAPH_BINDINGS
+)
 _LTX_T2V_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -483,6 +487,7 @@ _BINDING_SOURCES = frozenset(
         *_I2V_GRAPH_BINDINGS,
         *_V2V_GRAPH_BINDINGS,
         *_VACE_INPAINT_GRAPH_BINDINGS,
+        *_VACE_OUTPAINT_GRAPH_BINDINGS,
         *_LTX_T2V_GRAPH_BINDINGS,
         *_LTX_I2V_GRAPH_BINDINGS,
         *_LTX_V2V_GRAPH_BINDINGS,
@@ -2102,6 +2107,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _VACE_INPAINT_GRAPH_ROLES,
         "edges": _VACE_INPAINT_GRAPH_EDGES,
         "bindings": _VACE_INPAINT_GRAPH_BINDINGS,
+    },
+    "wan-vace-1.3b:video-outpaint:v1": {
+        "modelType": "WanVACEPipeline",
+        "mode": "video_outpaint",
+        "profile": {
+            "id": "wan-vace:direct",
+            "model_type": "WanVACEPipeline",
+            "modes": ("text_to_video", "video_inpaint", "video_outpaint", "control_to_video"),
+            "loader_module": "modules.DiffusersVideo",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-wan-vace",
+            "pipeline_class": "WanVACEPipeline",
+            "default_repo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 832,
+            "max_low_memory_steps": 24,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _VACE_INPAINT_GRAPH_ROLES,
+        "edges": _VACE_INPAINT_GRAPH_EDGES,
+        "bindings": _VACE_OUTPAINT_GRAPH_BINDINGS,
     },
 }
 

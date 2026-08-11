@@ -122,7 +122,7 @@ consistency identifiers, not authorization tokens or live-model evidence.
 The current schema-v1 catalog covers the migrated Flux Schnell, Dev, Krea,
 Flux2 Klein, Depth, Canny, Redux, Kontext, and Fill image pairs; Wan 2.2 I2V
 and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition
-modes; Wan VACE text-to-video and video inpaint; all four ACE-Step audio modes; and Qwen Image Edit inpaint. Related pairs reuse generic image, video,
+modes; Wan VACE text-to-video, video inpaint, and video outpaint; all four ACE-Step audio modes; and Qwen Image Edit inpaint. Related pairs reuse generic image, video,
 or audio topologies while keeping distinct exact profiles, artifacts, resource
 policies, form bindings, and receipt identities. ACE-Step text-to-audio,
 variation, continuation, and repaint use the generic Diffusers runtime recipe, audio
@@ -135,9 +135,10 @@ its outpaint and Modular edit siblings remain outside the marker until their
 distinct recipes are migrated.
 Wan VACE text-to-video seals the reviewed direct VACE profile and shared
 quantization, runtime-recipe, video loader/generator, and export route. Video
-inpaint additionally seals the source-video normalization and aligned-mask
-route with its reviewed mask-growth policy. Outpaint and control-to-video
-remain outside the marker until their distinct input topologies are migrated.
+inpaint and outpaint additionally seal the source-video normalization and
+aligned-mask route with their distinct reviewed mask-growth policies.
+Control-to-video remains outside the marker until its distinct input topology
+is migrated.
 
 ### Auto resource compatibility
 

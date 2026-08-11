@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 29)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 30)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -309,8 +309,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             qwen_inpaint_spec["edges"],
         )
         wan_vace = by_model["WanVACEPipeline"]
-        self.assertEqual(wan_vace["studioExecutionSpecModes"], ["text_to_video", "video_inpaint"])
-        wan_vace_text_spec, wan_vace_inpaint_spec = wan_vace["studioExecutionSpecs"]
+        self.assertEqual(
+            wan_vace["studioExecutionSpecModes"],
+            ["text_to_video", "video_inpaint", "video_outpaint"],
+        )
+        wan_vace_text_spec, wan_vace_inpaint_spec, wan_vace_outpaint_spec = wan_vace["studioExecutionSpecs"]
         self.assertEqual(wan_vace_text_spec["executionProfileId"], "wan-vace:direct")
         self.assertEqual(wan_vace_text_spec["executionPath"], "direct-wan-vace")
         self.assertEqual(wan_vace_text_spec["pipelineClass"], "WanVACEPipeline")
@@ -321,6 +324,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["alignMaskVideo", "output", "wanGenerate", "mask"],
             wan_vace_inpaint_spec["edges"],
         )
+        self.assertEqual(wan_vace_outpaint_spec["mode"], "video_outpaint")
+        self.assertIn(
+            ["alignMaskVideo", "grow_pixels", "outpaintMaskGrow0"],
+            wan_vace_outpaint_spec["bindings"],
+        )
+        self.assertNotEqual(wan_vace_outpaint_spec["contentHash"], wan_vace_inpaint_spec["contentHash"])
 
         ltx = by_model["LTXVideoPipeline"]
         self.assertEqual(ltx["mediaKind"], "video")
