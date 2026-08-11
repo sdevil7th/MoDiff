@@ -1,11 +1,12 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 
-from diffusers import ComponentSpec
+from diffusers import ComponentSpec, SchedulerMixin
 
 from modiff.NodeBase import NodeBase
 
-from . import components
+from . import MODULAR_SCHEDULER_OPTIONS, components
+from .pipeline_schema import MAX_SCHEDULER_OPTIONS
 
 
 logger = logging.getLogger("modiff")
@@ -295,7 +296,17 @@ class Scheduler(NodeBase):
     resizable = True
     skipParamsCheck = True
     params = {
-        "scheduler_in": {"label": "Scheduler", "display": "input", "type": "diffusers_auto_model"},
+        "scheduler_in": {
+            "label": "Scheduler",
+            "display": "input",
+            "type": "diffusers_auto_model",
+            "onSignal": {
+                "action": "value",
+                "target": "scheduler",
+                "prop": "options",
+                "data": MODULAR_SCHEDULER_OPTIONS,
+            },
+        },
         "scheduler": {
             "label": "Scheduler",
             "fieldOptions": {"loading": True},
@@ -332,8 +343,21 @@ class Scheduler(NodeBase):
         },
     }
 
+    def _selected_scheduler(self, scheduler):
+        model_type = self.get_signal_value("scheduler_in")
+        allowed = MODULAR_SCHEDULER_OPTIONS.get(model_type) if isinstance(model_type, str) else None
+        if (
+            not isinstance(scheduler, str)
+            or not isinstance(allowed, list)
+            or len(allowed) > MAX_SCHEDULER_OPTIONS
+            or scheduler not in SCHEDULER_CONFIGS
+            or scheduler not in allowed
+        ):
+            raise ValueError("Scheduler requires a class allowed by the connected reviewed Modular pipeline.")
+        return scheduler
+
     def updateNode(self, values, ref):
-        value = values.get("scheduler")
+        value = self._selected_scheduler(values.get("scheduler"))
 
         params = SCHEDULER_CONFIGS.get(value, {})
         self.send_node_definition(params)
@@ -344,8 +368,16 @@ class Scheduler(NodeBase):
         logger.debug(f" - scheduler: {scheduler}")
         logger.debug(f" - kwargs: {kwargs}")
 
+        scheduler = self._selected_scheduler(scheduler)
         scheduler_component = components.get_one(scheduler_in["model_id"])
         scheduler_cls = getattr(__import__("diffusers", fromlist=[scheduler]), scheduler)
+        current_scheduler_cls = type(scheduler_component)
+        compatible = set(getattr(current_scheduler_cls, "_compatibles", ()))
+        if (
+            not issubclass(scheduler_cls, SchedulerMixin)
+            or (scheduler_cls is not current_scheduler_cls and scheduler not in compatible)
+        ):
+            raise ValueError("Scheduler replacement is incompatible with the connected scheduler component.")
 
         scheduler_options = {}
         for key, value in kwargs.items():
@@ -366,6 +398,8 @@ class Scheduler(NodeBase):
             default_creation_method="from_config",
         )
         new_scheduler = schedule_spec.create(**scheduler_options)
+        if type(new_scheduler) is not scheduler_cls:
+            raise ValueError("Scheduler replacement did not construct the exact reviewed scheduler class.")
         comp_id = components.add(name="scheduler", component=new_scheduler, collection=self.node_id)
         logger.debug(f" Scheduler: new_scheduler: {new_scheduler}")
 

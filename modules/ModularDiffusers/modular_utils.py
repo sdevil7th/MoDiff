@@ -59,6 +59,22 @@ LAYER_GUIDER_OPTIONS = frozenset(
     {"SkipLayerGuidance", "AutoGuidance", "SmoothedEnergyGuidance", "PerturbedAttentionGuidance"}
 )
 NON_LAYER_GUIDER_OPTIONS = tuple(name for name in ALL_GUIDER_OPTIONS if name not in LAYER_GUIDER_OPTIONS)
+COMPATIBLE_SCHEDULER_OPTIONS = (
+    "DDIMScheduler",
+    "DDPMScheduler",
+    "DEISMultistepScheduler",
+    "DPMSolverMultistepScheduler",
+    "DPMSolverSinglestepScheduler",
+    "DPMSolverSDEScheduler",
+    "EulerDiscreteScheduler",
+    "EulerAncestralDiscreteScheduler",
+    "HeunDiscreteScheduler",
+    "KDPM2DiscreteScheduler",
+    "KDPM2AncestralDiscreteScheduler",
+    "LMSDiscreteScheduler",
+    "PNDMScheduler",
+    "UniPCMultistepScheduler",
+)
 
 
 def _normalize_modular_integer(value):
@@ -326,6 +342,7 @@ SDXL_PIPELINE_CONFIG = PipelineConfig(
     default_dtype="float16",
     layer_block_options=SDXL_LAYER_BLOCK_OPTIONS,
     guider_options=ALL_GUIDER_OPTIONS,
+    scheduler_options=COMPATIBLE_SCHEDULER_OPTIONS,
 )
 
 
@@ -1192,6 +1209,7 @@ WAN_T2V_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
     default_dtype="bfloat16",
     guider_options=NON_LAYER_GUIDER_OPTIONS,
+    scheduler_options=COMPATIBLE_SCHEDULER_OPTIONS,
 )
 
 WAN_I2V_NODE_SPECS = {
@@ -1310,6 +1328,7 @@ WAN_I2V_PIPELINE_CONFIG = PipelineConfig(
     default_repo="Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
     default_dtype="bfloat16",
     guider_options=NON_LAYER_GUIDER_OPTIONS,
+    scheduler_options=COMPATIBLE_SCHEDULER_OPTIONS,
     loader_component_outputs=("image_encoder",),
 )
 
@@ -1611,6 +1630,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
                 "loader_component_outputs": list(config.loader_component_outputs),
                 "layer_block_options": list(config.layer_block_options),
                 "guider_options": list(config.guider_options),
+                "scheduler_options": list(config.scheduler_options),
                 "denoise_image_latent_dimensions": list(config.denoise_image_latent_dimensions),
                 "node_params": config.node_params,
             }
@@ -1637,6 +1657,16 @@ def get_modular_guider_options() -> Dict[str, list[str]]:
         pipeline_cls.__name__: list(config.guider_options)
         for pipeline_cls, config in _get_registry_instance().get_all().items()
         if config.guider_options
+    }
+
+
+def get_modular_scheduler_options() -> Dict[str, list[str]]:
+    """Return exact model-type-to-scheduler replacements from reviewed configs."""
+
+    return {
+        pipeline_cls.__name__: list(config.scheduler_options)
+        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        if config.scheduler_options
     }
 
 

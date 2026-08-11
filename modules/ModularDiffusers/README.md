@@ -79,6 +79,13 @@ without an upstream Guider component expose no executable choice, and guiders
 that consume layer stacks are offered only when that pipeline has a reviewed
 Layers allowlist.
 
+The **Scheduler** replacement selector follows the pinned upstream compatibility
+contract. SDXL and Wan expose only scheduler classes compatible with their
+expected Euler or UniPC component; flow-matching pipelines expose no legacy
+replacement choices. Dynamic field refresh and execution require the connected
+reviewed pipeline identity, and execution also verifies the live scheduler
+component class before replacement.
+
 The **Denoise** node also uses reviewed pipeline metadata for the narrow legacy
 case where hidden `height` and `width` values must remain available alongside
 image latents. Other and unknown pipelines discard those stale dimensions, and

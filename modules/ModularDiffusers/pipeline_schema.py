@@ -55,6 +55,7 @@ MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION = 256
 MAX_LOADER_COMPONENT_OUTPUTS = 16
 MAX_LAYER_BLOCK_OPTIONS = 64
 MAX_GUIDER_OPTIONS = 16
+MAX_SCHEDULER_OPTIONS = 32
 MAX_DENOISE_IMAGE_LATENT_DIMENSIONS = 2
 SUPPORTED_DENOISE_IMAGE_LATENT_DIMENSIONS = frozenset({"height", "width"})
 PROTOTYPE_SENSITIVE_FIELD_NAMES = frozenset({"__proto__", "prototype", "constructor"})
@@ -282,6 +283,22 @@ def _validate_pipeline_config_document(data: dict[str, Any], *, source_label: st
     if invalid_guider_option or len(guider_options) != len(set(guider_options)):
         raise EnvironmentError(
             f"The config file at '{source_label}' contains invalid or duplicate guider class names."
+        )
+    scheduler_options = data.get("scheduler_options", [])
+    if not isinstance(scheduler_options, list) or len(scheduler_options) > MAX_SCHEDULER_OPTIONS:
+        raise EnvironmentError(
+            f"The config file at '{source_label}' requires at most {MAX_SCHEDULER_OPTIONS} scheduler class names."
+        )
+    invalid_scheduler_option = any(
+        not isinstance(name, str)
+        or not name.strip()
+        or len(name) > 128
+        or name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+        for name in scheduler_options
+    )
+    if invalid_scheduler_option or len(scheduler_options) != len(set(scheduler_options)):
+        raise EnvironmentError(
+            f"The config file at '{source_label}' contains invalid or duplicate scheduler class names."
         )
     denoise_image_latent_dimensions = data.get("denoise_image_latent_dimensions", [])
     if (
@@ -1364,6 +1381,7 @@ class MoDiffPipelineConfig:
         loader_component_outputs: tuple[str, ...] = (),
         layer_block_options: tuple[str, ...] = (),
         guider_options: tuple[str, ...] = (),
+        scheduler_options: tuple[str, ...] = (),
         denoise_image_latent_dimensions: tuple[str, ...] = (),
     ):
         """
@@ -1377,6 +1395,7 @@ class MoDiffPipelineConfig:
             loader_component_outputs: Additional required component names that ModelsLoader publishes.
             layer_block_options: Exact installed transformer block paths accepted by the Layers node.
             guider_options: Exact Diffusers guider classes accepted for this pipeline.
+            scheduler_options: Exact Diffusers scheduler replacements accepted for this pipeline.
             denoise_image_latent_dimensions: Legacy dimension inputs retained when image latents are supplied.
         """
         # Convert all node specs to MoDiff format immediately
@@ -1433,6 +1452,22 @@ class MoDiffPipelineConfig:
         ):
             raise ValueError("guider_options requires bounded, unique guider class names.")
         self.guider_options = normalized_guider_options
+        if not isinstance(scheduler_options, (list, tuple)):
+            raise ValueError("scheduler_options requires a list or tuple of scheduler class names.")
+        normalized_scheduler_options = tuple(scheduler_options)
+        if (
+            len(normalized_scheduler_options) > MAX_SCHEDULER_OPTIONS
+            or any(
+                not isinstance(name, str)
+                or not name.strip()
+                or len(name) > 128
+                or name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+                for name in normalized_scheduler_options
+            )
+            or len(normalized_scheduler_options) != len(set(normalized_scheduler_options))
+        ):
+            raise ValueError("scheduler_options requires bounded, unique scheduler class names.")
+        self.scheduler_options = normalized_scheduler_options
         if not isinstance(denoise_image_latent_dimensions, (list, tuple)):
             raise ValueError("denoise_image_latent_dimensions requires a list or tuple of dimension names.")
         normalized_denoise_dimensions = tuple(denoise_image_latent_dimensions)
@@ -1487,6 +1522,7 @@ class MoDiffPipelineConfig:
             "loader_component_outputs": list(self.loader_component_outputs),
             "layer_block_options": list(self.layer_block_options),
             "guider_options": list(self.guider_options),
+            "scheduler_options": list(self.scheduler_options),
             "denoise_image_latent_dimensions": list(self.denoise_image_latent_dimensions),
             "node_params": self.node_params,
         }
@@ -1507,6 +1543,7 @@ class MoDiffPipelineConfig:
         instance.loader_component_outputs = tuple(data.get("loader_component_outputs", ()))
         instance.layer_block_options = tuple(data.get("layer_block_options", ()))
         instance.guider_options = tuple(data.get("guider_options", ()))
+        instance.scheduler_options = tuple(data.get("scheduler_options", ()))
         instance.denoise_image_latent_dimensions = tuple(data.get("denoise_image_latent_dimensions", ()))
         return instance
 

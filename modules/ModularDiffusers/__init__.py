@@ -16,6 +16,7 @@ from .modular_utils import (
     ModiffPipelineRegistry,
     get_modular_guider_options,
     get_modular_layer_block_options,
+    get_modular_scheduler_options,
 )
 
 
@@ -43,8 +44,9 @@ QWEN_IMAGE_BLOCKS = list(QWEN_IMAGE_LAYER_BLOCK_OPTIONS)
 FLUX_BLOCKS = list(FLUX_LAYER_BLOCK_OPTIONS)
 MODULAR_LAYER_BLOCK_OPTIONS = get_modular_layer_block_options()
 MODULAR_GUIDER_OPTIONS = get_modular_guider_options()
+MODULAR_SCHEDULER_OPTIONS = get_modular_scheduler_options()
 
 # The static node-registry parser resolves schema constants against this
-# package object. Export the Guider options so the public /nodes contract
-# contains the actual mapping instead of the unresolved identifier string.
+# package object. Export reviewed dynamic options so the public /nodes
+# contract contains mappings instead of unresolved identifier strings.
 from .guiders import GUIDER_OPTIONS as GUIDER_OPTIONS  # noqa: E402,F401

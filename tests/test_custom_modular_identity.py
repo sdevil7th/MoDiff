@@ -247,6 +247,12 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 "invalid or duplicate guider class",
                 {**valid, "guider_options": ["ClassifierFreeGuidance", "ClassifierFreeGuidance"]},
             ),
+            ("at most 32 scheduler class", {**valid, "scheduler_options": "EulerDiscreteScheduler"}),
+            ("invalid or duplicate scheduler class", {**valid, "scheduler_options": [{}]}),
+            (
+                "invalid or duplicate scheduler class",
+                {**valid, "scheduler_options": ["EulerDiscreteScheduler", "EulerDiscreteScheduler"]},
+            ),
             (
                 "at most 2 denoise image-latent dimension",
                 {**valid, "denoise_image_latent_dimensions": "height"},

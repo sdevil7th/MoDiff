@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import diffusers
 import torch
-from diffusers import ComponentSpec, ComponentsManager, ModularPipeline
+from diffusers import ComponentSpec, ComponentsManager, EulerDiscreteScheduler, ModularPipeline
 from diffusers.modular_pipelines import InputParam, LoopSequentialPipelineBlocks, ModularPipelineBlocks, OutputParam
 
 from modiff.diffusers_profiles import public_execution_profiles, public_experimental_pipelines
@@ -13,6 +13,7 @@ from modules.ModularDiffusers.modular_utils import (
     get_all_model_types,
     get_modular_guider_options,
     get_modular_layer_block_options,
+    get_modular_scheduler_options,
     get_model_type_metadata,
     require_modiff_node_contract,
 )
@@ -20,6 +21,7 @@ from modules.ModularDiffusers import (
     FLUX_BLOCKS,
     MODULAR_GUIDER_OPTIONS,
     MODULAR_LAYER_BLOCK_OPTIONS,
+    MODULAR_SCHEDULER_OPTIONS,
     QWEN_IMAGE_BLOCKS,
     SDXL_BLOCKS,
 )
@@ -42,6 +44,7 @@ from modules.ModularDiffusers.pipeline_schema import (
     output_param_to_modiff_param,
 )
 from modules.ModularDiffusers.route_state import ROUTE_STATE_INPUT, ROUTE_STATE_OUTPUT
+from modules.ModularDiffusers.schedulers import SCHEDULER_CONFIGS, Scheduler
 
 
 _NO_EXPLICIT_GUIDER = object()
@@ -295,6 +298,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             loader_component_outputs=("image_encoder",),
             layer_block_options=("transformer_blocks",),
             guider_options=("ClassifierFreeGuidance",),
+            scheduler_options=("EulerDiscreteScheduler",),
             denoise_image_latent_dimensions=("height", "width"),
         )
 
@@ -303,6 +307,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertEqual(restored.loader_component_outputs, ("image_encoder",))
         self.assertEqual(restored.layer_block_options, ("transformer_blocks",))
         self.assertEqual(restored.guider_options, ("ClassifierFreeGuidance",))
+        self.assertEqual(restored.scheduler_options, ("EulerDiscreteScheduler",))
         self.assertEqual(restored.denoise_image_latent_dimensions, ("height", "width"))
         self.assertEqual(restored.node_params["encode"]["block_name"], "text_encoder")
         self.assertIn("prompt", restored.node_params["encode"]["params"])
@@ -336,6 +341,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             MoDiffPipelineConfig(node_specs={}, layer_block_options="transformer_blocks")
         with self.assertRaisesRegex(ValueError, "list or tuple"):
             MoDiffPipelineConfig(node_specs={}, guider_options="ClassifierFreeGuidance")
+        with self.assertRaisesRegex(ValueError, "list or tuple"):
+            MoDiffPipelineConfig(node_specs={}, scheduler_options="EulerDiscreteScheduler")
         with self.assertRaisesRegex(ValueError, "list or tuple"):
             MoDiffPipelineConfig(node_specs={}, denoise_image_latent_dimensions="height")
 
@@ -923,6 +930,99 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         guider_source = inspect.getsource(Guider)
         for model_type in registered:
             self.assertNotIn(model_type, guider_source)
+
+    def test_scheduler_options_follow_pinned_upstream_compatibility(self):
+        expected_choices = [name for name in SCHEDULER_CONFIGS if name not in {"LCMScheduler", "TCDScheduler"}]
+        expected = {
+            "StableDiffusionXLModularPipeline": expected_choices,
+            "WanModularPipeline": expected_choices,
+            "WanImage2VideoModularPipeline": expected_choices,
+        }
+        self.assertEqual(get_modular_scheduler_options(), expected)
+        self.assertEqual(MODULAR_SCHEDULER_OPTIONS, expected)
+        self.assertEqual(Scheduler.params["scheduler_in"]["onSignal"]["data"], expected)
+        self.assertEqual(
+            MODULE_MAP["modules.ModularDiffusers"]["Scheduler"]["params"]["scheduler_in"]["onSignal"]["data"],
+            expected,
+        )
+        for scheduler_name in SCHEDULER_CONFIGS:
+            scheduler_type = getattr(diffusers, scheduler_name)
+            self.assertTrue(issubclass(scheduler_type, diffusers.SchedulerMixin))
+            self.assertTrue(scheduler_type.__module__.startswith("diffusers."))
+
+        for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
+            pipeline_class = getattr(diffusers, model_type)
+            with self.subTest(model_type=model_type):
+                blocks, _node_config = require_modiff_node_contract(pipeline_class, "denoise")
+                scheduler_spec = next(spec for spec in blocks.expected_components if spec.name == "scheduler")
+                scheduler_type = scheduler_spec.type_hint
+                upstream_choices = {
+                    scheduler_type.__name__,
+                    *getattr(scheduler_type, "_compatibles", ()),
+                }
+                compatible = [name for name in SCHEDULER_CONFIGS if name in upstream_choices]
+                self.assertEqual(expected.get(model_type, []), compatible)
+                self.assertEqual(
+                    get_model_type_metadata(model_type)["scheduler_options"],
+                    compatible,
+                )
+
+        scheduler_source = inspect.getsource(Scheduler)
+        for model_type in set(get_all_model_types()) - {""}:
+            self.assertNotIn(model_type, scheduler_source)
+
+    def test_scheduler_field_action_and_execution_require_exact_compatible_identity(self):
+        node = object.__new__(Scheduler)
+        node.node_id = "scheduler-contract"
+        node.send_node_definition = MagicMock()
+
+        with patch.object(Scheduler, "get_signal_value", return_value="StableDiffusionXLModularPipeline"):
+            node.updateNode({"scheduler": "EulerDiscreteScheduler"}, None)
+        node.send_node_definition.assert_called_once_with(SCHEDULER_CONFIGS["EulerDiscreteScheduler"])
+
+        invalid_selections = (
+            (None, "EulerDiscreteScheduler"),
+            ({"model": "bad"}, "EulerDiscreteScheduler"),
+            ("QwenImageModularPipeline", "EulerDiscreteScheduler"),
+            ("FutureModularPipeline", "EulerDiscreteScheduler"),
+            ("StableDiffusionXLModularPipeline", "LCMScheduler"),
+            ("StableDiffusionXLModularPipeline", "TCDScheduler"),
+        )
+        for model_type, scheduler in invalid_selections:
+            with self.subTest(model_type=model_type, scheduler=scheduler), patch.object(
+                Scheduler,
+                "get_signal_value",
+                return_value=model_type,
+            ):
+                with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                    node.updateNode({"scheduler": scheduler}, None)
+
+        current = EulerDiscreteScheduler()
+        with (
+            patch.object(Scheduler, "get_signal_value", return_value="StableDiffusionXLModularPipeline"),
+            patch("modules.ModularDiffusers.schedulers.components.get_one", return_value=current),
+            patch("modules.ModularDiffusers.schedulers.components.add", return_value="replacement"),
+            patch(
+                "modules.ModularDiffusers.schedulers.components.get_model_info",
+                return_value={"model_id": "replacement"},
+            ),
+        ):
+            self.assertEqual(
+                node.execute({"model_id": "current"}, "EulerDiscreteScheduler"),
+                {"scheduler_out": {"model_id": "replacement"}},
+            )
+
+        from diffusers import FlowMatchEulerDiscreteScheduler
+
+        with (
+            patch.object(Scheduler, "get_signal_value", return_value="StableDiffusionXLModularPipeline"),
+            patch(
+                "modules.ModularDiffusers.schedulers.components.get_one",
+                return_value=FlowMatchEulerDiscreteScheduler(),
+            ),
+            self.assertRaisesRegex(ValueError, "incompatible with the connected scheduler component"),
+        ):
+            node.execute({"model_id": "current"}, "EulerDiscreteScheduler")
 
     def test_guider_field_action_and_execution_require_the_connected_reviewed_pipeline(self):
         node = object.__new__(Guider)
