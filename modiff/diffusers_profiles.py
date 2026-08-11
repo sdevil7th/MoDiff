@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import re
 
 from modiff.diffusers_offload_modes import (
@@ -58,6 +58,49 @@ OPTIONAL_RUNTIME_DELIVERIES = frozenset(
 )
 _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
 _EXECUTION_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._:-]{0,127}")
+_GIB = 1024**3
+
+
+@dataclass(frozen=True)
+class ExpertCudaPolicy:
+    schema_version: int
+    blocked_dtypes: tuple[str, ...]
+    recommended_dtype: str
+    offloaded_vram_bytes: int
+    resident_vram_bytes: int
+    quantized_resident_vram_bytes: tuple[tuple[str, int], ...]
+
+    def __post_init__(self) -> None:
+        dtypes = {"float32", "float16", "bfloat16"}
+        quantization_modes = {"bnb_4bit", "bnb_8bit", "quanto_float8", "torchao_float8"}
+        quantized_modes = tuple(mode for mode, _ in self.quantized_resident_vram_bytes)
+        byte_values = (
+            self.offloaded_vram_bytes,
+            self.resident_vram_bytes,
+            *(value for _, value in self.quantized_resident_vram_bytes),
+        )
+        if (
+            self.schema_version != 1
+            or not self.blocked_dtypes
+            or len(set(self.blocked_dtypes)) != len(self.blocked_dtypes)
+            or not set(self.blocked_dtypes).issubset(dtypes)
+            or self.recommended_dtype not in dtypes
+            or self.recommended_dtype in self.blocked_dtypes
+            or len(set(quantized_modes)) != len(quantized_modes)
+            or not set(quantized_modes).issubset(quantization_modes)
+            or any(not isinstance(value, int) or value <= 0 or value > 1024 * _GIB for value in byte_values)
+        ):
+            raise ValueError("Invalid reviewed Expert CUDA policy.")
+
+
+QWEN_EXPERT_CUDA_POLICY = ExpertCudaPolicy(
+    schema_version=1,
+    blocked_dtypes=("float32",),
+    recommended_dtype="bfloat16",
+    offloaded_vram_bytes=10 * _GIB,
+    resident_vram_bytes=80 * _GIB,
+    quantized_resident_vram_bytes=(("bnb_4bit", 24 * _GIB),),
+)
 
 
 @dataclass(frozen=True)
@@ -88,6 +131,7 @@ class DiffusersExecutionProfile:
     # ``optional_overlay`` and make first-use status an execution prerequisite.
     optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
     compatible_repos: tuple[str, ...] = ()
+    expert_cuda_policy: ExpertCudaPolicy | None = None
 
     def __post_init__(self) -> None:
         expected_loader = {
@@ -123,6 +167,16 @@ class DiffusersExecutionProfile:
     ) -> dict:
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        if self.expert_cuda_policy:
+            public["expert_cuda_policy"] = {
+                **public["expert_cuda_policy"],
+                "blocked_dtypes": list(self.expert_cuda_policy.blocked_dtypes),
+                "quantized_resident_vram_bytes": [
+                    list(item) for item in self.expert_cuda_policy.quantized_resident_vram_bytes
+                ],
+            }
+        else:
+            public.pop("expert_cuda_policy")
         public["backend_path"] = self.backend_path
         if observe_optional_runtime:
             # Lazy to keep the declarative profile module independent of
@@ -317,6 +371,19 @@ DIFFUSERS_EXECUTION_PROFILES.update(
         for profile_id, definition in studio_execution_profile_definitions().items()
     }
 )
+
+for profile_id in (
+    "qwen-image:t2i-direct",
+    "qwen-image:modular",
+    "qwen-edit:direct-inpaint",
+    "qwen-edit:modular",
+    "qwen-edit-plus:modular",
+    "qwen-layered:modular",
+):
+    DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+        DIFFUSERS_EXECUTION_PROFILES[profile_id],
+        expert_cuda_policy=QWEN_EXPERT_CUDA_POLICY,
+    )
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES = [
     {

@@ -119,6 +119,17 @@ recipe. A managed submission includes a bounded
 map. Graph admission checks that those exact nodes are executable and that all
 declared edges and bindings remain present. The receipt and checksum are
 consistency identifiers, not authorization tokens or live-model evidence.
+
+An execution profile may also publish `expert_cuda_policy` with
+`schema_version: 1`. This bounded policy declares the CUDA dtypes that Studio
+must block, the recommended replacement dtype, the projected offloaded and
+resident VRAM budgets, and exact per-quantization resident overrides. The
+policy is optional: when it is absent, the client does not infer one from a
+model family or pipeline name. Studio consumes it only from the unique
+execution profile named by the selected exact specification. Auto admission
+continues to use the backend resource plan rather than this Expert-facing
+estimate.
+
 The current schema-v1 catalog covers the migrated Flux Schnell, Dev, Krea,
 Flux2 Klein, Depth, Canny, Redux, Kontext, and Fill image pairs; Wan 2.2 I2V
 and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition

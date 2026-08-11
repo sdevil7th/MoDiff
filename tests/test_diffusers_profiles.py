@@ -1,6 +1,11 @@
 import unittest
 
-from modiff.diffusers_profiles import ACE_STEP_LORA_BASE_REPO, DIFFUSERS_EXECUTION_PROFILES
+from modiff.diffusers_profiles import (
+    ACE_STEP_LORA_BASE_REPO,
+    DIFFUSERS_EXECUTION_PROFILES,
+    ExpertCudaPolicy,
+    QWEN_EXPERT_CUDA_POLICY,
+)
 from modiff.model_artifact_catalog import catalog_revision
 from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
@@ -82,6 +87,64 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         self.assertEqual(profile.backend_path, "modules.DiffusersImage.LoadPipeline")
         self.assertEqual(profile.execution_path, "direct-diffusers-image")
         self.assertEqual(profile.pipeline_class, "ZImagePipeline")
+
+    def test_qwen_profiles_publish_one_reviewed_expert_cuda_policy(self):
+        qwen_profile_ids = {
+            "qwen-image:t2i-direct",
+            "qwen-image:modular",
+            "qwen-edit:direct-inpaint",
+            "qwen-edit:modular",
+            "qwen-edit-plus:modular",
+            "qwen-layered:modular",
+        }
+
+        for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
+            with self.subTest(profile=profile_id):
+                self.assertIs(
+                    profile.expert_cuda_policy,
+                    QWEN_EXPERT_CUDA_POLICY if profile_id in qwen_profile_ids else None,
+                )
+                self.assertEqual(
+                    "expert_cuda_policy" in profile.to_public_dict(),
+                    profile_id in qwen_profile_ids,
+                )
+
+        public = DIFFUSERS_EXECUTION_PROFILES["qwen-image:t2i-direct"].to_public_dict()
+        self.assertEqual(
+            public["expert_cuda_policy"],
+            {
+                "schema_version": 1,
+                "blocked_dtypes": ["float32"],
+                "recommended_dtype": "bfloat16",
+                "offloaded_vram_bytes": 10 * 1024**3,
+                "resident_vram_bytes": 80 * 1024**3,
+                "quantized_resident_vram_bytes": [["bnb_4bit", 24 * 1024**3]],
+            },
+        )
+
+    def test_expert_cuda_policy_rejects_unreviewed_or_unbounded_values(self):
+        cases = (
+            {"schema_version": 2},
+            {"blocked_dtypes": ("float32", "float32")},
+            {"blocked_dtypes": ("unknown",)},
+            {"recommended_dtype": "float32"},
+            {"offloaded_vram_bytes": 0},
+            {"resident_vram_bytes": 1025 * 1024**3},
+            {"quantized_resident_vram_bytes": (("unknown", 24 * 1024**3),)},
+        )
+        values = {
+            "schema_version": 1,
+            "blocked_dtypes": ("float32",),
+            "recommended_dtype": "bfloat16",
+            "offloaded_vram_bytes": 10 * 1024**3,
+            "resident_vram_bytes": 80 * 1024**3,
+            "quantized_resident_vram_bytes": (("bnb_4bit", 24 * 1024**3),),
+        }
+
+        for update in cases:
+            with self.subTest(update=update):
+                with self.assertRaisesRegex(ValueError, "Invalid reviewed Expert CUDA policy"):
+                    ExpertCudaPolicy(**{**values, **update})
 
     def test_ace_lora_template_base_is_an_exact_reviewed_compatible_artifact(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["ace-step-audio:direct"]
