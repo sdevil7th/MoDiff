@@ -158,6 +158,13 @@ direct outpaint, and Modular `edit_image`; and Qwen Image Edit Plus Modular
 image, video, or audio topologies while keeping distinct exact profiles,
 artifacts, resource policies, form bindings, and receipt identities.
 
+The generic Diffusers image loader's schema-v1 signal also contains the exact
+reviewed field overlay for its selected pipeline class and mode. Connected
+generic Generate, Edit, Inpaint, and Control Generate nodes validate that whole
+signal before updating optional control visibility. Switching the loader value
+therefore refreshes the same generic node; clients do not infer image controls
+from a model or pipeline name, and a stale or edited overlay fails closed.
+
 ACE-Step text-to-audio,
 variation, continuation, and repaint use the generic Diffusers runtime recipe, audio
 loader/generator, source-audio loader where required, and audio export nodes;

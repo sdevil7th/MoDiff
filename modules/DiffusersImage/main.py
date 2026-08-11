@@ -201,9 +201,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("FluxPipeline", "FluxInpaintPipeline"),
         guidance_parameter="true_cfg_scale",
     ),
-    "FluxFillPipeline": ImagePipelineAdapter(
-        "FluxFillPipeline", frozenset({"inpaint", "outpaint"}), FLUX_FILL_REPO
-    ),
+    "FluxFillPipeline": ImagePipelineAdapter("FluxFillPipeline", frozenset({"inpaint", "outpaint"}), FLUX_FILL_REPO),
     "FluxControlPipeline": ImagePipelineAdapter(
         "FluxControlPipeline",
         frozenset({"control_image"}),
@@ -306,6 +304,167 @@ IMAGE_ACTION_MODES = {
     "ControlGenerate": ("control_image",),
 }
 
+_IMAGE_CONTRACT_VISIBILITY_FIELDS = (
+    "negative_prompt",
+    "width",
+    "height",
+    "guidance_scale",
+    "strength",
+    "padding_mask_crop",
+    "max_sequence_length",
+    "reference_strength",
+)
+
+
+@dataclass(frozen=True)
+class ImageModeFieldContract:
+    visible_fields: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if len(set(self.visible_fields)) != len(self.visible_fields) or any(
+            field not in _IMAGE_CONTRACT_VISIBILITY_FIELDS for field in self.visible_fields
+        ):
+            raise ValueError("Image mode contracts must declare unique reviewed visibility fields.")
+
+    def field_param_overlay(self) -> dict[str, dict[str, bool]]:
+        return {field: {"hidden": field not in self.visible_fields} for field in _IMAGE_CONTRACT_VISIBILITY_FIELDS}
+
+
+def _image_field_contract(*visible_fields: str) -> ImageModeFieldContract:
+    return ImageModeFieldContract(visible_fields=visible_fields)
+
+
+_NEGATIVE_SIZE_GUIDANCE_SEQUENCE = (
+    "negative_prompt",
+    "width",
+    "height",
+    "guidance_scale",
+    "max_sequence_length",
+)
+_SIZE_GUIDANCE_SEQUENCE = ("width", "height", "guidance_scale", "max_sequence_length")
+_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE = (
+    "negative_prompt",
+    "width",
+    "height",
+    "guidance_scale",
+    "strength",
+    "max_sequence_length",
+)
+_SIZE_GUIDANCE_STRENGTH_SEQUENCE = (
+    "width",
+    "height",
+    "guidance_scale",
+    "strength",
+    "max_sequence_length",
+)
+_NEGATIVE_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE = (
+    "negative_prompt",
+    "width",
+    "height",
+    "guidance_scale",
+    "strength",
+    "padding_mask_crop",
+    "max_sequence_length",
+)
+_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE = (
+    "width",
+    "height",
+    "guidance_scale",
+    "strength",
+    "padding_mask_crop",
+    "max_sequence_length",
+)
+
+IMAGE_MODE_FIELD_CONTRACTS = {
+    "QwenImagePipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "ZImagePipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "ZImageImg2ImgPipeline": {
+        "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE),
+    },
+    "ZImageInpaintPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE) for mode in ("inpaint", "outpaint")
+    },
+    "StableDiffusionXLPipeline": {
+        "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
+    },
+    "StableDiffusionXLImg2ImgPipeline": {
+        "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
+    },
+    "StableDiffusionXLInpaintPipeline": {
+        mode: _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "strength", "padding_mask_crop"
+        )
+        for mode in ("inpaint", "outpaint")
+    },
+    "FluxPipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "Flux2KleinPipeline": {
+        mode: _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE)
+        for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
+    },
+    "Flux2KleinInpaintPipeline": {
+        mode: _image_field_contract(*_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE) for mode in ("inpaint", "outpaint")
+    },
+    "FluxImg2ImgPipeline": {
+        "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE),
+    },
+    "FluxInpaintPipeline": {
+        "inpaint": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE),
+    },
+    "FluxFillPipeline": {
+        mode: _image_field_contract(*_SIZE_GUIDANCE_STRENGTH_SEQUENCE) for mode in ("inpaint", "outpaint")
+    },
+    "FluxControlPipeline": {
+        "control_image": _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "FluxKontextPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE)
+        for mode in ("edit_image", "multi_image_reference_edit")
+    },
+    "FluxKontextInpaintPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE)
+        for mode in ("inpaint", "outpaint")
+    },
+    "FluxReduxPipeline": {
+        "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+        "multi_image_reference_edit": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE, "reference_strength"),
+    },
+    "QwenImageEditInpaintPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE)
+        for mode in ("inpaint", "outpaint")
+    },
+    "QwenImageImg2ImgPipeline": {
+        "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE),
+    },
+    "QwenImageInpaintPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE)
+        for mode in ("inpaint", "outpaint")
+    },
+    "QwenImageEditPipeline": {
+        "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "QwenImageEditPlusPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE)
+        for mode in ("edit_image", "multi_image_reference_edit")
+    },
+}
+
+
+def get_image_mode_field_contract(adapter: ImagePipelineAdapter, mode: str) -> ImageModeFieldContract:
+    contracts = IMAGE_MODE_FIELD_CONTRACTS.get(adapter.pipeline_class)
+    if contracts is None or tuple(contracts) != adapter.mode_options:
+        raise RuntimeError(f"Image adapter {adapter.pipeline_class} has an incomplete reviewed field contract.")
+    contract = contracts.get(mode)
+    if contract is None:
+        raise ValueError(f"{adapter.pipeline_class} does not support image mode {mode}.")
+    return contract
+
+
 _REMOVED_IMAGE_PIPELINE_ERRORS = {
     "FluxControlNetPipeline": (
         "FluxControlNetPipeline requires a separately loaded FluxControlNetModel, but the generic Diffusers image "
@@ -404,9 +563,7 @@ def resolve_image_model_selection(adapter: ImagePipelineAdapter, value: Any):
         source = "hub"
         selected = value.strip()
     else:
-        raise ValueError(
-            "Diffusers image model selection must be a repository ID or a hub/local selection object."
-        )
+        raise ValueError("Diffusers image model selection must be a repository ID or a hub/local selection object.")
 
     if source == "local":
         return {"source": "local", "value": selected}
@@ -475,6 +632,7 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
 
 
 def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[str, Any]:
+    field_contract = get_image_mode_field_contract(adapter, mode)
     actions = {
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
@@ -487,6 +645,7 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         "mode": mode,
         "modes": list(adapter.mode_options),
         "actions": {action: modes for action, modes in actions.items() if modes},
+        "fieldParams": field_contract.field_param_overlay(),
     }
 
 
@@ -526,7 +685,9 @@ def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
     adapter_hint = getattr(pipeline, "_modiff_image_adapter", None)
     if has_any_tag:
         if not has_all_tags:
-            missing = ", ".join(name.removeprefix("_modiff_image_") for name in tag_names if not hasattr(pipeline, name))
+            missing = ", ".join(
+                name.removeprefix("_modiff_image_") for name in tag_names if not hasattr(pipeline, name)
+            )
             raise ValueError(
                 f"Diffusers image pipeline identity is incomplete; missing canonical tags: {missing}. "
                 "Reconnect it through Load Diffusers Image Pipeline."
@@ -558,7 +719,11 @@ def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
             raise ValueError("Diffusers image pipeline repository tag must be a nonblank canonical string.")
         revision = getattr(pipeline, "_modiff_image_revision")
         if source == "hub":
-            if not isinstance(revision, str) or revision != revision.lower() or not IMMUTABLE_HUB_REVISION.fullmatch(revision):
+            if (
+                not isinstance(revision, str)
+                or revision != revision.lower()
+                or not IMMUTABLE_HUB_REVISION.fullmatch(revision)
+            ):
                 raise ValueError("Diffusers image Hub pipeline revision tag must be a lowercase 40-character commit.")
             pin = catalog_repository_pin(repository)
             if pin is not None and revision != catalog_revision(repository):
@@ -580,9 +745,7 @@ def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
         return adapter
 
     candidates = [
-        adapter
-        for adapter in IMAGE_PIPELINE_ADAPTERS.values()
-        if runtime_name in adapter.allowed_runtime_classes
+        adapter for adapter in IMAGE_PIPELINE_ADAPTERS.values() if runtime_name in adapter.allowed_runtime_classes
     ]
     if len(candidates) == 1:
         return candidates[0]
@@ -656,13 +819,9 @@ def _bounded_image_int(
             raise ValueError(f"Diffusers image {field} must be a finite integer.")
         parsed = int(numeric)
     if parsed < minimum or parsed > maximum:
-        raise ValueError(
-            f"Diffusers image {field} must be between {minimum} and {maximum}; received {parsed}."
-        )
+        raise ValueError(f"Diffusers image {field} must be between {minimum} and {maximum}; received {parsed}.")
     if step is not None and (parsed - minimum) % step:
-        raise ValueError(
-            f"Diffusers image {field} must use increments of {step} from {minimum}; received {parsed}."
-        )
+        raise ValueError(f"Diffusers image {field} must use increments of {step} from {minimum}; received {parsed}.")
     return parsed
 
 
@@ -711,16 +870,12 @@ def _image_media_extent(value: Any, *, field: str, require_pil: bool) -> tuple[i
         torch_module = sys.modules.get("torch")
         tensor_type = getattr(torch_module, "Tensor", ()) if torch_module is not None else ()
         if not isinstance(value, np.ndarray) and not (tensor_type and isinstance(value, tensor_type)):
-            raise ValueError(
-                f"Diffusers image {field} must be a PIL image, NumPy array, or Torch tensor."
-            )
+            raise ValueError(f"Diffusers image {field} must be a PIL image, NumPy array, or Torch tensor.")
         shape_value = getattr(value, "shape", None)
         try:
             shape = tuple(int(dimension) for dimension in shape_value)
         except (TypeError, ValueError, OverflowError) as error:
-            raise ValueError(
-                f"Diffusers image {field} must be a PIL image, NumPy array, or Torch tensor."
-            ) from error
+            raise ValueError(f"Diffusers image {field} must be a PIL image, NumPy array, or Torch tensor.") from error
         if not shape or any(dimension <= 0 for dimension in shape):
             raise ValueError(f"Diffusers image {field} dimensions must be positive and nonempty.")
         sample_count = shape[0] if len(shape) == 4 else 1
@@ -732,9 +887,7 @@ def _image_media_extent(value: Any, *, field: str, require_pil: bool) -> tuple[i
         elif len(image_shape) == 3 and image_shape[-1] in {1, 3, 4}:
             height, width, _channels = image_shape
         else:
-            raise ValueError(
-                f"Diffusers image {field} must have HW, CHW, HWC, NCHW, or NHWC image dimensions."
-            )
+            raise ValueError(f"Diffusers image {field} must have HW, CHW, HWC, NCHW, or NHWC image dimensions.")
     if width <= 0 or height <= 0:
         raise ValueError(f"Diffusers image {field} dimensions must be positive and nonempty.")
     if width > _MAX_IMAGE_INPUT_DIMENSION or height > _MAX_IMAGE_INPUT_DIMENSION:
@@ -777,9 +930,7 @@ def _validate_image_media(
     if total_items > max_items:
         raise ValueError(f"Diffusers image {field} accepts at most {max_items} image(s); received {total_items}.")
     if total_pixels > max_pixels:
-        raise ValueError(
-            f"Diffusers image {field} exceeds the {max_pixels}-pixel cumulative input limit."
-        )
+        raise ValueError(f"Diffusers image {field} exceeds the {max_pixels}-pixel cumulative input limit.")
 
 
 def preflight_image_action(
@@ -805,9 +956,7 @@ def preflight_image_action(
     values["height"] = _bounded_image_int(
         values.get("height"), field="height", default=1024, minimum=16, maximum=2048, step=16
     )
-    values["seed"] = _bounded_image_int(
-        values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295
-    )
+    values["seed"] = _bounded_image_int(values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295)
     values["num_inference_steps"] = _bounded_image_int(
         values.get("num_inference_steps"),
         field="num_inference_steps",
@@ -844,7 +993,9 @@ def preflight_image_action(
         maximum=1.0,
     )
 
-    output_type = "pil" if "output_type" not in values or values.get("output_type") is None else values.get("output_type")
+    output_type = (
+        "pil" if "output_type" not in values or values.get("output_type") is None else values.get("output_type")
+    )
     allowed_output_types = {"pil"} if action == "Inpaint" else {"pil", "np", "pt"}
     if not isinstance(output_type, str) or output_type not in allowed_output_types:
         allowed = ", ".join(sorted(allowed_output_types))
@@ -853,11 +1004,7 @@ def preflight_image_action(
 
     if action == "Edit":
         mode = getattr(pipeline, "_modiff_image_mode", None)
-        max_references = (
-            adapter.max_reference_images
-            if mode in (None, "multi_image_reference_edit")
-            else 1
-        )
+        max_references = adapter.max_reference_images if mode in (None, "multi_image_reference_edit") else 1
         _validate_image_media(
             values.get("image"),
             field="Edit image",
@@ -1562,9 +1709,7 @@ class LoadPipeline(NodeBase):
                 else:
                     selection_was_replaced = True
                 resolved_revision = (
-                    ""
-                    if selection_was_replaced
-                    else resolve_image_pipeline_revision(resolved_selection, raw_revision)
+                    "" if selection_was_replaced else resolve_image_pipeline_revision(resolved_selection, raw_revision)
                 )
 
         self.set_field_params(
@@ -1716,12 +1861,8 @@ class LoadPipeline(NodeBase):
         _tag_image_pipeline(pipeline, adapter, requested_mode, model_id, model_source, revision)
         runtime_recipe = {
             **execution_recipe,
-            "vae_slicing": bool(
-                execution_recipe.get("vae_slicing", kwargs.get("enable_vae_slicing", True))
-            ),
-            "vae_tiling": bool(
-                execution_recipe.get("vae_tiling", kwargs.get("enable_vae_tiling", True))
-            ),
+            "vae_slicing": bool(execution_recipe.get("vae_slicing", kwargs.get("enable_vae_slicing", True))),
+            "vae_tiling": bool(execution_recipe.get("vae_tiling", kwargs.get("enable_vae_tiling", True))),
         }
         runtime_owner = pipeline.base if isinstance(pipeline, FluxReduxPipelineBundle) else pipeline
         pipeline._modiff_runtime_config = apply_execution_recipe_to_pipeline(runtime_owner, runtime_recipe)
@@ -1754,7 +1895,22 @@ class Generate(NodeBase):
     category = "Diffusers Image"
     resizable = True
     params = {
-        "pipeline": {"label": "Pipeline", "display": "input", "type": "image_diffusion_pipeline", "required": True},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "image_diffusion_pipeline",
+            "required": True,
+            "onSignal": [
+                {"action": "value", "target": "image_contract"},
+                {"action": "exec", "data": "update_image_contract"},
+            ],
+        },
+        "image_contract": {
+            "label": "Image Contract",
+            "type": "object",
+            "default": DEFAULT_IMAGE_PIPELINE_CONTRACT,
+            "hidden": True,
+        },
         "prompt": {"label": "Prompt", "display": "textarea", "type": "text", "default": ""},
         "negative_prompt": {"label": "Negative Prompt", "display": "textarea", "type": "text", "default": ""},
         "width": {"label": "Width", "type": "int", "default": 1024, "min": 16, "max": 2048, "step": 16},
@@ -1785,6 +1941,7 @@ class Generate(NodeBase):
             "min": 0,
             "max": 1,
             "step": 0.01,
+            "hidden": True,
         },
         "padding_mask_crop": {
             "label": "Padding Mask Crop",
@@ -1793,6 +1950,7 @@ class Generate(NodeBase):
             "min": 0,
             "max": 512,
             "step": 8,
+            "hidden": True,
         },
         "max_sequence_length": {"label": "Max Sequence Length", "type": "int", "default": 256, "min": 1, "max": 512},
         "output_type": {"label": "Output type", "type": "string", "options": ["pil", "np", "pt"], "default": "pil"},
@@ -1811,6 +1969,25 @@ class Generate(NodeBase):
             raise ValueError(f"Unsupported Diffusers image action {action!r}.")
         _adapter, values = preflight_image_action(kwargs.get("pipeline"), action, kwargs)
         return super().__call__(**values)
+
+    def update_image_contract(self, values, ref):
+        """Apply the loader's backend-owned contract to this generic image form."""
+
+        values = values if isinstance(values, dict) else {}
+        signal_value = values.get("image_contract")
+        if not isinstance(signal_value, dict):
+            raise ValueError("The connected image pipeline did not publish a valid task contract.")
+        adapter = get_image_pipeline_adapter(signal_value.get("pipelineClass"))
+        mode = str(signal_value.get("mode") or "")
+        expected_signal = image_pipeline_contract(adapter, mode)
+        if signal_value != expected_signal:
+            raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
+        if mode not in expected_signal["actions"].get(self.class_name, ()):
+            raise ValueError("The connected image pipeline does not support this generic image action.")
+
+        for field, params in expected_signal["fieldParams"].items():
+            if field in self.__class__.params:
+                self.set_field_params(field, params)
 
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")
@@ -1865,6 +2042,7 @@ class Edit(Generate):
             "min": 0.0,
             "max": 1.0,
             "step": 0.05,
+            "hidden": True,
             "description": "Relative influence of every reference after the first composition anchor, when supported by the selected adapter.",
         },
     }
@@ -2021,9 +2199,7 @@ class LoadAdapter(NodeBase):
             adapter_path = ""
             normalized_selection: str | dict[str, str] = ""
         elif isinstance(selection, dict):
-            source = _canonical_image_model_source(
-                selection.get("source"), label="Diffusers image adapter"
-            )
+            source = _canonical_image_model_source(selection.get("source"), label="Diffusers image adapter")
             raw_adapter_path = selection.get("value")
             if not isinstance(raw_adapter_path, str):
                 raise ValueError("Diffusers image adapter value must be a repository ID or local path string.")
@@ -2059,8 +2235,7 @@ class LoadAdapter(NodeBase):
             raise ValueError("Diffusers image adapter expected_sha256 must be a string.")
         expected_sha256 = str(raw_expected_sha256 or "").strip().lower().removeprefix("sha256:")
         if expected_sha256 and (
-            len(expected_sha256) != 64
-            or any(character not in "0123456789abcdef" for character in expected_sha256)
+            len(expected_sha256) != 64 or any(character not in "0123456789abcdef" for character in expected_sha256)
         ):
             raise ValueError("Diffusers image adapter expected_sha256 must contain exactly 64 hexadecimal digits.")
 
@@ -2082,9 +2257,7 @@ class LoadAdapter(NodeBase):
             replace_existing = raw_replace_existing
 
         if source == "hub":
-            adapter_path = _validated_image_hub_repository(
-                adapter_path, label="Diffusers image adapter repository"
-            )
+            adapter_path = _validated_image_hub_repository(adapter_path, label="Diffusers image adapter repository")
             normalized_selection = {"source": "hub", "value": adapter_path}
             if not weight_name:
                 raise ValueError("A Hub adapter requires an exact safetensors weight_name.")
@@ -2096,11 +2269,7 @@ class LoadAdapter(NodeBase):
                 or not weight_name.endswith(".safetensors")
             ):
                 raise ValueError("A Hub adapter weight_name must be a contained .safetensors repository file.")
-            if (
-                revision != revision.lower()
-                or not revision
-                or not IMMUTABLE_HUB_REVISION.fullmatch(revision)
-            ):
+            if revision != revision.lower() or not revision or not IMMUTABLE_HUB_REVISION.fullmatch(revision):
                 raise ValueError("A Hub Diffusers image adapter requires a lowercase 40-character commit revision.")
             if not expected_sha256:
                 raise ValueError("A Hub Diffusers image adapter requires an expected SHA-256 hash.")
@@ -2191,9 +2360,7 @@ class LoadAdapter(NodeBase):
                 if not resolved_weight.is_file():
                     raise FileNotFoundError("The selected local Diffusers image adapter weight is not a file.")
             else:
-                raise FileNotFoundError(
-                    f"Diffusers image adapter target is not a file or folder: {local_target}"
-                )
+                raise FileNotFoundError(f"Diffusers image adapter target is not a file or folder: {local_target}")
 
             if not resolved_weight.name.endswith(".safetensors"):
                 raise ValueError("A local Diffusers image adapter must select a lowercase .safetensors file.")

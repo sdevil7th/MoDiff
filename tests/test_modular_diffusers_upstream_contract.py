@@ -387,9 +387,12 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertEqual(node_kwargs, {"image_latents": node_kwargs["image_latents"], "height": 640})
 
         for invalid in ("height", ["depth"], ["height", "height"], ["height", "width", "depth"]):
-            with self.subTest(invalid=invalid), patch(
-                "modules.ModularDiffusers.denoise.get_model_type_metadata",
-                return_value={"denoise_image_latent_dimensions": invalid},
+            with (
+                self.subTest(invalid=invalid),
+                patch(
+                    "modules.ModularDiffusers.denoise.get_model_type_metadata",
+                    return_value={"denoise_image_latent_dimensions": invalid},
+                ),
             ):
                 with self.assertRaisesRegex(RuntimeError, "invalid image-latent dimension contract"):
                     _apply_image_latent_dimension_contract(
@@ -690,6 +693,56 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         refreshed = node.send_node_definition.call_args.args[0]
         self.assertEqual(refreshed["controlnet_bundle"]["onSignal"], expected_actions)
 
+    def test_generic_modular_fields_refresh_from_each_selected_pipeline_contract(self):
+        cases = (
+            (
+                EncodePrompt,
+                "text_encoder",
+                "text_encoders",
+                ("QwenImageLayeredModularPipeline", "FluxModularPipeline"),
+            ),
+            (
+                Denoise,
+                "denoise",
+                "unet",
+                ("QwenImageLayeredModularPipeline", "FluxModularPipeline"),
+            ),
+            (
+                ImageEncode,
+                "vae_encoder",
+                "vae",
+                ("QwenImageLayeredModularPipeline", "FluxModularPipeline"),
+            ),
+            (
+                DecodeLatents,
+                "decoder",
+                "vae",
+                ("QwenImageLayeredModularPipeline", "FluxModularPipeline"),
+            ),
+            (
+                ImageEmbeddings,
+                "image_encoder",
+                "image_encoder",
+                ("WanImage2VideoModularPipeline",),
+            ),
+        )
+
+        for node_class, action, connector, model_types in cases:
+            with self.subTest(node=node_class.__name__):
+                node = node_class(f"selected-contract-{node_class.__name__}")
+                node.send_node_definition = MagicMock()
+                node.get_signal_value = MagicMock(side_effect=model_types)
+                for index, model_type in enumerate(model_types, start=1):
+                    node.update_node({}, None)
+                    expected = dict(get_model_type_metadata(model_type)["node_params"][action]["params"])
+                    expected.pop(connector, None)
+                    self.assertEqual(node.send_node_definition.call_args.args[0], expected)
+                    self.assertEqual(node.send_node_definition.call_count, index)
+
+                update_source = inspect.getsource(node_class.update_node)
+                for registered_model_type in set(get_all_model_types()) - {""}:
+                    self.assertNotIn(registered_model_type, update_source)
+
     def test_controlnet_update_rejects_an_unsupported_modular_pipeline(self):
         node = Controlnet("unsupported-controlnet-update")
 
@@ -989,10 +1042,13 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             ("StableDiffusionXLModularPipeline", "TCDScheduler"),
         )
         for model_type, scheduler in invalid_selections:
-            with self.subTest(model_type=model_type, scheduler=scheduler), patch.object(
-                Scheduler,
-                "get_signal_value",
-                return_value=model_type,
+            with (
+                self.subTest(model_type=model_type, scheduler=scheduler),
+                patch.object(
+                    Scheduler,
+                    "get_signal_value",
+                    return_value=model_type,
+                ),
             ):
                 with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
                     node.updateNode({"scheduler": scheduler}, None)
@@ -1036,10 +1092,13 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 node.updateNode({"guider": "SkipLayerGuidance"}, None)
 
         for model_type in (None, {}, "FluxModularPipeline", "FutureModularPipeline"):
-            with self.subTest(model_type=model_type), patch.object(
-                Guider,
-                "get_signal_value",
-                return_value=model_type,
+            with (
+                self.subTest(model_type=model_type),
+                patch.object(
+                    Guider,
+                    "get_signal_value",
+                    return_value=model_type,
+                ),
             ):
                 with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
                     node.execute("ClassifierFreeGuidance")

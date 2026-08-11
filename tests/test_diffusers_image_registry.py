@@ -25,6 +25,7 @@ from modules.DiffusersImage.main import (
     FLUX_KONTEXT_REPO,
     FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO,
+    IMAGE_MODE_FIELD_CONTRACTS,
     IMAGE_PIPELINE_CLASSES,
     QWEN_IMAGE_2512_REPO,
     QWEN_IMAGE_EDIT_PLUS_REPO,
@@ -32,6 +33,7 @@ from modules.DiffusersImage.main import (
     SDXL_BASE_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
+    ImageModeFieldContract,
     _tag_image_pipeline,
     add_progress_callback,
     image_pipeline_contract,
@@ -223,9 +225,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         pipeline = FluxPipeline()
         node = LoadPipeline("canonical-image-loader")
-        node.execute = Mock(
-            return_value={"pipeline": pipeline, "resolved_artifact": FLUX_SCHNELL_REPO}
-        )
+        node.execute = Mock(return_value={"pipeline": pipeline, "resolved_artifact": FLUX_SCHNELL_REPO})
         with patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
             result = node(
                 model_id={"source": "HUB", "value": " BLACK-FOREST-LABS/FLUX.1-SCHNELL "},
@@ -256,7 +256,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         accepted = (
             (None, {"source": "hub", "value": FLUX_SCHNELL_REPO}),
             ("", {"source": "hub", "value": FLUX_SCHNELL_REPO}),
-            ({"source": "HUB", "value": " BLACK-FOREST-LABS/FLUX.1-SCHNELL "}, {"source": "hub", "value": FLUX_SCHNELL_REPO}),
+            (
+                {"source": "HUB", "value": " BLACK-FOREST-LABS/FLUX.1-SCHNELL "},
+                {"source": "hub", "value": FLUX_SCHNELL_REPO},
+            ),
             ({"source": "Local", "value": " models/custom "}, {"source": "local", "value": "models/custom"}),
             (" org/custom ", {"source": "hub", "value": "org/custom"}),
         )
@@ -367,20 +370,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(resolve_image_model_selection(control, canny), canny)
 
     def test_every_image_adapter_owns_a_default_and_all_reviewed_compatible_repositories(self):
-        all_managed_repos = {
-            repo
-            for adapter in IMAGE_PIPELINE_ADAPTERS.values()
-            for repo in adapter.managed_repos
-        }
+        all_managed_repos = {repo for adapter in IMAGE_PIPELINE_ADAPTERS.values() for repo in adapter.managed_repos}
         for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
             with self.subTest(pipeline_class=pipeline_class):
                 self.assertTrue(adapter.default_repo)
                 contract = image_pipeline_contract(adapter, adapter.mode_options[0])
-                implemented_modes = {
-                    mode
-                    for action_modes in contract["actions"].values()
-                    for mode in action_modes
-                }
+                implemented_modes = {mode for action_modes in contract["actions"].values() for mode in action_modes}
                 self.assertEqual(implemented_modes, adapter.modes)
                 self.assertEqual(
                     resolve_image_model_selection(adapter, None),
@@ -402,6 +397,48 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     ),
                     {"source": "hub", "value": adapter.default_repo},
                 )
+
+    def test_image_field_contracts_cover_every_adapter_mode_and_selected_values(self):
+        self.assertEqual(set(IMAGE_MODE_FIELD_CONTRACTS), set(IMAGE_PIPELINE_ADAPTERS))
+        expected_fields = {
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "max_sequence_length",
+            "reference_strength",
+        }
+        for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
+            with self.subTest(pipeline_class=pipeline_class):
+                self.assertEqual(tuple(IMAGE_MODE_FIELD_CONTRACTS[pipeline_class]), adapter.mode_options)
+                for mode in adapter.mode_options:
+                    self.assertEqual(
+                        set(image_pipeline_contract(adapter, mode)["fieldParams"]),
+                        expected_fields,
+                    )
+
+        flux_text = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image")
+        self.assertTrue(flux_text["fieldParams"]["strength"]["hidden"])
+        self.assertTrue(flux_text["fieldParams"]["padding_mask_crop"]["hidden"])
+        sdxl_edit = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLImg2ImgPipeline"], "edit_image")
+        self.assertFalse(sdxl_edit["fieldParams"]["strength"]["hidden"])
+        self.assertTrue(sdxl_edit["fieldParams"]["width"]["hidden"])
+        redux_multi = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["FluxReduxPipeline"], "multi_image_reference_edit"
+        )
+        self.assertFalse(redux_multi["fieldParams"]["reference_strength"]["hidden"])
+        qwen_edit = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["QwenImageEditPlusPipeline"], "multi_image_reference_edit"
+        )
+        self.assertTrue(qwen_edit["fieldParams"]["strength"]["hidden"])
+        self.assertTrue(qwen_edit["fieldParams"]["reference_strength"]["hidden"])
+
+    def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
+        for fields in (("unknown",), ("strength", "strength")):
+            with self.subTest(fields=fields), self.assertRaisesRegex(ValueError, "unique reviewed"):
+                ImageModeFieldContract(fields)
 
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
@@ -618,31 +655,51 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
 
         node.set_field_value.assert_any_call({"mode": "edit_image"})
-        node.set_field_value.assert_any_call(
-            {"model_id": {"source": "hub", "value": FLUX_KONTEXT_REPO}}
-        )
+        node.set_field_value.assert_any_call({"model_id": {"source": "hub", "value": FLUX_KONTEXT_REPO}})
         node.set_field_value.assert_any_call({"revision": catalog_revision(FLUX_KONTEXT_REPO)})
-        mode_update = next(
-            call for call in node.set_field_params.call_args_list if call.args[0] == "mode"
-        )
+        mode_update = next(call for call in node.set_field_params.call_args_list if call.args[0] == "mode")
         self.assertEqual(mode_update.args[1]["options"], ["edit_image", "multi_image_reference_edit"])
         self.assertEqual(mode_update.args[1]["default"], "edit_image")
-        model_update = next(
-            call for call in node.set_field_params.call_args_list if call.args[0] == "model_id"
-        )
+        model_update = next(call for call in node.set_field_params.call_args_list if call.args[0] == "model_id")
         self.assertEqual(
             model_update.args[1]["fieldOptions"]["filter"]["hub"]["className"],
             ["FluxKontextPipeline"],
         )
-        signal_update = next(
-            call for call in node.set_field_params.call_args_list if call.args[0] == "pipeline"
-        )
+        signal_update = next(call for call in node.set_field_params.call_args_list if call.args[0] == "pipeline")
         signal = signal_update.args[1]["signal"]
         self.assertEqual(signal["origin"], "pipeline_class")
         self.assertEqual(
             signal["value"],
             image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxKontextPipeline"], "edit_image"),
         )
+
+    def test_generate_field_action_applies_only_the_exact_selected_image_contract(self):
+        self.assertEqual(
+            Generate.params["pipeline"]["onSignal"],
+            [
+                {"action": "value", "target": "image_contract"},
+                {"action": "exec", "data": "update_image_contract"},
+            ],
+        )
+        node = Edit("image-generate-contract-action")
+        node.set_field_params = Mock()
+        selected = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLImg2ImgPipeline"], "edit_image")
+
+        node.update_image_contract({"image_contract": selected}, {"key": "pipeline"})
+
+        updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+        self.assertEqual(updates["strength"], {"hidden": False})
+        self.assertEqual(updates["width"], {"hidden": True})
+        self.assertEqual(updates["max_sequence_length"], {"hidden": True})
+
+        tampered = {**selected, "fieldParams": {**selected["fieldParams"], "strength": {"hidden": True}}}
+        with self.assertRaisesRegex(ValueError, "stale or mismatched"):
+            node.update_image_contract({"image_contract": tampered}, {"key": "pipeline"})
+        with self.assertRaisesRegex(ValueError, "does not support this generic image action"):
+            Generate("wrong-image-action").update_image_contract(
+                {"image_contract": selected},
+                {"key": "pipeline"},
+            )
 
     def test_model_field_action_couples_repository_and_exact_revision_without_stale_pins(self):
         node = LoadPipeline("image-model-revision-action")
@@ -827,6 +884,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         for action_class, pipeline_class, repository, first_mode, second_mode, values, error in cases:
             with self.subTest(action=action_class.__name__, mode=f"{first_mode}->{second_mode}"):
+
                 class FakePipeline:
                     _execution_device = "cpu"
 
@@ -840,9 +898,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 FakePipeline.__name__ = IMAGE_PIPELINE_ADAPTERS[pipeline_class].allowed_runtime_classes[0]
                 pipeline = FakePipeline()
                 loader = LoadPipeline(f"{action_class.__name__}-loader")
-                loader.execute = Mock(
-                    return_value={"pipeline": pipeline, "resolved_artifact": repository}
-                )
+                loader.execute = Mock(return_value={"pipeline": pipeline, "resolved_artifact": repository})
                 task = action_class(f"{action_class.__name__}-task")
                 server = object.__new__(WebServer)
                 server.modules = module_registry.MODULE_MAP
@@ -1139,8 +1195,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         class FluxImg2ImgPipeline:
             pass
 
-        with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(
-            ValueError, "PIL image, NumPy array, or Torch tensor"
+        with (
+            patch.dict(sys.modules, {"torch": None}),
+            self.assertRaisesRegex(ValueError, "PIL image, NumPy array, or Torch tensor"),
         ):
             Edit().execute(
                 pipeline=FluxImg2ImgPipeline(),
@@ -1163,9 +1220,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         class Flux2KleinPipeline:
             pass
 
-        multi_mode = tag_test_image_pipeline(
-            Flux2KleinPipeline(), "Flux2KleinPipeline", "multi_image_reference_edit"
-        )
+        multi_mode = tag_test_image_pipeline(Flux2KleinPipeline(), "Flux2KleinPipeline", "multi_image_reference_edit")
         with patch.dict(sys.modules, {"torch": None}), self.assertRaisesRegex(ValueError, "at most 8"):
             Edit().execute(
                 pipeline=multi_mode,
@@ -1722,9 +1777,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         node = Inpaint("qwen-generic-probe")
         result = node.execute(
-            pipeline=tag_test_image_pipeline(
-                FakeQwenPipeline(), "QwenImageEditInpaintPipeline", "inpaint"
-            ),
+            pipeline=tag_test_image_pipeline(FakeQwenPipeline(), "QwenImageEditInpaintPipeline", "inpaint"),
             image=Image.new("RGB", (16, 16), "black"),
             mask_image=Image.new("L", (16, 16), "white"),
             prompt="replace the object",
@@ -1893,9 +1946,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     scale=0.8,
                 )
 
-        cached.assert_called_once_with(
-            "unit/adapter", "adapter.safetensors", revision=HUB_ADAPTER_REVISION
-        )
+        cached.assert_called_once_with("unit/adapter", "adapter.safetensors", revision=HUB_ADAPTER_REVISION)
         self.assertEqual(calls[0][0], str(cached_weight.parent))
         self.assertEqual(calls[0][1]["weight_name"], "adapter.safetensors")
         self.assertTrue(calls[0][1]["use_safetensors"])
@@ -1922,8 +1973,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         with patch("modules.DiffusersImage.main.cached_file_path") as cached:
             for weight_name in ("adapter.bin", "adapter.SAFETENSORS", "adapter.SafeTensors"):
-                with self.subTest(weight_name=weight_name), self.assertRaisesRegex(
-                    ValueError, "contained \\.safetensors"
+                with (
+                    self.subTest(weight_name=weight_name),
+                    self.assertRaisesRegex(ValueError, "contained \\.safetensors"),
                 ):
                     LoadAdapter("unsafe-hub-adapter").execute(
                         pipeline=FakePipeline(),
@@ -1956,9 +2008,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         revision=HUB_ADAPTER_REVISION,
                         expected_sha256="0" * 64,
                     )
-                cached.assert_called_once_with(
-                    "unit/adapter", "adapter.safetensors", revision=HUB_ADAPTER_REVISION
-                )
+                cached.assert_called_once_with("unit/adapter", "adapter.safetensors", revision=HUB_ADAPTER_REVISION)
                 self.assertEqual(pipeline.calls, [])
 
         invalid = (" hub ", "remote", None, 7)
@@ -2183,8 +2233,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 ("unit/adapter", "adapter.safetensors"),
                 (str(selected), "../outside.safetensors"),
             ):
-                with self.subTest(value=value, weight_name=weight_name), self.assertRaises(
-                    (FileNotFoundError, ValueError)
+                with (
+                    self.subTest(value=value, weight_name=weight_name),
+                    self.assertRaises((FileNotFoundError, ValueError)),
                 ):
                     LoadAdapter("invalid-local-adapter").execute(
                         pipeline=FakePipeline(),
@@ -2196,8 +2247,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             for unsafe_name in ("unsafe.bin", "unsafe.SAFETENSORS", "unsafe.SafeTensors"):
                 unsafe = root / unsafe_name
                 unsafe.write_bytes(b"unsafe format probe")
-                with self.subTest(unsafe_name=unsafe_name), self.assertRaisesRegex(
-                    ValueError, "lowercase \\.safetensors"
+                with (
+                    self.subTest(unsafe_name=unsafe_name),
+                    self.assertRaisesRegex(ValueError, "lowercase \\.safetensors"),
                 ):
                     LoadAdapter("unsafe-local-adapter").execute(
                         pipeline=FakePipeline(),
