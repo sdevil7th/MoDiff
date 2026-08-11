@@ -56,7 +56,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 37)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 38)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -341,6 +341,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(qwen_edit_spec["pipelineClass"], "QwenImageEditModularPipeline")
         self.assertIn("models", [item[0] for item in qwen_edit_spec["roles"]])
         self.assertIn(["imageEncode", "image_latents", "denoise", "image_latents"], qwen_edit_spec["edges"])
+        qwen_layered = by_model["QwenImageLayeredModularPipeline"]
+        self.assertEqual(qwen_layered["studioExecutionSpecModes"], ["layer_decomposition"])
+        qwen_layered_spec = qwen_layered["studioExecutionSpecs"][0]
+        self.assertEqual(qwen_layered_spec["executionProfileId"], "qwen-layered:modular")
+        self.assertEqual(qwen_layered_spec["executionPath"], "modular-diffusers")
+        self.assertEqual(qwen_layered_spec["pipelineClass"], "QwenImageLayeredModularPipeline")
+        self.assertIn(["denoise", "layers", "layers"], qwen_layered_spec["bindings"])
         wan_vace = by_model["WanVACEPipeline"]
         self.assertEqual(
             wan_vace["studioExecutionSpecModes"],

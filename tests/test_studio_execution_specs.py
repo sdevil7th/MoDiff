@@ -127,6 +127,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageEditModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
+                ("QwenImageLayeredModularPipeline", "layer_decomposition"),
             ],
         )
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
@@ -659,6 +660,21 @@ class StudioExecutionSpecTests(unittest.TestCase):
 
         self.assertNotEqual(specs[0]["id"], specs[1]["id"])
         self.assertNotEqual(specs[0]["contentHash"], specs[1]["contentHash"])
+
+    def test_qwen_image_layered_seals_the_exact_dynamic_modular_route(self):
+        spec = studio_execution_spec_for_pair("QwenImageLayeredModularPipeline", "layer_decomposition")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "qwen-layered:modular")
+        self.assertEqual(spec["executionPath"], "modular-diffusers")
+        self.assertEqual(spec["pipelineClass"], "QwenImageLayeredModularPipeline")
+        self.assertEqual(len(spec["roles"]), 7)
+        self.assertEqual(len(spec["edges"]), 11)
+        self.assertEqual(len(spec["bindings"]), 17)
+        self.assertNotIn("route_state_out", [item[1] for item in spec["edges"]])
+        self.assertIn(("loadImage", "alpha_channel", "addAlpha"), spec["bindings"])
+        self.assertIn(("denoise", "layers", "layers"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")

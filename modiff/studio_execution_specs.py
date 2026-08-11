@@ -179,6 +179,28 @@ _MODULAR_EDIT_GRAPH_BINDINGS = (
     ("denoise", "num_inference_steps", "steps"),
     ("denoise", "guidance_scale", "guidanceScale"),
 )
+_MODULAR_LAYERED_GRAPH_EDGES = tuple(
+    edge for edge in _MODULAR_EDIT_GRAPH_EDGES if edge[1] != "route_state_out"
+)
+_MODULAR_LAYERED_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "addAlpha"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("imageEncode", "seed", "seed"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "layers", "layers"),
+)
 _CONTROL_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -602,6 +624,7 @@ _BINDING_SOURCES = frozenset(
     for item in (
         *_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
+        *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_CONTROL_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
@@ -644,6 +667,30 @@ _MODULAR_EDIT_PLUS_PROFILE = {
     "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
     "max_low_memory_side": 768,
     "max_low_memory_steps": 24,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_MODULAR_LAYERED_PROFILE = {
+    "id": "qwen-layered:modular",
+    "model_type": "QwenImageLayeredModularPipeline",
+    "modes": ("layer_decomposition",),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "QwenImageLayeredModularPipeline",
+    "default_repo": "Qwen/Qwen-Image-Layered",
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": ("transformer", "text_encoder"),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 30,
     "live_proof": False,
     "compatible_repos": (),
 }
@@ -2459,6 +2506,14 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _MODULAR_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_EDIT_GRAPH_EDGES,
         "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+    },
+    "qwen-image-layered:layer-decomposition:v1": {
+        "modelType": "QwenImageLayeredModularPipeline",
+        "mode": "layer_decomposition",
+        "profile": _MODULAR_LAYERED_PROFILE,
+        "roles": _MODULAR_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_LAYERED_GRAPH_EDGES,
+        "bindings": _MODULAR_LAYERED_GRAPH_BINDINGS,
     },
 }
 

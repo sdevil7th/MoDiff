@@ -1220,6 +1220,7 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["qualityTier"], "native-bf16-high-memory")
         self.assertEqual(selected["quantizationMode"], "none")
         self.assertEqual(selected["offloadMode"], "none")
+        self.assertEqual(selected["studioExecutionSpecContract"]["executionProfileId"], "qwen-layered:modular")
 
     def test_corrupt_wrong_size_and_active_artifact_requires_repair(self):
         plan = self._plan(
