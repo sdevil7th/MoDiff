@@ -52,6 +52,7 @@ MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS = 2_048
 MAX_CUSTOM_PIPELINE_JSON_STRING_CHARS = 16_384
 MAX_CUSTOM_PIPELINE_ACTIONS = 128
 MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION = 256
+MAX_LOADER_COMPONENT_OUTPUTS = 16
 PROTOTYPE_SENSITIVE_FIELD_NAMES = frozenset({"__proto__", "prototype", "constructor"})
 _IMMUTABLE_HUB_REVISION = re.compile(r"^[0-9a-f]{40}$")
 _LOCAL_EXECUTABLE_CONFIG_FILES = {
@@ -229,6 +230,23 @@ def _validate_pipeline_config_document(data: dict[str, Any], *, source_label: st
             raise EnvironmentError(
                 f"The config file at '{source_label}' requires string field '{field_name}'."
             )
+    loader_component_outputs = data.get("loader_component_outputs", [])
+    if not isinstance(loader_component_outputs, list) or len(loader_component_outputs) > MAX_LOADER_COMPONENT_OUTPUTS:
+        raise EnvironmentError(
+            f"The config file at '{source_label}' requires at most {MAX_LOADER_COMPONENT_OUTPUTS} "
+            "loader component output names."
+        )
+    invalid_loader_component_output = any(
+        not isinstance(name, str)
+        or not name.strip()
+        or len(name) > 128
+        or name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+        for name in loader_component_outputs
+    )
+    if invalid_loader_component_output or len(loader_component_outputs) != len(set(loader_component_outputs)):
+        raise EnvironmentError(
+            f"The config file at '{source_label}' contains invalid or duplicate loader component output names."
+        )
     if "node_params" not in data or not isinstance(data["node_params"], dict) or not data["node_params"]:
         raise EnvironmentError(
             f"The config file at '{source_label}' requires a non-empty 'node_params' JSON object."
@@ -1288,6 +1306,7 @@ class MoDiffPipelineConfig:
         label: str = "",
         default_repo: str = "",
         default_dtype: str = "",
+        loader_component_outputs: tuple[str, ...] = (),
     ):
         """
         Args:
@@ -1297,6 +1316,7 @@ class MoDiffPipelineConfig:
             label: Human-readable label for the pipeline
             default_repo: Default HuggingFace repo for this pipeline
             default_dtype: Default dtype (e.g., "float16", "bfloat16")
+            loader_component_outputs: Additional required component names that ModelsLoader publishes.
         """
         # Convert all node specs to MoDiff format immediately
         self.node_specs = node_specs
@@ -1304,6 +1324,22 @@ class MoDiffPipelineConfig:
         self.label = label
         self.default_repo = default_repo
         self.default_dtype = default_dtype
+        if not isinstance(loader_component_outputs, (list, tuple)):
+            raise ValueError("loader_component_outputs requires a list or tuple of component names.")
+        normalized_loader_outputs = tuple(loader_component_outputs)
+        if (
+            len(normalized_loader_outputs) > MAX_LOADER_COMPONENT_OUTPUTS
+            or any(
+                not isinstance(name, str)
+                or not name.strip()
+                or len(name) > 128
+                or name in PROTOTYPE_SENSITIVE_FIELD_NAMES
+                for name in normalized_loader_outputs
+            )
+            or len(normalized_loader_outputs) != len(set(normalized_loader_outputs))
+        ):
+            raise ValueError("loader_component_outputs requires bounded, unique component names.")
+        self.loader_component_outputs = normalized_loader_outputs
 
     @property
     def node_params(self) -> dict[str, Any]:
@@ -1342,6 +1378,7 @@ class MoDiffPipelineConfig:
             "label": self.label,
             "default_repo": self.default_repo,
             "default_dtype": self.default_dtype,
+            "loader_component_outputs": list(self.loader_component_outputs),
             "node_params": self.node_params,
         }
 
@@ -1358,6 +1395,7 @@ class MoDiffPipelineConfig:
         instance.label = data.get("label", "")
         instance.default_repo = data.get("default_repo", "")
         instance.default_dtype = data.get("default_dtype", "")
+        instance.loader_component_outputs = tuple(data.get("loader_component_outputs", ()))
         return instance
 
     def to_json_string(self) -> str:

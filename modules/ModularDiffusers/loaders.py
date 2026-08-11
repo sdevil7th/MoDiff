@@ -71,6 +71,7 @@ QWEN_LOW_VRAM_COMPONENT = "qwen_low_vram"
 QWEN_LOW_RESOURCE_COMPONENTS = {"transformer", "text_encoder"}
 GROUP_OFFLOAD_COMPONENTS = set(DEFAULT_GROUP_COMPONENTS)
 MODELS_LOADER_IDENTITY_OUTPUTS = ("text_encoders", "unet_out", "vae_out", "scheduler", "image_encoder")
+MODELS_LOADER_COMPONENT_OUTPUTS = frozenset({"image_encoder"})
 MAX_REVIEWED_PIPELINE_INDEX_BYTES = 1024 * 1024
 _REVIEWED_PIPELINE_INDEX_FILENAMES = ("modular_model_index.json", "model_index.json")
 MAX_REVIEWED_COMPONENT_CONFIG_BYTES = 1024 * 1024
@@ -87,6 +88,14 @@ _DIFFUSERS_COMPONENT_CATEGORY_MODULES = {
 # This pinned Diffusers export inherits torch.nn.Module directly rather than
 # ModelMixin, so it does not implement the reviewed standalone loading contract.
 _DIFFUSERS_COMPONENT_EXPORT_EXCLUSIONS = frozenset({"DualTransformer2DModel"})
+
+
+def _reviewed_loader_component_outputs(model_type):
+    metadata = get_model_type_metadata(model_type)
+    outputs = metadata.get("loader_component_outputs") if isinstance(metadata, Mapping) else None
+    if not isinstance(outputs, list) or any(name not in MODELS_LOADER_COMPONENT_OUTPUTS for name in outputs):
+        raise RuntimeError("The registered Modular pipeline has an invalid loader component output contract.")
+    return tuple(outputs)
 
 
 def _reject_duplicate_pipeline_index_keys(pairs):
@@ -2134,6 +2143,7 @@ class ModelsLoader(NodeBase):
             _source, real_repo_id = self._selected_repository(repo_id, custom=True)
             reviewed_index_filename = None
             reviewed_index_document = None
+            loader_component_outputs = ()
         else:
             (
                 _source,
@@ -2158,6 +2168,7 @@ class ModelsLoader(NodeBase):
                 and tuple(_reviewed_builtin_identity) != current_reviewed_identity
             ):
                 raise ValueError("The reviewed Modular pipeline index changed after cache validation; retry the run.")
+            loader_component_outputs = _reviewed_loader_component_outputs(model_type)
 
         requested_offload_mode = offload_mode
         offload_mode = normalize_offload_mode(
@@ -2335,8 +2346,7 @@ class ModelsLoader(NodeBase):
                     )
 
         required_components = {denoiser_name, "vae", "scheduler", *text_encoder_names}
-        if model_type == "WanImage2VideoModularPipeline":
-            required_components.add("image_encoder")
+        required_components.update(loader_component_outputs)
         required_components = {name for name in required_components if name}
         self._loader_diagnostics["required_components"] = sorted(required_components)
         self._loader_diagnostics["components_to_load"] = list(components_to_reload)
@@ -2457,10 +2467,12 @@ class ModelsLoader(NodeBase):
                 "scheduler": node_get_component_info(node_id=self.node_id, manager=components, name="scheduler"),
             }
 
-            if model_type == "WanImage2VideoModularPipeline":
-                loaded_components["image_encoder"] = node_get_component_info(
-                    node_id=self.node_id, manager=components, name="image_encoder"
-                )
+            loaded_components.update(
+                {
+                    name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
+                    for name in loader_component_outputs
+                }
+            )
         except ValueError as e:
             self.notify(
                 f" ModelsLoader: Error retrieving component info: {e}",

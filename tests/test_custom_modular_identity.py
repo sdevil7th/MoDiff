@@ -229,6 +229,12 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                     "denoise": {**valid["node_params"]["denoise"], "input_names": "steps"}
                 },
             }),
+            ("at most 16 loader component", {**valid, "loader_component_outputs": "image_encoder"}),
+            ("invalid or duplicate loader component", {**valid, "loader_component_outputs": [{}]}),
+            (
+                "invalid or duplicate loader component",
+                {**valid, "loader_component_outputs": ["image_encoder", "image_encoder"]},
+            ),
         )
         for expected_message, document in invalid_documents:
             with self.subTest(expected_message=expected_message), tempfile.TemporaryDirectory() as directory:

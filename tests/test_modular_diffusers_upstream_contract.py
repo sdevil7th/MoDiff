@@ -20,7 +20,12 @@ from modules.ModularDiffusers.dynamic_node import DynamicBlockNode
 from modules.ModularDiffusers.embeddings import EncodePrompt, ImageEmbeddings
 from modules.ModularDiffusers.guiders import GUIDER_CONFIGS, GUIDER_OPTIONS, LAYER_CONFIG_MAPPING, Guider, Layers
 from modules.ModularDiffusers.latents import DecodeLatents, ImageEncode
-from modules.ModularDiffusers.loaders import AutoModelLoader, ModelsLoader, QuantizationConfigNode
+from modules.ModularDiffusers.loaders import (
+    AutoModelLoader,
+    ModelsLoader,
+    QuantizationConfigNode,
+    _reviewed_loader_component_outputs,
+)
 from modules.ModularDiffusers.pipeline_schema import (
     MoDiffParam,
     MoDiffPipelineConfig,
@@ -274,12 +279,40 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             label="Contract fixture",
             default_repo="local/fixture",
             default_dtype="bfloat16",
+            loader_component_outputs=("image_encoder",),
         )
 
         restored = MoDiffPipelineConfig.from_dict(config.to_dict())
         self.assertEqual(restored.to_dict(), config.to_dict())
+        self.assertEqual(restored.loader_component_outputs, ("image_encoder",))
         self.assertEqual(restored.node_params["encode"]["block_name"], "text_encoder")
         self.assertIn("prompt", restored.node_params["encode"]["params"])
+
+    def test_models_loader_component_outputs_come_from_reviewed_pipeline_metadata(self):
+        registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
+        expected = {"WanImage2VideoModularPipeline": ("image_encoder",)}
+
+        for model_type in sorted(registered):
+            with self.subTest(model_type=model_type):
+                outputs = _reviewed_loader_component_outputs(model_type)
+                self.assertEqual(outputs, expected.get(model_type, ()))
+                self.assertEqual(get_model_type_metadata(model_type)["loader_component_outputs"], list(outputs))
+
+        self.assertNotIn(
+            'model_type == "WanImage2VideoModularPipeline"',
+            inspect.getsource(ModelsLoader.execute),
+        )
+
+    def test_models_loader_rejects_malformed_component_output_metadata(self):
+        with patch(
+            "modules.ModularDiffusers.loaders.get_model_type_metadata",
+            return_value={"loader_component_outputs": ["not_a_loader_output"]},
+        ):
+            with self.assertRaisesRegex(RuntimeError, "invalid loader component output contract"):
+                _reviewed_loader_component_outputs("FixturePipeline")
+
+        with self.assertRaisesRegex(ValueError, "list or tuple"):
+            MoDiffPipelineConfig(node_specs={}, loader_component_outputs="image_encoder")
 
     def test_required_pipeline_registry_matches_installed_diffusers(self):
         required = {

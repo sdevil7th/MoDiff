@@ -62,6 +62,12 @@ The bundled `text_to_image` graph illustrates five stages:
 
 The exact fields and defaults come from the live registry. For example, Flux, Qwen Image, Z-Image, and Wan pipelines do not share one universal guidance, prompt, or step contract. Refresh or recreate a graph when a model's dynamic definition changes.
 
+Reviewed built-in pipeline metadata also declares any additional component that
+**Load Models** must load and publish. Wan I2V currently declares its
+`image_encoder` this way; the loader no longer selects that requirement from a
+pipeline-class branch. The same bounded field in an untrusted custom sidecar is
+descriptive only and cannot authorize custom execution.
+
 [Watch a separated Modular Diffusers workflow demo (MP4)](https://github.com/user-attachments/assets/4bbf74ac-404e-46bb-ae51-a84e65c25235)
 
 Type a prompt, confirm model readiness, and use **Run**. A queued task response only confirms submission; watch Queue and WebSocket progress for completion or structured failure details.

@@ -1260,6 +1260,7 @@ WAN_I2V_PIPELINE_CONFIG = PipelineConfig(
     label="WAN2 I2V",
     default_repo="Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
     default_dtype="bfloat16",
+    loader_component_outputs=("image_encoder",),
 )
 
 
@@ -1557,6 +1558,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
                 "label": config.label,
                 "default_repo": config.default_repo,
                 "default_dtype": config.default_dtype,
+                "loader_component_outputs": list(config.loader_component_outputs),
                 "node_params": config.node_params,
             }
             if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
