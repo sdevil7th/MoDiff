@@ -151,6 +151,28 @@ QWEN_EXPERT_QUANTIZATION_POLICY = ExpertQuantizationPolicy(
 
 
 @dataclass(frozen=True)
+class ExpertMpsPolicy:
+    schema_version: int
+    qualification: str
+    fallback_action: str
+
+    def __post_init__(self) -> None:
+        if (
+            self.schema_version != 1
+            or self.qualification not in {"unqualified", "experimental"}
+            or self.fallback_action not in {"open_setup", "switch_to_z_image"}
+        ):
+            raise ValueError("Invalid reviewed Expert MPS policy.")
+
+
+MPS_UNQUALIFIED_POLICY = ExpertMpsPolicy(1, "unqualified", "open_setup")
+MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY = ExpertMpsPolicy(
+    1, "unqualified", "switch_to_z_image"
+)
+MPS_EXPERIMENTAL_POLICY = ExpertMpsPolicy(1, "experimental", "open_setup")
+
+
+@dataclass(frozen=True)
 class DiffusersExecutionProfile:
     id: str
     model_type: str
@@ -180,6 +202,7 @@ class DiffusersExecutionProfile:
     compatible_repos: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
     expert_quantization_policy: ExpertQuantizationPolicy | None = None
+    expert_mps_policy: ExpertMpsPolicy | None = None
 
     def __post_init__(self) -> None:
         expected_loader = {
@@ -227,6 +250,8 @@ class DiffusersExecutionProfile:
             public.pop("expert_cuda_policy")
         if not self.expert_quantization_policy:
             public.pop("expert_quantization_policy")
+        if not self.expert_mps_policy:
+            public.pop("expert_mps_policy")
         public["backend_path"] = self.backend_path
         if observe_optional_runtime:
             # Lazy to keep the declarative profile module independent of
@@ -434,7 +459,30 @@ for profile_id in (
         DIFFUSERS_EXECUTION_PROFILES[profile_id],
         expert_cuda_policy=QWEN_EXPERT_CUDA_POLICY,
         expert_quantization_policy=QWEN_EXPERT_QUANTIZATION_POLICY,
+        expert_mps_policy=(
+            MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY
+            if profile_id == "qwen-image:t2i-direct"
+            else MPS_UNQUALIFIED_POLICY
+        ),
     )
+
+for profile_id in (
+    "wan-vace:direct",
+    "wan-22-image-to-video:direct",
+    "wan-22-ti2v-5b:direct",
+    "wan-text-to-video:direct",
+    "wan-video-to-video:direct",
+    "ltx-video:direct",
+):
+    DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+        DIFFUSERS_EXECUTION_PROFILES[profile_id],
+        expert_mps_policy=MPS_UNQUALIFIED_POLICY,
+    )
+
+DIFFUSERS_EXECUTION_PROFILES["z-image:auto"] = replace(
+    DIFFUSERS_EXECUTION_PROFILES["z-image:auto"],
+    expert_mps_policy=MPS_EXPERIMENTAL_POLICY,
+)
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES = [
     {

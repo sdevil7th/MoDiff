@@ -139,6 +139,13 @@ direct execution paths continue to derive their required loader fields from the
 specification bindings. Missing, malformed, or registry-incompatible policy
 data never falls back to a model-family or pipeline-name rule.
 
+An execution profile may also publish `expert_mps_policy` with
+`schema_version: 1`, a reviewed `qualification` (`unqualified` or
+`experimental`), and a bounded fallback action. Studio presents this advisory
+only in Expert mode on Apple MPS and only when the selected exact specification
+names that profile. The policy remains non-blocking and is omitted for profiles
+without a reviewed MPS advisory.
+
 The current schema-v1 catalog covers the migrated Flux Schnell, Dev, Krea,
 Flux2 Klein, Depth, Canny, Redux, Kontext, and Fill image pairs; Wan 2.2 I2V
 and TI2V; Wan 2.1 text, video, and color-edit modes; all four LTX condition

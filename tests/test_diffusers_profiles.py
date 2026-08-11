@@ -4,7 +4,11 @@ from modiff.diffusers_profiles import (
     ACE_STEP_LORA_BASE_REPO,
     DIFFUSERS_EXECUTION_PROFILES,
     ExpertCudaPolicy,
+    ExpertMpsPolicy,
     ExpertQuantizationPolicy,
+    MPS_EXPERIMENTAL_POLICY,
+    MPS_UNQUALIFIED_POLICY,
+    MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY,
     QWEN_EXPERT_CUDA_POLICY,
     QWEN_EXPERT_QUANTIZATION_POLICY,
 )
@@ -145,6 +149,42 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "double_quant": True,
             },
         )
+        self.assertEqual(
+            public["expert_mps_policy"],
+            {
+                "schema_version": 1,
+                "qualification": "unqualified",
+                "fallback_action": "switch_to_z_image",
+            },
+        )
+
+    def test_profiles_publish_only_the_reviewed_expert_mps_policies(self):
+        unqualified = {
+            "qwen-image:modular",
+            "qwen-edit:direct-inpaint",
+            "qwen-edit:modular",
+            "qwen-edit-plus:modular",
+            "qwen-layered:modular",
+            "wan-vace:direct",
+            "wan-22-image-to-video:direct",
+            "wan-22-ti2v-5b:direct",
+            "wan-text-to-video:direct",
+            "wan-video-to-video:direct",
+            "ltx-video:direct",
+        }
+        for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
+            with self.subTest(profile=profile_id):
+                expected = (
+                    MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY
+                    if profile_id == "qwen-image:t2i-direct"
+                    else MPS_EXPERIMENTAL_POLICY
+                    if profile_id == "z-image:auto"
+                    else MPS_UNQUALIFIED_POLICY
+                    if profile_id in unqualified
+                    else None
+                )
+                self.assertIs(profile.expert_mps_policy, expected)
+                self.assertEqual("expert_mps_policy" in profile.to_public_dict(), expected is not None)
 
     def test_expert_cuda_policy_rejects_unreviewed_or_unbounded_values(self):
         cases = (
@@ -198,6 +238,17 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             with self.subTest(update=update):
                 with self.assertRaisesRegex(ValueError, "Invalid reviewed Expert quantization policy"):
                     ExpertQuantizationPolicy(**{**values, **update})
+
+    def test_expert_mps_policy_rejects_unreviewed_values(self):
+        values = {"schema_version": 1, "qualification": "unqualified", "fallback_action": "open_setup"}
+        for update in (
+            {"schema_version": 2},
+            {"qualification": "certified"},
+            {"fallback_action": "run_anyway"},
+        ):
+            with self.subTest(update=update):
+                with self.assertRaisesRegex(ValueError, "Invalid reviewed Expert MPS policy"):
+                    ExpertMpsPolicy(**{**values, **update})
 
     def test_ace_lora_template_base_is_an_exact_reviewed_compatible_artifact(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["ace-step-audio:direct"]
