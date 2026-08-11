@@ -2089,8 +2089,24 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       This is static, unit, contract, mocked-browser, build, and local preflight
       evidence only; no model download, audio execution, generated media, or
       live workload qualification occurred.
-    - [ ] Move the remaining non-audio dynamic field visibility and resource
-      metadata out of frontend/node model switches and into reviewed
+    - [x] Auto execution-path authority overlay. Client commit `16b7f12`
+      removes the pre-plan Qwen and broad family execution-path guesses from
+      the local resource fallback. Auto now stays path-neutral until an exact
+      selected schema-v2 backend candidate supplies the reviewed loader path;
+      Expert likewise describes the editable full graph without claiming a
+      model-specific execution path. All current model/mode fallbacks are
+      covered by a zero-invented-path contract, while the mocked exact Auto run
+      proves `direct-diffusers-image` still reaches the submitted receipt from
+      the bound backend candidate. The focused resource/request matrix passed
+      79/79, `npm run check` passed, the exact Auto submission browser path
+      passed 1/1, and the final complete mocked Studio suite passed 89/89 in
+      4.5 minutes. The production bundle was 522524/523264 gzip bytes, 612
+      bytes below the stricter 523136-byte safety target. Formatting, lint,
+      type, build, bundle, and diff checks passed. This is static, unit,
+      contract, mocked-browser, and build evidence only; no model download,
+      inference, or generated media occurred.
+    - [ ] Move the remaining non-audio dynamic field visibility and non-path
+      resource metadata out of frontend/node model switches and into reviewed
       declarative overlays.
 - [ ] **P0.4 Proof receipts and current mismatch cleanup**
   - Backend: bind history to profile/schema version, graph and loader topology,
@@ -2935,6 +2951,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e Scheduler overlay | `6779a19` | `140cab2` | Not required | Not required | Complete: pinned-upstream scheduler compatibility metadata, live-component and exact-constructor validation, complete backend/client gates, and the focused generic signal-relay mocked-browser contract passed. This closes the Scheduler portion of the parent P0.3e remaining-work summary. |
 | P0.3e readiness overlay | `03c358b` (compatible exact-specification contract) | `7a02806` | Not required | Not required | Complete: readiness consumes the live managed loader identity or the unique authoritative execution specification, validates every exact role generically, and no longer routes the removed capability checks by model or pipeline name. Focused 67/67, complete client, exact browser, and final 88/88 mocked Studio gates passed; the bundle remained inside both limits. |
 | P0.3e audio field overlay | `2a98856` | `fba496c` | Not required | Not required | Complete: reviewed audio pipeline/mode contracts publish the exact generic Generate field overlay; the backend rejects tampered overlays and the client no longer derives audio visibility from pipeline names. Complete backend/client and final 89/89 mocked Studio gates passed; no live audio execution was required. |
+| P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification); add remaining receipts | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | In progress: the bounded schema-v2 repair and schema-v3 controlled-workflow proof are unit/contract/mocked-browser tested for LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux families. Auto candidates/history now bind the planner schema, exact execution profile, primary artifact revision, optional-runtime delivery contract, the exact backend-owned topology for all 39 current pairs, the exact Qwen ControlNet Union and FLUX Redux base dependencies, and server-derived executable Modular/direct-image/direct-audio LoRA receipts. Client plan-time controlled-artifact proof labeling, future controlled/auxiliary artifact families, remaining mismatch closure, and live qualification are pending. |
 | P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, and cutover-dormant base-neutral backend/client guard/status scaffold are CPU/static/unit/contract/mocked-browser tested. Executable overlay qualification; actionable consent/install/activation/restart/repair/rollback; repo-aware shared-loader readiness and Auto parity; staged workload/live qualification; and atomic Transformers+PEFT base cutover remain |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
