@@ -3674,6 +3674,32 @@ Assets: generated remotely even when a local smoke is allowed.
   - Stable Diffusion 1.x/2.x text-to-image, img2img, and inpaint.
   - LCM 1-4 step workflows and PAG using compatible base weights.
   - Local smoke: at most 512px and the minimum meaningful step count.
+  - [x] **P3.2a Stable Diffusion 1.5 exact generic workflows**
+    - Evidence 2026-08-13: backend `a0815b8` and client `5a633a9`
+      add immutable text-to-image, img2img, and inpaint pairs through the
+      existing generic image nodes. All three pairs reuse
+      `stable-diffusion-v1-5/stable-diffusion-v1-5` at
+      `451f4fe16113bff5a5d2269ed5ad43b0592e9a14` with safetensors and
+      CreativeML Open RAIL-M provenance; no pipeline-specific execution node
+      or client graph builder was added.
+    - Offline cached CPU node smokes completed at `64x64`: text-to-image at
+      one step in `0.68s`, img2img at two requested steps (`strength=0.8`, one
+      effective denoise step) in `0.81s`, and inpaint at two steps in `0.92s`.
+      The backend gate passed (`1266 passed, 3 skipped, 2562 subtests`) with
+      Ruff `E9,F`, package, shell, and diff checks; all 76 canonical workflows
+      verified; `npm run check` and the complete mocked Studio browser sweep
+      passed (`103 passed`). The production JavaScript bundle is
+      `526012 / 526336` total gzip bytes with the entry at
+      `278350 / 448512`.
+    - Auto and Gallery remain disabled pending remote quality review and
+      immutable Dataset publication. No generated media was retained or
+      committed. The standalone preflight confirmed port 8088 was free but
+      remains non-ready only because the installed CPU profile digest predates
+      this checkout, the same unrelated local drift recorded for P2.4 and
+      P3.1.
+  - [ ] **P3.2b Stable Diffusion 2.x exact generic workflows**
+  - [ ] **P3.2c Latent Consistency Model 1-4 step workflows**
+  - [ ] **P3.2d PAG workflows using compatible base weights**
 - [ ] **P3.3 Generic perception output**
   - Add prediction-map output semantics and integrate Marigold depth first.
   - Add normals, intrinsics, and uncertainty only after the shared output
@@ -3998,7 +4024,8 @@ Add references only after the corresponding evidence exists.
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
-| P3.2-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
+| P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
+| P3.2b-P3.2d, P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
 | P4.1-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
