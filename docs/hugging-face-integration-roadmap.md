@@ -3413,7 +3413,7 @@ output and assets remotely. Assets: remote Dataset only.
     `524487 / 525312` gzip bytes while the entry remained
     `284701 / 448512`. No model, media, network artifact, or generated asset was
     used.
-- [ ] **P2.2 Existing image paths**
+- [x] **P2.2 Existing image paths**
   - Stable Diffusion XL basics; direct Flux img2img/inpaint/ControlNet; Flux
     Kontext multi-reference; Z-Image img2img; supported Qwen img2img,
     edit/inpaint, ControlNet, Edit Plus, and Layered modes; existing registered
@@ -3567,6 +3567,21 @@ output and assets remotely. Assets: remote Dataset only.
       `npm run check` passed at `525153 / 525312` total production JavaScript
       gzip bytes with the entry at `284983 / 448512`. No weights, source media,
       inference output, or public asset was downloaded or generated.
+  - [x] **P2.2 existing-image-path closure**
+    - Evidence 2026-08-13: a manifest-derived audit deterministically verified
+      all 30 registered image model/mode pairs. The audit refreshed stale
+      canonical layouts for Qwen Image Control and both Qwen Image Edit Plus
+      modes. Canonical generation now reapplies reviewed immutable revisions
+      from the backend artifact catalog and derives every required Hub artifact
+      from the exported graph, preserving the Qwen base, ControlNet Union, and
+      Lightning LoRA identities through future regeneration. The focused
+      backend graph/catalog, discovery, truth, and task-contract gate passed
+      (`32 passed, 230 subtests passed`); the complete client check passed at
+      `525153 / 525312` total production JavaScript gzip bytes with the entry at
+      `284983 / 448512`. The complete backend source suite had already passed
+      for the final P2.2h slice (`1263 passed, 3 skipped, 2349 subtests`). No
+      weights, media, live inference, or public assets were used, and remote
+      Gallery qualification remains isolated to P2.5.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3922,7 +3937,8 @@ Add references only after the corresponding evidence exists.
 | P2.2f Z-Image Turbo image-to-image | `0d1d3cb` | `a586fce` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Z-Image Turbo revision, generic source-image binding, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
 | P2.2g Qwen-Image-2512 image-to-image | `8a4dbd8` | `538a79c` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Qwen-Image-2512 revision, generic source-image binding, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged and Gallery activation remains pending. |
 | P2.2h Qwen-Image-2512 inpaint | `556be5f` | `bd8278f` | Remote pending | Pending | Complete source slice: exact standard inpaint loader, immutable Qwen-Image-2512 revision, generic source/mask bindings, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged, outpaint remains unadvertised, and Gallery activation remains pending. |
-| P2.2i-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.2 existing-image-path closure | `653168c` | `9862eea` | Remote pending | Pending | Complete: all 30 registered image pairs have deterministic canonical layouts; regeneration preserves catalog revisions and discovers base plus auxiliary Hub artifacts from each graph; focused backend integrity and complete client gates passed without weights or media. |
+| P2.3-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
