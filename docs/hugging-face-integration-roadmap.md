@@ -3392,13 +3392,27 @@ output and assets remotely. Assets: remote Dataset only.
 
 ### Committable segments
 
-- [ ] **P2.1 Generic task-template builder and validator**
+- [x] **P2.1 Generic task-template builder and validator**
   - Backend: validate exact execution profile, loader identity, graph inputs, and
     output contract for every graph.
   - Client: generate task skeletons from generic image/audio/video contracts;
     do not clone model-specific graph builders.
   - Tests: graph round trips, required media, loader identity, stable IDs, and
     Gallery-hidden state while qualification is pending.
+  - Evidence 2026-08-12: the backend now derives 39 content-addressed task
+    contracts from the authoritative execution specifications and validates
+    exact profile/loader identity, required media, and modality terminal output.
+    Checked-in image, video, and audio graphs passed JSON round-trip validation;
+    loader, output, and required-media tampering failed closed. The client
+    strictly consumes the same generic contract, produces planning-only
+    skeletons without another graph representation, ignores future unknown
+    model types, and keeps every pending contract out of Gallery. The complete
+    backend suite passed (`1263 passed, 3 skipped, 2253 subtests passed`) with
+    Ruff `E9,F`, compile, package, shell, and diff gates. `npm run check` passed;
+    the reviewed task validator increased total production JavaScript to
+    `524487 / 525312` gzip bytes while the entry remained
+    `284701 / 448512`. No model, media, network artifact, or generated asset was
+    used.
 - [ ] **P2.2 Existing image paths**
   - Stable Diffusion XL basics; direct Flux img2img/inpaint/ControlNet; Flux
     Kontext multi-reference; Z-Image img2img; supported Qwen img2img,
@@ -3749,7 +3763,8 @@ Add references only after the corresponding evidence exists.
 | P1.2 | `50dafa6` | `7c6bdbf` | Not required | Not required | Complete: the reproducible pinned snapshot normalizes Sequential, Auto, Loop, state, output, and component contracts; DynamicBlock exposes and executes only sidecar-carryable reviewed tasks; the client consumes the declarative task visibility contract generically. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.3 | `b48355b` | `f044594` | Not required | Not required | Complete: all three planned guiders use exact pinned official exports and constructor contracts; layer requirements, component compatibility, typed parameters, and backend-driven generic option signals passed complete backend/client and focused browser gates without weights. |
 | P1.4 | `8e44eb5` | `5cb2998` | Not required | Not required | Complete: all 15 Modular classes present at the pin are split into image/video/multimodal contract-only batches with exact generated upstream workflow schemas and generic Expert visibility. They remain outside executable, Auto, template, Gallery, optional-runtime, and live-support registries; complete backend/client and focused browser gates passed without weights or assets. |
-| P2.1-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.1 | `fa1884a` | `6f12230` | Not required | Not required | Complete: all 39 authoritative execution pairs publish a stable generic planning contract with exact execution-profile, loader, required-media, and terminal-output identity. Strict client parsing produces modality-generic skeletons and leaves every entry Gallery-hidden pending the separate qualification gate; complete backend/client gates passed without weights or assets. |
+| P2.2-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
