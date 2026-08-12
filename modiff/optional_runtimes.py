@@ -8,7 +8,7 @@ packages.  Installation and activation remain a later, explicit P0.5 slice.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 from importlib import metadata
 import json
@@ -635,6 +635,45 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
     {_TRANSFORMERS_PEFT_PROFILE.id: _TRANSFORMERS_PEFT_PROFILE}
 )
+
+
+def project_optional_runtime_qualification(
+    profile: OptionalRuntimeProfile,
+    *,
+    platform_name: str | None = None,
+    machine: str | None = None,
+) -> OptionalRuntimeProfile:
+    """Project one pending target for the isolated qualification harness."""
+
+    target = profile.contract_for_target(
+        platform_name=platform_name,
+        machine=machine,
+    )
+    target_flags = (
+        target.cutover_ready,
+        target.install_action_available,
+        target.activation_available,
+    )
+    if target.contract_state == "qualified" and target_flags == (True, True, True):
+        return profile
+    if target.contract_state != "candidate_unqualified" or target_flags != (False, False, False):
+        raise RuntimeError("qualification requires a coherent qualified or pending target contract")
+    qualified_target = replace(
+        target,
+        contract_state="qualified",
+        cutover_ready=True,
+        install_action_available=True,
+        activation_available=True,
+    )
+    return replace(
+        profile,
+        target_contracts=tuple(
+            qualified_target
+            if (contract.platform, contract.machine) == (target.platform, target.machine)
+            else contract
+            for contract in profile.target_contracts
+        ),
+    )
 
 
 def _selected_profiles(profile_ids: Iterable[str] | None) -> tuple[OptionalRuntimeProfile, ...]:

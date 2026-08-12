@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Run the portable, fail-closed optional-runtime qualification workload.
 
-This tool is deliberately outside the product API. It temporarily projects the
-future qualified profile in memory, operates only in a newly-created temporary
-managed root, and never changes the source-controlled action/cutover flags.
+This tool is deliberately outside the product API. It accepts a qualified
+target or temporarily projects one pending target in memory, operates only in
+a newly-created temporary managed root, and never changes source-controlled
+action/cutover policy.
 Run it from a clean prospective base where every staged distribution is absent.
 """
 
 from __future__ import annotations
 
 import argparse
-from dataclasses import replace
 import hashlib
 import json
 import os
@@ -56,7 +56,6 @@ print(json.dumps({"plan": plan, "present": present}, sort_keys=True))
 """
 
 _WORKLOAD_SCRIPT = r"""
-from dataclasses import replace
 import json
 import math
 import os
@@ -70,13 +69,7 @@ import modiff.optional_runtimes as optional_runtimes
 
 profile_id = "huggingface-transformers-peft-5.14.1-0.20.0"
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
-qualified = replace(
-    candidate,
-    contract_state="qualified",
-    cutover_ready=True,
-    install_action_available=True,
-    activation_available=True,
-)
+qualified = optional_runtimes.project_optional_runtime_qualification(candidate)
 optional_runtimes.OPTIONAL_RUNTIME_PROFILES = {profile_id: qualified}
 
 import modiff.optimization_packages as optimization_packages
@@ -269,33 +262,12 @@ def _future_profile():
     import modiff.optional_runtimes as optional_runtimes
 
     candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[PROFILE_ID]
-    target = candidate.contract_for_target(
+    qualified = optional_runtimes.project_optional_runtime_qualification(
+        candidate,
         platform_name=_platform_name(),
         machine=_machine_name(),
     )
-    target_flags = (
-        target.cutover_ready,
-        target.install_action_available,
-        target.activation_available,
-    )
-    if target.contract_state == "qualified" and target_flags == (True, True, True):
-        return candidate, candidate
-    if target.contract_state != "candidate_unqualified" or target_flags != (False, False, False):
-        raise RuntimeError("qualification requires a coherent qualified or pending target contract")
-    qualified_target = replace(
-        target,
-        contract_state="qualified",
-        cutover_ready=True,
-        install_action_available=True,
-        activation_available=True,
-    )
-    qualified_contracts = tuple(
-        qualified_target
-        if (contract.platform, contract.machine) == (target.platform, target.machine)
-        else contract
-        for contract in candidate.target_contracts
-    )
-    return candidate, replace(candidate, target_contracts=qualified_contracts)
+    return candidate, qualified
 
 
 def qualification_preflight() -> dict[str, Any]:

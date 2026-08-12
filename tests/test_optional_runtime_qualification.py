@@ -66,6 +66,8 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
         self.assertTrue(
             projected.contract_for_target(platform_name="macos", machine="arm64").cutover_ready
         )
+        self.assertEqual(projected.contract_state, source.contract_state)
+        self.assertNotEqual(projected.spec_digest, source.spec_digest)
         self.assertEqual(
             projected.contract_for_target(platform_name="linux", machine="x86_64"),
             source.contract_for_target(platform_name="linux", machine="x86_64"),
