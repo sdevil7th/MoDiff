@@ -211,6 +211,22 @@ clean-base/staged-runtime dependency split. It still does not qualify a live
 model artifact, supervised server restart/repair, or another platform, and the
 source dependency/action/cutover declarations therefore remain unchanged.
 
+A supervised HTTP lifecycle then ran from that prospective clean base with only
+the future action/cutover flags enabled in the detached process. The real
+install endpoint staged and validated the same ten-wheel, 16,930,199-byte
+closure and retained a ready job bound to its exact environment, profile, and
+spec digest. Activation returned `restarting: true`, replaced the base worker,
+and the new worker reported an active overlay and Transformers `5.14.1`.
+Rollback returned `restarting: true`, replaced the active worker again, restored
+the base process status, and reported Transformers absent. The install exposed
+and fixed an invalid keyword call at the worker-thread progress boundary; both
+optional-runtime and legacy optimization installers now schedule a bound update
+callback, with regressions for each path. The temporary supervisor, detached
+checkout, staged environment, and diagnostics were removed and port 8088 was
+free. This closes Windows supervised install/activation/restart/rollback only;
+live cancellation/repair, live model/media execution, non-Windows execution,
+and source cutover remain pending.
+
 ## Runtime features
 
 The following features have concrete runtime implementations and remain

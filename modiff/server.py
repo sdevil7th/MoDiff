@@ -10381,10 +10381,12 @@ class WebServer:
 
         def progress(update):
             loop.call_soon_threadsafe(
-                self._update_optimization_job,
-                job_id,
-                status="running",
-                progress=update,
+                partial(
+                    self._update_optimization_job,
+                    job_id,
+                    status="running",
+                    progress=update,
+                )
             )
 
         try:
@@ -10441,10 +10443,12 @@ class WebServer:
 
         def progress(update):
             loop.call_soon_threadsafe(
-                self._update_optimization_job,
-                job_id,
-                status="running",
-                progress=update,
+                partial(
+                    self._update_optimization_job,
+                    job_id,
+                    status="running",
+                    progress=update,
+                )
             )
 
         try:

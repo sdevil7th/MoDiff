@@ -102,6 +102,98 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
                 streamed_oversize, allowed=set()
             )
 
+    async def test_optional_install_progress_crosses_the_worker_thread_boundary(self):
+        job_id = "optjob-abcdefghijkl"
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
+        lease = mock.Mock()
+        gate_token = "runtime-gate"
+        self.server.optimization_jobs[job_id] = {
+            "id": job_id,
+            "kind": "optional_runtime",
+            "profileId": profile.id,
+            "specDigest": profile.spec_digest,
+            "status": "queued",
+            "progress": {"phase": "queued"},
+            "createdAt": 1.0,
+            "updatedAt": 1.0,
+        }
+        self.server._runtime_install_leases[job_id] = lease
+        self.server._runtime_install_gate_tokens[job_id] = gate_token
+        phases = []
+        original_update = self.server._update_optimization_job
+
+        def record_update(identifier, **updates):
+            phase = (updates.get("progress") or {}).get("phase")
+            if phase:
+                phases.append(phase)
+            return original_update(identifier, **updates)
+
+        def install(*_args, progress, **_kwargs):
+            progress({"phase": "installing", "message": "Installing.", "updatedAt": 2.0})
+            return {"environmentId": "runtime-1-deadbeef"}
+
+        with (
+            mock.patch.object(self.server, "_update_optimization_job", side_effect=record_update),
+            mock.patch.object(self.server, "_release_worker_runtime_gate") as release_gate,
+            mock.patch.object(server_module, "release_runtime_install") as release_lease,
+            mock.patch.object(server_module, "install_optional_runtime", side_effect=install),
+        ):
+            await self.server._run_optional_runtime_install_job(
+                job_id, profile.id, profile.spec_digest, lease, gate_token
+            )
+            await asyncio.sleep(0)
+
+        self.assertIn("installing", phases)
+        self.assertEqual(self.server.optimization_jobs[job_id]["status"], "ready")
+        release_lease.assert_called_once_with(lease)
+        release_gate.assert_called_once_with(gate_token)
+
+    async def test_optimization_install_progress_crosses_the_worker_thread_boundary(self):
+        job_id = "optjob-bcdefghijklm"
+        lease = mock.Mock()
+        gate_token = "optimization-gate"
+        self.server.optimization_jobs[job_id] = {
+            "id": job_id,
+            "kind": "optimization",
+            "capabilityId": "torchao",
+            "status": "queued",
+            "progress": {"phase": "queued"},
+            "createdAt": 1.0,
+            "updatedAt": 1.0,
+        }
+        self.server._runtime_install_leases[job_id] = lease
+        self.server._runtime_install_gate_tokens[job_id] = gate_token
+        phases = []
+        original_update = self.server._update_optimization_job
+
+        def record_update(identifier, **updates):
+            phase = (updates.get("progress") or {}).get("phase")
+            if phase:
+                phases.append(phase)
+            return original_update(identifier, **updates)
+
+        def install(*_args, progress, **_kwargs):
+            progress({"phase": "installing", "message": "Installing.", "updatedAt": 2.0})
+            return {"environmentId": "runtime-2-deadbeef"}
+
+        with (
+            mock.patch.object(self.server, "_update_optimization_job", side_effect=record_update),
+            mock.patch.object(self.server, "_release_worker_runtime_gate") as release_gate,
+            mock.patch.object(server_module, "release_runtime_install") as release_lease,
+            mock.patch.object(
+                server_module, "install_optimization_capability", side_effect=install
+            ),
+        ):
+            await self.server._run_optimization_install_job(
+                job_id, "torchao", {}, {}, lease, gate_token
+            )
+            await asyncio.sleep(0)
+
+        self.assertIn("installing", phases)
+        self.assertEqual(self.server.optimization_jobs[job_id]["status"], "ready")
+        release_lease.assert_called_once_with(lease)
+        release_gate.assert_called_once_with(gate_token)
+
     async def test_install_schema_rejects_unknown_fields_and_nonliteral_consent(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
         base = {
