@@ -38,6 +38,11 @@ from modiff.diffusers_offload import (
     offload_mode_param,
 )
 from modiff.model_artifact_catalog import require_catalog_revision, resolve_model_revision
+from modiff.modular_workflow_contracts import (
+    PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_VARIANTS,
+)
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 from . import MESSAGE_DURATION, components
@@ -635,7 +640,8 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                 f"The cached reviewed pipeline index has an invalid {component_name!r} component type hint."
             )
         expected_type_hint = list(_fetch_class_library_tuple(component_spec.type_hint))
-        if observed_type_hint != expected_type_hint:
+        reviewed_concrete_type = PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES.get(repository, {}).get(component_name)
+        if observed_type_hint != expected_type_hint and tuple(observed_type_hint) != reviewed_concrete_type:
             raise ValueError(
                 f"The cached reviewed pipeline index maps component {component_name!r} to "
                 f"{observed_type_hint!r}, but registered pipeline {model_type!r} requires {expected_type_hint!r}. "
@@ -657,10 +663,13 @@ def _instantiate_reviewed_builtin_pipeline(
 
     pipeline_class = pipeline_class_from_model_type(model_type)
     installed_pipeline = pipeline_class()
+    load_document = deepcopy(index_document)
+    for component_name, type_hint in PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}).items():
+        load_document[component_name] = list(type_hint)
     config_kwargs = (
-        {"modular_config_dict": deepcopy(index_document)}
+        {"modular_config_dict": load_document}
         if index_filename == ModularPipeline.config_name
-        else {"config_dict": deepcopy(index_document)}
+        else {"config_dict": load_document}
     )
     return pipeline_class(
         blocks=installed_pipeline.blocks,
@@ -1924,8 +1933,8 @@ class ModelsLoader(NodeBase):
                 "ModelsLoader execution requires a registered built-in Modular Diffusers pipeline type. "
                 "Use the contract-preview flow for custom pipelines."
             )
-        expected_repository = metadata.get("default_repo")
-        if not isinstance(expected_repository, str) or not expected_repository:
+        default_repository = metadata.get("default_repo")
+        if not isinstance(default_repository, str) or not default_repository:
             raise ValueError(f"Registered Modular pipeline {model_type!r} has no reviewed default repository.")
         source, selected_repository = cls._selected_repository(repo_id, custom=False)
         if source != "hub":
@@ -1933,21 +1942,20 @@ class ModelsLoader(NodeBase):
                 "Registered built-in Modular Diffusers pipelines execute only from their reviewed immutable Hub "
                 "artifact; local or alternate repository selections are contract-preview only."
             )
-        if selected_repository != expected_repository:
+        reviewed_repositories = PINNED_MODULAR_REPOSITORY_VARIANTS.get(model_type, (default_repository,))
+        if selected_repository not in reviewed_repositories:
             raise ValueError(
-                f"Registered Modular pipeline {model_type!r} requires reviewed repository "
-                f"{expected_repository!r}; received {selected_repository!r}."
+                f"Registered Modular pipeline {model_type!r} requires reviewed repository selection."
             )
-        reviewed_revision = require_catalog_revision(expected_repository, model_type=model_type)
+        reviewed_revision = require_catalog_revision(selected_repository, model_type=model_type)
         if revision is not None and not isinstance(revision, str):
             raise ValueError("A built-in Modular Diffusers revision must be a string when provided.")
         selected_revision = str(revision or "").strip()
         if selected_revision and selected_revision != reviewed_revision:
             raise ValueError(
-                f"Registered Modular pipeline {model_type!r} requires reviewed revision {reviewed_revision}; "
-                f"received {selected_revision!r}."
+                f"Registered Modular pipeline {model_type!r} requires reviewed revision selection."
             )
-        return source, expected_repository, reviewed_revision
+        return source, selected_repository, reviewed_revision
 
     @classmethod
     def _preflight_reviewed_builtin_selection(cls, *, model_type, repo_id, revision):

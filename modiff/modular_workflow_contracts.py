@@ -16,6 +16,43 @@ from dataclasses import dataclass
 
 
 PINNED_DIFFUSERS_REVISION = "13a7bee4878d62fccc8d25f97e480e68de96fa03"
+WAN_I2V_REPOSITORY = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
+WAN_FLF_REPOSITORY = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
+
+# One installed Modular pipeline class can have multiple official weight/config
+# contracts. Keep the allowed repositories beside the pinned workflow truth;
+# the loader still requires an immutable catalog revision for the selected
+# repository, and the downstream action validates the workflow/repository pair.
+PINNED_MODULAR_REPOSITORY_VARIANTS = {
+    "WanImage2VideoModularPipeline": (WAN_I2V_REPOSITORY, WAN_FLF_REPOSITORY),
+}
+# Standard Hub indexes name the concrete classes serialized by each checkpoint,
+# while the installed Modular blocks declare their reviewed base/factory types.
+# These are exact repository-scoped aliases, not general subclass admission.
+PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
+    WAN_I2V_REPOSITORY: {
+        "tokenizer": ("transformers", "T5TokenizerFast"),
+        "image_encoder": ("transformers", "CLIPVisionModelWithProjection"),
+    },
+    WAN_FLF_REPOSITORY: {
+        "tokenizer": ("transformers", "T5TokenizerFast"),
+        "image_processor": ("transformers", "CLIPProcessor"),
+        "image_encoder": ("transformers", "CLIPVisionModelWithProjection"),
+    },
+}
+# The FLF standard pipeline serializes a combined processor wrapper even though
+# its image_processor subfolder contains only the reviewed CLIP image processor
+# config consumed by the installed Modular image block. Validate the serialized
+# declaration above, then normalize this one load contract to the block type.
+PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES = {
+    WAN_FLF_REPOSITORY: {
+        "image_processor": ("transformers", "CLIPImageProcessor"),
+    },
+}
+WAN_WORKFLOW_REPOSITORIES = (
+    ("image2video", WAN_I2V_REPOSITORY),
+    ("flf2v", WAN_FLF_REPOSITORY),
+)
 
 
 @dataclass(frozen=True)

@@ -549,8 +549,10 @@ Uploads are written under configured data subdirectories and share the configure
   `repair`, `repair_source_repo_id`, a `files` string list, and an optional exact
   lowercase 40-character commit `revision`. Concurrent requests for one
   repository may join only when both the immutable revision and file selection
-  match. It can consume substantial network, disk, RAM, and accelerator
-  resources.
+  match. When `revision` is omitted for a repository in the reviewed artifact
+  catalog, the server selects that repository's immutable catalog revision;
+  uncataloged user-selected repositories retain their existing Hub behavior. It
+  can consume substantial network, disk, RAM, and accelerator resources.
 - `DELETE /hf_cache/{hash}` deletes selected cached model revisions.
 - `POST /custom_modules/install` accepts a Git URL or local directory, places it under `custom/`, and refreshes the live registry. Imported custom code has the backend process's permissions.
 - Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but the current backend rejects all custom Modular pipeline and Dynamic Block execution, plus standalone component loading with remote code, before upstream construction. Exact cached 40-character commits may provide bounded declarative contract previews; a preview or persisted checksum is not execution authorization.

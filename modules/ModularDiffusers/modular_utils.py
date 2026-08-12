@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 import torch
 from diffusers import Flux2KleinModularPipeline
 from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.modular_workflow_contracts import WAN_I2V_REPOSITORY
 from .pipeline_schema import MoDiffParam as PipelineParam
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 from .custom_pipeline import (
@@ -1325,7 +1326,7 @@ WAN_I2V_NODE_SPECS = {
 WAN_I2V_PIPELINE_CONFIG = PipelineConfig(
     node_specs=WAN_I2V_NODE_SPECS,
     label="WAN2 I2V",
-    default_repo="Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
+    default_repo=WAN_I2V_REPOSITORY,
     default_dtype="bfloat16",
     guider_options=NON_LAYER_GUIDER_OPTIONS,
     scheduler_options=COMPATIBLE_SCHEDULER_OPTIONS,

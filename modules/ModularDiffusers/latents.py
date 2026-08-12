@@ -624,9 +624,16 @@ class ImageEncode(NodeBase):
         model_type = getattr(self._pipeline_class, "__name__", "")
         route_contract = route_contract_for_model_type(model_type)
         if route_contract == "wan_i2v":
+            binding = require_component_binding(
+                current.get("vae"),
+                label="VAE",
+                expected_model_type=model_type,
+                expected_role="vae",
+            )
             require_cataloged_wan_action_source(
                 image=current.get("image"),
                 last_image=current.get("last_image"),
+                binding=binding,
             )
             _blocks, node_config = require_modiff_node_contract(
                 self._pipeline_class,
@@ -638,12 +645,6 @@ class ImageEncode(NodeBase):
             route_output = self.output.get(ROUTE_STATE_OUTPUT)
             if route_input is None or route_output is None:
                 return False
-            binding = require_component_binding(
-                current.get("vae"),
-                label="VAE",
-                expected_model_type=model_type,
-                expected_role="vae",
-            )
             resident_vae = require_exact_resident_component(
                 getattr(self, "_pipeline", None),
                 current.get("vae"),
@@ -767,12 +768,19 @@ class ImageEncode(NodeBase):
         self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
         model_type = getattr(self._pipeline_class, "__name__", "")
         route_contract = route_contract_for_model_type(model_type)
+        route_binding = None
         if route_contract == "wan_i2v":
+            route_binding = require_component_binding(
+                kwargs.get("vae"),
+                label="VAE",
+                expected_model_type=model_type,
+                expected_role="vae",
+            )
             require_cataloged_wan_action_source(
                 image=kwargs.get("image"),
                 last_image=kwargs.get("last_image"),
+                binding=route_binding,
             )
-
         # 1. Get node config
         blocks, node_config = require_modiff_node_contract(self._pipeline_class, self.node_type)
         validate_route_field_contract(kwargs, node_config)
@@ -804,7 +812,6 @@ class ImageEncode(NodeBase):
                 "The backend-issued Modular Diffusers Encode Image contract declares a seed, but its installed "
                 "VAE encoder block does not expose the required generator input."
             )
-        route_binding = None
         preinit_vae = None
         preinit_geometry = None
         wan_preflight = None
@@ -814,12 +821,13 @@ class ImageEncode(NodeBase):
         if ROUTE_STATE_OUTPUT in node_config["output_names"]:
             if kwargs.get("seed") is None:
                 raise ValueError("A Modular VAE route requires a seed before pipeline initialization.")
-            route_binding = require_component_binding(
-                vae,
-                label="VAE",
-                expected_model_type=model_type,
-                expected_role="vae",
-            )
+            if route_binding is None:
+                route_binding = require_component_binding(
+                    vae,
+                    label="VAE",
+                    expected_model_type=model_type,
+                    expected_role="vae",
+                )
             if route_contract == "sdxl":
                 preinit_vae = resolve_managed_component_by_id(components, vae, label="Encode VAE")
                 preinit_geometry = sdxl_vae_geometry_from_component(preinit_vae)

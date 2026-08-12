@@ -393,7 +393,7 @@ and reviewed overrides instead of hidden model-specific code.
 | Flux Kontext Modular | text-to-image and image-conditioned | Registered internally but no public Modular execution profile/specification. |
 | Flux2 Klein Modular | text-to-image and image-conditioned | Registered internally; current experimental metadata points at a standard pipeline and advertises edit semantics without publishing a Modular execution path. |
 | Z-Image Modular | text-to-image and img2img | Text-to-image only is declared; existing generic latent/strength fields make img2img a small contract/profile gap, still requiring qualification. |
-| Wan I2V Modular | image-to-video and first/last-frame video | The existing image-to-video mode now has its exact split-action typed edges and opaque route. First/last-frame topology is structural only: `last_image` fails before action initialization because the distinct official FLF artifact is not reviewed or pinned in the executable catalog. |
+| Wan I2V Modular | image-to-video and first/last-frame video | The existing image-to-video mode has its exact split-action typed edges and opaque route. The distinct official FLF checkpoint is now pinned immutably and admitted as a reviewed repository variant of the same generic Models Loader; action admission requires the I2V/FLF input shape to match that exact loader publication. Public FLF profile/template promotion and live execution remain pending. |
 | Wan T2V Modular | canonical text-to-video block sequence | The declared text-to-video action matches the available block sequence. |
 
 This table is an admission inventory, not permission to advertise every
@@ -1069,8 +1069,43 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         Gallery-asset download/generation.
       - Public mode/profile promotion, templates/assets, and live qualification
         for the completed Qwen and SDXL base-inpaint flows remain outstanding;
-        SDXL ControlNet/Union/IP-Adapter combinations and Wan FLF executable
-        artifact admission are also unfinished, so P0.3c.3 stays incomplete.
+        SDXL ControlNet/Union/IP-Adapter combinations remain unfinished, so
+        P0.3c.3 stays incomplete.
+      - Wan FLF artifact admission 2026-08-12: the Apache-2.0 official
+        `Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers` checkpoint is pinned at exact
+        commit `17c30769b1e0b5dcaa1799b117bf20a9c31f59d7`. Its 50-file snapshot
+        contains 21 Safetensors files and no Python source. The existing generic
+        `WanImage2VideoModularPipeline` Models Loader accepts it only as an exact
+        reviewed repository variant and still requires the catalog revision.
+        The loader index boundary recognizes only its exact concrete
+        `CLIPProcessor`/`CLIPVisionModelWithProjection` declarations; the
+        Image Embeddings action loads the pinned block's exact
+        `CLIPImageProcessor` view locally. Image Embeddings and Encode Image bind
+        `image2video` to the original I2V artifact and `flf2v` to the FLF
+        artifact before block initialization and cache reuse. Swapping only
+        `last_image`, repository, revision, or component type fails closed. The
+        generic Model Manager install route now resolves an omitted revision to
+        the catalog commit for every reviewed repository, so the existing
+        model-select Install control cannot fetch mutable `main` for this or
+        another curated artifact; uncataloged user-selected repositories retain
+        their prior behavior. The affected loader/route/catalog/download matrix
+        passed 296 tests with 747 subtests. The complete backend gate passed
+        1,211 tests with 4 skips, the existing Diffusers deprecation warning,
+        and 2,041 subtests; Ruff E9/F, `uv pip check` (78 packages), preflight,
+        `py_compile`, JSON parsing, and diff checks passed. A no-weight exact
+        config probe read the pinned Hub `model_index.json` and image-processor
+        config, admitted their exact reviewed types, normalized only the
+        validated FLF image-processor load contract to `CLIPImageProcessor`,
+        and observed its 224-pixel shortest-edge/center-crop configuration. The
+        temporary config-only snapshot was removed. This is metadata,
+        no-weight, unit, contract, and fake-action evidence only; no FLF model
+        weights, inference, generated video, public template, or Gallery asset
+        were downloaded or exercised. The unchanged compatible client passed
+        complete `npm run check` with a 523108/523264-byte gzip bundle, 28 bytes
+        below the stricter 523136-byte target; its mocked Model Manager install
+        flow passed 1/1 in 5.2 seconds.
+        Public FLF mode/profile/template promotion, assets, and live execution
+        remain outside this slice.
     - [x] **P0.3c.4 Standard signature and adapter truth:** correct Flux
       `true_cfg_scale`/negative-prompt forwarding and register missing standard
       image classes only when each maps to an existing generic action with an
@@ -3372,7 +3407,7 @@ Add references only after the corresponding evidence exists.
 | P0.3a.1 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: registered Modular dynamic action safety and its backend/client gates are recorded in the paired implementation commits. |
 | P0.3a.2 | `91c9a36` | `28b12b7` | Not required | Not required | Complete: safe declarative custom contract identity/preview and its backend/client/HTTP gates are recorded; executable custom admission remains deferred to P1.1. |
 | P0.3b | `91c9a36` (revalidated at `8fb2cb9`) | `28b12b7`; Win32 checkpoint `d226c4b` (revalidated at `c3e8a17`) | Not required | Not required | Complete: P0.3b.1-.7 implementation, complete backend/client gates, reviewed Windows visual baselines, exact bundle mirror, and fresh HTTP smoke passed; live qualification is not part of this segment. |
-| P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2/.4 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, the Wan I2V split route, modern Flux true-CFG forwarding, and eleven contract-only standard image adapters are complete. Wan FLF executable artifact admission, SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain. |
+| P0.3c | Pending | Pending | Not required | Not required | In progress: P0.3c.1/.2/.4 complete; P0.3c.3 truth, Layered controls, seed state, standalone component provenance, Qwen main/ControlNet/combined internal flows, the SDXL base-inpaint backend/client internal flow, the Wan I2V split route and immutable FLF artifact admission, modern Flux true-CFG forwarding, and eleven contract-only standard image adapters are complete. SDXL ControlNet/Union/IP-Adapter combinations, public promotion/templates/assets, and live qualification remain. |
 | P0.3d | `fd258d8` | `642ea9c` | Not required | Not required | Complete: backend-owned versioned Flux Schnell/Dev specifications, strict client parsing, generic graph materialization, exact proof/runtime receipt binding, complete backend/client/browser gates, byte-exact mirror verification, and local HTTP smoke passed. No model or media execution was required. |
 | P0.3e | `96f70cb` (Flux Krea T2I), `a299d1d` (Flux Depth control-image), `14fef9f` (Flux Canny control-image), `6be23e7` (Flux Redux edit-image), `5f4d437` (Flux Kontext edit-image), `119c720` (Flux Kontext multi-reference edit), `544c54f` (Flux Fill inpaint), `634c485` (Flux Fill outpaint), `441cd00` (Flux2 Klein T2I), `ab3bd34` (Flux2 Klein edit-image), `4527764` (Flux2 Klein multi-reference edit), `276dd1f` (Wan TI2V text-to-video; corrected by `6983ce6`), `6983ce6` (Wan I2V image-to-video), `92cd1f5` (Wan 2.1 text-to-video), `93b1e17` (Wan 2.1 video-to-video), `09b1d4b` (Wan 2.1 color edit), `7736dd3` (LTX text-to-video), `7b8d5c1` (LTX image-to-video), `e83c760` (LTX video-to-video), `0bdc364` (LTX reference-to-video), `adcaf48` (ACE-Step text-to-audio), `5f6ffdc` (ACE-Step audio variation), `10b9b1c` (ACE-Step audio continuation), `60b87a1` (ACE-Step audio repaint), `de2160f` (Qwen Image Edit inpaint), `823357d` (Qwen Image Edit outpaint and bundle), `69a8561` (Wan VACE text-to-video; corrected by `2616014`, bundle `69247d0`), `0e9c3f2` (Wan VACE video inpaint and bundle), `b004af1` (Wan VACE video outpaint and bundle), `ed07f34` (Wan VACE control-to-video), `a4efd6c` (Z-Image Auto T2I), `6e40bab` (Qwen Image Auto T2I), `4596728` (Qwen Image Edit Modular), `0e7a8f1` (Qwen Image Edit Plus edit and multi-reference), `dd594ba` (Qwen Layered layer decomposition), `03c358b` (Qwen Image Control), `732e15c` (declarative loader-component outputs), `02afc25` (declarative layer-block allowlists), `7228c1f` (declarative Denoise image-latent dimensions), `b32241b` (generic video field overlay), `d3125dd` (Expert quantization resource policy), `f2ec7ac` (Expert MPS resource policy), `98f3841` (generic image and Modular field contracts), `fd514f7` (Expert quantization choices) | `80ac243` (Flux Krea T2I), `2de0c68` (Flux Depth control-image), `784e3c7` (Flux Canny control-image), `b709126` (Flux Redux edit-image), `8ae0dd9` (Flux Kontext edit-image), `d956a42` (Flux Kontext multi-reference edit), `38f8d81` (Flux Fill inpaint), `4c0bd05` (Flux Fill outpaint), `931621d` (Flux2 Klein T2I), `84e1d8f` (Flux2 Klein edit-image), `7180694` (Flux2 Klein multi-reference edit), `049addb` (Wan TI2V text-to-video; corrected by `60f4036`), `60f4036` (Wan I2V image-to-video), `0e359ce` (Wan 2.1 text-to-video), `651eeb3` (Wan 2.1 video-to-video), `2525937` (Wan 2.1 color edit), `9f2122f` (LTX text-to-video), `709ddd3` (LTX image-to-video), `8bd95e6` (LTX video-to-video), `cddd140` (LTX reference-to-video), `5f91ed9` (ACE-Step text-to-audio), `2a776c0` (ACE-Step audio variation), `7e69367` (ACE-Step audio continuation), `62dfe17` (ACE-Step audio repaint), `f28ff89` (Qwen Image Edit inpaint), `de2eba1` (Qwen Image Edit outpaint), `8f05541` (Wan VACE text-to-video; corrected by `4c9d40c`), `3f79ca2` (Wan VACE video inpaint), `fce224e` (Wan VACE video outpaint), `72ed446` (Wan VACE control-to-video), `77ceab9` (Z-Image Auto T2I), `531d4b9` (Qwen Image Auto T2I), `e8aab4e` (Qwen Image Edit Modular), `57a4072` (Qwen Image Edit Plus edit and multi-reference), `ff3f9c6` (Qwen Layered layer decomposition), `1102249` (Qwen Image Control), `947f7d9` (generic video field overlay), `5e8a1e7` (Expert quantization resource policy), `06ca70f` (Expert MPS resource policy), `c88e685` (generic image field switching browser proof), `a63d882` (image identity fallback removal), `5abfab9` (Expert quantization choices), `9cec2db` (exact installed-model loader identity), `d3ad700` (exact model-switch quantization retention), `229b5d1` (declarative low-memory presets), `a32b37a` (generic Modular readiness), `0c3a4c5` (exact restored quantization), `4afc515` (legacy graph fallback cleanup) | Not required | Not required | Complete: all 39 current execution-profile pairs and the shared loader, field, topology, readiness, and resource overlays are declarative and exact. The final residual audit removed active managed graph-construction model/pipeline switches while preserving explicit versioned template recipes, backend adapter normalization, and imported/manual Expert graph inference as declared boundaries. Complete client and 96/96 mocked-browser gates passed; no live model execution was required. |
 | P0.3e Guider overlay | `51206e6` | `d1b2f88` | Not required | Not required | Complete: reviewed per-pipeline Guider choices, exact execution validation, scalar/multi-select dynamic option preservation, the complete backend/client gates, and the focused signal-relay mocked-browser contract passed. This closes the Guider portion of the parent P0.3e remaining-work summary. |

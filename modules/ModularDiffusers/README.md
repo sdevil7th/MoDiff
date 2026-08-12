@@ -118,11 +118,13 @@ inpaint path carry masks and masked-image latents on their typed graph edges.
 SDXL inpaint remains unadvertised, unprofiled, and unqualified; combined SDXL
 VAE-route plus ControlNet, ControlNet Union, and IP-Adapter execution remain
 disabled while legacy bundle-only SDXL ControlNet is unchanged. Wan
-first/last-frame topology is preparatory and unadvertised: its official artifact
-has a distinct processor and transformer contract that is not in the executable
-artifact catalog. Supplying `last_image` therefore fails before block
-initialization; the existing cataloged `image_to_video` route remains the only
-executable Wan Modular image-conditioned mode.
+first/last-frame topology remains unadvertised, but its official artifact is
+reviewed at an immutable revision. The generic Models Loader accepts that exact
+repository variant, and Image Embeddings plus Encode Image require the selected
+I2V/FLF workflow to match the loader publication before initializing blocks.
+The distinct FLF processor and transformer contracts are then revalidated by
+the existing route-state boundary; changing only `last_image`, repository, or
+revision fails closed.
 
 ## Reusing a loaded model
 

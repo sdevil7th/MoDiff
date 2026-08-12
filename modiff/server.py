@@ -12890,6 +12890,9 @@ class WebServer:
                 status=400,
             )
 
+        if revision is None:
+            revision = catalog_revision(repo_id)
+
         if repo_id in self.hf_download_tasks:
             entry = self.hf_download_tasks[repo_id]
             if (

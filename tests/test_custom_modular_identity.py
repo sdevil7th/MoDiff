@@ -29,6 +29,8 @@ from modules.ModularDiffusers.loaders import (
     AutoModelLoader,
     MODELS_LOADER_IDENTITY_OUTPUTS,
     ModelsLoader,
+    _instantiate_reviewed_builtin_pipeline,
+    _validate_reviewed_pipeline_index,
     annotate_modular_loader_outputs,
     load_components_strict,
 )
@@ -1520,6 +1522,19 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                     ("hub", config.default_repo, expected_revision),
                 )
 
+        wan_revision = require_catalog_revision(
+            "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            model_type="WanImage2VideoModularPipeline",
+        )
+        self.assertEqual(
+            ModelsLoader._reviewed_builtin_selection(
+                model_type="WanImage2VideoModularPipeline",
+                repo_id={"source": "hub", "value": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"},
+                revision=wan_revision,
+            ),
+            ("hub", "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers", wan_revision),
+        )
+
     def test_builtin_pipeline_rejects_alternate_artifacts_before_node_cache_reuse(self):
         node = ModelsLoader("reviewed-builtin-cache-guard")
         node.params = {"model_type": "FluxModularPipeline"}
@@ -1554,6 +1569,83 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         base_call.assert_not_called()
         index_validator.assert_not_called()
         pipeline_loader.assert_not_called()
+
+    def test_wan_standard_indexes_accept_only_exact_reviewed_concrete_component_types(self):
+        base_document = {
+            "_class_name": "WanImageToVideoPipeline",
+            "_diffusers_version": "0.34.0.dev0",
+            "image_encoder": ["transformers", "CLIPVisionModelWithProjection"],
+            "scheduler": ["diffusers", "UniPCMultistepScheduler"],
+            "text_encoder": ["transformers", "UMT5EncoderModel"],
+            "tokenizer": ["transformers", "T5TokenizerFast"],
+            "transformer": ["diffusers", "WanTransformer3DModel"],
+            "vae": ["diffusers", "AutoencoderKLWan"],
+        }
+        cases = (
+            (
+                "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
+                "b184e23a8a16b20f108f727c902e769e873ffc73",
+                ["transformers", "CLIPImageProcessor"],
+            ),
+            (
+                "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+                "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+                ["transformers", "CLIPProcessor"],
+            ),
+        )
+        for repository, revision, processor_type in cases:
+            document = {**base_document, "image_processor": processor_type}
+            with self.subTest(repository=repository), patch(
+                "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                return_value=("model_index.json", document),
+            ):
+                filename, validated = _validate_reviewed_pipeline_index(
+                    "WanImage2VideoModularPipeline",
+                    repository,
+                    revision,
+                )
+                self.assertEqual(filename, "model_index.json")
+                self.assertEqual(validated, document)
+
+        tampered = {**base_document, "image_processor": ["transformers", "AutoProcessor"]}
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+            return_value=("model_index.json", tampered),
+        ), self.assertRaisesRegex(ValueError, "AutoProcessor"):
+            _validate_reviewed_pipeline_index(
+                "WanImage2VideoModularPipeline",
+                "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+                "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            )
+
+    def test_wan_flf_loads_reviewed_image_only_processor_after_index_validation(self):
+        from diffusers.pipelines.pipeline_loading_utils import _fetch_class_library_tuple
+
+        document = {
+            "_class_name": "WanImageToVideoPipeline",
+            "_diffusers_version": "0.34.0.dev0",
+            "image_processor": ["transformers", "CLIPProcessor"],
+            "image_encoder": ["transformers", "CLIPVisionModelWithProjection"],
+            "scheduler": ["diffusers", "UniPCMultistepScheduler"],
+            "text_encoder": ["transformers", "UMT5EncoderModel"],
+            "tokenizer": ["transformers", "T5TokenizerFast"],
+            "transformer": ["diffusers", "WanTransformer3DModel"],
+            "vae": ["diffusers", "AutoencoderKLWan"],
+        }
+        pipeline = _instantiate_reviewed_builtin_pipeline(
+            "WanImage2VideoModularPipeline",
+            "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            index_filename="model_index.json",
+            index_document=document,
+            components_manager=None,
+            collection="wan-flf-load-contract",
+        )
+
+        self.assertEqual(document["image_processor"], ["transformers", "CLIPProcessor"])
+        self.assertEqual(
+            _fetch_class_library_tuple(pipeline.get_component_spec("image_processor").type_hint),
+            ("transformers", "CLIPImageProcessor"),
+        )
 
     def test_builtin_pipeline_rejects_cache_mutated_component_library_before_upstream(self):
         document = {

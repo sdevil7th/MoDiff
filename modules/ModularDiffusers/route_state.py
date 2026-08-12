@@ -18,6 +18,9 @@ from enum import Enum
 import torch
 from PIL import Image
 
+from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.modular_workflow_contracts import WAN_WORKFLOW_REPOSITORIES
+
 
 _QWEN_ROUTE_CONTRACT = "qwen"
 _SDXL_ROUTE_CONTRACT = "sdxl"
@@ -1660,19 +1663,26 @@ def preflight_wan_image_encoder_inputs(*, image, last_image, height, width):
     )
 
 
-def require_cataloged_wan_action_source(*, image, last_image):
-    """Admit only the cataloged public I2V artifact at executable actions.
-
-    The preparatory FLF route contract is retained for a future paired change,
-    but its distinct official model artifact is not currently reviewed or
-    pinned in MoDiff's executable dependency catalog.
-    """
+def require_cataloged_wan_action_source(*, image, last_image, binding):
+    """Bind the selected Wan route to its exact reviewed loader artifact."""
 
     workflow = _validate_wan_source_pair(image, last_image)
-    if workflow != _WAN_I2V_WORKFLOW:
+    if not _is_issued_binding(binding) or binding._model_type != "WanImage2VideoModularPipeline":
+        raise ValueError("Wan image execution requires the current Models Loader publication.")
+    expected_repository = dict(WAN_WORKFLOW_REPOSITORIES).get(workflow)
+    if expected_repository is None:
+        raise ValueError("Wan image execution selected an unknown workflow contract.")
+    expected_revision = require_catalog_revision(
+        expected_repository,
+        model_type="WanImage2VideoModularPipeline",
+    )
+    if (
+        binding._repo_source != "hub"
+        or binding._repo_id != expected_repository
+        or binding._revision != expected_revision
+    ):
         raise ValueError(
-            "Wan first/last-frame execution is contract-only until its distinct official artifact "
-            "is reviewed and pinned; remove last_image to use the cataloged image-to-video route."
+            "Wan image execution does not match the reviewed immutable artifact for the selected workflow."
         )
     return workflow
 

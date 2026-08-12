@@ -7,6 +7,7 @@ import torch
 from PIL import Image
 
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
+from modiff.modular_workflow_contracts import WAN_FLF_REPOSITORY, WAN_I2V_REPOSITORY
 from modules.ModularDiffusers.denoise import Denoise
 from modules.ModularDiffusers.embeddings import ImageEmbeddings
 from modules.ModularDiffusers.latents import DecodeLatents, ImageEncode
@@ -23,6 +24,7 @@ from modules.ModularDiffusers.route_state import (
     issue_wan_vae_route_state,
     preflight_wan_image_encoder_inputs,
     preflight_wan_vae_route_state,
+    require_cataloged_wan_action_source,
     snapshot_wan_source_media,
     validate_wan_image_encoder_route_state,
     validate_wan_post_vae_route_state,
@@ -175,12 +177,16 @@ class _FlfTransformer(_Transformer):
         self.config.pos_embed_seq_len = 514
 
 
-def _bound_outputs():
+WAN_I2V_REVISION = "b184e23a8a16b20f108f727c902e769e873ffc73"
+WAN_FLF_REVISION = "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7"
+
+
+def _bound_outputs(*, repository=WAN_I2V_REPOSITORY, revision=WAN_I2V_REVISION):
     token = issue_pipeline_instance_token(
         model_type=WAN_I2V,
-        repo_id="fixture/wan-i2v",
+        repo_id=repository,
         repo_source="hub",
-        revision="a" * 40,
+        revision=revision,
     )
     outputs = {
         "unet_out": {"model_id": "wan-transformer"},
@@ -191,10 +197,10 @@ def _bound_outputs():
     }
     annotate_modular_loader_outputs(
         outputs,
-        repo_id="fixture/wan-i2v",
+        repo_id=repository,
         repo_source="hub",
         model_type=WAN_I2V,
-        revision="a" * 40,
+        revision=revision,
         trust_remote_code=False,
         pipeline_instance_token=token,
     )
@@ -210,7 +216,10 @@ def _issue_image_route(
     image_processor=None,
     image_encoder=None,
 ):
-    token, outputs = _bound_outputs()
+    token, outputs = _bound_outputs(
+        repository=WAN_FLF_REPOSITORY if last_image is not None else WAN_I2V_REPOSITORY,
+        revision=WAN_FLF_REVISION if last_image is not None else WAN_I2V_REVISION,
+    )
     image = image or Image.new("RGB", (64, 64), "red")
     image_processor = image_processor or (_FlfImageProcessor() if last_image is not None else _ImageProcessor())
     image_encoder = image_encoder or _ImageEncoder()
@@ -339,6 +348,26 @@ def _issue_decode_values():
 
 
 class WanRouteStateTests(unittest.TestCase):
+    def test_each_workflow_requires_its_exact_reviewed_loader_artifact(self):
+        image = Image.new("RGB", (64, 64))
+        last_image = Image.new("RGB", (64, 64))
+        i2v_token, _outputs = _bound_outputs()
+        flf_token, _outputs = _bound_outputs(
+            repository=WAN_FLF_REPOSITORY,
+            revision=WAN_FLF_REVISION,
+        )
+        self.assertEqual(
+            require_cataloged_wan_action_source(image=image, last_image=None, binding=i2v_token),
+            "image2video",
+        )
+        self.assertEqual(
+            require_cataloged_wan_action_source(image=image, last_image=last_image, binding=flf_token),
+            "flf2v",
+        )
+        for binding, ending in ((i2v_token, last_image), (flf_token, None)):
+            with self.subTest(repository=binding._repo_id), self.assertRaisesRegex(ValueError, "reviewed immutable"):
+                require_cataloged_wan_action_source(image=image, last_image=ending, binding=binding)
+
     def test_exact_two_pass_geometry_examples(self):
         portrait = Image.new("RGB", (100, 200))
         landscape = Image.new("RGB", (1200, 600))
@@ -833,7 +862,7 @@ class WanPreinitResourceTests(unittest.TestCase):
         )
         self.assertEqual(direct_resize[5:7], (224, 224))
 
-    def test_unpinned_flf_is_rejected_before_contract_resolution_and_cache_reuse(self):
+    def test_wrong_workflow_artifact_is_rejected_before_contract_resolution_and_cache_reuse(self):
         _token, outputs = _bound_outputs()
         image = Image.new("RGB", (64, 64))
         last_image = Image.new("RGB", (64, 64))
@@ -869,7 +898,7 @@ class WanPreinitResourceTests(unittest.TestCase):
                     ),
                     patch(f"{module}.require_modiff_node_contract", contract_resolver),
                     patch(f"{module}.resolve_managed_component_by_id", component_resolver),
-                    self.assertRaisesRegex(ValueError, "contract-only"),
+                    self.assertRaisesRegex(ValueError, "reviewed immutable"),
                 ):
                     node.execute(**values)
                 contract_resolver.assert_not_called()
@@ -879,7 +908,7 @@ class WanPreinitResourceTests(unittest.TestCase):
                 with (
                     patch(f"{module}.require_modiff_node_contract", contract_resolver),
                     patch(f"{module}.resolve_managed_component_by_id", component_resolver),
-                    self.assertRaisesRegex(ValueError, "contract-only"),
+                    self.assertRaisesRegex(ValueError, "reviewed immutable"),
                 ):
                     node._cache_params_equal(values, dict(values))
                 contract_resolver.assert_not_called()
@@ -947,10 +976,14 @@ class WanActionBoundaryTests(unittest.TestCase):
         encoder_component=None,
         init_observer=None,
         overrides=None,
+        last_image=None,
     ):
-        _token, outputs = _bound_outputs()
+        _token, outputs = _bound_outputs(
+            repository=WAN_FLF_REPOSITORY if last_image is not None else WAN_I2V_REPOSITORY,
+            revision=WAN_FLF_REVISION if last_image is not None else WAN_I2V_REVISION,
+        )
         source = Image.new("RGB", (100, 200), "red")
-        processor = _ImageProcessor()
+        processor = _FlfImageProcessor() if last_image is not None else _ImageProcessor()
         manager = {"encoder": encoder_component or _ImageEncoder()}
         pipeline_calls = []
 
@@ -972,11 +1005,19 @@ class WanActionBoundaryTests(unittest.TestCase):
                     call_mutation(manager, processor)
                 if pipeline_call_mutation is not None:
                     pipeline_call_mutation(self, manager, processor)
-                first_height, first_width = wan_area_budget_dimensions(source, 480, 832)
+                preflight = preflight_wan_image_encoder_inputs(
+                    image=source,
+                    last_image=last_image,
+                    height=480,
+                    width=832,
+                )
+                first_height, first_width = preflight[3:5]
                 return {
                     "resized_image": Image.new("L", (first_width, first_height)),
-                    "resized_last_image": None,
-                    "image_embeds": torch.zeros((1, 257, 1280)),
+                    "resized_last_image": (
+                        Image.new("L", preflight[7]) if last_image is not None else None
+                    ),
+                    "image_embeds": torch.zeros((2 if last_image is not None else 1, 257, 1280)),
                 }
 
         class FakeBlocks:
@@ -1020,10 +1061,11 @@ class WanActionBoundaryTests(unittest.TestCase):
             return manager["encoder"]
 
         node = ImageEmbeddings("wan-image-action")
+        processor_spec = Mock(return_value=FakeSpec())
         kwargs = {
             "image_encoder": outputs["image_encoder"],
             "image": source,
-            "last_image": None,
+            "last_image": last_image,
             "height": "480",
             "width": "832",
         }
@@ -1039,7 +1081,7 @@ class WanActionBoundaryTests(unittest.TestCase):
             ),
             patch("modules.ModularDiffusers.embeddings.resolve_managed_component_by_id", side_effect=resolve),
             patch("modules.ModularDiffusers.embeddings.collect_model_ids", return_value=["wan-image-encoder"]),
-            patch("modules.ModularDiffusers.embeddings.ComponentSpec", return_value=FakeSpec()),
+            patch("modules.ModularDiffusers.embeddings.ComponentSpec", processor_spec),
             patch("modules.ModularDiffusers.embeddings.components.add", return_value="wan-image-processor"),
             patch("modules.ModularDiffusers.embeddings.components.get_components_by_ids", side_effect=managed),
         ):
@@ -1047,6 +1089,7 @@ class WanActionBoundaryTests(unittest.TestCase):
             if use_cache:
                 cached = node(**dict(kwargs))
                 self.assertIs(result, cached)
+        self.assertEqual(processor_spec.call_args.kwargs["type_hint"].__name__, "CLIPImageProcessor")
         return result, pipeline_calls
 
     def test_image_embeddings_manager_init_and_call_swaps_publish_no_route(self):
@@ -1084,6 +1127,22 @@ class WanActionBoundaryTests(unittest.TestCase):
         result, calls = self._run_image_embeddings(use_cache=True)
         self.assertIsNotNone(result[ROUTE_STATE_OUTPUT])
         self.assertEqual(len(calls), 1)
+
+    def test_exact_flf_artifact_executes_image_and_vae_actions(self):
+        last_image = Image.new("RGB", (100, 200), "blue")
+        image_result, image_calls = self._run_image_embeddings(last_image=last_image)
+        self.assertIsNotNone(image_result[ROUTE_STATE_OUTPUT])
+        self.assertIs(image_calls[0]["last_image"], last_image)
+
+        values = _issue_image_route(
+            image=Image.new("RGB", (100, 200), "red"),
+            last_image=last_image,
+            height=480,
+            width=832,
+        )
+        vae_result, vae_calls, _preflight = self._run_image_encode(values=values)
+        self.assertIsNotNone(vae_result[ROUTE_STATE_OUTPUT])
+        self.assertIs(vae_calls[0]["last_image"], last_image)
 
     def _run_image_encode(
         self,
@@ -1136,16 +1195,21 @@ class WanActionBoundaryTests(unittest.TestCase):
                 if pipeline_call_mutation is not None:
                     pipeline_call_mutation(self, manager, processor)
                 temporal_frames = 2
-                return {
+                result = {
                     "resized_image": Image.new("L", (second_width, second_height)),
-                    "resized_last_image": None,
-                    "first_frame_latents": torch.zeros(
-                        (1, 16, temporal_frames, second_height // 8, second_width // 8)
+                    "resized_last_image": (
+                        Image.new("L", preflight[10])
+                        if values["last_image"] is not None
+                        else None
                     ),
                     "image_condition_latents": torch.zeros(
                         (1, 20, temporal_frames, second_height // 8, second_width // 8)
                     ),
                 }
+                result[
+                    "first_last_frame_latents" if values["last_image"] is not None else "first_frame_latents"
+                ] = torch.zeros((1, 16, temporal_frames, second_height // 8, second_width // 8))
+                return result
 
         class FakeBlocks:
             component_names = ["vae", "video_processor"]

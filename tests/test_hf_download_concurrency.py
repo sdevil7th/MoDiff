@@ -164,6 +164,45 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(captured["revision"], revision)
         self.assertEqual(payload["result"]["revision"], revision)
 
+    async def test_cataloged_download_uses_reviewed_commit_when_client_omits_revision(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {
+                "repo_id": repo_id,
+                "revision": entry["revision"],
+                "complete": True,
+                "repair_required": False,
+            }
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(
+            FakeRequest(repo_id="Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers")
+        )
+        payload = json.loads(response.text)
+
+        self.assertFalse(payload["error"])
+        self.assertEqual(captured["revision"], "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7")
+        self.assertEqual(payload["result"]["revision"], captured["revision"])
+
+    async def test_uncataloged_download_preserves_user_selected_revision_behavior(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(FakeRequest(repo_id="unit/custom-model"))
+
+        self.assertFalse(json.loads(response.text)["error"])
+        self.assertIsNone(captured["revision"])
+
     async def test_concurrent_download_rejects_a_different_exact_commit(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()

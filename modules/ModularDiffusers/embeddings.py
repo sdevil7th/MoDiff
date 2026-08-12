@@ -258,9 +258,16 @@ class ImageEmbeddings(NodeBase):
         model_type = getattr(self._pipeline_class, "__name__", "")
         if route_contract_for_model_type(model_type) != "wan_i2v":
             return True
+        binding = require_component_binding(
+            current.get("image_encoder"),
+            label="image encoder",
+            expected_model_type=model_type,
+            expected_role="image_encoder",
+        )
         require_cataloged_wan_action_source(
             image=current.get("image"),
             last_image=current.get("last_image"),
+            binding=binding,
         )
         _blocks, node_config = require_modiff_node_contract(
             self._pipeline_class,
@@ -271,12 +278,6 @@ class ImageEmbeddings(NodeBase):
         route_state = self.output.get(ROUTE_STATE_OUTPUT)
         if route_state is None or getattr(self, "_pipeline", None) is None:
             return False
-        binding = require_component_binding(
-            current.get("image_encoder"),
-            label="image encoder",
-            expected_model_type=model_type,
-            expected_role="image_encoder",
-        )
         resident_image_encoder = resolve_managed_component_by_id(
             components,
             current.get("image_encoder"),
@@ -348,10 +349,18 @@ class ImageEmbeddings(NodeBase):
         self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
         model_type = getattr(self._pipeline_class, "__name__", "")
         wan_route = route_contract_for_model_type(model_type) == "wan_i2v"
+        route_binding = None
         if wan_route:
+            route_binding = require_component_binding(
+                kwargs.get("image_encoder"),
+                label="image encoder",
+                expected_model_type=model_type,
+                expected_role="image_encoder",
+            )
             require_cataloged_wan_action_source(
                 image=kwargs.get("image"),
                 last_image=kwargs.get("last_image"),
+                binding=route_binding,
             )
 
         # 1. Get node config
@@ -360,7 +369,6 @@ class ImageEmbeddings(NodeBase):
         kwargs = normalize_modular_runtime_params(kwargs, node_config)
         source_snapshot = None
         image_preflight = None
-        route_binding = None
         if wan_route:
             source_snapshot = snapshot_wan_source_media(kwargs.get("image"), kwargs.get("last_image"))
             image_preflight = preflight_wan_image_encoder_inputs(
@@ -368,12 +376,6 @@ class ImageEmbeddings(NodeBase):
                 last_image=kwargs.get("last_image"),
                 height=kwargs.get("height"),
                 width=kwargs.get("width"),
-            )
-            route_binding = require_component_binding(
-                kwargs.get("image_encoder"),
-                label="image encoder",
-                expected_model_type=model_type,
-                expected_role="image_encoder",
             )
             preinit_image_encoder = resolve_managed_component_by_id(
                 components,
@@ -412,8 +414,11 @@ class ImageEmbeddings(NodeBase):
         # The image encoder contract does not currently expose its processor as
         # a model input, so load the matching Diffusers component explicitly.
         # Network writes remain owned by the app's download flow.
+        from transformers import CLIPImageProcessor
+
         spec = ComponentSpec(
             name="image_processor",
+            type_hint=CLIPImageProcessor,
             repo=repo_id,
             subfolder="image_processor",
             variant="",
