@@ -3355,19 +3355,35 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
     (`523239 / 523264` total gzip bytes), and the focused generic guider signal
     browser test passed (`1 passed`). Tests constructed the three guiders
     without weights; no model, media, download, or generated asset was used.
-- [ ] **P1.4 Register current-pin missing Modular classes as contract-only**
+- [x] **P1.4 Register current-pin missing Modular classes as contract-only**
   - Split into reviewable image, video, and multimodal batches.
   - Do not mark them Auto-ready or live-supported.
   - Each batch has backend class/schema tests and client experimental/Expert
     visibility tests.
+  - Status 2026-08-12: complete in backend `8e44eb5` and client `5cb2998`.
+    The exact pinned upstream inventory is split into six image, seven video,
+    and two multimodal discovery records. All 15 publish normalized checked-in
+    workflow/component schemas and appear in the generic Expert model selector,
+    but remain outside the executable registry with no repository, runnable
+    mode, optional-runtime, Auto, template, Gallery, or live-support claim.
+    Models Loader clears their pipeline signal and rejects execution before
+    artifact or pipeline-index resolution.
+  - Evidence 2026-08-12: the focused backend matrix passed (`73 passed, 341
+    subtests passed`) and the complete backend suite passed (`1259 passed, 3
+    skipped, 2168 subtests passed`). The generator `--check`, data-only import,
+    clean-base optional-import, Ruff `E9,F`, compile, package compatibility,
+    shell syntax, and diff gates passed. Client `npm run check` passed with the
+    unchanged bundle budget (`523239 / 523264` total gzip bytes), and the
+    focused mocked-browser Expert test passed (`1 passed`). No weight, model,
+    media, network artifact, or generated asset was used.
 
 ### Phase 1 completion gate
 
-- [ ] Complete backend and client gates pass.
-- [ ] Registry discovery imports no large model stack and downloads no weights.
-- [ ] Every exposed workflow is present in the pinned upstream block definition.
-- [ ] DynamicBlock has no Mellon filename, schema, option, or fallback.
-- [ ] No assets are generated.
+- [x] Complete backend and client gates pass.
+- [x] Registry discovery imports no large model stack and downloads no weights.
+- [x] Every exposed workflow is present in the pinned upstream block definition.
+- [x] DynamicBlock has no Mellon filename, schema, option, or fallback.
+- [x] No assets are generated.
 
 ## Phase 2 — Templates for already implemented execution paths
 
@@ -3588,21 +3604,21 @@ after the previous roadmap snapshot.
 
 Present in the current pin but not registered by MoDiff:
 
-- [ ] `AnimaModularPipeline`
-- [ ] `Cosmos3OmniModularPipeline`
-- [ ] `Cosmos3DistilledModularPipeline`
-- [ ] `ErnieImageModularPipeline`
-- [ ] `Flux2ModularPipeline`
-- [ ] `Flux2KleinBaseModularPipeline`
-- [ ] `HeliosModularPipeline`
-- [ ] `HeliosPyramidModularPipeline`
-- [ ] `HeliosPyramidDistilledModularPipeline`
-- [ ] `HunyuanVideo15ModularPipeline`
-- [ ] `Ideogram4ModularPipeline`
-- [ ] `LTXModularPipeline`
-- [ ] `StableDiffusion3ModularPipeline`
-- [ ] `Wan22ModularPipeline`
-- [ ] `Wan22Image2VideoModularPipeline`
+- [x] `AnimaModularPipeline`
+- [x] `Cosmos3OmniModularPipeline`
+- [x] `Cosmos3DistilledModularPipeline`
+- [x] `ErnieImageModularPipeline`
+- [x] `Flux2ModularPipeline`
+- [x] `Flux2KleinBaseModularPipeline`
+- [x] `HeliosModularPipeline`
+- [x] `HeliosPyramidModularPipeline`
+- [x] `HeliosPyramidDistilledModularPipeline`
+- [x] `HunyuanVideo15ModularPipeline`
+- [x] `Ideogram4ModularPipeline`
+- [x] `LTXModularPipeline`
+- [x] `StableDiffusion3ModularPipeline`
+- [x] `Wan22ModularPipeline`
+- [x] `Wan22Image2VideoModularPipeline`
 
 Require a pin update:
 
@@ -3732,7 +3748,7 @@ Add references only after the corresponding evidence exists.
 | P1.1 | `207d8f1`; actionable API message follow-up `5dc7313` | `c3e932c` | Not required | Not required | Complete: reviewed official component execution is bound to exact main/auxiliary Hub commits, an installed pinned pipeline/block pair, immediate identity revalidation, a private content-addressed metadata snapshot, and P0.5 runtime admission. Local sources remain preview-only and repository Python remains disabled without a future non-persistable task authorization. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.2 | `50dafa6` | `7c6bdbf` | Not required | Not required | Complete: the reproducible pinned snapshot normalizes Sequential, Auto, Loop, state, output, and component contracts; DynamicBlock exposes and executes only sidecar-carryable reviewed tasks; the client consumes the declarative task visibility contract generically. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.3 | `b48355b` | `f044594` | Not required | Not required | Complete: all three planned guiders use exact pinned official exports and constructor contracts; layer requirements, component compatibility, typed parameters, and backend-driven generic option signals passed complete backend/client and focused browser gates without weights. |
-| P1.4 | Pending | Pending | Not required | Not required | Not started |
+| P1.4 | `8e44eb5` | `5cb2998` | Not required | Not required | Complete: all 15 Modular classes present at the pin are split into image/video/multimodal contract-only batches with exact generated upstream workflow schemas and generic Expert visibility. They remain outside executable, Auto, template, Gallery, optional-runtime, and live-support registries; complete backend/client and focused browser gates passed without weights or assets. |
 | P2.1-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
