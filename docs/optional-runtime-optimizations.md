@@ -139,6 +139,54 @@ Until those gates are closed, `installActionAvailable`,
 `activationAvailable`, and `cutoverReady` remain false. The compatibility
 routes do not make a candidate eligible by themselves.
 
+### Portable target qualification
+
+`scripts/qualify_optional_runtime.py` prepares the same bounded qualification
+on each supported operating-system/architecture pair without exposing a
+product API or changing the source-controlled profile flags. Preflight is
+offline and non-mutating apart from a disposable copy of the already verified
+managed uv executable:
+
+```bash
+./scripts/with-runtime-env.sh ./.venv/bin/python \
+  scripts/qualify_optional_runtime.py --preflight-only
+```
+
+On Windows, the equivalent inspection command is:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\qualify_optional_runtime.py --preflight-only
+```
+
+The command must report `status: ready` before the networked run. In particular,
+Python must be 3.12, the managed uv receipt and executable must match the exact
+source-controlled platform lock, and all ten staged distributions must be
+absent from the base interpreter. Run from a dedicated prospective-base
+checkout; do not uninstall packages from a normal development environment and
+do not weaken the clean-base check. Keep any prospective dependency diff with
+the evidence so the tested source state is reviewable.
+
+The explicit-consent run downloads only the selected immutable wheel set into
+a new temporary managed root. It uses the production install, validation,
+promotion, activation, and rollback code; runs an offline tiny CLIP+LoRA
+Transformers/PEFT workload in a fresh child; then starts another fresh child to
+prove that rollback returned to a base process where every staged distribution
+is absent. Evidence is bounded, excludes local paths, refuses to overwrite an
+existing file, and should be written outside the repository:
+
+```bash
+./scripts/with-runtime-env.sh ./.venv/bin/python \
+  scripts/qualify_optional_runtime.py --consent \
+  --evidence ../modiff-optional-runtime-linux-x86_64.json
+```
+
+Use the same command on macOS and on each reviewed architecture. A passing JSON
+file proves only the locked temporary overlay, fresh-process no-weight workload,
+and rollback boundary on that exact host/source revision. It does not prove a
+supervised HTTP restart/cancel/repair sequence, accelerator execution, a live
+model/media result, or another platform. Run and record those remaining target
+checks separately before changing any production action or cutover flag.
+
 Qualification preparation now includes exact filename, URL, SHA-256, and size
 locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
 archive/executable pair for each supported target. The base installer writes a

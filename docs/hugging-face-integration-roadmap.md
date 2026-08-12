@@ -3018,6 +3018,19 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       qualification, and cutover declarations remain unchanged. This is not
       non-Windows evidence and does not itself authorize the atomic base
       dependency cutover.
+    - [x] Portable non-Windows qualification preparation: add an explicit-
+      consent, path-redacted qualification command that refuses a non-Python-
+      3.12 host, an unverified managed uv executable, or any base interpreter
+      containing one of the ten staged distributions. In a disposable managed
+      root it projects the future qualified profile only in memory, uses the
+      production locked install/validation/promotion/activation path, runs the
+      offline CLIP+LoRA workload in a fresh child, rolls back, and verifies a
+      second fresh clean-base child. Focused contract tests cover dormant source
+      flags, consent-before-preflight, exact artifact selection, forged uv
+      rejection, and bounded no-overwrite evidence. This prepares a reproducible
+      Linux/macOS handoff; it is not platform evidence until executed there and
+      does not replace supervised HTTP restart/cancel/repair or live model/media
+      qualification.
     - [ ] Executable qualification: add reviewed per-platform wheel and
       installer execution evidence plus clean-base/staged workload,
       fresh-process containment, restart, and rollback evidence before enabling
