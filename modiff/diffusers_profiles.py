@@ -683,12 +683,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
     # Standard image adapters.  The final eleven were admitted by P0.3c.4;
     # FLUX img2img/inpaint were already implemented but likewise unprofiled.
     (
-        "StableDiffusionXLImg2ImgPipeline",
-        "image",
-        SDXL_BASE_REPO,
-        ("edit_image",),
-    ),
-    (
         "StableDiffusionXLInpaintPipeline",
         "image",
         SDXL_BASE_REPO,

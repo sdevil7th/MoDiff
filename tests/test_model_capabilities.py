@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 39)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 38)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 40)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 41)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -115,8 +115,6 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             payload["studioExecutionSpecs"][2]["edges"],
         )
         sdxl = by_model["StableDiffusionXLPipeline"]
-        self.assertEqual(sdxl["studioExecutionSpecModes"], ["text_to_image"])
-        self.assertEqual(sdxl["pipelineClasses"], ["StableDiffusionXLPipeline"])
         self.assertEqual(sdxl["executionProfiles"][0]["id"], "sdxl-base:direct")
         self.assertEqual(
             sdxl["revisionCandidates"],
@@ -126,6 +124,27 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sdxl["autoEligible"])
         self.assertFalse(sdxl["galleryEligible"])
         self.assertNotIn("StableDiffusionXLPipeline", experimental)
+        sdxl_edit = next(
+            item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "edit_image"
+        )
+        self.assertEqual(sdxl["studioExecutionSpecModes"], ["edit_image", "text_to_image"])
+        self.assertEqual(
+            sdxl["pipelineClasses"],
+            ["StableDiffusionXLImg2ImgPipeline", "StableDiffusionXLPipeline"],
+        )
+        self.assertEqual(sdxl_edit["pipelineClass"], "StableDiffusionXLImg2ImgPipeline")
+        self.assertEqual(
+            next(
+                profile
+                for profile in sdxl["executionProfiles"]
+                if profile["id"] == "sdxl-base:img2img-direct"
+            )["modes"],
+            ["edit_image"],
+        )
+        self.assertEqual(
+            sdxl["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
         depth_spec = by_model["FluxDepthPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(by_model["FluxDepthPipeline"]["modes"], ["control_image"])
         self.assertEqual(depth_spec["mode"], "control_image")

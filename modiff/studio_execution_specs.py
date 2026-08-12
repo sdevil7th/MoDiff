@@ -323,6 +323,9 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageEdit", "output_type", "outputType"),
     ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
 )
+_SDXL_EDIT_GRAPH_BINDINGS = _EDIT_GRAPH_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+)
 _INPAINT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -687,6 +690,7 @@ _BINDING_SOURCES = frozenset(
     for item in (
         *_GRAPH_BINDINGS,
         *_SDXL_GRAPH_BINDINGS,
+        *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
@@ -1936,7 +1940,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "recommendedSteps": 50,
             "recommendedGuidance": 5.0,
             "guidanceLabel": "Guidance",
-            "supportsImageInput": False,
+            "supportsImageInput": True,
             "supportsMask": False,
             "supportsMultiImage": False,
             "supportsControlImage": False,
@@ -2677,7 +2681,13 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 "width": 768,
                 "height": 768,
             },
-            "modes": ["text_to_image"],
+            "modes": ["text_to_image", "edit_image"],
+            "modeRequirements": {
+                "edit_image": {
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires one source image for image-to-image transformation.",
+                }
+            },
             "executionStatus": "expert_only",
             "qualificationStatus": "graph-qualified-execution-pending",
             "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO)],
@@ -2685,6 +2695,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "templateEligible": True,
             "galleryEligible": False,
         },
+    },
+    "sdxl-base:edit-image:v1": {
+        "modelType": "StableDiffusionXLPipeline",
+        "mode": "edit_image",
+        "profile": {
+            "id": "sdxl-base:img2img-direct",
+            "model_type": "StableDiffusionXLPipeline",
+            "modes": ("edit_image",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "StableDiffusionXLImg2ImgPipeline",
+            "default_repo": SDXL_BASE_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 30,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
     },
 }
 
