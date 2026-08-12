@@ -187,13 +187,13 @@ supervised HTTP restart/cancel/repair sequence, accelerator execution, a live
 model/media result, or another platform. Run and record those remaining target
 checks separately before changing any production action or cutover flag.
 
-The next available physical target is Linux. No local macOS qualification host
-is currently available, so macOS remains an explicit open gate. Its evidence
-must come from a reviewed hosted macOS runner or a contributor-controlled Mac;
-until then, do not enable global action/cutover flags. A Windows-and-Linux-only
-cutover would require a separate reviewed platform-scoped delivery design that
-keeps macOS base-delivered and tested—it is not implied by skipping the macOS
-matrix.
+Linux x86-64 now has the portable and supervised evidence recorded below. No
+local macOS qualification host is currently available, so macOS remains the
+explicit open platform gate. Its evidence must come from the manual reviewed
+hosted workflow or a contributor-controlled Mac; until then, do not enable
+global action/cutover flags. A Windows-and-Linux-only cutover would require a
+separate reviewed platform-scoped delivery design that keeps macOS
+base-delivered and tested—it is not implied by skipping the macOS matrix.
 
 Qualification preparation now includes exact filename, URL, SHA-256, and size
 locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
@@ -315,6 +315,68 @@ base worker, the same loader was rejected before queueing with HTTP 409
 join only for the same revision and file selection. All qualification-only
 state was removed. This closes the Windows guarded live-model/media check, not
 non-Windows qualification or the production dependency/action/cutover gate.
+
+Linux x86-64 CPU qualification on 2026-08-12 used a detached checkout at
+`b30c6b12989272b7399be1ed8102a25070ba00d0` with one reviewable prospective
+base diff: remove the direct Transformers and PEFT project dependencies. The
+managed installer selected Python `3.12.13`, installed a compatible 61-package
+CPU base, and retained the exact uv `0.11.26` receipt with archive SHA-256
+`6426a73c3837e6e2483ee344cbc00f36394d179afcba6183cb77437e67db4af0` and
+executable SHA-256
+`29b90e884c384e1578ac37335521d807c192aa44d5a4a9b9f4690bb3850e179d`.
+All ten staged distributions were absent and registry discovery loaded all 20
+module groups and 133 nodes without importing Transformers. The exact offline
+preflight command was:
+
+```bash
+./scripts/with-runtime-env.sh ./.venv/bin/python \
+  scripts/qualify_optional_runtime.py --preflight-only
+```
+
+It reported `status: ready`, clean base, dormant source flags, 10 Linux wheels,
+17,457,395 archive bytes, and artifact-plan digest
+`sha256:7e05d4b1fdb31d36da05f8b101aaa3a9ca746c5088c00f30bd1cf6d49474dda3`.
+The explicit-consent command was:
+
+```bash
+./scripts/with-runtime-env.sh ./.venv/bin/python \
+  scripts/qualify_optional_runtime.py --consent \
+  --evidence ../modiff-optional-runtime-linux-x86_64-b30c6b1.json
+```
+
+It passed locked installation, validation, promotion, activation, the fresh
+offline finite `[1, 4, 16]` CLIP+LoRA workload with four trainable adapter
+parameters, and rollback to a second clean-base process. The bounded path-free
+evidence was 1,518 bytes with SHA-256
+`a90c3c84826a55af615b62eda9b8ea83c356691330eabba52e54ad3b0b790cde`;
+no managed state was retained by the portable run.
+
+The same prospective base then exercised the real supervised HTTP lifecycle
+with qualified/action flags changed only in the detached checkout. An explicit
+consent install exposed `installing`, `validating`, and `ready`; a separate job
+advanced through `cancelling` to `cancelled`; and activation replaced the base
+worker with a fresh worker loading exact Transformers `5.14.1` and PEFT `0.20.0`
+from module and metadata origins bound inside the promoted environment. A
+same-size, one-byte content mutation caused the next clean worker to import no
+optional package and publish `repair_required`. Reinstall produced a separate
+validated environment, direct replacement activation was refused with HTTP
+409, rollback restarted to base, activation from the exact completed-job
+receipt restarted into the repaired overlay, and final rollback restarted to a
+base worker with all ten staged distributions absent. No model, media, or
+Gallery asset was downloaded. Both server ports, the detached checkout,
+environments, jobs, and evidence file were removed after review. This closes
+Linux x86-64 clean-base/no-weight and supervised lifecycle qualification, not
+AMD GPU execution, a Linux live-model/media run, macOS qualification, or source
+cutover. Production dependency, delivery, qualification, and action flags stay
+unchanged.
+
+`.github/workflows/qualify-optional-runtime-macos.yml` is the smallest pending
+hosted macOS proposal: it is `workflow_dispatch` only, asserts the current
+`macos-14` runner is ARM64, applies and uploads the explicit two-dependency
+prospective-base diff, requires `status: ready`, runs the same consented
+qualifier, and uploads bounded evidence plus target context for 14 days. The
+workflow has not run. Its presence is not macOS evidence or permission to
+enable any production flag.
 
 ## Runtime features
 
