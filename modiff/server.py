@@ -478,6 +478,10 @@ from modiff.studio_execution_specs import (
     studio_model_requirements_for_pair,
     validate_studio_execution_specs,
 )
+from modiff.task_template_contracts import (
+    TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
+    build_task_template_contracts,
+)
 from modiff.modelstore import modelstore
 from modules import MODULE_MAP, parse_module_map
 from utils.huggingface import (
@@ -11922,6 +11926,16 @@ class WebServer:
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
+        task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
+        task_contracts_by_model = {}
+        for contract in task_template_contracts:
+            task_contracts_by_model.setdefault(contract["modelType"], []).append(contract)
+        for capability in capabilities:
+            contracts = task_contracts_by_model.get(capability["modelType"], [])
+            capability["taskTemplateContracts"] = contracts
+            if contracts:
+                capability["taskTemplateContractSchemaVersion"] = TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION
+                capability["taskTemplateContractModes"] = sorted(contract["mode"] for contract in contracts)
         if query:
             capabilities = [
                 capability
@@ -11931,6 +11945,10 @@ class WebServer:
                 or query in capability.get("family", "").lower()
                 or query in capability.get("defaultRepo", "").lower()
             ]
+            returned_models = {capability["modelType"] for capability in capabilities}
+            task_template_contracts = [
+                contract for contract in task_template_contracts if contract["modelType"] in returned_models
+            ]
 
         return web.json_response(
             {
@@ -11938,6 +11956,8 @@ class WebServer:
                 "schemaVersion": 2,
                 "count": len(capabilities),
                 "capabilities": capabilities,
+                "taskTemplateContractSchemaVersion": TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
+                "taskTemplateContracts": task_template_contracts,
                 "diffusersExecutionProfiles": public_execution_profiles(
                     observe_optional_runtime=True,
                     optional_runtime_catalog_resolver=request_optional_runtime_catalog,
