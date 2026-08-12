@@ -166,6 +166,31 @@ _SDXL_ROUTE_INPAINT_TO_OUTPUT_EDGES = (
     StateEdgeTruth("denoise", "route_state_out", "decoder", "route_state_in"),
 )
 
+_SDXL_ROUTE_CONTROL_IMAGE_TO_OUTPUT_EDGES = (
+    StateEdgeTruth("text_encoder", "embeddings", "denoise", "embeddings"),
+    StateEdgeTruth("vae_encoder", "image_latents", "denoise", "image_latents"),
+    StateEdgeTruth("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+    StateEdgeTruth("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+    StateEdgeTruth("denoise", "latents", "decoder", "latents"),
+    StateEdgeTruth("denoise", "route_state_out", "decoder", "route_state_in"),
+)
+
+_SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES = (
+    StateEdgeTruth("text_encoder", "embeddings", "denoise", "embeddings"),
+    StateEdgeTruth("vae_encoder", "image_latents", "denoise", "image_latents"),
+    StateEdgeTruth("vae_encoder", "mask", "denoise", "mask"),
+    StateEdgeTruth(
+        "vae_encoder",
+        "masked_image_latents",
+        "denoise",
+        "masked_image_latents",
+    ),
+    StateEdgeTruth("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+    StateEdgeTruth("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+    StateEdgeTruth("denoise", "latents", "decoder", "latents"),
+    StateEdgeTruth("denoise", "route_state_out", "decoder", "route_state_in"),
+)
+
 _SDXL_INPAINT_BLOCK_SEQUENCE = (
     "text_encoder",
     "vae_encoder",
@@ -173,6 +198,18 @@ _SDXL_INPAINT_BLOCK_SEQUENCE = (
     "denoise.before_denoise.set_timesteps",
     "denoise.before_denoise.prepare_latents",
     "denoise.before_denoise.prepare_add_cond",
+    "denoise.denoise",
+    "decode",
+)
+
+_SDXL_CONTROLNET_BLOCK_SEQUENCE = (
+    "text_encoder",
+    "vae_encoder",
+    "denoise.input",
+    "denoise.before_denoise.set_timesteps",
+    "denoise.before_denoise.prepare_latents",
+    "denoise.before_denoise.prepare_add_cond",
+    "denoise.controlnet_input",
     "denoise.denoise",
     "decode",
 )
@@ -449,6 +486,26 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _SDXL_INPAINT_BLOCK_SEQUENCE,
                     ("text_encoder", "vae_encoder", "denoise", "decoder"),
                     _SDXL_ROUTE_INPAINT_TO_OUTPUT_EDGES,
+                ),
+            ),
+            (
+                "controlnet_image2image",
+                ModularStateFlowTruth(
+                    "controlnet_image2image",
+                    frozenset({"control_image", "image", "prompt"}),
+                    _SDXL_CONTROLNET_BLOCK_SEQUENCE,
+                    ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_IMAGE_TO_OUTPUT_EDGES,
+                ),
+            ),
+            (
+                "controlnet_inpainting",
+                ModularStateFlowTruth(
+                    "controlnet_inpainting",
+                    frozenset({"control_image", "mask_image", "image", "prompt"}),
+                    _SDXL_CONTROLNET_BLOCK_SEQUENCE,
+                    ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES,
                 ),
             ),
         ),

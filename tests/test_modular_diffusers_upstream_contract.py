@@ -43,7 +43,12 @@ from modules.ModularDiffusers.pipeline_schema import (
     input_param_to_modiff_param,
     output_param_to_modiff_param,
 )
-from modules.ModularDiffusers.route_state import ROUTE_STATE_INPUT, ROUTE_STATE_OUTPUT
+from modules.ModularDiffusers.route_state import (
+    ROUTE_STATE_INPUT,
+    ROUTE_STATE_OUTPUT,
+    bind_standalone_component_output,
+    issue_standalone_component_issuer,
+)
 from modules.ModularDiffusers.schedulers import SCHEDULER_CONFIGS, Scheduler
 
 
@@ -873,8 +878,27 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         controlnet_component = {
             "model_id": "fixture-controlnet-id",
             "repo_id": "local/controlnet-fixture",
+            "repo_source": "hub",
+            "revision": "a" * 40,
+            "class_name": "ControlNetModel",
+            "trust_remote_code": False,
         }
-        result = Controlnet("sdxl-bundle-only").execute(
+        issuer = issue_standalone_component_issuer()
+        bind_standalone_component_output(
+            controlnet_component,
+            issuer=issuer,
+            component_kind="controlnet",
+            reviewed_identity=(
+                "hub",
+                "local/controlnet-fixture",
+                "a" * 40,
+                None,
+                "ControlNetModel",
+                "b" * 64,
+            ),
+        )
+        node = Controlnet("sdxl-bundle-only")
+        result = node.execute(
             model_type=pipeline_class.__name__,
             controlnet=controlnet_component,
             control_image="fixture-control-image",
@@ -894,6 +918,63 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 }
             },
         )
+        self.assertTrue(
+            node._cache_params_equal(
+                {"controlnet": controlnet_component},
+                {"controlnet": controlnet_component},
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "Union fields"):
+            node._cache_params_equal(
+                {"controlnet": controlnet_component, "control_mode": 1},
+                {"controlnet": controlnet_component, "control_mode": 1},
+            )
+        with self.assertRaisesRegex(ValueError, "opaque value"):
+            node._cache_params_equal(
+                {"controlnet": controlnet_component, ROUTE_STATE_INPUT: {}},
+                {"controlnet": controlnet_component, ROUTE_STATE_INPUT: {}},
+            )
+        with self.assertRaisesRegex(ValueError, "Union fields"):
+            Controlnet("sdxl-union-fields-through-ordinary-port").execute(
+                model_type=pipeline_class.__name__,
+                controlnet=controlnet_component,
+                control_image="fixture-control-image",
+                controlnet_conditioning_scale=0.75,
+                control_guidance_start=0.1,
+                control_guidance_end=0.9,
+                control_mode=1,
+            )
+
+        union_component = {
+            "model_id": "fixture-controlnet-union-id",
+            "repo_id": "local/controlnet-union-fixture",
+            "repo_source": "hub",
+            "revision": "c" * 40,
+            "class_name": "ControlNetUnionModel",
+            "trust_remote_code": False,
+        }
+        bind_standalone_component_output(
+            union_component,
+            issuer=issue_standalone_component_issuer(),
+            component_kind="controlnet",
+            reviewed_identity=(
+                "hub",
+                "local/controlnet-union-fixture",
+                "c" * 40,
+                None,
+                "ControlNetUnionModel",
+                "d" * 64,
+            ),
+        )
+        with self.assertRaisesRegex(ValueError, "exact ControlNetModel"):
+            Controlnet("sdxl-union-through-ordinary-port").execute(
+                model_type=pipeline_class.__name__,
+                controlnet=union_component,
+                control_image="fixture-control-image",
+                controlnet_conditioning_scale=0.75,
+                control_guidance_start=0.1,
+                control_guidance_end=0.9,
+            )
 
     def test_qwen_controlnet_generator_is_closed_by_seed_and_optional_opaque_route(self):
         blocks, node_config = require_modiff_node_contract(

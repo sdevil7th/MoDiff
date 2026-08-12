@@ -214,7 +214,10 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         workflows = {workflow.name: workflow for workflow in truth.workflows}
         state_flow = truth.state_flow("inpainting")
 
-        self.assertEqual(set(dict(truth.state_flows)), {"inpainting"})
+        self.assertEqual(
+            set(dict(truth.state_flows)),
+            {"inpainting", "controlnet_image2image", "controlnet_inpainting"},
+        )
         self.assertEqual(
             set(dict(truth.modes)),
             {"text_to_image", "image_to_image", "control_image"},
@@ -340,6 +343,92 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             self.assertEqual(consumer_param["display"], "input")
             self.assertEqual(producer_param["type"], field_type)
             self.assertEqual(consumer_param["type"], field_type)
+
+    def test_sdxl_controlnet_vae_state_flows_are_exact_constructible_and_nonadvertised(self):
+        model_type = "StableDiffusionXLModularPipeline"
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+        pipeline_class, blocks = _pipeline_blocks(model_type)
+        metadata = get_model_type_metadata(model_type)
+        workflows = {workflow.name: workflow for workflow in truth.workflows}
+        expected = {
+            "controlnet_image2image": {
+                "inputs": frozenset({"control_image", "image", "prompt"}),
+                "vae_edges": ("image_latents",),
+            },
+            "controlnet_inpainting": {
+                "inputs": frozenset({"control_image", "mask_image", "image", "prompt"}),
+                "vae_edges": ("image_latents", "mask", "masked_image_latents"),
+            },
+        }
+        expected_blocks = (
+            "text_encoder",
+            "vae_encoder",
+            "denoise.input",
+            "denoise.before_denoise.set_timesteps",
+            "denoise.before_denoise.prepare_latents",
+            "denoise.before_denoise.prepare_add_cond",
+            "denoise.controlnet_input",
+            "denoise.denoise",
+            "decode",
+        )
+
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            {"text_to_image", "image_to_image", "control_image"},
+        )
+        for name, contract in expected.items():
+            with self.subTest(state_flow=name):
+                state_flow = truth.state_flow(name)
+                self.assertIsNotNone(state_flow)
+                self.assertEqual(state_flow.required_upstream_inputs, contract["inputs"])
+                self.assertEqual(state_flow.required_upstream_inputs, workflows[name].required_inputs)
+                self.assertEqual(state_flow.upstream_block_sequence, expected_blocks)
+                self.assertEqual(
+                    state_flow.action_sequence,
+                    ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
+                )
+                workflow = blocks.get_workflow(name)
+                self.assertEqual(tuple(workflow.block_names), expected_blocks)
+                self.assertTrue(contract["inputs"].issubset(workflow.input_names))
+
+                action_contracts = {}
+                for action in state_flow.action_sequence:
+                    resolved_blocks, resolved_contract = require_modiff_node_contract(
+                        pipeline_class,
+                        action,
+                        require_blocks=(action != "controlnet"),
+                    )
+                    self.assertIsNotNone(resolved_contract)
+                    self.assertEqual(resolved_contract, metadata["node_params"][action])
+                    if action == "controlnet":
+                        self.assertIsNone(resolved_blocks)
+                    else:
+                        self.assertIsNotNone(resolved_blocks)
+                    action_contracts[action] = resolved_contract
+
+                edge_names = {
+                    (edge.producer_action, edge.producer_output, edge.consumer_action, edge.consumer_input)
+                    for edge in state_flow.state_edges
+                }
+                for vae_output in contract["vae_edges"]:
+                    self.assertIn(("vae_encoder", vae_output, "denoise", vae_output), edge_names)
+                self.assertIn(
+                    ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                    edge_names,
+                )
+                self.assertIn(
+                    ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                    edge_names,
+                )
+                for edge in state_flow.state_edges:
+                    self.assertIn(
+                        edge.producer_output,
+                        action_contracts[edge.producer_action]["output_names"],
+                    )
+                    self.assertIn(
+                        edge.consumer_input,
+                        action_contracts[edge.consumer_action]["input_names"],
+                    )
 
     def test_qwen_state_flows_are_exact_constructible_and_nonadvertised(self):
         model_type = "QwenImageModularPipeline"

@@ -115,9 +115,12 @@ Studio switches to the native mask/overlay path only after the complete route
 chain is present. A partial dynamic definition remains pending instead of
 guessing a fallback topology. The generic Qwen path and the internal SDXL base
 inpaint path carry masks and masked-image latents on their typed graph edges.
-SDXL inpaint remains unadvertised, unprofiled, and unqualified; combined SDXL
-VAE-route plus ControlNet, ControlNet Union, and IP-Adapter execution remain
-disabled while legacy bundle-only SDXL ControlNet is unchanged. Wan
+SDXL inpaint remains unadvertised, unprofiled, and unqualified. Its internal
+VAE route may be combined with the ordinary SDXL ControlNet bundle only when
+the generic Load Model output is a current, exact `ControlNetModel`
+publication and the same resident component survives cache validation,
+pipeline initialization, component installation, and the upstream call.
+ControlNet Union and IP-Adapter execution remain disabled. Wan
 first/last-frame topology remains unadvertised, but its official artifact is
 reviewed at an immutable revision. The generic Models Loader accepts that exact
 repository variant, and Image Embeddings plus Encode Image require the selected

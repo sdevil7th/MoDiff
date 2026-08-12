@@ -23,8 +23,10 @@ from .route_state import (
     require_component_binding,
     require_route_state_current_publication,
     require_route_state_shape_before_identity_resolution,
+    require_sdxl_controlnet_component_binding,
     require_standalone_component_binding,
     route_cache_params_equal,
+    route_contract_for_model_type,
     validate_controlnet_input_route_state,
     validate_route_field_contract,
 )
@@ -255,6 +257,22 @@ class Controlnet(NodeBase):
 
         route_state = current.get(ROUTE_STATE_INPUT)
         vae = current.get("vae")
+        if route_contract_for_model_type(self._model_type) == "sdxl":
+            require_route_state_shape_before_identity_resolution(current)
+            reject_undeclared_modular_generator(current)
+            reject_route_reserved_inputs_before_identity_resolution(current)
+            reject_route_reserved_inputs(current, model_type=self._model_type, action=self.node_type)
+            _, node_config = require_modiff_node_contract(
+                self._pipeline_class,
+                self.node_type,
+                require_blocks=False,
+                resolve_blocks=False,
+            )
+            validate_route_field_contract(current, node_config)
+            if {"control_mode", "control_type", "control_type_idx"}.intersection(current):
+                raise ValueError("SDXL ControlNet Union fields are not enabled on the ordinary ControlNet action.")
+            require_sdxl_controlnet_component_binding(current.get("controlnet"))
+            return True
         routed_action = route_state is not None or self._model_type == "QwenImageModularPipeline"
         routed_action = routed_action or (
             isinstance(vae, dict) and vae.get("model_type") == "QwenImageModularPipeline"
@@ -305,6 +323,10 @@ class Controlnet(NodeBase):
         )
         denoise_blocks, _ = require_modiff_node_contract(self._pipeline_class, "denoise")
         validate_route_field_contract(kwargs, node_config)
+        if route_contract_for_model_type(self._model_type) == "sdxl":
+            if {"control_mode", "control_type", "control_type_idx"}.intersection(kwargs):
+                raise ValueError("SDXL ControlNet Union fields are not enabled on the ordinary ControlNet action.")
+            require_sdxl_controlnet_component_binding(kwargs.get("controlnet"))
 
         route_output_declared = ROUTE_STATE_OUTPUT in node_config["output_names"]
         route_state = kwargs.get(ROUTE_STATE_INPUT)

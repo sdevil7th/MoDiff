@@ -36,6 +36,7 @@ from .route_state import (
     require_component_binding,
     require_matching_token_bearers,
     require_route_state_shape_before_identity_resolution,
+    require_sdxl_controlnet_component_binding,
     route_contract_for_model_type,
     route_requires_controlnet_state,
     route_cache_params_equal,
@@ -299,6 +300,20 @@ class Denoise(NodeBase):
             raise ValueError("The resident SDXL Denoise pipeline does not hold the exact connected VAE component.")
         return vae, sdxl_vae_geometry_from_component(vae)
 
+    def _resolve_sdxl_controlnet(self, component_input, *, require_resident_pipeline):
+        require_sdxl_controlnet_component_binding(component_input)
+        controlnet = resolve_managed_component_by_id(
+            components,
+            component_input,
+            label="Denoise ControlNet",
+        )
+        if require_resident_pipeline and (
+            getattr(self, "_pipeline", None) is None
+            or getattr(self._pipeline, "controlnet", None) is not controlnet
+        ):
+            raise ValueError("The resident SDXL Denoise pipeline does not hold the exact connected ControlNet.")
+        return controlnet
+
     def _validate_route_cache_inputs(self, current):
         route_state = current.get(ROUTE_STATE_INPUT)
         supported_route_model = self._model_type in SUPPORTED_ROUTE_MODEL_TYPES
@@ -429,6 +444,22 @@ class Denoise(NodeBase):
             target_name="controlnet",
         )
         controlnet_bundle_present = current.get("controlnet_bundle") is not None
+        controlnet_state_present = (
+            controlnet_bundle_present
+            or control_image_latents is not None
+            or controlnet_component is not None
+        )
+        if route_contract == "sdxl" and controlnet_state_present:
+            if (
+                not controlnet_bundle_present
+                or controlnet_component is None
+                or control_image_latents is not None
+            ):
+                raise ValueError("SDXL ordinary ControlNet requires one exact connected component bundle.")
+            self._resolve_sdxl_controlnet(
+                controlnet_component,
+                require_resident_pipeline=True,
+            )
         image_embeds = effective_modular_block_input(
             current,
             node_input_names=node_input_names,
@@ -674,11 +705,23 @@ class Denoise(NodeBase):
         preinit_vae = None
         preinit_geometry = (None, None)
         preinit_transformer = None
+        preinit_controlnet = None
         if route_contract == "sdxl":
             preinit_vae, preinit_geometry = self._resolve_sdxl_route_vae(
                 kwargs,
                 require_resident_pipeline=False,
             )
+            if controlnet_state_present:
+                if (
+                    not controlnet_bundle_present
+                    or effective_controlnet_component is None
+                    or effective_control_latents is not None
+                ):
+                    raise ValueError("SDXL ordinary ControlNet requires one exact connected component bundle.")
+                preinit_controlnet = self._resolve_sdxl_controlnet(
+                    effective_controlnet_component,
+                    require_resident_pipeline=False,
+                )
         elif route_contract == "wan_i2v":
             preinit_vae, preinit_transformer = self._resolve_wan_route_components(
                 kwargs,
@@ -816,6 +859,7 @@ class Denoise(NodeBase):
             self._pipeline.update_components(**component_updates)
         route_geometry = None
         route_transformer = None
+        route_controlnet = None
         if supported_route_model:
             self._require_route_component_inputs(
                 kwargs,
@@ -839,6 +883,18 @@ class Denoise(NodeBase):
                 route_geometry = live_geometry
                 if route_geometry != preinit_geometry:
                     raise ValueError("The connected Denoise VAE geometry changed during pipeline initialization.")
+                if preinit_controlnet is not None:
+                    installed_controlnet = component_updates.get("controlnet")
+                    if installed_controlnet is None:
+                        raise ValueError(
+                            "The connected Denoise ControlNet could not be resolved from its exact managed component ID."
+                        )
+                    route_controlnet = self._resolve_sdxl_controlnet(
+                        effective_controlnet_component,
+                        require_resident_pipeline=True,
+                    )
+                    if route_controlnet is not installed_controlnet or route_controlnet is not preinit_controlnet:
+                        raise ValueError("The connected Denoise ControlNet changed during pipeline initialization.")
             elif route_contract == "wan_i2v":
                 live_vae, route_transformer = self._resolve_wan_route_components(
                     kwargs,
@@ -974,6 +1030,11 @@ class Denoise(NodeBase):
                 )
                 if live_vae is not installed_vae or live_geometry != route_geometry:
                     raise ValueError("The connected Denoise VAE changed before upstream execution.")
+                if route_controlnet is not None and self._resolve_sdxl_controlnet(
+                    effective_controlnet_component,
+                    require_resident_pipeline=True,
+                ) is not route_controlnet:
+                    raise ValueError("The connected Denoise ControlNet changed before upstream execution.")
             elif route_contract == "wan_i2v":
                 live_vae, live_transformer = self._resolve_wan_route_components(
                     kwargs,
@@ -1065,6 +1126,11 @@ class Denoise(NodeBase):
                 )
                 if live_vae is not installed_vae or live_geometry != route_geometry:
                     raise ValueError("The connected Denoise VAE changed during upstream execution.")
+                if route_controlnet is not None and self._resolve_sdxl_controlnet(
+                    effective_controlnet_component,
+                    require_resident_pipeline=True,
+                ) is not route_controlnet:
+                    raise ValueError("The connected Denoise ControlNet changed during upstream execution.")
             elif route_contract == "wan_i2v":
                 live_vae, live_transformer = self._resolve_wan_route_components(
                     kwargs,

@@ -921,6 +921,25 @@ def require_standalone_component_binding(
     return binding
 
 
+def require_sdxl_controlnet_component_binding(component, *, expected_binding=None):
+    """Require the exact ordinary SDXL ControlNet component contract.
+
+    ControlNet Union uses the same generic graph port, so the process-local
+    reviewed class identity is the authority that keeps the still-dormant
+    Union route from being admitted through the ordinary ControlNet path.
+    """
+
+    binding = require_standalone_component_binding(
+        component,
+        label="ControlNet model",
+        expected_kind="controlnet",
+        expected_binding=expected_binding,
+    )
+    if binding._class_name != "ControlNetModel":
+        raise ValueError("SDXL ordinary ControlNet execution requires an exact ControlNetModel component.")
+    return binding
+
+
 def _component_id_inventory(component):
     pending = [(component, "", 0)]
     visited = set()
@@ -3368,10 +3387,14 @@ def validate_denoise_route_state(
     if route_state._contract == _SDXL_ROUTE_CONTRACT:
         if route_state._stage != _ENCODE_TO_DENOISE:
             raise ValueError("The SDXL route state is connected to the wrong action stage.")
-        if controlnet_bundle_present or control_image_latents is not None or controlnet_component is not None:
-            raise ValueError("Combined SDXL VAE-route and ControlNet execution is not enabled.")
         if ip_adapter_present:
             raise ValueError("Combined SDXL VAE-route and IP-Adapter execution is not enabled.")
+        if control_image_latents is not None:
+            raise ValueError("SDXL ordinary ControlNet does not accept prepared Qwen ControlNet latents.")
+        if controlnet_bundle_present != (controlnet_component is not None):
+            raise ValueError("SDXL ordinary ControlNet requires one exact connected component bundle.")
+        if controlnet_component is not None:
+            require_sdxl_controlnet_component_binding(controlnet_component)
         return validate_encoder_route_state(
             route_state,
             binding=binding,

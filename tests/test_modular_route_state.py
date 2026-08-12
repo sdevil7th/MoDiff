@@ -953,7 +953,7 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
         self.assertIsNot(materialized["image"], fixture["original_image"])
         self.assertIsNot(materialized["mask_image"], fixture["original_mask"])
 
-    def test_sdxl_route_rejects_vae_rebinding_geometry_drift_and_combined_control_or_ip(self):
+    def test_sdxl_route_accepts_exact_ordinary_controlnet_and_rejects_other_adapter_state(self):
         fixture = _sdxl_encoder_route()
         common = {
             "binding": fixture["token"],
@@ -979,17 +979,75 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
                 **common,
             )
         fixture["vae"].config.latent_channels = 4
-        for field, value, message in (
-            ("controlnet_bundle_present", True, "ControlNet execution is not enabled"),
-            ("ip_adapter_present", True, "IP-Adapter execution is not enabled"),
+        ordinary_identity = _standalone_identity(class_name="ControlNetModel")
+        _issuer, ordinary_controlnet = _publish_standalone(ordinary_identity)
+        self.assertIsNone(
+            validate_denoise_route_state(
+                fixture["route"],
+                vae_component=fixture["vae"],
+                controlnet_bundle_present=True,
+                controlnet_component=ordinary_controlnet,
+                **common,
+            )
+        )
+        consumed = consume_denoise_route_state(
+            fixture["route"],
+            vae_component=fixture["vae"],
+            controlnet_bundle_present=True,
+            controlnet_component=ordinary_controlnet,
+            execution_device="cpu",
+            **common,
+        )
+        self.assertTrue(torch.equal(consumed["generator"].get_state(), fixture["generator"].get_state()))
+
+        for values, message in (
+            ({"controlnet_bundle_present": True}, "exact connected component bundle"),
+            ({"controlnet_component": ordinary_controlnet}, "exact connected component bundle"),
+            (
+                {
+                    "controlnet_bundle_present": True,
+                    "controlnet_component": ordinary_controlnet,
+                    "control_image_latents": torch.zeros((1, 4, 8, 8)),
+                },
+                "does not accept prepared Qwen",
+            ),
+            ({"ip_adapter_present": True}, "IP-Adapter execution is not enabled"),
         ):
-            with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
+            with self.subTest(values=tuple(values)), self.assertRaisesRegex(ValueError, message):
                 validate_denoise_route_state(
                     fixture["route"],
                     vae_component=fixture["vae"],
                     **common,
-                    **{field: value},
+                    **values,
                 )
+
+        _union_issuer, union_controlnet = _publish_standalone(
+            _standalone_identity(class_name="ControlNetUnionModel"),
+            manager_model_id="controlnet-union-resident",
+        )
+        with self.assertRaisesRegex(ValueError, "exact ControlNetModel"):
+            validate_denoise_route_state(
+                fixture["route"],
+                vae_component=fixture["vae"],
+                controlnet_bundle_present=True,
+                controlnet_component=union_controlnet,
+                **common,
+            )
+
+        _replacement_issuer, replacement_controlnet = _publish_standalone(
+            ordinary_identity,
+            issuer=_issuer,
+            manager_model_id="controlnet-resident",
+        )
+        with self.assertRaisesRegex(ValueError, "no longer the current"):
+            validate_denoise_route_state(
+                fixture["route"],
+                vae_component=fixture["vae"],
+                controlnet_bundle_present=True,
+                controlnet_component=ordinary_controlnet,
+                **common,
+            )
+        self.assertIsNotNone(replacement_controlnet)
 
         dead_fixture = _sdxl_encoder_route()
         departed = weakref.ref(dead_fixture.pop("vae"))
@@ -2106,18 +2164,188 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
         self.assertEqual(captured["decode"]["mask_image"].getpixel((0, 0)), 255)
         self.assertEqual(decoded["images"], "decoded-sdxl-inpaint")
 
+    def test_sdxl_inpaint_controlnet_installs_exact_resident_component_and_closes_swaps(self):
+        for swap_phase in (None, "init", "call"):
+            with self.subTest(swap_phase=swap_phase):
+                fixture = _sdxl_encoder_route()
+                outputs = fixture["outputs"]
+                unet_component = object()
+                scheduler_component = object()
+                first_controlnet = object()
+                replacement_controlnet = object()
+                resident = {"controlnet": first_controlnet}
+                _issuer, controlnet_payload = _publish_standalone(
+                    _standalone_identity(class_name="ControlNetModel"),
+                    manager_model_id=f"sdxl-controlnet-{swap_phase or 'stable'}",
+                )
+                denoised = torch.full((1, 4, 8, 8), 3.0)
+                pipeline_calls = []
+                pipelines = []
+
+                class FakePipeline:
+                    _execution_device = torch.device("cpu")
+                    component_names = ["unet", "vae", "scheduler", "controlnet"]
+                    blocks = type("PipelineBlocks", (), {"doc": "sdxl-controlnet-denoise"})()
+                    transformer = None
+
+                    def __init__(self):
+                        self.unet = None
+                        self.vae = None
+                        self.scheduler = None
+                        self.controlnet = None
+
+                    def update_components(self, **values):
+                        for name, value in values.items():
+                            setattr(self, name, value)
+
+                    def __call__(self, **kwargs):
+                        pipeline_calls.append(dict(kwargs))
+                        if swap_phase == "call":
+                            resident["controlnet"] = replacement_controlnet
+                        return {"latents": denoised}
+
+                class FakeBlocks:
+                    component_names = ["unet", "vae", "scheduler", "controlnet"]
+                    input_names = [
+                        "prompt_embeds",
+                        "image_latents",
+                        "mask",
+                        "masked_image_latents",
+                        "generator",
+                        "control_image",
+                        "controlnet_conditioning_scale",
+                        "control_guidance_start",
+                        "control_guidance_end",
+                    ]
+
+                    @staticmethod
+                    def init_pipeline(*, components_manager):
+                        if swap_phase == "init":
+                            resident["controlnet"] = replacement_controlnet
+                        pipeline = FakePipeline()
+                        pipelines.append(pipeline)
+                        return pipeline
+
+                config = {
+                    "params": {
+                        "embeddings": {"type": "embeddings"},
+                        "image_latents": {"type": "latents"},
+                        "mask": {"type": "latent_mask"},
+                        "masked_image_latents": {"type": "masked_latents"},
+                        "seed": {"type": "int", "min": 0, "max": 4294967295},
+                        "controlnet_bundle": {"type": "custom_controlnet"},
+                        ROUTE_STATE_INPUT: {"type": "modular_route_state"},
+                    },
+                    "model_input_names": ["unet", "vae", "scheduler", "controlnet_bundle"],
+                    "input_names": [
+                        "embeddings",
+                        "image_latents",
+                        "mask",
+                        "masked_image_latents",
+                        "seed",
+                        "controlnet_bundle",
+                        ROUTE_STATE_INPUT,
+                    ],
+                    "output_names": ["latents", ROUTE_STATE_OUTPUT],
+                }
+                controlnet_bundle = {
+                    "controlnet": controlnet_payload,
+                    "control_image": "control-image",
+                    "controlnet_conditioning_scale": 0.75,
+                    "control_guidance_start": 0.1,
+                    "control_guidance_end": 0.9,
+                }
+
+                def managed_components(*, ids, return_dict_with_names=True):
+                    if return_dict_with_names:
+                        result = {
+                            "unet": unet_component,
+                            "vae": fixture["vae"],
+                            "scheduler": scheduler_component,
+                        }
+                        if controlnet_payload["model_id"] in ids:
+                            result["controlnet"] = resident["controlnet"]
+                        return result
+                    available = {
+                        outputs["vae_out"]["model_id"]: fixture["vae"],
+                        controlnet_payload["model_id"]: resident["controlnet"],
+                    }
+                    return {model_id: available[model_id] for model_id in set(ids)}
+
+                kwargs = {
+                    "unet": outputs["unet_out"],
+                    "vae": outputs["vae_out"],
+                    "scheduler": outputs["scheduler"],
+                    "embeddings": {"prompt_embeds": object()},
+                    "image_latents": fixture["image_latents"],
+                    "mask": fixture["mask"],
+                    "masked_image_latents": fixture["masked_image_latents"],
+                    "controlnet_bundle": controlnet_bundle,
+                    "seed": 7,
+                    ROUTE_STATE_INPUT: fixture["route"],
+                }
+                denoise_node = Denoise()
+                with (
+                    patch(
+                        "modules.ModularDiffusers.denoise.pipeline_class_from_runtime_inputs",
+                        return_value=diffusers.StableDiffusionXLModularPipeline,
+                    ),
+                    patch(
+                        "modules.ModularDiffusers.denoise.require_modiff_node_contract",
+                        return_value=(FakeBlocks(), config),
+                    ),
+                    patch("modules.ModularDiffusers.denoise.insert_preview_block"),
+                    patch(
+                        "modules.ModularDiffusers.denoise.components.get_components_by_ids",
+                        side_effect=managed_components,
+                    ),
+                ):
+                    if swap_phase is not None:
+                        with self.assertRaisesRegex(ValueError, "ControlNet changed|does not hold"):
+                            denoise_node.execute(**kwargs)
+                        continue
+                    result = denoise_node.execute(**kwargs)
+                    denoise_node.output = result
+                    self.assertTrue(denoise_node._cache_params_equal(kwargs, kwargs))
+
+                self.assertIs(result["latents"], denoised)
+                self.assertEqual(len(pipeline_calls), 1)
+                self.assertNotIn("controlnet", pipeline_calls[0])
+                self.assertIs(pipelines[0].controlnet, first_controlnet)
+                self.assertIs(pipeline_calls[0]["image_latents"], fixture["image_latents"])
+                self.assertIs(pipeline_calls[0]["mask"], fixture["mask"])
+                self.assertIs(
+                    pipeline_calls[0]["masked_image_latents"],
+                    fixture["masked_image_latents"],
+                )
+                consume_decode_route_state(
+                    result[ROUTE_STATE_OUTPUT],
+                    binding=fixture["token"],
+                    model_type=SDXL,
+                    latents=denoised,
+                    vae_component=fixture["vae"],
+                    vae_latent_channels=4,
+                    vae_scale_factor=8,
+                    materialize_overlay=False,
+                )
+
     def test_sdxl_route_less_text_and_legacy_control_emit_normal_decode_routes_while_ip_union_fail_closed(self):
         token, outputs = _bound_outputs(SDXL)
         _other_token, other_outputs = _bound_outputs(SDXL, suffix="b")
         vae = _FixtureSdxlVae()
         unet_component = object()
         scheduler_component = object()
+        controlnet_component = object()
+        controlnet_issuer, controlnet_payload = _publish_standalone(
+            _standalone_identity(class_name="ControlNetModel")
+        )
         init_calls = []
         pipeline_calls = []
+        pipelines = []
 
         class FakePipeline:
             _execution_device = torch.device("cpu")
-            component_names = ["unet", "vae", "scheduler"]
+            component_names = ["unet", "vae", "scheduler", "controlnet"]
             blocks = type("PipelineBlocks", (), {"doc": "denoise"})()
             transformer = None
 
@@ -2125,6 +2353,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                 self.unet = None
                 self.vae = None
                 self.scheduler = None
+                self.controlnet = None
 
             def update_components(self, **values):
                 for name, value in values.items():
@@ -2135,11 +2364,10 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                 return {"latents": torch.zeros((1, 4, 8, 8))}
 
         class FakeBlocks:
-            component_names = ["unet", "vae", "scheduler"]
+            component_names = ["unet", "vae", "scheduler", "controlnet"]
             input_names = [
                 "prompt_embeds",
                 "generator",
-                "controlnet",
                 "control_image",
                 "controlnet_conditioning_scale",
                 "control_guidance_start",
@@ -2149,7 +2377,9 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
             @staticmethod
             def init_pipeline(*, components_manager):
                 init_calls.append(components_manager)
-                return FakePipeline()
+                pipeline = FakePipeline()
+                pipelines.append(pipeline)
+                return pipeline
 
         config = {
             "params": {
@@ -2166,8 +2396,15 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
 
         def managed_components(*, ids, return_dict_with_names=True):
             if return_dict_with_names:
-                return {"unet": unet_component, "vae": vae, "scheduler": scheduler_component}
-            return {model_id: vae for model_id in set(ids)}
+                result = {"unet": unet_component, "vae": vae, "scheduler": scheduler_component}
+                if controlnet_payload["model_id"] in ids:
+                    result["controlnet"] = controlnet_component
+                return result
+            available = {
+                outputs["vae_out"]["model_id"]: vae,
+                controlnet_payload["model_id"]: controlnet_component,
+            }
+            return {model_id: available[model_id] for model_id in set(ids)}
 
         base = {
             "unet": outputs["unet_out"],
@@ -2177,7 +2414,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
             "seed": 7,
         }
         legacy_control = {
-            "controlnet": object(),
+            "controlnet": controlnet_payload,
             "control_image": "control-image",
             "controlnet_conditioning_scale": 0.75,
             "control_guidance_start": 0.1,
@@ -2192,7 +2429,6 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                 "modules.ModularDiffusers.denoise.require_modiff_node_contract",
                 return_value=(FakeBlocks(), config),
             ),
-            patch("modules.ModularDiffusers.denoise.collect_model_ids", return_value=["shared-model"]),
             patch("modules.ModularDiffusers.denoise.insert_preview_block"),
             patch(
                 "modules.ModularDiffusers.denoise.components.get_components_by_ids",
@@ -2216,7 +2452,9 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                 )
 
             self.assertNotIn("controlnet", pipeline_calls[0])
-            self.assertIs(pipeline_calls[1]["controlnet"], legacy_control["controlnet"])
+            self.assertNotIn("controlnet", pipeline_calls[1])
+            self.assertIsNone(pipelines[0].controlnet)
+            self.assertIs(pipelines[1].controlnet, controlnet_component)
             self.assertEqual(pipeline_calls[1]["control_image"], "control-image")
 
             invalid_cases = (
@@ -2232,6 +2470,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
             self.assertEqual(len(init_calls), init_before)
 
         self.assertEqual(len(pipeline_calls), 2)
+        self.assertIsNotNone(controlnet_issuer)
 
     def test_sdxl_live_manager_vae_swap_during_init_or_call_never_publishes_route_outputs(self):
         token, outputs = _bound_outputs(SDXL)
