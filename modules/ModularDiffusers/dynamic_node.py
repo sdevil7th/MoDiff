@@ -18,6 +18,10 @@ from modiff.diffusers_offload import (
     normalize_offload_mode,
     offload_mode_param,
 )
+from modiff.modular_workflow_discovery import (
+    reviewed_modular_workflow_contract,
+    select_modular_workflow,
+)
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 from . import components
@@ -105,7 +109,7 @@ def _validate_sidecar_field_action(value, *, field_name, event_name, field_defin
                 )
 
 
-def _custom_node_contract(custom_config):
+def _custom_node_contract(custom_config, workflow_contract=None):
     """Return an isolated, declarative-only DynamicBlock node contract."""
 
     node_params = custom_config.node_params
@@ -151,6 +155,85 @@ def _custom_node_contract(custom_config):
         value = contract.get(text_key)
         if value is not None and not isinstance(value, str):
             raise ValueError(f"Dynamic Block sidecar custom.{text_key} must be a string when provided.")
+
+    if workflow_contract is not None:
+        if "workflow" in sanitized_params:
+            raise ValueError("Dynamic Block sidecars must not replace the backend-owned workflow selector.")
+        reviewed_workflows = workflow_contract["workflows"]
+        if not reviewed_workflows:
+            raise ValueError("The reviewed Modular workflow contract has no executable tasks.")
+        visibility = {}
+        all_workflow_fields = {
+            field["name"] for workflow in reviewed_workflows for field in workflow["inputs"]
+        }
+        all_workflow_outputs = {
+            field["name"] for workflow in reviewed_workflows for field in workflow["outputs"]
+        }
+        unknown_inputs = sorted(set(contract["input_names"]) - all_workflow_fields)
+        pipeline_output_names = {
+            name[4:] if name.startswith("out_") else name for name in contract["output_names"]
+        }
+        unknown_outputs = sorted(pipeline_output_names - all_workflow_outputs)
+        if unknown_inputs or unknown_outputs:
+            details = []
+            if unknown_inputs:
+                details.append(f"inputs: {', '.join(unknown_inputs)}")
+            if unknown_outputs:
+                details.append(f"outputs: {', '.join(unknown_outputs)}")
+            raise ValueError(
+                "Dynamic Block sidecar fields are absent from the reviewed upstream workflow contract ("
+                + "; ".join(details)
+                + ")."
+            )
+        sidecar_inputs = set(contract["input_names"])
+        workflows = [
+            workflow
+            for workflow in reviewed_workflows
+            if set(workflow["requiredInputs"]).issubset(sidecar_inputs)
+        ]
+        if not workflows:
+            raise ValueError("Dynamic Block sidecar cannot carry the required inputs for any reviewed workflow.")
+        for workflow in workflows:
+            input_names = {field["name"] for field in workflow["inputs"]}
+            output_names = {field["name"] for field in workflow["outputs"]}
+            visible = []
+            for field_name, definition in sanitized_params.items():
+                pipeline_name = field_name[4:] if field_name.startswith("out_") else field_name
+                display = definition.get("display")
+                if field_name in contract["model_input_names"]:
+                    visible.append(field_name)
+                elif display == "output" and pipeline_name in output_names:
+                    visible.append(field_name)
+                elif field_name in input_names:
+                    visible.append(field_name)
+                elif display != "output" and field_name not in all_workflow_fields:
+                    visible.append(field_name)
+            visibility[workflow["taskId"]] = visible
+        first_task = workflows[0]["taskId"]
+        initially_visible = set(visibility[first_task])
+        managed_fields = {
+            field_name
+            for field_name, definition in sanitized_params.items()
+            if field_name in all_workflow_fields
+            or (
+                definition.get("display") == "output"
+                and (field_name[4:] if field_name.startswith("out_") else field_name) in all_workflow_outputs
+            )
+        }
+        for field_name in managed_fields:
+            sanitized_params[field_name]["hidden"] = field_name not in initially_visible
+        sanitized_params = {
+            "workflow": {
+                "label": "Task",
+                "type": "string",
+                "value": first_task,
+                "options": {workflow["taskId"]: workflow["label"] for workflow in workflows},
+                "onChange": {"action": "show", "data": visibility},
+                "description": "Tasks and fields come from the reviewed pinned upstream workflow contract.",
+            },
+            **sanitized_params,
+        }
+        contract["params"] = sanitized_params
     return contract
 
 
@@ -290,7 +373,8 @@ class DynamicBlockNode(NodeBase):
             trust_remote_code=False,
             expected_identity=None,
         )
-        node_config = _custom_node_contract(binding.pipeline_config())
+        workflow_contract = reviewed_modular_workflow_contract(binding.execution_contract.pipeline_class_name)
+        node_config = _custom_node_contract(binding.pipeline_config(), workflow_contract)
         self.set_field_value({CUSTOM_PIPELINE_IDENTITY_FIELD: binding.identity.to_dict()})
 
         custom_params = node_config["params"]
@@ -351,9 +435,15 @@ class DynamicBlockNode(NodeBase):
         }:
             raise ValueError(f"Dynamic Modular Diffusers blocks do not support {offload_mode} offload.")
 
-        pipeline = binding.instantiate(components_manager=components, collection=self.node_id)
         custom_config = binding.pipeline_config()
-        node_config = _custom_node_contract(custom_config)
+        workflow_contract = reviewed_modular_workflow_contract(binding.execution_contract.pipeline_class_name)
+        node_config = _custom_node_contract(custom_config, workflow_contract)
+        available_task_ids = node_config["params"]["workflow"]["options"]
+        task_id = kwargs.pop("workflow", next(iter(available_task_ids)))
+        if task_id not in available_task_ids:
+            raise ValueError(f"Unknown Modular workflow task {task_id!r}, or task unsupported by this sidecar.")
+        workflow = select_modular_workflow(workflow_contract, task_id, kwargs)
+        pipeline = binding.instantiate(components_manager=components, collection=self.node_id)
         torch_dtype = str_to_dtype(custom_config.default_dtype or "bfloat16")
         configure_components_manager_offload(components, mode=offload_mode, device=device)
 
@@ -417,9 +507,20 @@ class DynamicBlockNode(NodeBase):
             node_id=self.node_id,
         )
 
-        inputs = {name: kwargs[name] for name in node_config["input_names"] if name in kwargs}
-        node_output_names = node_config["output_names"]
-        pipeline_output_names = [name[4:] if name.startswith("out_") else name for name in node_output_names]
+        workflow_input_names = {field["name"] for field in workflow["inputs"]}
+        inputs = {
+            name: kwargs[name]
+            for name in node_config["input_names"]
+            if name in workflow_input_names and name in kwargs
+        }
+        workflow_output_names = {field["name"] for field in workflow["outputs"]}
+        output_pairs = [
+            (name, name[4:] if name.startswith("out_") else name)
+            for name in node_config["output_names"]
+            if (name[4:] if name.startswith("out_") else name) in workflow_output_names
+        ]
+        node_output_names = [name for name, _ in output_pairs]
+        pipeline_output_names = [name for _, name in output_pairs]
         pipeline_outputs = pipeline(**inputs, output=pipeline_output_names)
         final_outputs = {
             node_name: pipeline_outputs[pipeline_name]

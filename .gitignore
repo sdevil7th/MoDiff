@@ -23,6 +23,7 @@ custom/*
 
 data/*
 !data/model-artifact-catalog.json
+!data/modular-workflow-contracts.json
 !data/graphs/
 !data/workflow-library-manifest.json
 data/graphs/*

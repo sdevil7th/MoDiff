@@ -18,7 +18,10 @@ from typing import Any
 
 from huggingface_hub.utils import validate_repo_id
 
-from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
+from modiff.modular_workflow_discovery import (
+    ModularWorkflowContractError,
+    reviewed_modular_workflow_contract,
+)
 
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 from .pipeline_schema import MAX_CUSTOM_PIPELINE_REPOSITORY_CHARS
@@ -315,13 +318,15 @@ def _review_upstream_contract(
         )
     pipeline_class_name = document.get("_class_name")
     blocks_class_name = document.get("_blocks_class_name")
-    truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(pipeline_class_name)
-    if (
-        not isinstance(pipeline_class_name, str)
-        or truth is None
-        or not isinstance(blocks_class_name, str)
-        or blocks_class_name != truth.blocks_class
-    ):
+    try:
+        workflow_contract = reviewed_modular_workflow_contract(pipeline_class_name)
+    except ModularWorkflowContractError as error:
+        raise CustomPipelineContractError(
+            "custom_pipeline_component_unapproved",
+            "The canonical pipeline class has no reviewed pinned workflow contract.",
+            "Select a pipeline using an installed reviewed Modular Diffusers pipeline and blocks pair.",
+        ) from error
+    if not isinstance(blocks_class_name, str) or blocks_class_name != workflow_contract["blocksClass"]:
         raise CustomPipelineContractError(
             "custom_pipeline_component_unapproved",
             "The canonical pipeline/block class pair is not in MoDiff's pinned Diffusers contract.",
