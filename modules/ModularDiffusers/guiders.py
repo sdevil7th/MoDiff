@@ -2,7 +2,7 @@
 import logging
 from collections.abc import Mapping
 
-from diffusers import LayerSkipConfig, SmoothedEnergyGuidanceConfig
+from diffusers import LayerSkipConfig, SmoothedEnergyGuidanceConfig, guiders as diffusers_guiders
 
 from modiff.NodeBase import NodeBase
 
@@ -24,6 +24,7 @@ GUIDER_OPTIONS = {
     "SkipLayerGuidance": "Skip Layer Guidance",
     "AdaptiveProjectedGuidance": "Adaptive Projected Guidance",
     "AdaptiveProjectedMixGuidance": "Adaptive Projected Mix Guidance",
+    "MagnitudeAwareGuidance": "Magnitude Aware Guidance",
     "ClassifierFreeZeroStarGuidance": "Classifier Free Zero Star Guidance",
     "AutoGuidance": "Auto Guidance",
     "SmoothedEnergyGuidance": "Smoothed Energy Guidance",
@@ -111,6 +112,16 @@ GUIDER_CONFIGS = {
             "type": "int",
             "value": 5,
             "min": 0,
+        },
+    },
+    "MagnitudeAwareGuidance": {
+        "alpha": {
+            "label": "Magnitude Suppression Alpha",
+            "type": "float",
+            "value": 8.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
         },
     },
     "ClassifierFreeZeroStarGuidance": {
@@ -291,7 +302,7 @@ class Guider(NodeBase):
 
         guider = self._selected_guider(guider)
 
-        guider_cls = getattr(__import__("diffusers", fromlist=[guider]), guider)
+        guider_cls = getattr(diffusers_guiders, guider)
 
         configs = {}
 

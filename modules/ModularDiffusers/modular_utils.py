@@ -49,6 +49,7 @@ ALL_GUIDER_OPTIONS = (
     "SkipLayerGuidance",
     "AdaptiveProjectedGuidance",
     "AdaptiveProjectedMixGuidance",
+    "MagnitudeAwareGuidance",
     "ClassifierFreeZeroStarGuidance",
     "AutoGuidance",
     "SmoothedEnergyGuidance",
