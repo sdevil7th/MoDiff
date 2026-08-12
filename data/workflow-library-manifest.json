@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T19:15:59.479Z",
+  "generatedAt": "2026-08-12T19:25:00.341Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 42,
-  "supportedPairCount": 54,
+  "supportedCanonicalPairCount": 43,
+  "supportedPairCount": 55,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -318,6 +318,38 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "FluxDevPipeline:edit_image",
+      "modelType": "FluxDevPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-dev"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for image-to-image transformation."
+      },
+      "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxPipeline"
+      ],
+      "sourceTemplateId": "task-template:flux-dev:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/flux-dev-pipeline/edit-image.json",
+      "graphHash": "4908efa5eb214aa419324c2c2f30b119568f57ea9136e71f2ee9838440b8d68b"
     },
     {
       "id": "FluxDevPipeline:text_to_image",

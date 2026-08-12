@@ -693,7 +693,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
     ),
     ("ZImageImg2ImgPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("edit_image",)),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
-    ("FluxImg2ImgPipeline", "image", FLUX_DEV_REPO, ("edit_image",)),
     ("FluxInpaintPipeline", "image", FLUX_DEV_REPO, ("inpaint",)),
     (
         "FluxKontextInpaintPipeline",

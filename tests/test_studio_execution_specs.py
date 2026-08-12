@@ -129,6 +129,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
                 ("QwenImageLayeredModularPipeline", "layer_decomposition"),
                 ("QwenImageModularPipeline", "control_image"),
+                ("FluxDevPipeline", "edit_image"),
                 ("StableDiffusionXLPipeline", "text_to_image"),
                 ("StableDiffusionXLPipeline", "edit_image"),
                 ("StableDiffusionXLPipeline", "inpaint"),
@@ -155,6 +156,11 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(sdxl_inpaint["roles"], specs[8]["roles"])
         self.assertEqual(sdxl_inpaint["edges"], specs[8]["edges"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sdxl_inpaint["bindings"])
+        flux_dev_edit = specs[-4]
+        self.assertEqual(flux_dev_edit["id"], "flux-dev:edit-image:v1")
+        self.assertEqual(flux_dev_edit["pipelineClass"], "FluxImg2ImgPipeline")
+        self.assertEqual(flux_dev_edit["roles"], specs[5]["roles"])
+        self.assertEqual(flux_dev_edit["edges"], specs[5]["edges"])
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
         self.assertEqual(specs[0]["edges"], specs[1]["edges"])
         self.assertEqual(specs[0]["bindings"], specs[1]["bindings"])
