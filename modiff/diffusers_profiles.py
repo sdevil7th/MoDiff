@@ -214,10 +214,12 @@ class DiffusersExecutionProfile:
     expert_cuda_policy: ExpertCudaPolicy | None = None
     expert_quantization_policy: ExpertQuantizationPolicy | None = None
     expert_mps_policy: ExpertMpsPolicy | None = None
+    public: bool = True
 
     def __post_init__(self) -> None:
         expected_loader = {
             "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
+            "dynamic-modular": ("modules.ModularDiffusers", "DynamicBlockNode"),
             "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
             "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
@@ -334,6 +336,44 @@ class DiffusersExecutionProfile:
 
 
 DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
+    "custom-modular:reviewed-loader": DiffusersExecutionProfile(
+        id="custom-modular:reviewed-loader",
+        model_type="DummyCustomPipeline",
+        modes=("reviewed_repository",),
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
+        pipeline_class="DummyCustomPipeline",
+        default_repo="",
+        fallback_repo=None,
+        quantizable_components=(),
+        default_quantized_components=(),
+        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
+        max_low_memory_side=None,
+        max_low_memory_steps=None,
+        live_proof=False,
+        public=False,
+    ),
+    "custom-modular:reviewed-block": DiffusersExecutionProfile(
+        id="custom-modular:reviewed-block",
+        model_type="DummyCustomPipeline",
+        modes=("reviewed_repository",),
+        loader_module="modules.ModularDiffusers",
+        loader_action="DynamicBlockNode",
+        execution_path="dynamic-modular",
+        pipeline_class="DummyCustomPipeline",
+        default_repo="",
+        fallback_repo=None,
+        quantizable_components=(),
+        default_quantized_components=(),
+        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
+        max_low_memory_side=None,
+        max_low_memory_steps=None,
+        live_proof=False,
+        public=False,
+    ),
     "z-image:auto": DiffusersExecutionProfile(
         id="z-image:auto",
         model_type="ZImageModularPipeline",
@@ -913,7 +953,7 @@ def resolve_execution_profiles_for_loader(
         return backend_profiles, "loader_parameters_invalid"
 
     identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
-    raw_identity = values.get(identity_key)
+    raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)
     identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
     if not identity:
         return backend_profiles, "loader_identity_missing"
@@ -1090,6 +1130,7 @@ def public_execution_profiles(
             optional_runtime_catalog_resolver=optional_runtime_catalog_resolver,
         )
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+        if profile.public
     ]
 
 

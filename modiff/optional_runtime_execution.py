@@ -288,6 +288,48 @@ def loader_optional_runtime_requirement(
     )
 
 
+_DECLARATIVE_FIELD_ACTIONS = frozenset(
+    {
+        (
+            "modules.ModularDiffusers",
+            "ModelsLoader",
+            "refresh_pipeline_identity",
+        ),
+        (
+            "modules.ModularDiffusers",
+            "DynamicBlockNode",
+            "update_node",
+        ),
+    }
+)
+
+
+def field_action_optional_runtime_requirement(
+    module: str,
+    action: str,
+    method_name: str,
+    values: dict[str, Any],
+    *,
+    catalog_resolver: Callable[[], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Keep reviewed metadata previews on the non-installing base path.
+
+    These callbacks verify immutable repository metadata but never construct a
+    pipeline or import repository Python. The executable node remains guarded
+    by :func:`loader_optional_runtime_requirement` at graph admission and again
+    immediately before worker import.
+    """
+
+    if (module, action, method_name) in _DECLARATIVE_FIELD_ACTIONS:
+        return declarative_requirement_for_profiles(())
+    return loader_optional_runtime_requirement(
+        module,
+        action,
+        values,
+        catalog_resolver=catalog_resolver,
+    )
+
+
 def _static_node_values(node: dict[str, Any]) -> dict[str, Any]:
     params = node.get("params")
     if not isinstance(params, dict):

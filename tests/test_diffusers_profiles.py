@@ -23,6 +23,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_every_profile_declares_one_explicit_loader_and_execution_path(self):
         expected_targets = {
             "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
+            "dynamic-modular": ("modules.ModularDiffusers", "DynamicBlockNode"),
             "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
             "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
@@ -67,6 +68,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "Flux2KleinPipeline",
+            "DummyCustomPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

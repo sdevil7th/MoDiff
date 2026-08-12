@@ -463,6 +463,7 @@ from modiff.runtime_overlays import (
 from modiff.optional_runtimes import public_optional_runtime_profiles
 from modiff.optional_runtime_execution import (
     assert_optional_runtime_ready,
+    field_action_optional_runtime_requirement,
     graph_optional_runtime_requirement,
     loader_optional_runtime_requirement,
     optional_runtime_blocker_payload,
@@ -2496,7 +2497,12 @@ class WebServer:
         ref,
     ):
         assert_optional_runtime_ready(
-            loader_optional_runtime_requirement(module, action, values)
+            field_action_optional_runtime_requirement(
+                module,
+                action,
+                fn.__name__,
+                values,
+            )
         )
         from modiff.NodeBase import node_message_context
 
@@ -2605,9 +2611,10 @@ class WebServer:
                 {"error": True, "message": str(error)},
                 status=400,
             )
-        optional_runtime_requirement = loader_optional_runtime_requirement(
+        optional_runtime_requirement = field_action_optional_runtime_requirement(
             module,
             action,
+            method_name,
             values,
         )
         if optional_runtime_requirement_blocks_execution(
@@ -2703,14 +2710,19 @@ class WebServer:
                         optional_runtime_blocker_payload(blocked_requirement),
                         status=409,
                     )
+                classification = self._classify_exception(e)
+                status = 409 if getattr(e, "modiff_error_code", None) else 500
                 return web.json_response(
                     {
                         "error": True,
                         "message": f"Field action error: {e}",
+                        "category": classification.get("category"),
+                        "error_code": classification.get("error_code"),
+                        "recovery_hint": classification.get("recovery_hint"),
                         "sid": sid,
                         "ref": ref,
                     },
-                    status=500,
+                    status=status,
                 )
             task_id = None
 

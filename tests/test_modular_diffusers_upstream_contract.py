@@ -206,7 +206,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "perturbed_guidance_config",
         )
 
-    def test_reviewed_dynamic_block_resolves_its_catalog_revision(self):
+    def test_dynamic_block_requires_an_explicit_immutable_revision(self):
         node = DynamicBlockNode("dynamic-revision-probe")
         verified = MagicMock()
         verified.config = object()
@@ -214,12 +214,12 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "modules.ModularDiffusers.dynamic_node.PipelineConfig.load_verified",
             return_value=verified,
         ) as load_verified:
-            node._get_custom_config("diffusers/FLUX.2-klein-4B-modular")
+            node._get_custom_config("owner/custom-block", "a" * 40)
 
         load_verified.assert_called_once_with(
-            "diffusers/FLUX.2-klein-4B-modular",
+            "owner/custom-block",
             source="hub",
-            revision="62ac375aa5308588f111fcd12115f5c54a8b1f4f",
+            revision="a" * 40,
         )
 
     def test_models_loader_resolves_known_base_revision(self):

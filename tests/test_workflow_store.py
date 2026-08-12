@@ -7,6 +7,7 @@ from unittest.mock import patch
 from modiff.NodeBase import NodeBase
 from modiff.server import WebServer
 from modiff.workflow_store import delete_workflow, get_workflow, list_workflows, save_workflow
+from modules.ModularDiffusers.custom_pipeline import CustomPipelineContractError
 
 
 class FakeRequest:
@@ -294,7 +295,7 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         server.node_cache["models-loader"] = cached_node
 
         with patch(
-            "modiff.server.loader_optional_runtime_requirement",
+            "modiff.server.field_action_optional_runtime_requirement",
             return_value={
                 "schemaVersion": 1,
                 "delivery": "optional_overlay",
@@ -341,6 +342,63 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
                 )
             ],
         )
+
+    async def test_field_action_preserves_actionable_custom_pipeline_error_contract(self):
+        module_name = "modules.ModularDiffusers"
+        action_name = "ModelsLoader"
+        definition = {
+            module_name: {
+                action_name: {
+                    "params": {"repo_id": {"onChange": "refresh_pipeline_identity"}},
+                }
+            }
+        }
+
+        class CachedModelsLoader:
+            module_name = "modules.ModularDiffusers"
+            class_name = "ModelsLoader"
+            _sid = None
+
+            def refresh_pipeline_identity(self, _values, _ref):
+                raise CustomPipelineContractError(
+                    "custom_pipeline_unpinned_auxiliary",
+                    "The auxiliary repository is mutable.",
+                    "Pin every auxiliary repository to an exact commit.",
+                )
+
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        server.loop = asyncio.get_running_loop()
+        server.node_cache["models-loader"] = CachedModelsLoader()
+        request = FakeRequest(
+            "models-loader",
+            {
+                "node": "models-loader",
+                "sid": "field-session",
+                "module": module_name,
+                "action": action_name,
+                "fieldKey": "repo_id",
+                "fn": "refresh_pipeline_identity",
+                "values": {"model_type": "DummyCustomPipeline"},
+                "queue": False,
+            },
+        )
+        active_requirement = {
+            "schemaVersion": 1,
+            "delivery": "optional_overlay",
+            "requiredNow": True,
+            "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+            "executionProfileIds": ["custom-modular:reviewed-loader"],
+            "state": "active",
+            "reason": "optional_runtime_active",
+        }
+        with patch("modiff.server.field_action_optional_runtime_requirement", return_value=active_requirement):
+            response = await server.field_action(request)
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 409)
+        self.assertEqual(payload["category"], "custom_pipeline")
+        self.assertEqual(payload["error_code"], "custom_pipeline_unpinned_auxiliary")
+        self.assertEqual(payload["recovery_hint"], "Pin every auxiliary repository to an exact commit.")
 
     async def test_generated_media_is_preserved_without_a_frontend_history_post(self):
         server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)

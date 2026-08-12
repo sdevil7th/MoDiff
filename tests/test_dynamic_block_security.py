@@ -35,13 +35,20 @@ def _verified(config=None):
     )
 
 
+def _binding(config=None):
+    return SimpleNamespace(
+        pipeline_config=lambda: _custom_config() if config is None else config,
+        identity=SimpleNamespace(to_dict=lambda: {"schema": "fixture"}),
+    )
+
+
 class DynamicBlockSecurityTests(unittest.TestCase):
     def test_imported_trust_and_non_boolean_values_fail_before_any_loader(self):
         node = DynamicBlockNode("dynamic-imported-trust")
 
         cases = (
-            (False, ValueError, "contract-preview only"),
-            (True, ValueError, "contract-preview only"),
+            (False, ValueError, "backend-issued reviewed identity"),
+            (True, ValueError, "task-scoped operator authorization"),
             ("false", TypeError, "JSON boolean"),
             (1, TypeError, "JSON boolean"),
         )
@@ -53,12 +60,12 @@ class DynamicBlockSecurityTests(unittest.TestCase):
                     "_get_verified_custom_config",
                 ) as verify_config,
                 patch(
-                    "diffusers.ModularPipeline.from_pretrained",
+                    "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
                 ) as pipeline_loader,
             ):
                 with self.assertRaisesRegex(error_type, message):
                     node.execute(
-                        "owner/custom-block",
+                        {"source": "hub", "value": "owner/custom-block"},
                         "cpu",
                         False,
                         trust_value,
@@ -73,13 +80,12 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         node = DynamicBlockNode("dynamic-sidecar-revision")
         verified = _verified()
         with (
-            patch("modules.ModularDiffusers.dynamic_node.resolve_model_revision", return_value=_REVISION),
             patch(
                 "modules.ModularDiffusers.dynamic_node.PipelineConfig.load_verified",
                 return_value=verified,
             ) as load_verified,
         ):
-            result = node._get_verified_custom_config("owner/custom-block", "main")
+            result = node._get_verified_custom_config("owner/custom-block", _REVISION)
 
         self.assertIs(result, verified)
         load_verified.assert_called_once_with(
@@ -98,10 +104,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         for index, params in enumerate(hostile_actions):
             node = DynamicBlockNode(f"dynamic-hostile-action-{index}")
             node.send_node_definition_with_meta = MagicMock()
-            with patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config(params)),
+            with patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config(params)),
             ):
                 with self.assertRaisesRegex(ValueError, "must not define"):
                     node.update_node(
@@ -118,7 +123,7 @@ class DynamicBlockSecurityTests(unittest.TestCase):
     def test_trusted_preview_is_rejected_before_sidecar_resolution(self):
         node = DynamicBlockNode("dynamic-trusted-preview")
         node.send_node_definition_with_meta = MagicMock()
-        with patch.object(node, "_get_verified_custom_config") as verify_config:
+        with patch("modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding") as verify_config:
             with self.assertRaisesRegex(ValueError, "Trust Remote Code off"):
                 node.update_node(
                     {
@@ -148,10 +153,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         node = DynamicBlockNode("dynamic-declarative-actions")
         node.send_node_definition_with_meta = MagicMock()
         with (
-            patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config(params)),
+            patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config(params)),
             ) as verify_config,
             patch("modules.ModularDiffusers.dynamic_node.PipelineConfig.load") as network_config_load,
         ):
@@ -166,7 +170,13 @@ class DynamicBlockSecurityTests(unittest.TestCase):
 
         published_params = node.send_node_definition_with_meta.call_args.args[0]
         self.assertEqual(published_params, params)
-        verify_config.assert_called_once_with("owner/custom-block", _REVISION)
+        verify_config.assert_called_once_with(
+            source="hub",
+            repo_id="owner/custom-block",
+            revision=_REVISION,
+            trust_remote_code=False,
+            expected_identity=None,
+        )
         network_config_load.assert_not_called()
 
     def test_declarative_sidecar_cannot_target_unpublished_fields(self):
@@ -186,10 +196,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         for index, params in enumerate(hostile_targets):
             node = DynamicBlockNode(f"dynamic-hostile-target-{index}")
             node.send_node_definition_with_meta = MagicMock()
-            with patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config(params)),
+            with patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config(params)),
             ):
                 with self.assertRaisesRegex(ValueError, "unknown contract field|input or output"):
                     node.update_node(
@@ -206,10 +215,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         for index, field_name in enumerate(("__proto__", "prototype", "constructor")):
             node = DynamicBlockNode(f"dynamic-prototype-field-{index}")
             node.send_node_definition_with_meta = MagicMock()
-            with patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config({field_name: {"type": "string"}})),
+            with patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config({field_name: {"type": "string"}})),
             ):
                 with self.assertRaisesRegex(ValueError, "fields must map"):
                     node.update_node(

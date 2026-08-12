@@ -22,6 +22,7 @@ from modiff.diffusers_profiles import (
 )
 from modiff.optional_runtime_execution import (
     OptionalRuntimeExecutionBlocked,
+    field_action_optional_runtime_requirement,
     graph_optional_runtime_requirement,
     loader_optional_runtime_requirement,
     optional_runtime_requirement_for_profiles,
@@ -325,6 +326,59 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertIsNone(reason)
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
+
+    def test_reviewed_custom_loaders_share_the_first_use_optional_runtime_gate(self):
+        cases = (
+            (
+                "ModelsLoader",
+                {"model_type": "DummyCustomPipeline", "repo_id": {"source": "hub", "value": "owner/repo"}},
+                "custom-modular:reviewed-loader",
+            ),
+            (
+                "DynamicBlockNode",
+                {"repo_id": {"source": "hub", "value": "owner/repo"}},
+                "custom-modular:reviewed-block",
+            ),
+        )
+        for action, values, expected_id in cases:
+            with self.subTest(action=action):
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.ModularDiffusers",
+                    action,
+                    values,
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected_id])
+                requirement = loader_optional_runtime_requirement(
+                    "modules.ModularDiffusers",
+                    action,
+                    values,
+                    catalog_resolver=lambda: runtime_catalog("missing"),
+                )
+                self.assertTrue(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "missing")
+
+    def test_reviewed_custom_preview_actions_do_not_probe_or_install_the_runtime(self):
+        catalog = mock.Mock(side_effect=AssertionError("preview must not inspect the runtime catalog"))
+        cases = (
+            ("ModelsLoader", "refresh_pipeline_identity"),
+            ("DynamicBlockNode", "update_node"),
+        )
+        for action, method_name in cases:
+            with self.subTest(action=action):
+                requirement = field_action_optional_runtime_requirement(
+                    "modules.ModularDiffusers",
+                    action,
+                    method_name,
+                    {
+                        "model_type": "DummyCustomPipeline",
+                        "repo_id": {"source": "hub", "value": "owner/repo"},
+                    },
+                    catalog_resolver=catalog,
+                )
+                self.assertFalse(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "base_satisfied")
+        catalog.assert_not_called()
 
     def test_local_custom_and_malformed_shared_selectors_fail_closed_after_cutover(self):
         catalog = mock.Mock(return_value=runtime_catalog("missing"))

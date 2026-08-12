@@ -44,9 +44,8 @@ Open the workflow library in the left sidebar and expand `modular_diffusers`. Th
 - `image_to_image` — prompt plus reference-image conditioning.
 - `multiple_image_edit` — multiple-image editing inputs.
 - `quantization` — an example with an explicit quantization configuration.
-- `dynamic_node` — a historical Hub-backed contract-preview graph; it is not runnable in this release.
 
-Drag a runnable built-in graph onto the canvas, inspect its selected model and required inputs, then update the graph before running. Models are not bundled with these JSON files; MoDiff may need to download them, and gated repositories may require accepted terms plus a Hugging Face read token. The historical `dynamic_node` graph remains only as migration input; its selected repository cannot produce a current MoDiff contract preview.
+Drag a runnable built-in graph onto the canvas, inspect its selected model and required inputs, then update the graph before running. Models are not bundled with these JSON files; MoDiff may need to download them, and gated repositories may require accepted terms plus a Hugging Face read token.
 
 [Watch the bundled workflow browser demo (MP4)](https://github.com/user-attachments/assets/a4d0604f-80ea-4470-80e6-53a73e584ca3)
 
@@ -156,13 +155,11 @@ Component reuse depends on compatible pipeline contracts and current cache state
 
 ## Dynamic Block
 
-`Dynamic Block` previews the declarative node contract from a compatible Modular Diffusers repository. Enter a repository ID and an exact 40-character commit, cache that revision through Model Manager, then inspect its sanitized generated fields. Previewing reads only the local Hub cache, performs no network fetch, and does not construct or execute the upstream pipeline.
-
-The legacy `diffusers/FLUX.2-klein-4B-modular` selector and bundled graph are not valid MoDiff examples because that reviewed revision does not publish `modiff_pipeline_config.json`. They remain migration debt tracked by roadmap segment P1.1 and are not runnable.
+`Dynamic Block` previews the declarative node contract from a compatible Modular Diffusers repository. Enter a neutral repository ID and an exact 40-character commit, cache that revision through Model Manager, then inspect its sanitized generated fields. Previewing reads only the local Hub cache, performs no network fetch, and does not construct or execute the upstream pipeline.
 
 Dynamic blocks are not arbitrary no-code plugins. Sidecars must use MoDiff's bounded declarative schema, and executable callbacks are rejected.
 
-`Dynamic Block` is `contract_only` in this release. MoDiff can preview its sanitized fields, but execution fails before Diffusers can import any repository-selected component library.
+Execution accepts only an exact Hub snapshot whose canonical `modular_model_index.json` selects a pinned installed Diffusers pipeline/block pair, declares only the official Diffusers or Transformers component libraries, and pins every main and auxiliary component repository. MoDiff copies the reviewed sidecar and canonical index into a private content-addressed execution snapshot before constructing installed blocks. Local mutable repositories remain preview-only. Repository Python remains unavailable without a fresh task-scoped operator authorization; a workflow checkbox or checksum is never consent.
 
 ## Combining workflows
 
@@ -170,9 +167,9 @@ Multiple Modular Diffusers paths can coexist on one canvas and share compatible 
 
 Only nodes connected to the submitted graph path execute, but shared component state still consumes memory. Inspect Queue, loader diagnostics, and GPU-process information when a combined graph exceeds available resources.
 
-## Custom Hub contract previews
+## Reviewed custom Hub contracts
 
-MoDiff can inspect compatible custom contracts from an exact locally cached Hugging Face Hub commit. This is a bounded, no-network preview path, not an executable custom-pipeline feature:
+MoDiff can inspect compatible custom contracts from an exact locally cached Hugging Face Hub commit. Preview is bounded and does not construct a pipeline, install optional libraries, or fetch from the network. Execution is available only when the repository's canonical upstream contract resolves entirely to the reviewed installed Diffusers surface:
 
 Custom block repositories must publish MoDiff's current `modiff_pipeline_config.json` schema. The loader does not fall
 back to earlier extension schemas or filenames.
@@ -180,7 +177,11 @@ back to earlier extension schemas or filenames.
 1. Review the repository, owner, dependencies, license, and exact commit.
 2. Enter the reviewed 40-character commit revision; moving branches and tags are rejected.
 3. Keep `trust_remote_code` off. The backend rejects it before identity issuance, cache reuse, or model construction.
-4. Use the preview only to inspect the sanitized node contract. Executable custom repository code is deferred until MoDiff has a reviewed component dependency contract and isolated, task-scoped authorization.
+4. Review the canonical `modular_model_index.json`: the pipeline and blocks must match MoDiff's pinned upstream contract, component libraries are limited to official Diffusers or Transformers exports, and every auxiliary Hub repository must have an exact commit.
+5. Install any required Transformers/PEFT runtime explicitly through Setup. Preview itself never requests or installs that runtime.
+6. Run only after the backend revalidates the exact repository identity and creates its private content-addressed metadata snapshot. Local mutable repositories remain preview-only.
+
+Repository Python remains disabled. Supporting it would require a fresh task-scoped operator authorization that cannot be persisted in or restored from a workflow; the current trust checkbox is not that authorization.
 
 [Watch the historical custom prompt block demo (MP4)](https://github.com/user-attachments/assets/d68bc8c1-1b1c-478a-b94b-1e498c60a4fc). It predates the current fail-closed execution boundary and is not current qualification evidence.
 

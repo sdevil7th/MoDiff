@@ -1834,10 +1834,15 @@ class ModelsLoader(NodeBase):
                     "Custom Modular Diffusers repository code is disabled; refresh the contract with Trust Remote "
                     "Code off."
                 )
-            raise RuntimeError(
-                "Custom Modular Diffusers is contract_only in this release. Contract preview is available, but "
-                "execution is disabled pending the P1.1 reviewed component dependency contract."
+            binding = resolve_custom_pipeline_binding(
+                source=identity.source,
+                repo_id=identity.repo_id,
+                revision=identity.revision,
+                trust_remote_code=False,
+                expected_identity=identity,
             )
+            kwargs["_reviewed_custom_identity"] = binding.identity.execution_id
+            return super().__call__(**kwargs)
         reviewed_selection = self._preflight_reviewed_builtin_selection(
             model_type=model_type,
             repo_id=kwargs.get("repo_id"),
@@ -2139,6 +2144,7 @@ class ModelsLoader(NodeBase):
         modiff_pipeline_identity=None,
         refresh_pipeline_identity_button=False,
         _reviewed_builtin_identity=None,
+        _reviewed_custom_identity=None,
     ):
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
@@ -2266,6 +2272,7 @@ class ModelsLoader(NodeBase):
             return None
         self._loader_diagnostics["repo_id"] = real_repo_id
         custom_identity = None
+        custom_binding = None
         pipeline_load_path = real_repo_id
         if is_custom_pipeline:
             expected_identity = modiff_pipeline_identity
@@ -2290,25 +2297,29 @@ class ModelsLoader(NodeBase):
             real_repo_id = custom_binding.identity.repo_id
             revision = custom_binding.identity.revision
             pipeline_load_path = custom_binding.repository_path
-            raise RuntimeError(
-                "Custom Modular Diffusers is contract_only in this release. Upstream can import repository-named "
-                "component libraries even with Trust Remote Code off, so execution is disabled pending the P1.1 "
-                "reviewed component dependency contract."
-            )
+            if _reviewed_custom_identity not in (None, custom_binding.identity.execution_id):
+                raise ValueError("The reviewed custom pipeline metadata changed after cache validation; retry the run.")
+            loader_component_outputs = tuple(custom_binding.pipeline_config().loader_component_outputs)
         self._loader_diagnostics["revision"] = revision
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
         configure_components_manager_offload(components, mode=offload_mode, device=device)
 
-        self.loader = _instantiate_reviewed_builtin_pipeline(
-            model_type,
-            pipeline_load_path,
-            index_filename=reviewed_index_filename,
-            index_document=reviewed_index_document,
-            components_manager=components,
-            collection=self.node_id,
-        )
+        if custom_binding is not None:
+            self.loader = custom_binding.instantiate(
+                components_manager=components,
+                collection=self.node_id,
+            )
+        else:
+            self.loader = _instantiate_reviewed_builtin_pipeline(
+                model_type,
+                pipeline_load_path,
+                index_filename=reviewed_index_filename,
+                index_document=reviewed_index_document,
+                components_manager=components,
+                collection=self.node_id,
+            )
         self._loader_diagnostics["component_revision_pins"] = pin_modular_component_revisions(
             self.loader,
             real_repo_id,
