@@ -3645,11 +3645,31 @@ Assets: generated remotely even when a local smoke is allowed.
 
 ### Committable segments
 
-- [ ] **P3.1 Generic unconditional image generation**
+- [x] **P3.1 Generic unconditional image generation**
   - Add an unconditional task mode/adapter, not DDPM-specific nodes.
   - Integrate `DDPMPipeline`, `DDIMPipeline`, and
     `ConsistencyModelPipeline` in separate exact-pair entries.
   - Local smoke: tiny resolution and bounded steps; hard timeout 40 minutes.
+  - Evidence 2026-08-13: backend `80e4587` and client `8f2a671`
+    add one generic `UnconditionalGenerate` adapter, three immutable exact
+    model/mode pairs, prompt-free fixed-resolution Studio controls, and three
+    deterministic canonical workflows. `google/ddpm-cifar10-32` is pinned at
+    `267b167dc01f0e4e61923ea244e8b988f84deb80` for DDPM and DDIM;
+    `openai/diffusers-cd_imagenet64_l2` is pinned at
+    `5f462e4403fc37b72ec6004e806c71805db22387` for the consistency
+    model. Offline cached CPU node smokes completed at two DDPM steps
+    (`32x32`, `0.10s`), two DDIM steps (`32x32`, `0.08s`), and one
+    consistency step (`64x64`, `0.28s`), all far below the 40-minute bound.
+    The backend gate passed (`1266 passed, 3 skipped, 2511 subtests`) with
+    Ruff `E9,F`, package, shell, and diff checks; all 73 canonical workflows
+    verified; `npm run check` and the complete mocked Studio browser sweep
+    passed (`102 passed`). The production JavaScript bundle is
+    `525941 / 526336` total gzip bytes with the entry at
+    `278350 / 448512`. Auto and Gallery remain disabled pending remote output
+    review and immutable Dataset publication. No generated media was retained
+    or committed. The standalone preflight confirmed port 8088 was free but
+    remains non-ready only because the installed CPU profile digest predates
+    this checkout, the same unrelated local drift recorded for P2.4.
 - [ ] **P3.2 Small latent image workflows**
   - Stable Diffusion 1.x/2.x text-to-image, img2img, and inpaint.
   - LCM 1-4 step workflows and PAG using compatible base weights.
@@ -3977,7 +3997,8 @@ Add references only after the corresponding evidence exists.
 | P2.4 | `0ace2ae` | `8e25f5f` | Remote pending | Pending | Complete source slice: ten new exact short-video planning contracts and the existing Wan I2V/TI2V paths verify in the 70-workflow deterministic catalog; complete backend/client and focused browser gates passed without weights or media, while Auto and Gallery remain disabled pending P2.5. |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
-| P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
+| P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
+| P3.2-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
 | P4.1-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
