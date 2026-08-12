@@ -4,17 +4,18 @@ Last reviewed: 2026-08-12
 
 MoDiff treats accelerator extensions and optional model libraries as reviewed
 runtime contracts, not as uncontrolled additions to the main Python
-environment. The current backend includes the fail-closed control and
-artifact-validation scaffold for an app-owned staged overlay, but no package
-profile is qualified for installation or activation yet. Existing hashless
+environment. The backend includes a fail-closed, artifact-locked app-owned
+staged overlay with explicit per-platform qualification and delivery. Existing hashless
 optimization overlays are classified as `legacy_unqualified`; they are never
 loaded or activated, and an explicit rollback deactivates them to the base
 environment.
 
 The first optional model-library contract moves Transformers `5.14.1` and PEFT
 `0.20.0` together with their eight overlay-owned transitive distributions. It
-is published as `candidate_unqualified` with `cutoverReady: false`, exact
-source-controlled artifact locks, and unavailable install/activation actions.
+publishes one immutable six-target contract. Linux and Windows x86-64 are
+`qualified` with install/activation actions available; Linux ARM64, Windows
+ARM64, and both macOS architectures remain `candidate_unqualified` and
+base-delivered.
 The lock covers ten wheels on Python 3.12 for Linux, macOS, and Windows on
 x86-64 and ARM64. Merely finding the requested versions—or merely publishing
 these locks—does not make the contract runnable.
@@ -51,22 +52,23 @@ rollback contracts. Setup implements that lifecycle behind the backend-owned
 install or repair requires explicit consent, polls only the returned bounded job
 identity, supports cancellation, and keeps activation and rollback behind their
 own consent steps. Ambiguous staged environments do not expose activation.
-Current source flags keep the candidate unqualified, so Setup renders no package
-controls and sends no package mutation request. Direct install and activation
-requests still return a fail-closed conflict before a lease, job, network
-request, staged directory, or subprocess is created. Runtime-only optimization
+The status catalog includes the effective `platform` and `machine`, and the
+client names that target beside the runtime state. A pending target renders no
+package controls and rejects direct install or activation before a lease, job,
+network request, staged directory, or subprocess exists. A qualified target
+requires explicit consent for install, activation, and rollback. Runtime-only optimization
 features may still be explicitly selected or qualified when their existing
 capability contract permits it.
 
 ## First-use execution boundary
 
 Optional-runtime dependency metadata is intentionally separate from executable
-delivery. Every current Diffusers execution profile is `base` delivered even
-though it declares the composite Transformers/PEFT profile, so current missing,
-wrong-version, or unqualified observations do not change browsing, Auto,
-capability readiness, graph execution, or field actions. A future atomic
-cutover changes an exact execution profile to `optional_overlay`; only then is
-the optional runtime externally required for that execution.
+delivery. Every current Diffusers execution profile publishes a complete
+platform-delivery table: Linux and Windows x86-64 use `optional_overlay`, while
+pending architectures use `base`. The effective target is resolved from that
+reviewed table rather than a hidden platform shortcut. Discovery, workflow
+browsing/opening, contract preview, and Auto planning remain non-installing on
+every target.
 
 Auto plans, workflow listings, model capabilities, and execution profiles
 publish the same seven-field `optionalRuntimeRequirement` contract:
@@ -80,12 +82,13 @@ runtime and one execution profile. States are `base_satisfied`, `missing`,
 Malformed or ambiguous contracts and status catalogs fail closed as
 `unavailable`.
 
-A base-delivered `base_satisfied` requirement is execution-ready. When
-`requiredNow` is true, only `state: active` is ready. Active requires the
+A base-delivered `base_satisfied` requirement is execution-ready. On qualified
+Linux/Windows x86-64 targets, when `requiredNow` is true, only `state: active`
+is ready. Active requires the
 current worker and status catalog to agree on the active overlay, and each
 required profile must have `contractState: qualified` and
-`cutoverReady: true`. The current `candidate_unqualified` profile therefore
-cannot become runnable. Graph admission inspects only loader nodes on
+`cutoverReady: true`. An unqualified target cannot become overlay-runnable and
+remains base-delivered. Graph admission inspects only loader nodes on
 executable paths; field actions use their authorized module, action, and
 values. Both are rechecked at the worker/pre-import boundary, and client
 `runtimeHints` cannot authorize execution.
@@ -126,24 +129,18 @@ a qualified deployment.
 
 ## Staged-overlay qualification boundary
 
-The staged-overlay implementation is intentionally not an executable product
-claim. Qualification still requires, at minimum:
-
-- cross-platform execution of the locked installer/promotion boundary and
-  clean-base, staged, restart/rollback, and representative no-weight/live
-  workload evidence on each target class; and
-- stricter fresh-process side-effect containment evidence for the installed
-  Transformers/PEFT closure.
-
-Until those gates are closed, `installActionAvailable`,
-`activationAvailable`, and `cutoverReady` remain false. The compatibility
-routes do not make a candidate eligible by themselves.
+Qualification is target-specific. Windows x86-64 has clean-base, staged,
+supervised lifecycle, no-weight, and guarded live-model evidence. Linux x86-64
+has clean-base, staged, supervised lifecycle, and no-weight evidence. Those two
+targets are actionable. The other four target records remain pending and
+base-delivered; their artifact locks alone do not make them eligible.
 
 ### Portable target qualification
 
 `scripts/qualify_optional_runtime.py` prepares the same bounded qualification
 on each supported operating-system/architecture pair without exposing a
-product API or changing the source-controlled profile flags. Preflight is
+product API or changing the source-controlled target table. It accepts an
+already-qualified target or projects only the current pending target in memory. Preflight is
 offline and non-mutating apart from a disposable copy of the already verified
 managed uv executable:
 
@@ -188,12 +185,11 @@ model/media result, or another platform. Run and record those remaining target
 checks separately before changing any production action or cutover flag.
 
 Linux x86-64 now has the portable and supervised evidence recorded below. No
-local macOS qualification host is currently available, so macOS remains the
-explicit open platform gate. Its evidence must come from the manual reviewed
-hosted workflow or a contributor-controlled Mac; until then, do not enable
-global action/cutover flags. A Windows-and-Linux-only cutover would require a
-separate reviewed platform-scoped delivery design that keeps macOS
-base-delivered and tested—it is not implied by skipping the macOS matrix.
+local macOS qualification host is currently available, so macOS remains an
+explicit pending target. Its evidence must come from the manual reviewed hosted
+workflow or a contributor-controlled Mac. Until then, its checked contract
+keeps both direct base dependencies and `delivery: base`; a passing reviewed
+run can promote only that target in a later commit.
 
 Qualification preparation now includes exact filename, URL, SHA-256, and size
 locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
@@ -237,9 +233,9 @@ requirements with a separate `--hash=sha256:...`, and `--link-mode copy` is
 required so the authenticated overlay never shares hardlinks with uv's cache.
 The path-bearing requirements document plus uv's bounded `.lock` and
 `uv_cache.json` bookkeeping are removed before authentication/promotion. No
-model artifact was downloaded or executed. This is one Windows qualification,
-not Linux/macOS/ARM64 or representative model-workload evidence, so action and
-cutover flags remain false.
+model artifact was downloaded or executed. At that checkpoint it was one
+Windows qualification, not Linux/macOS/ARM64 or representative model-workload
+evidence, so source action and cutover flags remained false.
 
 A second isolated Windows x86-64 run on 2026-08-12 exercised a bounded local
 no-weight workload through that same production install, validation, promotion,

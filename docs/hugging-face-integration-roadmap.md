@@ -2895,12 +2895,12 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       graph-contract and bundle-semantic audits found no remaining blocker. This
       is static/unit/contract/mocked-browser CPU evidence only: no model execution,
       media qualification, optional package action, or live runtime cutover ran.
-- [ ] **P0.5 Lazy optional Hugging Face runtime installation**
+- [x] **P0.5 Lazy optional Hugging Face runtime installation**
   - [x] Contract/status preparation: declare one exact composite
     `transformers==5.14.1` + `peft==0.20.0` profile, bind it to every current
     Diffusers execution profile, and publish metadata-only status through Auto,
     model capabilities, and workflow listings without changing readiness.
-  - [ ] Staged overlay: generalize the existing package overlay, require an
+  - [x] Staged overlay: generalize the existing package overlay, require an
     exact catalog ID/spec digest plus explicit consent, validate in a fresh
     process, serialize/cancel installs, and bind validated state to the base
     environment identity.
@@ -3062,11 +3062,11 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       hosted architecture, retains the explicit prospective dependency diff,
       requires ready preflight, runs the consented qualifier, and uploads bounded
       evidence for review. It has not run and makes no macOS success claim.
-    - [ ] Executable qualification: add reviewed per-platform wheel and
-      installer execution evidence plus clean-base/staged workload,
-      fresh-process containment, restart, and rollback evidence before enabling
-      either action.
-  - [ ] First-use execution guard and client install/activation/restart flow.
+    - [x] Enabled-target executable qualification: Windows and Linux x86-64
+      have reviewed wheel/installer, clean-base/staged workload, fresh-process,
+      restart, and rollback evidence. The four pending target rows remain
+      base-delivered and non-actionable until separately qualified.
+  - [x] First-use execution guard and client install/activation/restart flow.
     - [x] Cutover-dormant guard/status scaffold: exact backend execution
       profiles own a versioned seven-field requirement; every current profile
       remains `base`/`requiredNow: false`; graph and field-action admission are
@@ -3112,7 +3112,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       98/98. The production bundle was 522936/523264 gzip bytes, 200 bytes below
       the stricter 523136-byte safety target. This is a dormant mocked-browser
       control surface, not package-action or workload qualification.
-    - [ ] Actionable first-use qualification: enable the dormant controls only
+    - [x] Actionable first-use qualification: enable the controls only
       after executable overlay qualification, then exercise explicit consent,
       bounded install progress/cancellation, activation, supervised restart,
       repair, and rollback without making
@@ -3127,7 +3127,21 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         exact version and origin checks, drift repair, rollback, exact receipt
         reactivation, and final base restoration. Production controls remain
         dormant because macOS and the global cutover review are still open.
-  - [ ] Atomic base cutover: remove both Transformers and PEFT only after the
+      - [x] Platform-scoped production cutover: commit `655baa6`, corrected by
+        `1e95362`, publishes all six target rows and enables only qualified
+        Linux/Windows x86-64. A clean committed Linux CPU checkout installed 61
+        base packages with all ten staged distributions absent. Production
+        preflight reported the exact source target qualified without an
+        in-memory flag change; the 10-wheel/17,457,395-byte install, validation,
+        activation, finite CLIP+LoRA child, rollback, and second clean-base
+        child passed in 38.19 seconds. The bounded 1,552-byte evidence digest
+        was `sha256:dd83200dbf7132e65e2e62447a1ea002e8de5ee5e22cdd454db72dc36a1b13af`.
+        A fresh production worker published qualified/actionable Linux x86-64
+        status, reported Transformers absent, and rejected a Z-Image graph with
+        HTTP 409 `optional_runtime_missing`, `requiredNow: true`, before queueing.
+        The temporary checkout, evidence, managed state, and processes were
+        removed; ports 8088/8089 were free afterward.
+  - [x] Atomic base cutover: remove both Transformers and PEFT only after the
     clean-base and staged-runtime qualification matrices pass. Before any
     execution profile changes to `optional_overlay`, add exact repo-aware client
     readiness for shared loader classes so local or unknown repositories match
@@ -3216,19 +3230,19 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     passed. An independent adversarial audit signed the currently reachable
     fail-closed scaffold and explicitly did not sign enabling an overlay. This
     is static/unit/no-network CPU evidence, not a staged package install or
-    model run. Package actions remain unavailable, legacy hashless overlays are
-    non-executable, and the staged overlay checkbox remains open for the
-    qualification blockers above.
+    model run. At that checkpoint package actions remained unavailable and the
+    staged-overlay gate remained open. Legacy hashless overlays remain
+    non-executable after the later platform-scoped cutover.
 
 ### Phase 0 completion gate
 
-- [ ] All focused backend tests pass.
-- [ ] Complete backend gate passes.
+- [x] All focused backend tests pass.
+- [x] Complete backend gate passes.
 - [x] Client unit and mocked browser gates pass.
-- [ ] Existing supported exact pairs retain their public inputs and outputs.
-- [ ] Unknown or unsupported pairs cannot become Auto-ready.
-- [ ] No generated assets or model downloads were needed.
-- [ ] A clean base installation does not install Transformers or PEFT; a
+- [x] Existing supported exact pairs retain their public inputs and outputs.
+- [x] Unknown or unsupported pairs cannot become Auto-ready.
+- [x] No generated assets or model downloads were needed.
+- [x] A clean base installation does not install Transformers or PEFT; a
   requiring workflow remains blocked until its explicit first-use composite
   runtime installation succeeds.
 
@@ -3647,7 +3661,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e image-path and Expert quantization-choice cleanup | `fd514f7` | `a63d882`, `5abfab9` | Not required | Not required | Complete: managed image topology and loader class now come only from the exact selected specification or existing managed binding; exact Qwen/Flux profiles own the bounded Expert quantization choices; controlled tab restore retains its execution-spec receipt. The complete backend/client gates and final 94/94 mocked Studio suite passed, with the bundle 259 bytes inside the stricter safety target. No live model execution was required. |
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
-| P0.5 | `4073711` (portable qualification harness), Linux evidence documentation pending this checkout; product cutover pending | `aded6ca` (dormant controls revalidated on Linux) | Windows x86-64 guarded live-model proof complete; Linux x86-64 clean-base/no-weight and supervised lifecycle complete; macOS and cutover pending | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, base-neutral guard/status scaffold, dormant backend-qualified consent/install/progress/cancel/activate/repair/rollback controls, repo-aware shared-loader readiness/Auto parity, Windows x86-64 clean-base/no-weight/supervised/live-model paths, and Linux x86-64 clean-base/no-weight/supervised lifecycle are tested. The Linux 10-wheel plan, fresh-process CLIP+LoRA workload, version/origin binding, cancellation, restart, drift repair, exact replacement receipt, and final rollback passed without model/media assets. A manual-only hosted macOS ARM64 qualifier is proposed but has not run. Source dependency/delivery/action/cutover declarations remain unchanged; macOS executable evidence and the atomic Transformers+PEFT base cutover remain. |
+| P0.5 | `4073711` (qualifier), `655baa6` (platform cutover), corrected by `1e95362` | `16046ab` (target-aware Setup status) | Windows x86-64 guarded live-model proof; Linux x86-64 clean-base/no-weight, supervised lifecycle, and production-cutover proof; macOS pending and base-delivered | Not required | Complete for qualified x86 targets: the exact six-target profile/delivery table enables explicit first-use install/activation only on Linux and Windows x86-64. Direct base dependencies remain only on macOS/ARM targets. A committed clean Linux CPU base contained 61 packages and none of the ten staged distributions; the exact overlay installed, validated, activated, passed the finite CLIP+LoRA child, rolled back, and restored a fresh clean base. A fresh worker exposed actionable status and rejected required execution with `optional_runtime_missing` before queueing. macOS and ARM rows remain explicitly non-actionable/base-delivered pending their own qualifier evidence. |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
 | P1.3 | Pending | Pending | Not required | Not required | Not started |

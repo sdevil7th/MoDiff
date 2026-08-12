@@ -360,21 +360,23 @@ every required profile reports `contractState: qualified` and
 `cutoverReady: true`. Missing, malformed, ambiguous, duplicate, oversized, or
 inconsistent execution/catalog metadata resolves to `unavailable`, not active.
 
-The current composite Transformers + PEFT profile is contract metadata plus a
-non-runnable staged-lifecycle scaffold. It reports
-`contractState: candidate_unqualified`, `cutoverReady: false`, a complete
-source-controlled six-target wheel lock for its ten exact `stagedRequirements`,
-and unavailable install and activation actions. Each lock includes the exact
+The current composite Transformers + PEFT profile has a complete
+source-controlled six-target wheel lock for its ten exact `stagedRequirements`.
+Its effective response also reports `platform` and `machine`. Linux and Windows
+x86-64 report `contractState: qualified`, `cutoverReady: true`, and available
+install/activation actions. Linux ARM64, Windows ARM64, and both macOS targets
+report `candidate_unqualified`, remain base-delivered, and expose no actions.
+Each lock includes the exact
 filename, official PyPI URL, SHA-256, byte size, Python target, platform, and
 machine. Its metadata-only package status is `missing`,
 `wrong_version`, or `present_unqualified`; unreadable distribution metadata
 fails closed as `wrong_version` with `metadataState: unreadable`. These
-observations do not change Auto selection, `canAutoRun`, or execution
-readiness, and browsing or opening a workflow never imports, installs, or
-activates the runtime. Every current Diffusers execution profile has
-`delivery: base` and `requiredNow: false`; publishing an optional profile ID is
-dependency metadata, not an activation gate. A future cutover must change the
-authoritative exact execution profile to `optional_overlay` atomically.
+observations do not install anything during Auto planning, discovery, browsing,
+or workflow open. Every current Diffusers execution profile publishes its full
+platform delivery table. Linux/Windows x86-64 resolve to
+`delivery: optional_overlay` and `requiredNow: true`; pending targets resolve to
+`delivery: base` and `requiredNow: false`. An unknown or duplicate target fails
+closed rather than selecting an overlay implicitly.
 
 `GET /runtime/optional-runtimes` returns the same profile catalog plus bounded
 overlay state, staged-environment summaries, and a redacted active job summary.
