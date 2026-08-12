@@ -198,6 +198,19 @@ model artifact and changed no source action flag. It closes the Windows
 no-weight staged-workload check only; it is not a clean-base install, supervised
 server restart, live model/media run, or evidence for another target platform.
 
+The prospective clean-base Windows x86-64 matrix then installed the reviewed
+NVIDIA backend from a detached checkout with Transformers and PEFT removed from
+the project dependencies and from required preflight imports. The managed
+installer produced a compatible 64-package CUDA base; all ten overlay
+distributions were absent; preflight was ready; and registry discovery loaded
+132 nodes without loading any staged distribution. Starting from that base, the
+same ten locked wheels and 16,930,199-byte archive set passed validation,
+promotion, activation, the finite CLIP+LoRA workload above in a fresh process,
+and rollback to a process with no active environment. This proves the Windows
+clean-base/staged-runtime dependency split. It still does not qualify a live
+model artifact, supervised server restart/repair, or another platform, and the
+source dependency/action/cutover declarations therefore remain unchanged.
+
 ## Runtime features
 
 The following features have concrete runtime implementations and remain

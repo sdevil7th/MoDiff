@@ -2176,32 +2176,40 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
 
 class PreflightHardwareTests(unittest.TestCase):
-    def test_diffusers_package_status_rejects_an_older_api_contract(self):
-        old_diffusers = SimpleNamespace(
-            __version__="0.39.0",
-            AceStepPipeline=type("AceStepPipeline", (), {}),
-        )
+    def test_diffusers_package_status_does_not_probe_optional_runtime_symbols(self):
+        class CleanBaseDiffusers:
+            __version__ = "0.40.0.dev0"
+
+            def __getattr__(self, name):
+                if name == "AceStepPipeline":
+                    raise AssertionError("optional-dependent pipeline symbol must not be probed")
+                raise AttributeError(name)
+
         with (
-            patch("modiff.preflight.metadata.version", return_value="0.39.0"),
-            patch("modiff.preflight.importlib.import_module", return_value=old_diffusers),
+            patch("modiff.preflight.metadata.version", return_value="0.40.0.dev0"),
+            patch("modiff.preflight.importlib.import_module", return_value=CleanBaseDiffusers()),
         ):
             status = preflight.package_status("diffusers", "diffusers")
 
+        self.assertTrue(status["available"])
+        self.assertNotIn("error", status)
+
+    def test_package_import_failure_cannot_remain_available(self):
+        with (
+            patch("modiff.preflight.metadata.version", return_value="1.0.0"),
+            patch("modiff.preflight.importlib.import_module", side_effect=RuntimeError("broken import")),
+        ):
+            status = preflight.package_status("example", "example")
+
         self.assertFalse(status["available"])
-        self.assertEqual(
-            status["contractMissing"],
-            [
-                "AceStepPipeline.load_lora_weights",
-                "AceStepPipeline.set_adapters",
-                "AceStepPipeline.unload_lora_weights",
-            ],
-        )
-        self.assertIn("Repair the managed environment", status["error"])
+        self.assertEqual(status["error"], "broken import")
 
     def test_report_adds_hardware_and_preserves_torch_human_summary(self):
         snapshot = hardware_snapshot()
+        checks = []
 
         def package_status(module_name, distribution_name, import_check=True):
+            checks.append((module_name, import_check))
             return {
                 "module": module_name,
                 "distribution": distribution_name,
@@ -2211,7 +2219,7 @@ class PreflightHardwareTests(unittest.TestCase):
                 "version": "unit-test",
             }
 
-        args = SimpleNamespace(check_port=65534, full=False)
+        args = SimpleNamespace(check_port=65534, full=True)
         with (
             patch("modiff.preflight.package_status", side_effect=package_status),
             patch("modiff.preflight.get_hardware_snapshot", return_value=copy.deepcopy(snapshot)),
@@ -2227,6 +2235,12 @@ class PreflightHardwareTests(unittest.TestCase):
         self.assertEqual(report["hardware"], snapshot)
         self.assertEqual(torch_status["cuda_device_name"], "Mock CUDA")
         self.assertTrue(torch_status["cuda_available"])
+        self.assertEqual(
+            [item["module"] for item in report["packages"]["optional_runtime"]],
+            ["transformers", "peft"],
+        )
+        self.assertIn(("transformers", False), checks)
+        self.assertIn(("peft", False), checks)
         self.assertEqual(
             report["namespace"],
             {
