@@ -187,6 +187,14 @@ supervised HTTP restart/cancel/repair sequence, accelerator execution, a live
 model/media result, or another platform. Run and record those remaining target
 checks separately before changing any production action or cutover flag.
 
+The next available physical target is Linux. No local macOS qualification host
+is currently available, so macOS remains an explicit open gate. Its evidence
+must come from a reviewed hosted macOS runner or a contributor-controlled Mac;
+until then, do not enable global action/cutover flags. A Windows-and-Linux-only
+cutover would require a separate reviewed platform-scoped delivery design that
+keeps macOS base-delivered and tested—it is not implied by skipping the macOS
+matrix.
+
 Qualification preparation now includes exact filename, URL, SHA-256, and size
 locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
 archive/executable pair for each supported target. The base installer writes a

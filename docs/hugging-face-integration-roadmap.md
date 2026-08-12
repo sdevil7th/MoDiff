@@ -3030,7 +3030,12 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       rejection, and bounded no-overwrite evidence. This prepares a reproducible
       Linux/macOS handoff; it is not platform evidence until executed there and
       does not replace supervised HTTP restart/cancel/repair or live model/media
-      qualification.
+      qualification. Linux is the next available physical target. No local
+      macOS host is available; macOS must remain pending until an approved
+      hosted runner or contributor-controlled Mac produces the same reviewed
+      evidence. Do not enable global action/cutover flags in the interim. A
+      Windows-and-Linux-only release would first require an independently
+      reviewed platform-scoped delivery contract that keeps macOS base-delivered.
     - [ ] Executable qualification: add reviewed per-platform wheel and
       installer execution evidence plus clean-base/staged workload,
       fresh-process containment, restart, and rollback evidence before enabling
