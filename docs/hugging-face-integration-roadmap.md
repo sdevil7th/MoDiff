@@ -3698,7 +3698,28 @@ Assets: generated remotely even when a local smoke is allowed.
       this checkout, the same unrelated local drift recorded for P2.4 and
       P3.1.
   - [ ] **P3.2b Stable Diffusion 2.x exact generic workflows**
-  - [ ] **P3.2c Latent Consistency Model 1-4 step workflows**
+  - [x] **P3.2c Latent Consistency Model 1-4 step workflows**
+    - Evidence 2026-08-13: backend `6a1b579` and client `9f7b7da`
+      add one exact generic text-to-image pair for
+      `SimianLuo/LCM_Dreamshaper_v7` at immutable revision
+      `a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5`, using the official
+      `LatentConsistencyModelPipeline`, safetensors, and MIT provenance. The
+      Studio profile exposes its native one-to-four-step range with a
+      four-step quality default and no unsupported negative-prompt control.
+    - The exact component snapshot cached in `6m58s`; the offline cached CPU
+      `LoadPipeline` plus generic `Generate` node smoke loaded in `0.57s` and
+      completed one step at `64x64` in `0.49s`. The in-memory output digest was
+      `fed2db181ee91a8edb6823f2959d37fc841ebd07196281232fcc9cf56112f508`;
+      no output file was retained.
+    - The backend gate passed (`1266 passed, 3 skipped, 2578 subtests`) with
+      Ruff `E9,F`, package, shell, and diff checks; all 77 canonical workflows
+      verified; `npm run check` and the complete mocked Studio browser sweep
+      passed (`103 passed`). The production JavaScript bundle is
+      `526082 / 526336` total gzip bytes with the entry at
+      `278350 / 448512`. Auto and Gallery remain disabled pending remote
+      quality review and immutable Dataset publication. The standalone
+      preflight confirmed port 8088 was free and remains non-ready only for the
+      previously recorded local CPU profile digest drift.
   - [ ] **P3.2d PAG workflows using compatible base weights**
 - [ ] **P3.3 Generic perception output**
   - Add prediction-map output semantics and integrate Marigold depth first.
@@ -4025,7 +4046,8 @@ Add references only after the corresponding evidence exists.
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
-| P3.2b-P3.2d, P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
+| P3.2c Latent Consistency Model | `6a1b579` | `9f7b7da` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the exact immutable DreamShaper LCM pair uses the generic image nodes, the 77-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
+| P3.2b, P3.2d, P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
 | P4.1-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
