@@ -3601,11 +3601,29 @@ output and assets remotely. Assets: remote Dataset only.
     `525276 / 525312` total production JavaScript gzip bytes with the entry at
     `285027 / 448512`. No weights, source media, inference output, or public
     asset was downloaded or generated.
-- [ ] **P2.4 Existing short-video graph paths**
+- [x] **P2.4 Existing short-video graph paths**
   - Wan 2.2 I2V/TI2V, Wan Animate, Wan first/last-frame, LTX long-prompt I2V,
     LTX2 joint audio/video, and Hunyuan FramePack.
   - This segment commits graph/template contracts only. It does not run video on
     the local machine.
+  - Evidence 2026-08-13: six reviewed planning adapters add ten exact generic
+    task contracts: Wan 2.2 A14B text-to-video; both Wan Animate character
+    modes; Wan first/last-frame image-to-video; LTX long-prompt
+    image-to-video; all four LTX2 video modes with joint video/audio export;
+    and Hunyuan FramePack image-to-video. The existing Wan 2.2 I2V and TI2V
+    paths remain covered by the same global library audit. All 58 canonical
+    pairs and 70 supported workflows, including refreshed deterministic FLUX
+    and Z-Image variants, passed graph/hash/layout verification. The backend
+    suite passed (`1264 passed, 3 skipped, 2463 subtests`) together with Ruff,
+    package, and shell checks. The complete client check passed, the focused
+    graph/store suites passed (`80 tests`), and the exact-spec plus pending
+    dynamic-schema browser cases passed after the full mocked sweep reported
+    `101 passed` and exposed that fixture expectation. The final production
+    JavaScript bundle is `525155 / 525312` gzip bytes with the entry at
+    `277958 / 448512`. The standalone local preflight remains non-ready only
+    because the already-installed CPU profile digest predates the checkout;
+    no environment repair, weights, source media, inference output, or public
+    asset was required. Auto and Gallery remain disabled pending P2.5.
 - [ ] **P2.5 Remote Gallery qualification and activation**
   - Generate examples remotely from the paired commits.
   - Review and publish media to an immutable Dataset revision.
@@ -3614,8 +3632,8 @@ output and assets remotely. Assets: remote Dataset only.
 
 ### Phase 2 test and asset gate
 
-- [ ] Backend graph/catalog/profile integrity tests pass.
-- [ ] Client template, quality, Gallery coverage, and mocked browser tests pass.
+- [x] Backend graph/catalog/profile integrity tests pass.
+- [x] Client template, quality, Gallery coverage, and mocked browser tests pass.
 - [ ] Every public template has a remote live-output receipt for its exact mode.
 - [ ] Every media byte is in the Dataset, not either Git repository.
 - [ ] Auto remains disabled for any template whose qualification is pending.
@@ -3956,7 +3974,7 @@ Add references only after the corresponding evidence exists.
 | P2.2h Qwen-Image-2512 inpaint | `556be5f` | `bd8278f` | Remote pending | Pending | Complete source slice: exact standard inpaint loader, immutable Qwen-Image-2512 revision, generic source/mask bindings, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged, outpaint remains unadvertised, and Gallery activation remains pending. |
 | P2.2 existing-image-path closure | `653168c` | `9862eea` | Remote pending | Pending | Complete: all 30 registered image pairs have deterministic canonical layouts; regeneration preserves catalog revisions and discovers base plus auxiliary Hub artifacts from each graph; focused backend integrity and complete client gates passed without weights or media. |
 | P2.3 existing audio paths | `8e91284` | `c0170b2` | Remote pending for Stable Audio | Pending | Complete source slice: Stable Audio has an exact pinned generic task workflow; all five canonical audio pairs and both ACE LoRA variants verify deterministically; complete backend/client gates passed without weights or media. |
-| P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.4 | `0ace2ae` | `8e25f5f` | Remote pending | Pending | Complete source slice: ten new exact short-video planning contracts and the existing Wan I2V/TI2V paths verify in the 70-workflow deterministic catalog; complete backend/client and focused browser gates passed without weights or media, while Auto and Gallery remain disabled pending P2.5. |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
