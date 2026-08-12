@@ -3515,6 +3515,23 @@ output and assets remotely. Assets: remote Dataset only.
       `525140 / 525312` total production JavaScript gzip bytes with the entry at
       `284983 / 448512`. No weights, source media, inference output, or public
       asset was downloaded or generated.
+  - [x] **P2.2f Z-Image Turbo image-to-image**
+    - Evidence 2026-08-12: the existing logical `ZImageModularPipeline` Studio
+      model now exposes a separate `edit_image` execution profile selecting the
+      standard `ZImageImg2ImgPipeline` adapter at reviewed Z-Image Turbo
+      revision `f332072aa78be7aecdf3ee76d5c247082da564a6`. Its task contract and
+      canonical graph require one source image, use the generic Edit action,
+      and bind the immutable revision without a static planning template or
+      client model-family graph builder. The standard adapter left the
+      contract-only registry only after the pair became executable. Auto
+      remains text-to-image-only, while image-to-image stays Expert
+      planning-only and Gallery-hidden pending P2.5 qualification. Pair
+      generation and deterministic verification passed. The complete backend
+      suite passed (`1263 passed, 3 skipped, 2325 subtests`) with Ruff `E9,F`,
+      compile, package, shell, and diff gates; `npm run check` passed at
+      `525152 / 525312` total production JavaScript gzip bytes with the entry at
+      `284983 / 448512`. No weights, source media, inference output, or public
+      asset was downloaded or generated.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3867,7 +3884,8 @@ Add references only after the corresponding evidence exists.
 | P2.2c SDXL inpaint | `a1faf3a` | `b9ea71e` | Remote pending | Pending | Complete source slice: exact mode-specific inpaint loader, immutable base revision, generic source/mask bindings, task-contract generation, complete suites, and bundle gate passed; Auto and Gallery remain disabled. |
 | P2.2d FLUX.1-dev image-to-image | `b66439b` | `9a7280e` | Remote pending | Pending | Complete source slice: exact mode-specific img2img loader, immutable FLUX.1-dev revision, generic source-image binding, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
 | P2.2e FLUX.1-dev inpaint | `b679e4f` | `e8197c8` | Remote pending | Pending | Complete source slice: exact mode-specific inpaint loader, immutable FLUX.1-dev revision, generic source/mask bindings, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
-| P2.2f-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.2f Z-Image Turbo image-to-image | `0d1d3cb` | `a586fce` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Z-Image Turbo revision, generic source-image binding, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
+| P2.2g-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
