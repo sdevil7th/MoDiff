@@ -263,6 +263,13 @@
       "baseRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
       "baseLicense": "creativeml-openrail-m",
       "artifacts": []
+    },
+    {
+      "modelType": "LatentConsistencyModelPipeline",
+      "baseRepo": "SimianLuo/LCM_Dreamshaper_v7",
+      "baseRevision": "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
+      "baseLicense": "mit",
+      "artifacts": []
     }
   ]
 }

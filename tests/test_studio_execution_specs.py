@@ -154,6 +154,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPipeline", "text_to_image"),
                 ("StableDiffusionPipeline", "edit_image"),
                 ("StableDiffusionPipeline", "inpaint"),
+                ("LatentConsistencyModelPipeline", "text_to_image"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -194,6 +195,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertIn(
                     ("diffusersImagePipeline", "revision", "defaultRevision"), specification["bindings"]
                 )
+        lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
+        self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
+        self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")
+        self.assertEqual(lcm["defaultRepo"], "SimianLuo/LCM_Dreamshaper_v7")
+        self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), lcm["bindings"])
+        self.assertTrue(DIFFUSERS_EXECUTION_PROFILES[lcm["executionProfileId"]].live_proof)
         sdxl = by_id["sdxl-base:text-to-image:v1"]
         self.assertEqual(sdxl["id"], "sdxl-base:text-to-image:v1")
         self.assertEqual(sdxl["pipelineClass"], "StableDiffusionXLPipeline")

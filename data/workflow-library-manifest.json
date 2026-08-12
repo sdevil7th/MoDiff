@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T22:46:58.448Z",
+  "generatedAt": "2026-08-12T23:09:41.225Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 64,
-  "supportedPairCount": 76,
+  "supportedCanonicalPairCount": 65,
+  "supportedPairCount": 77,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -955,6 +955,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
       "graphHash": "cd397f4b4d351bff07338f604e5d1058072419dfe469ce8362e33dd74eb667b4"
+    },
+    {
+      "id": "LatentConsistencyModelPipeline:text_to_image",
+      "modelType": "LatentConsistencyModelPipeline",
+      "modelFamily": "Latent Consistency Models",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "SimianLuo/LCM_Dreamshaper_v7"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LatentConsistencyModelPipeline"
+      ],
+      "sourceTemplateId": "task-template:lcm-dreamshaper-v7:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
+      "graphHash": "16c33fbfe1882c0726e2f90a8bb2357d761e997d0cddf741b12af809ca694610"
     },
     {
       "id": "LTX2ConditionPipeline:image_to_video",

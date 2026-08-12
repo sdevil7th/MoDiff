@@ -31,6 +31,7 @@ FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -3785,6 +3786,86 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
         for spec_id, profile_id, mode, pipeline_class, roles, edges, bindings in _P3_SD15_DEFINITIONS
     }
 )
+
+
+_LCM_PROFILE = {
+    "id": "lcm-dreamshaper-v7:direct",
+    "model_type": "LatentConsistencyModelPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "LatentConsistencyModelPipeline",
+    "default_repo": LCM_DREAMSHAPER_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 512,
+    "max_low_memory_steps": 4,
+    "live_proof": True,
+    "compatible_repos": (),
+}
+_LCM_CAPABILITY = {
+    "modelType": "LatentConsistencyModelPipeline",
+    "label": "LCM DreamShaper v7",
+    "displayName": "LCM DreamShaper v7",
+    "family": "Latent Consistency Models",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": LCM_DREAMSHAPER_REPO,
+    "artifactLabel": "Diffusers safetensors repo",
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+    "recommendedSteps": 4,
+    "recommendedGuidance": 8.5,
+    "guidanceLabel": "Guidance",
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 4,
+        "width": 512,
+        "height": 512,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(LCM_DREAMSHAPER_REPO, model_type="LatentConsistencyModelPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The exact LCM checkpoint supports one-to-four-step text-to-image generation through the generic image node.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["lcm-dreamshaper-v7:text-to-image:v1"] = {
+    "modelType": "LatentConsistencyModelPipeline",
+    "mode": "text_to_image",
+    "profile": _LCM_PROFILE,
+    "capability": _LCM_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",

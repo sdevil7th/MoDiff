@@ -52,6 +52,7 @@ FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
@@ -204,6 +205,11 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"inpaint", "outpaint"}),
         SD15_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionInpaintPipeline"),
+    ),
+    "LatentConsistencyModelPipeline": ImagePipelineAdapter(
+        "LatentConsistencyModelPipeline",
+        frozenset({"text_to_image"}),
+        LCM_DREAMSHAPER_REPO,
     ),
     "FluxPipeline": ImagePipelineAdapter(
         "FluxPipeline",
@@ -461,6 +467,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "negative_prompt", "width", "height", "guidance_scale", "strength", "padding_mask_crop"
         )
         for mode in ("inpaint", "outpaint")
+    },
+    "LatentConsistencyModelPipeline": {
+        "text_to_image": _image_field_contract("width", "height", "guidance_scale"),
     },
     "FluxPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),

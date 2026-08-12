@@ -37,6 +37,7 @@ STUDIO_MODEL_TYPES = {
     "DDIMPipeline",
     "ConsistencyModelPipeline",
     "StableDiffusionPipeline",
+    "LatentConsistencyModelPipeline",
 }
 
 

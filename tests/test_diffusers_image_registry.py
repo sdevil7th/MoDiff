@@ -41,6 +41,7 @@ from modules.DiffusersImage.main import (
     QWEN_IMAGE_2512_REPO,
     QWEN_IMAGE_EDIT_PLUS_REPO,
     QWEN_IMAGE_EDIT_REPO,
+    LCM_DREAMSHAPER_REPO,
     SD15_BASE_REPO,
     SDXL_BASE_REPO,
     Z_IMAGE_REPO,
@@ -540,6 +541,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
+            "LatentConsistencyModelPipeline": ({"text_to_image"}, LCM_DREAMSHAPER_REPO, {"prompt"}),
             "StableDiffusionPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
             "StableDiffusionImg2ImgPipeline": ({"edit_image"}, SD15_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionInpaintPipeline": (
@@ -618,6 +620,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         image = Image.new("RGB", (16, 16), "black")
         mask = Image.new("L", (16, 16), "white")
         cases = (
+            ("LatentConsistencyModelPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
