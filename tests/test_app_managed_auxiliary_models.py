@@ -143,6 +143,7 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
                 loader.assert_not_called()
 
     def test_exact_upscaler_selection_is_revalidated_before_model_load(self):
+        managed_path = Path("C:/managed/exact.pth")
         selection = {
             "source": "hub",
             "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
@@ -158,7 +159,7 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
         with (
             patch(
                 "modiff.controlled_artifacts.resolve_upscaler_artifact",
-                return_value=SimpleNamespace(path=Path("C:/managed/exact.pth")),
+                return_value=SimpleNamespace(path=managed_path),
             ) as resolve,
             patch("modules.Spandrel.main.ModelLoader") as loader,
         ):
@@ -166,7 +167,7 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
             self.assertEqual(node.execute(image=object(), model_id=selection, device="cpu"), {"output": []})
 
         resolve.assert_called_once_with(selection)
-        loader.return_value.load_from_file.assert_called_once_with("C:\\managed\\exact.pth")
+        loader.return_value.load_from_file.assert_called_once_with(str(managed_path))
 
     def test_upscaler_tiles_and_stitches_model_agnostic_integer_scale(self):
         class FakeUpscaler:
