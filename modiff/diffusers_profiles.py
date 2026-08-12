@@ -690,7 +690,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
         "Qwen/Qwen-Image-Edit-2511",
         ("edit_image", "multi_image_reference_edit"),
     ),
-    ("ZImageImg2ImgPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("edit_image",)),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
     (
         "FluxKontextInpaintPipeline",

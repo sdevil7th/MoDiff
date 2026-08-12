@@ -123,6 +123,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("WanVACEPipeline", "control_to_video"),
                 ("QwenImageEditModularPipeline", "outpaint"),
                 ("ZImageModularPipeline", "text_to_image"),
+                ("ZImageModularPipeline", "edit_image"),
                 ("QwenImageModularPipeline", "text_to_image"),
                 ("QwenImageEditModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "edit_image"),
@@ -573,6 +574,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(RuntimeError, "node identity"):
             assert_studio_execution_graph(graph, hints)
+
+        edit = studio_execution_spec_for_pair("ZImageModularPipeline", "edit_image")
+        self.assertIsNotNone(edit)
+        self.assertEqual(edit["id"], "z-image:edit-image:v1")
+        self.assertEqual(edit["executionProfileId"], "z-image:img2img-direct")
+        self.assertEqual(edit["pipelineClass"], "ZImageImg2ImgPipeline")
+        self.assertEqual(edit["defaultRepo"], "Tongyi-MAI/Z-Image-Turbo")
+        self.assertEqual(edit["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["roles"])
+        self.assertEqual(edit["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["edges"])
+        self.assertIn(("loadImage", "file", "referenceImages"), edit["bindings"])
+        self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), edit["bindings"])
 
     def test_qwen_image_text_to_image_seals_the_exact_direct_image_route(self):
         spec = studio_execution_spec_for_pair("QwenImageModularPipeline", "text_to_image")

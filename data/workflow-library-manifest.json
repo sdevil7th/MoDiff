@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T19:34:13.952Z",
+  "generatedAt": "2026-08-12T19:42:36.963Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 44,
-  "supportedPairCount": 56,
+  "supportedCanonicalPairCount": 45,
+  "supportedPairCount": 57,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1553,6 +1553,38 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "ZImageModularPipeline:edit_image",
+      "modelType": "ZImageModularPipeline",
+      "modelFamily": "Z-Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Tongyi-MAI/Z-Image-Turbo"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for image-to-image transformation."
+      },
+      "pipelineClasses": [
+        "ZImageImg2ImgPipeline",
+        "ZImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:z-image:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/zimage-modular-pipeline/edit-image.json",
+      "graphHash": "4cdbc3ae0335a72f8eebcb5955c190f8214969082fb5282369757bd987a77cc2"
     },
     {
       "id": "ZImageModularPipeline:text_to_image",

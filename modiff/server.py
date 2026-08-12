@@ -478,6 +478,7 @@ from modiff.studio_execution_specs import (
     studio_model_requirements_for_pair,
     validate_studio_execution_specs,
 )
+from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.task_template_contracts import (
     TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
     build_task_template_contracts,
@@ -672,7 +673,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "recommendedGuidance": 1,
         "guidanceLabel": "Guidance",
         "supportsNegativePrompt": False,
-        "supportsImageInput": False,
+        "supportsImageInput": True,
         "supportsMask": False,
         "supportsMultiImage": False,
         "supportsControlImage": False,
@@ -680,7 +681,19 @@ STUDIO_MODEL_CAPABILITIES = {
         "supportsLora": True,
         "offloadSupport": QWEN_MODULAR_OFFLOAD_SUPPORT,
         "lowVram": {"dtype": "bfloat16", "autoOffload": True, "offloadMode": OFFLOAD_MODE_MODEL_CPU, "steps": 8},
-        "modes": ["text_to_image"],
+        "modes": ["text_to_image", "edit_image"],
+        "modeRequirements": {
+            "edit_image": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one source image for image-to-image transformation.",
+            }
+        },
+        "revisionCandidates": [
+            require_catalog_revision(
+                "Tongyi-MAI/Z-Image-Turbo",
+                model_type="ZImageModularPipeline",
+            )
+        ],
         "executionStatus": "supported",
     },
     "QwenImageModularPipeline": {

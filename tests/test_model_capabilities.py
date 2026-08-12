@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 35)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 34)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 44)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 45)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -287,16 +287,24 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             )
 
         z_image = by_model["ZImageModularPipeline"]
-        self.assertEqual(z_image["pipelineClasses"], ["ZImagePipeline"])
+        self.assertEqual(z_image["pipelineClasses"], ["ZImageImg2ImgPipeline", "ZImagePipeline"])
         self.assertEqual(
             z_image["executionProfiles"][0]["backend_path"],
             "modules.DiffusersImage.LoadPipeline",
         )
         self.assertEqual(z_image["executionProfiles"][0]["execution_path"], "direct-diffusers-image")
         self.assertNotIn("expert_quantization_modes", z_image["executionProfiles"][0])
-        self.assertEqual(z_image["studioExecutionSpecModes"], ["text_to_image"])
-        self.assertEqual(z_image["studioExecutionSpecs"][0]["id"], "z-image:text-to-image:v1")
-        self.assertEqual(z_image["studioExecutionSpecs"][0]["pipelineClass"], "ZImagePipeline")
+        self.assertEqual(z_image["studioExecutionSpecModes"], ["edit_image", "text_to_image"])
+        z_image_text = next(item for item in z_image["studioExecutionSpecs"] if item["mode"] == "text_to_image")
+        z_image_edit = next(item for item in z_image["studioExecutionSpecs"] if item["mode"] == "edit_image")
+        self.assertEqual(z_image_text["id"], "z-image:text-to-image:v1")
+        self.assertEqual(z_image_text["pipelineClass"], "ZImagePipeline")
+        self.assertEqual(z_image_edit["id"], "z-image:edit-image:v1")
+        self.assertEqual(z_image_edit["pipelineClass"], "ZImageImg2ImgPipeline")
+        self.assertEqual(
+            z_image["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
 
         qwen_image = by_model["QwenImageModularPipeline"]
         self.assertTrue(

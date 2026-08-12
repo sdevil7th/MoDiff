@@ -38,6 +38,7 @@ LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
+Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
     ("QwenImageModularPipeline", "control_image"): (
@@ -2528,7 +2529,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "loader_action": "LoadPipeline",
             "execution_path": "direct-diffusers-image",
             "pipeline_class": "ZImagePipeline",
-            "default_repo": "Tongyi-MAI/Z-Image-Turbo",
+            "default_repo": Z_IMAGE_REPO,
             "fallback_repo": None,
             "quantizable_components": (),
             "default_quantized_components": (),
@@ -2544,6 +2545,38 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "live_proof": False,
             "compatible_repos": (),
         },
+    },
+    "z-image:edit-image:v1": {
+        "modelType": "ZImageModularPipeline",
+        "mode": "edit_image",
+        "profile": {
+            "id": "z-image:img2img-direct",
+            "model_type": "ZImageModularPipeline",
+            "modes": ("edit_image",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "ZImageImg2ImgPipeline",
+            "default_repo": Z_IMAGE_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": 1024,
+            "max_low_memory_steps": 8,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _EDIT_GRAPH_BINDINGS
+        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "qwen-image-2512:text-to-image:v1": {
         "modelType": "QwenImageModularPipeline",
