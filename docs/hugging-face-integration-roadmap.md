@@ -3582,8 +3582,25 @@ output and assets remotely. Assets: remote Dataset only.
       for the final P2.2h slice (`1263 passed, 3 skipped, 2349 subtests`). No
       weights, media, live inference, or public assets were used, and remote
       Gallery qualification remains isolated to P2.5.
-- [ ] **P2.3 Existing audio paths**
+- [x] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
+  - Evidence 2026-08-13: Stable Audio Open 1.0 moved from the
+    contract-only registry into an exact `stable-audio:direct` execution
+    profile selecting `StableAudioPipeline` at reviewed revision
+    `f21265c1e2710b3bd2386596943f0007f55f802e`. Its planning graph uses only
+    the generic Diffusers audio loader/generator/export nodes and binds Stable
+    Audio's native task, steps, guidance, waveform-count, duration, and sample
+    rate controls. It remains Expert-only and Gallery-hidden pending P2.5 live
+    qualification. Pair-scoped generation and verification now include all
+    variants for a model/mode pair; all five canonical audio pairs and both ACE
+    text-to-audio LoRA variants passed deterministic verification. Regeneration
+    refreshed the three ACE text-to-audio layouts and preserved their exact
+    base/LoRA artifact receipts. The complete backend suite passed (`1264
+    passed, 3 skipped, 2361 subtests passed`) with Ruff `E9,F`, compile,
+    package, shell, and diff gates; `npm run check` passed at
+    `525276 / 525312` total production JavaScript gzip bytes with the entry at
+    `285027 / 448512`. No weights, source media, inference output, or public
+    asset was downloaded or generated.
 - [ ] **P2.4 Existing short-video graph paths**
   - Wan 2.2 I2V/TI2V, Wan Animate, Wan first/last-frame, LTX long-prompt I2V,
     LTX2 joint audio/video, and Hunyuan FramePack.
@@ -3938,7 +3955,8 @@ Add references only after the corresponding evidence exists.
 | P2.2g Qwen-Image-2512 image-to-image | `8a4dbd8` | `538a79c` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Qwen-Image-2512 revision, generic source-image binding, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged and Gallery activation remains pending. |
 | P2.2h Qwen-Image-2512 inpaint | `556be5f` | `bd8278f` | Remote pending | Pending | Complete source slice: exact standard inpaint loader, immutable Qwen-Image-2512 revision, generic source/mask bindings, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged, outpaint remains unadvertised, and Gallery activation remains pending. |
 | P2.2 existing-image-path closure | `653168c` | `9862eea` | Remote pending | Pending | Complete: all 30 registered image pairs have deterministic canonical layouts; regeneration preserves catalog revisions and discovers base plus auxiliary Hub artifacts from each graph; focused backend integrity and complete client gates passed without weights or media. |
-| P2.3-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.3 existing audio paths | `8e91284` | `c0170b2` | Remote pending for Stable Audio | Pending | Complete source slice: Stable Audio has an exact pinned generic task workflow; all five canonical audio pairs and both ACE LoRA variants verify deterministically; complete backend/client gates passed without weights or media. |
+| P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
