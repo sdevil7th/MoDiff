@@ -3418,6 +3418,25 @@ output and assets remotely. Assets: remote Dataset only.
     Kontext multi-reference; Z-Image img2img; supported Qwen img2img,
     edit/inpaint, ControlNet, Edit Plus, and Layered modes; existing registered
     Modular image pipelines.
+  - [x] **P2.2a Stable Diffusion XL base text-to-image**
+    - Evidence 2026-08-12: the backend now owns an exact
+      `StableDiffusionXLPipeline` text-to-image execution specification and a
+      content-addressed 1024px planning graph pinned to reviewed revision
+      `462165984030d82259a11f4367a4eed129e94a7b`. The client consumes the
+      backend-owned revision through the generic `defaultRevision` binding,
+      revalidates static node schemas before resealing a refreshed graph, and
+      fails closed for malformed revisions or tampered schemas. The template is
+      planning-only, Auto-disabled, and Gallery-hidden; no model, media, or
+      public asset was downloaded or generated. Pair-scoped generation and
+      verification passed for the one SDXL workflow. The complete backend suite
+      passed (`1243 tests, 3 skipped`), with the focused graph/catalog matrix at
+      `130/130` plus Ruff `E9,F`, compile, package, shell, and diff gates.
+      `npm run check` passed with production JavaScript at
+      `525295 / 525312` gzip bytes and the entry at `284983 / 448512`.
+      Static preflight also reported that this checkout's managed CPU
+      environment records an older dependency-contract digest and requires the
+      documented repair command before it can be used for future live proof;
+      that local environment drift is not source or qualification evidence.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3764,7 +3783,8 @@ Add references only after the corresponding evidence exists.
 | P1.3 | `b48355b` | `f044594` | Not required | Not required | Complete: all three planned guiders use exact pinned official exports and constructor contracts; layer requirements, component compatibility, typed parameters, and backend-driven generic option signals passed complete backend/client and focused browser gates without weights. |
 | P1.4 | `8e44eb5` | `5cb2998` | Not required | Not required | Complete: all 15 Modular classes present at the pin are split into image/video/multimodal contract-only batches with exact generated upstream workflow schemas and generic Expert visibility. They remain outside executable, Auto, template, Gallery, optional-runtime, and live-support registries; complete backend/client and focused browser gates passed without weights or assets. |
 | P2.1 | `fa1884a` | `6f12230` | Not required | Not required | Complete: all 39 authoritative execution pairs publish a stable generic planning contract with exact execution-profile, loader, required-media, and terminal-output identity. Strict client parsing produces modality-generic skeletons and leaves every entry Gallery-hidden pending the separate qualification gate; complete backend/client gates passed without weights or assets. |
-| P2.2-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.2a SDXL base text-to-image | `e5905f5` | `7581902` | Remote pending | Pending | Complete source slice: exact pinned planning graph and generic revision binding passed the complete backend/client gates; Auto and Gallery remain disabled pending live qualification and immutable assets. |
+| P2.2b-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
