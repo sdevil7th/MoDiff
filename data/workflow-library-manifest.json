@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T19:53:58.094Z",
+  "generatedAt": "2026-08-12T20:04:11.021Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 47,
@@ -1047,6 +1047,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "Qwen/Qwen-Image-Edit-2511",
         "lightx2v/Qwen-Image-Edit-2511-Lightning"
@@ -1059,12 +1064,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/edit-image.json",
-      "graphHash": "e0c8ab087a29620ca03cae6dda2b85d89469362fbfe919e5a5e5f4c18484d55c",
-      "graphQualificationStatus": "graph-qualified",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "5a7c67936ee4b3a42f52191db87d80fcf03abdddbde3289d69bf1532865d8a57"
     },
     {
       "id": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
@@ -1074,6 +1074,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "Qwen/Qwen-Image-Edit-2511",
         "lightx2v/Qwen-Image-Edit-2511-Lightning"
@@ -1086,12 +1091,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/multi-image-reference-edit.json",
-      "graphHash": "082221ac8c8f58f66c31856ab891ca5988843eef01aa543f4b48e578c5f345af",
-      "graphQualificationStatus": "graph-qualified",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "9a1f1342737591601590551fcd63fcc4880f7551cdd32cfb6a56c85a440a68cf"
     },
     {
       "id": "QwenImageLayeredModularPipeline:layer_decomposition",
@@ -1127,6 +1127,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "Qwen/Qwen-Image-2512",
         "InstantX/Qwen-Image-ControlNet-Union"
@@ -1151,6 +1156,8 @@
         "note": "Requires the Qwen ControlNet Union model plus one control image."
       },
       "pipelineClasses": [
+        "QwenImageImg2ImgPipeline",
+        "QwenImageInpaintPipeline",
         "QwenImageModularPipeline",
         "QwenImagePipeline"
       ],
@@ -1158,12 +1165,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/qwen-image-modular-pipeline/control-image.json",
-      "graphHash": "18659db5a7e83c5a0d38072491ece1833fcd03e5dc49412ff443c66390286492",
-      "graphQualificationStatus": "graph-qualified",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "18b420ef110dc6a0026881074b723924a2f2b59284637116d1a1a2b37b192997"
     },
     {
       "id": "QwenImageModularPipeline:edit_image",
