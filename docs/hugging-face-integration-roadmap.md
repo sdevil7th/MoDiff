@@ -2801,6 +2801,32 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       completed-job environment receipt over catalog inference. All temporary
       processes and managed state were removed. This is not live model/media or
       non-Windows evidence.
+    - [x] Windows x86-64 guarded live-model execution: a detached clean-base
+      checkout enabled the complete future qualified/action/cutover contract
+      only in that qualification tree. Model Manager downloaded the
+      Apache-2.0, safetensors-only, no-custom-code
+      `optimum-intel-internal-testing/tiny-random-qwen-image` snapshot at exact
+      commit `ef73a0df0cb8ccfa00cc178ec528c6e681791a10`; validation observed
+      17 complete files and 41,663,402 completed bytes and confirmed
+      `QwenImagePipeline`. A fresh supervised worker activated the exact
+      ten-wheel composite overlay and ran the existing generic
+      `DiffusersImage.LoadPipeline -> Generate -> Image.Save` path on an RTX
+      4080 at 64 by 64, one step, seed 123. Task `W44WcoUEma-X` completed in
+      1.25 seconds and wrote a non-uniform RGB PNG with pixel digest
+      `sha256:8aef57fdb4aa58e5d2dcacb04b731893d3883f30554e1004e9c49b863a083e6f`;
+      its runtime receipt reported Diffusers `0.40.0.dev0`, Transformers
+      `5.14.1`, Torch `2.8.0+cu128`, and CUDA execution. After explicit
+      rollback, the same exact Qwen loader was rejected before queueing with
+      HTTP 409 `optional_runtime_staged`, `requiredNow: true`, and no current
+      task. The run exposed that custom immutable loader pins could not be
+      passed through Model Manager; `/hf_download` now accepts only an exact
+      lowercase 40-character optional `revision`, binds concurrent joins to
+      that revision plus file selection, and forwards it to the app-owned Hub
+      snapshot operation. The qualification artifact, output, overlay, and
+      processes were removed afterward. Production dependency, action,
+      qualification, and cutover declarations remain unchanged. This is not
+      non-Windows evidence and does not itself authorize the atomic base
+      dependency cutover.
     - [ ] Executable qualification: add reviewed per-platform wheel and
       installer execution evidence plus clean-base/staged workload,
       fresh-process containment, restart, and rollback evidence before enabling

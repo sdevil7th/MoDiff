@@ -244,6 +244,22 @@ tree, both staged environments, jobs, and server processes were removed. This
 closes Windows supervised cancellation/repair, but not live model/media or
 non-Windows execution and not source cutover.
 
+A third detached Windows x86-64 run exercised the complete future qualified
+guard with a real model and media output. Model Manager downloaded the
+Apache-2.0, safetensors-only, no-custom-code
+`optimum-intel-internal-testing/tiny-random-qwen-image` snapshot at immutable
+commit `ef73a0df0cb8ccfa00cc178ec528c6e681791a10`. The activated composite
+overlay then supplied Transformers `5.14.1` to the existing generic Qwen image
+loader; `LoadPipeline -> Generate -> Image.Save` completed one 64 by 64 CUDA
+step and produced a non-uniform RGB PNG. After rollback to a Transformers-free
+base worker, the same loader was rejected before queueing with HTTP 409
+`optional_runtime_staged`. This run also closed an app-owned download mismatch:
+`POST /hf_download` now accepts a bounded exact lowercase 40-character commit
+`revision`, forwards it to the Hub snapshot operation, and permits concurrent
+join only for the same revision and file selection. All qualification-only
+state was removed. This closes the Windows guarded live-model/media check, not
+non-Windows qualification or the production dependency/action/cutover gate.
+
 ## Runtime features
 
 The following features have concrete runtime implementations and remain

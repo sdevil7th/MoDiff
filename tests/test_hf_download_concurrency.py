@@ -1,6 +1,7 @@
 import asyncio
 import json
 import unittest
+from unittest import mock
 
 from modiff.server import WebServer
 
@@ -11,6 +12,34 @@ class FakeRequest:
 
 
 class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
+    async def test_app_download_forwards_exact_commit_to_hub_snapshot(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        revision = "a" * 40
+        entry = {
+            "task_id": "download-task",
+            "sids": set(),
+            "started_at": 1.0,
+            "repair": False,
+            "repair_source_repo_id": None,
+            "requested_files": [],
+            "revision": revision,
+        }
+
+        async def run_callback(callback, **_kwargs):
+            return callback()
+
+        with (
+            mock.patch.object(server, "_run_executor_callback", side_effect=run_callback),
+            mock.patch(
+                "modiff.server.download_hub_model",
+                return_value={"repo_id": "unit/exact-model", "complete": True},
+            ) as download,
+        ):
+            await server._run_hf_download_task("unit/exact-model", entry)
+
+        self.assertEqual(download.call_args.args[-1], revision)
+
     async def test_shared_memory_runtime_serializes_graph_and_download_model_io(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
@@ -109,6 +138,54 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("transformer/diffusion_pytorch_model.safetensors.index.json", captured["requested_files"])
         self.assertIn("text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", captured["requested_files"])
+
+    async def test_custom_download_carries_exact_commit_into_app_owned_task(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+        revision = "a" * 40
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {
+                "repo_id": repo_id,
+                "revision": entry["revision"],
+                "complete": True,
+                "repair_required": False,
+            }
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(
+            FakeRequest(repo_id="unit/exact-model", revision=revision)
+        )
+        payload = json.loads(response.text)
+
+        self.assertFalse(payload["error"])
+        self.assertEqual(captured["revision"], revision)
+        self.assertEqual(payload["result"]["revision"], revision)
+
+    async def test_concurrent_download_rejects_a_different_exact_commit(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        release = asyncio.Event()
+
+        async def fake_download(repo_id, entry):
+            await release.wait()
+            return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+        server._run_hf_download_task = fake_download
+        first = asyncio.create_task(
+            server.hf_download(FakeRequest(repo_id="unit/exact-model", revision="a" * 40))
+        )
+        await asyncio.sleep(0)
+        response = await server.hf_download(
+            FakeRequest(repo_id="unit/exact-model", revision="b" * 40)
+        )
+
+        self.assertEqual(response.status, 409)
+        self.assertIn("immutable snapshot", json.loads(response.text)["error"])
+        release.set()
+        await first
 
 
 if __name__ == "__main__":

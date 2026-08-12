@@ -545,7 +545,12 @@ Uploads are written under configured data subdirectories and share the configure
 ## Model and code trust
 
 - `POST /hf_token` validates a token and writes it in plaintext to ignored `config.ini`.
-- `POST /hf_download` accepts a JSON object with `repo_id`, optional `sid`, `repair`, `repair_source_repo_id`, and a `files` string list. It can consume substantial network, disk, RAM, and accelerator resources.
+- `POST /hf_download` accepts a JSON object with `repo_id`, optional `sid`,
+  `repair`, `repair_source_repo_id`, a `files` string list, and an optional exact
+  lowercase 40-character commit `revision`. Concurrent requests for one
+  repository may join only when both the immutable revision and file selection
+  match. It can consume substantial network, disk, RAM, and accelerator
+  resources.
 - `DELETE /hf_cache/{hash}` deletes selected cached model revisions.
 - `POST /custom_modules/install` accepts a Git URL or local directory, places it under `custom/`, and refreshes the live registry. Imported custom code has the backend process's permissions.
 - Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but the current backend rejects all custom Modular pipeline and Dynamic Block execution, plus standalone component loading with remote code, before upstream construction. Exact cached 40-character commits may provide bounded declarative contract previews; a preview or persisted checksum is not execution authorization.

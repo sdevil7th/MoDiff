@@ -12808,6 +12808,7 @@ class WebServer:
                     bool(entry.get("repair")),
                     entry.get("repair_source_repo_id"),
                     entry.get("requested_files"),
+                    entry.get("revision"),
                 ),
                 serialize_model_io=True,
             )
@@ -12828,6 +12829,24 @@ class WebServer:
         query = getattr(request, "query", {}) or {}
         repo_id = payload.get("repo_id") or query.get("repo_id")
         sid = payload.get("sid") or query.get("sid")
+        raw_revision = payload.get("revision") if "revision" in payload else query.get("revision")
+        revision = None
+        if raw_revision is not None:
+            if (
+                not isinstance(raw_revision, str)
+                or raw_revision != raw_revision.strip()
+                or raw_revision != raw_revision.lower()
+                or not IMMUTABLE_HUB_REVISION.fullmatch(raw_revision)
+            ):
+                return web.json_response(
+                    {
+                        "error": "Model downloads require an exact lowercase 40-character commit revision.",
+                        "code": "invalid_huggingface_revision",
+                        "retryable": False,
+                    },
+                    status=400,
+                )
+            revision = raw_revision
         repair_value = payload.get("repair") if "repair" in payload else query.get("repair")
         repair = repair_value is True or str(repair_value or "").lower() in {"1", "true", "yes"}
         repair_source_repo_id = (
@@ -12873,10 +12892,13 @@ class WebServer:
 
         if repo_id in self.hf_download_tasks:
             entry = self.hf_download_tasks[repo_id]
-            if sorted(entry.get("requested_files") or []) != requested_files:
+            if (
+                sorted(entry.get("requested_files") or []) != requested_files
+                or entry.get("revision") != revision
+            ):
                 return web.json_response(
                     {
-                        "error": "A different file selection is already downloading for this repository.",
+                        "error": "A different immutable snapshot or file selection is already downloading for this repository.",
                         "repo_id": repo_id,
                         "retryable": True,
                     },
@@ -12907,6 +12929,7 @@ class WebServer:
                 "repair": repair,
                 "repair_source_repo_id": repair_source_repo_id,
                 "requested_files": requested_files,
+                "revision": revision,
             }
             entry["future"] = self.loop.create_task(self._run_hf_download_task(repo_id, entry))
             self.hf_download_tasks[repo_id] = entry
