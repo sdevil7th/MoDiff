@@ -3300,7 +3300,7 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
     bytes); the focused mocked-browser admission test passed (`1 passed`). No
     model weights, media, repository Python, or optional-runtime install was
     downloaded or executed for this segment.
-- [ ] **P1.2 Generic upstream workflow discovery**
+- [x] **P1.2 Generic upstream workflow discovery**
   - Backend: derive workflows, required inputs, outputs, and components from
     `available_workflows`, `get_workflow()`, block docs, and `init_pipeline()`;
     keep small reviewed overlays for MoDiff aliases and UI defaults.
@@ -3308,6 +3308,27 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
     than pipeline-name switches.
   - Tests: Sequential, Auto, Loop, state, component reuse, schema round trip, and
     unknown workflow rejection.
+  - Status 2026-08-12: complete in backend `50dafa6` and client `7c6bdbf`.
+    A checked-in schema-v1 snapshot derives 11 registered pipeline contracts,
+    39 workflows, required inputs, outputs, state keys, nested block kinds/docs,
+    initialized execution classes, and component reuse keys from the exact
+    pinned no-weight Diffusers APIs. Runtime and registry consumers validate the
+    bounded snapshot without importing Diffusers. DynamicBlock publishes only
+    tasks whose required inputs its reviewed sidecar can carry, rejects fields
+    outside the upstream contract before construction, and filters inputs and
+    outputs to the selected task. The existing generic client field action
+    renders the backend-owned task choices and visibility map without a
+    pipeline-name branch.
+  - Evidence 2026-08-12: the focused backend matrix passed (`120 passed, 302
+    subtests passed`); the complete backend suite passed (`1253 passed, 3
+    skipped, 2107 subtests passed`). The pinned generator `--check`, Ruff
+    `E9,F`, compile, shell syntax, package compatibility, and diff checks passed.
+    Client `npm run check` passed, including build and the bundle budget
+    (`523239 / 523264` total gzip bytes), and the focused mocked-browser task
+    selector test passed (`1 passed`). Preflight separately reported the
+    existing managed CPU environment receipt as stale for this checkout; no
+    package install, model weight, network workflow discovery, or asset
+    generation was performed for this segment.
 - [ ] **P1.3 Complete the generic guider registry**
   - Add `AdaptiveProjectedMixGuidance`, `MagnitudeAwareGuidance`, and
     `PerturbedAttentionGuidance` to the existing Guider node.
@@ -3688,7 +3709,7 @@ Add references only after the corresponding evidence exists.
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
 | P0.5 | `4073711` (qualifier), `655baa6` (platform cutover), corrected by `1e95362` | `16046ab` (target-aware Setup status) | Windows x86-64 guarded live-model proof; Linux x86-64 clean-base/no-weight, supervised lifecycle, and production-cutover proof; macOS pending and base-delivered | Not required | Complete for qualified x86 targets: the exact six-target profile/delivery table enables explicit first-use install/activation only on Linux and Windows x86-64. Direct base dependencies remain only on macOS/ARM targets. A committed clean Linux CPU base contained 61 packages and none of the ten staged distributions; the exact overlay installed, validated, activated, passed the finite CLIP+LoRA child, rolled back, and restored a fresh clean base. A fresh worker exposed actionable status and rejected required execution with `optional_runtime_missing` before queueing. macOS and ARM rows remain explicitly non-actionable/base-delivered pending their own qualifier evidence. |
 | P1.1 | `207d8f1`; actionable API message follow-up `5dc7313` | `c3e932c` | Not required | Not required | Complete: reviewed official component execution is bound to exact main/auxiliary Hub commits, an installed pinned pipeline/block pair, immediate identity revalidation, a private content-addressed metadata snapshot, and P0.5 runtime admission. Local sources remain preview-only and repository Python remains disabled without a future non-persistable task authorization. Complete backend/client and focused browser gates passed without model or asset execution. |
-| P1.2 | Pending | Pending | Not required | Not required | Not started |
+| P1.2 | `50dafa6` | `7c6bdbf` | Not required | Not required | Complete: the reproducible pinned snapshot normalizes Sequential, Auto, Loop, state, output, and component contracts; DynamicBlock exposes and executes only sidecar-carryable reviewed tasks; the client consumes the declarative task visibility contract generically. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.3 | Pending | Pending | Not required | Not required | Not started |
 | P1.4 | Pending | Pending | Not required | Not required | Not started |
 | P2.1-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
