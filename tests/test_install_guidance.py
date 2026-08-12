@@ -256,6 +256,27 @@ class GuidedInstallerTests(unittest.TestCase):
                     f"{relative_path} must be executable because documentation invokes it directly",
                 )
 
+    def test_macos_optional_runtime_qualifier_is_manual_and_fail_closed(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/qualify-optional-runtime-macos.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("pull_request:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertIn("runs-on: macos-14", workflow)
+        self.assertIn('test "$(uname -m)" = "arm64"', workflow)
+        self.assertIn('test "$(git diff --name-only)" = "pyproject.toml"', workflow)
+        self.assertEqual(workflow.count('-  "peft>=0.17.0"'), 2)
+        self.assertEqual(workflow.count('-  "transformers>=4.49.0"'), 2)
+        self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
+        self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)
+        self.assertIn('assert value["status"] == "ready"', workflow)
+        self.assertIn('assert value["status"] == "passed"', workflow)
+        self.assertIn("prospective-base.diff", workflow)
+        self.assertIn("actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f", workflow)
+
     def test_structured_issue_contains_help_and_safe_action_metadata(self):
         issue = enrich_issue(
             "gpu-groups-missing", "groups required", blocking=True,
