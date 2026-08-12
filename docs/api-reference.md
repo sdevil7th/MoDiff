@@ -449,6 +449,13 @@ request, or subprocess. Existing hashless environments are
 only be deactivated to the base environment through the compatibility rollback
 route.
 
+Staged environments are promoted without replacing an existing destination and
+are bound to the directory identity captured by the install lease. A bounded
+durable promotion journal contains only the environment ID, phase, canonical
+manifest/validation digests, and timestamp. Interrupted promotion is reconciled
+under the same global install lease; ambiguous or malformed states fail closed
+as repair-required and are not projected as runnable environments.
+
 Runtime-only enablement changes local opt-in state when its capability permits
 it; probing records only a compatibility result; qualification additionally
 asserts that the exact workload output was reviewed. Public job and receipt

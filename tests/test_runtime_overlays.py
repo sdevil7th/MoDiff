@@ -673,6 +673,145 @@ else:
         self.assertEqual(reacquired.returncode, 0, reacquired.stderr)
         self.assertEqual(reacquired.stdout.strip(), "acquired")
 
+    def test_managed_promotion_uses_exact_directory_and_never_replaces_target(self):
+        managed = self.root / "promotion-managed"
+        staging = managed / "optimizations" / "staging"
+        environments = managed / "optimizations" / "environments"
+        source = staging / "runtime-1-cafebabe"
+        destination = environments / source.name
+        (source / "site-packages").mkdir(parents=True)
+        environments.mkdir(parents=True)
+        (source / "site-packages" / "proof.txt").write_text("reviewed", encoding="utf-8")
+        with mock.patch.object(runtime_overlays, "MANAGED_ROOT", managed):
+            runtime_overlays.promote_managed_directory(source, destination)
+        self.assertFalse(source.exists())
+        self.assertEqual(
+            (destination / "site-packages" / "proof.txt").read_text(encoding="utf-8"),
+            "reviewed",
+        )
+
+        replacement_source = staging / "runtime-2-deadbeef"
+        replacement_source.mkdir()
+        (replacement_source / "canary.txt").write_text("source", encoding="utf-8")
+        occupied = environments / replacement_source.name
+        occupied.mkdir()
+        (occupied / "canary.txt").write_text("destination", encoding="utf-8")
+        with (
+            mock.patch.object(runtime_overlays, "MANAGED_ROOT", managed),
+            self.assertRaises(runtime_overlays.OverlayStorageUnsafe),
+        ):
+            runtime_overlays.promote_managed_directory(replacement_source, occupied)
+        self.assertEqual((replacement_source / "canary.txt").read_text(), "source")
+        self.assertEqual((occupied / "canary.txt").read_text(), "destination")
+
+    def test_managed_cleanup_quarantines_exact_tree_and_rejects_unsafe_target(self):
+        managed = self.root / "cleanup-managed"
+        environments = managed / "optimizations" / "environments"
+        target = environments / "runtime-1-cafebabe"
+        (target / "site-packages" / "nested").mkdir(parents=True)
+        (target / "site-packages" / "nested" / "proof.txt").write_text(
+            "reviewed",
+            encoding="utf-8",
+        )
+        with mock.patch.object(runtime_overlays, "MANAGED_ROOT", managed):
+            self.assertTrue(
+                runtime_overlays.remove_managed_directory(target, parent=environments)
+            )
+            self.assertFalse(
+                runtime_overlays.remove_managed_directory(target, parent=environments)
+            )
+        self.assertFalse(target.exists())
+        self.assertEqual(list(environments.glob(".cleanup-*")), [])
+
+        unsafe = environments / "runtime-2-deadbeef"
+        unsafe.write_text("do-not-delete", encoding="utf-8")
+        with (
+            mock.patch.object(runtime_overlays, "MANAGED_ROOT", managed),
+            self.assertRaises(runtime_overlays.OverlayStorageUnsafe),
+        ):
+            runtime_overlays.remove_managed_directory(unsafe, parent=environments)
+        self.assertEqual(unsafe.read_text(encoding="utf-8"), "do-not-delete")
+
+    def test_staging_identity_rejects_directory_replacement_before_promote_or_cleanup(self):
+        managed = self.root / "identity-managed"
+        staging = managed / "optimizations" / "staging"
+        environments = managed / "optimizations" / "environments"
+        staged = staging / "runtime-1-cafebabe"
+        displaced = staging / "displaced"
+        staged.mkdir(parents=True)
+        environments.mkdir(parents=True)
+        (staged / "proof.txt").write_text("validated", encoding="utf-8")
+        with mock.patch.object(runtime_overlays, "MANAGED_ROOT", managed):
+            identity = runtime_overlays.managed_directory_identity(staged)
+            staged.replace(displaced)
+            staged.mkdir()
+            (staged / "proof.txt").write_text("replacement", encoding="utf-8")
+            with self.assertRaises(runtime_overlays.OverlayStorageUnsafe):
+                runtime_overlays.promote_managed_directory(
+                    staged,
+                    environments / staged.name,
+                    expected_identity=identity,
+                )
+            with self.assertRaises(runtime_overlays.OverlayStorageUnsafe):
+                runtime_overlays.remove_managed_directory(
+                    staged,
+                    parent=staging,
+                    expected_identity=identity,
+                )
+        self.assertEqual((staged / "proof.txt").read_text(), "replacement")
+        self.assertEqual((displaced / "proof.txt").read_text(), "validated")
+        self.assertFalse((environments / staged.name).exists())
+
+    def test_posix_promotion_requires_platform_exclusive_rename_flags(self):
+        class Operation:
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, *args):
+                self.calls.append(args)
+                return 0
+
+        linux = Operation()
+        macos = Operation()
+        with (
+            mock.patch("ctypes.CDLL", return_value=SimpleNamespace(renameat2=linux)),
+            mock.patch.object(sys, "platform", "linux"),
+        ):
+            runtime_overlays._posix_rename_noreplace(3, "source", 4, "target")
+        self.assertEqual(linux.calls[0][-1], 1)
+        with (
+            mock.patch("ctypes.CDLL", return_value=SimpleNamespace(renameatx_np=macos)),
+            mock.patch.object(sys, "platform", "darwin"),
+        ):
+            runtime_overlays._posix_rename_noreplace(3, "source", 4, "target")
+        self.assertEqual(macos.calls[0][-1], 0x00000004)
+        with (
+            mock.patch("ctypes.CDLL", return_value=SimpleNamespace()),
+            mock.patch.object(sys, "platform", "linux"),
+            self.assertRaises(runtime_overlays.OverlayStorageUnsafe),
+        ):
+            runtime_overlays._posix_rename_noreplace(3, "source", 4, "target")
+
+    def test_cancelled_lease_cannot_enter_managed_promotion(self):
+        lease = runtime_overlays.InstallLease(
+            token="cancelled",
+            owner_kind="test",
+            owner_id="promotion",
+            cancel_event=threading.Event(),
+        )
+        lease.cancel_event.set()
+        with (
+            mock.patch.object(runtime_overlays, "_ACTIVE_INSTALL", lease),
+            mock.patch.object(runtime_overlays, "promote_managed_directory") as promote,
+            self.assertRaises(runtime_overlays.OverlayCancelled),
+        ):
+            runtime_overlays.promote_staged_environment(
+                lease,
+                self.root / "staged",
+                self.root / "destination",
+            )
+        promote.assert_not_called()
+
     def test_cancel_kills_benign_child_and_grandchild_before_escape(self):
         managed = self.root / "cancel-managed"
         lock_path = managed / "optimizations" / "install.lock"

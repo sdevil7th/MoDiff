@@ -123,11 +123,11 @@ a qualified deployment.
 The staged-overlay implementation is intentionally not an executable product
 claim. Qualification still requires, at minimum:
 
-- handle-relative promotion/cleanup that is safe against directory replacement;
-- a durable promotion commit/reconciliation record and stricter fresh-process
-  side-effect containment; and
-- clean-base, staged, restart/rollback, and representative no-weight/live
-  workload evidence on the target machine.
+- cross-platform execution of the locked installer/promotion boundary and
+  clean-base, staged, restart/rollback, and representative no-weight/live
+  workload evidence on each target class; and
+- stricter fresh-process side-effect containment evidence for the installed
+  Transformers/PEFT closure.
 
 Until those gates are closed, `installActionAvailable`,
 `activationAvailable`, and `cutoverReady` remain false. The compatibility
@@ -144,6 +144,24 @@ On Windows, the watchdog enters a non-breakaway Job Object with kill-on-close
 before launching the installer, so cancellation or parent death contains the
 entire descendant tree. These controls remain dormant while action flags are
 false.
+
+Promotion and cleanup now operate on exact filesystem objects rather than
+resolved path strings. Windows renames the held source handle with
+`FileRenameInfoEx`, write-through, and no replacement; cleanup quarantines the
+same held directory and disposes each descendant by handle. Linux requires
+`renameat2(RENAME_NOREPLACE)` relative to opened parents, while macOS requires
+`renameatx_np(RENAME_EXCL)`; an unavailable exclusive primitive fails closed.
+The install lease binds the original staging directory identity, so a replaced
+name cannot be promoted or cleaned as though it were the validated tree.
+
+Before promotion, MoDiff durably records the exact environment ID and canonical
+manifest/validation digests. A post-rename record is written only after the
+destination is re-inspected against those digests. On the next locked startup,
+install, activation, or rollback operation, an interrupted prepared record is
+either completed from the still-valid staged directory, acknowledged against
+the already-promoted exact directory, or left as an explicit repair condition;
+malformed, missing, duplicated, or identity-mismatched states never downgrade
+to an absent journal.
 
 ## Runtime features
 

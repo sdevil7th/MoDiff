@@ -110,6 +110,577 @@ def ensure_managed_directory(path: Path, *, managed_root: Path = MANAGED_ROOT) -
     return current.resolve(strict=True)
 
 
+def _managed_child(
+    path: Path,
+    parent: Path,
+    *,
+    managed_root: Path | None = None,
+) -> tuple[Path, str]:
+    """Return one validated direct-child name beneath an anchored parent."""
+
+    raw_path = Path(path).absolute()
+    raw_parent = Path(parent).absolute()
+    if (
+        raw_path.parent != raw_parent
+        or raw_path.name in {"", ".", ".."}
+        or len(raw_path.name) > 255
+        or any(ord(character) < 32 or ord(character) == 127 for character in raw_path.name)
+    ):
+        raise OverlayStorageUnsafe("A managed runtime operation has an invalid child path.")
+    try:
+        trusted_parent = ensure_managed_directory(
+            raw_parent,
+            managed_root=MANAGED_ROOT if managed_root is None else managed_root,
+        )
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise OverlayStorageUnsafe("A managed runtime parent directory is unsafe.") from exc
+    return trusted_parent, raw_path.name
+
+
+def _safe_directory_details(details: os.stat_result) -> bool:
+    return (
+        stat.S_ISDIR(details.st_mode)
+        and not stat.S_ISLNK(details.st_mode)
+        and not bool(
+            getattr(details, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        )
+    )
+
+
+def _windows_open_path(
+    path: Path,
+    *,
+    directory: bool,
+    writable: bool = False,
+) -> tuple[Any, tuple[int, int]]:
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateFileW.argtypes = (
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    )
+    kernel32.CreateFileW.restype = wintypes.HANDLE
+    desired_access = 0x00010000 | 0x00000080 | 0x00100000
+    if writable:
+        desired_access |= 0x40000000  # GENERIC_WRITE
+    if directory:
+        desired_access |= 0x00000001 | 0x00000020  # FILE_LIST_DIRECTORY | FILE_TRAVERSE
+    handle = kernel32.CreateFileW(
+        str(path),
+        desired_access,
+        0x00000001 | 0x00000002 | 0x00000004,
+        None,
+        3,  # OPEN_EXISTING
+        0x02000000 | 0x00200000,  # BACKUP_SEMANTICS | OPEN_REPARSE_POINT
+        None,
+    )
+    if handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+
+    class FILE_INFO(ctypes.Structure):
+        _fields_ = [
+            ("attributes", wintypes.DWORD),
+            ("creation_low", wintypes.DWORD),
+            ("creation_high", wintypes.DWORD),
+            ("access_low", wintypes.DWORD),
+            ("access_high", wintypes.DWORD),
+            ("write_low", wintypes.DWORD),
+            ("write_high", wintypes.DWORD),
+            ("volume_serial", wintypes.DWORD),
+            ("size_high", wintypes.DWORD),
+            ("size_low", wintypes.DWORD),
+            ("links", wintypes.DWORD),
+            ("index_high", wintypes.DWORD),
+            ("index_low", wintypes.DWORD),
+        ]
+
+    kernel32.GetFileInformationByHandle.argtypes = (wintypes.HANDLE, ctypes.POINTER(FILE_INFO))
+    kernel32.GetFileInformationByHandle.restype = wintypes.BOOL
+    info = FILE_INFO()
+    if not kernel32.GetFileInformationByHandle(handle, ctypes.byref(info)):
+        error = ctypes.get_last_error()
+        kernel32.CloseHandle(handle)
+        raise ctypes.WinError(error)
+    is_directory = bool(info.attributes & 0x00000010)
+    is_reparse = bool(info.attributes & 0x00000400)
+    if is_directory != directory or is_reparse:
+        kernel32.CloseHandle(handle)
+        raise OverlayStorageUnsafe("A managed runtime entry is not an exact regular path.")
+    identity = (int(info.volume_serial), (int(info.index_high) << 32) | int(info.index_low))
+    return handle, identity
+
+
+def _windows_close_handle(handle: Any) -> None:
+    import ctypes
+
+    if handle is not None:
+        ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle(handle)
+
+
+def _windows_rename_directory(
+    source: Path,
+    destination: Path,
+    *,
+    expected_identity: tuple[int, int] | None = None,
+) -> None:
+    import ctypes
+    from ctypes import wintypes
+
+    source_handle = parent_handle = destination_handle = None
+    try:
+        source_handle, source_identity = _windows_open_path(source, directory=True)
+        if expected_identity is not None and source_identity != expected_identity:
+            raise OverlayStorageUnsafe("The staged runtime directory changed identity.")
+        parent_handle, _ = _windows_open_path(destination.parent, directory=True)
+        handle_destination = _windows_final_path(parent_handle) / destination.name
+        try:
+            handle_destination.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise OverlayStorageUnsafe("A managed runtime promotion target already exists.")
+
+        destination_name = str(handle_destination)
+        name_length = len(destination_name)
+
+        class FILE_RENAME_INFO_EX(ctypes.Structure):
+            _fields_ = [
+                ("flags", wintypes.DWORD),
+                ("root", wintypes.HANDLE),
+                ("name_bytes", wintypes.DWORD),
+                ("name", wintypes.WCHAR * (name_length + 1)),
+            ]
+
+        rename = FILE_RENAME_INFO_EX()
+        rename.flags = 0x00000002  # FILE_RENAME_FLAG_WRITE_THROUGH
+        rename.root = None
+        rename.name_bytes = len(destination_name.encode("utf-16-le"))
+        rename.name = destination_name
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.SetFileInformationByHandle.argtypes = (
+            wintypes.HANDLE,
+            ctypes.c_int,
+            ctypes.c_void_p,
+            wintypes.DWORD,
+        )
+        kernel32.SetFileInformationByHandle.restype = wintypes.BOOL
+        if not kernel32.SetFileInformationByHandle(
+            source_handle,
+            22,  # FileRenameInfoEx
+            ctypes.byref(rename),
+            FILE_RENAME_INFO_EX.name.offset + rename.name_bytes,
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        destination_handle, destination_identity = _windows_open_path(
+            handle_destination,
+            directory=True,
+        )
+        if destination_identity != source_identity:
+            raise OverlayStorageUnsafe("The promoted runtime directory changed identity.")
+    finally:
+        _windows_close_handle(destination_handle)
+        _windows_close_handle(parent_handle)
+        _windows_close_handle(source_handle)
+
+
+def _posix_open_directory(path: str | Path, *, directory_fd: int | None = None) -> int:
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    return os.open(path, flags, dir_fd=directory_fd)
+
+
+def _posix_rename_noreplace(
+    source_parent_fd: int,
+    source_name: str,
+    destination_parent_fd: int,
+    destination_name: str,
+) -> None:
+    import ctypes
+
+    library = ctypes.CDLL(None, use_errno=True)
+    source = os.fsencode(source_name)
+    destination = os.fsencode(destination_name)
+    if sys.platform.startswith("linux") and hasattr(library, "renameat2"):
+        operation = library.renameat2
+        flag = 1  # RENAME_NOREPLACE
+    elif sys.platform == "darwin" and hasattr(library, "renameatx_np"):
+        operation = library.renameatx_np
+        flag = 0x00000004  # RENAME_EXCL
+    else:
+        raise OverlayStorageUnsafe(
+            "This platform lacks the required exclusive handle-relative rename primitive."
+        )
+    operation.argtypes = (
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_uint,
+    )
+    operation.restype = ctypes.c_int
+    if operation(
+        source_parent_fd,
+        source,
+        destination_parent_fd,
+        destination,
+        flag,
+    ) != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), destination_name)
+
+
+def _posix_rename_directory(
+    source: Path,
+    destination: Path,
+    *,
+    expected_identity: tuple[int, int] | None = None,
+) -> None:
+    source_parent_fd = destination_parent_fd = source_fd = None
+    try:
+        source_parent_fd = _posix_open_directory(source.parent)
+        destination_parent_fd = _posix_open_directory(destination.parent)
+        source_fd = _posix_open_directory(source.name, directory_fd=source_parent_fd)
+        source_details = os.fstat(source_fd)
+        named_details = os.stat(source.name, dir_fd=source_parent_fd, follow_symlinks=False)
+        if (
+            not _safe_directory_details(source_details)
+            or (
+                expected_identity is not None
+                and (source_details.st_dev, source_details.st_ino) != expected_identity
+            )
+            or (source_details.st_dev, source_details.st_ino)
+            != (named_details.st_dev, named_details.st_ino)
+        ):
+            raise OverlayStorageUnsafe("The staged runtime directory changed identity.")
+        try:
+            os.stat(destination.name, dir_fd=destination_parent_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            raise OverlayStorageUnsafe("A managed runtime promotion target already exists.")
+        _posix_rename_noreplace(
+            source_parent_fd,
+            source.name,
+            destination_parent_fd,
+            destination.name,
+        )
+        promoted = os.stat(destination.name, dir_fd=destination_parent_fd, follow_symlinks=False)
+        if (source_details.st_dev, source_details.st_ino) != (promoted.st_dev, promoted.st_ino):
+            raise OverlayStorageUnsafe("The promoted runtime directory changed identity.")
+        os.fsync(destination_parent_fd)
+        if source_parent_fd != destination_parent_fd:
+            os.fsync(source_parent_fd)
+    finally:
+        for descriptor in (source_fd, destination_parent_fd, source_parent_fd):
+            if descriptor is not None:
+                os.close(descriptor)
+
+
+def managed_directory_identity(path: Path) -> tuple[int, int]:
+    """Capture the filesystem identity of one safe managed directory."""
+
+    trusted_parent, name = _managed_child(path, path.parent)
+    anchored = trusted_parent / name
+    if os.name == "nt":
+        handle = None
+        try:
+            handle, identity = _windows_open_path(anchored, directory=True)
+            return identity
+        finally:
+            _windows_close_handle(handle)
+    parent_descriptor = descriptor = None
+    try:
+        parent_descriptor = _posix_open_directory(trusted_parent)
+        descriptor = _posix_open_directory(name, directory_fd=parent_descriptor)
+        details = os.fstat(descriptor)
+        return int(details.st_dev), int(details.st_ino)
+    finally:
+        for opened in (descriptor, parent_descriptor):
+            if opened is not None:
+                os.close(opened)
+
+
+def flush_managed_directory(path: Path, *, managed_root: Path | None = None) -> None:
+    """Durably flush metadata changes for one exact managed directory."""
+
+    try:
+        anchored = ensure_managed_directory(
+            path,
+            managed_root=MANAGED_ROOT if managed_root is None else managed_root,
+        )
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise OverlayStorageUnsafe("The managed directory flush target is unsafe.") from exc
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        handle = None
+        try:
+            handle, _ = _windows_open_path(anchored, directory=True, writable=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel32.FlushFileBuffers.argtypes = (wintypes.HANDLE,)
+            kernel32.FlushFileBuffers.restype = wintypes.BOOL
+            if not kernel32.FlushFileBuffers(handle):
+                raise ctypes.WinError(ctypes.get_last_error())
+        finally:
+            _windows_close_handle(handle)
+        return
+    descriptor = None
+    try:
+        descriptor = _posix_open_directory(anchored)
+        os.fsync(descriptor)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+def promote_managed_directory(
+    source: Path,
+    destination: Path,
+    *,
+    expected_identity: tuple[int, int] | None = None,
+) -> None:
+    """Move one exact managed directory without replacing an existing target."""
+
+    source_parent, source_name = _managed_child(source, source.parent)
+    destination_parent, destination_name = _managed_child(destination, destination.parent)
+    anchored_source = source_parent / source_name
+    anchored_destination = destination_parent / destination_name
+    try:
+        if os.name == "nt":
+            _windows_rename_directory(
+                anchored_source,
+                anchored_destination,
+                expected_identity=expected_identity,
+            )
+        else:
+            _posix_rename_directory(
+                anchored_source,
+                anchored_destination,
+                expected_identity=expected_identity,
+            )
+    except OverlayStorageUnsafe:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise OverlayStorageUnsafe("The staged runtime directory could not be promoted safely.") from exc
+
+
+def _posix_remove_contents(directory_fd: int) -> None:
+    for name in os.listdir(directory_fd):
+        details = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+        if stat.S_ISDIR(details.st_mode) and not stat.S_ISLNK(details.st_mode):
+            child_fd = _posix_open_directory(name, directory_fd=directory_fd)
+            try:
+                opened = os.fstat(child_fd)
+                if (details.st_dev, details.st_ino) != (opened.st_dev, opened.st_ino):
+                    raise OverlayStorageUnsafe("A managed cleanup directory changed identity.")
+                _posix_remove_contents(child_fd)
+                current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+                if (opened.st_dev, opened.st_ino) != (current.st_dev, current.st_ino):
+                    raise OverlayStorageUnsafe("A managed cleanup directory changed identity.")
+                os.rmdir(name, dir_fd=directory_fd)
+            finally:
+                os.close(child_fd)
+        else:
+            os.unlink(name, dir_fd=directory_fd)
+
+
+def _windows_final_path(handle: Any) -> Path:
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetFinalPathNameByHandleW.argtypes = (
+        wintypes.HANDLE,
+        wintypes.LPWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+    )
+    kernel32.GetFinalPathNameByHandleW.restype = wintypes.DWORD
+    size = kernel32.GetFinalPathNameByHandleW(handle, None, 0, 0)
+    if not size or size > 32768:
+        raise ctypes.WinError(ctypes.get_last_error())
+    buffer = ctypes.create_unicode_buffer(size)
+    written = kernel32.GetFinalPathNameByHandleW(handle, buffer, size, 0)
+    if not written or written >= size:
+        raise ctypes.WinError(ctypes.get_last_error())
+    return Path(buffer.value)
+
+
+def _windows_delete_handle(handle: Any) -> None:
+    import ctypes
+    from ctypes import wintypes
+
+    class FILE_DISPOSITION_INFO_EX(ctypes.Structure):
+        _fields_ = [("flags", wintypes.DWORD)]
+
+    disposition = FILE_DISPOSITION_INFO_EX(0x00000001 | 0x00000002 | 0x00000010)
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.SetFileInformationByHandle.argtypes = (
+        wintypes.HANDLE,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+    )
+    kernel32.SetFileInformationByHandle.restype = wintypes.BOOL
+    if not kernel32.SetFileInformationByHandle(
+        handle,
+        21,  # FileDispositionInfoEx
+        ctypes.byref(disposition),
+        ctypes.sizeof(disposition),
+    ):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _windows_remove_contents(directory_handle: Any) -> None:
+    directory = _windows_final_path(directory_handle)
+    with os.scandir(directory) as entries:
+        names = [entry.name for entry in entries]
+    for name in names:
+        child = directory / name
+        child_details = child.lstat()
+        is_directory = stat.S_ISDIR(child_details.st_mode)
+        child_handle = None
+        try:
+            child_handle, _ = _windows_open_path(child, directory=is_directory)
+            if is_directory:
+                _windows_remove_contents(child_handle)
+            _windows_delete_handle(child_handle)
+        finally:
+            _windows_close_handle(child_handle)
+
+
+def remove_managed_directory(
+    path: Path,
+    *,
+    parent: Path,
+    expected_identity: tuple[int, int] | None = None,
+) -> bool:
+    """Quarantine and remove one exact direct-child directory without following links."""
+
+    trusted_parent, name = _managed_child(path, parent)
+    source = trusted_parent / name
+    try:
+        details = source.lstat()
+    except FileNotFoundError:
+        return False
+    if not _safe_directory_details(details):
+        raise OverlayStorageUnsafe("The managed cleanup target is not a regular directory.")
+    quarantine = trusted_parent / f".cleanup-{uuid.uuid4().hex}"
+    if os.name == "nt":
+        _windows_rename_directory(
+            source,
+            quarantine,
+            expected_identity=expected_identity,
+        )
+        handle = None
+        try:
+            handle, _ = _windows_open_path(quarantine, directory=True)
+            _windows_remove_contents(handle)
+            _windows_delete_handle(handle)
+        finally:
+            _windows_close_handle(handle)
+        return True
+
+    parent_fd = directory_fd = None
+    try:
+        parent_fd = _posix_open_directory(trusted_parent)
+        directory_fd = _posix_open_directory(name, directory_fd=parent_fd)
+        opened = os.fstat(directory_fd)
+        named = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+        if (
+            (opened.st_dev, opened.st_ino) != (named.st_dev, named.st_ino)
+            or (
+                expected_identity is not None
+                and (opened.st_dev, opened.st_ino) != expected_identity
+            )
+        ):
+            raise OverlayStorageUnsafe("The managed cleanup target changed identity.")
+        _posix_rename_noreplace(parent_fd, name, parent_fd, quarantine.name)
+        quarantined = os.stat(quarantine.name, dir_fd=parent_fd, follow_symlinks=False)
+        if (opened.st_dev, opened.st_ino) != (quarantined.st_dev, quarantined.st_ino):
+            raise OverlayStorageUnsafe("The quarantined cleanup target changed identity.")
+        _posix_remove_contents(directory_fd)
+        quarantined = os.stat(quarantine.name, dir_fd=parent_fd, follow_symlinks=False)
+        if (opened.st_dev, opened.st_ino) != (quarantined.st_dev, quarantined.st_ino):
+            raise OverlayStorageUnsafe("The quarantined cleanup target changed identity.")
+        os.rmdir(quarantine.name, dir_fd=parent_fd)
+        return True
+    except OverlayStorageUnsafe:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise OverlayStorageUnsafe("The managed runtime directory could not be removed safely.") from exc
+    finally:
+        for descriptor in (directory_fd, parent_fd):
+            if descriptor is not None:
+                os.close(descriptor)
+
+
+def remove_managed_file(path: Path, *, parent: Path) -> bool:
+    """Remove one exact regular direct-child file without following replacements."""
+
+    trusted_parent, name = _managed_child(path, parent)
+    target = trusted_parent / name
+    try:
+        details = target.lstat()
+    except FileNotFoundError:
+        return False
+    if (
+        not stat.S_ISREG(details.st_mode)
+        or stat.S_ISLNK(details.st_mode)
+        or getattr(details, "st_nlink", 1) != 1
+        or bool(
+            getattr(details, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        )
+    ):
+        raise OverlayStorageUnsafe("The managed cleanup target is not a regular file.")
+    if os.name == "nt":
+        handle = None
+        try:
+            handle, _ = _windows_open_path(target, directory=False)
+            _windows_delete_handle(handle)
+            return True
+        except OverlayStorageUnsafe:
+            raise
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise OverlayStorageUnsafe("The managed runtime file could not be removed safely.") from exc
+        finally:
+            _windows_close_handle(handle)
+
+    parent_fd = target_fd = None
+    try:
+        parent_fd = _posix_open_directory(trusted_parent)
+        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        target_fd = os.open(name, flags, dir_fd=parent_fd)
+        opened = os.fstat(target_fd)
+        named = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or getattr(opened, "st_nlink", 1) != 1
+            or (opened.st_dev, opened.st_ino) != (named.st_dev, named.st_ino)
+        ):
+            raise OverlayStorageUnsafe("The managed cleanup file changed identity.")
+        os.unlink(name, dir_fd=parent_fd)
+        return True
+    except OverlayStorageUnsafe:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise OverlayStorageUnsafe("The managed runtime file could not be removed safely.") from exc
+    finally:
+        for descriptor in (target_fd, parent_fd):
+            if descriptor is not None:
+                os.close(descriptor)
+
+
 @dataclass
 class InstallLease:
     """One authoritative process-local install and its running subprocess."""
@@ -121,6 +692,7 @@ class InstallLease:
     process: subprocess.Popen | None = None
     lock_file: Any = None
     committed: bool = False
+    staged_identity: tuple[int, int] | None = None
 
 
 def _acquire_os_lock() -> Any:
@@ -257,8 +829,11 @@ def promote_staged_environment(lease: InstallLease, staged: Path, destination: P
     with _INSTALL_LOCK:
         if _ACTIVE_INSTALL is not lease or lease.cancel_event.is_set() or lease.committed:
             raise OverlayCancelled("Optional-runtime installation was cancelled before promotion.")
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        staged.replace(destination)
+        promote_managed_directory(
+            staged,
+            destination,
+            expected_identity=lease.staged_identity,
+        )
         lease.committed = True
 
 

@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 from modiff import optimization_packages as optimizations
+from modiff import runtime_overlays
 
 
 class OptimizationPackageTests(unittest.TestCase):
@@ -25,6 +26,7 @@ class OptimizationPackageTests(unittest.TestCase):
             mock.patch.object(optimizations, "MANAGED_ROOT", root),
             mock.patch.object(optimizations, "STATE_PATH", root / "state.json"),
             mock.patch.object(optimizations, "RECEIPTS_PATH", root / "receipts.json"),
+            mock.patch.object(optimizations, "PROMOTION_PATH", root / "promotion.json"),
         ]
         for patcher in self.path_patchers:
             patcher.start()
@@ -70,6 +72,121 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertFalse(by_id["torchao"]["canInstall"])
         self.assertFalse(by_id["torchao"]["canEnable"])
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
+
+    @staticmethod
+    def promotion_inspection(environment_id, *, environment_root, **_kwargs):
+        candidate = environment_root / environment_id
+        if not candidate.is_dir():
+            return {"status": "repair_required"}
+        return {
+            "status": "ready",
+            "manifest": {"schemaVersion": 2, "id": environment_id},
+            "validation": {"schemaVersion": 2, "environmentId": environment_id},
+        }
+
+    def test_prepared_promotion_journal_recovers_exact_staged_environment(self):
+        environment_id = "runtime-9-cafebabe"
+        staged = optimizations.STAGING_DIR / environment_id
+        destination = optimizations.ENVIRONMENTS_DIR / environment_id
+        (staged / "site-packages").mkdir(parents=True)
+        optimizations.ENVIRONMENTS_DIR.mkdir()
+        (staged / "site-packages" / "proof.txt").write_text("reviewed", encoding="utf-8")
+        inspection = self.promotion_inspection(
+            environment_id,
+            environment_root=optimizations.STAGING_DIR,
+        )
+        anchor = optimizations._promotion_anchor(inspection)
+        optimizations._write_promotion_record(
+            environment_id,
+            phase="prepared",
+            anchor=anchor,
+        )
+        lease = runtime_overlays.InstallLease(
+            token="recovery",
+            owner_kind="test",
+            owner_id=environment_id,
+            cancel_event=threading.Event(),
+        )
+        with (
+            mock.patch.object(runtime_overlays, "MANAGED_ROOT", optimizations.MANAGED_ROOT),
+            mock.patch.object(runtime_overlays, "_ACTIVE_INSTALL", lease),
+            mock.patch.object(
+                optimizations,
+                "_environment_inspection",
+                side_effect=self.promotion_inspection,
+            ),
+        ):
+            recovered = optimizations._reconcile_promotion(lease)
+        self.assertEqual(recovered, environment_id)
+        self.assertTrue(lease.committed)
+        self.assertFalse(staged.exists())
+        self.assertEqual((destination / "site-packages" / "proof.txt").read_text(), "reviewed")
+        self.assertFalse(optimizations.PROMOTION_PATH.exists())
+
+    def test_prepared_journal_acknowledges_crash_after_exact_rename(self):
+        environment_id = "runtime-9-cafebabe"
+        destination = optimizations.ENVIRONMENTS_DIR / environment_id
+        destination.mkdir(parents=True)
+        inspection = self.promotion_inspection(
+            environment_id,
+            environment_root=optimizations.ENVIRONMENTS_DIR,
+        )
+        optimizations._write_promotion_record(
+            environment_id,
+            phase="prepared",
+            anchor=optimizations._promotion_anchor(inspection),
+        )
+        lease = self.lease()
+        with (
+            mock.patch.object(
+                optimizations,
+                "_environment_inspection",
+                side_effect=self.promotion_inspection,
+            ),
+            mock.patch.object(optimizations, "promote_staged_environment") as promote,
+            mock.patch.object(runtime_overlays, "MANAGED_ROOT", optimizations.MANAGED_ROOT),
+        ):
+            self.assertEqual(optimizations._reconcile_promotion(lease), environment_id)
+        promote.assert_not_called()
+        self.assertTrue(destination.is_dir())
+        self.assertFalse(optimizations.PROMOTION_PATH.exists())
+
+    def test_ambiguous_promotion_journal_fails_closed_without_mutation(self):
+        environment_id = "runtime-9-cafebabe"
+        staged = optimizations.STAGING_DIR / environment_id
+        destination = optimizations.ENVIRONMENTS_DIR / environment_id
+        staged.mkdir(parents=True)
+        destination.mkdir(parents=True)
+        inspection = self.promotion_inspection(
+            environment_id,
+            environment_root=optimizations.STAGING_DIR,
+        )
+        optimizations._write_promotion_record(
+            environment_id,
+            phase="prepared",
+            anchor=optimizations._promotion_anchor(inspection),
+        )
+        with self.assertRaisesRegex(RuntimeError, "ambiguous filesystem state"):
+            optimizations._reconcile_promotion(self.lease())
+        self.assertTrue(staged.is_dir())
+        self.assertTrue(destination.is_dir())
+        self.assertTrue(optimizations.PROMOTION_PATH.is_file())
+
+    def test_malformed_promotion_journal_never_downgrades_to_no_record(self):
+        optimizations.OPTIMIZATION_ROOT.mkdir(parents=True, exist_ok=True)
+        optimizations.PROMOTION_PATH.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": 1,
+                    "environmentId": "../escape",
+                    "phase": "prepared",
+                }
+            ),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(RuntimeError, "promotion journal requires repair"):
+            optimizations._reconcile_promotion(self.lease())
+        self.assertTrue(optimizations.PROMOTION_PATH.is_file())
 
     def test_legacy_activation_is_unqualified_and_rollback_deactivates_to_base(self):
         self.set_active_environment("runtime-1-deadbeef")

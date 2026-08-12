@@ -48,6 +48,7 @@ from modiff.runtime_overlays import (
     cache_locked_artifacts,
     current_base_binding,
     ensure_managed_directory,
+    flush_managed_directory,
     normalize_locked_wheel_install,
     release_install,
     reserve_install,
@@ -56,8 +57,11 @@ from modiff.runtime_overlays import (
     sanitized_install_environment,
     overlay_file_seal_matches,
     promote_staged_environment,
+    remove_managed_directory,
+    remove_managed_file,
     verify_artifact_anchored_overlay,
     locked_artifact_file_seal,
+    managed_directory_identity,
 )
 from modiff.tool_locks import UV_TOOL_LOCKS
 
@@ -70,6 +74,7 @@ STAGING_DIR = OPTIMIZATION_ROOT / "staging"
 ARTIFACTS_DIR = OPTIMIZATION_ROOT / "artifacts"
 STATE_PATH = OPTIMIZATION_ROOT / "state.json"
 RECEIPTS_PATH = OPTIMIZATION_ROOT / "qualification-receipts.json"
+PROMOTION_PATH = OPTIMIZATION_ROOT / "promotion.json"
 CATALOG_SCHEMA_VERSION = 1
 STATE_SCHEMA_VERSION = 2
 RECEIPT_SCHEMA_VERSION = 1
@@ -129,6 +134,7 @@ def _atomic_json(path: Path, value: dict[str, Any], *, root: Path) -> None:
             os.fsync(output.fileno())
         path.parent.resolve(strict=True).relative_to(trusted_root)
         temporary.replace(path)
+        flush_managed_directory(path.parent, managed_root=MANAGED_ROOT)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -385,6 +391,158 @@ def _reset_state_to_base() -> dict[str, Any]:
 def _canonical_digest(value: dict[str, Any]) -> str:
     body = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return f"sha256:{hashlib.sha256(body).hexdigest()}"
+
+
+def _promotion_anchor(inspection: dict[str, Any]) -> dict[str, str]:
+    if inspection.get("status") != "ready":
+        raise RuntimeError("An optional-runtime promotion candidate is not fully validated.")
+    manifest = inspection.get("manifest")
+    validation = inspection.get("validation")
+    if not isinstance(manifest, dict) or not isinstance(validation, dict):
+        raise RuntimeError("An optional-runtime promotion candidate lacks its validation records.")
+    return {
+        "manifestDigest": _canonical_digest(manifest),
+        "validationDigest": _canonical_digest(validation),
+    }
+
+
+def _read_promotion_record() -> dict[str, Any] | None:
+    _verified_existing_managed_directory(
+        OPTIMIZATION_ROOT,
+        managed_root=MANAGED_ROOT,
+    )
+    if PROMOTION_PATH.absolute().parent != OPTIMIZATION_ROOT.absolute():
+        raise OSError("The optional-runtime promotion journal is outside its managed root.")
+    try:
+        record = _read_json(
+            PROMOTION_PATH,
+            {},
+            root=OPTIMIZATION_ROOT,
+            max_bytes=16 * 1024,
+            reject_invalid_existing=True,
+        )
+    except _ManagedJsonInvalid as exc:
+        raise RuntimeError("The optional-runtime promotion journal requires repair.") from exc
+    if not record:
+        return None
+    expected_keys = {
+        "schemaVersion",
+        "environmentId",
+        "phase",
+        "manifestDigest",
+        "validationDigest",
+        "updatedAt",
+    }
+    digest = r"sha256:[0-9a-f]{64}"
+    if (
+        set(record) != expected_keys
+        or record.get("schemaVersion") != 1
+        or not isinstance(record.get("environmentId"), str)
+        or not re.fullmatch(
+            r"runtime-[0-9]{1,16}-[0-9a-f]{8}",
+            record["environmentId"],
+        )
+        or record.get("phase") not in {"prepared", "promoted"}
+        or not isinstance(record.get("manifestDigest"), str)
+        or not re.fullmatch(digest, record["manifestDigest"])
+        or not isinstance(record.get("validationDigest"), str)
+        or not re.fullmatch(digest, record["validationDigest"])
+        or _public_utc_timestamp(record.get("updatedAt")) is None
+    ):
+        raise RuntimeError("The optional-runtime promotion journal requires repair.")
+    return record
+
+
+def _write_promotion_record(
+    environment_id: str,
+    *,
+    phase: str,
+    anchor: dict[str, str],
+) -> dict[str, Any]:
+    record = {
+        "schemaVersion": 1,
+        "environmentId": environment_id,
+        "phase": phase,
+        "manifestDigest": anchor["manifestDigest"],
+        "validationDigest": anchor["validationDigest"],
+        "updatedAt": _now(),
+    }
+    _atomic_json(PROMOTION_PATH, record, root=OPTIMIZATION_ROOT)
+    return record
+
+
+def _promotion_matches(record: dict[str, Any], inspection: dict[str, Any]) -> bool:
+    try:
+        anchor = _promotion_anchor(inspection)
+    except RuntimeError:
+        return False
+    return all(anchor[key] == record[key] for key in ("manifestDigest", "validationDigest"))
+
+
+def _clear_promotion_record() -> None:
+    remove_managed_file(PROMOTION_PATH, parent=OPTIMIZATION_ROOT)
+
+
+def _reconcile_promotion(lease: InstallLease) -> str | None:
+    """Complete or acknowledge one exact interrupted promotion under the install lease."""
+
+    record = _read_promotion_record()
+    if record is None:
+        return None
+    environment_id = record["environmentId"]
+    staged = STAGING_DIR / environment_id
+    destination = ENVIRONMENTS_DIR / environment_id
+
+    def entry_exists(path: Path) -> bool:
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            return False
+        return True
+
+    staged_exists = entry_exists(staged)
+    destination_exists = entry_exists(destination)
+    if staged_exists == destination_exists:
+        raise RuntimeError("The optional-runtime promotion journal has an ambiguous filesystem state.")
+    if destination_exists:
+        inspection = _environment_inspection(
+            environment_id,
+            environment_root=_verified_existing_managed_directory(
+                ENVIRONMENTS_DIR,
+                managed_root=MANAGED_ROOT,
+            ),
+        )
+        if not _promotion_matches(record, inspection):
+            raise RuntimeError("The promoted optional runtime no longer matches its durable journal.")
+        if record["phase"] == "prepared":
+            _write_promotion_record(environment_id, phase="promoted", anchor=record)
+        _clear_promotion_record()
+        return environment_id
+    if record["phase"] != "prepared":
+        raise RuntimeError("The optional-runtime promotion journal is missing its promoted environment.")
+    inspection = _environment_inspection(
+        environment_id,
+        environment_root=_verified_existing_managed_directory(
+            STAGING_DIR,
+            managed_root=MANAGED_ROOT,
+        ),
+    )
+    if not _promotion_matches(record, inspection):
+        raise RuntimeError("The staged optional runtime no longer matches its durable journal.")
+    lease.staged_identity = managed_directory_identity(staged)
+    promote_staged_environment(lease, staged, destination)
+    promoted = _environment_inspection(
+        environment_id,
+        environment_root=_verified_existing_managed_directory(
+            ENVIRONMENTS_DIR,
+            managed_root=MANAGED_ROOT,
+        ),
+    )
+    if not _promotion_matches(record, promoted):
+        raise RuntimeError("The recovered optional runtime failed its post-promotion identity check.")
+    _write_promotion_record(environment_id, phase="promoted", anchor=record)
+    _clear_promotion_record()
+    return environment_id
 
 
 def _optimization_spec(capability_id: str) -> dict[str, Any]:
@@ -764,6 +922,7 @@ def activate_runtime_overlay() -> str | None:
             os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
             return None
     try:
+        _reconcile_promotion(lease)
         state = read_state()
         if state.get("_storageStatus") != "ok":
             os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
@@ -1521,6 +1680,11 @@ def _install_reviewed_overlay(
         if progress:
             progress({"phase": phase, "message": message, "updatedAt": _now()})
 
+    recovered_environment = _reconcile_promotion(lease)
+    if recovered_environment is not None:
+        raise RuntimeError(
+            "An interrupted optional-runtime promotion was recovered. Retry the requested operation."
+        )
     state = read_state()
     if state.get("_storageStatus") != "ok":
         raise RuntimeError("Repair or reset the corrupt runtime state before installing an overlay.")
@@ -1539,6 +1703,7 @@ def _install_reviewed_overlay(
         if not stat.S_ISDIR(staged_info.st_mode) or stat.S_ISLNK(staged_info.st_mode):
             raise RuntimeError("The optional-runtime staging directory is unsafe.")
         staged.resolve(strict=True).relative_to(STAGING_DIR.resolve(strict=True))
+        lease.staged_identity = managed_directory_identity(staged)
         specs: list[dict[str, Any]] = []
         existing_packages: list[dict[str, Any]] = []
         existing_base: list[dict[str, Any]] = []
@@ -1694,7 +1859,35 @@ def _install_reviewed_overlay(
             raise RuntimeError("The staged optional runtime failed isolated validation.")
         if binding != current_base_binding(base_packages) or not all(_spec_is_current(item) for item in specs):
             raise RuntimeError("The host or executable runtime spec changed before promotion.")
+        staged_inspection = _environment_inspection(
+            environment_id,
+            environment_root=_verified_existing_managed_directory(
+                STAGING_DIR,
+                managed_root=MANAGED_ROOT,
+            ),
+        )
+        promotion_anchor = _promotion_anchor(staged_inspection)
+        _write_promotion_record(
+            environment_id,
+            phase="prepared",
+            anchor=promotion_anchor,
+        )
         promote_staged_environment(lease, staged, destination)
+        promoted_inspection = _environment_inspection(
+            environment_id,
+            environment_root=_verified_existing_managed_directory(
+                ENVIRONMENTS_DIR,
+                managed_root=MANAGED_ROOT,
+            ),
+        )
+        if _promotion_anchor(promoted_inspection) != promotion_anchor:
+            raise RuntimeError("The optional runtime changed identity during promotion.")
+        _write_promotion_record(
+            environment_id,
+            phase="promoted",
+            anchor=promotion_anchor,
+        )
+        _clear_promotion_record()
         report("ready", "Validation passed. Explicit activation and restart are still required.")
         return {
             "environmentId": environment_id,
@@ -1709,18 +1902,12 @@ def _install_reviewed_overlay(
         }
     finally:
         try:
-            staging_root = ensure_managed_directory(STAGING_DIR, managed_root=MANAGED_ROOT)
-            staged_info = staged.lstat()
-            if (
-                stat.S_ISDIR(staged_info.st_mode)
-                and not stat.S_ISLNK(staged_info.st_mode)
-                and not bool(
-                    getattr(staged_info, "st_file_attributes", 0)
-                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+            if not lease.committed:
+                remove_managed_directory(
+                    staged,
+                    parent=STAGING_DIR,
+                    expected_identity=lease.staged_identity,
                 )
-                and staged.resolve(strict=True).is_relative_to(staging_root)
-            ):
-                shutil.rmtree(staged)
         except (FileNotFoundError, OSError, RuntimeError, ValueError):
             pass
         finally:
@@ -1963,6 +2150,7 @@ def _activate_environment_transaction(
         )
     lease = reserve_install("activation", str(environment_id))
     try:
+        _reconcile_promotion(lease)
         state = read_state()
         if state.get("_storageStatus") != "ok":
             raise RuntimeError("Repair or reset the corrupt runtime state before activation.")
@@ -2018,6 +2206,7 @@ def activate_environment(environment_id: str) -> dict[str, Any]:
 def _rollback_environment_transaction(*, expected_trust_class: str) -> dict[str, Any]:
     lease = reserve_install("rollback", "previous_environment")
     try:
+        _reconcile_promotion(lease)
         state = read_state()
         if state.get("_storageStatus") != "ok":
             state = _reset_state_to_base()
@@ -2491,7 +2680,6 @@ def delete_environment(environment_id: str) -> None:
     state = read_state()
     if environment_id in {state.get("activeEnvironmentId"), state.get("previousEnvironmentId")}:
         raise RuntimeError("Active and rollback environments cannot be deleted.")
-    path = (ENVIRONMENTS_DIR / environment_id).resolve()
-    path.relative_to(ENVIRONMENTS_DIR.resolve())
-    if path.is_dir():
-        shutil.rmtree(path)
+    if not re.fullmatch(r"runtime-[0-9]{1,16}-[0-9a-f]{8}", str(environment_id or "")):
+        raise ValueError("A valid managed environment identifier is required.")
+    remove_managed_directory(ENVIRONMENTS_DIR / environment_id, parent=ENVIRONMENTS_DIR)

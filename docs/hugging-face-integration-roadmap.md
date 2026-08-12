@@ -2727,10 +2727,19 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       validate complete unique wheel RECORD hashes/sizes, and place the Windows
       watchdog and all descendants in a non-breakaway kill-on-close Job Object.
       Install, activation, and cutover flags remain false.
+    - [x] Promotion storage preparation: bind the install lease to the original
+      staging-directory identity; use held-parent exclusive, no-replace
+      promotion plus handle-scoped quarantine cleanup; and persist canonical
+      manifest/validation digests in a bounded promotion journal. Locked
+      startup/install/activation/rollback reconciliation completes only one
+      exact prepared move, acknowledges one exact promoted move, and leaves
+      malformed, ambiguous, replaced, or missing states fail-closed for repair.
+      Windows write-through promotion/cleanup and crash-window regressions pass;
+      action flags remain false pending target-platform execution evidence.
     - [ ] Executable qualification: add reviewed per-platform wheel and
-      installer evidence, handle-relative promotion/cleanup proof, durable
-      promotion reconciliation, and clean-base/staged workload evidence before
-      enabling either action.
+      installer execution evidence plus clean-base/staged workload,
+      fresh-process containment, restart, and rollback evidence before enabling
+      either action.
   - [ ] First-use execution guard and client install/activation/restart flow.
     - [x] Cutover-dormant guard/status scaffold: exact backend execution
       profiles own a versioned seven-field requirement; every current profile
