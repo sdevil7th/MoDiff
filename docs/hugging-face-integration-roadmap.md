@@ -827,6 +827,10 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         `113 passed, 1 warning, 185 subtests`; repository-wide Ruff E9/F and
         `git diff --check` passed. These were CPU/no-weight tests and generated
         no media, downloads, or assets.
+      - Superseded by P1.3 on 2026-08-12: the class was verified at the existing
+        pin under the official `diffusers.guiders` namespace even though the
+        top-level lazy export omits it, and it is now registered without a pin
+        change.
     - [x] **P0.3c.3 Complete generic state flows:** add mask/processed-mask/
       overlay state for SDXL and Qwen inpaint, a generic IP-Adapter encoding
       action for SDXL, and first/last-frame state for Wan I2V. Preserve the
@@ -3329,11 +3333,28 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
     existing managed CPU environment receipt as stale for this checkout; no
     package install, model weight, network workflow discovery, or asset
     generation was performed for this segment.
-- [ ] **P1.3 Complete the generic guider registry**
+- [x] **P1.3 Complete the generic guider registry**
   - Add `AdaptiveProjectedMixGuidance`, `MagnitudeAwareGuidance`, and
     `PerturbedAttentionGuidance` to the existing Guider node.
   - Test constructor parameters, required layers/components, signal updates, and
     pinned upstream exports.
+  - Status 2026-08-12: complete in backend `b48355b` with generic client signal
+    proof `f044594`. `AdaptiveProjectedMixGuidance`,
+    `MagnitudeAwareGuidance`, and `PerturbedAttentionGuidance` are resolved from
+    the exact pinned official `diffusers.guiders` namespace. This matters for
+    Magnitude Aware Guidance because the pin exports it from that namespace but
+    omits it from the top-level Diffusers lazy-export list; no dependency pin
+    change or local implementation was introduced. The registry publishes its
+    bounded `alpha` control to every reviewed guider-capable pipeline, while
+    Perturbed Attention retains its exact non-empty Layers contract and all
+    choices remain narrowed by the connected backend pipeline signal.
+  - Evidence 2026-08-12: the focused pinned upstream matrix passed (`48 passed,
+    212 subtests passed`); the complete backend suite passed (`1254 passed, 3
+    skipped, 2108 subtests passed`). Ruff `E9,F`, compile, and diff checks
+    passed. Client `npm run check` passed with the unchanged bundle budget
+    (`523239 / 523264` total gzip bytes), and the focused generic guider signal
+    browser test passed (`1 passed`). Tests constructed the three guiders
+    without weights; no model, media, download, or generated asset was used.
 - [ ] **P1.4 Register current-pin missing Modular classes as contract-only**
   - Split into reviewable image, video, and multimodal batches.
   - Do not mark them Auto-ready or live-supported.
@@ -3710,7 +3731,7 @@ Add references only after the corresponding evidence exists.
 | P0.5 | `4073711` (qualifier), `655baa6` (platform cutover), corrected by `1e95362` | `16046ab` (target-aware Setup status) | Windows x86-64 guarded live-model proof; Linux x86-64 clean-base/no-weight, supervised lifecycle, and production-cutover proof; macOS pending and base-delivered | Not required | Complete for qualified x86 targets: the exact six-target profile/delivery table enables explicit first-use install/activation only on Linux and Windows x86-64. Direct base dependencies remain only on macOS/ARM targets. A committed clean Linux CPU base contained 61 packages and none of the ten staged distributions; the exact overlay installed, validated, activated, passed the finite CLIP+LoRA child, rolled back, and restored a fresh clean base. A fresh worker exposed actionable status and rejected required execution with `optional_runtime_missing` before queueing. macOS and ARM rows remain explicitly non-actionable/base-delivered pending their own qualifier evidence. |
 | P1.1 | `207d8f1`; actionable API message follow-up `5dc7313` | `c3e932c` | Not required | Not required | Complete: reviewed official component execution is bound to exact main/auxiliary Hub commits, an installed pinned pipeline/block pair, immediate identity revalidation, a private content-addressed metadata snapshot, and P0.5 runtime admission. Local sources remain preview-only and repository Python remains disabled without a future non-persistable task authorization. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.2 | `50dafa6` | `7c6bdbf` | Not required | Not required | Complete: the reproducible pinned snapshot normalizes Sequential, Auto, Loop, state, output, and component contracts; DynamicBlock exposes and executes only sidecar-carryable reviewed tasks; the client consumes the declarative task visibility contract generically. Complete backend/client and focused browser gates passed without model or asset execution. |
-| P1.3 | Pending | Pending | Not required | Not required | Not started |
+| P1.3 | `b48355b` | `f044594` | Not required | Not required | Complete: all three planned guiders use exact pinned official exports and constructor contracts; layer requirements, component compatibility, typed parameters, and backend-driven generic option signals passed complete backend/client and focused browser gates without weights. |
 | P1.4 | Pending | Pending | Not required | Not required | Not started |
 | P2.1-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
