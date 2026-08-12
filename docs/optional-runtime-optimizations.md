@@ -185,6 +185,19 @@ model artifact was downloaded or executed. This is one Windows qualification,
 not Linux/macOS/ARM64 or representative model-workload evidence, so action and
 cutover flags remain false.
 
+A second isolated Windows x86-64 run on 2026-08-12 exercised a bounded local
+no-weight workload through that same production install, validation, promotion,
+activation, fresh-process, and rollback path. With every Hugging Face offline
+flag enabled, the activated worker loaded Transformers `5.14.1` and PEFT
+`0.20.0` from the artifact-anchored overlay, constructed a tiny local CLIP text
+encoder, injected PEFT LoRA adapters into its query/value projections, and
+completed a finite `[1, 4, 16]` forward result with four trainable adapter
+parameters. Diffusers reported its PEFT backend active. The fresh worker then
+rolled back to a base process with no active environment. The run downloaded no
+model artifact and changed no source action flag. It closes the Windows
+no-weight staged-workload check only; it is not a clean-base install, supervised
+server restart, live model/media run, or evidence for another target platform.
+
 ## Runtime features
 
 The following features have concrete runtime implementations and remain
