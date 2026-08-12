@@ -3454,6 +3454,19 @@ output and assets remotely. Assets: remote Dataset only.
       generated. Preflight again reported only the already-recorded stale local
       managed-CPU contract digest, so this slice makes no live qualification
       claim.
+  - [x] **P2.2 task-contract planning foundation**
+    - Evidence 2026-08-13: canonical workflow generation now prefers a curated
+      Studio recipe when one exists and otherwise materializes the exact
+      backend-owned task-template skeleton. Pending SDXL text-to-image and
+      image-to-image graphs were regenerated through their content-addressed
+      task contracts, so further P2 modes no longer require placeholder Gallery
+      entries, prompts, or per-model client builders. Both pair-scoped
+      generators and deterministic verifiers passed; backend graph/catalog and
+      task-contract tests passed (`13 passed, 150 subtests`), the complete
+      client gate passed before the final redundant-template removal, and the
+      final focused template/task/graph suites plus build and bundle gate passed
+      at `525120 / 525312` total gzip bytes. No model, media, inference output,
+      or public asset was downloaded or generated.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3802,6 +3815,7 @@ Add references only after the corresponding evidence exists.
 | P2.1 | `fa1884a` | `6f12230` | Not required | Not required | Complete: all 39 authoritative execution pairs publish a stable generic planning contract with exact execution-profile, loader, required-media, and terminal-output identity. Strict client parsing produces modality-generic skeletons and leaves every entry Gallery-hidden pending the separate qualification gate; complete backend/client gates passed without weights or assets. |
 | P2.2a SDXL base text-to-image | `e5905f5` | `7581902` | Remote pending | Pending | Complete source slice: exact pinned planning graph and generic revision binding passed the complete backend/client gates; Auto and Gallery remain disabled pending live qualification and immutable assets. |
 | P2.2b SDXL image-to-image | `5b03302` | `2bd15b2` | Remote pending | Pending | Complete source slice: one logical SDXL model selects an exact mode-specific img2img class and pinned planning graph; source-image, complete-suite, and bundle gates passed while Auto and Gallery remain disabled. |
+| P2.2 task-contract planning foundation | `57316d9` | `2ec78a4` | Not required | Not required | Complete: the canonical generator falls back from curated recipes to exact backend task-template skeletons, and both pending SDXL base modes were regenerated without placeholder Gallery entries or model-specific client builders. |
 | P2.2c-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
