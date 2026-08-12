@@ -36,7 +36,9 @@ def _advertised_modular_modes():
     for capability in public_experimental_pipelines():
         if capability.get("executionKind") != "modular":
             continue
-        advertised.setdefault(capability["modelType"], set()).update(capability["runnableModes"])
+        runnable_modes = capability["runnableModes"]
+        if runnable_modes:
+            advertised.setdefault(capability["modelType"], set()).update(runnable_modes)
     for profile in public_execution_profiles():
         if profile["backend_path"] != MODULAR_BACKEND_PATH:
             continue

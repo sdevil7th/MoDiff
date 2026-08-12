@@ -28,8 +28,8 @@ class ModularWorkflowDiscoveryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         snapshot = load_reviewed_modular_workflow_snapshot()
         self.assertEqual(snapshot["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
-        self.assertEqual(len(snapshot["contracts"]), 11)
-        self.assertEqual(sum(len(item["workflows"]) for item in snapshot["contracts"]), 39)
+        self.assertEqual(len(snapshot["contracts"]), 26)
+        self.assertEqual(sum(len(item["workflows"]) for item in snapshot["contracts"]), 78)
 
     def test_auto_sequential_loop_state_and_component_reuse_are_normalized(self):
         flux = reviewed_modular_workflow_contract("FluxModularPipeline")

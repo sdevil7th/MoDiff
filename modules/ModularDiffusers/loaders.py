@@ -1939,6 +1939,11 @@ class ModelsLoader(NodeBase):
                 "ModelsLoader execution requires a registered built-in Modular Diffusers pipeline type. "
                 "Use the contract-preview flow for custom pipelines."
             )
+        if metadata.get("execution_status") == "contract_only":
+            raise ValueError(
+                f"Modular pipeline {model_type!r} is registered for Expert contract discovery only. "
+                "It has no reviewed artifact or executable generic action contract and cannot load model weights."
+            )
         default_repository = metadata.get("default_repo")
         if not isinstance(default_repository, str) or not default_repository:
             raise ValueError(f"Registered Modular pipeline {model_type!r} has no reviewed default repository.")
@@ -1994,8 +1999,11 @@ class ModelsLoader(NodeBase):
             return None
 
         if model_type != CUSTOM_PIPELINE_MODEL_TYPE:
-            # Do not publish an unknown class name as a runnable capability.
-            pipeline_class_from_model_type(model_type)
+            metadata = get_model_type_metadata(model_type)
+            contract_only = isinstance(metadata, Mapping) and metadata.get("execution_status") == "contract_only"
+            if not contract_only:
+                # Do not publish an unknown class name as a runnable capability.
+                pipeline_class_from_model_type(model_type)
             trust_remote_code = values.get("trust_remote_code", False)
             selected_repo = values.get("repo_id")
             clear_revision = (
@@ -2015,7 +2023,7 @@ class ModelsLoader(NodeBase):
             self._publish_pipeline_identity(
                 generation,
                 persisted_identity=None,
-                signal_value="" if trust_remote_code else model_type,
+                signal_value="" if trust_remote_code or contract_only else model_type,
                 show_refresh=False,
                 clear_revision=clear_revision,
             )
@@ -2103,7 +2111,7 @@ class ModelsLoader(NodeBase):
     def set_filters(self, values, ref):
         # first time dynamically load the model_type options
         if not self.model_types_loaded:
-            self.set_field_params("model_type", {"options": get_all_model_types()})
+            self.set_field_params("model_type", {"options": get_all_model_types(include_contract_only=True)})
             self.model_types_loaded = True
 
         model_type = values.get("model_type", "")

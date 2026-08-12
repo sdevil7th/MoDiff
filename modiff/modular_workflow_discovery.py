@@ -42,6 +42,14 @@ def _description(value: Any) -> str:
     return " ".join(value.split())[:1024]
 
 
+def _block_description(block: Any) -> str:
+    try:
+        value = block.description
+    except (AttributeError, NotImplementedError):
+        value = ""
+    return _description(value)
+
+
 def _json_default(value: Any) -> Any:
     if value is None or type(value) in {bool, int, float, str}:
         return value
@@ -100,7 +108,7 @@ def _block_steps(blocks: Any) -> list[dict[str, Any]]:
                 "path": _name(path, "Workflow block path"),
                 "className": _name(type(block).__name__, "Workflow block class"),
                 "kind": _block_kind(block),
-                "description": _description(getattr(block, "description", "")),
+                "description": _block_description(block),
             }
         )
         nested = getattr(block, "sub_blocks", None)
@@ -174,21 +182,23 @@ def build_modular_workflow_contract(
         workflow = selected_workflow.get_execution_blocks()
         initialized = workflow.init_pipeline()
         execution_pipeline_class = _name(type(initialized).__name__, "Execution pipeline class")
-        required_inputs = {
+        workflow_map_requirements = {
             str(name)
             for name, required in (workflow_map.get(workflow_id, {}) if workflow_map is not None else {}).items()
             if required is True
         }
+        input_fields = [field for field in workflow.inputs if isinstance(getattr(field, "name", None), str)]
+        input_names = {field.name for field in input_fields}
+        # Auto workflow maps may also contain selector-only predicates (for
+        # example Cosmos ``enable_sound``) that are not execution inputs. Only
+        # publish requirements the selected execution blocks can receive.
+        required_inputs = workflow_map_requirements & input_names
         required_inputs.update(
             str(field.name)
-            for field in workflow.inputs
-            if isinstance(getattr(field, "name", None), str) and getattr(field, "required", False) is True
+            for field in input_fields
+            if getattr(field, "required", False) is True
         )
-        inputs = [
-            _field_contract(field, required_names=required_inputs)
-            for field in workflow.inputs
-            if isinstance(getattr(field, "name", None), str)
-        ]
+        inputs = [_field_contract(field, required_names=required_inputs) for field in input_fields]
         outputs = [
             _field_contract(field, required_names=set())
             for field in workflow.outputs
@@ -249,7 +259,7 @@ def build_modular_workflow_contract(
             "pipelineClass": pipeline_class,
             "blocksClass": blocks_class,
             "kind": "auto" if workflow_map is not None else _block_kind(blocks),
-            "description": _description(getattr(blocks, "description", "")),
+            "description": _block_description(blocks),
             "uiDefaults": defaults,
             "components": _component_contracts(pipeline),
             "workflows": workflows,

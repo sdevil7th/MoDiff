@@ -10,6 +10,8 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_NONE,
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
+from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modiff.modular_workflow_contracts import (
     FLUX_MODULAR_CONTROL_UNSUPPORTED,
 )
@@ -807,6 +809,34 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
 )
 
 
+def _contract_only_modular_capability(specification) -> dict:
+    workflow_contract = reviewed_modular_workflow_contract(specification.class_name)
+    return {
+        "modelType": specification.class_name,
+        "label": specification.label,
+        "mediaKind": specification.batch,
+        "pipelineClasses": [specification.class_name],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
+        "runnableModes": [],
+        "upstreamWorkflows": [workflow["taskId"] for workflow in workflow_contract["workflows"]],
+        "workflowContractSchemaVersion": workflow_contract["schemaVersion"],
+        "contractBatch": specification.batch,
+        "qualificationStatus": "contract_only",
+        "expertVisible": True,
+        "autoEligible": False,
+        "templateEligible": False,
+        "galleryEligible": False,
+        "optionalRuntimeProfileIds": [],
+    }
+
+
+EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
+    _contract_only_modular_capability(specification)
+    for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+)
+
+
 def optional_runtime_requirement_for_profiles(
     profiles: tuple[DiffusersExecutionProfile, ...] | list[DiffusersExecutionProfile],
     *,
@@ -1057,8 +1087,9 @@ def public_experimental_pipelines(
         )
         if not optional_runtime_profile_ids:
             optional_runtime_profile_ids = list(
-                pipeline.get("optionalRuntimeProfileIds")
-                or (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+                pipeline["optionalRuntimeProfileIds"]
+                if "optionalRuntimeProfileIds" in pipeline
+                else (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
             )
         selected_profile_contracts = tuple(
             DIFFUSERS_EXECUTION_PROFILES[profile_id]

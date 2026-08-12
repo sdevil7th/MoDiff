@@ -8,6 +8,7 @@ from modiff.diffusers_profiles import (
     DIFFUSERS_EXECUTION_PROFILES,
 )
 from modiff.model_artifact_catalog import catalog_revision
+from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
 from modiff.server import WebServer
 from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
@@ -23,10 +24,17 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 25)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 40)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
+        for model_type in CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME:
+            with self.subTest(contract_only_modular=model_type):
+                capability = experimental[model_type]
+                self.assertEqual(capability["runnableModes"], [])
+                self.assertEqual(capability["qualificationStatus"], "contract_only")
+                self.assertTrue(capability["expertVisible"])
+                self.assertFalse(capability["autoEligible"])
         # Official Hugging Face libraries may back generic task nodes, but the
         # removed library/model-specific driver must not return as a parallel path.
         self.assertNotIn("modules.TransformersMultimodal", module_registry.MODULE_MAP)

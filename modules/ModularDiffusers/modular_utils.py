@@ -11,6 +11,10 @@ from typing import Any, Dict, Optional
 import torch
 from diffusers import Flux2KleinModularPipeline
 from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.modular_contract_only_registry import (
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
+)
 from modiff.modular_workflow_contracts import WAN_I2V_REPOSITORY
 from .pipeline_schema import MoDiffParam as PipelineParam
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
@@ -1661,7 +1665,7 @@ def _get_registry_instance():
     return MODULAR_REGISTRY
 
 
-def get_all_model_types() -> Dict[str, str]:
+def get_all_model_types(*, include_contract_only: bool = False) -> Dict[str, str]:
     """Get all registered model types with their labels for UI dropdowns.
 
     Returns:
@@ -1675,11 +1679,14 @@ def get_all_model_types() -> Dict[str, str]:
             "FluxModularPipeline": "Flux",
         }
     """
-    registry = _get_registry_instance().get_all()
     all_labels = {"": ""}
-    for pipeline_cls, config in registry.items():
-        model_type = pipeline_cls.__name__
-        all_labels[model_type] = config.label
+    for pipeline_cls, config in _get_registry_instance().get_all().items():
+        all_labels[pipeline_cls.__name__] = config.label
+    if include_contract_only:
+        all_labels.update(
+            (specification.class_name, specification.label)
+            for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+        )
     return all_labels
 
 
@@ -1689,8 +1696,27 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
     Returns model_type, label, default_repo, default_dtype, and node_params.
     The custom preview marker also declares ``execution_status=contract_only``.
     """
-    registry = _get_registry_instance().get_all()
-    for pipeline_cls, config in registry.items():
+    specification = CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME.get(model_type)
+    if specification is not None:
+        return {
+            "model_type": model_type,
+            "label": specification.label,
+            "default_repo": "",
+            "default_dtype": "bfloat16",
+            "loader_component_outputs": [],
+            "layer_block_options": [],
+            "guider_options": [],
+            "scheduler_options": [],
+            "denoise_image_latent_dimensions": [],
+            "node_params": {},
+            "execution_status": "contract_only",
+            "contract_batch": specification.batch,
+            "auto_eligible": False,
+            "template_eligible": False,
+            "gallery_eligible": False,
+        }
+
+    for pipeline_cls, config in _get_registry_instance().get_all().items():
         if pipeline_cls.__name__ == model_type:
             metadata = {
                 "model_type": model_type,

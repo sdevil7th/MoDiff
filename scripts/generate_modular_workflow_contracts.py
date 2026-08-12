@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 import diffusers
 from diffusers.modular_pipelines.modular_pipeline import PipelineState
 
+from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION, PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import (
     MODULAR_WORKFLOW_SNAPSHOT,
@@ -25,6 +27,9 @@ _GENERIC_TASK_ALIASES = {
     "image_conditioned": "edit_image",
     "image_conditioned_inpainting": "inpaint",
     "image2video": "image_to_video",
+    "img2img": "image_to_image",
+    "text2video": "text_to_video",
+    "video2video": "video_to_video",
 }
 
 
@@ -59,6 +64,25 @@ def generate() -> dict:
                 f"{pipeline_class_name} discovered {contract['blocksClass']}, expected {truth.blocks_class}."
             )
         contracts.append(contract)
+    for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
+        pipeline_class = getattr(diffusers, specification.class_name)
+        aliases = dict(specification.aliases)
+        pipeline = pipeline_class()
+        blocks = pipeline.blocks
+        workflow_map = getattr(blocks, "_workflow_map", None)
+        if isinstance(workflow_map, Mapping):
+            aliases = {
+                workflow: _GENERIC_TASK_ALIASES[workflow]
+                for workflow in workflow_map
+                if workflow in _GENERIC_TASK_ALIASES
+            } | aliases
+        contracts.append(
+            build_modular_workflow_contract(
+                pipeline,
+                aliases=aliases,
+                pipeline_state_factory=PipelineState,
+            )
+        )
     contracts.sort(key=lambda item: item["pipelineClass"])
     return validate_modular_workflow_snapshot(
         {
