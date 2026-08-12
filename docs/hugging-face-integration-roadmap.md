@@ -3252,7 +3252,7 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
 
 ### Committable segments
 
-- [ ] **P1.1 Reviewed custom Modular and DynamicBlock execution contract**
+- [x] **P1.1 Reviewed custom Modular and DynamicBlock execution contract**
   - Backend: remove the invalid curated default and bundled graph; accept only
     `modiff_pipeline_config.json` for bounded declarative MoDiff UI metadata.
     Before enabling execution, validate every repository-supplied component
@@ -3275,6 +3275,31 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
     revisions, cache/local mutation and validation-to-load races, imported
     authorization replay, auth/network distinction, and no downloads or
     optional-library installation during node discovery or contract preview.
+  - Status 2026-08-12: complete in backend `207d8f1`, with actionable response
+    guidance corrected by `5dc7313`, and client/browser proof `c3e932c`. The
+    invalid curated repository default, its bundled graph, and its catalog row
+    are removed. Only the exact `modiff_pipeline_config.json` sidecar supplies
+    bounded UI metadata; canonical `modular_model_index.json` supplies the
+    executable pipeline/block and component contract. Hub execution requires
+    an exact main commit and exact commits for every official Diffusers or
+    Transformers component repository. Path-like auxiliary sources,
+    repository requirements, `auto_map`, arbitrary installed-package dispatch,
+    and local mutable execution fail closed. The backend revalidates identity
+    immediately before a private content-addressed metadata snapshot and
+    constructs only the installed reviewed Diffusers pipeline/blocks pair.
+    Repository Python remains unavailable; the persisted trust field and
+    contract checksum are not authorization. Preview callbacks neither inspect
+    nor install the optional runtime, while both executable custom loader paths
+    use the P0.5 first-use gate.
+  - Evidence 2026-08-12: the focused backend contract matrix passed (`186
+    passed, 628 subtests passed`); the complete backend suite passed (`1245
+    passed, 3 skipped, 2107 subtests passed`), followed by the API-guidance
+    focused gate (`65 passed, 1 skipped, 156 subtests passed`). Ruff `E9,F`,
+    compile, and diff checks passed. Client `npm run check` passed, including
+    all unit gates, build, and the bundle budget (`523239 / 523264` total gzip
+    bytes); the focused mocked-browser admission test passed (`1 passed`). No
+    model weights, media, repository Python, or optional-runtime install was
+    downloaded or executed for this segment.
 - [ ] **P1.2 Generic upstream workflow discovery**
   - Backend: derive workflows, required inputs, outputs, and components from
     `available_workflows`, `get_workflow()`, block docs, and `init_pipeline()`;
@@ -3662,7 +3687,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
 | P0.5 | `4073711` (qualifier), `655baa6` (platform cutover), corrected by `1e95362` | `16046ab` (target-aware Setup status) | Windows x86-64 guarded live-model proof; Linux x86-64 clean-base/no-weight, supervised lifecycle, and production-cutover proof; macOS pending and base-delivered | Not required | Complete for qualified x86 targets: the exact six-target profile/delivery table enables explicit first-use install/activation only on Linux and Windows x86-64. Direct base dependencies remain only on macOS/ARM targets. A committed clean Linux CPU base contained 61 packages and none of the ten staged distributions; the exact overlay installed, validated, activated, passed the finite CLIP+LoRA child, rolled back, and restored a fresh clean base. A fresh worker exposed actionable status and rejected required execution with `optional_runtime_missing` before queueing. macOS and ARM rows remain explicitly non-actionable/base-delivered pending their own qualifier evidence. |
-| P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
+| P1.1 | `207d8f1`; actionable API message follow-up `5dc7313` | `c3e932c` | Not required | Not required | Complete: reviewed official component execution is bound to exact main/auxiliary Hub commits, an installed pinned pipeline/block pair, immediate identity revalidation, a private content-addressed metadata snapshot, and P0.5 runtime admission. Local sources remain preview-only and repository Python remains disabled without a future non-persistable task authorization. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
 | P1.3 | Pending | Pending | Not required | Not required | Not started |
 | P1.4 | Pending | Pending | Not required | Not required | Not started |
