@@ -30,6 +30,7 @@ FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
+SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -3657,6 +3658,131 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "bindings": _UNCONDITIONAL_GRAPH_BINDINGS,
         }
         for spec_id, profile_id, pipeline_class, label, family, repo, side, steps in _P3_UNCONDITIONAL_DEFINITIONS
+    }
+)
+
+
+def _sd15_profile(profile_id: str, mode: str, pipeline_class: str) -> dict[str, Any]:
+    return {
+        "id": profile_id,
+        "model_type": "StableDiffusionPipeline",
+        "modes": (mode,),
+        "loader_module": "modules.DiffusersImage",
+        "loader_action": "LoadPipeline",
+        "execution_path": "direct-diffusers-image",
+        "pipeline_class": pipeline_class,
+        "default_repo": SD15_BASE_REPO,
+        "fallback_repo": None,
+        "quantizable_components": (),
+        "default_quantized_components": (),
+        "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+        "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+        "max_low_memory_side": 512,
+        "max_low_memory_steps": 30,
+        "live_proof": True,
+        "compatible_repos": (),
+    }
+
+
+_SD15_CAPABILITY = {
+    "modelType": "StableDiffusionPipeline",
+    "label": "Stable Diffusion 1.5",
+    "displayName": "stable-diffusion-v1-5",
+    "family": "Stable Diffusion 1.x",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SD15_BASE_REPO,
+    "artifactLabel": "Diffusers safetensors repo",
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+    "recommendedSteps": 30,
+    "recommendedGuidance": 7.5,
+    "guidanceLabel": "Guidance",
+    "supportsImageInput": True,
+    "supportsMask": True,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": True,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 20,
+        "width": 512,
+        "height": 512,
+    },
+    "modes": ["text_to_image", "edit_image", "inpaint"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image.",
+        },
+        "inpaint": {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "note": "Requires one source image and one mask image.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(SD15_BASE_REPO, model_type="StableDiffusionPipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "All modes reuse the immutable Stable Diffusion 1.5 safetensors base through generic image nodes.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+
+_P3_SD15_DEFINITIONS = (
+    (
+        "sd15-base:text-to-image:v1",
+        "sd15-base:direct",
+        "text_to_image",
+        "StableDiffusionPipeline",
+        _GRAPH_ROLES,
+        _GRAPH_EDGES,
+        _SDXL_GRAPH_BINDINGS,
+    ),
+    (
+        "sd15-base:edit-image:v1",
+        "sd15-base:img2img-direct",
+        "edit_image",
+        "StableDiffusionImg2ImgPipeline",
+        _EDIT_GRAPH_ROLES,
+        _EDIT_GRAPH_EDGES,
+        _SDXL_EDIT_GRAPH_BINDINGS,
+    ),
+    (
+        "sd15-base:inpaint:v1",
+        "sd15-base:inpaint-direct",
+        "inpaint",
+        "StableDiffusionInpaintPipeline",
+        _INPAINT_GRAPH_ROLES,
+        _INPAINT_GRAPH_EDGES,
+        _SDXL_INPAINT_GRAPH_BINDINGS,
+    ),
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
+    {
+        spec_id: {
+            "modelType": "StableDiffusionPipeline",
+            "mode": mode,
+            "profile": _sd15_profile(profile_id, mode, pipeline_class),
+            "capability": deepcopy(_SD15_CAPABILITY),
+            "roles": roles,
+            "edges": edges,
+            "bindings": bindings,
+        }
+        for spec_id, profile_id, mode, pipeline_class, roles, edges, bindings in _P3_SD15_DEFINITIONS
     }
 )
 

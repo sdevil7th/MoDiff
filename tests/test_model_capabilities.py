@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 61)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 64)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -137,6 +137,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "DDPMPipeline",
             "DDIMPipeline",
             "ConsistencyModelPipeline",
+            "StableDiffusionPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],

@@ -242,6 +242,27 @@
       "baseRevision": "5f462e4403fc37b72ec6004e806c71805db22387",
       "baseLicense": "mit",
       "artifacts": []
+    },
+    {
+      "modelType": "StableDiffusionPipeline",
+      "baseRepo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+      "baseRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+      "baseLicense": "creativeml-openrail-m",
+      "artifacts": []
+    },
+    {
+      "modelType": "StableDiffusionImg2ImgPipeline",
+      "baseRepo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+      "baseRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+      "baseLicense": "creativeml-openrail-m",
+      "artifacts": []
+    },
+    {
+      "modelType": "StableDiffusionInpaintPipeline",
+      "baseRepo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+      "baseRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+      "baseLicense": "creativeml-openrail-m",
+      "artifacts": []
     }
   ]
 }

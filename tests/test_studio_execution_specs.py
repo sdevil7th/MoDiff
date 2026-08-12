@@ -151,6 +151,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("DDPMPipeline", "unconditional_image"),
                 ("DDIMPipeline", "unconditional_image"),
                 ("ConsistencyModelPipeline", "unconditional_image"),
+                ("StableDiffusionPipeline", "text_to_image"),
+                ("StableDiffusionPipeline", "edit_image"),
+                ("StableDiffusionPipeline", "inpaint"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -177,6 +180,20 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 )
                 self.assertTrue(DIFFUSERS_EXECUTION_PROFILES[specification["executionProfileId"]].live_proof)
                 self.assertNotIn("modules.DiffusersImage.Generate", [role[1] for role in specification["roles"]])
+        for spec_id, mode, pipeline_class in (
+            ("sd15-base:text-to-image:v1", "text_to_image", "StableDiffusionPipeline"),
+            ("sd15-base:edit-image:v1", "edit_image", "StableDiffusionImg2ImgPipeline"),
+            ("sd15-base:inpaint:v1", "inpaint", "StableDiffusionInpaintPipeline"),
+        ):
+            with self.subTest(sd15_spec=spec_id):
+                specification = by_id[spec_id]
+                self.assertEqual(specification["modelType"], "StableDiffusionPipeline")
+                self.assertEqual(specification["mode"], mode)
+                self.assertEqual(specification["pipelineClass"], pipeline_class)
+                self.assertEqual(specification["defaultRepo"], "stable-diffusion-v1-5/stable-diffusion-v1-5")
+                self.assertIn(
+                    ("diffusersImagePipeline", "revision", "defaultRevision"), specification["bindings"]
+                )
         sdxl = by_id["sdxl-base:text-to-image:v1"]
         self.assertEqual(sdxl["id"], "sdxl-base:text-to-image:v1")
         self.assertEqual(sdxl["pipelineClass"], "StableDiffusionXLPipeline")

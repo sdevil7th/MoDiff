@@ -51,6 +51,7 @@ FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
+SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
@@ -186,6 +187,23 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"inpaint", "outpaint"}),
         SDXL_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLInpaintPipeline"),
+    ),
+    "StableDiffusionPipeline": ImagePipelineAdapter(
+        "StableDiffusionPipeline",
+        frozenset({"text_to_image"}),
+        SD15_BASE_REPO,
+    ),
+    "StableDiffusionImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionImg2ImgPipeline"),
+    ),
+    "StableDiffusionInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionInpaintPipeline"),
     ),
     "FluxPipeline": ImagePipelineAdapter(
         "FluxPipeline",
@@ -427,6 +445,18 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
     },
     "StableDiffusionXLInpaintPipeline": {
+        mode: _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "strength", "padding_mask_crop"
+        )
+        for mode in ("inpaint", "outpaint")
+    },
+    "StableDiffusionPipeline": {
+        "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
+    },
+    "StableDiffusionImg2ImgPipeline": {
+        "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
+    },
+    "StableDiffusionInpaintPipeline": {
         mode: _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "strength", "padding_mask_crop"
         )
