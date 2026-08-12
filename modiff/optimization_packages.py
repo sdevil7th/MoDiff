@@ -480,7 +480,11 @@ def _promotion_matches(record: dict[str, Any], inspection: dict[str, Any]) -> bo
 
 
 def _clear_promotion_record() -> None:
-    remove_managed_file(PROMOTION_PATH, parent=OPTIMIZATION_ROOT)
+    remove_managed_file(
+        PROMOTION_PATH,
+        parent=OPTIMIZATION_ROOT,
+        managed_root=MANAGED_ROOT,
+    )
 
 
 def _reconcile_promotion(lease: InstallLease) -> str | None:
@@ -1664,6 +1668,22 @@ def _merge_contracts(existing: list[dict[str, Any]], additions: list[dict[str, A
     return [merged[name] for name in sorted(merged)]
 
 
+def _locked_requirements_body(
+    artifacts: list[dict[str, Any]],
+    cached_artifacts: list[Path],
+) -> bytes:
+    if len(artifacts) != len(cached_artifacts) or not artifacts:
+        raise RuntimeError("A complete locked requirements set is required.")
+    lines = [
+        f"{artifact['distribution']} @ {path.resolve(strict=True).as_uri()} --hash=sha256:{artifact['sha256']}"
+        for artifact, path in zip(artifacts, cached_artifacts, strict=True)
+    ]
+    body = ("\n".join(lines) + "\n").encode("utf-8")
+    if len(body) > 64 * 1024:
+        raise RuntimeError("The locked optional-runtime requirements document is oversized.")
+    return body
+
+
 def _install_reviewed_overlay(
     *,
     spec: dict[str, Any],
@@ -1754,10 +1774,17 @@ def _install_reviewed_overlay(
                 ARTIFACTS_DIR,
                 lease=lease,
             )
-            effective_install_urls = [
-                f"{path.resolve(strict=True).as_uri()}#sha256={artifact['sha256']}"
-                for artifact, path in zip(selected_artifacts, cached_artifacts, strict=True)
-            ]
+            requirements_body = _locked_requirements_body(
+                selected_artifacts,
+                cached_artifacts,
+            )
+            requirements_path = staged / "locked-requirements.txt"
+            with requirements_path.open("xb") as output:
+                output.write(requirements_body)
+                output.flush()
+                os.fsync(output.fileno())
+            flush_managed_directory(staged, managed_root=MANAGED_ROOT)
+            effective_install_urls = []
         else:
             if any(item.get("kind") != "optimization" for item in specs):
                 raise RuntimeError("Optional-runtime packages cannot be mixed into a legacy overlay.")
@@ -1787,6 +1814,8 @@ def _install_reviewed_overlay(
             str(site_packages),
             "--upgrade",
             "--no-deps",
+            "--link-mode",
+            "copy",
         ]
         if hash_locked:
             command.extend(
@@ -1795,16 +1824,26 @@ def _install_reviewed_overlay(
                     "--require-hashes",
                     "--only-binary",
                     ":all:",
+                    "--requirement",
+                    str(requirements_path),
                 ]
             )
         command.extend(effective_install_urls)
-        install_result = run_cancellable_command(
-            command,
-            environment=sanitized_install_environment(site_packages),
-            lease=lease,
-            timeout=1800,
-            cwd=staged,
-        )
+        try:
+            install_result = run_cancellable_command(
+                command,
+                environment=sanitized_install_environment(site_packages),
+                lease=lease,
+                timeout=1800,
+                cwd=staged,
+            )
+        finally:
+            if hash_locked:
+                remove_managed_file(
+                    requirements_path,
+                    parent=staged,
+                    managed_root=MANAGED_ROOT,
+                )
         if lease.cancel_event.is_set():
             raise OverlayCancelled("Optional-runtime installation was cancelled.")
         _atomic_json(

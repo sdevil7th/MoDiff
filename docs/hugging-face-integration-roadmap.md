@@ -2736,6 +2736,15 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       malformed, ambiguous, replaced, or missing states fail-closed for repair.
       Windows write-through promotion/cleanup and crash-window regressions pass;
       action flags remain false pending target-platform execution evidence.
+    - [x] Windows x86-64 isolated staging proof: under temporary, process-local
+      future-state flags, pinned uv installed all ten reviewed wheels
+      (16,930,199 archive bytes) with copy-only cache behavior; 3,441 wheel files
+      matched their archive anchor; isolated symbol/origin validation passed;
+      promotion/activation succeeded; a second fresh process loaded exact
+      Transformers `5.14.1` and PEFT `0.20.0` from the promoted overlay; and
+      rollback returned to base with no promotion journal or path-bearing
+      requirements file left behind. Source action/cutover flags remain false.
+      No model artifact was downloaded or executed.
     - [ ] Executable qualification: add reviewed per-platform wheel and
       installer execution evidence plus clean-base/staged workload,
       fresh-process containment, restart, and rollback evidence before enabling

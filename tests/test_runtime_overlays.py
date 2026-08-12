@@ -394,8 +394,9 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
         self._extract(archive)
         dist_info = self.site_packages / "demo_pkg-1.0.0.dist-info"
         (dist_info / "RECORD").write_bytes(b"installer-rewritten-record\n")
-        for receipt in ("INSTALLER", "direct_url.json", "REQUESTED"):
+        for receipt in ("INSTALLER", "direct_url.json", "REQUESTED", "uv_cache.json"):
             (dist_info / receipt).write_bytes(b"installer generated\n")
+        (self.site_packages / ".lock").write_bytes(b"installer lock\n")
         script = self.site_packages / "bin" / "demo-tool"
         script.parent.mkdir()
         script.write_bytes(b"#!/usr/bin/env python\n")
@@ -405,8 +406,9 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
         )
 
         self.assertEqual((dist_info / "RECORD").read_bytes(), reviewed_record)
-        for receipt in ("INSTALLER", "direct_url.json", "REQUESTED"):
+        for receipt in ("INSTALLER", "direct_url.json", "REQUESTED", "uv_cache.json"):
             self.assertFalse((dist_info / receipt).exists())
+        self.assertFalse((self.site_packages / ".lock").exists())
         self.assertFalse(script.exists())
         self.assertFalse(script.parent.exists())
         runtime_overlays.verify_artifact_anchored_overlay(

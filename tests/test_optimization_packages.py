@@ -73,6 +73,23 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertFalse(by_id["torchao"]["canEnable"])
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
 
+    def test_locked_requirements_keep_windows_file_hash_out_of_url_path(self):
+        wheel = optimizations.OPTIMIZATION_ROOT / "demo_pkg-1.0.0-py3-none-any.whl"
+        wheel.write_bytes(b"wheel")
+        digest = "a" * 64
+        body = optimizations._locked_requirements_body(
+            [{"distribution": "demo-pkg", "sha256": digest}],
+            [wheel],
+        ).decode("utf-8")
+        self.assertIn("demo-pkg @ file:///", body)
+        self.assertIn(f" --hash=sha256:{digest}\n", body)
+        self.assertNotIn(".whl#sha256=", body)
+
+    def test_overlay_installer_never_links_staged_files_to_a_shared_cache(self):
+        source = Path(optimizations.__file__).read_text(encoding="utf-8")
+        command = source[source.index('command = [') : source.index('install_result =', source.index('command = ['))]
+        self.assertIn('"--link-mode",\n            "copy",', command)
+
     @staticmethod
     def promotion_inspection(environment_id, *, environment_root, **_kwargs):
         candidate = environment_root / environment_id

@@ -163,6 +163,22 @@ the already-promoted exact directory, or left as an explicit repair condition;
 malformed, missing, duplicated, or identity-mismatched states never downgrade
 to an absent journal.
 
+Windows x86-64 qualification on 2026-08-12 exercised the dormant future-state
+path in an isolated temporary managed root: the reviewed uv executable installed
+all ten locked wheels (16,930,199 archive bytes), authenticated 3,441 wheel
+files, passed isolated import/symbol/origin validation, promoted with a cleared
+journal, activated only in the temporary state, and loaded
+`transformers==5.14.1` plus `peft==0.20.0` from the overlay in a second fresh
+process before rolling back to base. The run exposed and closed two Windows uv
+integration details: local hashes must be expressed as `name @ file://...`
+requirements with a separate `--hash=sha256:...`, and `--link-mode copy` is
+required so the authenticated overlay never shares hardlinks with uv's cache.
+The path-bearing requirements document plus uv's bounded `.lock` and
+`uv_cache.json` bookkeeping are removed before authentication/promotion. No
+model artifact was downloaded or executed. This is one Windows qualification,
+not Linux/macOS/ARM64 or representative model-workload evidence, so action and
+cutover flags remain false.
+
 ## Runtime features
 
 The following features have concrete runtime implementations and remain

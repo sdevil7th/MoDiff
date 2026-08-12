@@ -624,10 +624,19 @@ def remove_managed_directory(
                 os.close(descriptor)
 
 
-def remove_managed_file(path: Path, *, parent: Path) -> bool:
+def remove_managed_file(
+    path: Path,
+    *,
+    parent: Path,
+    managed_root: Path | None = None,
+) -> bool:
     """Remove one exact regular direct-child file without following replacements."""
 
-    trusted_parent, name = _managed_child(path, parent)
+    trusted_parent, name = _managed_child(
+        path,
+        parent,
+        managed_root=managed_root,
+    )
     target = trusted_parent / name
     try:
         details = target.lstat()
@@ -1316,7 +1325,7 @@ def normalize_locked_wheel_install(
     *,
     lease: InstallLease | None = None,
 ) -> None:
-    """Remove three known installer receipts and restore authenticated RECORDs."""
+    """Remove bounded installer bookkeeping and restore authenticated RECORDs."""
 
     artifact_list = [dict(item) for item in artifacts]
     expected = locked_artifact_file_seal(artifact_list, archive_root, lease=lease)
@@ -1329,7 +1338,7 @@ def normalize_locked_wheel_install(
     for metadata_root in metadata_roots:
         if lease is not None and lease.cancel_event.is_set():
             raise OverlayCancelled("Optional-runtime normalization was cancelled.")
-        for filename in ("INSTALLER", "direct_url.json", "REQUESTED"):
+        for filename in ("INSTALLER", "direct_url.json", "REQUESTED", "uv_cache.json"):
             relative = f"{metadata_root}/{filename}"
             if relative in expected:
                 continue
@@ -1349,6 +1358,25 @@ def normalize_locked_wheel_install(
                 raise RuntimeError("An installer-generated receipt is not a safe regular file.")
             candidate.resolve(strict=True).relative_to(root)
             candidate.unlink()
+    if ".lock" not in expected:
+        lock_path = root / ".lock"
+        try:
+            lock_details = lock_path.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            if (
+                not stat.S_ISREG(lock_details.st_mode)
+                or stat.S_ISLNK(lock_details.st_mode)
+                or getattr(lock_details, "st_nlink", 1) != 1
+                or bool(
+                    getattr(lock_details, "st_file_attributes", 0)
+                    & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+                )
+            ):
+                raise RuntimeError("The installer-generated overlay lock is not a safe regular file.")
+            lock_path.resolve(strict=True).relative_to(root)
+            lock_path.unlink()
     generated_scripts: set[str] = set()
     for artifact in artifact_list:
         if lease is not None and lease.cancel_event.is_set():
