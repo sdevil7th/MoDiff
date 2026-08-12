@@ -3532,6 +3532,23 @@ output and assets remotely. Assets: remote Dataset only.
       `525152 / 525312` total production JavaScript gzip bytes with the entry at
       `284983 / 448512`. No weights, source media, inference output, or public
       asset was downloaded or generated.
+  - [x] **P2.2g Qwen-Image-2512 image-to-image**
+    - Evidence 2026-08-12: the existing logical `QwenImageModularPipeline`
+      Studio model now exposes an `edit_image` execution profile selecting the
+      standard `QwenImageImg2ImgPipeline` adapter at reviewed Qwen-Image-2512
+      revision `25468b98e3276ca6700de15c6628e51b7de54a26`. Its task contract and
+      canonical graph require one source image, use the generic Edit action,
+      retain the reviewed Qwen Expert resource policy, and bind the immutable
+      revision without a static planning template or client model-family graph
+      builder. The standard adapter left the contract-only registry only after
+      the pair became executable. Existing Auto modes remain unchanged;
+      image-to-image stays Expert planning-only and Gallery-hidden pending P2.5
+      qualification. Pair generation and deterministic verification passed.
+      The complete backend suite passed (`1263 passed, 3 skipped, 2337
+      subtests`) with Ruff `E9,F`, compile, package, shell, and diff gates;
+      `npm run check` passed at `525154 / 525312` total production JavaScript
+      gzip bytes with the entry at `284983 / 448512`. No weights, source media,
+      inference output, or public asset was downloaded or generated.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3885,7 +3902,8 @@ Add references only after the corresponding evidence exists.
 | P2.2d FLUX.1-dev image-to-image | `b66439b` | `9a7280e` | Remote pending | Pending | Complete source slice: exact mode-specific img2img loader, immutable FLUX.1-dev revision, generic source-image binding, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
 | P2.2e FLUX.1-dev inpaint | `b679e4f` | `e8197c8` | Remote pending | Pending | Complete source slice: exact mode-specific inpaint loader, immutable FLUX.1-dev revision, generic source/mask bindings, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
 | P2.2f Z-Image Turbo image-to-image | `0d1d3cb` | `a586fce` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Z-Image Turbo revision, generic source-image binding, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
-| P2.2g-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.2g Qwen-Image-2512 image-to-image | `8a4dbd8` | `538a79c` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Qwen-Image-2512 revision, generic source-image binding, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged and Gallery activation remains pending. |
+| P2.2h-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
