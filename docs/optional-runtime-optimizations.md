@@ -370,6 +370,34 @@ AMD GPU execution, a Linux live-model/media run, macOS qualification, or source
 cutover. Production dependency, delivery, qualification, and action flags stay
 unchanged.
 
+The final Linux repository replay used the normal managed CPU environment and
+the documented gates:
+
+```bash
+uvx --from ruff==0.12.7 ruff check . --select E9,F
+uv pip check --python ./.venv/bin/python
+./scripts/with-runtime-env.sh ./.venv/bin/python \
+  -m modiff.preflight --json --check-port 8088 --fail-on-error
+./scripts/with-runtime-env.sh ./.venv/bin/python -m pytest -q
+bash -n install.sh run.sh scripts/with-runtime-env.sh
+git diff --check
+```
+
+Ruff and shell/diff checks passed, all 75 installed packages were compatible,
+preflight was ready with port 8088 free, and pytest passed 1,236 tests plus
+2,091 subtests with three platform skips. The only warning was the existing
+Diffusers `torch_dtype` deprecation. On sibling client commit `aded6ca`,
+`npm ci`, `npm run check`, `npx playwright install chromium`,
+`npm run check:ui`, `npm run build`, and `npm run bundle:check` passed: two
+Linux shared-control visual tests and all 99 mocked Studio tests passed. The
+26-file production mirror was byte-identical with aggregate manifest SHA-256
+`bb10bdd69e6a91fa40d8d6a97c33229b9ea39b8efcc64352946e7b98c166f330`.
+Entry `index.js` was 1,035,340 raw/283,322 gzip bytes with SHA-256
+`23fe0bcd224eebc2c68fd09109cffe4d0b5ec57dce51e7cf730bfb818963ee40`;
+the four JavaScript chunks totaled 523,108 gzip bytes against the 523,264-byte
+cap. A fresh backend returned HTTP 200 for `/`, `/assets/index.js`, and
+`/health`. No Gallery media or model asset was generated or downloaded.
+
 `.github/workflows/qualify-optional-runtime-macos.yml` is the smallest pending
 hosted macOS proposal: it is `workflow_dispatch` only, asserts the current
 `macos-14` runner is ARM64, applies and uploads the explicit two-dependency
