@@ -709,7 +709,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "recommendedGuidance": 4.5,
         "guidanceLabel": "Guidance",
         "supportsImageInput": True,
-        "supportsMask": False,
+        "supportsMask": True,
         "supportsMultiImage": False,
         "supportsControlImage": True,
         "supportsLayers": False,
@@ -722,7 +722,7 @@ STUDIO_MODEL_CAPABILITIES = {
             "offloadMode": OFFLOAD_MODE_MODEL_CPU,
             "steps": 28,
         },
-        "modes": ["text_to_image", "edit_image", "control_image"],
+        "modes": ["text_to_image", "edit_image", "inpaint", "control_image"],
         "executionStatus": "supported_with_model",
         "additionalRequirements": studio_model_requirements_for_pair(
             "QwenImageModularPipeline", "control_image"
@@ -731,6 +731,10 @@ STUDIO_MODEL_CAPABILITIES = {
             "edit_image": {
                 "requiredImages": ["referenceImages"],
                 "note": "Requires one source image for image-to-image transformation.",
+            },
+            "inpaint": {
+                "requiredImages": ["referenceImages", "maskImage"],
+                "note": "Requires one source image and one mask image for inpainting.",
             },
             "control_image": {
                 "modelRequirements": studio_model_requirements_for_pair(

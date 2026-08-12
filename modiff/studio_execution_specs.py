@@ -2649,6 +2649,43 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "bindings": _EDIT_GRAPH_BINDINGS
         + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
+    "qwen-image-2512:inpaint:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "inpaint",
+        "profile": {
+            "id": "qwen-image:inpaint-direct",
+            "model_type": "QwenImageModularPipeline",
+            "modes": ("inpaint",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "QwenImageInpaintPipeline",
+            "default_repo": QWEN_IMAGE_2512_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": (),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 1328,
+            "max_low_memory_steps": 50,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _INPAINT_GRAPH_ROLES,
+        "edges": _INPAINT_GRAPH_EDGES,
+        "bindings": _INPAINT_GRAPH_BINDINGS
+        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+    },
     "qwen-image-edit:edit-image:v1": {
         "modelType": "QwenImageEditModularPipeline",
         "mode": "edit_image",

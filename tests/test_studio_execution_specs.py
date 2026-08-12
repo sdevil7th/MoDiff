@@ -126,6 +126,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("ZImageModularPipeline", "edit_image"),
                 ("QwenImageModularPipeline", "text_to_image"),
                 ("QwenImageModularPipeline", "edit_image"),
+                ("QwenImageModularPipeline", "inpaint"),
                 ("QwenImageEditModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
@@ -586,6 +587,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["edges"])
         self.assertIn(("loadImage", "file", "referenceImages"), edit["bindings"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), edit["bindings"])
+
+        inpaint = studio_execution_spec_for_pair("QwenImageModularPipeline", "inpaint")
+        self.assertIsNotNone(inpaint)
+        self.assertEqual(inpaint["id"], "qwen-image-2512:inpaint:v1")
+        self.assertEqual(inpaint["executionProfileId"], "qwen-image:inpaint-direct")
+        self.assertEqual(inpaint["pipelineClass"], "QwenImageInpaintPipeline")
+        self.assertEqual(inpaint["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[8]["roles"])
+        self.assertEqual(inpaint["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[8]["edges"])
+        self.assertIn(("loadImage", "file", "referenceImages"), inpaint["bindings"])
+        self.assertIn(("loadMask", "file", "maskImage"), inpaint["bindings"])
+        self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), inpaint["bindings"])
 
     def test_qwen_image_text_to_image_seals_the_exact_direct_image_route(self):
         spec = studio_execution_spec_for_pair("QwenImageModularPipeline", "text_to_image")

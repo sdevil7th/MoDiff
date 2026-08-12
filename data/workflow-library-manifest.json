@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T19:49:10.550Z",
+  "generatedAt": "2026-08-12T19:53:58.094Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 46,
-  "supportedPairCount": 58,
+  "supportedCanonicalPairCount": 47,
+  "supportedPairCount": 59,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1197,6 +1197,41 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/qwen-image-modular-pipeline/edit-image.json",
       "graphHash": "86c625f89ad14c2ddb68ad68633d0eba906fa77aba95b277a4569dd1599c67a1"
+    },
+    {
+      "id": "QwenImageModularPipeline:inpaint",
+      "modelType": "QwenImageModularPipeline",
+      "modelFamily": "Qwen Image",
+      "mode": "inpaint",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-2512"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ],
+        "note": "Requires one source image and one mask image for inpainting."
+      },
+      "pipelineClasses": [
+        "QwenImageImg2ImgPipeline",
+        "QwenImageInpaintPipeline",
+        "QwenImageModularPipeline",
+        "QwenImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:qwen-image-2512:inpaint:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/qwen-image-modular-pipeline/inpaint.json",
+      "graphHash": "85a20e7b625f1d98fa3f0207d7df5cd2e5e4388d34a6d597dea79df6c7629a4c"
     },
     {
       "id": "QwenImageModularPipeline:text_to_image",

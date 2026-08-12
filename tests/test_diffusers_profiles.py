@@ -102,6 +102,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         qwen_profile_ids = {
             "qwen-image:t2i-direct",
             "qwen-image:img2img-direct",
+            "qwen-image:inpaint-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
@@ -167,6 +168,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_profiles_publish_only_the_reviewed_expert_mps_policies(self):
         unqualified = {
             "qwen-image:img2img-direct",
+            "qwen-image:inpaint-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
@@ -198,6 +200,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         qwen_ids = {
             "qwen-image:t2i-direct",
             "qwen-image:img2img-direct",
+            "qwen-image:inpaint-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
