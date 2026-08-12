@@ -708,7 +708,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "recommendedSteps": 50,
         "recommendedGuidance": 4.5,
         "guidanceLabel": "Guidance",
-        "supportsImageInput": False,
+        "supportsImageInput": True,
         "supportsMask": False,
         "supportsMultiImage": False,
         "supportsControlImage": True,
@@ -722,12 +722,16 @@ STUDIO_MODEL_CAPABILITIES = {
             "offloadMode": OFFLOAD_MODE_MODEL_CPU,
             "steps": 28,
         },
-        "modes": ["text_to_image", "control_image"],
+        "modes": ["text_to_image", "edit_image", "control_image"],
         "executionStatus": "supported_with_model",
         "additionalRequirements": studio_model_requirements_for_pair(
             "QwenImageModularPipeline", "control_image"
         ),
         "modeRequirements": {
+            "edit_image": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one source image for image-to-image transformation.",
+            },
             "control_image": {
                 "modelRequirements": studio_model_requirements_for_pair(
                     "QwenImageModularPipeline", "control_image"
@@ -736,6 +740,12 @@ STUDIO_MODEL_CAPABILITIES = {
                 "note": "Requires the Qwen ControlNet Union model plus one control image.",
             }
         },
+        "revisionCandidates": [
+            require_catalog_revision(
+                "Qwen/Qwen-Image-2512",
+                model_type="QwenImageModularPipeline",
+            )
+        ],
     },
     "QwenImageEditModularPipeline": {
         "modelType": "QwenImageEditModularPipeline",

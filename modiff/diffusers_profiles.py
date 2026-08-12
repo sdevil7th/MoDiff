@@ -553,6 +553,7 @@ DIFFUSERS_EXECUTION_PROFILES.update(
 
 for profile_id in (
     "qwen-image:t2i-direct",
+    "qwen-image:img2img-direct",
     "qwen-image:modular",
     "qwen-edit:direct-inpaint",
     "qwen-edit:modular",
@@ -681,7 +682,6 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
 CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
     # Standard image adapters.  The final eleven were admitted by P0.3c.4;
     # FLUX img2img/inpaint were already implemented but likewise unprofiled.
-    ("QwenImageImg2ImgPipeline", "image", QWEN_IMAGE_2512_REPO, ("edit_image",)),
     ("QwenImageInpaintPipeline", "image", QWEN_IMAGE_2512_REPO, ("inpaint", "outpaint")),
     ("QwenImageEditPipeline", "image", "Qwen/Qwen-Image-Edit", ("edit_image",)),
     (

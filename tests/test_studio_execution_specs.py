@@ -125,6 +125,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("ZImageModularPipeline", "text_to_image"),
                 ("ZImageModularPipeline", "edit_image"),
                 ("QwenImageModularPipeline", "text_to_image"),
+                ("QwenImageModularPipeline", "edit_image"),
                 ("QwenImageEditModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
@@ -602,6 +603,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["bindings"], z_image["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+        edit = studio_execution_spec_for_pair("QwenImageModularPipeline", "edit_image")
+        self.assertIsNotNone(edit)
+        self.assertEqual(edit["id"], "qwen-image-2512:edit-image:v1")
+        self.assertEqual(edit["executionProfileId"], "qwen-image:img2img-direct")
+        self.assertEqual(edit["pipelineClass"], "QwenImageImg2ImgPipeline")
+        self.assertEqual(edit["defaultRepo"], "Qwen/Qwen-Image-2512")
+        self.assertEqual(edit["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["roles"])
+        self.assertEqual(edit["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["edges"])
+        self.assertIn(("loadImage", "file", "referenceImages"), edit["bindings"])
+        self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), edit["bindings"])
 
     def test_wan_modes_have_exact_receipts_and_v2v_modes_share_the_reviewed_recipe(self):
         text = studio_execution_spec_for_pair("WanVideoPipeline", "text_to_video")

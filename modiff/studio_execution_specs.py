@@ -38,6 +38,7 @@ LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
+QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
@@ -2589,7 +2590,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "loader_action": "LoadPipeline",
             "execution_path": "direct-diffusers-image",
             "pipeline_class": "QwenImagePipeline",
-            "default_repo": "Qwen/Qwen-Image-2512",
+            "default_repo": QWEN_IMAGE_2512_REPO,
             "fallback_repo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
             "quantizable_components": ("transformer", "text_encoder"),
             "default_quantized_components": (),
@@ -2610,6 +2611,43 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "live_proof": False,
             "compatible_repos": (),
         },
+    },
+    "qwen-image-2512:edit-image:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "edit_image",
+        "profile": {
+            "id": "qwen-image:img2img-direct",
+            "model_type": "QwenImageModularPipeline",
+            "modes": ("edit_image",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "QwenImageImg2ImgPipeline",
+            "default_repo": QWEN_IMAGE_2512_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("transformer", "text_encoder"),
+            "default_quantized_components": (),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 1328,
+            "max_low_memory_steps": 50,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _EDIT_GRAPH_BINDINGS
+        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "qwen-image-edit:edit-image:v1": {
         "modelType": "QwenImageEditModularPipeline",

@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 34)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 33)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 45)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 46)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -314,11 +314,21 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             by_model["FluxSchnellPipeline"]["executionProfiles"][0]["expert_quantization_modes"],
             ["bnb_4bit", "bnb_8bit", "quanto_float8", "torchao_float8"],
         )
-        self.assertEqual(qwen_image["studioExecutionSpecModes"], ["control_image", "text_to_image"])
+        self.assertEqual(
+            qwen_image["studioExecutionSpecModes"],
+            ["control_image", "edit_image", "text_to_image"],
+        )
         qwen_text_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "text_to_image")
+        qwen_edit_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "edit_image")
         qwen_control_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "control_image")
         self.assertEqual(qwen_text_spec["id"], "qwen-image-2512:text-to-image:v1")
         self.assertEqual(qwen_text_spec["pipelineClass"], "QwenImagePipeline")
+        self.assertEqual(qwen_edit_spec["id"], "qwen-image-2512:edit-image:v1")
+        self.assertEqual(qwen_edit_spec["pipelineClass"], "QwenImageImg2ImgPipeline")
+        self.assertEqual(
+            qwen_image["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
         self.assertEqual(qwen_control_spec["executionProfileId"], "qwen-image:modular")
         self.assertEqual(qwen_control_spec["pipelineClass"], "QwenImageModularPipeline")
         self.assertIn(["controlnetModel", "revision", "revision"], qwen_control_spec["bindings"])

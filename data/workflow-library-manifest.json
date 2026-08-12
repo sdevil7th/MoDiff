@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T19:42:36.963Z",
+  "generatedAt": "2026-08-12T19:49:10.550Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 45,
-  "supportedPairCount": 57,
+  "supportedCanonicalPairCount": 46,
+  "supportedPairCount": 58,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1164,6 +1164,39 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "QwenImageModularPipeline:edit_image",
+      "modelType": "QwenImageModularPipeline",
+      "modelFamily": "Qwen Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-2512"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for image-to-image transformation."
+      },
+      "pipelineClasses": [
+        "QwenImageImg2ImgPipeline",
+        "QwenImageModularPipeline",
+        "QwenImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:qwen-image-2512:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/qwen-image-modular-pipeline/edit-image.json",
+      "graphHash": "86c625f89ad14c2ddb68ad68633d0eba906fa77aba95b277a4569dd1599c67a1"
     },
     {
       "id": "QwenImageModularPipeline:text_to_image",

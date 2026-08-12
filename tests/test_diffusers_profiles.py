@@ -101,6 +101,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_qwen_profiles_publish_reviewed_expert_resource_policies(self):
         qwen_profile_ids = {
             "qwen-image:t2i-direct",
+            "qwen-image:img2img-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
@@ -165,6 +166,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
 
     def test_profiles_publish_only_the_reviewed_expert_mps_policies(self):
         unqualified = {
+            "qwen-image:img2img-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
@@ -195,6 +197,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         flux_modes = ("bnb_4bit", "bnb_8bit", "quanto_float8", "torchao_float8")
         qwen_ids = {
             "qwen-image:t2i-direct",
+            "qwen-image:img2img-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
