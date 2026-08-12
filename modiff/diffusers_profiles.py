@@ -725,10 +725,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
         "lllyasviel/FramePackI2V_HY",
         ("image_to_video",),
     ),
-    # Stable Audio already runs through the generic Diffusers audio facade; it
-    # remains Expert/contract-only until its graph and live resource envelope
-    # are qualified.
-    ("StableAudioPipeline", "audio", "stabilityai/stable-audio-open-1.0", ("text_to_audio",)),
 )
 
 

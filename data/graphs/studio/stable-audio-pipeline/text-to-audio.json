@@ -40,7 +40,7 @@
       "style": {
         "stroke": "#E879F9"
       },
-      "target": "node-06",
+      "target": "node-02",
       "targetHandle": "pipeline",
       "type": "default"
     },
@@ -87,34 +87,12 @@
       "target": "node-03",
       "targetHandle": "execution_recipe",
       "type": "default"
-    },
-    {
-      "className": "category-audio_diffusion_pipeline",
-      "data": {
-        "connectionType": "audio_diffusion_pipeline"
-      },
-      "edgeType": "default",
-      "id": "edge-05",
-      "markerEnd": {
-        "color": "#E879F9",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-06",
-      "sourceHandle": "output",
-      "style": {
-        "stroke": "#E879F9"
-      },
-      "target": "node-02",
-      "targetHandle": "pipeline",
-      "type": "default"
     }
   ],
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "f50a503ab0fde7c59f2cef8f31d9bdb9432518cd9d127a99b31c4be4c06bd214",
+    "positionHash": "2c3b9b63379a8e0f81c91d522cc37a619b6ea820ce5deee23ae8d72f5dd95eaa",
     "verticalGap": 72
   },
   "nodes": [
@@ -218,7 +196,7 @@
       },
       "id": "node-01",
       "position": {
-        "x": 2200,
+        "x": 1760,
         "y": 187
       },
       "type": "custom"
@@ -426,20 +404,16 @@
           },
           "audio_cover_strength": {
             "default": 0.85,
-            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "Cover Strength",
             "max": 1,
             "min": 0,
             "step": 0.01,
-            "type": "float",
-            "value": 0.5
+            "type": "float"
           },
           "audio_duration": {
             "default": 30,
-            "disabled": false,
-            "hidden": false,
             "label": "Duration",
             "max": 240,
             "min": 1,
@@ -455,13 +429,10 @@
           },
           "bpm": {
             "default": 0,
-            "disabled": false,
-            "hidden": false,
             "label": "BPM",
             "max": 400,
             "min": 0,
-            "type": "int",
-            "value": 96
+            "type": "int"
           },
           "duration_seconds": {
             "display": "output",
@@ -471,35 +442,27 @@
           },
           "extension_duration": {
             "default": 15,
-            "disabled": false,
             "hidden": true,
             "label": "Extension",
             "max": 180,
             "min": 1,
             "step": 0.5,
-            "type": "float",
-            "value": 15
+            "type": "float"
           },
           "guidance_scale": {
             "default": 1,
             "description": "XL Turbo is guidance-distilled; values above 1 are ignored by the Diffusers pipeline.",
-            "disabled": false,
             "display": "slider",
-            "hidden": false,
             "label": "Guidance",
             "max": 20,
             "min": 0,
             "step": 0.1,
-            "type": "float",
-            "value": 1
+            "type": "float"
           },
           "keyscale": {
             "default": "",
-            "disabled": false,
-            "hidden": false,
             "label": "Key",
-            "type": "string",
-            "value": "D major"
+            "type": "string"
           },
           "lora_scale": {
             "default": 1,
@@ -514,12 +477,9 @@
           },
           "lyrics": {
             "default": "",
-            "disabled": false,
             "display": "textarea",
-            "hidden": false,
             "label": "Lyrics",
-            "type": "text",
-            "value": "[verse]\n春风又绿江南岸\n明月何时照我还"
+            "type": "text"
           },
           "negative_prompt": {
             "default": "",
@@ -533,27 +493,24 @@
           "num_inference_steps": {
             "default": 8,
             "description": "ACE-Step v1.5 XL Turbo is designed for 8 denoising steps.",
-            "disabled": false,
             "display": "slider",
-            "hidden": false,
             "label": "Steps",
             "max": 100,
             "min": 1,
-            "type": "int",
-            "value": 8
+            "type": "int"
           },
           "num_waveforms": {
             "default": 1,
             "description": "Number of StableAudioPipeline waveforms; ignored by ACE-Step.",
-            "disabled": false,
             "hidden": true,
             "label": "Variations",
             "max": 8,
             "min": 1,
-            "type": "int"
+            "type": "int",
+            "value": 1
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -568,10 +525,9 @@
             "display": "textarea",
             "label": "Prompt",
             "type": "text",
-            "value": "chinese traditional music, erhu solo, peaceful and elegant"
+            "value": ""
           },
           "reference_audio": {
-            "disabled": false,
             "display": "input",
             "hidden": true,
             "isConnected": false,
@@ -584,31 +540,25 @@
           },
           "repainting_end": {
             "default": 0,
-            "disabled": false,
             "hidden": true,
             "label": "Repaint End",
             "min": 0,
             "step": 0.01,
-            "type": "float",
-            "value": 10
+            "type": "float"
           },
           "repainting_start": {
             "default": 0,
-            "disabled": false,
             "hidden": true,
             "label": "Repaint Start",
             "min": 0,
             "step": 0.01,
-            "type": "float",
-            "value": 0
+            "type": "float"
           },
           "return_continuation_tail": {
             "default": true,
-            "disabled": false,
             "hidden": true,
             "label": "Return Tail Only",
-            "type": "bool",
-            "value": false
+            "type": "bool"
           },
           "sample_rate": {
             "default": 48000,
@@ -664,24 +614,20 @@
             "min": 0,
             "type": "int",
             "value": {
-              "isRandom": false,
+              "isRandom": true,
               "value": 42
             }
           },
           "shift": {
             "default": 3,
-            "disabled": false,
             "display": "slider",
-            "hidden": false,
             "label": "Shift",
             "max": 10,
             "min": 0.1,
             "step": 0.1,
-            "type": "float",
-            "value": 3
+            "type": "float"
           },
           "source_audio": {
-            "disabled": false,
             "display": "input",
             "hidden": true,
             "isConnected": false,
@@ -700,7 +646,8 @@
             "label": "Stable Audio Guidance",
             "max": 20,
             "min": 0,
-            "type": "float"
+            "type": "float",
+            "value": 7
           },
           "stable_audio_steps": {
             "default": 100,
@@ -710,36 +657,37 @@
             "label": "Stable Audio Steps",
             "max": 300,
             "min": 1,
-            "type": "int"
+            "type": "int",
+            "value": 100
           },
           "task_type": {
             "default": "text2music",
-            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Task",
             "options": [
-              "text2music"
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text2music",
+                "schemaVersion": 1,
+                "value": "text2music"
+              }
             ],
             "type": "string",
-            "value": "text2music"
+            "value": "text2audio"
           },
           "timesignature": {
             "default": "4",
-            "disabled": false,
-            "hidden": false,
             "label": "Time",
-            "type": "string",
-            "value": "4/4"
+            "type": "string"
           },
           "vocal_language": {
             "default": "en",
-            "disabled": false,
-            "hidden": false,
             "label": "Language",
-            "type": "string",
-            "value": "en"
+            "type": "string"
           }
         },
         "resizable": true,
@@ -757,7 +705,7 @@
       },
       "id": "node-02",
       "position": {
-        "x": 1760,
+        "x": 1320,
         "y": 0
       },
       "type": "custom"
@@ -950,6 +898,7 @@
           },
           "mode": {
             "default": "text_to_audio",
+            "disabled": true,
             "fieldOptions": {
               "noValidation": true
             },
@@ -992,6 +941,7 @@
             "value": "text_to_audio"
           },
           "model_id": {
+            "disabled": true,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1004,7 +954,7 @@
             "type": "string",
             "value": {
               "source": "hub",
-              "value": "Runware/acestep-v15-turbo-diffusers"
+              "value": "stabilityai/stable-audio-open-1.0"
             }
           },
           "offload_mode": {
@@ -1075,6 +1025,7 @@
           },
           "pipeline_class": {
             "default": "AceStepPipeline",
+            "disabled": true,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1098,7 +1049,7 @@
               }
             ],
             "type": "string",
-            "value": "AceStepPipeline"
+            "value": "StableAudioPipeline"
           },
           "resolved_artifact": {
             "display": "output",
@@ -1110,7 +1061,7 @@
             "default": "",
             "label": "Revision",
             "type": "string",
-            "value": "be23effe449c5957947f3020fd63bee23c64abe4"
+            "value": "f21265c1e2710b3bd2386596943f0007f55f802e"
           }
         },
         "resizable": true,
@@ -1955,121 +1906,11 @@
         "y": 0
       },
       "type": "custom"
-    },
-    {
-      "data": {
-        "action": "LoadAdapter",
-        "cache": false,
-        "category": "Diffusers Audio",
-        "description": "Load a safetensors-only ACE-Step LoRA from managed cache or a local folder.",
-        "label": "Load Diffusers Audio LoRA",
-        "memory": [
-          0,
-          0,
-          0
-        ],
-        "module": "modules.DiffusersAudio",
-        "params": {
-          "adapter_name": {
-            "default": "audio_style",
-            "label": "Adapter name",
-            "type": "string",
-            "value": "chinese_new_year"
-          },
-          "adapter_path": {
-            "display": "modelselect",
-            "fieldOptions": {
-              "noValidation": true,
-              "sources": [
-                "hub",
-                "local"
-              ]
-            },
-            "label": "LoRA",
-            "required": true,
-            "type": "string",
-            "value": {
-              "source": "hub",
-              "value": "ACE-Step/ACE-Step-v1.5-chinese-new-year-LoRA"
-            }
-          },
-          "expected_sha256": {
-            "default": "",
-            "description": "Required content digest for Hub LoRA weights.",
-            "label": "Expected SHA-256",
-            "type": "string",
-            "value": "78650245c79cbfda7169eae34eb2ccb5f5e639b31a99da0a153a5bbd74194b0d"
-          },
-          "output": {
-            "display": "output",
-            "isConnected": true,
-            "label": "Pipeline",
-            "type": "audio_diffusion_pipeline"
-          },
-          "pipeline": {
-            "display": "input",
-            "isConnected": true,
-            "label": "Pipeline",
-            "required": true,
-            "signal": {
-              "direction": "output"
-            },
-            "type": "audio_diffusion_pipeline"
-          },
-          "replace_existing": {
-            "default": true,
-            "label": "Replace existing adapters",
-            "type": "bool",
-            "value": true
-          },
-          "revision": {
-            "default": "",
-            "description": "Required immutable 40-character commit SHA for Hub LoRAs.",
-            "label": "Revision",
-            "type": "string",
-            "value": "cb829a12775740c830a6d49795f16913065dc492"
-          },
-          "scale": {
-            "default": 0.7,
-            "display": "slider",
-            "label": "Strength",
-            "max": 2,
-            "min": 0,
-            "step": 0.05,
-            "type": "float",
-            "value": 0.5
-          },
-          "weight_name": {
-            "default": "adapter_model.safetensors",
-            "description": "Must end with the literal lowercase .safetensors suffix.",
-            "label": "Weight name",
-            "type": "string",
-            "value": "adapter_model.safetensors"
-          }
-        },
-        "resizable": true,
-        "skipParamsCheck": false,
-        "studioOwned": true,
-        "studioRole": "loraAdapter",
-        "style": {},
-        "time": [
-          0,
-          0,
-          0
-        ],
-        "type": "custom"
-      },
-      "id": "node-06",
-      "position": {
-        "x": 1320,
-        "y": 145
-      },
-      "type": "custom"
     }
   ],
   "viewport": {
-    "x": 84,
-    "y": 118.13135593220338,
-    "zoom": 0.4265536723163842
+    "x": 0,
+    "y": 0,
+    "zoom": 1
   }
 }

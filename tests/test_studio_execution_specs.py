@@ -132,6 +132,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
                 ("QwenImageLayeredModularPipeline", "layer_decomposition"),
                 ("QwenImageModularPipeline", "control_image"),
+                ("StableAudioPipeline", "text_to_audio"),
                 ("FluxDevPipeline", "edit_image"),
                 ("FluxDevPipeline", "inpaint"),
                 ("StableDiffusionXLPipeline", "text_to_image"),
@@ -683,6 +684,19 @@ class StudioExecutionSpecTests(unittest.TestCase):
             self.assertIn(("audioGenerate", "sample_rate", "sampleRate48000"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
+
+    def test_stable_audio_seals_exact_pinned_generic_audio_route(self):
+        spec = studio_execution_spec_for_pair("StableAudioPipeline", "text_to_audio")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "stable-audio:direct")
+        self.assertEqual(spec["pipelineClass"], "StableAudioPipeline")
+        self.assertEqual(spec["defaultRepo"], "stabilityai/stable-audio-open-1.0")
+        self.assertIn(("audioPipeline", "revision", "defaultRevision"), spec["bindings"])
+        self.assertIn(("audioGenerate", "task_type", "text2audio"), spec["bindings"])
+        self.assertIn(("audioGenerate", "stable_audio_steps", "steps"), spec["bindings"])
+        self.assertIn(("audioGenerate", "stable_audio_guidance", "guidanceScale"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_inpaint_seals_the_exact_direct_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "inpaint")

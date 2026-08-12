@@ -22,7 +22,6 @@
     {"repo": "hunyuanvideo-community/HunyuanVideo", "revision": "e8c2aaa66fe3742a32c11a6766aecbf07c56e773", "license": "not-declared", "purpose": "framepack-base-components", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "lllyasviel/flux_redux_bfl", "revision": "45b801affc54ff2af4e5daf1b282e0921901db87", "license": "not-declared", "purpose": "framepack-vision-components", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Runware/acestep-v15-turbo-diffusers", "revision": "be23effe449c5957947f3020fd63bee23c64abe4", "license": "not-declared", "purpose": "shipped-ace-step-lora-base", "verifiedAt": "2026-08-03T14:34:36+05:30"},
-    {"repo": "stabilityai/stable-audio-open-1.0", "revision": "f21265c1e2710b3bd2386596943f0007f55f802e", "license": "other", "purpose": "built-in-diffusers-audio-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "stabilityai/stable-diffusion-xl-base-1.0", "revision": "462165984030d82259a11f4367a4eed129e94a7b", "license": "openrail++", "purpose": "built-in-modular-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", "revision": "b184e23a8a16b20f108f727c902e769e873ffc73", "license": "apache-2.0", "purpose": "built-in-modular-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers", "revision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7", "license": "apache-2.0", "purpose": "built-in-modular-workflow-variant", "verifiedAt": "2026-08-12T00:00:00+05:30"},
@@ -133,6 +132,13 @@
       "artifacts": [
         {"repo": "Serveurperso/ACE-Step-1.5-GGUF", "revision": "9b3707625776cc4cf775e9b12ab82f9fe48335ff", "license": "mit", "format": "gguf", "bits": 5, "components": ["language_model"], "provenance": "community", "trust": "popular_unverified", "downloads": 43025, "likes": 80}
       ]
+    },
+    {
+      "modelType": "StableAudioPipeline",
+      "baseRepo": "stabilityai/stable-audio-open-1.0",
+      "baseRevision": "f21265c1e2710b3bd2386596943f0007f55f802e",
+      "baseLicense": "other",
+      "artifacts": []
     },
     {
       "modelType": "FluxSchnellPipeline",

@@ -13,6 +13,7 @@ from modiff.model_artifact_catalog import (
 
 STUDIO_MODEL_TYPES = {
     "AceStepAudioPipeline",
+    "StableAudioPipeline",
     "Flux2KleinPipeline",
     "FluxCannyPipeline",
     "FluxDepthPipeline",

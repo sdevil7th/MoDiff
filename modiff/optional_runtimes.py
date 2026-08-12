@@ -572,6 +572,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
         "WanImage2VideoModularPipeline",
         "LTXConditionPipeline",
         "AceStepPipeline",
+        "StableAudioPipeline",
         "StableDiffusionXLModularPipeline",
         "StableDiffusionXLPipeline",
         "StableDiffusionXLImg2ImgPipeline",
@@ -595,6 +596,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
     artifact_locks=_transformers_peft_artifact_locks(),
     pipeline_adapter_symbols=(
         "AceStepPipeline",
+        "StableAudioPipeline",
         "FluxPipeline",
         "Flux2KleinPipeline",
         "LTXConditionPipeline",

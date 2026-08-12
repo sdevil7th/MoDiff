@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 32)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 31)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 47)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 48)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -278,6 +278,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "WanVideoPipeline",
             "LTXVideoPipeline",
             "AceStepAudioPipeline",
+            "StableAudioPipeline",
             "StableDiffusionXLPipeline",
         ):
             capability = by_model[model_type]
@@ -451,6 +452,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ace["runnableModes"],
             ["audio_continuation", "audio_repaint", "audio_variation", "text_to_audio"],
         )
+        stable_audio = by_model["StableAudioPipeline"]
+        self.assertEqual(stable_audio["runnableModes"], ["text_to_audio"])
+        self.assertEqual(stable_audio["studioExecutionSpecModes"], ["text_to_audio"])
+        self.assertEqual(stable_audio["studioExecutionSpecs"][0]["pipelineClass"], "StableAudioPipeline")
+        self.assertEqual(stable_audio["revisionCandidates"], ["f21265c1e2710b3bd2386596943f0007f55f802e"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],

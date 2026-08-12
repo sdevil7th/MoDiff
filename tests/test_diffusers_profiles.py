@@ -59,6 +59,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "WanTI2VPipeline",
             "LTXVideoPipeline",
             "AceStepAudioPipeline",
+            "StableAudioPipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
             "FluxKreaPipeline",

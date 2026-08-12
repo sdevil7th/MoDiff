@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T20:04:11.021Z",
+  "generatedAt": "2026-08-12T20:19:41.500Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 47,
-  "supportedPairCount": 59,
+  "supportedCanonicalPairCount": 48,
+  "supportedPairCount": 60,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -107,6 +107,11 @@
       "mediaKind": "audio",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "ACE-Step/acestep-v15-xl-turbo-diffusers"
       ],
@@ -118,12 +123,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio.json",
-      "graphHash": "bc4e49d3d34841856f829069055927ac1d29f1f00d11450724b58cb9aa9d697f",
-      "graphQualificationStatus": "graph-qualified",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "e08496ab0c704cf4d3c8f4a42d0e8cb31d249b37a78ceb9542cfb362f87d7b70"
     },
     {
       "id": "AceStepAudioPipeline:text_to_audio:ace_step_chinese_new_year_lora",
@@ -133,9 +133,15 @@
       "mediaKind": "audio",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
-        "ACE-Step/acestep-v15-xl-turbo-diffusers"
+        "Runware/acestep-v15-turbo-diffusers",
+        "ACE-Step/ACE-Step-v1.5-chinese-new-year-LoRA"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
@@ -145,12 +151,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-chinese-new-year-lora.json",
-      "graphHash": "024321ec98fecde987bcc3f83b4265cf9c4bf0c4e5ca409ddc84786ae99a4c05",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "2464e01dc770fc3dddb5e86931c2fb107a905b2f573f2ef6f2c89b9f0c201248"
     },
     {
       "id": "AceStepAudioPipeline:text_to_audio:ace_step_custom_lora",
@@ -160,9 +161,14 @@
       "mediaKind": "audio",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
-        "ACE-Step/acestep-v15-xl-turbo-diffusers"
+        "Runware/acestep-v15-turbo-diffusers"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
@@ -172,12 +178,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
-      "graphHash": "affc73c7ac0417c050c274da7074444a422b916c5ca7d43bafce8f37ed18d4a3",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "e02a08b1ac4e6182716dca08064c2557bebd92743aab23143dd918769dcd9296"
     },
     {
       "id": "Flux2KleinPipeline:edit_image",
@@ -1261,6 +1262,32 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "StableAudioPipeline:text_to_audio",
+      "modelType": "StableAudioPipeline",
+      "modelFamily": "Stable Audio",
+      "mode": "text_to_audio",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "stabilityai/stable-audio-open-1.0"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "StableAudioPipeline"
+      ],
+      "sourceTemplateId": "task-template:stable-audio-open-1.0:text-to-audio:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
+      "graphHash": "c6cb63923510b1455dfaec26ad940216f28d415e829e9227458ede15beafb09c"
     },
     {
       "id": "StableDiffusionXLPipeline:edit_image",
