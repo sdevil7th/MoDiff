@@ -438,12 +438,13 @@ _RECOVERY_HINTS = {
 
 def optional_runtime_blocker_payload(requirement: dict[str, Any]) -> dict[str, Any]:
     state = requirement.get("state") if requirement.get("state") in _BLOCK_MESSAGES else "unavailable"
+    recovery_hint = _RECOVERY_HINTS[state]
     return {
         "error": True,
         "category": "optional_runtime",
         "error_code": f"optional_runtime_{state}",
-        "message": _BLOCK_MESSAGES[state],
-        "recovery_hint": _RECOVERY_HINTS[state],
+        "message": f"{_BLOCK_MESSAGES[state]} {recovery_hint}",
+        "recovery_hint": recovery_hint,
         "optionalRuntimeRequirement": _copy_requirement(
             requirement,
             state=state,

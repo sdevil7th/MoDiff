@@ -2712,13 +2712,17 @@ class WebServer:
                     )
                 classification = self._classify_exception(e)
                 status = 409 if getattr(e, "modiff_error_code", None) else 500
+                recovery_hint = classification.get("recovery_hint")
+                response_message = f"Field action error: {e}"
+                if recovery_hint:
+                    response_message = f"{response_message} {recovery_hint}"
                 return web.json_response(
                     {
                         "error": True,
-                        "message": f"Field action error: {e}",
+                        "message": response_message,
                         "category": classification.get("category"),
                         "error_code": classification.get("error_code"),
-                        "recovery_hint": classification.get("recovery_hint"),
+                        "recovery_hint": recovery_hint,
                         "sid": sid,
                         "ref": ref,
                     },
@@ -5447,6 +5451,8 @@ class WebServer:
             message = "Prompt embeddings are missing from Encode Prompt. Update or recreate the Studio graph after node definitions finish refreshing."
         elif classification.get("message"):
             message = classification["message"]
+        if classification["category"] == "custom_pipeline" and classification.get("recovery_hint"):
+            message = f"{message} {classification['recovery_hint']}"
         oom = classification["category"] == "oom"
         memory_summary = None
         if oom:
