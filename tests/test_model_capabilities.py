@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 31)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 25)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -73,8 +73,43 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("revisionCandidates", capability)
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
+        planning_video = {
+            "Wan22Pipeline": (
+                ["text_to_video"],
+                "5be7df9619b54f4e2667b2755bc6a756675b5cd7",
+            ),
+            "WanAnimatePipeline": (
+                ["character_animate", "character_replace"],
+                "6f4df10861c758af86ac3c979aacc1bf5c03eff0",
+            ),
+            "LTXI2VLongMultiPromptPipeline": (
+                ["image_to_video"],
+                "7c64400e1861cc0d7b98d570a1926d5408ec60cd",
+            ),
+            "LTX2ConditionPipeline": (
+                ["image_to_video", "reference_to_video", "text_to_video", "video_to_video"],
+                "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            ),
+            "HunyuanVideoFramepackPipeline": (
+                ["image_to_video"],
+                "86cef4396041b6002c957852daac4c91aaa47c79",
+            ),
+            "WanImage2VideoModularPipeline": (
+                ["image_to_video"],
+                "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            ),
+        }
+        for model_type, (modes, revision) in planning_video.items():
+            with self.subTest(planning_video=model_type):
+                capability = by_model[model_type]
+                self.assertEqual(capability["runnableModes"], modes)
+                self.assertEqual(capability["revisionCandidates"], [revision])
+                self.assertEqual(capability["qualificationStatus"], "graph-qualified-execution-pending")
+                self.assertEqual(capability["executionStatus"], "expert_only")
+                self.assertEqual(capability["qualifiedModes"], [])
+                self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 48)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 58)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -87,8 +122,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "Flux2KleinPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
+            "Wan22Pipeline",
+            "WanAnimatePipeline",
+            "WanImage2VideoModularPipeline",
             "WanVideoPipeline",
             "LTXVideoPipeline",
+            "LTXI2VLongMultiPromptPipeline",
+            "LTX2ConditionPipeline",
+            "HunyuanVideoFramepackPipeline",
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",

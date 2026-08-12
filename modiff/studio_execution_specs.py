@@ -38,6 +38,11 @@ LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 STABLE_AUDIO_REPO = "stabilityai/stable-audio-open-1.0"
+WAN_22_T2V_A14B_REPO = "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
+WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
+WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
+LTX2_REPO = "Lightricks/LTX-2"
+FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -558,6 +563,157 @@ _LTX_V2V_GRAPH_BINDINGS = tuple(
     ("normalizeVideo", "height", "height"),
     ("normalizeVideo", "num_frames", "numFrames"),
 )
+_VIDEO_REVISION_GRAPH_BINDINGS = tuple(
+    (role, param, "defaultRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+    for role, param, source in _VIDEO_GRAPH_BINDINGS
+)
+_I2V_REVISION_GRAPH_BINDINGS = tuple(
+    (role, param, "defaultRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+    for role, param, source in _I2V_GRAPH_BINDINGS
+)
+_WAN_ANIMATE_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("loadPoseVideo", "modules.Video.Load", -520, 520),
+    ("loadFaceVideo", "modules.Video.Load", -160, 520),
+)
+_WAN_ANIMATE_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (
+    ("loadImage", "image", "wanGenerate", "reference_images"),
+    ("loadPoseVideo", "video", "wanGenerate", "pose_video"),
+    ("loadFaceVideo", "video", "wanGenerate", "face_video"),
+)
+_WAN_ANIMATE_GRAPH_BINDINGS = _VIDEO_REVISION_GRAPH_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadPoseVideo", "file", "poseVideo"),
+    ("loadFaceVideo", "file", "faceVideo"),
+    ("wanGenerate", "segment_frame_length", "segmentFrameLength77"),
+    ("wanGenerate", "previous_conditioning_frames", "previousConditioningFrames1"),
+    ("wanGenerate", "motion_encode_batch_size", "motionEncodeBatchSize1"),
+)
+_WAN_REPLACE_GRAPH_ROLES = _WAN_ANIMATE_GRAPH_ROLES + (
+    ("loadBackgroundVideo", "modules.Video.Load", 220, 520),
+    ("loadMaskVideo", "modules.Video.Load", 600, 520),
+)
+_WAN_REPLACE_GRAPH_EDGES = _WAN_ANIMATE_GRAPH_EDGES + (
+    ("loadBackgroundVideo", "video", "wanGenerate", "background_video"),
+    ("loadMaskVideo", "video", "wanGenerate", "mask"),
+)
+_WAN_REPLACE_GRAPH_BINDINGS = _WAN_ANIMATE_GRAPH_BINDINGS + (
+    ("loadBackgroundVideo", "file", "backgroundVideo"),
+    ("loadMaskVideo", "file", "maskVideo"),
+)
+_LTX_LONG_GRAPH_BINDINGS = tuple(
+    (role, param, "defaultRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+    for role, param, source in _LTX_I2V_GRAPH_BINDINGS
+) + (
+    ("wanGenerate", "temporal_tile_size", "temporalTileSize80"),
+    ("wanGenerate", "temporal_overlap", "temporalOverlap24"),
+    ("wanGenerate", "temporal_overlap_condition_strength", "temporalOverlapConditionStrength05"),
+    ("wanGenerate", "adain_factor", "adainFactor025"),
+    ("wanGenerate", "prompt_segments_json", "empty"),
+)
+_LTX2_GRAPH_ROLES = tuple(
+    (role, "modules.DiffusersVideo.GenerateVideoAudio" if role == "wanGenerate" else node_key, x, y)
+    for role, node_key, x, y in _VIDEO_GRAPH_ROLES
+    if role != "videoExport"
+) + (("videoExport", "modules.Video.ExportWithAudio", 640, -80),)
+_LTX2_GRAPH_EDGES = tuple(edge for edge in _VIDEO_GRAPH_EDGES if edge[2] != "videoExport") + (
+    ("wanGenerate", "video_out", "videoExport", "video"),
+    ("wanGenerate", "audio", "videoExport", "audio"),
+)
+_LTX2_GRAPH_BINDINGS = tuple(
+    (role, param, "defaultRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+    for role, param, source in _LTX_T2V_GRAPH_BINDINGS
+)
+_LTX2_I2V_GRAPH_ROLES = _LTX2_GRAPH_ROLES + (("loadImage", "modules.Image.Load", -520, 300),)
+_LTX2_I2V_GRAPH_EDGES = _LTX2_GRAPH_EDGES + (("loadImage", "image", "wanGenerate", "reference_images"),)
+_LTX2_I2V_GRAPH_BINDINGS = _LTX2_GRAPH_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+)
+_LTX2_V2V_GRAPH_ROLES = _LTX2_GRAPH_ROLES + (
+    ("loadVideo", "modules.Video.Load", -520, 260),
+    ("normalizeVideo", "modules.VideoConditioning.Normalize", -160, 260),
+)
+_LTX2_V2V_GRAPH_EDGES = _LTX2_GRAPH_EDGES + (
+    ("loadVideo", "video", "normalizeVideo", "video"),
+    ("normalizeVideo", "output", "wanGenerate", "video"),
+)
+_LTX2_V2V_GRAPH_BINDINGS = _LTX2_GRAPH_BINDINGS + (
+    ("loadVideo", "file", "sourceVideo"),
+    ("normalizeVideo", "width", "width"),
+    ("normalizeVideo", "height", "height"),
+    ("normalizeVideo", "num_frames", "numFrames"),
+)
+_FRAMEPACK_GRAPH_ROLES = _I2V_GRAPH_ROLES
+_FRAMEPACK_GRAPH_EDGES = _I2V_GRAPH_EDGES
+_FRAMEPACK_GRAPH_BINDINGS = _I2V_REVISION_GRAPH_BINDINGS + (
+    ("wanGenerate", "framepack_sampling", "framepackSampling"),
+    ("wanGenerate", "latent_window_size", "latentWindowSize9"),
+    ("wanGenerate", "true_cfg_scale", "trueCfgScale1"),
+)
+_WAN_FLF_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1080, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -700, -240),
+    ("loadImage", "modules.Image.Load", -1080, 300),
+    ("loadLastImage", "modules.Image.Load", -1080, 560),
+    ("imageEmbeddings", "modules.ModularDiffusers.ImageEmbeddings", -700, 300),
+    ("imageEncode", "modules.ModularDiffusers.ImageEncode", -300, 300),
+    ("denoise", "modules.ModularDiffusers.Denoise", 100, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 500, -80),
+    ("videoExport", "modules.Video.Export", 900, -80),
+)
+_WAN_FLF_GRAPH_EDGES = (
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "image_encoder", "imageEmbeddings", "image_encoder"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "imageEmbeddings", "image"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("loadLastImage", "image", "imageEmbeddings", "last_image"),
+    ("loadLastImage", "image", "imageEncode", "last_image"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEmbeddings", "image_embeds", "denoise", "image_embeds"),
+    ("imageEmbeddings", "route_state_out", "imageEncode", "route_state_in"),
+    ("imageEncode", "image_condition_latents", "denoise", "image_condition_latents"),
+    ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "videos", "videoExport", "video"),
+)
+_WAN_FLF_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadLastImage", "file", "lastImage"),
+    ("loadLastImage", "alpha_channel", "alphaMode"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("imageEmbeddings", "width", "width"),
+    ("imageEmbeddings", "height", "height"),
+    ("imageEncode", "width", "width"),
+    ("imageEncode", "height", "height"),
+    ("imageEncode", "num_frames", "numFrames"),
+    ("imageEncode", "seed", "seed"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "num_frames", "numFrames"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("decode", "output_type", "outputType"),
+    ("videoExport", "fps", "fps"),
+)
 _AUDIO_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -748,6 +904,14 @@ _BINDING_SOURCES = frozenset(
         *_LTX_T2V_GRAPH_BINDINGS,
         *_LTX_I2V_GRAPH_BINDINGS,
         *_LTX_V2V_GRAPH_BINDINGS,
+        *_WAN_ANIMATE_GRAPH_BINDINGS,
+        *_WAN_REPLACE_GRAPH_BINDINGS,
+        *_LTX_LONG_GRAPH_BINDINGS,
+        *_LTX2_GRAPH_BINDINGS,
+        *_LTX2_I2V_GRAPH_BINDINGS,
+        *_LTX2_V2V_GRAPH_BINDINGS,
+        *_FRAMEPACK_GRAPH_BINDINGS,
+        *_WAN_FLF_GRAPH_BINDINGS,
         *_STABLE_AUDIO_GRAPH_BINDINGS,
         *_AUDIO_GRAPH_BINDINGS,
         *_AUDIO_VARIATION_GRAPH_BINDINGS,
@@ -3048,6 +3212,264 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "bindings": _SDXL_INPAINT_GRAPH_BINDINGS,
     },
 }
+
+
+def _planning_video_profile(
+    profile_id: str,
+    model_type: str,
+    modes: tuple[str, ...],
+    pipeline_class: str,
+    repo: str,
+    *,
+    loader_module: str = "modules.DiffusersVideo",
+    loader_action: str = "LoadPipeline",
+    execution_path: str = "direct-diffusers-video",
+) -> dict[str, Any]:
+    return {
+        "id": profile_id,
+        "model_type": model_type,
+        "modes": modes,
+        "loader_module": loader_module,
+        "loader_action": loader_action,
+        "execution_path": execution_path,
+        "pipeline_class": pipeline_class,
+        "default_repo": repo,
+        "fallback_repo": None,
+        "quantizable_components": (),
+        "default_quantized_components": (),
+        "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+        "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+        "max_low_memory_side": None,
+        "max_low_memory_steps": 50,
+        "live_proof": False,
+        "compatible_repos": (),
+    }
+
+
+def _planning_video_capability(
+    model_type: str,
+    label: str,
+    family: str,
+    repo: str,
+    modes: tuple[str, ...],
+    input_contracts: dict[str, dict[str, list[str]]] | None = None,
+) -> dict[str, Any]:
+    return {
+        "modelType": model_type,
+        "label": label,
+        "displayName": label,
+        "family": family,
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": repo,
+        "artifactLabel": "Diffusers video repo",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 768, "height": 512, "aspectRatio": "custom"},
+        "recommendedSteps": 30,
+        "recommendedGuidance": 3.0,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": any(
+            contract.get("requiredImages") for contract in (input_contracts or {}).values()
+        ),
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": any(
+            contract.get("requiredVideos") for contract in (input_contracts or {}).values()
+        ),
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 81,
+        "recommendedFps": 24,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_MODEL_CPU,
+            "lowVram": OFFLOAD_MODE_MODEL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "steps": 20,
+            "width": 768,
+            "height": 512,
+            "numFrames": 49,
+        },
+        "modes": list(modes),
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(repo)],
+        "modeRequirements": input_contracts or {},
+        "notes": [
+            "This generic planning graph is Expert-only pending remote video execution qualification.",
+            "Auto and Gallery publication remain disabled until an exact live receipt is reviewed.",
+        ],
+    }
+
+
+_WAN_ANIMATE_MODES = ("character_animate", "character_replace")
+_LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
+_P2_VIDEO_PROFILES = {
+    "wan22": _planning_video_profile(
+        "wan-22-a14b:direct", "Wan22Pipeline", ("text_to_video",), "Wan22Pipeline", WAN_22_T2V_A14B_REPO
+    ),
+    "animate": _planning_video_profile(
+        "wan-animate:direct", "WanAnimatePipeline", _WAN_ANIMATE_MODES, "WanAnimatePipeline", WAN_ANIMATE_REPO
+    ),
+    "ltx-long": _planning_video_profile(
+        "ltx-long:direct",
+        "LTXI2VLongMultiPromptPipeline",
+        ("image_to_video",),
+        "LTXI2VLongMultiPromptPipeline",
+        LTX_VIDEO_REPO,
+    ),
+    "ltx2": _planning_video_profile(
+        "ltx2:direct", "LTX2ConditionPipeline", _LTX2_MODES, "LTX2ConditionPipeline", LTX2_REPO
+    ),
+    "framepack": _planning_video_profile(
+        "framepack:direct",
+        "HunyuanVideoFramepackPipeline",
+        ("image_to_video",),
+        "HunyuanVideoFramepackPipeline",
+        FRAMEPACK_REPO,
+    ),
+    "wan-flf": _planning_video_profile(
+        "wan-flf:modular",
+        "WanImage2VideoModularPipeline",
+        ("image_to_video",),
+        "WanImage2VideoModularPipeline",
+        WAN_FLF_REPO,
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
+    ),
+}
+_WAN_ANIMATE_INPUTS = {
+    "character_animate": {
+        "requiredImages": ["referenceImages"],
+        "requiredVideos": ["poseVideo", "faceVideo"],
+    },
+    "character_replace": {
+        "requiredImages": ["referenceImages"],
+        "requiredVideos": ["poseVideo", "faceVideo", "backgroundVideo", "maskVideo"],
+    },
+}
+_LTX2_INPUTS = {
+    "image_to_video": {"requiredImages": ["referenceImages"]},
+    "reference_to_video": {"requiredImages": ["referenceImages"]},
+    "video_to_video": {"requiredVideos": ["sourceVideo"]},
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
+    {
+        "wan-22-a14b:text-to-video:v1": {
+            "modelType": "Wan22Pipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["wan22"],
+            "capability": _planning_video_capability(
+                "Wan22Pipeline", "Wan 2.2 T2V A14B", "Wan Video", WAN_22_T2V_A14B_REPO, ("text_to_video",)
+            ),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _VIDEO_REVISION_GRAPH_BINDINGS,
+        },
+        "wan-animate:character-animate:v1": {
+            "modelType": "WanAnimatePipeline",
+            "mode": "character_animate",
+            "profile": _P2_VIDEO_PROFILES["animate"],
+            "capability": _planning_video_capability(
+                "WanAnimatePipeline", "Wan 2.2 Animate", "Wan Video", WAN_ANIMATE_REPO, _WAN_ANIMATE_MODES,
+                _WAN_ANIMATE_INPUTS,
+            ),
+            "roles": _WAN_ANIMATE_GRAPH_ROLES,
+            "edges": _WAN_ANIMATE_GRAPH_EDGES,
+            "bindings": _WAN_ANIMATE_GRAPH_BINDINGS,
+        },
+        "wan-animate:character-replace:v1": {
+            "modelType": "WanAnimatePipeline",
+            "mode": "character_replace",
+            "profile": _P2_VIDEO_PROFILES["animate"],
+            "roles": _WAN_REPLACE_GRAPH_ROLES,
+            "edges": _WAN_REPLACE_GRAPH_EDGES,
+            "bindings": _WAN_REPLACE_GRAPH_BINDINGS,
+        },
+        "ltx-long:image-to-video:v1": {
+            "modelType": "LTXI2VLongMultiPromptPipeline",
+            "mode": "image_to_video",
+            "profile": _P2_VIDEO_PROFILES["ltx-long"],
+            "capability": _planning_video_capability(
+                "LTXI2VLongMultiPromptPipeline", "LTX long-prompt I2V", "LTX Video", LTX_VIDEO_REPO,
+                ("image_to_video",), {"image_to_video": {"requiredImages": ["referenceImages"]}},
+            ),
+            "roles": _I2V_GRAPH_ROLES,
+            "edges": _I2V_GRAPH_EDGES,
+            "bindings": _LTX_LONG_GRAPH_BINDINGS,
+        },
+        "ltx2:text-to-video:v1": {
+            "modelType": "LTX2ConditionPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["ltx2"],
+            "capability": _planning_video_capability(
+                "LTX2ConditionPipeline", "LTX-2 video and audio", "LTX Video", LTX2_REPO, _LTX2_MODES,
+                _LTX2_INPUTS,
+            ),
+            "roles": _LTX2_GRAPH_ROLES,
+            "edges": _LTX2_GRAPH_EDGES,
+            "bindings": _LTX2_GRAPH_BINDINGS,
+        },
+        "ltx2:image-to-video:v1": {
+            "modelType": "LTX2ConditionPipeline",
+            "mode": "image_to_video",
+            "profile": _P2_VIDEO_PROFILES["ltx2"],
+            "roles": _LTX2_I2V_GRAPH_ROLES,
+            "edges": _LTX2_I2V_GRAPH_EDGES,
+            "bindings": _LTX2_I2V_GRAPH_BINDINGS,
+        },
+        "ltx2:reference-to-video:v1": {
+            "modelType": "LTX2ConditionPipeline",
+            "mode": "reference_to_video",
+            "profile": _P2_VIDEO_PROFILES["ltx2"],
+            "roles": _LTX2_I2V_GRAPH_ROLES,
+            "edges": _LTX2_I2V_GRAPH_EDGES,
+            "bindings": _LTX2_I2V_GRAPH_BINDINGS,
+        },
+        "ltx2:video-to-video:v1": {
+            "modelType": "LTX2ConditionPipeline",
+            "mode": "video_to_video",
+            "profile": _P2_VIDEO_PROFILES["ltx2"],
+            "roles": _LTX2_V2V_GRAPH_ROLES,
+            "edges": _LTX2_V2V_GRAPH_EDGES,
+            "bindings": _LTX2_V2V_GRAPH_BINDINGS,
+        },
+        "framepack:image-to-video:v1": {
+            "modelType": "HunyuanVideoFramepackPipeline",
+            "mode": "image_to_video",
+            "profile": _P2_VIDEO_PROFILES["framepack"],
+            "capability": _planning_video_capability(
+                "HunyuanVideoFramepackPipeline", "Hunyuan FramePack I2V", "Wan Video", FRAMEPACK_REPO,
+                ("image_to_video",), {"image_to_video": {"requiredImages": ["referenceImages"]}},
+            ),
+            "roles": _FRAMEPACK_GRAPH_ROLES,
+            "edges": _FRAMEPACK_GRAPH_EDGES,
+            "bindings": _FRAMEPACK_GRAPH_BINDINGS,
+        },
+        "wan-flf:image-to-video:v1": {
+            "modelType": "WanImage2VideoModularPipeline",
+            "mode": "image_to_video",
+            "profile": _P2_VIDEO_PROFILES["wan-flf"],
+            "capability": _planning_video_capability(
+                "WanImage2VideoModularPipeline", "Wan first/last-frame video", "Wan Video", WAN_FLF_REPO,
+                ("image_to_video",),
+                {"image_to_video": {"requiredImages": ["referenceImages", "lastImage"]}},
+            ),
+            "roles": _WAN_FLF_GRAPH_ROLES,
+            "edges": _WAN_FLF_GRAPH_EDGES,
+            "bindings": _WAN_FLF_GRAPH_BINDINGS,
+        },
+    }
+)
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",

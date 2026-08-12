@@ -16,20 +16,25 @@ _MEDIA_REQUIREMENT_KEYS = {
 }
 _MEDIA_FIELDS = {
     "referenceImages": ("image", ("loadImage",)),
+    "lastImage": ("image", ("loadLastImage",)),
     "maskImage": ("image", ("loadMask",)),
     "controlImage": ("image", ("loadControlImage", "loadImage")),
     "sourceVideo": ("video", ("loadVideo",)),
     "maskVideo": ("video", ("loadMaskVideo",)),
     "controlVideo": ("video", ("loadControlVideo",)),
+    "poseVideo": ("video", ("loadPoseVideo",)),
+    "faceVideo": ("video", ("loadFaceVideo",)),
+    "backgroundVideo": ("video", ("loadBackgroundVideo",)),
     "sourceAudio": ("audio", ("loadAudio",)),
     "referenceAudio": ("audio", ("loadReferenceAudio",)),
 }
 _OUTPUT_NODE_KEYS = {
-    "image": "modules.Image.Preview",
-    "video": "modules.Video.Export",
-    "audio": "modules.Audio.Export",
-    "json": "modules.Primitive.DataViewer",
+    "image": ("modules.Image.Preview",),
+    "video": ("modules.Video.Export", "modules.Video.ExportWithAudio"),
+    "audio": ("modules.Audio.Export",),
+    "json": ("modules.Primitive.DataViewer",),
 }
+_OUTPUT_INPUT_HANDLES = {"image": "image", "video": "video", "audio": "audio", "json": "data"}
 
 
 class TaskTemplateContractError(ValueError):
@@ -91,10 +96,10 @@ def _required_media(input_contract: Any, specification: Mapping[str, Any]) -> li
 
 
 def _output_contract(specification: Mapping[str, Any], media_kind: str) -> dict[str, str]:
-    expected_node_key = _OUTPUT_NODE_KEYS.get(media_kind)
+    expected_node_keys = _OUTPUT_NODE_KEYS.get(media_kind)
     roles = specification.get("roles")
     edges = specification.get("edges")
-    if expected_node_key is None or not isinstance(roles, (list, tuple)) or not isinstance(edges, (list, tuple)):
+    if expected_node_keys is None or not isinstance(roles, (list, tuple)) or not isinstance(edges, (list, tuple)):
         raise TaskTemplateContractError("Task-template output contract is invalid.")
     outgoing = {edge[0] for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4}
     sinks = [
@@ -102,21 +107,22 @@ def _output_contract(specification: Mapping[str, Any], media_kind: str) -> dict[
         for item in roles
         if isinstance(item, (list, tuple)) and len(item) == 4 and item[0] not in outgoing
     ]
-    if len(sinks) != 1 or sinks[0][1] != expected_node_key:
+    if len(sinks) != 1 or sinks[0][1] not in expected_node_keys:
         raise TaskTemplateContractError(
-            f"Task-template {media_kind!r} graph must end at exactly one {expected_node_key} node."
+            f"Task-template {media_kind!r} graph must end at exactly one reviewed output node."
         )
     role = sinks[0][0]
     incoming = [
         edge for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4 and edge[2] == role
     ]
-    if len(incoming) != 1:
-        raise TaskTemplateContractError("Task-template output node must have exactly one reviewed input edge.")
+    media_inputs = [edge for edge in incoming if edge[3] == _OUTPUT_INPUT_HANDLES[media_kind]]
+    if len(media_inputs) != 1:
+        raise TaskTemplateContractError("Task-template output node must have exactly one reviewed media input edge.")
     return {
         "mediaKind": media_kind,
         "role": role,
-        "nodeKey": expected_node_key,
-        "inputHandle": incoming[0][3],
+        "nodeKey": sinks[0][1],
+        "inputHandle": media_inputs[0][3],
     }
 
 

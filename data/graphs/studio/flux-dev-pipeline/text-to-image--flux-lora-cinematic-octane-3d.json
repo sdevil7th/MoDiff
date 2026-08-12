@@ -136,7 +136,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "ee0adeffc971a3e0b2f87422d3433464f3a4ce3657c57b8943d1b502017714ee",
+    "positionHash": "cf2c16fd2cd9a3ebd776bfc7bcc9c6fc280a103780dfe57e28d86c8b55205c94",
     "verticalGap": 72
   },
   "nodes": [
@@ -156,7 +156,9 @@
         "params": {
           "guidance_scale": {
             "default": 0,
+            "disabled": false,
             "display": "slider",
+            "hidden": false,
             "label": "Guidance",
             "max": 20,
             "min": 0,
@@ -166,6 +168,8 @@
           },
           "height": {
             "default": 1024,
+            "disabled": false,
+            "hidden": false,
             "label": "Height",
             "max": 2048,
             "min": 16,
@@ -179,6 +183,93 @@
             "label": "Height",
             "type": "int"
           },
+          "image_contract": {
+            "default": {
+              "actions": {
+                "Generate": [
+                  "text_to_image"
+                ]
+              },
+              "fieldParams": {
+                "guidance_scale": {
+                  "hidden": false
+                },
+                "height": {
+                  "hidden": false
+                },
+                "max_sequence_length": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": false
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "width": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "text_to_image",
+              "modes": [
+                "text_to_image"
+              ],
+              "pipelineClass": "FluxPipeline",
+              "schemaVersion": 1
+            },
+            "hidden": true,
+            "label": "Image Contract",
+            "type": "object",
+            "value": {
+              "actions": {
+                "Generate": [
+                  "text_to_image"
+                ]
+              },
+              "fieldParams": {
+                "guidance_scale": {
+                  "hidden": false
+                },
+                "height": {
+                  "hidden": false
+                },
+                "max_sequence_length": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": false
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "width": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "text_to_image",
+              "modes": [
+                "text_to_image"
+              ],
+              "pipelineClass": "FluxPipeline",
+              "schemaVersion": 1
+            }
+          },
           "images": {
             "display": "output",
             "isConnected": true,
@@ -187,15 +278,19 @@
           },
           "max_sequence_length": {
             "default": 256,
+            "disabled": false,
+            "hidden": false,
             "label": "Max Sequence Length",
-            "max": 2048,
+            "max": 512,
             "min": 1,
             "type": "int",
             "value": 512
           },
           "negative_prompt": {
             "default": "",
+            "disabled": false,
             "display": "textarea",
+            "hidden": false,
             "label": "Negative Prompt",
             "type": "text",
             "value": ""
@@ -243,6 +338,8 @@
           },
           "padding_mask_crop": {
             "default": 0,
+            "disabled": false,
+            "hidden": true,
             "label": "Padding Mask Crop",
             "max": 512,
             "min": 0,
@@ -250,10 +347,14 @@
             "type": "int"
           },
           "pipeline": {
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
+            "signal": {
+              "direction": "output"
+            },
             "type": "image_diffusion_pipeline"
           },
           "prompt": {
@@ -277,7 +378,9 @@
           },
           "strength": {
             "default": 0.8,
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Strength",
             "max": 1,
             "min": 0,
@@ -287,6 +390,8 @@
           },
           "width": {
             "default": 1024,
+            "disabled": false,
+            "hidden": false,
             "label": "Width",
             "max": 2048,
             "min": 16,
@@ -317,7 +422,7 @@
       "id": "node-01",
       "position": {
         "x": 2200,
-        "y": 61
+        "y": 47
       },
       "type": "custom"
     },
@@ -339,20 +444,12 @@
             "default": true,
             "label": "Auto offload",
             "type": "bool",
-            "value": false
+            "value": true
           },
           "device": {
-            "default": "cuda:0",
+            "default": "cpu:0",
             "label": "Device",
             "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
-              },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -441,9 +538,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -483,6 +581,9 @@
           },
           "mode": {
             "default": "text_to_image",
+            "fieldOptions": {
+              "noValidation": true
+            },
             "label": "Mode",
             "options": [
               {
@@ -540,6 +641,18 @@
           "model_id": {
             "display": "modelselect",
             "fieldOptions": {
+              "filter": {
+                "hub": {
+                  "className": [
+                    "FluxPipeline"
+                  ]
+                },
+                "local": {
+                  "className": [
+                    "FluxPipeline"
+                  ]
+                }
+              },
               "noValidation": true,
               "sources": [
                 "hub",
@@ -607,12 +720,16 @@
               }
             ],
             "type": "string",
-            "value": "none"
+            "value": "model_cpu"
           },
           "pipeline": {
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
+            "signal": {
+              "direction": "output",
+              "origin": "pipeline_class"
+            },
             "type": "image_diffusion_pipeline"
           },
           "pipeline_class": {
@@ -642,6 +759,46 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "ZImageImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "ZImageImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ZImageInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "ZImageInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "FluxPipeline",
                 "schemaVersion": 1,
                 "value": "FluxPipeline"
@@ -653,6 +810,14 @@
                 "label": "Flux2KleinPipeline",
                 "schemaVersion": 1,
                 "value": "Flux2KleinPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux2KleinInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "Flux2KleinInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -690,17 +855,17 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
-                "label": "FluxControlNetPipeline",
+                "label": "FluxKontextPipeline",
                 "schemaVersion": 1,
-                "value": "FluxControlNetPipeline"
+                "value": "FluxKontextPipeline"
               },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
-                "label": "FluxKontextPipeline",
+                "label": "FluxKontextInpaintPipeline",
                 "schemaVersion": 1,
-                "value": "FluxKontextPipeline"
+                "value": "FluxKontextInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -717,6 +882,38 @@
                 "label": "QwenImageEditInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "QwenImageEditInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageEditPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageEditPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageEditPlusPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageEditPlusPipeline"
               }
             ],
             "type": "string",
@@ -1019,7 +1216,9 @@
               }
             ],
             "type": "string",
-            "value": []
+            "value": [
+              "transformer"
+            ]
           },
           "dtype": {
             "default": "bfloat16",
@@ -1034,9 +1233,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1127,17 +1327,19 @@
                 "value": "native"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "installationState": "unavailable",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -1160,9 +1362,10 @@
                 "value": "_native_cudnn"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
+                "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
                 "value": "flex"
@@ -1170,7 +1373,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "flash-attn package is not installed",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
                 "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
@@ -1251,7 +1454,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "AITER package is not installed",
+                "disabledReason": "Requires AMD ROCm",
                 "installationState": "unavailable",
                 "label": "aiter",
                 "schemaVersion": 1,
@@ -1260,7 +1463,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "SageAttention package is not installed",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
                 "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
@@ -1642,7 +1845,7 @@
               }
             ],
             "type": "string",
-            "value": "none"
+            "value": "model_cpu"
           },
           "quantization_config": {
             "display": "input",
@@ -1784,7 +1987,7 @@
         "resizable": true,
         "skipParamsCheck": false,
         "studioOwned": true,
-        "studioRole": "loraAdapter:render_3d",
+        "studioRole": "loraAdapter:1",
         "style": {},
         "time": [
           0,
@@ -1796,7 +1999,7 @@
       "id": "node-05",
       "position": {
         "x": 1760,
-        "y": 159
+        "y": 145
       },
       "type": "custom"
     },
@@ -1854,6 +2057,9 @@
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
+            "signal": {
+              "direction": "output"
+            },
             "type": "image_diffusion_pipeline"
           },
           "replace_existing": {
@@ -1902,7 +2108,7 @@
       "id": "node-06",
       "position": {
         "x": 1320,
-        "y": 159
+        "y": 145
       },
       "type": "custom"
     },
@@ -1921,7 +2127,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cuda:0",
+            "default": "cpu:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -1939,14 +2145,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -1965,19 +2163,6 @@
           "image": {
             "display": "input",
             "isConnected": true,
-            "onChange": {
-              "action": "show",
-              "condition": {
-                "type": "latent"
-              },
-              "data": {
-                "false": [],
-                "true": [
-                  "vae",
-                  "device"
-                ]
-              }
-            },
             "type": [
               "image",
               "latent"
@@ -2024,7 +2209,7 @@
   ],
   "viewport": {
     "x": 84,
-    "y": 152.41982346450902,
+    "y": 160.97223243839647,
     "zoom": 0.38874586244942994
   }
 }

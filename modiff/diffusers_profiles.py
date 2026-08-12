@@ -659,15 +659,6 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
         "executionKind": "modular",
         "runnableModes": ["text_to_video"],
     },
-    {
-        "modelType": "WanImage2VideoModularPipeline",
-        "label": "Wan Image to Video (Modular)",
-        "mediaKind": "video",
-        "pipelineClasses": ["WanImage2VideoModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["image_to_video"],
-    },
 ]
 
 
@@ -698,33 +689,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
         ("inpaint", "outpaint"),
     ),
     ("Flux2KleinInpaintPipeline", "image", FLUX2_KLEIN_REPO, ("inpaint", "outpaint")),
-    # Implemented generic video adapters which intentionally have no execution
-    # profile yet.  Qualification and templates remain later remote work.
-    ("Wan22Pipeline", "video", "Wan-AI/Wan2.2-T2V-A14B-Diffusers", ("text_to_video",)),
-    (
-        "WanAnimatePipeline",
-        "video",
-        "Wan-AI/Wan2.2-Animate-14B-Diffusers",
-        ("character_animate", "character_replace"),
-    ),
-    (
-        "LTXI2VLongMultiPromptPipeline",
-        "video",
-        LTX_VIDEO_REPO,
-        ("image_to_video",),
-    ),
-    (
-        "LTX2ConditionPipeline",
-        "video",
-        "Lightricks/LTX-2",
-        ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
-    ),
-    (
-        "HunyuanVideoFramepackPipeline",
-        "video",
-        "lllyasviel/FramePackI2V_HY",
-        ("image_to_video",),
-    ),
 )
 
 

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T20:19:41.500Z",
+  "generatedAt": "2026-08-12T21:36:22.445Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 48,
-  "supportedPairCount": 60,
+  "supportedCanonicalPairCount": 58,
+  "supportedPairCount": 70,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -394,23 +394,25 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_dev_expert_text_to_image",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image.json",
-      "graphHash": "186c7fb68d364cd6fcf6e4e01f0a6f3d913a7d28463cf82eb8779b7303543c2e",
-      "graphQualificationStatus": "graph-qualified",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "476ad4d2f85f6f85c8d1b2f0bfec3ff97c7f35f0b383edd65f8539f7b59ce350"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_cinematic_octane_3d",
@@ -420,25 +422,28 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
-        "prithivMLmods/3D-Render-Flux-LoRA"
+        "prithivMLmods/3D-Render-Flux-LoRA",
+        "aixonlab/FLUX.1-dev-LoRA-Cinematic-Octane"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_cinematic_octane_3d",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json",
-      "graphHash": "d1dd5049c0435a6b0cf03c35780fb24e8bf17e25a865ac4991d26fb9472dc0fd",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "2153456c35ae143de5ba73be5ee28ed5c222876c18944a4d0a30341c5e646c3f"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_film_noir",
@@ -448,6 +453,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -455,18 +465,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_film_noir",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-film-noir.json",
-      "graphHash": "830c6ce5e408b19abbb18e1c278341afbcd9e56f2765b69ddf14731f95be64dd",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "2f39df5f268ae8665781242688a9dc5162f771dfe68ce28bcc612a0a2a58cea8"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_ghibli_story",
@@ -476,6 +483,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -483,18 +495,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_ghibli_story",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-ghibli-story.json",
-      "graphHash": "2afa48e5cf4dcf4fcf8e56b1ad12b94a8e4f8cb550475898f9aeca5b5be8664f",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "23807e6c4b99c9dcf2f0d9e997081ba61cf001e5e9847b0095c032d35bd9a002"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_oil_painting",
@@ -504,6 +513,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -511,18 +525,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_oil_painting",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-oil-painting.json",
-      "graphHash": "8c9fa44a5d86bba5209153a96ad36b00a9a6fa5ab30168fb035dfa1347cf2586",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "f9783695b3434bbe8dd5336f2a56f73e916505de0cd94e357b079e4e2052f493"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_paper_cutout",
@@ -532,6 +543,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -539,18 +555,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_paper_cutout",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-paper-cutout.json",
-      "graphHash": "94f55212d766dfba5af677f079ebfcf02bd91a2bd2a494dfdf59c6b4bbdd3581",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "5f009ab66845a4c73d4f880daf0a9d2617fbdaee7fecf664d22eef77488295fb"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_photoreal_documentary",
@@ -560,6 +573,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -567,18 +585,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_photoreal_documentary",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-photoreal-documentary.json",
-      "graphHash": "1b2df13428ada60067e80140e623a435cc3fa88e74041b1fabba9e4f55f507db",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "fd10ccc219ef938374cae11582d93901b8c942e83aa492251dc63ced90cdccbd"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_retro_comic",
@@ -588,6 +603,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -595,18 +615,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_retro_comic",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-retro-comic.json",
-      "graphHash": "96d21dc1253bd15fc870ca2309df2ea86ec3170f513b538b2dd0b09b4480cae4",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "7cb214b706ed2cd7173fb4f504aff5ef9f8e5c0e40f6187eff787aa12dbfc7d4"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_watercolor",
@@ -616,6 +633,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "black-forest-labs/FLUX.1-dev",
@@ -623,18 +645,15 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
         "FluxPipeline"
       ],
       "sourceTemplateId": "flux_lora_watercolor",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-watercolor.json",
-      "graphHash": "4c0beaeadd956ef6a7b4b15c6393b4043407dd64a7d4e1d1332605b3eecc005e",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "e87786cee1c2f9980b6c6970c039b5029156f55a82d2feef2e5add7ed5794180"
     },
     {
       "id": "FluxFillPipeline:inpaint",
@@ -828,6 +847,182 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "HunyuanVideoFramepackPipeline:image_to_video",
+      "modelType": "HunyuanVideoFramepackPipeline",
+      "modelFamily": "Wan Video",
+      "mode": "image_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/FramePackI2V_HY"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "HunyuanVideoFramepackPipeline"
+      ],
+      "sourceTemplateId": "task-template:framepack:image-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
+      "graphHash": "cd397f4b4d351bff07338f604e5d1058072419dfe469ce8362e33dd74eb667b4"
+    },
+    {
+      "id": "LTX2ConditionPipeline:image_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "modelFamily": "LTX Video",
+      "mode": "image_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "sourceTemplateId": "task-template:ltx2:image-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ltx2-condition-pipeline/image-to-video.json",
+      "graphHash": "d679c40dab19f246d101f7b3b5df1866a6d2c9c9a1c6724bfeb8dbc4c6352f0b"
+    },
+    {
+      "id": "LTX2ConditionPipeline:reference_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "modelFamily": "LTX Video",
+      "mode": "reference_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "sourceTemplateId": "task-template:ltx2:reference-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ltx2-condition-pipeline/reference-to-video.json",
+      "graphHash": "4f2ae81de6f42b4876e039addcd6f1cf33144bdb80ca01be051c36f06067d9e0"
+    },
+    {
+      "id": "LTX2ConditionPipeline:text_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "modelFamily": "LTX Video",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "sourceTemplateId": "task-template:ltx2:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ltx2-condition-pipeline/text-to-video.json",
+      "graphHash": "ca9cbd2c0b34a91e3fcdc6d6e1654492893ea8ca22290d5aeea9dd436586e5f4"
+    },
+    {
+      "id": "LTX2ConditionPipeline:video_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "modelFamily": "LTX Video",
+      "mode": "video_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ]
+      },
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "sourceTemplateId": "task-template:ltx2:video-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ltx2-condition-pipeline/video-to-video.json",
+      "graphHash": "deab6c8345616c5d34c8f3266734dc94fc370151be7e25e037c9a540364fb13d"
+    },
+    {
+      "id": "LTXI2VLongMultiPromptPipeline:image_to_video",
+      "modelType": "LTXI2VLongMultiPromptPipeline",
+      "modelFamily": "LTX Video",
+      "mode": "image_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Lightricks/LTX-Video-0.9.8-13B-distilled"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "LTXI2VLongMultiPromptPipeline"
+      ],
+      "sourceTemplateId": "task-template:ltx-long:image-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ltxi2-vlong-multi-prompt-pipeline/image-to-video.json",
+      "graphHash": "2e5b40d9c2f302cf29c6aa7e8e770308fe411d820957c12c6f22eadfbf906794"
     },
     {
       "id": "LTXVideoPipeline:image_to_video",
@@ -1383,6 +1578,133 @@
       "graphHash": "ed9f21370940ccad676c13a480464b5fcdee1b3cb90792e0d4c9cbb504c1be5e"
     },
     {
+      "id": "Wan22Pipeline:text_to_video",
+      "modelType": "Wan22Pipeline",
+      "modelFamily": "Wan Video",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Wan22Pipeline"
+      ],
+      "sourceTemplateId": "task-template:wan-22-a14b:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/wan22-pipeline/text-to-video.json",
+      "graphHash": "b5e9ad7013f83965abf055a8bddd0a16f9e99be0fa97dd96827589282ef965db"
+    },
+    {
+      "id": "WanAnimatePipeline:character_animate",
+      "modelType": "WanAnimatePipeline",
+      "modelFamily": "Wan Video",
+      "mode": "character_animate",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.2-Animate-14B-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "requiredVideos": [
+          "poseVideo",
+          "faceVideo"
+        ]
+      },
+      "pipelineClasses": [
+        "WanAnimatePipeline"
+      ],
+      "sourceTemplateId": "task-template:wan-animate:character-animate:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/wan-animate-pipeline/character-animate.json",
+      "graphHash": "bb03ae717a66a322b448b14f21d8ff167267a07c0ca850b4f506f2774fb0652e"
+    },
+    {
+      "id": "WanAnimatePipeline:character_replace",
+      "modelType": "WanAnimatePipeline",
+      "modelFamily": "Wan Video",
+      "mode": "character_replace",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.2-Animate-14B-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "requiredVideos": [
+          "poseVideo",
+          "faceVideo",
+          "backgroundVideo",
+          "maskVideo"
+        ]
+      },
+      "pipelineClasses": [
+        "WanAnimatePipeline"
+      ],
+      "sourceTemplateId": "task-template:wan-animate:character-replace:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/wan-animate-pipeline/character-replace.json",
+      "graphHash": "79cab9524d369c58ebcb433d001a4932a0c745369cf68ae95e939d839f6a5754"
+    },
+    {
+      "id": "WanImage2VideoModularPipeline:image_to_video",
+      "modelType": "WanImage2VideoModularPipeline",
+      "modelFamily": "Wan Video",
+      "mode": "image_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages",
+          "lastImage"
+        ]
+      },
+      "pipelineClasses": [
+        "WanImage2VideoModularPipeline"
+      ],
+      "sourceTemplateId": "task-template:wan-flf:image-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/wan-image2-video-modular-pipeline/image-to-video.json",
+      "graphHash": "f2648d9bb6fb91588686f955ddd485032149f199611190dc06cbc1ee6aca82c8"
+    },
+    {
       "id": "WanImageToVideoPipeline:image_to_video",
       "modelType": "WanImageToVideoPipeline",
       "modelFamily": "Wan Video",
@@ -1691,23 +2013,24 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "Tongyi-MAI/Z-Image-Turbo"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
-        "ZImageModularPipeline"
+        "ZImageImg2ImgPipeline",
+        "ZImagePipeline"
       ],
       "sourceTemplateId": "z_image_quick_concept",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/zimage-modular-pipeline/text-to-image.json",
-      "graphHash": "451b0f0c8900137b1510b3adbdbcfc7613e4c9229a1faf15a654239c01b44878",
-      "graphQualificationStatus": "graph-qualified",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "373eff6938228301c1c1fbec9f213dfd43ad1f533cf43006c800d40d55e97acb"
     },
     {
       "id": "ZImageModularPipeline:text_to_image:fast_lora",
@@ -1717,6 +2040,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "Tongyi-MAI/Z-Image-Turbo",
@@ -1724,18 +2052,14 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
-        "ZImageModularPipeline"
+        "ZImageImg2ImgPipeline",
+        "ZImagePipeline"
       ],
       "sourceTemplateId": "fast_lora",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/zimage-modular-pipeline/text-to-image--fast-lora.json",
-      "graphHash": "a9c8044ebd36e25c6af6063221dab5b14922b826990a480385430481b6978c9a",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "9d46c6b8e59321eb17ff62738e507ca0454da966b064d28cc2dcc54113cc4d64"
     },
     {
       "id": "ZImageModularPipeline:text_to_image:z_image_lora_style",
@@ -1745,6 +2069,11 @@
       "mediaKind": "image",
       "supportTier": "supported",
       "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
         "Tongyi-MAI/Z-Image-Turbo",
@@ -1752,18 +2081,14 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
-        "ZImageModularPipeline"
+        "ZImageImg2ImgPipeline",
+        "ZImagePipeline"
       ],
       "sourceTemplateId": "z_image_lora_style",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/zimage-modular-pipeline/text-to-image--z-image-lora-style.json",
-      "graphHash": "50895ad6b9bc1d73be8446a08fea990c7287b966553321bf39d376fb39a0beac",
-      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware"
+      "graphHash": "107a8c70766c2b9dd7c1a8ddfdf44431ecc7fb7dc33c499e6c95e8353de88b88"
     }
   ],
   "experimentalWorkflowCount": 0,

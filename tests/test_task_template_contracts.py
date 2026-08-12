@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 48)
+        self.assertEqual(len(self.contracts), 58)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -110,6 +110,29 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("video", "sourceVideo"),
                 ("video", "maskVideo"),
             ],
+            ("Wan22Pipeline", "text_to_video"): [],
+            ("WanAnimatePipeline", "character_animate"): [
+                ("image", "referenceImages"),
+                ("video", "poseVideo"),
+                ("video", "faceVideo"),
+            ],
+            ("WanAnimatePipeline", "character_replace"): [
+                ("image", "referenceImages"),
+                ("video", "poseVideo"),
+                ("video", "faceVideo"),
+                ("video", "backgroundVideo"),
+                ("video", "maskVideo"),
+            ],
+            ("WanImage2VideoModularPipeline", "image_to_video"): [
+                ("image", "referenceImages"),
+                ("image", "lastImage"),
+            ],
+            ("LTXI2VLongMultiPromptPipeline", "image_to_video"): [("image", "referenceImages")],
+            ("LTX2ConditionPipeline", "text_to_video"): [],
+            ("LTX2ConditionPipeline", "image_to_video"): [("image", "referenceImages")],
+            ("LTX2ConditionPipeline", "reference_to_video"): [("image", "referenceImages")],
+            ("LTX2ConditionPipeline", "video_to_video"): [("video", "sourceVideo")],
+            ("HunyuanVideoFramepackPipeline", "image_to_video"): [("image", "referenceImages")],
             ("AceStepAudioPipeline", "audio_continuation"): [("audio", "sourceAudio")],
         }
         for pair, required in expected.items():
@@ -122,13 +145,18 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(all(item["minimumCount"] == 1 for item in contract["requiredMedia"]))
 
         output_nodes = {
-            "image": "modules.Image.Preview",
-            "video": "modules.Video.Export",
-            "audio": "modules.Audio.Export",
+            "image": {"modules.Image.Preview"},
+            "video": {"modules.Video.Export", "modules.Video.ExportWithAudio"},
+            "audio": {"modules.Audio.Export"},
         }
         for contract in self.contracts:
             with self.subTest(output=contract["id"]):
-                self.assertEqual(contract["output"]["nodeKey"], output_nodes[contract["mediaKind"]])
+                self.assertIn(contract["output"]["nodeKey"], output_nodes[contract["mediaKind"]])
+        for mode in ("text_to_video", "image_to_video", "reference_to_video", "video_to_video"):
+            output = self.contract_by_pair[("LTX2ConditionPipeline", mode)]["output"]
+            self.assertEqual(output["nodeKey"], "modules.Video.ExportWithAudio")
+            self.assertEqual(output["role"], "videoExport")
+            self.assertEqual(output["inputHandle"], "video")
 
     async def test_image_video_and_audio_graphs_round_trip_against_the_generic_contract(self):
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
@@ -144,6 +172,16 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("QwenImageModularPipeline", "inpaint"),
             ("FluxFillPipeline", "inpaint"),
             ("WanVACEPipeline", "video_inpaint"),
+            ("Wan22Pipeline", "text_to_video"),
+            ("WanAnimatePipeline", "character_animate"),
+            ("WanAnimatePipeline", "character_replace"),
+            ("LTXI2VLongMultiPromptPipeline", "image_to_video"),
+            ("LTX2ConditionPipeline", "text_to_video"),
+            ("LTX2ConditionPipeline", "image_to_video"),
+            ("LTX2ConditionPipeline", "reference_to_video"),
+            ("LTX2ConditionPipeline", "video_to_video"),
+            ("HunyuanVideoFramepackPipeline", "image_to_video"),
+            ("WanImage2VideoModularPipeline", "image_to_video"),
             ("AceStepAudioPipeline", "audio_continuation"),
             ("StableAudioPipeline", "text_to_audio"),
         }
