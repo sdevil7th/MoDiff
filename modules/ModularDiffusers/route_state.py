@@ -35,6 +35,7 @@ _ROUTE_CONTRACT_BY_MODEL_TYPE = {
 SUPPORTED_ROUTE_MODEL_TYPES = frozenset(_ROUTE_CONTRACT_BY_MODEL_TYPE)
 ROUTE_STATE_INPUT = "route_state_in"
 ROUTE_STATE_OUTPUT = "route_state_out"
+SDXL_UNION_CONTROL_MODE_LIMIT = 32
 ROUTE_RESERVED_PIPELINE_INPUTS = frozenset(
     {
         "generator",
@@ -921,8 +922,8 @@ def require_standalone_component_binding(
     return binding
 
 
-def require_sdxl_controlnet_component_binding(component, *, expected_binding=None):
-    """Require the exact ordinary SDXL ControlNet component contract.
+def require_sdxl_controlnet_component_binding(component, *, union=False, expected_binding=None):
+    """Require one exact ordinary or Union SDXL ControlNet contract.
 
     ControlNet Union uses the same generic graph port, so the process-local
     reviewed class identity is the authority that keeps the still-dormant
@@ -935,8 +936,12 @@ def require_sdxl_controlnet_component_binding(component, *, expected_binding=Non
         expected_kind="controlnet",
         expected_binding=expected_binding,
     )
-    if binding._class_name != "ControlNetModel":
-        raise ValueError("SDXL ordinary ControlNet execution requires an exact ControlNetModel component.")
+    if type(union) is not bool:
+        raise TypeError("SDXL ControlNet variant selection must be a boolean.")
+    expected_class = "ControlNetUnionModel" if union else "ControlNetModel"
+    if binding._class_name != expected_class:
+        variant = "Union" if union else "ordinary"
+        raise ValueError(f"SDXL {variant} ControlNet execution requires an exact {expected_class} component.")
     return binding
 
 
@@ -3346,6 +3351,7 @@ def validate_denoise_route_state(
     vae_scale_factor=None,
     control_image_latents=None,
     controlnet_component=None,
+    control_mode=None,
     controlnet_bundle_present=False,
     ip_adapter_present=False,
     image_embeds=None,
@@ -3390,11 +3396,20 @@ def validate_denoise_route_state(
         if ip_adapter_present:
             raise ValueError("Combined SDXL VAE-route and IP-Adapter execution is not enabled.")
         if control_image_latents is not None:
-            raise ValueError("SDXL ordinary ControlNet does not accept prepared Qwen ControlNet latents.")
+            raise ValueError("SDXL ControlNet does not accept prepared Qwen ControlNet latents.")
         if controlnet_bundle_present != (controlnet_component is not None):
-            raise ValueError("SDXL ordinary ControlNet requires one exact connected component bundle.")
+            raise ValueError("SDXL ControlNet requires one exact connected component bundle.")
         if controlnet_component is not None:
-            require_sdxl_controlnet_component_binding(controlnet_component)
+            if control_mode is not None and (
+                type(control_mode) is not int or not 0 <= control_mode < SDXL_UNION_CONTROL_MODE_LIMIT
+            ):
+                raise ValueError("SDXL ControlNet Union mode must be one bounded canonical integer.")
+            require_sdxl_controlnet_component_binding(
+                controlnet_component,
+                union=control_mode is not None,
+            )
+        elif control_mode is not None:
+            raise ValueError("SDXL ControlNet Union mode requires one exact connected component bundle.")
         return validate_encoder_route_state(
             route_state,
             binding=binding,
@@ -3448,6 +3463,7 @@ def consume_denoise_route_state(
     vae_scale_factor=None,
     control_image_latents=None,
     controlnet_component=None,
+    control_mode=None,
     controlnet_bundle_present=False,
     ip_adapter_present=False,
     image_embeds=None,
@@ -3488,6 +3504,7 @@ def consume_denoise_route_state(
         vae_scale_factor=vae_scale_factor,
         control_image_latents=control_image_latents,
         controlnet_component=controlnet_component,
+        control_mode=control_mode,
         controlnet_bundle_present=controlnet_bundle_present,
         ip_adapter_present=ip_adapter_present,
     )

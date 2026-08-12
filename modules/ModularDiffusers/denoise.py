@@ -24,6 +24,7 @@ from .modular_utils import (
 from .route_state import (
     ROUTE_STATE_INPUT,
     ROUTE_STATE_OUTPUT,
+    SDXL_UNION_CONTROL_MODE_LIMIT,
     consume_decode_route_state,
     SUPPORTED_ROUTE_MODEL_TYPES,
     consume_denoise_route_state,
@@ -300,13 +301,24 @@ class Denoise(NodeBase):
             raise ValueError("The resident SDXL Denoise pipeline does not hold the exact connected VAE component.")
         return vae, sdxl_vae_geometry_from_component(vae)
 
-    def _resolve_sdxl_controlnet(self, component_input, *, require_resident_pipeline):
-        require_sdxl_controlnet_component_binding(component_input)
+    def _resolve_sdxl_controlnet(self, component_input, *, control_mode, require_resident_pipeline):
+        union = control_mode is not None
+        require_sdxl_controlnet_component_binding(component_input, union=union)
         controlnet = resolve_managed_component_by_id(
             components,
             component_input,
             label="Denoise ControlNet",
         )
+        if union:
+            control_type_count = getattr(getattr(controlnet, "config", None), "num_control_type", None)
+            if type(control_type_count) is not int or not 1 <= control_type_count <= SDXL_UNION_CONTROL_MODE_LIMIT:
+                raise ValueError("The connected SDXL ControlNet Union has an invalid control-type contract.")
+            if (
+                type(control_mode) is not int
+                or not 0 <= control_mode < SDXL_UNION_CONTROL_MODE_LIMIT
+                or control_mode >= control_type_count
+            ):
+                raise ValueError("The selected SDXL ControlNet Union mode is outside the resident model contract.")
         if require_resident_pipeline and (
             getattr(self, "_pipeline", None) is None
             or getattr(self._pipeline, "controlnet", None) is not controlnet
@@ -351,7 +363,7 @@ class Denoise(NodeBase):
                     raise ValueError(
                         f"SDXL IP-Adapter fields are not enabled: {', '.join(sorted(ip_fields))}."
                     )
-                union_fields = {"control_mode", "control_type", "control_type_idx"}.intersection(
+                union_fields = {"control_type", "control_type_idx"}.intersection(
                     current[bundle_name]
                 )
                 if union_fields:
@@ -443,11 +455,18 @@ class Denoise(NodeBase):
             block_input_names=tuple(block_input_names) + tuple(component_names),
             target_name="controlnet",
         )
+        control_mode = effective_modular_block_input(
+            current,
+            node_input_names=node_input_names,
+            block_input_names=block_input_names,
+            target_name="control_mode",
+        )
         controlnet_bundle_present = current.get("controlnet_bundle") is not None
         controlnet_state_present = (
             controlnet_bundle_present
             or control_image_latents is not None
             or controlnet_component is not None
+            or control_mode is not None
         )
         if route_contract == "sdxl" and controlnet_state_present:
             if (
@@ -455,9 +474,10 @@ class Denoise(NodeBase):
                 or controlnet_component is None
                 or control_image_latents is not None
             ):
-                raise ValueError("SDXL ordinary ControlNet requires one exact connected component bundle.")
+                raise ValueError("SDXL ControlNet requires one exact connected component bundle.")
             self._resolve_sdxl_controlnet(
                 controlnet_component,
+                control_mode=control_mode,
                 require_resident_pipeline=True,
             )
         image_embeds = effective_modular_block_input(
@@ -505,6 +525,7 @@ class Denoise(NodeBase):
             vae_scale_factor=resident_geometry[1],
             control_image_latents=control_image_latents,
             controlnet_component=controlnet_component,
+            control_mode=control_mode,
             controlnet_bundle_present=controlnet_bundle_present,
             ip_adapter_present=current.get("ip_adapter") is not None,
             image_embeds=image_embeds,
@@ -586,7 +607,7 @@ class Denoise(NodeBase):
                     raise ValueError(
                         f"SDXL IP-Adapter fields are not enabled: {', '.join(sorted(ip_fields))}."
                     )
-                union_fields = {"control_mode", "control_type", "control_type_idx"}.intersection(
+                union_fields = {"control_type", "control_type_idx"}.intersection(
                     kwargs[bundle_name]
                 )
                 if union_fields:
@@ -648,6 +669,12 @@ class Denoise(NodeBase):
             block_input_names=tuple(blocks.input_names) + tuple(component_names),
             target_name="controlnet",
         )
+        effective_control_mode = effective_modular_block_input(
+            kwargs,
+            node_input_names=node_config["input_names"],
+            block_input_names=blocks.input_names,
+            target_name="control_mode",
+        )
         controlnet_bundle_present = kwargs.get("controlnet_bundle") is not None
         routed_latent_present = any(
             kwargs.get(name) is not None for name in ("image_latents", "image_latents_with_strength")
@@ -676,6 +703,7 @@ class Denoise(NodeBase):
             controlnet_bundle_present
             or effective_control_latents is not None
             or effective_controlnet_component is not None
+            or effective_control_mode is not None
         )
         if route_state is None and route_requires_controlnet_state(self._model_type) and controlnet_state_present:
             raise ValueError(
@@ -717,9 +745,10 @@ class Denoise(NodeBase):
                     or effective_controlnet_component is None
                     or effective_control_latents is not None
                 ):
-                    raise ValueError("SDXL ordinary ControlNet requires one exact connected component bundle.")
+                    raise ValueError("SDXL ControlNet requires one exact connected component bundle.")
                 preinit_controlnet = self._resolve_sdxl_controlnet(
                     effective_controlnet_component,
+                    control_mode=effective_control_mode,
                     require_resident_pipeline=False,
                 )
         elif route_contract == "wan_i2v":
@@ -744,6 +773,7 @@ class Denoise(NodeBase):
                 vae_scale_factor=preinit_geometry[1],
                 control_image_latents=effective_control_latents,
                 controlnet_component=effective_controlnet_component,
+                control_mode=effective_control_mode,
                 controlnet_bundle_present=controlnet_bundle_present,
                 ip_adapter_present=kwargs.get("ip_adapter") is not None,
                 image_embeds=effective_image_embeds,
@@ -891,6 +921,7 @@ class Denoise(NodeBase):
                         )
                     route_controlnet = self._resolve_sdxl_controlnet(
                         effective_controlnet_component,
+                        control_mode=effective_control_mode,
                         require_resident_pipeline=True,
                     )
                     if route_controlnet is not installed_controlnet or route_controlnet is not preinit_controlnet:
@@ -922,6 +953,7 @@ class Denoise(NodeBase):
                 vae_scale_factor=(route_geometry[1] if route_geometry is not None else None),
                 control_image_latents=effective_control_latents,
                 controlnet_component=effective_controlnet_component,
+                control_mode=effective_control_mode,
                 controlnet_bundle_present=controlnet_bundle_present,
                 ip_adapter_present=kwargs.get("ip_adapter") is not None,
                 image_embeds=effective_image_embeds,
@@ -1032,6 +1064,7 @@ class Denoise(NodeBase):
                     raise ValueError("The connected Denoise VAE changed before upstream execution.")
                 if route_controlnet is not None and self._resolve_sdxl_controlnet(
                     effective_controlnet_component,
+                    control_mode=effective_control_mode,
                     require_resident_pipeline=True,
                 ) is not route_controlnet:
                     raise ValueError("The connected Denoise ControlNet changed before upstream execution.")
@@ -1058,6 +1091,7 @@ class Denoise(NodeBase):
                     vae_scale_factor=(route_geometry[1] if route_geometry is not None else None),
                     control_image_latents=effective_control_latents,
                     controlnet_component=effective_controlnet_component,
+                    control_mode=effective_control_mode,
                     controlnet_bundle_present=controlnet_bundle_present,
                     ip_adapter_present=kwargs.get("ip_adapter") is not None,
                     image_embeds=effective_image_embeds,
@@ -1128,6 +1162,7 @@ class Denoise(NodeBase):
                     raise ValueError("The connected Denoise VAE changed during upstream execution.")
                 if route_controlnet is not None and self._resolve_sdxl_controlnet(
                     effective_controlnet_component,
+                    control_mode=effective_control_mode,
                     require_resident_pipeline=True,
                 ) is not route_controlnet:
                     raise ValueError("The connected Denoise ControlNet changed during upstream execution.")
@@ -1154,6 +1189,7 @@ class Denoise(NodeBase):
                     vae_scale_factor=(route_geometry[1] if route_geometry is not None else None),
                     control_image_latents=effective_control_latents,
                     controlnet_component=effective_controlnet_component,
+                    control_mode=effective_control_mode,
                     controlnet_bundle_present=controlnet_bundle_present,
                     ip_adapter_present=kwargs.get("ip_adapter") is not None,
                     image_embeds=effective_image_embeds,

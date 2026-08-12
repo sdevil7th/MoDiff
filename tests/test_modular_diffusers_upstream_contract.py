@@ -875,6 +875,27 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertIsNotNone(node_config)
         self.assertFalse({"seed", ROUTE_STATE_INPUT}.intersection(node_config["input_names"]))
         self.assertNotIn(ROUTE_STATE_OUTPUT, node_config["output_names"])
+        self.assertEqual(
+            node_config["params"]["controlnet_variant"],
+            {
+                "label": "ControlNet Variant",
+                "options": ["ordinary", "union"],
+                "type": "string",
+                "value": "ordinary",
+                "onChange": {"union": ["control_mode"]},
+            },
+        )
+        self.assertEqual(
+            node_config["params"]["control_mode"],
+            {
+                "label": "Union Control Type Index",
+                "type": "int",
+                "min": 0,
+                "max": 31,
+                "step": 1,
+                "value": 0,
+            },
+        )
         controlnet_component = {
             "model_id": "fixture-controlnet-id",
             "repo_id": "local/controlnet-fixture",
@@ -901,6 +922,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         result = node.execute(
             model_type=pipeline_class.__name__,
             controlnet=controlnet_component,
+            controlnet_variant="ordinary",
+            control_mode=0,
             control_image="fixture-control-image",
             controlnet_conditioning_scale=0.75,
             control_guidance_start=0.1,
@@ -920,21 +943,37 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         )
         self.assertTrue(
             node._cache_params_equal(
-                {"controlnet": controlnet_component},
-                {"controlnet": controlnet_component},
+                {
+                    "controlnet": controlnet_component,
+                    "controlnet_variant": "ordinary",
+                    "control_mode": 0,
+                },
+                {
+                    "controlnet": controlnet_component,
+                    "controlnet_variant": "ordinary",
+                    "control_mode": 0,
+                },
             )
         )
-        with self.assertRaisesRegex(ValueError, "Union fields"):
+        with self.assertRaisesRegex(ValueError, "exact ControlNetUnionModel"):
             node._cache_params_equal(
-                {"controlnet": controlnet_component, "control_mode": 1},
-                {"controlnet": controlnet_component, "control_mode": 1},
+                {
+                    "controlnet": controlnet_component,
+                    "controlnet_variant": "union",
+                    "control_mode": 0,
+                },
+                {
+                    "controlnet": controlnet_component,
+                    "controlnet_variant": "union",
+                    "control_mode": 0,
+                },
             )
         with self.assertRaisesRegex(ValueError, "opaque value"):
             node._cache_params_equal(
                 {"controlnet": controlnet_component, ROUTE_STATE_INPUT: {}},
                 {"controlnet": controlnet_component, ROUTE_STATE_INPUT: {}},
             )
-        with self.assertRaisesRegex(ValueError, "Union fields"):
+        with self.assertRaisesRegex(ValueError, "backend-managed"):
             Controlnet("sdxl-union-fields-through-ordinary-port").execute(
                 model_type=pipeline_class.__name__,
                 controlnet=controlnet_component,
@@ -942,7 +981,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 controlnet_conditioning_scale=0.75,
                 control_guidance_start=0.1,
                 control_guidance_end=0.9,
-                control_mode=1,
+                control_type_idx=[0],
             )
 
         union_component = {
@@ -966,6 +1005,43 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "d" * 64,
             ),
         )
+        union_result = Controlnet("sdxl-union-bundle").execute(
+            model_type=pipeline_class.__name__,
+            controlnet=union_component,
+            controlnet_variant="union",
+            control_mode=1,
+            control_image="fixture-control-image",
+            controlnet_conditioning_scale=0.75,
+            control_guidance_start=0.1,
+            control_guidance_end=0.9,
+        )
+        self.assertEqual(
+            union_result,
+            {
+                "controlnet_bundle": {
+                    "controlnet": union_component,
+                    "control_mode": 1,
+                    "control_image": "fixture-control-image",
+                    "controlnet_conditioning_scale": 0.75,
+                    "control_guidance_start": 0.1,
+                    "control_guidance_end": 0.9,
+                }
+            },
+        )
+        self.assertTrue(
+            Controlnet("sdxl-union-cache")._cache_params_equal(
+                {
+                    "controlnet": union_component,
+                    "controlnet_variant": "union",
+                    "control_mode": 1,
+                },
+                {
+                    "controlnet": union_component,
+                    "controlnet_variant": "union",
+                    "control_mode": 1,
+                },
+            )
+        )
         with self.assertRaisesRegex(ValueError, "exact ControlNetModel"):
             Controlnet("sdxl-union-through-ordinary-port").execute(
                 model_type=pipeline_class.__name__,
@@ -974,6 +1050,22 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 controlnet_conditioning_scale=0.75,
                 control_guidance_start=0.1,
                 control_guidance_end=0.9,
+            )
+        with self.assertRaisesRegex(ValueError, "exactly 'ordinary' or 'union'"):
+            Controlnet("sdxl-invalid-controlnet-variant").execute(
+                model_type=pipeline_class.__name__,
+                controlnet=union_component,
+                controlnet_variant="automatic",
+                control_mode=0,
+                control_image="fixture-control-image",
+            )
+        with self.assertRaisesRegex(ValueError, "one bounded control-type index"):
+            Controlnet("sdxl-invalid-controlnet-mode").execute(
+                model_type=pipeline_class.__name__,
+                controlnet=union_component,
+                controlnet_variant="union",
+                control_mode="custom",
+                control_image="fixture-control-image",
             )
 
     def test_qwen_controlnet_generator_is_closed_by_seed_and_optional_opaque_route(self):

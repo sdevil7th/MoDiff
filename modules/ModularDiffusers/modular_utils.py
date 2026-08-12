@@ -230,6 +230,23 @@ def pin_modular_component_revisions(pipeline, primary_repo, primary_revision):
 SDXL_NODE_SPECS = {
     "controlnet": {
         "inputs": [
+            PipelineParam(
+                name="controlnet_variant",
+                label="ControlNet Variant",
+                type="string",
+                options=["ordinary", "union"],
+                value="ordinary",
+                onChange={"union": ["control_mode"]},
+            ),
+            PipelineParam(
+                name="control_mode",
+                label="Union Control Type Index",
+                type="int",
+                min=0,
+                max=31,
+                step=1,
+                value=0,
+            ),
             PipelineParam.control_image(),
             PipelineParam.controlnet_conditioning_scale(),
             PipelineParam.control_guidance_start(),

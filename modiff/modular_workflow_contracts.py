@@ -508,6 +508,26 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES,
                 ),
             ),
+            (
+                "controlnet_union_image2image",
+                ModularStateFlowTruth(
+                    "controlnet_union_image2image",
+                    frozenset({"control_image", "control_mode", "image", "prompt"}),
+                    _SDXL_CONTROLNET_BLOCK_SEQUENCE,
+                    ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_IMAGE_TO_OUTPUT_EDGES,
+                ),
+            ),
+            (
+                "controlnet_union_inpainting",
+                ModularStateFlowTruth(
+                    "controlnet_union_inpainting",
+                    frozenset({"control_image", "control_mode", "mask_image", "image", "prompt"}),
+                    _SDXL_CONTROLNET_BLOCK_SEQUENCE,
+                    ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES,
+                ),
+            ),
         ),
     ),
     "QwenImageModularPipeline": PinnedModularPipelineTruth(

@@ -216,7 +216,13 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
         self.assertEqual(
             set(dict(truth.state_flows)),
-            {"inpainting", "controlnet_image2image", "controlnet_inpainting"},
+            {
+                "inpainting",
+                "controlnet_image2image",
+                "controlnet_inpainting",
+                "controlnet_union_image2image",
+                "controlnet_union_inpainting",
+            },
         )
         self.assertEqual(
             set(dict(truth.modes)),
@@ -357,6 +363,14 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             },
             "controlnet_inpainting": {
                 "inputs": frozenset({"control_image", "mask_image", "image", "prompt"}),
+                "vae_edges": ("image_latents", "mask", "masked_image_latents"),
+            },
+            "controlnet_union_image2image": {
+                "inputs": frozenset({"control_image", "control_mode", "image", "prompt"}),
+                "vae_edges": ("image_latents",),
+            },
+            "controlnet_union_inpainting": {
+                "inputs": frozenset({"control_image", "control_mode", "mask_image", "image", "prompt"}),
                 "vae_edges": ("image_latents", "mask", "masked_image_latents"),
             },
         }

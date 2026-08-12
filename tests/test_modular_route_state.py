@@ -1025,12 +1025,41 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
             _standalone_identity(class_name="ControlNetUnionModel"),
             manager_model_id="controlnet-union-resident",
         )
+        self.assertIsNone(
+            validate_denoise_route_state(
+                fixture["route"],
+                vae_component=fixture["vae"],
+                controlnet_bundle_present=True,
+                controlnet_component=union_controlnet,
+                control_mode=3,
+                **common,
+            )
+        )
+        union_consumed = consume_denoise_route_state(
+            fixture["route"],
+            vae_component=fixture["vae"],
+            controlnet_bundle_present=True,
+            controlnet_component=union_controlnet,
+            control_mode=3,
+            execution_device="cpu",
+            **common,
+        )
+        self.assertTrue(torch.equal(union_consumed["generator"].get_state(), fixture["generator"].get_state()))
         with self.assertRaisesRegex(ValueError, "exact ControlNetModel"):
             validate_denoise_route_state(
                 fixture["route"],
                 vae_component=fixture["vae"],
                 controlnet_bundle_present=True,
                 controlnet_component=union_controlnet,
+                **common,
+            )
+        with self.assertRaisesRegex(ValueError, "bounded canonical integer"):
+            validate_denoise_route_state(
+                fixture["route"],
+                vae_component=fixture["vae"],
+                controlnet_bundle_present=True,
+                controlnet_component=union_controlnet,
+                control_mode=32,
                 **common,
             )
 
@@ -2165,18 +2194,28 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
         self.assertEqual(decoded["images"], "decoded-sdxl-inpaint")
 
     def test_sdxl_inpaint_controlnet_installs_exact_resident_component_and_closes_swaps(self):
-        for swap_phase in (None, "init", "call"):
-            with self.subTest(swap_phase=swap_phase):
+        for case in ("ordinary", "union", "init-swap", "call-swap"):
+            with self.subTest(case=case):
+                union = case == "union"
+                swap_phase = case.removesuffix("-swap") if case.endswith("-swap") else None
                 fixture = _sdxl_encoder_route()
                 outputs = fixture["outputs"]
                 unet_component = object()
                 scheduler_component = object()
-                first_controlnet = object()
+                first_controlnet = (
+                    type(
+                        "FixtureControlNetUnion",
+                        (),
+                        {"config": type("FixtureControlNetUnionConfig", (), {"num_control_type": 8})()},
+                    )()
+                    if union
+                    else object()
+                )
                 replacement_controlnet = object()
                 resident = {"controlnet": first_controlnet}
                 _issuer, controlnet_payload = _publish_standalone(
-                    _standalone_identity(class_name="ControlNetModel"),
-                    manager_model_id=f"sdxl-controlnet-{swap_phase or 'stable'}",
+                    _standalone_identity(class_name="ControlNetUnionModel" if union else "ControlNetModel"),
+                    manager_model_id=f"sdxl-controlnet-{case}",
                 )
                 denoised = torch.full((1, 4, 8, 8), 3.0)
                 pipeline_calls = []
@@ -2212,6 +2251,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                         "mask",
                         "masked_image_latents",
                         "generator",
+                        "control_mode",
                         "control_image",
                         "controlnet_conditioning_scale",
                         "control_guidance_start",
@@ -2255,6 +2295,8 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                     "control_guidance_start": 0.1,
                     "control_guidance_end": 0.9,
                 }
+                if union:
+                    controlnet_bundle["control_mode"] = 3
 
                 def managed_components(*, ids, return_dict_with_names=True):
                     if return_dict_with_names:
@@ -2307,11 +2349,20 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                     result = denoise_node.execute(**kwargs)
                     denoise_node.output = result
                     self.assertTrue(denoise_node._cache_params_equal(kwargs, kwargs))
+                    if union:
+                        first_controlnet.config.num_control_type = 3
+                        with self.assertRaisesRegex(ValueError, "outside the resident model contract"):
+                            denoise_node._cache_params_equal(kwargs, kwargs)
+                        first_controlnet.config.num_control_type = 8
 
                 self.assertIs(result["latents"], denoised)
                 self.assertEqual(len(pipeline_calls), 1)
                 self.assertNotIn("controlnet", pipeline_calls[0])
                 self.assertIs(pipelines[0].controlnet, first_controlnet)
+                if union:
+                    self.assertEqual(pipeline_calls[0]["control_mode"], 3)
+                else:
+                    self.assertNotIn("control_mode", pipeline_calls[0])
                 self.assertIs(pipeline_calls[0]["image_latents"], fixture["image_latents"])
                 self.assertIs(pipeline_calls[0]["mask"], fixture["mask"])
                 self.assertIs(
@@ -2329,7 +2380,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                     materialize_overlay=False,
                 )
 
-    def test_sdxl_route_less_text_and_legacy_control_emit_normal_decode_routes_while_ip_union_fail_closed(self):
+    def test_sdxl_route_less_text_and_legacy_control_emit_normal_decode_routes_while_ip_mismatches_fail_closed(self):
         token, outputs = _bound_outputs(SDXL)
         _other_token, other_outputs = _bound_outputs(SDXL, suffix="b")
         vae = _FixtureSdxlVae()
@@ -2368,6 +2419,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
             input_names = [
                 "prompt_embeds",
                 "generator",
+                "control_mode",
                 "control_image",
                 "controlnet_conditioning_scale",
                 "control_guidance_start",
@@ -2460,7 +2512,10 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
             invalid_cases = (
                 ({"ip_adapter": object()}, "IP-Adapter execution is not enabled"),
                 ({"embeddings": {"prompt_embeds": object(), "ip_adapter_embeds": object()}}, "IP-Adapter fields"),
-                ({"controlnet_bundle": {**legacy_control, "control_mode": 1}}, "ControlNet Union fields"),
+                (
+                    {"controlnet_bundle": {**legacy_control, "control_mode": 1}},
+                    "exact ControlNetUnionModel",
+                ),
                 ({"vae": other_outputs["vae_out"]}, "different Models Loader"),
             )
             init_before = len(init_calls)

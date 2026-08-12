@@ -16,6 +16,7 @@ from .modular_utils import (
 from .route_state import (
     ROUTE_STATE_INPUT,
     ROUTE_STATE_OUTPUT,
+    SDXL_UNION_CONTROL_MODE_LIMIT,
     consume_controlnet_input_route_state,
     issue_controlnet_route_state,
     reject_route_reserved_inputs,
@@ -34,6 +35,20 @@ from .utils import collect_model_ids
 
 
 logger = logging.getLogger("modiff")
+
+_SDXL_CONTROLNET_VARIANTS = frozenset({"ordinary", "union"})
+
+
+def _sdxl_controlnet_selection(values):
+    variant = values.get("controlnet_variant", "ordinary")
+    if type(variant) is not str or variant not in _SDXL_CONTROLNET_VARIANTS:
+        raise ValueError("SDXL ControlNet variant must be exactly 'ordinary' or 'union'.")
+    if variant == "ordinary":
+        return False, None
+    control_mode = values.get("control_mode")
+    if type(control_mode) is not int or not 0 <= control_mode < SDXL_UNION_CONTROL_MODE_LIMIT:
+        raise ValueError("SDXL ControlNet Union requires one bounded control-type index.")
+    return True, control_mode
 
 
 class ControlnetUnion(NodeBase):
@@ -269,9 +284,10 @@ class Controlnet(NodeBase):
                 resolve_blocks=False,
             )
             validate_route_field_contract(current, node_config)
-            if {"control_mode", "control_type", "control_type_idx"}.intersection(current):
-                raise ValueError("SDXL ControlNet Union fields are not enabled on the ordinary ControlNet action.")
-            require_sdxl_controlnet_component_binding(current.get("controlnet"))
+            union, _control_mode = _sdxl_controlnet_selection(current)
+            if {"control_type", "control_type_idx"}.intersection(current):
+                raise ValueError("SDXL ControlNet Union output fields are backend-managed.")
+            require_sdxl_controlnet_component_binding(current.get("controlnet"), union=union)
             return True
         routed_action = route_state is not None or self._model_type == "QwenImageModularPipeline"
         routed_action = routed_action or (
@@ -324,9 +340,14 @@ class Controlnet(NodeBase):
         denoise_blocks, _ = require_modiff_node_contract(self._pipeline_class, "denoise")
         validate_route_field_contract(kwargs, node_config)
         if route_contract_for_model_type(self._model_type) == "sdxl":
-            if {"control_mode", "control_type", "control_type_idx"}.intersection(kwargs):
-                raise ValueError("SDXL ControlNet Union fields are not enabled on the ordinary ControlNet action.")
-            require_sdxl_controlnet_component_binding(kwargs.get("controlnet"))
+            union, control_mode = _sdxl_controlnet_selection(kwargs)
+            if {"control_type", "control_type_idx"}.intersection(kwargs):
+                raise ValueError("SDXL ControlNet Union output fields are backend-managed.")
+            require_sdxl_controlnet_component_binding(kwargs.get("controlnet"), union=union)
+            kwargs.pop("controlnet_variant", None)
+            kwargs.pop("control_mode", None)
+            if union:
+                kwargs["control_mode"] = control_mode
 
         route_output_declared = ROUTE_STATE_OUTPUT in node_config["output_names"]
         route_state = kwargs.get(ROUTE_STATE_INPUT)
