@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T18:49:48.556Z",
+  "generatedAt": "2026-08-12T19:11:05.670Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 41,
@@ -1152,11 +1152,11 @@
         "StableDiffusionXLImg2ImgPipeline",
         "StableDiffusionXLPipeline"
       ],
-      "sourceTemplateId": "sdxl_image_to_image",
+      "sourceTemplateId": "task-template:sdxl-base:edit-image:v1",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-xlpipeline/edit-image.json",
-      "graphHash": "95d1be09e609acb0ba85c96c869d58b7a4ed607d2e5770935fd2c2a61c04dd3b"
+      "graphHash": "f156389957adbbe998a368f499400c16c4cd4d46c97246b08a186e22abea5eed"
     },
     {
       "id": "StableDiffusionXLPipeline:text_to_image",
@@ -1176,13 +1176,14 @@
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "StableDiffusionXLImg2ImgPipeline",
         "StableDiffusionXLPipeline"
       ],
-      "sourceTemplateId": "sdxl_text_to_image",
+      "sourceTemplateId": "task-template:sdxl-base:text-to-image:v1",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-xlpipeline/text-to-image.json",
-      "graphHash": "24ef7e6c9a09e56df3544133c973a0a9f6296280de89587de70415ce32c79209"
+      "graphHash": "ed9f21370940ccad676c13a480464b5fcdee1b3cb90792e0d4c9cbb504c1be5e"
     },
     {
       "id": "WanImageToVideoPipeline:image_to_video",

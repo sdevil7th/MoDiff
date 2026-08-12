@@ -234,8 +234,6 @@
           },
           "max_sequence_length": {
             "default": 256,
-            "disabled": false,
-            "hidden": false,
             "label": "Max Sequence Length",
             "max": 512,
             "min": 1,
@@ -249,7 +247,7 @@
             "hidden": false,
             "label": "Negative Prompt",
             "type": "text",
-            "value": "illustration, CGI, plastic materials, floating objects, duplicate tools, malformed leaves, illegible writing, logo, watermark, oversaturation, harsh glow, excessive blur"
+            "value": ""
           },
           "num_inference_steps": {
             "default": 4,
@@ -318,7 +316,7 @@
             "display": "textarea",
             "label": "Prompt",
             "type": "text",
-            "value": "Create a documentary still life of a field botanist's weathered oak workbench beside a north-facing greenhouse window. Arrange one open linen-bound specimen journal, three pressed fern samples, a brass magnifier, cotton gloves, and a small unbranded amber sample bottle with physically correct contact shadows. Use an eye-level 50 mm composition, soft overcast daylight from camera left, restrained warm timber bounce, readable paper fibers, natural leaf veins, subtle glass reflections, and generous negative space. Keep the scene photographic, grounded, and free of people, labels, logos, or readable text."
+            "value": ""
           },
           "seed": {
             "default": 0,
@@ -328,8 +326,8 @@
             "min": 0,
             "type": "int",
             "value": {
-              "isRandom": false,
-              "value": 8601
+              "isRandom": true,
+              "value": 42
             }
           },
           "strength": {
@@ -537,7 +535,7 @@
           },
           "mode": {
             "default": "text_to_image",
-            "disabled": false,
+            "disabled": true,
             "fieldOptions": {
               "noValidation": true
             },
@@ -596,7 +594,7 @@
             "value": "text_to_image"
           },
           "model_id": {
-            "disabled": false,
+            "disabled": true,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
@@ -692,7 +690,7 @@
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": false,
+            "disabled": true,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1952,8 +1950,8 @@
     }
   ],
   "viewport": {
-    "x": 212.7084734364492,
-    "y": 43,
-    "zoom": 0.3618022864828514
+    "x": 0,
+    "y": 0,
+    "zoom": 1
   }
 }

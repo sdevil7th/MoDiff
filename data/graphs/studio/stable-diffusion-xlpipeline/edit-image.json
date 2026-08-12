@@ -271,7 +271,7 @@
             "display": "textarea",
             "label": "Negative Prompt",
             "type": "text",
-            "value": "changed composition, moved or duplicate objects, warped journal, floating bottle, illegible writing, logo, illustration, CGI, halo, mismatched shadows, blur"
+            "value": ""
           },
           "num_inference_steps": {
             "default": 4,
@@ -324,7 +324,7 @@
             "type": "int"
           },
           "pipeline": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -339,7 +339,7 @@
             "display": "textarea",
             "label": "Prompt",
             "type": "text",
-            "value": "Relight the supplied field-botanist workbench photograph from daylight to blue hour. Preserve the source composition, camera, journal, three ferns, magnifier, gloves, amber bottle, scale, positions, and contact points. Change only illumination and color: cool window light, one warm desk lamp, realistic mixed reflections, and anchored timber shadows. Keep it photographic; do not move, duplicate, reshape, relabel, or replace objects."
+            "value": ""
           },
           "reference_strength": {
             "default": 1,
@@ -360,8 +360,8 @@
             "min": 0,
             "type": "int",
             "value": {
-              "isRandom": false,
-              "value": 8602
+              "isRandom": true,
+              "value": 42
             }
           },
           "strength": {
@@ -373,7 +373,7 @@
             "min": 0,
             "step": 0.01,
             "type": "float",
-            "value": 0.65
+            "value": 0.8
           },
           "width": {
             "default": 1024,
@@ -566,7 +566,7 @@
           },
           "mode": {
             "default": "text_to_image",
-            "disabled": false,
+            "disabled": true,
             "fieldOptions": {
               "noValidation": true
             },
@@ -625,7 +625,7 @@
             "value": "edit_image"
           },
           "model_id": {
-            "disabled": false,
+            "disabled": true,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
@@ -721,7 +721,7 @@
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": false,
+            "disabled": true,
             "fieldOptions": {
               "noValidation": true
             },
