@@ -2810,6 +2810,28 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     execution profile changes to `optional_overlay`, add exact repo-aware client
     readiness for shared loader classes so local or unknown repositories match
     the backend loader-identity guard instead of being shown as runtime-ready.
+    - [x] Repo-aware shared-loader readiness and Auto parity: the client now
+      resolves a managed loader by exact module/action plus model/pipeline
+      identity, disambiguates shared classes only with an exact Hub repository
+      from each profile's default/fallback/compatible set, and preserves
+      base-delivery neutrality when no candidate requires an overlay. Local,
+      malformed, unknown, or ambiguous selectors fail closed as soon as any
+      matching profile requires the optional runtime. Schema-v2 Auto candidates
+      require one consistent artifact repository receipt; applying a reviewed
+      plan may update the exact managed loader, while readiness and submission
+      require the live loader to match the effective selected repository.
+      Evidence 2026-08-12: focused client request/template contracts passed
+      109/109; the exact wrong-repository mocked-browser regression passed 1/1;
+      full `npm run check` passed; and the complete mocked Studio suite passed
+      99/99 in 293.7 seconds. The production bundle remained within the fixed
+      gate at 523108/523264 gzip bytes (28 bytes below the stricter 523136-byte
+      safety target). All 77 runnable and 3 planning templates remained
+      deep-identical after the size carve. The backend shared-loader/profile
+      replay passed 41 tests and 254 subtests in 31.67 seconds, including Hub,
+      compatible-repository, local, custom, malformed, and executable-path
+      selection. This closes only the repository/readiness prerequisite; it is
+      not clean-base, staged workload, restart, rollback, or atomic cutover
+      evidence.
   - Backend: add reviewed package requirements to execution specifications;
     generalize the staged optional-runtime installer for official Hugging Face
     libraries; verify in a fresh process; support activation, restart, and
@@ -3285,7 +3307,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e image-path and Expert quantization-choice cleanup | `fd514f7` | `a63d882`, `5abfab9` | Not required | Not required | Complete: managed image topology and loader class now come only from the exact selected specification or existing managed binding; exact Qwen/Flux profiles own the bounded Expert quantization choices; controlled tab restore retains its execution-spec receipt. The complete backend/client gates and final 94/94 mocked Studio suite passed, with the bundle 259 bytes inside the stricter safety target. No live model execution was required. |
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
-| P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, base-neutral guard/status scaffold, and dormant backend-qualified consent/install/progress/cancel/activate/repair/rollback client controls are CPU/static/unit/contract/mocked-browser tested. Source action flags remain false. Cross-platform executable overlay qualification; live supervised package/restart/rollback evidence; repo-aware shared-loader readiness and Auto parity; staged workload qualification; and atomic Transformers+PEFT base cutover remain. |
+| P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, base-neutral guard/status scaffold, dormant backend-qualified consent/install/progress/cancel/activate/repair/rollback controls, and repo-aware shared-loader readiness/Auto parity are CPU/static/unit/contract/mocked-browser tested. Source action flags remain false. Cross-platform executable overlay qualification; live supervised package/restart/rollback evidence; staged workload qualification; and atomic Transformers+PEFT base cutover remain. |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
 | P1.3 | Pending | Pending | Not required | Not required | Not started |
