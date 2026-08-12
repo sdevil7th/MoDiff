@@ -245,6 +245,17 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertNotRegex(linux_launcher, r"exec python(?:3)? main\.py")
         self.assertIn("Run ./install.sh before starting", linux_launcher)
 
+    @unittest.skipIf(os.name == "nt", "POSIX executable bits are not available on Windows")
+    def test_documented_posix_entrypoints_are_executable(self):
+        root = Path(__file__).parents[1]
+
+        for relative_path in ("install.sh", "run.sh", "scripts/with-runtime-env.sh"):
+            with self.subTest(path=relative_path):
+                self.assertTrue(
+                    os.access(root / relative_path, os.X_OK),
+                    f"{relative_path} must be executable because documentation invokes it directly",
+                )
+
     def test_structured_issue_contains_help_and_safe_action_metadata(self):
         issue = enrich_issue(
             "gpu-groups-missing", "groups required", blocking=True,
