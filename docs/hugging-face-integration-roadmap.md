@@ -3437,6 +3437,23 @@ output and assets remotely. Assets: remote Dataset only.
       environment records an older dependency-contract digest and requires the
       documented repair command before it can be used for future live proof;
       that local environment drift is not source or qualification evidence.
+  - [x] **P2.2b Stable Diffusion XL image-to-image**
+    - Evidence 2026-08-12: the existing SDXL Studio model now exposes a separate
+      `edit_image` execution profile whose exact loader class is
+      `StableDiffusionXLImg2ImgPipeline`, while text-to-image retains
+      `StableDiffusionXLPipeline`. Both mode receipts bind the same reviewed base
+      repository revision without presenting the implementation classes as two
+      user-facing models. The canonical edit graph requires one source image,
+      binds the generic Edit node at strength `0.65`, and remains planning-only,
+      Auto-disabled, and Gallery-hidden. Pair-scoped generation and deterministic
+      verification passed for the one new workflow. The complete backend suite
+      passed (`1243 tests, 3 skipped`) with Ruff `E9,F`, compile, package, shell,
+      and diff gates; `npm run check` passed with production JavaScript at
+      `525303 / 525312` gzip bytes and the entry at `284983 / 448512`. No model,
+      source media, inference output, or public asset was downloaded or
+      generated. Preflight again reported only the already-recorded stale local
+      managed-CPU contract digest, so this slice makes no live qualification
+      claim.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3784,7 +3801,8 @@ Add references only after the corresponding evidence exists.
 | P1.4 | `8e44eb5` | `5cb2998` | Not required | Not required | Complete: all 15 Modular classes present at the pin are split into image/video/multimodal contract-only batches with exact generated upstream workflow schemas and generic Expert visibility. They remain outside executable, Auto, template, Gallery, optional-runtime, and live-support registries; complete backend/client and focused browser gates passed without weights or assets. |
 | P2.1 | `fa1884a` | `6f12230` | Not required | Not required | Complete: all 39 authoritative execution pairs publish a stable generic planning contract with exact execution-profile, loader, required-media, and terminal-output identity. Strict client parsing produces modality-generic skeletons and leaves every entry Gallery-hidden pending the separate qualification gate; complete backend/client gates passed without weights or assets. |
 | P2.2a SDXL base text-to-image | `e5905f5` | `7581902` | Remote pending | Pending | Complete source slice: exact pinned planning graph and generic revision binding passed the complete backend/client gates; Auto and Gallery remain disabled pending live qualification and immutable assets. |
-| P2.2b-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.2b SDXL image-to-image | `5b03302` | `2bd15b2` | Remote pending | Pending | Complete source slice: one logical SDXL model selects an exact mode-specific img2img class and pinned planning graph; source-image, complete-suite, and bundle gates passed while Auto and Gallery remain disabled. |
+| P2.2c-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
