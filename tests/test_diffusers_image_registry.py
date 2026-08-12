@@ -508,6 +508,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "padding_mask_crop",
             "max_sequence_length",
             "reference_strength",
+            "pag_scale",
+            "pag_adaptive_scale",
         }
         for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
             with self.subTest(pipeline_class=pipeline_class):
@@ -533,6 +535,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertTrue(qwen_edit["fieldParams"]["strength"]["hidden"])
         self.assertTrue(qwen_edit["fieldParams"]["reference_strength"]["hidden"])
+        pag = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionPAGPipeline"], "text_to_image")
+        self.assertFalse(pag["fieldParams"]["pag_scale"]["hidden"])
+        self.assertFalse(pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
 
     def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
         for fields in (("unknown",), ("strength", "strength")):
@@ -541,6 +546,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
+            "StableDiffusionPAGPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
             "LatentConsistencyModelPipeline": ({"text_to_image"}, LCM_DREAMSHAPER_REPO, {"prompt"}),
             "StableDiffusionPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
             "StableDiffusionImg2ImgPipeline": ({"edit_image"}, SD15_BASE_REPO, {"prompt", "image"}),
@@ -620,6 +626,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         image = Image.new("RGB", (16, 16), "black")
         mask = Image.new("L", (16, 16), "white")
         cases = (
+            ("StableDiffusionPAGPipeline", "text_to_image", Generate, {}),
             ("LatentConsistencyModelPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionImg2ImgPipeline", "edit_image", Edit, {"image": image}),
@@ -644,6 +651,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "strength": "strength",
             "padding_mask_crop": "padding_mask_crop",
             "reference_strength": "reference_strength",
+            "pag_scale": "pag_scale",
+            "pag_adaptive_scale": "pag_adaptive_scale",
         }
         for pipeline_name, mode, action_class, action_inputs in cases:
             with self.subTest(pipeline=pipeline_name):
@@ -673,6 +682,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "strength": 0.75,
                     "padding_mask_crop": 16,
                     "max_sequence_length": 128,
+                    "pag_scale": 3.0,
+                    "pag_adaptive_scale": 0.5,
                     "output_type": "pil",
                     **action_inputs,
                 }
@@ -1250,6 +1261,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("seed", 4294967296),
             ("num_inference_steps", 101),
             ("guidance_scale", float("inf")),
+            ("pag_scale", -0.1),
+            ("pag_adaptive_scale", float("inf")),
             ("strength", -0.01),
             ("padding_mask_crop", 7),
             ("max_sequence_length", 513),

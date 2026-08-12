@@ -38,6 +38,7 @@ STUDIO_MODEL_TYPES = {
     "ConsistencyModelPipeline",
     "StableDiffusionPipeline",
     "LatentConsistencyModelPipeline",
+    "StableDiffusionPAGPipeline",
 }
 
 

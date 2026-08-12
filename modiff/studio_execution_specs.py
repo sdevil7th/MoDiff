@@ -154,6 +154,10 @@ _GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
 _SDXL_GRAPH_BINDINGS = _GRAPH_BINDINGS + (
     ("diffusersImagePipeline", "revision", "defaultRevision"),
 )
+_PAG_GRAPH_BINDINGS = _SDXL_GRAPH_BINDINGS + (
+    ("diffusersImageGenerate", "pag_scale", "pagScale"),
+    ("diffusersImageGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
     ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
@@ -935,6 +939,7 @@ _BINDING_SOURCES = frozenset(
     for item in (
         *_GRAPH_BINDINGS,
         *_SDXL_GRAPH_BINDINGS,
+        *_PAG_GRAPH_BINDINGS,
         *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
@@ -3865,6 +3870,83 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["lcm-dreamshaper-v7:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+_PAG_PROFILE = {
+    "id": "sd15-pag:direct",
+    "model_type": "StableDiffusionPAGPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "StableDiffusionPAGPipeline",
+    "default_repo": SD15_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 512,
+    "max_low_memory_steps": 30,
+    "live_proof": True,
+    "compatible_repos": (),
+}
+_PAG_CAPABILITY = {
+    "modelType": "StableDiffusionPAGPipeline",
+    "label": "Stable Diffusion 1.5 PAG",
+    "displayName": "Stable Diffusion 1.5 PAG",
+    "family": "Stable Diffusion 1.x",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SD15_BASE_REPO,
+    "artifactLabel": "Diffusers safetensors repo",
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+    "recommendedSteps": 30,
+    "recommendedGuidance": 7.5,
+    "guidanceLabel": "Guidance",
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": True,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 20,
+        "width": 512,
+        "height": 512,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(SD15_BASE_REPO, model_type="StableDiffusionPAGPipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "Perturbed-attention guidance reuses the immutable Stable Diffusion 1.5 safetensors base.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag:text-to-image:v1"] = {
+    "modelType": "StableDiffusionPAGPipeline",
+    "mode": "text_to_image",
+    "profile": _PAG_PROFILE,
+    "capability": _PAG_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _PAG_GRAPH_BINDINGS,
 }
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {

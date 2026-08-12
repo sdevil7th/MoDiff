@@ -119,6 +119,8 @@ class ImagePipelineAdapter:
             "strength": "strength",
             "padding_mask_crop": "padding_mask_crop",
             "reference_strength": "reference_strength",
+            "pag_scale": "pag_scale",
+            "pag_adaptive_scale": "pag_adaptive_scale",
         }
         for source, destination in aliases.items():
             value = values.get(source)
@@ -210,6 +212,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         "LatentConsistencyModelPipeline",
         frozenset({"text_to_image"}),
         LCM_DREAMSHAPER_REPO,
+    ),
+    "StableDiffusionPAGPipeline": ImagePipelineAdapter(
+        "StableDiffusionPAGPipeline",
+        frozenset({"text_to_image"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionPAGPipeline"),
     ),
     "FluxPipeline": ImagePipelineAdapter(
         "FluxPipeline",
@@ -360,6 +368,8 @@ _IMAGE_CONTRACT_VISIBILITY_FIELDS = (
     "padding_mask_crop",
     "max_sequence_length",
     "reference_strength",
+    "pag_scale",
+    "pag_adaptive_scale",
 )
 
 
@@ -470,6 +480,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "LatentConsistencyModelPipeline": {
         "text_to_image": _image_field_contract("width", "height", "guidance_scale"),
+    },
+    "StableDiffusionPAGPipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "pag_scale", "pag_adaptive_scale"
+        ),
     },
     "FluxPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
@@ -1048,6 +1063,16 @@ def preflight_image_action(
     )
     values["guidance_scale"] = _bounded_image_float(
         values.get("guidance_scale"), field="guidance_scale", default=0.0, minimum=0.0, maximum=20.0
+    )
+    values["pag_scale"] = _bounded_image_float(
+        values.get("pag_scale"), field="pag_scale", default=3.0, minimum=0.0, maximum=20.0
+    )
+    values["pag_adaptive_scale"] = _bounded_image_float(
+        values.get("pag_adaptive_scale"),
+        field="pag_adaptive_scale",
+        default=0.0,
+        minimum=0.0,
+        maximum=20.0,
     )
     values["strength"] = _bounded_image_float(
         values.get("strength"), field="strength", default=0.8, minimum=0.0, maximum=1.0
@@ -2175,6 +2200,26 @@ class Generate(NodeBase):
             "min": 0,
             "max": 20,
             "step": 0.1,
+        },
+        "pag_scale": {
+            "label": "PAG Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 3.0,
+            "min": 0,
+            "max": 20,
+            "step": 0.1,
+            "hidden": True,
+        },
+        "pag_adaptive_scale": {
+            "label": "PAG Adaptive Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 0.0,
+            "min": 0,
+            "max": 20,
+            "step": 0.1,
+            "hidden": True,
         },
         "strength": {
             "label": "Strength",

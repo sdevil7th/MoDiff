@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T23:09:41.225Z",
+  "generatedAt": "2026-08-12T23:32:53.779Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 65,
-  "supportedPairCount": 77,
+  "supportedCanonicalPairCount": 66,
+  "supportedPairCount": 78,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1587,6 +1587,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
       "graphHash": "c6cb63923510b1455dfaec26ad940216f28d415e829e9227458ede15beafb09c"
+    },
+    {
+      "id": "StableDiffusionPAGPipeline:text_to_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "modelFamily": "Stable Diffusion 1.x",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "StableDiffusionPAGPipeline"
+      ],
+      "sourceTemplateId": "task-template:sd15-pag:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-pagpipeline/text-to-image.json",
+      "graphHash": "f30cc2bb11ada8ed39ed629b561737f3383f053b7379e1a0437ab6d86e62f3ed"
     },
     {
       "id": "StableDiffusionPipeline:edit_image",
