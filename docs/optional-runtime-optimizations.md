@@ -227,6 +227,23 @@ free. This closes Windows supervised install/activation/restart/rollback only;
 live cancellation/repair, live model/media execution, non-Windows execution,
 and source cutover remain pending.
 
+A second supervised clean-base run exercised cancellation and repair through
+the production HTTP boundary. Cancellation during the installer subprocess
+advanced the exact job through `cancelling` to `cancelled`, removed staging,
+promoted no environment, and left the same Transformers-free worker running.
+After a later validated activation, a qualification-only one-byte overlay drift
+caused the next worker to import no optional package and report
+`repair_required`. Reinstall created a separately validated replacement, while
+activation correctly refused to replace the still-selected corrupt runtime
+directly. Explicit rollback restarted to base; activation of the replacement
+environment from the completed job receipt restarted into Transformers
+`5.14.1`; a final rollback restarted to base with Transformers absent. Setup
+uses that completed-job environment identity before catalog inference, so the
+immediate repair activation stays bound to the exact new receipt. The detached
+tree, both staged environments, jobs, and server processes were removed. This
+closes Windows supervised cancellation/repair, but not live model/media or
+non-Windows execution and not source cutover.
+
 ## Runtime features
 
 The following features have concrete runtime implementations and remain

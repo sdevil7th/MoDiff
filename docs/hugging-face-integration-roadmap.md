@@ -2784,6 +2784,23 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       environment, server processes, and diagnostics were removed afterward;
       port 8088 was free. Source action/cutover flags remain false. This is not
       live-model, live cancellation/repair, or non-Windows evidence.
+    - [x] Windows x86-64 supervised cancellation and repair: a second clean-base
+      supervisor began the real locked install, exposed `installing`, accepted
+      the exact job-scoped cancellation request, and reached terminal
+      `cancelled` with no staging directory, no promoted environment, no worker
+      replacement, and Transformers still absent. A subsequent validated
+      environment was activated, then a one-byte managed-overlay drift was
+      introduced in the detached qualification tree. On restart, the worker
+      imported no optional package and published `repair_required` for the
+      process, active environment, and profile. A new install produced a
+      separately validated replacement; direct replacement activation was
+      refused while the corrupt selection remained active, explicit rollback
+      restarted to base, and activating the exact completed-job environment
+      restarted into Transformers `5.14.1`. A final rollback returned to a new
+      base worker with Transformers absent. Setup already prioritizes that exact
+      completed-job environment receipt over catalog inference. All temporary
+      processes and managed state were removed. This is not live model/media or
+      non-Windows evidence.
     - [ ] Executable qualification: add reviewed per-platform wheel and
       installer execution evidence plus clean-base/staged workload,
       fresh-process containment, restart, and rollback evidence before enabling
@@ -3346,7 +3363,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e image-path and Expert quantization-choice cleanup | `fd514f7` | `a63d882`, `5abfab9` | Not required | Not required | Complete: managed image topology and loader class now come only from the exact selected specification or existing managed binding; exact Qwen/Flux profiles own the bounded Expert quantization choices; controlled tab restore retains its execution-spec receipt. The complete backend/client gates and final 94/94 mocked Studio suite passed, with the bundle 259 bytes inside the stricter safety target. No live model execution was required. |
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
-| P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, base-neutral guard/status scaffold, dormant backend-qualified consent/install/progress/cancel/activate/repair/rollback controls, repo-aware shared-loader readiness/Auto parity, and Windows x86-64 clean-base, artifact-locked no-weight workload, plus supervised HTTP install/activation/restart/rollback are tested. Source dependency/action/cutover declarations remain unchanged. Non-Windows executable overlay qualification; live-model evidence; live supervised cancellation/repair; and atomic Transformers+PEFT base cutover remain. |
+| P0.5 | Pending | Pending | Pending for staged-runtime cutover | Not required | In progress: the exact composite contract/status, fail-closed overlay scaffold, base-neutral guard/status scaffold, dormant backend-qualified consent/install/progress/cancel/activate/repair/rollback controls, repo-aware shared-loader readiness/Auto parity, and Windows x86-64 clean-base, artifact-locked no-weight workload, plus supervised HTTP install/cancel/activate/restart/repair/rollback are tested. Source dependency/action/cutover declarations remain unchanged. Non-Windows executable overlay qualification; live-model evidence; and atomic Transformers+PEFT base cutover remain. |
 | P1.1 | Pending | Pending | Not required | Not required | Custom execution admission deferred by repository-directed import review |
 | P1.2 | Pending | Pending | Not required | Not required | Not started |
 | P1.3 | Pending | Pending | Not required | Not required | Not started |
