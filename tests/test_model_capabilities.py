@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 38)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 37)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 41)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 42)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -127,10 +127,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         sdxl_edit = next(
             item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "edit_image"
         )
-        self.assertEqual(sdxl["studioExecutionSpecModes"], ["edit_image", "text_to_image"])
+        self.assertEqual(sdxl["studioExecutionSpecModes"], ["edit_image", "inpaint", "text_to_image"])
         self.assertEqual(
             sdxl["pipelineClasses"],
-            ["StableDiffusionXLImg2ImgPipeline", "StableDiffusionXLPipeline"],
+            [
+                "StableDiffusionXLImg2ImgPipeline",
+                "StableDiffusionXLInpaintPipeline",
+                "StableDiffusionXLPipeline",
+            ],
         )
         self.assertEqual(sdxl_edit["pipelineClass"], "StableDiffusionXLImg2ImgPipeline")
         self.assertEqual(
@@ -144,6 +148,22 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             sdxl["modeRequirements"]["edit_image"]["requiredImages"],
             ["referenceImages"],
+        )
+        sdxl_inpaint = next(
+            item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
+        )
+        self.assertEqual(sdxl_inpaint["pipelineClass"], "StableDiffusionXLInpaintPipeline")
+        self.assertEqual(
+            next(
+                profile
+                for profile in sdxl["executionProfiles"]
+                if profile["id"] == "sdxl-base:inpaint-direct"
+            )["modes"],
+            ["inpaint"],
+        )
+        self.assertEqual(
+            sdxl["modeRequirements"]["inpaint"]["requiredImages"],
+            ["referenceImages", "maskImage"],
         )
         depth_spec = by_model["FluxDepthPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(by_model["FluxDepthPipeline"]["modes"], ["control_image"])

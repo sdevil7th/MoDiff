@@ -131,22 +131,30 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageModularPipeline", "control_image"),
                 ("StableDiffusionXLPipeline", "text_to_image"),
                 ("StableDiffusionXLPipeline", "edit_image"),
+                ("StableDiffusionXLPipeline", "inpaint"),
             ],
         )
-        sdxl = specs[-2]
+        sdxl = specs[-3]
         self.assertEqual(sdxl["id"], "sdxl-base:text-to-image:v1")
         self.assertEqual(sdxl["pipelineClass"], "StableDiffusionXLPipeline")
         self.assertEqual(sdxl["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
         self.assertEqual(sdxl["roles"], specs[0]["roles"])
         self.assertEqual(sdxl["edges"], specs[0]["edges"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sdxl["bindings"])
-        sdxl_edit = specs[-1]
+        sdxl_edit = specs[-2]
         self.assertEqual(sdxl_edit["id"], "sdxl-base:edit-image:v1")
         self.assertEqual(sdxl_edit["pipelineClass"], "StableDiffusionXLImg2ImgPipeline")
         self.assertEqual(sdxl_edit["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
         self.assertEqual(sdxl_edit["roles"], specs[5]["roles"])
         self.assertEqual(sdxl_edit["edges"], specs[5]["edges"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sdxl_edit["bindings"])
+        sdxl_inpaint = specs[-1]
+        self.assertEqual(sdxl_inpaint["id"], "sdxl-base:inpaint:v1")
+        self.assertEqual(sdxl_inpaint["pipelineClass"], "StableDiffusionXLInpaintPipeline")
+        self.assertEqual(sdxl_inpaint["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertEqual(sdxl_inpaint["roles"], specs[8]["roles"])
+        self.assertEqual(sdxl_inpaint["edges"], specs[8]["edges"])
+        self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sdxl_inpaint["bindings"])
         self.assertEqual(specs[0]["roles"], specs[1]["roles"])
         self.assertEqual(specs[0]["edges"], specs[1]["edges"])
         self.assertEqual(specs[0]["bindings"], specs[1]["bindings"])

@@ -360,6 +360,9 @@ _INPAINT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageInpaint", "output_type", "outputType"),
     ("diffusersImageInpaint", "max_sequence_length", "maxSequenceLength"),
 )
+_SDXL_INPAINT_GRAPH_BINDINGS = _INPAINT_GRAPH_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+)
 _QWEN_OUTPAINT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -2661,8 +2664,8 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "recommendedSteps": 30,
             "recommendedGuidance": 5.0,
             "guidanceLabel": "Guidance",
-            "supportsImageInput": False,
-            "supportsMask": False,
+            "supportsImageInput": True,
+            "supportsMask": True,
             "supportsMultiImage": False,
             "supportsControlImage": False,
             "supportsLayers": False,
@@ -2681,12 +2684,16 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 "width": 768,
                 "height": 768,
             },
-            "modes": ["text_to_image", "edit_image"],
+            "modes": ["text_to_image", "edit_image", "inpaint"],
             "modeRequirements": {
                 "edit_image": {
                     "requiredImages": ["referenceImages"],
                     "note": "Requires one source image for image-to-image transformation.",
-                }
+                },
+                "inpaint": {
+                    "requiredImages": ["referenceImages", "maskImage"],
+                    "note": "Requires one source image and one mask image.",
+                },
             },
             "executionStatus": "expert_only",
             "qualificationStatus": "graph-qualified-execution-pending",
@@ -2725,6 +2732,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
         "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+    },
+    "sdxl-base:inpaint:v1": {
+        "modelType": "StableDiffusionXLPipeline",
+        "mode": "inpaint",
+        "profile": {
+            "id": "sdxl-base:inpaint-direct",
+            "model_type": "StableDiffusionXLPipeline",
+            "modes": ("inpaint",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "StableDiffusionXLInpaintPipeline",
+            "default_repo": SDXL_BASE_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 30,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "roles": _INPAINT_GRAPH_ROLES,
+        "edges": _INPAINT_GRAPH_EDGES,
+        "bindings": _SDXL_INPAINT_GRAPH_BINDINGS,
     },
 }
 

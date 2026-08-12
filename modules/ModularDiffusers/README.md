@@ -114,8 +114,10 @@ Studio switches to the native mask/overlay path only after the complete route
 chain is present. A partial dynamic definition remains pending instead of
 guessing a fallback topology. The generic Qwen path and the internal SDXL base
 inpaint path carry masks and masked-image latents on their typed graph edges.
-SDXL inpaint remains unadvertised, unprofiled, and unqualified. Its internal
-VAE route may be combined with the generic SDXL ControlNet bundle only when
+The internal Modular SDXL inpaint path remains unadvertised, unprofiled, and
+unqualified; the separately profiled standard Diffusers inpaint adapter does
+not change that boundary. Its internal VAE route may be combined with the
+generic SDXL ControlNet bundle only when
 the Load Model output is a current, exact `ControlNetModel` or
 `ControlNetUnionModel` publication and the selected ordinary/Union variant
 matches that class. Selecting Union reveals one bounded numeric control-type

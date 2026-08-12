@@ -682,12 +682,6 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
 CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
     # Standard image adapters.  The final eleven were admitted by P0.3c.4;
     # FLUX img2img/inpaint were already implemented but likewise unprofiled.
-    (
-        "StableDiffusionXLInpaintPipeline",
-        "image",
-        SDXL_BASE_REPO,
-        ("inpaint", "outpaint"),
-    ),
     ("QwenImageImg2ImgPipeline", "image", QWEN_IMAGE_2512_REPO, ("edit_image",)),
     ("QwenImageInpaintPipeline", "image", QWEN_IMAGE_2512_REPO, ("inpaint", "outpaint")),
     ("QwenImageEditPipeline", "image", "Qwen/Qwen-Image-Edit", ("edit_image",)),
