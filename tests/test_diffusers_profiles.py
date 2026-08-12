@@ -77,6 +77,9 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "Flux2KleinPipeline",
             "StableDiffusionXLPipeline",
             "DummyCustomPipeline",
+            "DDPMPipeline",
+            "DDIMPipeline",
+            "ConsistencyModelPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

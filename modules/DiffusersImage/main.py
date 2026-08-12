@@ -56,8 +56,11 @@ QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
 QWEN_IMAGE_EDIT_PLUS_REPO = "Qwen/Qwen-Image-Edit-2511"
 QWEN_IMAGE_EDIT_PREQUANTIZED_REPO = "ovedrive/qwen-image-edit-4bit"
+DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
+CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 DEVICE_OPTIONS = list(DEVICE_LIST.keys())
 _IMAGE_MODE_ORDER = (
+    "unconditional_image",
     "text_to_image",
     "edit_image",
     "multi_image_reference_edit",
@@ -83,6 +86,7 @@ class ImagePipelineAdapter:
     max_sequence_length: int = 512
     max_reference_images: int = 1
     max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
+    unconditional_optional_fields: tuple[str, ...] = ()
 
     @property
     def managed_repos(self) -> frozenset[str]:
@@ -129,6 +133,23 @@ class ImagePipelineAdapter:
 
 
 IMAGE_PIPELINE_ADAPTERS = {
+    "DDPMPipeline": ImagePipelineAdapter(
+        "DDPMPipeline",
+        frozenset({"unconditional_image"}),
+        DDPM_CIFAR10_REPO,
+    ),
+    "DDIMPipeline": ImagePipelineAdapter(
+        "DDIMPipeline",
+        frozenset({"unconditional_image"}),
+        DDPM_CIFAR10_REPO,
+        unconditional_optional_fields=("eta",),
+    ),
+    "ConsistencyModelPipeline": ImagePipelineAdapter(
+        "ConsistencyModelPipeline",
+        frozenset({"unconditional_image"}),
+        CONSISTENCY_IMAGENET64_REPO,
+        unconditional_optional_fields=("class_label",),
+    ),
     "QwenImagePipeline": ImagePipelineAdapter(
         "QwenImagePipeline",
         frozenset({"text_to_image"}),
@@ -281,6 +302,7 @@ IMAGE_PIPELINE_ADAPTERS = {
 IMAGE_PIPELINE_CLASSES = list(IMAGE_PIPELINE_ADAPTERS)
 IMAGE_PIPELINE_MODES = {name: set(adapter.modes) for name, adapter in IMAGE_PIPELINE_ADAPTERS.items()}
 IMAGE_PIPELINE_MODE_OPTIONS = [
+    "unconditional_image",
     "text_to_image",
     "edit_image",
     "multi_image_reference_edit",
@@ -298,6 +320,7 @@ DIFFUSERS_IMAGE_OFFLOAD_MODES = [
 QUANT_COMPONENTS = ["transformer", "transformer_2", "text_encoder", "text_encoder_2", "vae"]
 
 IMAGE_ACTION_MODES = {
+    "UnconditionalGenerate": ("unconditional_image",),
     "Generate": ("text_to_image",),
     "Edit": ("edit_image", "multi_image_reference_edit"),
     "Inpaint": ("inpaint", "outpaint"),
@@ -376,6 +399,15 @@ _SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE = (
 )
 
 IMAGE_MODE_FIELD_CONTRACTS = {
+    "DDPMPipeline": {
+        "unconditional_image": _image_field_contract(),
+    },
+    "DDIMPipeline": {
+        "unconditional_image": _image_field_contract(),
+    },
+    "ConsistencyModelPipeline": {
+        "unconditional_image": _image_field_contract(),
+    },
     "QwenImagePipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
@@ -637,7 +669,7 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
     }
-    return {
+    contract = {
         "schemaVersion": 1,
         "library": "diffusers",
         "mediaKind": "image",
@@ -647,11 +679,22 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         "actions": {action: modes for action, modes in actions.items() if modes},
         "fieldParams": field_contract.field_param_overlay(),
     }
+    if mode == "unconditional_image":
+        optional_fields = set(adapter.unconditional_optional_fields)
+        contract["actionFieldParams"] = {
+            "eta": {"hidden": "eta" not in optional_fields},
+            "class_label": {"hidden": "class_label" not in optional_fields},
+        }
+    return contract
 
 
 DEFAULT_IMAGE_PIPELINE_CONTRACT = image_pipeline_contract(
     IMAGE_PIPELINE_ADAPTERS["FluxPipeline"],
     "text_to_image",
+)
+DEFAULT_UNCONDITIONAL_IMAGE_PIPELINE_CONTRACT = image_pipeline_contract(
+    IMAGE_PIPELINE_ADAPTERS["DDPMPipeline"],
+    "unconditional_image",
 )
 
 
@@ -1035,6 +1078,43 @@ def preflight_image_action(
             max_items=1,
             max_pixels=adapter.max_reference_pixels,
         )
+    return adapter, values
+
+
+def preflight_unconditional_action(
+    pipeline: Any,
+    kwargs: dict[str, Any],
+) -> tuple[ImagePipelineAdapter, dict[str, Any]]:
+    """Validate model-neutral unconditional sampling inputs before Torch execution."""
+
+    if pipeline is None:
+        raise ValueError("Diffusers image pipeline is required.")
+    adapter = validate_image_action(pipeline, "UnconditionalGenerate")
+    values = dict(kwargs)
+    values["pipeline"] = pipeline
+    values["batch_size"] = _bounded_image_int(
+        values.get("batch_size"), field="batch_size", default=1, minimum=1, maximum=16
+    )
+    values["seed"] = _bounded_image_int(
+        values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295
+    )
+    values["num_inference_steps"] = _bounded_image_int(
+        values.get("num_inference_steps"),
+        field="num_inference_steps",
+        default=50,
+        minimum=1,
+        maximum=1000,
+    )
+    values["eta"] = _bounded_image_float(
+        values.get("eta"), field="eta", default=0.0, minimum=0.0, maximum=1.0
+    )
+    values["class_label"] = _bounded_image_int(
+        values.get("class_label"), field="class_label", default=-1, minimum=-1, maximum=999
+    )
+    output_type = "pil" if values.get("output_type") is None else values.get("output_type")
+    if output_type not in {"pil", "np"}:
+        raise ValueError("Diffusers image UnconditionalGenerate output_type must be exactly one of: np, pil.")
+    values["output_type"] = output_type
     return adapter, values
 
 
@@ -1886,6 +1966,130 @@ class LoadPipeline(NodeBase):
             )
             self.mm_add(target, priority=2)
         return {"pipeline": pipeline, "resolved_artifact": model_id}
+
+
+class UnconditionalGenerate(NodeBase):
+    """Generate images without prompts through a generic unconditional Diffusers pipeline."""
+
+    label = "Diffusers Unconditional Image Generate"
+    category = "Diffusers Image"
+    resizable = True
+    params = {
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "image_diffusion_pipeline",
+            "required": True,
+            "onSignal": [
+                {"action": "value", "target": "image_contract"},
+                {"action": "exec", "data": "update_image_contract"},
+            ],
+        },
+        "image_contract": {
+            "label": "Image Contract",
+            "type": "object",
+            "default": DEFAULT_UNCONDITIONAL_IMAGE_PIPELINE_CONTRACT,
+            "hidden": True,
+        },
+        "batch_size": {"label": "Batch size", "type": "int", "default": 1, "min": 1, "max": 16},
+        "seed": {"label": "Seed", "type": "int", "display": "random", "default": 0, "min": 0, "max": 4294967295},
+        "num_inference_steps": {
+            "label": "Steps",
+            "display": "slider",
+            "type": "int",
+            "default": 50,
+            "min": 1,
+            "max": 1000,
+        },
+        "eta": {
+            "label": "DDIM eta",
+            "type": "float",
+            "default": 0.0,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+            "hidden": True,
+        },
+        "class_label": {
+            "label": "Optional class label",
+            "type": "int",
+            "default": -1,
+            "min": -1,
+            "max": 999,
+            "hidden": True,
+            "description": "Use -1 for unconditional sampling.",
+        },
+        "output_type": {"label": "Output type", "type": "string", "options": ["pil", "np"], "default": "pil"},
+        "images": {"label": "Images", "display": "output", "type": "image"},
+        "width_out": {"label": "Width", "display": "output", "type": "int"},
+        "height_out": {"label": "Height", "display": "output", "type": "int"},
+    }
+
+    def __call__(self, **kwargs):
+        _adapter, values = preflight_unconditional_action(kwargs.get("pipeline"), kwargs)
+        return super().__call__(**values)
+
+    def update_image_contract(self, values, ref):
+        values = values if isinstance(values, dict) else {}
+        signal_value = values.get("image_contract")
+        if not isinstance(signal_value, dict):
+            raise ValueError("The connected image pipeline did not publish a valid task contract.")
+        adapter = get_image_pipeline_adapter(signal_value.get("pipelineClass"))
+        mode = str(signal_value.get("mode") or "")
+        expected_signal = image_pipeline_contract(adapter, mode)
+        if signal_value != expected_signal:
+            raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
+        if mode not in expected_signal["actions"].get(self.class_name, ()):
+            raise ValueError("The connected image pipeline does not support unconditional image generation.")
+        for field, params in expected_signal.get("actionFieldParams", {}).items():
+            if field in self.__class__.params:
+                self.set_field_params(field, params)
+
+    def execute(self, **kwargs):
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_unconditional_action(pipeline, kwargs)
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or getattr(pipeline, "device", None) or "cpu"
+        try:
+            generator = torch.Generator(device=device).manual_seed(values["seed"])
+        except Exception:
+            generator = torch.Generator(device="cpu").manual_seed(values["seed"])
+        steps = values["num_inference_steps"]
+        call_kwargs = {
+            "batch_size": values["batch_size"],
+            "num_inference_steps": steps,
+            "generator": generator,
+            "output_type": values["output_type"],
+            "return_dict": True,
+        }
+        if "eta" in adapter.unconditional_optional_fields and supports_arg(pipeline, "eta"):
+            call_kwargs["eta"] = values["eta"]
+        if (
+            "class_label" in adapter.unconditional_optional_fields
+            and values["class_label"] >= 0
+            and supports_arg(pipeline, "class_labels")
+        ):
+            call_kwargs["class_labels"] = values["class_label"]
+        add_progress_callback(self, pipeline, call_kwargs, steps)
+        if supports_arg(pipeline, "callback") and "callback_on_step_end" not in call_kwargs:
+            pipeline._num_timesteps = steps
+
+            def callback(step_index, timestep, latents):
+                self.pipe_callback(pipeline, step_index, timestep, {})
+
+            call_kwargs["callback"] = callback
+            if supports_arg(pipeline, "callback_steps"):
+                call_kwargs["callback_steps"] = 1
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(**call_kwargs)
+        finally:
+            self._active_pipeline = None
+        images = getattr(result, "images", result)
+        width, height = output_image_dimensions(images, values["output_type"])
+        return {"images": images, "width_out": width, "height_out": height}
 
 
 class Generate(NodeBase):

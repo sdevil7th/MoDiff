@@ -148,9 +148,35 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTX2ConditionPipeline", "video_to_video"),
                 ("HunyuanVideoFramepackPipeline", "image_to_video"),
                 ("WanImage2VideoModularPipeline", "image_to_video"),
+                ("DDPMPipeline", "unconditional_image"),
+                ("DDIMPipeline", "unconditional_image"),
+                ("ConsistencyModelPipeline", "unconditional_image"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
+        for spec_id, pipeline_class in (
+            ("ddpm-cifar10:unconditional-image:v1", "DDPMPipeline"),
+            ("ddim-cifar10:unconditional-image:v1", "DDIMPipeline"),
+            ("consistency-imagenet64:unconditional-image:v1", "ConsistencyModelPipeline"),
+        ):
+            with self.subTest(unconditional_spec=spec_id):
+                specification = by_id[spec_id]
+                self.assertEqual(specification["pipelineClass"], pipeline_class)
+                self.assertEqual(specification["mode"], "unconditional_image")
+                self.assertIn(
+                    ("diffusersImagePipeline", "pipeline", "diffusersUnconditionalGenerate", "pipeline"),
+                    specification["edges"],
+                )
+                self.assertIn(
+                    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+                    specification["edges"],
+                )
+                self.assertIn(
+                    ("diffusersQuantization", "components", "quantizedComponents"),
+                    specification["bindings"],
+                )
+                self.assertTrue(DIFFUSERS_EXECUTION_PROFILES[specification["executionProfileId"]].live_proof)
+                self.assertNotIn("modules.DiffusersImage.Generate", [role[1] for role in specification["roles"]])
         sdxl = by_id["sdxl-base:text-to-image:v1"]
         self.assertEqual(sdxl["id"], "sdxl-base:text-to-image:v1")
         self.assertEqual(sdxl["pipelineClass"], "StableDiffusionXLPipeline")

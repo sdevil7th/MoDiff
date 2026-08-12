@@ -33,6 +33,9 @@ STUDIO_MODEL_TYPES = {
     "WanVACEPipeline",
     "WanVideoPipeline",
     "ZImageModularPipeline",
+    "DDPMPipeline",
+    "DDIMPipeline",
+    "ConsistencyModelPipeline",
 }
 
 

@@ -221,6 +221,27 @@
         {"repo": "black-forest-labs/FLUX.2-klein-4b-fp8", "revision": "5b4408e59397a4a37ccb46afe426d8ed86379441", "license": "apache-2.0", "format": "fp8", "bits": 8, "components": ["transformer"], "provenance": "official", "trust": "official", "downloads": 86722, "likes": 54},
         {"repo": "unsloth/FLUX.2-klein-4B-GGUF", "revision": "0084d1df98e2e2137fe776d55170bc4792ec1d66", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 153603, "likes": 182}
       ]
+    },
+    {
+      "modelType": "DDPMPipeline",
+      "baseRepo": "google/ddpm-cifar10-32",
+      "baseRevision": "267b167dc01f0e4e61923ea244e8b988f84deb80",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "DDIMPipeline",
+      "baseRepo": "google/ddpm-cifar10-32",
+      "baseRevision": "267b167dc01f0e4e61923ea244e8b988f84deb80",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "ConsistencyModelPipeline",
+      "baseRepo": "openai/diffusers-cd_imagenet64_l2",
+      "baseRevision": "5f462e4403fc37b72ec6004e806c71805db22387",
+      "baseLicense": "mit",
+      "artifacts": []
     }
   ]
 }

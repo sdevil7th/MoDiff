@@ -46,6 +46,8 @@ FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
+DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
+CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
     ("QwenImageModularPipeline", "control_image"): (
@@ -866,6 +868,51 @@ _AUDIO_REPAINT_GRAPH_BINDINGS = (
         for role, param, source in _AUDIO_GRAPH_BINDINGS
     ),
 )
+_UNCONDITIONAL_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1080, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -720, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -360, -80),
+    ("diffusersUnconditionalGenerate", "modules.DiffusersImage.UnconditionalGenerate", 80, -80),
+    ("preview", "modules.Image.Preview", 520, -80),
+)
+_UNCONDITIONAL_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersUnconditionalGenerate", "pipeline"),
+    ("diffusersUnconditionalGenerate", "images", "preview", "image"),
+)
+_UNCONDITIONAL_GRAPH_BINDINGS = (
+    ("diffusersQuantization", "backend", "quantizationMode"),
+    ("diffusersQuantization", "components", "quantizedComponents"),
+    ("diffusersQuantization", "dtype", "dtype"),
+    ("diffusersRecipe", "device_map", "deviceMapNone"),
+    ("diffusersRecipe", "offload_mode", "offloadMode"),
+    ("diffusersRecipe", "device", "device"),
+    ("diffusersRecipe", "attention_backend", "nativeMath"),
+    ("diffusersRecipe", "attention_components", "empty"),
+    ("diffusersRecipe", "vae_slicing", "false"),
+    ("diffusersRecipe", "vae_tiling", "false"),
+    ("diffusersRecipe", "regional_compile", "false"),
+    ("diffusersRecipe", "denoiser_cache", "false"),
+    ("diffusersRecipe", "layerwise_casting", "false"),
+    ("diffusersRecipe", "channels_last", "false"),
+    ("diffusersImagePipeline", "model_id", "artifact"),
+    ("diffusersImagePipeline", "pipeline_class", "pipelineClass"),
+    ("diffusersImagePipeline", "mode", "mode"),
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("diffusersImagePipeline", "dtype", "dtype"),
+    ("diffusersImagePipeline", "device", "device"),
+    ("diffusersImagePipeline", "quantization_mode", "quantizationMode"),
+    ("diffusersImagePipeline", "quantized_components", "empty"),
+    ("diffusersImagePipeline", "auto_offload", "autoOffload"),
+    ("diffusersImagePipeline", "offload_mode", "offloadMode"),
+    ("diffusersUnconditionalGenerate", "batch_size", "batchSize"),
+    ("diffusersUnconditionalGenerate", "seed", "seed"),
+    ("diffusersUnconditionalGenerate", "num_inference_steps", "steps"),
+    ("diffusersUnconditionalGenerate", "eta", "eta"),
+    ("diffusersUnconditionalGenerate", "class_label", "classLabel"),
+    ("diffusersUnconditionalGenerate", "output_type", "outputType"),
+)
 _AUTO_FIELDS = (
     "resolvedArtifact",
     "artifact",
@@ -917,6 +964,7 @@ _BINDING_SOURCES = frozenset(
         *_AUDIO_VARIATION_GRAPH_BINDINGS,
         *_AUDIO_CONTINUATION_GRAPH_BINDINGS,
         *_AUDIO_REPAINT_GRAPH_BINDINGS,
+        *_UNCONDITIONAL_GRAPH_BINDINGS,
     )
 )
 
@@ -3468,6 +3516,147 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "edges": _WAN_FLF_GRAPH_EDGES,
             "bindings": _WAN_FLF_GRAPH_BINDINGS,
         },
+    }
+)
+
+
+def _unconditional_profile(
+    profile_id: str,
+    pipeline_class: str,
+    repo: str,
+    *,
+    max_steps: int,
+) -> dict[str, Any]:
+    return {
+        "id": profile_id,
+        "model_type": pipeline_class,
+        "modes": ("unconditional_image",),
+        "loader_module": "modules.DiffusersImage",
+        "loader_action": "LoadPipeline",
+        "execution_path": "direct-diffusers-image",
+        "pipeline_class": pipeline_class,
+        "default_repo": repo,
+        "fallback_repo": None,
+        "quantizable_components": (),
+        "default_quantized_components": (),
+        "supported_offload_modes": (OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU),
+        "retry_offload_modes": (OFFLOAD_MODE_NONE,),
+        "max_low_memory_side": 64,
+        "max_low_memory_steps": max_steps,
+        "live_proof": True,
+        "compatible_repos": (),
+    }
+
+
+def _unconditional_capability(
+    pipeline_class: str,
+    label: str,
+    family: str,
+    repo: str,
+    *,
+    side: int,
+    steps: int,
+) -> dict[str, Any]:
+    return {
+        "modelType": pipeline_class,
+        "label": label,
+        "displayName": label,
+        "family": family,
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": repo,
+        "artifactLabel": "Diffusers unconditional image repo",
+        "defaultDtype": "float32",
+        "defaultSize": {"width": side, "height": side, "aspectRatio": "1:1"},
+        "recommendedSteps": steps,
+        "recommendedGuidance": 0.0,
+        "guidanceLabel": "Not used",
+        "supportsImageInput": False,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "outputKind": "image",
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_NONE,
+            "lowVram": OFFLOAD_MODE_NONE,
+            "emergency": OFFLOAD_MODE_MODEL_CPU,
+            "modes": [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU],
+        },
+        "lowVram": {
+            "dtype": "float32",
+            "autoOffload": False,
+            "offloadMode": OFFLOAD_MODE_NONE,
+            "steps": steps,
+            "width": side,
+            "height": side,
+        },
+        "modes": ["unconditional_image"],
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(repo, model_type=pipeline_class)],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "This model uses the generic unconditional image loader and sampler nodes.",
+            "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+        ],
+    }
+
+
+_P3_UNCONDITIONAL_DEFINITIONS = (
+    (
+        "ddpm-cifar10:unconditional-image:v1",
+        "ddpm-cifar10:direct",
+        "DDPMPipeline",
+        "DDPM CIFAR-10 32x32",
+        "DDPM",
+        DDPM_CIFAR10_REPO,
+        32,
+        1000,
+    ),
+    (
+        "ddim-cifar10:unconditional-image:v1",
+        "ddim-cifar10:direct",
+        "DDIMPipeline",
+        "DDIM CIFAR-10 32x32",
+        "DDIM",
+        DDPM_CIFAR10_REPO,
+        32,
+        50,
+    ),
+    (
+        "consistency-imagenet64:unconditional-image:v1",
+        "consistency-imagenet64:direct",
+        "ConsistencyModelPipeline",
+        "Consistency Model ImageNet 64x64",
+        "Consistency Models",
+        CONSISTENCY_IMAGENET64_REPO,
+        64,
+        1,
+    ),
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
+    {
+        spec_id: {
+            "modelType": pipeline_class,
+            "mode": "unconditional_image",
+            "profile": _unconditional_profile(profile_id, pipeline_class, repo, max_steps=steps),
+            "capability": _unconditional_capability(
+                pipeline_class,
+                label,
+                family,
+                repo,
+                side=side,
+                steps=steps,
+            ),
+            "roles": _UNCONDITIONAL_GRAPH_ROLES,
+            "edges": _UNCONDITIONAL_GRAPH_EDGES,
+            "bindings": _UNCONDITIONAL_GRAPH_BINDINGS,
+        }
+        for spec_id, profile_id, pipeline_class, label, family, repo, side, steps in _P3_UNCONDITIONAL_DEFINITIONS
     }
 )
 

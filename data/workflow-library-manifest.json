@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T21:36:22.445Z",
+  "generatedAt": "2026-08-12T22:22:16.329Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 58,
-  "supportedPairCount": 70,
+  "supportedCanonicalPairCount": 61,
+  "supportedPairCount": 73,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -179,6 +179,84 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
       "graphHash": "e02a08b1ac4e6182716dca08064c2557bebd92743aab23143dd918769dcd9296"
+    },
+    {
+      "id": "ConsistencyModelPipeline:unconditional_image",
+      "modelType": "ConsistencyModelPipeline",
+      "modelFamily": "Consistency Models",
+      "mode": "unconditional_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "openai/diffusers-cd_imagenet64_l2"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "ConsistencyModelPipeline"
+      ],
+      "sourceTemplateId": "task-template:consistency-imagenet64:unconditional-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
+      "graphHash": "639bd0a6d60f2bdf67361aa36918736c9a9c17084c0c8699c29d8aaffb8d5143"
+    },
+    {
+      "id": "DDIMPipeline:unconditional_image",
+      "modelType": "DDIMPipeline",
+      "modelFamily": "DDIM",
+      "mode": "unconditional_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "google/ddpm-cifar10-32"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "DDIMPipeline"
+      ],
+      "sourceTemplateId": "task-template:ddim-cifar10:unconditional-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ddimpipeline/unconditional-image.json",
+      "graphHash": "195f45f00f94a35538fa9c9e3a15359585d0ade9255ed9ac87db9c2723190fe2"
+    },
+    {
+      "id": "DDPMPipeline:unconditional_image",
+      "modelType": "DDPMPipeline",
+      "modelFamily": "DDPM",
+      "mode": "unconditional_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "google/ddpm-cifar10-32"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "DDPMPipeline"
+      ],
+      "sourceTemplateId": "task-template:ddpm-cifar10:unconditional-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ddpmpipeline/unconditional-image.json",
+      "graphHash": "c3cbd284e7bbbc55e1335b71ac5e69c14aa0b69d91fed81a188fa2c2508d8fca"
     },
     {
       "id": "Flux2KleinPipeline:edit_image",

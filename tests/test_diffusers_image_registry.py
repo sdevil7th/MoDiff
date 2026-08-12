@@ -15,8 +15,19 @@ from PIL import Image
 import modules as module_registry
 from modiff.model_artifact_catalog import catalog_revision
 from modiff.server import WebServer
-from modules.DiffusersImage import ControlGenerate, Edit, Generate, Inpaint, LoadAdapter, LoadPipeline, MODULE_MAP
+from modules.DiffusersImage import (
+    ControlGenerate,
+    Edit,
+    Generate,
+    Inpaint,
+    LoadAdapter,
+    LoadPipeline,
+    MODULE_MAP,
+    UnconditionalGenerate,
+)
 from modules.DiffusersImage.main import (
+    CONSISTENCY_IMAGENET64_REPO,
+    DDPM_CIFAR10_REPO,
     FLUX2_KLEIN_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
@@ -66,6 +77,92 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(output_image_dimensions(np.zeros((2, 19, 31, 3)), "np"), (31, 19))
         fake_tensor = SimpleNamespace(shape=(2, 3, 19, 31), size=lambda: 2 * 3 * 19 * 31)
         self.assertEqual(output_image_dimensions(fake_tensor, "pt"), (31, 19))
+
+    def test_unconditional_adapters_are_exact_generic_pipeline_pairs(self):
+        expected = {
+            "DDPMPipeline": (DDPM_CIFAR10_REPO, ()),
+            "DDIMPipeline": (DDPM_CIFAR10_REPO, ("eta",)),
+            "ConsistencyModelPipeline": (CONSISTENCY_IMAGENET64_REPO, ("class_label",)),
+        }
+        for pipeline_class, (repo, optional_fields) in expected.items():
+            with self.subTest(pipeline=pipeline_class):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+                self.assertEqual(adapter.default_repo, repo)
+                self.assertEqual(adapter.mode_options, ("unconditional_image",))
+                self.assertEqual(adapter.unconditional_optional_fields, optional_fields)
+                contract = image_pipeline_contract(adapter, "unconditional_image")
+                self.assertEqual(contract["actions"], {"UnconditionalGenerate": ["unconditional_image"]})
+
+    def test_unconditional_generate_normalizes_outputs_and_only_passes_supported_arguments(self):
+        cases = (
+            ("DDPMPipeline", {}, {"batch_size", "generator", "num_inference_steps", "output_type", "return_dict"}),
+            (
+                "DDIMPipeline",
+                {"eta": 0.25},
+                {"batch_size", "generator", "num_inference_steps", "eta", "output_type", "return_dict"},
+            ),
+            (
+                "ConsistencyModelPipeline",
+                {"class_label": 145},
+                {
+                    "batch_size",
+                    "class_labels",
+                    "generator",
+                    "num_inference_steps",
+                    "output_type",
+                    "return_dict",
+                    "callback",
+                    "callback_steps",
+                },
+            ),
+        )
+        for pipeline_class, extra, expected_keys in cases:
+            with self.subTest(pipeline=pipeline_class):
+                received = {}
+
+                def call(self, **kwargs):
+                    received.update(kwargs)
+                    if callback := kwargs.get("callback"):
+                        callback(0, 0, object())
+                    return SimpleNamespace(images=[Image.new("RGB", (32, 24), "white")])
+
+                parameters = {
+                    "batch_size": inspect.Parameter("batch_size", inspect.Parameter.KEYWORD_ONLY),
+                    "generator": inspect.Parameter("generator", inspect.Parameter.KEYWORD_ONLY),
+                    "num_inference_steps": inspect.Parameter("num_inference_steps", inspect.Parameter.KEYWORD_ONLY),
+                    "output_type": inspect.Parameter("output_type", inspect.Parameter.KEYWORD_ONLY),
+                    "return_dict": inspect.Parameter("return_dict", inspect.Parameter.KEYWORD_ONLY),
+                }
+                if pipeline_class == "DDIMPipeline":
+                    parameters["eta"] = inspect.Parameter("eta", inspect.Parameter.KEYWORD_ONLY)
+                if pipeline_class == "ConsistencyModelPipeline":
+                    parameters.update(
+                        {
+                            "class_labels": inspect.Parameter("class_labels", inspect.Parameter.KEYWORD_ONLY),
+                            "callback": inspect.Parameter("callback", inspect.Parameter.KEYWORD_ONLY),
+                            "callback_steps": inspect.Parameter("callback_steps", inspect.Parameter.KEYWORD_ONLY),
+                        }
+                    )
+                call.__signature__ = inspect.Signature(
+                    [inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD), *parameters.values()]
+                )
+                fake_type = type(pipeline_class, (), {"_execution_device": "cpu", "__call__": call})
+                pipeline = tag_test_image_pipeline(fake_type(), pipeline_class, "unconditional_image")
+                node = UnconditionalGenerate()
+                node.progress = Mock()
+
+                result = node.execute(
+                    pipeline=pipeline,
+                    batch_size=1,
+                    seed=7,
+                    num_inference_steps=2,
+                    output_type="pil",
+                    **extra,
+                )
+
+                self.assertEqual(set(received), expected_keys)
+                self.assertEqual((result["width_out"], result["height_out"]), (32, 24))
+                self.assertEqual(len(result["images"]), 1)
 
     def test_torchao_int8_weight_only_passes_an_aobase_config_instance(self):
         int8_config = object()
