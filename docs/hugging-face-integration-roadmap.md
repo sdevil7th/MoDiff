@@ -3483,6 +3483,22 @@ output and assets remotely. Assets: remote Dataset only.
       JavaScript gzip bytes with the entry at `284983 / 448512`. No weights,
       source media, inference output, or public asset was downloaded or
       generated, and Auto/Gallery activation remains deferred to P2.5.
+  - [x] **P2.2d FLUX.1-dev image-to-image**
+    - Evidence 2026-08-12: the existing logical `FluxDevPipeline` model now
+      exposes a separate `edit_image` execution profile selecting the exact
+      `FluxImg2ImgPipeline` loader at reviewed FLUX.1-dev revision
+      `3de623fc3c33e44ffbe2bad470d0f45bccf2eb21`. Its task contract and canonical
+      graph require one source image, use the generic Edit action, and bind the
+      immutable revision without a static planning template or client
+      model-family graph builder. Auto remains enabled only for the already
+      qualified text-to-image mode; image-to-image remains Expert planning-only
+      and Gallery-hidden pending P2.5 qualification. Pair generation and
+      deterministic verification passed. The complete backend suite passed
+      (`1263 passed, 3 skipped, 2301 subtests`) with Ruff `E9,F`, compile,
+      package, shell, and diff gates; `npm run check` passed at
+      `525142 / 525312` total production JavaScript gzip bytes with the entry at
+      `284983 / 448512`. No weights, source media, inference output, or public
+      asset was downloaded or generated.
 - [ ] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
 - [ ] **P2.4 Existing short-video graph paths**
@@ -3833,7 +3849,8 @@ Add references only after the corresponding evidence exists.
 | P2.2b SDXL image-to-image | `5b03302` | `2bd15b2` | Remote pending | Pending | Complete source slice: one logical SDXL model selects an exact mode-specific img2img class and pinned planning graph; source-image, complete-suite, and bundle gates passed while Auto and Gallery remain disabled. |
 | P2.2 task-contract planning foundation | `57316d9` | `2ec78a4` | Not required | Not required | Complete: the canonical generator falls back from curated recipes to exact backend task-template skeletons, and both pending SDXL base modes were regenerated without placeholder Gallery entries or model-specific client builders. |
 | P2.2c SDXL inpaint | `a1faf3a` | `b9ea71e` | Remote pending | Pending | Complete source slice: exact mode-specific inpaint loader, immutable base revision, generic source/mask bindings, task-contract generation, complete suites, and bundle gate passed; Auto and Gallery remain disabled. |
-| P2.2d-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
+| P2.2d FLUX.1-dev image-to-image | `b66439b` | `9a7280e` | Remote pending | Pending | Complete source slice: exact mode-specific img2img loader, immutable FLUX.1-dev revision, generic source-image binding, task-contract generation, complete suites, and bundle gate passed; Auto remains text-to-image-only and Gallery activation remains pending. |
+| P2.2e-P2.4 | Pending; add one row per family/mode slice | Pending; add one row per family/mode slice | Remote pending | Pending | Not started |
 | P2.5 | Pending | Pending | Pending | Pending | Not started |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1-P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
