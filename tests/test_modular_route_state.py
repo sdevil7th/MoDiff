@@ -35,11 +35,13 @@ from modules.ModularDiffusers.route_state import (
     issue_encoder_route_state,
     issue_normal_decode_route_state,
     issue_pipeline_instance_token,
+    issue_sdxl_ip_adapter_bundle,
     issue_standalone_component_issuer,
     reject_route_reserved_inputs,
     require_component_binding,
     require_matching_token_bearers,
     require_route_state_current_publication,
+    require_sdxl_ip_adapter_bundle,
     require_standalone_component_binding,
     validate_controlnet_input_route_state,
     validate_controlnet_route_state,
@@ -189,6 +191,90 @@ def _normal_encoder_route(token, *, seed=7, advance_generator=True):
         ),
         image_latents,
     )
+
+
+def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
+    from diffusers import ClassifierFreeGuidance
+    from diffusers.models import ImageProjection
+    from diffusers.models.attention_processor import IPAdapterAttnProcessor
+    from transformers import CLIPImageProcessor
+
+    class FixtureEncoder(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.config = type(
+                "FixtureIPAdapterEncoderConfig",
+                (),
+                {
+                    "image_size": 224,
+                    "hidden_size": 1280,
+                    "patch_size": 14,
+                    "num_channels": 3,
+                    "num_hidden_layers": 32,
+                    "num_attention_heads": 16,
+                    "projection_dim": 1024,
+                },
+            )()
+
+    class FixtureUNet(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.dtype = torch.float32
+            self.encoder_hid_proj = type("FixtureProjection", (), {})()
+            self.encoder_hid_proj.image_projection_layers = torch.nn.ModuleList(
+                [ImageProjection(image_embed_dim=1024, cross_attention_dim=8, num_image_text_embeds=4)]
+            )
+            self.attn_processors = {
+                "down_blocks.0.attentions.0.transformer_blocks.0.attn2.processor": IPAdapterAttnProcessor(
+                    hidden_size=8,
+                    cross_attention_dim=8,
+                    num_tokens=(4,),
+                    scale=scale,
+                )
+            }
+            self.config = type("FixtureIPAdapterUNetConfig", (), {"encoder_hid_dim_type": "ip_image_proj"})()
+
+    token, outputs = _bound_outputs(SDXL, suffix=suffix, model_id=f"ip-unet-{suffix}")
+    unet = FixtureUNet()
+    encoder = FixtureEncoder()
+    processor = CLIPImageProcessor(size=224, crop_size=224)
+    guider = ClassifierFreeGuidance(guidance_scale=7.5)
+    image = Image.new("RGB", (32, 24), "purple")
+    embeddings = [torch.zeros((1, 1, 1024))]
+    negative_embeddings = [torch.ones((1, 1, 1024))]
+    bundle = issue_sdxl_ip_adapter_bundle(
+        binding=token,
+        unet=unet,
+        artifact_identity=(
+            "h94/IP-Adapter",
+            "0" * 40,
+            "sdxl_models/ip-adapter_sdxl.safetensors",
+            "1" * 64,
+            1,
+            "models/image_encoder",
+            "CLIPVisionModelWithProjection",
+        ),
+        image_encoder=encoder,
+        feature_extractor=processor,
+        guider=guider,
+        scale=scale,
+        image=image,
+        ip_adapter_embeds=embeddings,
+        negative_ip_adapter_embeds=negative_embeddings,
+    )
+    return {
+        "token": token,
+        "outputs": outputs,
+        "unet": unet,
+        "encoder": encoder,
+        "processor": processor,
+        "guider": guider,
+        "image": image,
+        "embeddings": embeddings,
+        "negative_embeddings": negative_embeddings,
+        "bundle": bundle,
+        "scale": scale,
+    }
 
 
 def _route_node_config(*, route=True, control_bundle=False):
@@ -953,7 +1039,7 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
         self.assertIsNot(materialized["image"], fixture["original_image"])
         self.assertIsNot(materialized["mask_image"], fixture["original_mask"])
 
-    def test_sdxl_route_accepts_exact_ordinary_controlnet_and_rejects_other_adapter_state(self):
+    def test_sdxl_route_accepts_exact_ordinary_controlnet_and_ip_adapter_composition(self):
         fixture = _sdxl_encoder_route()
         common = {
             "binding": fixture["token"],
@@ -1011,7 +1097,6 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
                 },
                 "does not accept prepared Qwen",
             ),
-            ({"ip_adapter_present": True}, "IP-Adapter execution is not enabled"),
         ):
             with self.subTest(values=tuple(values)), self.assertRaisesRegex(ValueError, message):
                 validate_denoise_route_state(
@@ -1020,6 +1105,14 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
                     **common,
                     **values,
                 )
+        self.assertIsNone(
+            validate_denoise_route_state(
+                fixture["route"],
+                vae_component=fixture["vae"],
+                ip_adapter_present=True,
+                **common,
+            )
+        )
 
         _union_issuer, union_controlnet = _publish_standalone(
             _standalone_identity(class_name="ControlNetUnionModel"),
@@ -1805,6 +1898,111 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
                 )
 
 
+class SDXLIPAdapterReceiptTests(unittest.TestCase):
+    def test_exact_backend_publication_validates_and_cannot_serialize(self):
+        fixture = _sdxl_ip_adapter_fixture()
+        self.assertIs(
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )._binding,
+            fixture["token"],
+        )
+        with self.assertRaises(TypeError):
+            json.dumps(fixture["bundle"])
+        with self.assertRaises(TypeError):
+            pickle.dumps(fixture["bundle"])
+
+    def test_wrong_loader_unet_guider_or_embedding_identity_fails_closed(self):
+        fixture = _sdxl_ip_adapter_fixture()
+        other = _sdxl_ip_adapter_fixture(suffix="b")
+        cases = (
+            ({"binding": other["token"]}, "different Models Loader"),
+            ({"unet": other["unet"]}, "different resident UNet"),
+            ({"guider": other["guider"]}, "exact same Guider"),
+        )
+        for override, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+                require_sdxl_ip_adapter_bundle(
+                    fixture["bundle"],
+                    binding=override.get("binding", fixture["token"]),
+                    unet=override.get("unet", fixture["unet"]),
+                    guider=override.get("guider", fixture["guider"]),
+                )
+
+        fixture["bundle"]["ip_adapter_embeds"] = [torch.zeros((1, 1, 1024))]
+        with self.assertRaisesRegex(ValueError, "changed after backend publication"):
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )
+
+    def test_unet_image_and_latest_publication_tampering_fails_closed(self):
+        fixture = _sdxl_ip_adapter_fixture()
+        with torch.no_grad():
+            next(iter(fixture["unet"].encoder_hid_proj.image_projection_layers[0].parameters())).add_(1)
+        with self.assertRaisesRegex(ValueError, "UNet state changed"):
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )
+
+        fixture = _sdxl_ip_adapter_fixture()
+        fixture["image"].putpixel((0, 0), (1, 2, 3))
+        with self.assertRaisesRegex(ValueError, "source image changed"):
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )
+
+        fixture = _sdxl_ip_adapter_fixture()
+        replacement = issue_sdxl_ip_adapter_bundle(
+            binding=fixture["token"],
+            unet=fixture["unet"],
+            artifact_identity=("h94/IP-Adapter", "0" * 40, "weight", "2" * 64, 1, "encoder", "class"),
+            image_encoder=fixture["encoder"],
+            feature_extractor=fixture["processor"],
+            guider=fixture["guider"],
+            scale=fixture["scale"],
+            image=fixture["image"],
+            ip_adapter_embeds=fixture["embeddings"],
+            negative_ip_adapter_embeds=fixture["negative_embeddings"],
+        )
+        with self.assertRaisesRegex(ValueError, "no longer the current"):
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )
+        self.assertIsNotNone(
+            require_sdxl_ip_adapter_bundle(
+                replacement,
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )
+        )
+
+    def test_resident_adapter_requires_its_exact_bundle(self):
+        fixture = _sdxl_ip_adapter_fixture()
+        with self.assertRaisesRegex(ValueError, "no matching adapter bundle"):
+            require_sdxl_ip_adapter_bundle(
+                None,
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )
+
+
 class RouteRuntimeBoundaryTests(unittest.TestCase):
     def test_sdxl_crop_media_preflight_rejects_untrusted_or_oversize_inputs_before_init(self):
         _token, outputs = _bound_outputs(SDXL)
@@ -1872,7 +2070,13 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
         fixture = _sdxl_encoder_route()
         model_id = fixture["outputs"]["vae_out"]["model_id"]
         resident = fixture["vae"]
-        manager_result = {model_id: resident}
+        resident_unet = type("ResidentUnet", (), {})()
+        resident_state = {model_id: resident}
+
+        def manager_result(*, ids, return_dict_with_names=True):
+            if return_dict_with_names:
+                return {"unet": resident_unet, "vae": resident_state[model_id], "scheduler": object()}
+            return {requested: resident_state[requested] for requested in ids}
 
         encoder = ImageEncode("sdxl-encoder-cache-provenance")
         encoder._pipeline_class = diffusers.StableDiffusionXLModularPipeline
@@ -1897,7 +2101,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
         denoise = Denoise("sdxl-denoise-cache-provenance")
         denoise._pipeline_class = diffusers.StableDiffusionXLModularPipeline
         denoise._model_type = SDXL
-        denoise._pipeline = type("ResidentDenoisePipeline", (), {"vae": resident})()
+        denoise._pipeline = type("ResidentDenoisePipeline", (), {"unet": resident_unet, "vae": resident})()
         denoise._route_cache_node_input_names = ("seed", ROUTE_STATE_INPUT)
         denoise._route_cache_block_input_names = ("generator",)
         denoise._route_cache_component_names = ("unet", "vae", "scheduler")
@@ -1930,11 +2134,11 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
         with (
             patch(
                 "modules.ModularDiffusers.latents.components.get_components_by_ids",
-                return_value=manager_result,
+                side_effect=manager_result,
             ),
             patch(
                 "modules.ModularDiffusers.denoise.components.get_components_by_ids",
-                return_value=manager_result,
+                side_effect=manager_result,
             ),
             patch(
                 "modules.ModularDiffusers.latents.require_modiff_node_contract",
@@ -1965,7 +2169,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
 
             resident.config.latent_channels = 4
             replacement = _FixtureSdxlVae()
-            manager_result[model_id] = replacement
+            resident_state[model_id] = replacement
             with self.assertRaisesRegex(ValueError, "resident Modular pipeline"):
                 encoder._cache_params_equal(encode_params, encode_params)
             with self.assertRaisesRegex(ValueError, "resident SDXL Denoise pipeline"):
@@ -2510,7 +2714,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
             self.assertEqual(pipeline_calls[1]["control_image"], "control-image")
 
             invalid_cases = (
-                ({"ip_adapter": object()}, "IP-Adapter execution is not enabled"),
+                ({"ip_adapter": object()}, "exact backend-issued bundle"),
                 ({"embeddings": {"prompt_embeds": object(), "ip_adapter_embeds": object()}}, "IP-Adapter fields"),
                 (
                     {"controlnet_bundle": {**legacy_control, "control_mode": 1}},

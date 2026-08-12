@@ -30,6 +30,7 @@ from modules.ModularDiffusers.denoise import Denoise, _apply_image_latent_dimens
 from modules.ModularDiffusers.dynamic_node import DynamicBlockNode
 from modules.ModularDiffusers.embeddings import EncodePrompt, ImageEmbeddings
 from modules.ModularDiffusers.guiders import GUIDER_CONFIGS, GUIDER_OPTIONS, LAYER_CONFIG_MAPPING, Guider, Layers
+from modules.ModularDiffusers.ip_adapter import IPAdapter
 from modules.ModularDiffusers.latents import DecodeLatents, ImageEncode
 from modules.ModularDiffusers.loaders import (
     AutoModelLoader,
@@ -433,7 +434,14 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
     def test_registered_pipeline_action_matrix_resolves_real_contracts(self):
         expected = {
-            "StableDiffusionXLModularPipeline": {"controlnet", "decoder", "denoise", "text_encoder", "vae_encoder"},
+            "StableDiffusionXLModularPipeline": {
+                "controlnet",
+                "decoder",
+                "denoise",
+                "ip_adapter",
+                "text_encoder",
+                "vae_encoder",
+            },
             "QwenImageModularPipeline": {"controlnet", "decoder", "denoise", "text_encoder", "vae_encoder"},
             "QwenImageEditModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "QwenImageEditPlusModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
@@ -454,7 +462,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
         self.assertEqual(registered, set(expected))
 
-        actions = {"controlnet", "decoder", "denoise", "image_encoder", "text_encoder", "vae_encoder"}
+        actions = {"controlnet", "decoder", "denoise", "image_encoder", "ip_adapter", "text_encoder", "vae_encoder"}
         for model_type, supported_actions in expected.items():
             pipeline_class = getattr(diffusers, model_type)
             metadata = get_model_type_metadata(model_type)
@@ -730,6 +738,12 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "image_encoder",
                 ("WanImage2VideoModularPipeline",),
             ),
+            (
+                IPAdapter,
+                "ip_adapter",
+                "unet",
+                ("StableDiffusionXLModularPipeline",),
+            ),
         )
 
         for node_class, action, connector, model_types in cases:
@@ -775,6 +789,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             (Denoise, "Denoise", False),
             (DecodeLatents, "Decode Latents", False),
             (Controlnet, "ControlNet", True),
+            (IPAdapter, "IP-Adapter Embeddings", False),
         )
 
         with patch(
@@ -810,6 +825,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             (Denoise, False),
             (DecodeLatents, False),
             (Controlnet, True),
+            (IPAdapter, False),
         )
 
         for node_class, uses_explicit_model_type in cases:
@@ -844,6 +860,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             (Denoise, "Denoise", "unet"),
             (DecodeLatents, "Decode Latents", "vae"),
             (Controlnet, "ControlNet", "unet"),
+            (IPAdapter, "IP-Adapter Embeddings", "unet"),
         )
 
         with patch(

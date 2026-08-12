@@ -222,6 +222,15 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 "controlnet_inpainting",
                 "controlnet_union_image2image",
                 "controlnet_union_inpainting",
+                "ip_adapter_text2image",
+                "ip_adapter_image2image",
+                "ip_adapter_inpainting",
+                "ip_adapter_controlnet_text2image",
+                "ip_adapter_controlnet_image2image",
+                "ip_adapter_controlnet_inpainting",
+                "ip_adapter_controlnet_union_text2image",
+                "ip_adapter_controlnet_union_image2image",
+                "ip_adapter_controlnet_union_inpainting",
             },
         )
         self.assertEqual(
@@ -443,6 +452,73 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                         edge.consumer_input,
                         action_contracts[edge.consumer_action]["input_names"],
                     )
+
+    def test_sdxl_ip_adapter_state_flows_match_all_nine_pinned_upstream_compositions(self):
+        model_type = "StableDiffusionXLModularPipeline"
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+        pipeline_class, blocks = _pipeline_blocks(model_type)
+        metadata = get_model_type_metadata(model_type)
+        workflows = {workflow.name: workflow for workflow in truth.workflows}
+        expected_names = {
+            "ip_adapter_text2image",
+            "ip_adapter_image2image",
+            "ip_adapter_inpainting",
+            "ip_adapter_controlnet_text2image",
+            "ip_adapter_controlnet_image2image",
+            "ip_adapter_controlnet_inpainting",
+            "ip_adapter_controlnet_union_text2image",
+            "ip_adapter_controlnet_union_image2image",
+            "ip_adapter_controlnet_union_inpainting",
+        }
+        actual = {name: flow for name, flow in truth.state_flows if name.startswith("ip_adapter_")}
+        self.assertEqual(set(actual), expected_names)
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            {"text_to_image", "image_to_image", "control_image"},
+        )
+
+        for name, state_flow in actual.items():
+            with self.subTest(state_flow=name):
+                self.assertEqual(state_flow.required_upstream_inputs, workflows[name].required_inputs)
+                workflow = blocks.get_workflow(name)
+                self.assertEqual(tuple(workflow.block_names), state_flow.upstream_block_sequence)
+                self.assertIn("ip_adapter", workflow.block_names)
+                self.assertIn("ip_adapter", state_flow.action_sequence)
+
+                action_contracts = {}
+                for action in state_flow.action_sequence:
+                    action_contract = metadata["node_params"].get(action)
+                    self.assertIsNotNone(action_contract)
+                    action_contracts[action] = action_contract
+                    resolved_blocks, resolved_contract = require_modiff_node_contract(
+                        pipeline_class,
+                        action,
+                        require_blocks=action != "controlnet",
+                    )
+                    self.assertIsNotNone(resolved_contract)
+                    if action == "controlnet":
+                        self.assertIsNone(resolved_blocks)
+                    else:
+                        self.assertIsNotNone(resolved_blocks)
+
+                edges = {
+                    (edge.producer_action, edge.producer_output, edge.consumer_action, edge.consumer_input)
+                    for edge in state_flow.state_edges
+                }
+                self.assertIn(("ip_adapter", "ip_adapter", "denoise", "ip_adapter"), edges)
+                if "controlnet" in state_flow.action_sequence:
+                    self.assertIn(("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"), edges)
+                if "vae_encoder" in state_flow.action_sequence:
+                    self.assertIn(("vae_encoder", "route_state_out", "denoise", "route_state_in"), edges)
+                for edge in state_flow.state_edges:
+                    self.assertIn(edge.producer_output, action_contracts[edge.producer_action]["output_names"])
+                    self.assertIn(edge.consumer_input, action_contracts[edge.consumer_action]["input_names"])
+
+        ip_contract = metadata["node_params"]["ip_adapter"]
+        self.assertEqual(ip_contract["params"]["ip_adapter_image"]["type"], "image")
+        self.assertEqual(ip_contract["params"]["ip_adapter"]["type"], "custom_ip_adapter")
+        self.assertEqual(ip_contract["params"]["ip_adapter"]["display"], "output")
+        self.assertEqual(metadata["node_params"]["denoise"]["params"]["ip_adapter"]["display"], "input")
 
     def test_qwen_state_flows_are_exact_constructible_and_nonadvertised(self):
         model_type = "QwenImageModularPipeline"

@@ -2,6 +2,7 @@
 import inspect
 import logging
 import time
+from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any, List, Tuple
 
@@ -37,6 +38,7 @@ from .route_state import (
     require_component_binding,
     require_matching_token_bearers,
     require_route_state_shape_before_identity_resolution,
+    require_sdxl_ip_adapter_bundle,
     require_sdxl_controlnet_component_binding,
     route_contract_for_model_type,
     route_requires_controlnet_state,
@@ -301,6 +303,26 @@ class Denoise(NodeBase):
             raise ValueError("The resident SDXL Denoise pipeline does not hold the exact connected VAE component.")
         return vae, sdxl_vae_geometry_from_component(vae)
 
+    def _resolve_sdxl_route_unet(self, current, *, require_resident_pipeline):
+        component_input = current.get("unet")
+        if not isinstance(component_input, Mapping) or not isinstance(component_input.get("model_id"), str):
+            raise ValueError("Denoise UNet metadata must contain one managed component ID.")
+        try:
+            resolved = components.get_components_by_ids(
+                ids=[component_input["model_id"]],
+                return_dict_with_names=True,
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("Denoise UNet could not be resolved from its exact managed component ID.") from error
+        unet = resolved.get("unet") if isinstance(resolved, Mapping) else None
+        if unet is None:
+            raise ValueError("Denoise UNet could not be resolved from its exact managed component ID.")
+        if require_resident_pipeline and (
+            getattr(self, "_pipeline", None) is None or getattr(self._pipeline, "unet", None) is not unet
+        ):
+            raise ValueError("The resident SDXL Denoise pipeline does not hold the exact connected UNet.")
+        return unet
+
     def _resolve_sdxl_controlnet(self, component_input, *, control_mode, require_resident_pipeline):
         union = control_mode is not None
         require_sdxl_controlnet_component_binding(component_input, union=union)
@@ -353,15 +375,13 @@ class Denoise(NodeBase):
             if isinstance(current.get(name), dict) and name not in block_input_names
         ]
         if route_contract == "sdxl":
-            if current.get("ip_adapter") is not None:
-                raise ValueError("SDXL IP-Adapter execution is not enabled.")
             for bundle_name in bundle_names:
                 ip_fields = {"ip_adapter_embeds", "negative_ip_adapter_embeds"}.intersection(
                     current[bundle_name]
                 )
-                if ip_fields:
+                if ip_fields and bundle_name != "ip_adapter":
                     raise ValueError(
-                        f"SDXL IP-Adapter fields are not enabled: {', '.join(sorted(ip_fields))}."
+                        f"SDXL IP-Adapter fields require the exact adapter input: {', '.join(sorted(ip_fields))}."
                     )
                 union_fields = {"control_type", "control_type_idx"}.intersection(
                     current[bundle_name]
@@ -391,6 +411,13 @@ class Denoise(NodeBase):
         resident_geometry = (None, None)
         resident_transformer = None
         if route_contract == "sdxl":
+            resident_unet = self._resolve_sdxl_route_unet(current, require_resident_pipeline=True)
+            require_sdxl_ip_adapter_bundle(
+                current.get("ip_adapter"),
+                binding=binding,
+                unet=resident_unet,
+                guider=getattr(self._pipeline, "guider", None),
+            )
             resident_vae, resident_geometry = self._resolve_sdxl_route_vae(
                 current,
                 require_resident_pipeline=True,
@@ -597,15 +624,13 @@ class Denoise(NodeBase):
             if isinstance(kwargs.get(name), dict) and name not in blocks.input_names
         ]
         if route_contract == "sdxl":
-            if kwargs.get("ip_adapter") is not None:
-                raise ValueError("SDXL IP-Adapter execution is not enabled.")
             for bundle_name in bundle_names:
                 ip_fields = {"ip_adapter_embeds", "negative_ip_adapter_embeds"}.intersection(
                     kwargs[bundle_name]
                 )
-                if ip_fields:
+                if ip_fields and bundle_name != "ip_adapter":
                     raise ValueError(
-                        f"SDXL IP-Adapter fields are not enabled: {', '.join(sorted(ip_fields))}."
+                        f"SDXL IP-Adapter fields require the exact adapter input: {', '.join(sorted(ip_fields))}."
                     )
                 union_fields = {"control_type", "control_type_idx"}.intersection(
                     kwargs[bundle_name]
@@ -734,7 +759,16 @@ class Denoise(NodeBase):
         preinit_geometry = (None, None)
         preinit_transformer = None
         preinit_controlnet = None
+        preinit_unet = None
+        ip_adapter_state = None
         if route_contract == "sdxl":
+            preinit_unet = self._resolve_sdxl_route_unet(kwargs, require_resident_pipeline=False)
+            ip_adapter_state = require_sdxl_ip_adapter_bundle(
+                kwargs.get("ip_adapter"),
+                binding=route_binding,
+                unet=preinit_unet,
+                guider=kwargs.get("guider"),
+            )
             preinit_vae, preinit_geometry = self._resolve_sdxl_route_vae(
                 kwargs,
                 require_resident_pipeline=False,
@@ -902,6 +936,15 @@ class Denoise(NodeBase):
                 model_input_names=model_input_names,
             )
             if route_contract == "sdxl":
+                if component_updates.get("unet") is not preinit_unet or getattr(self._pipeline, "unet", None) is not preinit_unet:
+                    raise ValueError("The connected Denoise UNet changed during pipeline initialization.")
+                if require_sdxl_ip_adapter_bundle(
+                    kwargs.get("ip_adapter"),
+                    binding=route_binding,
+                    unet=preinit_unet,
+                    guider=getattr(self._pipeline, "guider", None),
+                ) is not ip_adapter_state:
+                    raise ValueError("The SDXL IP-Adapter publication changed during pipeline initialization.")
                 live_vae, live_geometry = self._resolve_sdxl_route_vae(
                     kwargs,
                     require_resident_pipeline=True,
@@ -1056,6 +1099,13 @@ class Denoise(NodeBase):
                 model_input_names=model_input_names,
             )
             if route_geometry is not None:
+                if require_sdxl_ip_adapter_bundle(
+                    kwargs.get("ip_adapter"),
+                    binding=route_binding,
+                    unet=preinit_unet,
+                    guider=getattr(self._pipeline, "guider", None),
+                ) is not ip_adapter_state:
+                    raise ValueError("The SDXL IP-Adapter publication changed before upstream execution.")
                 live_vae, live_geometry = self._resolve_sdxl_route_vae(
                     kwargs,
                     require_resident_pipeline=True,
@@ -1154,6 +1204,13 @@ class Denoise(NodeBase):
                 model_input_names=model_input_names,
             )
             if route_geometry is not None:
+                if require_sdxl_ip_adapter_bundle(
+                    kwargs.get("ip_adapter"),
+                    binding=route_binding,
+                    unet=preinit_unet,
+                    guider=getattr(self._pipeline, "guider", None),
+                ) is not ip_adapter_state:
+                    raise ValueError("The SDXL IP-Adapter publication changed during upstream execution.")
                 live_vae, live_geometry = self._resolve_sdxl_route_vae(
                     kwargs,
                     require_resident_pipeline=True,

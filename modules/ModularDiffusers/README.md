@@ -123,7 +123,21 @@ matches that class. Selecting Union reveals one bounded numeric control-type
 index; Denoise also requires that index to exist in the resident model's
 declared `num_control_type` contract. The same resident component must survive
 cache validation, pipeline initialization, component installation, and the
-upstream call. Multi-ControlNet and IP-Adapter execution remain disabled. Wan
+upstream call. The internal generic **IP-Adapter Embeddings** action can add one
+reviewed standard SDXL adapter to that same resident UNet and pass its exact
+positive/negative embeddings to Denoise. It accepts only
+`h94/IP-Adapter@018e402774aeeddd60609b4ecdb7e298259dc729` and
+`sdxl_models/ip-adapter_sdxl.safetensors`, verifies the cataloged byte size and
+SHA-256 from the local Hub cache, and never downloads during graph execution.
+Its image encoder also loads locally from the pinned repository revision and
+must match the reviewed CLIP ViT-H geometry. The process-local receipt binds the
+loader execution, UNet mutation, adapter parameters/scale, encoder, processor,
+Guider, source pixels, and embedding tensors through cache and Denoise
+boundaries. Re-running Models Loader removes only that current owned mutation
+before issuing a new loader receipt. This single-adapter path is contract-only:
+it is not a public mode or template, requires the optional Transformers runtime
+to have been installed explicitly, and has no live output qualification.
+Multiple adapters and Multi-ControlNet remain disabled. Wan
 first/last-frame topology remains unadvertised, but its official artifact is
 reviewed at an immutable revision. The generic Models Loader accepts that exact
 repository variant, and Image Embeddings plus Encode Image require the selected

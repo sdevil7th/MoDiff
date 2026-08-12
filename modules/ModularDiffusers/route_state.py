@@ -48,6 +48,7 @@ ROUTE_RESERVED_PIPELINE_INPUTS = frozenset(
 _ENCODE_TO_DENOISE = "encode_to_denoise"
 _IMAGE_EMBED_TO_VAE = "image_embed_to_vae"
 _CONTROLNET_TO_DENOISE = "controlnet_to_denoise"
+_IP_ADAPTER_TO_DENOISE = "ip_adapter_to_denoise"
 _DENOISE_TO_DECODE = "denoise_to_decode"
 _MAX_PAIRED_LATENT_TENSORS = 64
 _MAX_MASK_CROP_PADDING = 8192
@@ -78,6 +79,17 @@ _WAN_IMAGE_ENCODER_LAYERS = 32
 _WAN_IMAGE_ENCODER_HEADS = 16
 _WAN_CLIP_IMAGE_MEAN = (0.48145466, 0.4578275, 0.40821073)
 _WAN_CLIP_IMAGE_STD = (0.26862954, 0.26130258, 0.27577711)
+_SDXL_IP_ADAPTER_IMAGE_SIZE = 224
+_SDXL_IP_ADAPTER_HIDDEN_SIZE = 1280
+_SDXL_IP_ADAPTER_PATCH_SIZE = 14
+_SDXL_IP_ADAPTER_PROJECTION_DIM = 1024
+_SDXL_IP_ADAPTER_LAYERS = 32
+_SDXL_IP_ADAPTER_HEADS = 16
+_SDXL_IP_ADAPTER_IMAGE_MEAN = (0.48145466, 0.4578275, 0.40821073)
+_SDXL_IP_ADAPTER_IMAGE_STD = (0.26862954, 0.26130258, 0.27577711)
+_MAX_SDXL_IP_ADAPTER_DIMENSION = 8192
+_MAX_SDXL_IP_ADAPTER_PIXELS = 16 * 1024 * 1024
+_MAX_SDXL_IP_ADAPTER_SOURCE_BYTES = 64 * 1024 * 1024
 _WAN_VAE_LATENTS_MEAN = (
     -0.7571,
     -0.7089,
@@ -175,6 +187,24 @@ class _PipelineBindingKey:
 
 
 _PIPELINE_BINDING_KEY = _PipelineBindingKey()
+
+
+class _IPAdapterStateKey:
+    """Identity-only key for the process-local IP-Adapter bundle receipt."""
+
+    __slots__ = ()
+
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, _memo):
+        return self
+
+    def __reduce_ex__(self, _protocol):
+        raise TypeError("SDXL IP-Adapter state cannot be serialized.")
+
+
+_IP_ADAPTER_STATE_KEY = _IPAdapterStateKey()
 
 
 class _StandaloneComponentBindingKey:
@@ -610,13 +640,94 @@ class _ModularRouteState:
         raise TypeError("Modular route states cannot be serialized.")
 
 
+class _SDXLIPAdapterState:
+    """Sealed receipt for one exact adapted UNet and its encoded tensors."""
+
+    __slots__ = (
+        "_stage",
+        "_binding",
+        "_unet_ref",
+        "_artifact_identity",
+        "_image_encoder_ref",
+        "_image_encoder_seal",
+        "_feature_extractor_ref",
+        "_feature_extractor_seal",
+        "_guider_ref",
+        "_guider_conditions",
+        "_unet_seal",
+        "_scale",
+        "_image_ref",
+        "_image_seal",
+        "_embedding_refs",
+        "_negative_embedding_refs",
+        "_sealed",
+        "__weakref__",
+    )
+
+    def __init__(
+        self,
+        seal,
+        *,
+        binding,
+        unet,
+        artifact_identity,
+        image_encoder,
+        image_encoder_seal,
+        feature_extractor,
+        feature_extractor_seal,
+        guider,
+        guider_conditions,
+        unet_seal,
+        scale,
+        image,
+        image_seal,
+        embedding_refs,
+        negative_embedding_refs,
+    ):
+        if seal is not _ISSUER_SEAL:
+            raise TypeError("SDXL IP-Adapter states are issued only by the backend runtime.")
+        object.__setattr__(self, "_stage", _IP_ADAPTER_TO_DENOISE)
+        object.__setattr__(self, "_binding", binding)
+        object.__setattr__(self, "_unet_ref", weakref.ref(unet))
+        object.__setattr__(self, "_artifact_identity", artifact_identity)
+        object.__setattr__(self, "_image_encoder_ref", weakref.ref(image_encoder))
+        object.__setattr__(self, "_image_encoder_seal", image_encoder_seal)
+        object.__setattr__(self, "_feature_extractor_ref", weakref.ref(feature_extractor))
+        object.__setattr__(self, "_feature_extractor_seal", feature_extractor_seal)
+        object.__setattr__(self, "_guider_ref", weakref.ref(guider))
+        object.__setattr__(self, "_guider_conditions", guider_conditions)
+        object.__setattr__(self, "_unet_seal", unet_seal)
+        object.__setattr__(self, "_scale", scale)
+        object.__setattr__(self, "_image_ref", weakref.ref(image))
+        object.__setattr__(self, "_image_seal", image_seal)
+        object.__setattr__(self, "_embedding_refs", embedding_refs)
+        object.__setattr__(self, "_negative_embedding_refs", negative_embedding_refs)
+        object.__setattr__(self, "_sealed", True)
+
+    def __setattr__(self, _name, _value):
+        if getattr(self, "_sealed", False):
+            raise AttributeError("SDXL IP-Adapter states are immutable.")
+        object.__setattr__(self, _name, _value)
+
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, _memo):
+        return self
+
+    def __reduce_ex__(self, _protocol):
+        raise TypeError("SDXL IP-Adapter states cannot be serialized.")
+
+
 _ISSUED_BINDINGS = weakref.WeakSet()
 _ISSUED_COMPONENT_BINDINGS = weakref.WeakSet()
 _ISSUED_ROUTE_STATES = weakref.WeakSet()
+_ISSUED_IP_ADAPTER_STATES = weakref.WeakSet()
 _ISSUED_STANDALONE_COMPONENT_ISSUERS = weakref.WeakSet()
 _ISSUED_STANDALONE_COMPONENT_BINDINGS = weakref.WeakSet()
 _CURRENT_STANDALONE_COMPONENT_PUBLICATIONS = weakref.WeakKeyDictionary()
 _CURRENT_STANDALONE_MANAGER_PUBLICATIONS = {}
+_CURRENT_SDXL_IP_ADAPTER_STATES = weakref.WeakKeyDictionary()
 
 _STANDALONE_COMPONENT_KINDS = frozenset({"unet", "transformer", "vae", "controlnet"})
 
@@ -2131,6 +2242,412 @@ def _component_identity_reference(component, *, label):
     return reference
 
 
+def _sdxl_ip_adapter_image_seal(image):
+    if type(image) is not Image.Image:
+        raise TypeError("SDXL IP-Adapter currently accepts one exact PIL image.")
+    width, height = image.size
+    if (
+        type(width) is not int
+        or type(height) is not int
+        or width <= 0
+        or height <= 0
+        or width > _MAX_SDXL_IP_ADAPTER_DIMENSION
+        or height > _MAX_SDXL_IP_ADAPTER_DIMENSION
+        or width * height > _MAX_SDXL_IP_ADAPTER_PIXELS
+    ):
+        raise ValueError("SDXL IP-Adapter image dimensions exceed the bounded image contract.")
+    try:
+        image.load()
+        pixels = image.convert("RGBA").tobytes()
+    except Exception as error:
+        raise ValueError("SDXL IP-Adapter image pixels could not be sealed before execution.") from error
+    if len(pixels) > _MAX_SDXL_IP_ADAPTER_SOURCE_BYTES:
+        raise ValueError("SDXL IP-Adapter image exceeds the bounded 64-MiB pixel budget.")
+    return image.mode, image.size, image.getbands(), hashlib.sha256(pixels).digest()
+
+
+def sdxl_ip_adapter_image_encoder_contract(image_encoder):
+    """Validate the exact CLIP ViT-H geometry used by the reviewed SDXL adapter."""
+
+    config = getattr(image_encoder, "config", None)
+    expected = {
+        "image_size": _SDXL_IP_ADAPTER_IMAGE_SIZE,
+        "hidden_size": _SDXL_IP_ADAPTER_HIDDEN_SIZE,
+        "patch_size": _SDXL_IP_ADAPTER_PATCH_SIZE,
+        "num_channels": 3,
+        "num_hidden_layers": _SDXL_IP_ADAPTER_LAYERS,
+        "num_attention_heads": _SDXL_IP_ADAPTER_HEADS,
+        "projection_dim": _SDXL_IP_ADAPTER_PROJECTION_DIM,
+    }
+    values = []
+    for name, expected_value in expected.items():
+        value = getattr(config, name, None)
+        if type(value) is not int or value != expected_value:
+            raise ValueError(
+                f"The reviewed SDXL IP-Adapter image encoder must declare {name}={expected_value}."
+            )
+        values.append(value)
+    return tuple(values)
+
+
+def sdxl_ip_adapter_feature_extractor_contract(feature_extractor):
+    """Seal the from-config CLIP preprocessing used by the pinned upstream block."""
+
+    if feature_extractor is None:
+        raise ValueError("The reviewed SDXL IP-Adapter is missing its CLIP image processor.")
+    size = _canonical_clip_size(getattr(feature_extractor, "size", None), label="IP-Adapter processor size")
+    crop_size = _canonical_clip_size(
+        getattr(feature_extractor, "crop_size", None),
+        label="IP-Adapter processor crop size",
+    )
+    expected_size = (
+        ("height", None),
+        ("width", None),
+        ("longest_edge", None),
+        ("shortest_edge", _SDXL_IP_ADAPTER_IMAGE_SIZE),
+        ("max_height", None),
+        ("max_width", None),
+    )
+    expected_crop = (
+        ("height", _SDXL_IP_ADAPTER_IMAGE_SIZE),
+        ("width", _SDXL_IP_ADAPTER_IMAGE_SIZE),
+        ("longest_edge", None),
+        ("shortest_edge", None),
+        ("max_height", None),
+        ("max_width", None),
+    )
+    if size != expected_size or crop_size != expected_crop:
+        raise ValueError("The reviewed SDXL IP-Adapter processor must retain its 224-pixel resize/crop contract.")
+    expected_scalars = {
+        "do_convert_rgb": True,
+        "do_resize": True,
+        "do_rescale": True,
+        "rescale_factor": 1 / 255,
+        "do_normalize": True,
+        "do_center_crop": True,
+    }
+    scalars = []
+    for name, expected_value in expected_scalars.items():
+        value = getattr(feature_extractor, name, _NOT_PROVIDED)
+        if value != expected_value or type(value) is not type(expected_value):
+            raise ValueError(f"The reviewed SDXL IP-Adapter processor has an invalid {name} setting.")
+        scalars.append((name, value))
+    image_mean = tuple(getattr(feature_extractor, "image_mean", ()))
+    image_std = tuple(getattr(feature_extractor, "image_std", ()))
+    if image_mean != _SDXL_IP_ADAPTER_IMAGE_MEAN or image_std != _SDXL_IP_ADAPTER_IMAGE_STD:
+        raise ValueError("The reviewed SDXL IP-Adapter processor has invalid CLIP normalization values.")
+    return type(feature_extractor).__module__, type(feature_extractor).__qualname__, size, crop_size, tuple(scalars)
+
+
+def _sdxl_ip_adapter_parameter_seal(modules):
+    values = []
+    for module_index, module in enumerate(modules):
+        named_parameters = getattr(module, "named_parameters", None)
+        if not callable(named_parameters):
+            raise ValueError("The resident SDXL IP-Adapter module does not expose Torch parameters.")
+        for name, parameter in named_parameters():
+            if len(values) >= 4096:
+                raise ValueError("The resident SDXL IP-Adapter exceeds the bounded parameter inventory.")
+            if not isinstance(name, str) or len(name) > 512 or type(parameter) is not torch.nn.Parameter:
+                raise ValueError("The resident SDXL IP-Adapter has an invalid parameter inventory.")
+            values.append(
+                (
+                    module_index,
+                    name,
+                    id(parameter),
+                    int(getattr(parameter, "_version", -1)),
+                    tuple(parameter.shape),
+                    str(parameter.dtype),
+                    str(parameter.device),
+                )
+            )
+    if not values:
+        raise ValueError("The resident SDXL IP-Adapter has no sealed adapter parameters.")
+    return tuple(values)
+
+
+def sdxl_ip_adapter_unet_contract(unet, *, scale):
+    """Seal one loaded adapter projection plus its exact attention processors."""
+
+    if isinstance(scale, bool) or not isinstance(scale, (int, float)) or not math.isfinite(float(scale)):
+        raise ValueError("SDXL IP-Adapter scale must be a finite number.")
+    scale = float(scale)
+    if not 0.0 <= scale <= 2.0:
+        raise ValueError("SDXL IP-Adapter scale must be between 0 and 2.")
+    from diffusers.models import ImageProjection
+    from diffusers.models.attention_processor import (
+        IPAdapterAttnProcessor,
+        IPAdapterAttnProcessor2_0,
+        IPAdapterXFormersAttnProcessor,
+    )
+
+    projection = getattr(unet, "encoder_hid_proj", None)
+    layers = getattr(projection, "image_projection_layers", None)
+    if not isinstance(layers, torch.nn.ModuleList) or len(layers) != 1 or type(layers[0]) is not ImageProjection:
+        raise ValueError("The resident SDXL UNet must contain exactly one reviewed standard IP-Adapter projection.")
+    processors = getattr(unet, "attn_processors", None)
+    if not isinstance(processors, Mapping) or not processors or len(processors) > 512:
+        raise ValueError("The resident SDXL UNet has an invalid attention-processor inventory.")
+    adapter_types = (IPAdapterAttnProcessor, IPAdapterAttnProcessor2_0, IPAdapterXFormersAttnProcessor)
+    adapter_processors = []
+    processor_seal = []
+    for name, processor in sorted(processors.items()):
+        if not isinstance(name, str) or not name or len(name) > 512:
+            raise ValueError("The resident SDXL UNet has an invalid attention-processor name.")
+        if isinstance(processor, adapter_types):
+            scales = getattr(processor, "scale", None)
+            if type(scales) is not list or len(scales) != 1 or float(scales[0]) != scale:
+                raise ValueError("The resident SDXL IP-Adapter attention scale no longer matches its receipt.")
+            adapter_processors.append(processor)
+            processor_seal.append((name, type(processor).__module__, type(processor).__qualname__, id(processor)))
+    if not adapter_processors:
+        raise ValueError("The resident SDXL UNet has no IP-Adapter attention processors.")
+    config = getattr(unet, "config", None)
+    if getattr(config, "encoder_hid_dim_type", None) != "ip_image_proj":
+        raise ValueError("The resident SDXL UNet does not advertise the reviewed IP image projection contract.")
+    return (
+        id(projection),
+        id(layers[0]),
+        tuple(processor_seal),
+        _sdxl_ip_adapter_parameter_seal([layers[0], *adapter_processors]),
+    )
+
+
+def _sdxl_ip_adapter_tensor_refs(values, *, label, required):
+    if values is None and not required:
+        return ()
+    if type(values) is not list or len(values) != 1 or type(values[0]) is not torch.Tensor:
+        raise ValueError(f"SDXL IP-Adapter {label} must contain exactly one Torch tensor.")
+    tensor = values[0]
+    if tensor.ndim != 3 or tensor.shape[0] != 1 or not 1 <= tensor.shape[1] <= 64 or tensor.shape[2] != 1024:
+        raise ValueError(f"SDXL IP-Adapter {label} has an invalid standard projection shape.")
+    return (weakref.ref(tensor),)
+
+
+def _require_sdxl_ip_adapter_tensor_refs(refs, values, *, label, required):
+    current_refs = _sdxl_ip_adapter_tensor_refs(values, label=label, required=required)
+    if len(refs) != len(current_refs) or any(
+        reference() is not current() for reference, current in zip(refs, current_refs)
+    ):
+        raise ValueError(f"SDXL IP-Adapter {label} changed after backend publication.")
+
+
+def _is_issued_ip_adapter_state(value):
+    with _REGISTRY_LOCK:
+        return type(value) is _SDXLIPAdapterState and value in _ISSUED_IP_ADAPTER_STATES
+
+
+def _current_sdxl_ip_adapter_state(unet):
+    with _REGISTRY_LOCK:
+        try:
+            state = _CURRENT_SDXL_IP_ADAPTER_STATES.get(unet)
+        except TypeError:
+            return None
+        return state if type(state) is _SDXLIPAdapterState else None
+
+
+def _validate_sdxl_ip_adapter_resident_state(state, *, binding, unet):
+    if not _is_issued_ip_adapter_state(state) or state._stage != _IP_ADAPTER_TO_DENOISE:
+        raise ValueError("SDXL IP-Adapter requires a current backend-issued state receipt.")
+    if state._binding is not binding or binding._model_type != "StableDiffusionXLModularPipeline":
+        raise ValueError("SDXL IP-Adapter state belongs to a different Models Loader execution.")
+    if state._unet_ref() is not unet:
+        raise ValueError("SDXL IP-Adapter state belongs to a different resident UNet.")
+    if _current_sdxl_ip_adapter_state(unet) is not state:
+        raise ValueError("SDXL IP-Adapter state is no longer the current resident publication.")
+    if sdxl_ip_adapter_unet_contract(unet, scale=state._scale) != state._unet_seal:
+        raise ValueError("The resident SDXL IP-Adapter UNet state changed after publication.")
+    return state
+
+
+def _validate_sdxl_ip_adapter_state(state, *, binding, unet, guider=None, bundle=None):
+    _validate_sdxl_ip_adapter_resident_state(state, binding=binding, unet=unet)
+    image_encoder = state._image_encoder_ref()
+    feature_extractor = state._feature_extractor_ref()
+    if image_encoder is None or feature_extractor is None:
+        raise ValueError("The resident SDXL IP-Adapter encoder components are no longer available.")
+    if sdxl_ip_adapter_image_encoder_contract(image_encoder) != state._image_encoder_seal:
+        raise ValueError("The resident SDXL IP-Adapter image encoder changed after publication.")
+    if sdxl_ip_adapter_feature_extractor_contract(feature_extractor) != state._feature_extractor_seal:
+        raise ValueError("The resident SDXL IP-Adapter processor changed after publication.")
+    source_image = state._image_ref()
+    if source_image is None or _sdxl_ip_adapter_image_seal(source_image) != state._image_seal:
+        raise ValueError("The SDXL IP-Adapter source image changed after encoding.")
+    state_guider = state._guider_ref()
+    if bundle is not None and state_guider is not guider:
+        raise ValueError("SDXL IP-Adapter and Denoise must use the exact same Guider publication.")
+    if state_guider is None or getattr(state_guider, "num_conditions", None) != state._guider_conditions:
+        raise ValueError("The SDXL IP-Adapter Guider contract changed after encoding.")
+    if bundle is not None:
+        if type(bundle) is not dict or set(bundle) != {
+            "ip_adapter_embeds",
+            "negative_ip_adapter_embeds",
+            _IP_ADAPTER_STATE_KEY,
+        }:
+            raise ValueError("SDXL IP-Adapter bundle fields do not match the backend-issued contract.")
+        if bundle.get(_IP_ADAPTER_STATE_KEY) is not state:
+            raise ValueError("SDXL IP-Adapter bundle carries a different state receipt.")
+        _require_sdxl_ip_adapter_tensor_refs(
+            state._embedding_refs,
+            bundle.get("ip_adapter_embeds"),
+            label="embeddings",
+            required=True,
+        )
+        _require_sdxl_ip_adapter_tensor_refs(
+            state._negative_embedding_refs,
+            bundle.get("negative_ip_adapter_embeds"),
+            label="negative embeddings",
+            required=state._guider_conditions > 1,
+        )
+    return state
+
+
+def _sdxl_unet_has_ip_adapter_structure(unet):
+    projection = getattr(unet, "encoder_hid_proj", None)
+    if bool(getattr(projection, "image_projection_layers", None)):
+        return True
+    processors = getattr(unet, "attn_processors", None)
+    if not isinstance(processors, Mapping):
+        return False
+    from diffusers.models.attention_processor import (
+        IPAdapterAttnProcessor,
+        IPAdapterAttnProcessor2_0,
+        IPAdapterXFormersAttnProcessor,
+    )
+
+    return any(
+        isinstance(
+            processor,
+            (IPAdapterAttnProcessor, IPAdapterAttnProcessor2_0, IPAdapterXFormersAttnProcessor),
+        )
+        for processor in processors.values()
+    )
+
+
+def prepare_sdxl_ip_adapter_unet(unet, *, binding):
+    """Return current owned state or reject an unreceipted UNet mutation."""
+
+    state = _current_sdxl_ip_adapter_state(unet)
+    if state is None:
+        if _sdxl_unet_has_ip_adapter_structure(unet):
+            raise ValueError("The connected SDXL UNet contains unreceipted IP-Adapter state.")
+        return None
+    _validate_sdxl_ip_adapter_resident_state(state, binding=binding, unet=unet)
+    return state
+
+
+def clear_sdxl_ip_adapter_state(unet, *, expected_state):
+    with _REGISTRY_LOCK:
+        current = _current_sdxl_ip_adapter_state(unet)
+        if current is not expected_state:
+            raise ValueError("The resident SDXL IP-Adapter publication changed before cleanup.")
+        _CURRENT_SDXL_IP_ADAPTER_STATES.pop(unet, None)
+
+
+def reset_owned_sdxl_ip_adapter_for_loader(pipeline):
+    """Remove an exact owned adapter before Models Loader publishes a new receipt."""
+
+    unet = getattr(pipeline, "unet", None)
+    if unet is None:
+        return False
+    state = _current_sdxl_ip_adapter_state(unet)
+    if state is None:
+        if _sdxl_unet_has_ip_adapter_structure(unet):
+            raise ValueError("Models Loader found unreceipted IP-Adapter state on its resident SDXL UNet.")
+        return False
+    _validate_sdxl_ip_adapter_resident_state(state, binding=state._binding, unet=unet)
+    unload = getattr(pipeline, "unload_ip_adapter", None)
+    if not callable(unload):
+        raise ValueError("The reviewed SDXL pipeline cannot remove its resident IP-Adapter state.")
+    unload()
+    if _sdxl_unet_has_ip_adapter_structure(unet):
+        raise ValueError("The reviewed SDXL pipeline did not fully remove its resident IP-Adapter state.")
+    clear_sdxl_ip_adapter_state(unet, expected_state=state)
+    return True
+
+
+def issue_sdxl_ip_adapter_bundle(
+    *,
+    binding,
+    unet,
+    artifact_identity,
+    image_encoder,
+    feature_extractor,
+    guider,
+    scale,
+    image,
+    ip_adapter_embeds,
+    negative_ip_adapter_embeds,
+):
+    """Publish one exact process-local adapter/embedding receipt for Denoise."""
+
+    if not _is_issued_binding(binding) or binding._model_type != "StableDiffusionXLModularPipeline":
+        raise ValueError("SDXL IP-Adapter requires the current SDXL Models Loader binding.")
+    if type(artifact_identity) is not tuple or len(artifact_identity) != 7:
+        raise ValueError("SDXL IP-Adapter artifact identity is malformed.")
+    if any(not isinstance(value, (str, int)) or isinstance(value, bool) for value in artifact_identity):
+        raise ValueError("SDXL IP-Adapter artifact identity contains an invalid value.")
+    guider_conditions = getattr(guider, "num_conditions", None)
+    if type(guider_conditions) is not int or not 1 <= guider_conditions <= 4:
+        raise ValueError("SDXL IP-Adapter Guider must declare a bounded condition count.")
+    scale = float(scale)
+    state = _SDXLIPAdapterState(
+        _ISSUER_SEAL,
+        binding=binding,
+        unet=unet,
+        artifact_identity=artifact_identity,
+        image_encoder=image_encoder,
+        image_encoder_seal=sdxl_ip_adapter_image_encoder_contract(image_encoder),
+        feature_extractor=feature_extractor,
+        feature_extractor_seal=sdxl_ip_adapter_feature_extractor_contract(feature_extractor),
+        guider=guider,
+        guider_conditions=guider_conditions,
+        unet_seal=sdxl_ip_adapter_unet_contract(unet, scale=scale),
+        scale=scale,
+        image=image,
+        image_seal=_sdxl_ip_adapter_image_seal(image),
+        embedding_refs=_sdxl_ip_adapter_tensor_refs(ip_adapter_embeds, label="embeddings", required=True),
+        negative_embedding_refs=_sdxl_ip_adapter_tensor_refs(
+            negative_ip_adapter_embeds,
+            label="negative embeddings",
+            required=guider_conditions > 1,
+        ),
+    )
+    with _REGISTRY_LOCK:
+        _ISSUED_IP_ADAPTER_STATES.add(state)
+        # The resident UNet keeps this receipt current even if the action node
+        # is deleted; the weak key releases it when that UNet leaves memory.
+        _CURRENT_SDXL_IP_ADAPTER_STATES[unet] = state
+    return {
+        "ip_adapter_embeds": ip_adapter_embeds,
+        "negative_ip_adapter_embeds": negative_ip_adapter_embeds,
+        _IP_ADAPTER_STATE_KEY: state,
+    }
+
+
+def require_sdxl_ip_adapter_bundle(bundle, *, binding, unet, guider):
+    """Validate an adapter bundle and all resident mutation state before Denoise."""
+
+    if bundle is None:
+        state = _current_sdxl_ip_adapter_state(unet)
+        if state is not None or _sdxl_unet_has_ip_adapter_structure(unet):
+            raise ValueError(
+                "The resident SDXL UNet has IP-Adapter state but Denoise has no matching adapter bundle. "
+                "Reconnect the adapter or rerun Models Loader with a clean component."
+            )
+        return None
+    if type(bundle) is not dict:
+        raise ValueError("SDXL IP-Adapter input must be the exact backend-issued bundle.")
+    state = bundle.get(_IP_ADAPTER_STATE_KEY)
+    return _validate_sdxl_ip_adapter_state(
+        state,
+        binding=binding,
+        unet=unet,
+        guider=guider,
+        bundle=bundle,
+    )
+
+
 def _require_sdxl_vae_provenance(payload, vae_component):
     if vae_component is None:
         raise ValueError("The exact connected SDXL VAE component is required for route validation.")
@@ -3393,8 +3910,6 @@ def validate_denoise_route_state(
     if route_state._contract == _SDXL_ROUTE_CONTRACT:
         if route_state._stage != _ENCODE_TO_DENOISE:
             raise ValueError("The SDXL route state is connected to the wrong action stage.")
-        if ip_adapter_present:
-            raise ValueError("Combined SDXL VAE-route and IP-Adapter execution is not enabled.")
         if control_image_latents is not None:
             raise ValueError("SDXL ControlNet does not accept prepared Qwen ControlNet latents.")
         if controlnet_bundle_present != (controlnet_component is not None):

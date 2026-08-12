@@ -191,6 +191,10 @@ _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES = (
     StateEdgeTruth("denoise", "route_state_out", "decoder", "route_state_in"),
 )
 
+_SDXL_IP_ADAPTER_EDGE = (
+    StateEdgeTruth("ip_adapter", "ip_adapter", "denoise", "ip_adapter"),
+)
+
 _SDXL_INPAINT_BLOCK_SEQUENCE = (
     "text_encoder",
     "vae_encoder",
@@ -205,6 +209,54 @@ _SDXL_INPAINT_BLOCK_SEQUENCE = (
 _SDXL_CONTROLNET_BLOCK_SEQUENCE = (
     "text_encoder",
     "vae_encoder",
+    "denoise.input",
+    "denoise.before_denoise.set_timesteps",
+    "denoise.before_denoise.prepare_latents",
+    "denoise.before_denoise.prepare_add_cond",
+    "denoise.controlnet_input",
+    "denoise.denoise",
+    "decode",
+)
+
+_SDXL_IP_ADAPTER_BLOCK_SEQUENCE = (
+    "text_encoder",
+    "ip_adapter",
+    "vae_encoder",
+    "denoise.input",
+    "denoise.before_denoise.set_timesteps",
+    "denoise.before_denoise.prepare_latents",
+    "denoise.before_denoise.prepare_add_cond",
+    "denoise.denoise",
+    "decode",
+)
+
+_SDXL_IP_ADAPTER_TEXT_BLOCK_SEQUENCE = (
+    "text_encoder",
+    "ip_adapter",
+    "denoise.input",
+    "denoise.before_denoise.set_timesteps",
+    "denoise.before_denoise.prepare_latents",
+    "denoise.before_denoise.prepare_add_cond",
+    "denoise.denoise",
+    "decode",
+)
+
+_SDXL_IP_ADAPTER_CONTROL_BLOCK_SEQUENCE = (
+    "text_encoder",
+    "ip_adapter",
+    "vae_encoder",
+    "denoise.input",
+    "denoise.before_denoise.set_timesteps",
+    "denoise.before_denoise.prepare_latents",
+    "denoise.before_denoise.prepare_add_cond",
+    "denoise.controlnet_input",
+    "denoise.denoise",
+    "decode",
+)
+
+_SDXL_IP_ADAPTER_CONTROL_TEXT_BLOCK_SEQUENCE = (
+    "text_encoder",
+    "ip_adapter",
     "denoise.input",
     "denoise.before_denoise.set_timesteps",
     "denoise.before_denoise.prepare_latents",
@@ -526,6 +578,98 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _SDXL_CONTROLNET_BLOCK_SEQUENCE,
                     ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
                     _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES,
+                ),
+            ),
+            (
+                "ip_adapter_text2image",
+                ModularStateFlowTruth(
+                    "ip_adapter_text2image",
+                    frozenset({"ip_adapter_image", "prompt"}),
+                    _SDXL_IP_ADAPTER_TEXT_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "denoise", "decoder"),
+                    _SDXL_ROUTE_TEXT_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_image2image",
+                ModularStateFlowTruth(
+                    "ip_adapter_image2image",
+                    frozenset({"ip_adapter_image", "image", "prompt"}),
+                    _SDXL_IP_ADAPTER_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "vae_encoder", "denoise", "decoder"),
+                    _SDXL_ROUTE_IMAGE_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_inpainting",
+                ModularStateFlowTruth(
+                    "ip_adapter_inpainting",
+                    frozenset({"ip_adapter_image", "mask_image", "image", "prompt"}),
+                    _SDXL_IP_ADAPTER_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "vae_encoder", "denoise", "decoder"),
+                    _SDXL_ROUTE_INPAINT_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_controlnet_text2image",
+                ModularStateFlowTruth(
+                    "ip_adapter_controlnet_text2image",
+                    frozenset({"ip_adapter_image", "control_image", "prompt"}),
+                    _SDXL_IP_ADAPTER_CONTROL_TEXT_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_controlnet_image2image",
+                ModularStateFlowTruth(
+                    "ip_adapter_controlnet_image2image",
+                    frozenset({"ip_adapter_image", "control_image", "image", "prompt"}),
+                    _SDXL_IP_ADAPTER_CONTROL_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_IMAGE_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_controlnet_inpainting",
+                ModularStateFlowTruth(
+                    "ip_adapter_controlnet_inpainting",
+                    frozenset({"ip_adapter_image", "control_image", "mask_image", "image", "prompt"}),
+                    _SDXL_IP_ADAPTER_CONTROL_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_controlnet_union_text2image",
+                ModularStateFlowTruth(
+                    "ip_adapter_controlnet_union_text2image",
+                    frozenset({"ip_adapter_image", "control_image", "control_mode", "prompt"}),
+                    _SDXL_IP_ADAPTER_CONTROL_TEXT_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_controlnet_union_image2image",
+                ModularStateFlowTruth(
+                    "ip_adapter_controlnet_union_image2image",
+                    frozenset({"ip_adapter_image", "control_image", "control_mode", "image", "prompt"}),
+                    _SDXL_IP_ADAPTER_CONTROL_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_IMAGE_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
+                ),
+            ),
+            (
+                "ip_adapter_controlnet_union_inpainting",
+                ModularStateFlowTruth(
+                    "ip_adapter_controlnet_union_inpainting",
+                    frozenset(
+                        {"ip_adapter_image", "control_image", "control_mode", "mask_image", "image", "prompt"}
+                    ),
+                    _SDXL_IP_ADAPTER_CONTROL_BLOCK_SEQUENCE,
+                    ("text_encoder", "ip_adapter", "vae_encoder", "controlnet", "denoise", "decoder"),
+                    _SDXL_ROUTE_CONTROL_INPAINT_TO_OUTPUT_EDGES + _SDXL_IP_ADAPTER_EDGE,
                 ),
             ),
         ),

@@ -228,6 +228,57 @@ def pin_modular_component_revisions(pipeline, primary_repo, primary_revision):
 
 
 SDXL_NODE_SPECS = {
+    "ip_adapter": {
+        "inputs": [
+            PipelineParam(
+                name="ip_adapter_image",
+                label="IP-Adapter Image",
+                type="image",
+                display="input",
+            ),
+            PipelineParam(
+                name="adapter_model",
+                label="IP-Adapter Model",
+                type="string",
+                display="modelselect",
+                value={"source": "hub", "value": "h94/IP-Adapter"},
+                fieldOptions={"noValidation": True, "sources": ["hub"]},
+            ),
+            PipelineParam(
+                name="adapter_revision",
+                label="Adapter Revision",
+                type="string",
+                value="018e402774aeeddd60609b4ecdb7e298259dc729",
+            ),
+            PipelineParam(
+                name="adapter_weight_name",
+                label="Adapter Weight",
+                type="string",
+                value="sdxl_models/ip-adapter_sdxl.safetensors",
+            ),
+            PipelineParam(
+                name="adapter_scale",
+                label="IP-Adapter Scale",
+                type="float",
+                display="slider",
+                value=1.0,
+                min=0.0,
+                max=2.0,
+                step=0.05,
+            ),
+        ],
+        "model_inputs": [
+            PipelineParam.unet(),
+            PipelineParam.guider(display="input"),
+        ],
+        "outputs": [
+            PipelineParam.ip_adapter(display="output"),
+            PipelineParam.doc(),
+        ],
+        "required_inputs": ["ip_adapter_image", "adapter_model", "adapter_revision", "adapter_weight_name"],
+        "required_model_inputs": ["unet", "guider"],
+        "block_name": "ip_adapter",
+    },
     "controlnet": {
         "inputs": [
             PipelineParam(
@@ -1720,6 +1771,7 @@ _MODIFF_NODE_ACTION_LABELS = {
     "denoise": "Denoise",
     "decoder": "Decode Latents",
     "controlnet": "ControlNet",
+    "ip_adapter": "IP-Adapter Embeddings",
 }
 
 

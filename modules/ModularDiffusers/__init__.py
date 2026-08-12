@@ -33,6 +33,7 @@ MODULE_PARSE = [
     "denoise",
     "embeddings",
     "guiders",
+    "ip_adapter",
     "latents",
     "loaders",
     "schedulers",

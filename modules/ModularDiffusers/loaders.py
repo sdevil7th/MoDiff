@@ -64,6 +64,7 @@ from .route_state import (
     bind_standalone_component_output,
     issue_pipeline_instance_token,
     issue_standalone_component_issuer,
+    reset_owned_sdxl_ip_adapter_for_loader,
     require_standalone_component_binding,
     standalone_component_reuse_is_bound,
 )
@@ -2388,6 +2389,9 @@ class ModelsLoader(NodeBase):
                 else None,
             )
         self.loader.update_components(**components_to_update)
+
+        if model_type == "StableDiffusionXLModularPipeline":
+            reset_owned_sdxl_ip_adapter_for_loader(self.loader)
 
         if use_group_offload:
             try:
