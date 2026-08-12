@@ -46,6 +46,16 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             experimental["ZImageModularPipeline"]["pipelineClasses"],
             ["ZImageModularPipeline"],
         )
+        sdxl = experimental["StableDiffusionXLModularPipeline"]
+        self.assertEqual(sdxl["qualificationStatus"], "contract_only")
+        self.assertEqual(sdxl["runnableModes"], ["text_to_image", "image_to_image", "control_image", "inpaint"])
+        self.assertEqual(sdxl["pipelineClasses"], ["StableDiffusionXLModularPipeline"])
+        self.assertEqual(sdxl["backendPath"], "modules.ModularDiffusers.ModelsLoader")
+        self.assertEqual(sdxl["executionProfiles"], [])
+        self.assertFalse(sdxl["autoEligible"])
+        self.assertFalse(sdxl["templateEligible"])
+        self.assertFalse(sdxl["galleryEligible"])
+        self.assertNotIn("StableDiffusionXLModularPipeline", AUTO_MODEL_REQUIREMENTS)
         for capability in payload["experimentalCapabilities"]:
             self.assertIn("executionProfiles", capability)
             self.assertIn("inputContracts", capability)
@@ -464,6 +474,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             item["modelType"]: item
             for item in payload["experimentalCapabilities"]
             if item.get("qualificationStatus") == "contract_only"
+            and item.get("executionKind") == "standard"
         }
 
         profiled_classes = {

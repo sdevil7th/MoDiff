@@ -88,7 +88,12 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_flux_qwen_and_wan_advertised_modular_modes_are_exact(self):
         expected = {
-            "StableDiffusionXLModularPipeline": {"text_to_image", "image_to_image", "control_image"},
+            "StableDiffusionXLModularPipeline": {
+                "text_to_image",
+                "image_to_image",
+                "control_image",
+                "inpaint",
+            },
             "QwenImageModularPipeline": {"control_image"},
             "QwenImageEditModularPipeline": {"edit_image"},
             "QwenImageEditPlusModularPipeline": {"edit_image", "multi_image_reference_edit"},
@@ -188,6 +193,15 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 ("denoise", "latents", "decoder", "latents"),
                 ("denoise", "route_state_out", "decoder", "route_state_in"),
             ),
+            "inpaint": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "mask", "denoise", "mask"),
+                ("vae_encoder", "masked_image_latents", "denoise", "masked_image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
         }
 
         self.assertEqual(set(dict(truth.modes)), set(expected_edges))
@@ -204,7 +218,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 )
                 self.assertEqual(actual_edges, expected_edges[name])
 
-    def test_sdxl_base_inpaint_state_flow_is_exact_constructible_and_nonadvertised(
+    def test_sdxl_base_inpaint_state_flow_is_exact_constructible_and_contract_only(
         self,
     ):
         model_type = "StableDiffusionXLModularPipeline"
@@ -235,12 +249,19 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         )
         self.assertEqual(
             set(dict(truth.modes)),
-            {"text_to_image", "image_to_image", "control_image"},
+            {"text_to_image", "image_to_image", "control_image", "inpaint"},
         )
         self.assertEqual(
             _advertised_modular_modes()[model_type],
-            {"text_to_image", "image_to_image", "control_image"},
+            {"text_to_image", "image_to_image", "control_image", "inpaint"},
         )
+        inpaint_mode = truth.mode("inpaint")
+        self.assertIsNotNone(inpaint_mode)
+        self.assertEqual(inpaint_mode.upstream_workflow, "inpainting")
+        self.assertEqual(inpaint_mode.required_upstream_inputs, state_flow.required_upstream_inputs)
+        self.assertEqual(inpaint_mode.upstream_block_sequence, state_flow.upstream_block_sequence)
+        self.assertEqual(inpaint_mode.action_sequence, state_flow.action_sequence)
+        self.assertEqual(inpaint_mode.state_edges, state_flow.state_edges)
         self.assertIsNotNone(state_flow)
         self.assertEqual(state_flow.upstream_workflow, "inpainting")
         self.assertEqual(
@@ -397,7 +418,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
         self.assertEqual(
             _advertised_modular_modes()[model_type],
-            {"text_to_image", "image_to_image", "control_image"},
+            {"text_to_image", "image_to_image", "control_image", "inpaint"},
         )
         for name, contract in expected.items():
             with self.subTest(state_flow=name):
@@ -474,7 +495,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual(set(actual), expected_names)
         self.assertEqual(
             _advertised_modular_modes()[model_type],
-            {"text_to_image", "image_to_image", "control_image"},
+            {"text_to_image", "image_to_image", "control_image", "inpaint"},
         )
 
         for name, state_flow in actual.items():
@@ -638,17 +659,22 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 )
                 self.assertEqual(actual_edges, expected_edges[name])
 
-    def test_false_modular_claims_are_explicitly_unsupported(self):
+    def test_completed_sdxl_inpaint_is_contract_only_while_false_flux_claims_remain_unsupported(self):
         experimental = {item["modelType"]: item for item in public_experimental_pipelines()}
 
         sdxl = experimental["StableDiffusionXLModularPipeline"]
-        self.assertNotIn("inpaint", sdxl["runnableModes"])
-        self.assertEqual(sdxl["unsupportedModes"]["inpaint"]["status"], "unsupported")
-        self.assertEqual(sdxl["unsupportedModes"]["inpaint"]["upstreamWorkflow"], "inpainting")
-        self.assertIn("state flow internally", sdxl["unsupportedModes"]["inpaint"]["reason"])
-        self.assertIn("no reviewed execution profile", sdxl["unsupportedModes"]["inpaint"]["reason"])
-        self.assertIn("live qualification", sdxl["unsupportedModes"]["inpaint"]["reason"])
-        self.assertEqual(sdxl["unsupportedModes"]["inpaint"]["missingState"], [])
+        self.assertIn("inpaint", sdxl["runnableModes"])
+        self.assertNotIn("inpaint", sdxl["unsupportedModes"])
+        self.assertEqual(sdxl["qualificationStatus"], "contract_only")
+        self.assertEqual(sdxl["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertEqual(sdxl["revisionCandidates"], ["462165984030d82259a11f4367a4eed129e94a7b"])
+        self.assertFalse(sdxl["autoEligible"])
+        self.assertFalse(sdxl["templateEligible"])
+        self.assertFalse(sdxl["galleryEligible"])
+        self.assertEqual(
+            sdxl["inputContracts"]["inpaint"]["requiredImages"],
+            ["referenceImages", "maskImage"],
+        )
 
         flux = experimental["FluxModularPipeline"]
         self.assertNotIn("control_image", flux["runnableModes"])
@@ -707,8 +733,12 @@ class ModularWorkflowCapabilitySerializationTests(unittest.IsolatedAsyncioTestCa
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
 
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertIn("inpaint", experimental["StableDiffusionXLModularPipeline"]["unsupportedModes"])
-        self.assertNotIn("inpaint", experimental["StableDiffusionXLModularPipeline"]["runnableModes"])
+        self.assertNotIn("inpaint", experimental["StableDiffusionXLModularPipeline"]["unsupportedModes"])
+        self.assertIn("inpaint", experimental["StableDiffusionXLModularPipeline"]["runnableModes"])
+        self.assertEqual(
+            experimental["StableDiffusionXLModularPipeline"]["qualificationStatus"],
+            "contract_only",
+        )
         self.assertEqual(
             experimental["Flux2KleinModularPipeline"]["pipelineClasses"],
             ["Flux2KleinPipeline"],

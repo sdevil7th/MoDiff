@@ -79,14 +79,16 @@ that a real model workload completed.
 
 `GET /model_capabilities` publishes reviewed but unqualified generic adapters
 under `experimentalCapabilities`. A record whose `qualificationStatus` is
-`contract_only` identifies one exact standard Diffusers pipeline class, its
-generic `backendPath`, immutable `defaultRepo`/`revisionCandidates`, exact
-`runnableModes`, backend-owned parameter aliases, and mode input contracts.
+`contract_only` identifies one exact registered Diffusers pipeline class and
+execution kind, its generic `backendPath`, immutable
+`defaultRepo`/`revisionCandidates`, exact `runnableModes`, backend-owned
+parameter aliases, and mode input contracts.
 It also reports `autoEligible: false`, `templateEligible: false`, and
 `galleryEligible: false`.
 
-Contract-only means that the loader/action and fake-call contract are present;
-it is not evidence of a completed model run. These records have no
+Contract-only means that the loader/action and reviewed state-flow or fake-call
+contract, as applicable, are present; it is not evidence of a completed model
+run. These records have no
 `executionProfiles` or `optionalRuntimeRequirement`, do not enter the primary
 supported `capabilities` list, and cannot be selected by Auto. Expert users can
 still inspect the same generic node fields from `/nodes`. Templates, resource

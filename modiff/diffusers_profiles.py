@@ -12,7 +12,6 @@ from modiff.diffusers_offload_modes import (
 )
 from modiff.modular_workflow_contracts import (
     FLUX_MODULAR_CONTROL_UNSUPPORTED,
-    SDXL_MODULAR_INPAINT_UNSUPPORTED,
 )
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
@@ -499,16 +498,28 @@ DIFFUSERS_EXECUTION_PROFILES["z-image:auto"] = replace(
     expert_mps_policy=MPS_EXPERIMENTAL_POLICY,
 )
 
+SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
+
 EXPERIMENTAL_DIFFUSERS_PIPELINES = [
     {
         "modelType": "StableDiffusionXLModularPipeline",
         "label": "Stable Diffusion XL (Modular)",
         "mediaKind": "image",
+        "defaultRepo": SDXL_BASE_REPO,
         "pipelineClasses": ["StableDiffusionXLModularPipeline"],
         "backendPath": "modules.ModularDiffusers.ModelsLoader",
         "executionKind": "modular",
-        "runnableModes": ["text_to_image", "image_to_image", "control_image"],
-        "unsupportedModes": {"inpaint": SDXL_MODULAR_INPAINT_UNSUPPORTED},
+        "runnableModes": ["text_to_image", "image_to_image", "control_image", "inpaint"],
+        "inputContracts": {
+            "image_to_image": {"requiredImages": ["referenceImages"]},
+            "control_image": {"requiredImages": ["controlImage"]},
+            "inpaint": {"requiredImages": ["referenceImages", "maskImage"]},
+        },
+        "qualificationStatus": "contract_only",
+        "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO)],
+        "autoEligible": False,
+        "templateEligible": False,
+        "galleryEligible": False,
     },
     {
         "modelType": "FluxModularPipeline",
@@ -579,17 +590,17 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
 CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
     # Standard image adapters.  The final eleven were admitted by P0.3c.4;
     # FLUX img2img/inpaint were already implemented but likewise unprofiled.
-    ("StableDiffusionXLPipeline", "image", "stabilityai/stable-diffusion-xl-base-1.0", ("text_to_image",)),
+    ("StableDiffusionXLPipeline", "image", SDXL_BASE_REPO, ("text_to_image",)),
     (
         "StableDiffusionXLImg2ImgPipeline",
         "image",
-        "stabilityai/stable-diffusion-xl-base-1.0",
+        SDXL_BASE_REPO,
         ("edit_image",),
     ),
     (
         "StableDiffusionXLInpaintPipeline",
         "image",
-        "stabilityai/stable-diffusion-xl-base-1.0",
+        SDXL_BASE_REPO,
         ("inpaint", "outpaint"),
     ),
     ("QwenImageImg2ImgPipeline", "image", QWEN_IMAGE_2512_REPO, ("edit_image",)),

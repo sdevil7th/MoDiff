@@ -528,6 +528,16 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _SDXL_ROUTE_CONTROL_TO_OUTPUT_EDGES,
                 ),
             ),
+            (
+                "inpaint",
+                ModularModeTruth(
+                    "inpainting",
+                    frozenset({"mask_image", "image", "prompt"}),
+                    ("text_encoder", "vae_encoder", "denoise", "decoder"),
+                    _SDXL_ROUTE_INPAINT_TO_OUTPUT_EDGES,
+                    _SDXL_INPAINT_BLOCK_SEQUENCE,
+                ),
+            ),
         ),
         state_flows=(
             (
@@ -901,18 +911,6 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
             ),
         ),
     ),
-}
-
-
-SDXL_MODULAR_INPAINT_UNSUPPORTED = {
-    "status": "unsupported",
-    "upstreamWorkflow": "inpainting",
-    "reason": (
-        "MoDiff declares the pinned SDXL base-inpaint encode, denoise, and decode state flow internally, "
-        "but no reviewed execution profile or live qualification advertises it as runnable. Combined "
-        "ControlNet, ControlNet Union, and IP-Adapter inpaint variants remain outside this base contract."
-    ),
-    "missingState": [],
 }
 
 
