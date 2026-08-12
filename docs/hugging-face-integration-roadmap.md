@@ -7,16 +7,47 @@ pipeline is already runnable.
 
 The reviewed Diffusers installation remains pinned to commit
 `13a7bee4878d62fccc8d25f97e480e68de96fa03`. The latest-upstream check on
-2026-08-09 found [Diffusers v0.39.0](https://github.com/huggingface/diffusers/releases/tag/v0.39.0)
+2026-08-12 found [Diffusers v0.39.0](https://github.com/huggingface/diffusers/releases/tag/v0.39.0)
 as the latest tagged release (release commit
 `a3608b512ed7248499a44c61d954965ed9bdae4d`) and
-`d6726f38a0c5ca6c06a8f227fb7bade3486ed98d` as the latest `main` commit. The
-comparison inventory still uses the earlier reviewed snapshot
-`50e7158093710f9c1b4ea9ff100137a91c9228f3`; the one newer commit only fixes
-partial LoRA-unfuse bookkeeping and adds its regression test. It does not
-change the Modular APIs, pipeline inventory, or the Flux Modular workflow map.
-Re-run the inventory before changing the Diffusers pin or marking a gap
-complete.
+`175fe6b2419a01db9c2ceabd01ec37d2c0305fc2` as the latest `main` commit. The
+comparison inventory now uses the reviewed `main` snapshot
+`175fe6b2419a01db9c2ceabd01ec37d2c0305fc2`. Re-run the inventory before
+changing the Diffusers pin or marking a gap complete.
+
+### Upstream delta reviewed 2026-08-12
+
+The five commits after the 2026-08-09 snapshot contain one model/workflow
+change: upstream commit
+[`7564fb0`](https://github.com/huggingface/diffusers/commit/7564fb0) adds
+LTX-2.5. The other four commits are an import guard, device deduction, LoRA
+bookkeeping, and NVIDIA Spark installation documentation; they add no pipeline
+family. LTX-2.5 reuses the standard `LTX2Pipeline` family rather than adding a
+model-named standard pipeline, but it adds execution behavior that must be
+reviewed explicitly:
+
+- the immutable `Lightricks/LTX-2.5-Diffusers` artifact and its distinct
+  distilled `transformer/`, full/SFT `transformer_full/`, latent upsampler, and
+  stage-2 distilled-LoRA receipts;
+- the reference distilled sigma schedules and both supported two-stage
+  generation variants, without substituting a generic step-count schedule;
+- `LTX2DurationHead`, the optional Gemma-4 prompt-enhancement component, and
+  their bounded/explicit controls (no discovery-time model download);
+- `LTX2VideoDiffusionDecoderModel` and
+  `LTX2VideoDiffusionDecodePipeline`, including the production-resolution
+  NATTEN dependency and video/audio latent handoff contract; and
+- the new `LTX2ModularPipeline` and `LTX25ModularPipeline` exports, with
+  `LTX2AutoBlocks`/`LTX25AutoBlocks` covering text-to-video,
+  image-to-video, condition-to-video, and IC-LoRA/in-context selection.
+
+MiniMax H3 was already present in the prior inventory from upstream commit
+[`f53d552`](https://github.com/huggingface/diffusers/commit/f53d552) and remains
+post-pin. Its Phase 6 item now records the three separate joint video-and-audio
+workflows: text-only `t2va`, first/last-keyframe `fl2va`, and omni-reference
+`ref2va`. `t2va`/`fl2va` use the repository's `transformer/` partition;
+`ref2va` uses `transformer_ref/`. These are future generic video+audio task
+contracts, not permission to add a MiniMax-named node or enable an unqualified
+artifact.
 
 ## How to update this tracker
 
@@ -35,8 +66,11 @@ complete.
 - [x] Inventory the current backend profiles, Auto requirements, nodes, graphs,
   and Gallery manifest.
 - [x] Compare the pinned Diffusers revision with the reviewed upstream snapshot.
-- [x] Identify the 18 missing official Modular pipeline classes and 69 missing
-  standard pipeline families listed in the appendices.
+- [x] Identify the initial 18 missing official Modular pipeline classes and 69
+  missing standard pipeline families listed in the appendices.
+- [x] Re-audit upstream through 2026-08-12 and append the two newly exported
+  LTX2/LTX2.5 Modular classes, bringing the current Modular gap inventory to
+  20 without changing the 69-family standard-pipeline inventory.
 - [x] Run the pre-change backend baseline: 627 tests and 274 subtests passed;
   Ruff, dependency validation, and backend preflight passed.
 - [x] Confirm the following owner decisions:
@@ -414,7 +448,7 @@ image, video, and audio task nodes; none justifies a model-named node.
 | Flux | text/image edit, fill, base control, ControlNet, Kontext, Redux, contract-only img2img/inpaint/Kontext-inpaint, and exact true-CFG forwarding | control-img2img, control-inpaint, ControlNet-img2img, and ControlNet-inpaint |
 | Flux2 | Klein text/image edit and multi-reference plus contract-only Klein inpaint | KV and full Flux2 after artifact/runtime review |
 | Wan | five profiled standard video adapters, Modular T2V/I2V, and contract-only Wan 2.2 T2V/Animate adapters | first/last-frame profile; the three Expert-only VACE video/reference/color modes; a truthful VACE first-frame adapter that synthesizes the required video-and-mask state; live qualification for Animate |
-| LTX/LTX2 | profiled LTX condition modes plus contract-only long-prompt I2V and LTX2 condition adapters | latent upsample; LTX2 in-context, HDR, and latent-upsample actions; live execution qualification for long/LTX2 |
+| LTX/LTX2 | profiled LTX condition modes plus contract-only long-prompt I2V and LTX2 condition adapters | latent upsample; LTX2 in-context, HDR, and latent-upsample actions; post-pin LTX-2.5 distilled/full and two-stage recipes, duration head, Gemma-4 prompt enhancer, diffusion decoder, and LTX2/LTX2.5 Modular pipelines; live execution qualification for long/LTX2 |
 | Hunyuan Video | FramePack adapter published contract-only | base text-to-video, image-to-video, and SkyReels image-to-video; live FramePack qualification |
 | Audio | ACE-Step plus Stable Audio published contract-only | live Stable Audio qualification; unsupported ACE `extract`, `lego`, and `complete` choices remain hidden until their missing inputs exist |
 
@@ -3362,7 +3396,19 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 - [ ] Review all commits between the current and proposed Diffusers pins; update
   the executable dependency, compatibility test, and upstream contract tests in
   one isolated change.
-- [ ] Add the post-pin Krea2, Krea2 Turbo, and MiniMax H3 Modular classes.
+- [ ] Add the post-pin Krea2 and Krea2 Turbo Modular classes.
+- [ ] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
+  specifications for its distinct `t2va`, `fl2va`, and `ref2va` workflows.
+  Validate the `transformer/` versus `transformer_ref/` partition receipt,
+  Qwen3-VL conditioning, separate video/audio scheduler state, reference-media
+  bounds, immutable artifact revision, and remote-only resource envelope before
+  exposing any mode.
+- [ ] Add the post-pin `LTX2ModularPipeline` and `LTX25ModularPipeline`, then
+  separately qualify LTX-2.5 distilled single-stage, full/SFT plus stage-2 LoRA,
+  and distilled two-stage recipes. Bind the exact sigma schedules, latent
+  upsampler, duration head, Gemma-4 prompt enhancer, diffusion decoder/NATTEN
+  path, and audio/video output handoff; prompt enhancement must remain an
+  explicit execution action and may not download during discovery or planning.
 - [ ] Evaluate HunyuanVideo 1.5, Helios/Pyramid, Wan 14B/22 Modular, full LTX/LTX2,
   EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video
   families.
@@ -3406,6 +3452,10 @@ Complete this research before implementing any pipeline or model entry:
 
 ## Appendix A — Missing Modular classes
 
+The current inventory contains 20 classes: 15 present at the MoDiff pin and 5
+that require a pin update. The latter group includes the two LTX2 exports added
+after the previous roadmap snapshot.
+
 Present in the current pin but not registered by MoDiff:
 
 - [ ] `AnimaModularPipeline`
@@ -3429,6 +3479,8 @@ Require a pin update:
 - [ ] `Krea2ModularPipeline`
 - [ ] `Krea2TurboModularPipeline`
 - [ ] `MiniMaxH3ModularPipeline`
+- [ ] `LTX2ModularPipeline`
+- [ ] `LTX25ModularPipeline`
 
 ## Appendix B — Missing standard pipeline families
 
