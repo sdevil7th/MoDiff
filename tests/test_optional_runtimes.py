@@ -103,10 +103,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             profile["requirements"],
             ["transformers==5.14.1", "peft==0.20.0"],
         )
-        self.assertEqual(
-            profile["specDigest"],
-            "sha256:8e1b0b6b2baa891d4551caa3cde4d59708eced0fd74c1333b68a1aab7ff924b5",
-        )
+        self.assertEqual(len(profile["artifactLocks"]), 60)
         canonical_spec = json.dumps(
             OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID].to_spec_dict(),
             ensure_ascii=True,

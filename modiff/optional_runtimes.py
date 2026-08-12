@@ -21,6 +21,61 @@ OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 _MAX_OBSERVED_VERSION_LENGTH = 128
 
+_OPTIONAL_RUNTIME_TARGETS = (
+    ("linux", "cp312", "x86_64"),
+    ("linux", "cp312", "arm64"),
+    ("macos", "cp312", "x86_64"),
+    ("macos", "cp312", "arm64"),
+    ("windows", "cp312", "x86_64"),
+    ("windows", "cp312", "arm64"),
+)
+_PURE_RUNTIME_WHEELS = (
+    ("transformers", "5.14.1", "transformers-5.14.1-py3-none-any.whl", "https://files.pythonhosted.org/packages/6f/67/8d85ca2323233ae3c0365a659c4e52ee1f587b440e4bc577e7d8e4416d0f/transformers-5.14.1-py3-none-any.whl", "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725", 11625234),
+    ("peft", "0.20.0", "peft-0.20.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/28/79/13bcabb8048126422d5c4b880575d40886c726f354db88cfeed4325525bb/peft-0.20.0-py3-none-any.whl", "0fbba16ffebfad3de96e06f2da6860fd860292324b85b6141909fa1e26ea9233", 775777),
+    ("typer", "0.27.1", "typer-0.27.1-py3-none-any.whl", "https://files.pythonhosted.org/packages/43/89/9518bc0c3929bee36b3a4a8e3daddd6e03f92f9961c66d4983b837160543/typer-0.27.1-py3-none-any.whl", "53150287edd11baeb4e4722c8e394fcdf8181c0ae89485cba8d25c778d5edd56", 122874),
+    ("annotated-doc", "0.0.5", "annotated_doc-0.0.5-py3-none-any.whl", "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl", "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101", 5302),
+    ("rich", "15.0.0", "rich-15.0.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl", "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb", 310654),
+    ("markdown-it-py", "4.2.0", "markdown_it_py-4.2.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl", "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a", 91687),
+    ("mdurl", "0.1.2", "mdurl-0.1.2-py3-none-any.whl", "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", 9979),
+    ("pygments", "2.20.0", "pygments-2.20.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/f4/7e/a72dd26f3b0f4f2bf1dd8923c85f7ceb43172af56d63c7383eb62b332364/pygments-2.20.0-py3-none-any.whl", "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176", 1231151),
+    ("shellingham", "1.5.4", "shellingham-1.5.4-py2.py3-none-any.whl", "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", "7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", 9755),
+)
+_TOKENIZERS_RUNTIME_WHEELS = {
+    ("linux", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", "https://files.pythonhosted.org/packages/2e/76/932be4b50ef6ccedf9d3c6639b056a967a86258c6d9200643f01269211ca/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67", 3274982),
+    ("linux", "arm64"): ("tokenizers-0.22.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", "https://files.pythonhosted.org/packages/d6/84/7990e799f1309a8b87af6b948f31edaa12a3ed22d11b352eaf4f4b2e5753/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", "2249487018adec45d6e3554c71d46eb39fa8ea67156c640f7513eb26f318cec7", 3290736),
+    ("macos", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-macosx_10_12_x86_64.whl", "https://files.pythonhosted.org/packages/92/97/5dbfabf04c7e348e655e907ed27913e03db0923abb5dfdd120d7b25630e1/tokenizers-0.22.2-cp39-abi3-macosx_10_12_x86_64.whl", "544dd704ae7238755d790de45ba8da072e9af3eea688f698b137915ae959281c", 3100275),
+    ("macos", "arm64"): ("tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl", "https://files.pythonhosted.org/packages/2e/47/174dca0502ef88b28f1c9e06b73ce33500eedfac7a7692108aec220464e7/tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl", "1e418a55456beedca4621dbab65a318981467a2b188e982a23e117f115ce5001", 2981472),
+    ("windows", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-win_amd64.whl", "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl", "c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48", 2747786),
+    ("windows", "arm64"): ("tokenizers-0.22.2-cp39-abi3-win_arm64.whl", "https://files.pythonhosted.org/packages/72/f4/0de46cfa12cdcbcd464cc59fde36912af405696f687e53a091fb432f694c/tokenizers-0.22.2-cp39-abi3-win_arm64.whl", "9ce725d22864a1e965217204946f830c37876eee3b2ba6fc6255e8e903d5fcbc", 2612133),
+}
+
+
+def _transformers_peft_artifact_locks() -> tuple[dict, ...]:
+    locks = []
+    for platform_name, python_tag, machine in _OPTIONAL_RUNTIME_TARGETS:
+        tokenizers = _TOKENIZERS_RUNTIME_WHEELS[(platform_name, machine)]
+        wheels = (
+            _PURE_RUNTIME_WHEELS[0],
+            _PURE_RUNTIME_WHEELS[1],
+            ("tokenizers", "0.22.2", *tokenizers),
+            *_PURE_RUNTIME_WHEELS[2:],
+        )
+        for distribution, version, filename, url, sha256, byte_size in wheels:
+            locks.append(
+                {
+                    "distribution": distribution,
+                    "version": version,
+                    "filename": filename,
+                    "url": url,
+                    "sha256": sha256,
+                    "byteSize": byte_size,
+                    "platform": platform_name,
+                    "pythonTag": python_tag,
+                    "machine": machine,
+                }
+            )
+    return tuple(locks)
+
 
 @dataclass(frozen=True)
 class OptionalRuntimePackageContract:
@@ -412,9 +467,9 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
         "Flux2KleinModularPipeline",
     ),
     require_peft_backend=True,
-    # Candidate metadata deliberately has no executable wheel/hash lock yet.
-    # Even an accidental flag flip must not make version-only acquisition run.
-    artifact_locks=(),
+    # Exact locks do not enable installation by themselves. Qualification,
+    # action availability, activation, and cutover remain separate gates.
+    artifact_locks=_transformers_peft_artifact_locks(),
     pipeline_adapter_symbols=(
         "AceStepPipeline",
         "FluxPipeline",

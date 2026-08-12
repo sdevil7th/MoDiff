@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import base64
 import configparser
+import csv
 from email.parser import BytesParser
 from email.policy import default as email_policy
 import hashlib
@@ -18,6 +19,7 @@ import importlib
 import importlib.util
 from importlib import metadata
 import json
+import io
 import os
 from pathlib import Path
 import platform
@@ -405,6 +407,14 @@ def cache_locked_artifacts(
         if lease.cancel_event.is_set():
             raise OverlayCancelled("Optional-runtime artifact acquisition was cancelled.")
         destination = locked_artifact_path(archive_root, artifact)
+        expected_size = artifact.get("byteSize")
+        if (
+            isinstance(expected_size, bool)
+            or not isinstance(expected_size, int)
+            or expected_size <= 0
+            or expected_size > MAX_LOCKED_ARCHIVE_BYTES
+        ):
+            raise RuntimeError("The optional-runtime artifact size lock is malformed.")
         destination.parent.mkdir(parents=False, exist_ok=True)
         parent_info = destination.parent.lstat()
         if not stat.S_ISDIR(parent_info.st_mode) or stat.S_ISLNK(parent_info.st_mode):
@@ -415,7 +425,7 @@ def cache_locked_artifacts(
                 maximum_bytes=MAX_LOCKED_ARCHIVE_BYTES,
                 cancel_event=lease.cancel_event,
             )
-            if observed_digest != artifact["sha256"]:
+            if observed_digest != artifact["sha256"] or observed_size != expected_size:
                 raise RuntimeError("A cached optional-runtime artifact failed its catalog digest.")
             total += observed_size
             if total > MAX_LOCKED_ARCHIVE_TOTAL_BYTES:
@@ -432,8 +442,8 @@ def cache_locked_artifacts(
                 if response.geturl() != artifact["url"]:
                     raise RuntimeError("A locked artifact URL redirected outside its reviewed source.")
                 length = response.headers.get("Content-Length")
-                if length is not None and int(length) > MAX_LOCKED_ARCHIVE_BYTES:
-                    raise RuntimeError("A locked optional-runtime artifact is oversized.")
+                if length is not None and int(length) != expected_size:
+                    raise RuntimeError("A locked optional-runtime artifact has an unexpected size.")
                 hasher = hashlib.sha256()
                 observed_size = 0
                 while chunk := response.read(1024 * 1024):
@@ -446,7 +456,7 @@ def cache_locked_artifacts(
                     hasher.update(chunk)
                 output.flush()
                 os.fsync(output.fileno())
-            if hasher.hexdigest() != artifact["sha256"]:
+            if hasher.hexdigest() != artifact["sha256"] or observed_size != expected_size:
                 raise RuntimeError("A downloaded optional-runtime artifact failed its catalog digest.")
             temporary.replace(destination)
         finally:
@@ -462,7 +472,12 @@ def cache_locked_artifacts(
 
 
 def _wheel_target_path(member_name: str) -> str:
-    if not member_name or len(member_name) > 1024 or "\\" in member_name or "\0" in member_name:
+    if (
+        not member_name
+        or len(member_name) > 1024
+        or "\\" in member_name
+        or any(ord(character) < 32 or ord(character) == 127 for character in member_name)
+    ):
         raise RuntimeError("A locked wheel contains an invalid member path.")
     path = PurePosixPath(member_name)
     if (
@@ -498,6 +513,67 @@ def _wheel_target_path(member_name: str) -> str:
     return target
 
 
+def _validate_locked_wheel_record(
+    body: bytes,
+    archive_files: dict[str, tuple[str, int]],
+    record_name: str,
+) -> None:
+    """Require RECORD to authenticate every file in the reviewed wheel once."""
+
+    try:
+        text = body.decode("utf-8", errors="strict")
+        rows = csv.reader(io.StringIO(text, newline=""), strict=True)
+        observed: set[str] = set()
+        for row_count, row in enumerate(rows, start=1):
+            if row_count > MAX_LOCKED_WHEEL_ENTRIES or len(row) != 3:
+                raise RuntimeError("A locked wheel RECORD has an invalid row structure.")
+            name, digest, size = row
+            if not name or name in observed:
+                raise RuntimeError("A locked wheel RECORD contains an invalid or duplicate path.")
+            _wheel_target_path(name)
+            observed.add(name)
+            expected = archive_files.get(name)
+            if expected is None:
+                raise RuntimeError("A locked wheel RECORD names a file outside the wheel archive.")
+            if name == record_name:
+                if digest or size:
+                    raise RuntimeError("A locked wheel RECORD must leave its own digest and size empty.")
+                continue
+            expected_digest, expected_size = expected
+            encoded_digest = base64.urlsafe_b64encode(bytes.fromhex(expected_digest)).rstrip(b"=").decode("ascii")
+            if digest != f"sha256={encoded_digest}" or size != str(expected_size):
+                raise RuntimeError("A locked wheel RECORD does not match its archived file bytes.")
+    except (csv.Error, UnicodeDecodeError) as exc:
+        raise RuntimeError("A locked wheel RECORD is not valid bounded UTF-8 CSV.") from exc
+    if observed != set(archive_files):
+        raise RuntimeError("A locked wheel RECORD does not cover every archived file exactly once.")
+
+
+def _expanded_wheel_filename_tags(filename_parts: list[str]) -> set[str]:
+    components = [part.split(".") for part in filename_parts[-3:]]
+    if any(
+        not values
+        or len(values) > 16
+        or any(
+            not value
+            or len(value) > 64
+            or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" for character in value)
+            for value in values
+        )
+        for values in components
+    ):
+        raise RuntimeError("A locked wheel filename contains invalid compatibility tags.")
+    tags = {
+        f"{python_tag}-{abi_tag}-{platform_tag}"
+        for python_tag in components[0]
+        for abi_tag in components[1]
+        for platform_tag in components[2]
+    }
+    if not tags or len(tags) > 256:
+        raise RuntimeError("A locked wheel filename contains too many compatibility tags.")
+    return tags
+
+
 def locked_artifact_file_seal(
     artifacts: Iterable[dict[str, Any]],
     archive_root: Path,
@@ -527,6 +603,7 @@ def locked_artifact_file_seal(
         if (
             total_archive_bytes > MAX_LOCKED_ARCHIVE_TOTAL_BYTES
             or observed_digest != artifact.get("sha256")
+            or observed_size != artifact.get("byteSize")
         ):
             raise RuntimeError("A locked wheel archive failed its catalog identity.")
         filename_parts = str(artifact.get("filename") or "").removesuffix(".whl").split("-")
@@ -543,6 +620,8 @@ def locked_artifact_file_seal(
         metadata_documents: list[bytes] = []
         wheel_documents: list[bytes] = []
         record_targets: list[str] = []
+        record_documents: list[bytes] = []
+        archive_files: dict[str, tuple[str, int]] = {}
         metadata_parents: set[str] = set()
         try:
             wheel = zipfile.ZipFile(archive)
@@ -562,7 +641,9 @@ def locked_artifact_file_seal(
                     raise RuntimeError("The locked wheel set contains duplicate install targets.")
                 seen_archive_members.add(target)
                 mode = (info.external_attr >> 16) & 0xFFFF
-                if stat.S_ISLNK(mode) or (mode and not (stat.S_ISREG(mode) or stat.S_ISDIR(mode))):
+                file_type = stat.S_IFMT(mode)
+                expected_types = {0, stat.S_IFDIR} if info.is_dir() else {0, stat.S_IFREG}
+                if stat.S_ISLNK(mode) or file_type not in expected_types:
                     raise RuntimeError("A locked wheel contains a non-regular member.")
                 if info.is_dir():
                     continue
@@ -602,7 +683,10 @@ def locked_artifact_file_seal(
                             bounded_document.extend(chunk)
                 if observed_member_size != info.file_size:
                     raise RuntimeError("A locked wheel member was truncated.")
-                expected_files[target] = hasher.hexdigest()
+                member_digest = hasher.hexdigest()
+                expected_files[target] = member_digest
+                archive_name = PurePosixPath(info.filename).as_posix()
+                archive_files[archive_name] = (member_digest, observed_member_size)
                 if target.endswith(".dist-info/METADATA"):
                     metadata_documents.append(bytes(bounded_document or b""))
                     metadata_parents.add(PurePosixPath(target).parent.as_posix())
@@ -611,6 +695,7 @@ def locked_artifact_file_seal(
                     metadata_parents.add(PurePosixPath(target).parent.as_posix())
                 elif target.endswith(".dist-info/RECORD"):
                     record_targets.append(target)
+                    record_documents.append(bytes(bounded_document or b""))
                     metadata_parents.add(PurePosixPath(target).parent.as_posix())
         if (
             len(metadata_documents) != 1
@@ -619,6 +704,7 @@ def locked_artifact_file_seal(
             or len(metadata_parents) != 1
         ):
             raise RuntimeError("A locked wheel must contain one matching METADATA, WHEEL, and RECORD.")
+        _validate_locked_wheel_record(record_documents[0], archive_files, record_targets[0])
         dist_info_name = next(iter(metadata_parents)).removesuffix(".dist-info")
         if "-" not in dist_info_name:
             raise RuntimeError("A locked wheel has an invalid dist-info directory name.")
@@ -635,13 +721,14 @@ def locked_artifact_file_seal(
         ):
             raise RuntimeError("A locked wheel METADATA identity does not match its catalog lock.")
         parsed_wheel = BytesParser(policy=email_policy).parsebytes(wheel_documents[0])
-        expected_wheel_tag = "-".join(filename_parts[-3:])
+        expected_wheel_tags = _expanded_wheel_filename_tags(filename_parts)
         wheel_tags = [str(value) for value in (parsed_wheel.get_all("Tag") or [])]
         if (
             not parsed_wheel.get("Wheel-Version")
             or str(parsed_wheel.get("Root-Is-Purelib") or "").lower()
             not in {"true", "false"}
-            or expected_wheel_tag not in wheel_tags
+            or len(wheel_tags) != len(set(wheel_tags))
+            or set(wheel_tags) != expected_wheel_tags
         ):
             raise RuntimeError("A locked wheel has an invalid WHEEL identity document.")
     return dict(sorted(expected_files.items()))
@@ -874,6 +961,7 @@ def observed_overlay_file_seal(site_packages: Path) -> dict[str, str]:
 
 _WATCHDOG_SCRIPT = r'''
 import ctypes
+from ctypes import wintypes
 import json
 import os
 from pathlib import Path
@@ -884,6 +972,58 @@ import time
 
 parent_pid = int(sys.argv[1])
 command = json.loads(sys.argv[2])
+
+def install_windows_job():
+    if os.name != "nt":
+        return None
+    class BASIC_LIMITS(ctypes.Structure):
+        _fields_ = [
+            ("per_process_time", ctypes.c_longlong),
+            ("per_job_time", ctypes.c_longlong),
+            ("flags", wintypes.DWORD),
+            ("minimum_working_set", ctypes.c_size_t),
+            ("maximum_working_set", ctypes.c_size_t),
+            ("active_process_limit", wintypes.DWORD),
+            ("affinity", ctypes.c_size_t),
+            ("priority_class", wintypes.DWORD),
+            ("scheduling_class", wintypes.DWORD),
+        ]
+    class IO_COUNTERS(ctypes.Structure):
+        _fields_ = [(name, ctypes.c_ulonglong) for name in (
+            "read_operations", "write_operations", "other_operations",
+            "read_bytes", "write_bytes", "other_bytes",
+        )]
+    class EXTENDED_LIMITS(ctypes.Structure):
+        _fields_ = [
+            ("basic", BASIC_LIMITS),
+            ("io", IO_COUNTERS),
+            ("process_memory", ctypes.c_size_t),
+            ("job_memory", ctypes.c_size_t),
+            ("peak_process_memory", ctypes.c_size_t),
+            ("peak_job_memory", ctypes.c_size_t),
+        ]
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateJobObjectW.argtypes = (ctypes.c_void_p, wintypes.LPCWSTR)
+    kernel32.CreateJobObjectW.restype = wintypes.HANDLE
+    kernel32.SetInformationJobObject.argtypes = (
+        wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+    )
+    kernel32.SetInformationJobObject.restype = wintypes.BOOL
+    kernel32.AssignProcessToJobObject.argtypes = (wintypes.HANDLE, wintypes.HANDLE)
+    kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    job = kernel32.CreateJobObjectW(None, None)
+    if not job:
+        raise ctypes.WinError(ctypes.get_last_error())
+    limits = EXTENDED_LIMITS()
+    limits.basic.flags = 0x00002000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+    if not kernel32.SetInformationJobObject(job, 9, ctypes.byref(limits), ctypes.sizeof(limits)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    if not kernel32.AssignProcessToJobObject(job, kernel32.GetCurrentProcess()):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return job
+
+windows_job = install_windows_job()
 
 def parent_alive():
     if os.name != "nt":
@@ -902,15 +1042,7 @@ child = subprocess.Popen(command)
 while child.poll() is None:
     if not parent_alive():
         if os.name == "nt":
-            system_root = Path(os.environ.get("SystemRoot") or r"C:\Windows")
-            taskkill = (system_root / "System32" / "taskkill.exe").resolve()
-            subprocess.run(
-                [str(taskkill), "/PID", str(child.pid), "/T", "/F"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                timeout=5,
-            )
+            ctypes.windll.kernel32.TerminateJobObject(windows_job, 137)
             raise SystemExit(137)
         os.killpg(os.getpgrp(), signal.SIGKILL)
     time.sleep(0.05)

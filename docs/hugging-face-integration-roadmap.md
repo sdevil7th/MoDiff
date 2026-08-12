@@ -2719,10 +2719,18 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       and legacy hashless-overlay rejection are implemented and CPU-tested.
       The current candidate still rejects before lease, job, network, staging,
       or subprocess creation.
+    - [x] Immutable wheel/installer preparation: bind the complete ten-wheel
+      Transformers/PEFT closure to exact official PyPI filenames, URLs,
+      SHA-256 values, and byte sizes for Python 3.12 on Linux, macOS, and
+      Windows on x86-64 and ARM64. Share one reviewed uv `0.11.26`
+      archive/executable identity with base setup, require a rehashed receipt,
+      validate complete unique wheel RECORD hashes/sizes, and place the Windows
+      watchdog and all descendants in a non-breakaway kill-on-close Job Object.
+      Install, activation, and cutover flags remain false.
     - [ ] Executable qualification: add reviewed per-platform wheel and
-      installer locks, Windows breakaway-process containment, handle-relative
-      promotion/cleanup proof, stricter complete wheel RECORD semantics, and
-      clean-base/staged workload evidence before enabling either action.
+      installer evidence, handle-relative promotion/cleanup proof, durable
+      promotion reconciliation, and clean-base/staged workload evidence before
+      enabling either action.
   - [ ] First-use execution guard and client install/activation/restart flow.
     - [x] Cutover-dormant guard/status scaffold: exact backend execution
       profiles own a versioned seven-field requirement; every current profile

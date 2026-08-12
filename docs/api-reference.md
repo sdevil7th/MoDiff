@@ -360,9 +360,11 @@ inconsistent execution/catalog metadata resolves to `unavailable`, not active.
 
 The current composite Transformers + PEFT profile is contract metadata plus a
 non-runnable staged-lifecycle scaffold. It reports
-`contractState: candidate_unqualified`, `cutoverReady: false`, empty
-`artifactLocks`, ten exact `stagedRequirements`, and unavailable install and
-activation actions. Its metadata-only package status is `missing`,
+`contractState: candidate_unqualified`, `cutoverReady: false`, a complete
+source-controlled six-target wheel lock for its ten exact `stagedRequirements`,
+and unavailable install and activation actions. Each lock includes the exact
+filename, official PyPI URL, SHA-256, byte size, Python target, platform, and
+machine. Its metadata-only package status is `missing`,
 `wrong_version`, or `present_unqualified`; unreadable distribution metadata
 fails closed as `wrong_version` with `metadataState: unreadable`. These
 observations do not change Auto selection, `canAutoRun`, or execution

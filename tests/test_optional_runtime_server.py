@@ -277,7 +277,8 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
         body = response_json(response)
         profile = body["profiles"][0]
         self.assertEqual(len(profile["stagedRequirements"]), 10)
-        self.assertEqual(profile["artifactLocks"], [])
+        self.assertEqual(len(profile["artifactLocks"]), 60)
+        self.assertTrue(all(lock["byteSize"] > 0 for lock in profile["artifactLocks"]))
         self.assertFalse(profile["installActionAvailable"])
         self.assertFalse(profile["activationAvailable"])
         self.assertFalse(profile["cutoverReady"])

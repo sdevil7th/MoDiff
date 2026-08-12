@@ -9,12 +9,14 @@ import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
 import tempfile
 import time
 import urllib.request
+import uuid
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -33,6 +35,7 @@ from modiff.runtime_profile import (
     runtime_contract_paths,
 )
 from modiff.setup_catalog import CATALOG, PHASES, enrich_issue
+from modiff.tool_locks import UV_TOOL_LOCKS
 
 ROOT = Path(__file__).resolve().parents[1]
 VENV = ROOT / ".venv"
@@ -45,9 +48,10 @@ DIAGNOSTICS_DIR = MANAGED_ROOT / "diagnostics"
 WEB_ROOT = ROOT / "web"
 
 TOOL_ARCHIVES = {
-    ("linux", "x86_64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-x86_64-unknown-linux-gnu.tar.gz", "6426a73c3837e6e2483ee344cbc00f36394d179afcba6183cb77437e67db4af0"),
-    ("macos", "arm64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-aarch64-apple-darwin.tar.gz", "8f7fbf1708399b921857bce71e1d60f0d3ccf52a30caebc1c1a2f175dce13ab6"),
-    ("windows", "x86_64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-x86_64-pc-windows-msvc.zip", "4e1278ede866be6c0bf32d2f466cc6de7a9fb399ecf20c9ce2d186e52424be47"),
+    **{
+        (os_name, machine, "uv"): (str(lock["url"]), str(lock["archiveSha256"]))
+        for (os_name, machine), lock in UV_TOOL_LOCKS.items()
+    },
     ("linux", "x86_64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz", "bdebee276e58d0ef5448f3d5ac12c67daa963dd5e0a9bb621a53d1cefbc852fd"),
     ("macos", "arm64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-darwin-arm64.tar.gz", "319f221adc5e44ff0ed57e8a441b2284f02b8dc6fc87b8eb92a6a93643fd8080"),
     ("windows", "x86_64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-win-x64.zip", "9c125f61ae947b52e779095830f9cac267846a043ef7192183c84016aaad2812"),
@@ -536,6 +540,43 @@ def _ensure_uv() -> str:
         uv = _find_executable(_download_tool("uv"), ("uv.exe", "uv"))
     if not uv:
         raise RuntimeError("The app-local uv archive did not contain the expected executable")
+    managed_info = managed_uv.lstat()
+    if (
+        not stat.S_ISDIR(managed_info.st_mode)
+        or stat.S_ISLNK(managed_info.st_mode)
+        or bool(
+            getattr(managed_info, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        )
+    ):
+        raise RuntimeError("The app-local uv tool directory is unsafe")
+    key = (normalized_os(), normalized_arch())
+    lock = UV_TOOL_LOCKS.get(key)
+    executable = Path(uv).resolve(strict=True)
+    if lock is None or executable.is_symlink():
+        raise RuntimeError("The app-local uv executable has no reviewed platform lock")
+    try:
+        relative = executable.relative_to(managed_uv.resolve(strict=True)).as_posix()
+    except ValueError as exc:
+        raise RuntimeError("The app-local uv executable escapes its managed directory") from exc
+    executable_hash = hashlib.sha256(executable.read_bytes()).hexdigest()
+    if relative != lock["executable"] or executable_hash != lock["executableSha256"]:
+        raise RuntimeError("The app-local uv executable failed its reviewed integrity check")
+    receipt = {
+        "schemaVersion": 1,
+        "archiveSha256": lock["archiveSha256"],
+        "executable": relative,
+        "executableSha256": executable_hash,
+    }
+    temporary = managed_uv / f".receipt.{uuid.uuid4().hex}.tmp"
+    try:
+        with temporary.open("x", encoding="utf-8", newline="\n") as output:
+            output.write(json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n")
+            output.flush()
+            os.fsync(output.fileno())
+        temporary.replace(managed_uv / "receipt.json")
+    finally:
+        temporary.unlink(missing_ok=True)
     return uv
 
 

@@ -1,6 +1,6 @@
 # Optional runtime optimizations
 
-Last reviewed: 2026-08-10
+Last reviewed: 2026-08-12
 
 MoDiff treats accelerator extensions and optional model libraries as reviewed
 runtime contracts, not as uncontrolled additions to the main Python
@@ -13,10 +13,11 @@ environment.
 
 The first optional model-library contract moves Transformers `5.14.1` and PEFT
 `0.20.0` together with their eight overlay-owned transitive distributions. It
-is published as `candidate_unqualified` with `cutoverReady: false`, empty
-artifact locks, and unavailable install/activation actions. Merely finding the
-requested versions in the base environment does not make the contract
-runnable.
+is published as `candidate_unqualified` with `cutoverReady: false`, exact
+source-controlled artifact locks, and unavailable install/activation actions.
+The lock covers ten wheels on Python 3.12 for Linux, macOS, and Windows on
+x86-64 and ARM64. Merely finding the requested versions—or merely publishing
+these locks—does not make the contract runnable.
 
 ## Product contract
 
@@ -122,11 +123,7 @@ a qualified deployment.
 The staged-overlay implementation is intentionally not an executable product
 claim. Qualification still requires, at minimum:
 
-- reviewed wheel filenames and SHA-256 values for the complete ten-package
-  Transformers/PEFT closure on every supported Python/platform combination;
-- a reviewed per-platform installer executable and immutable installer digest;
-- Windows Job Object containment for breakaway descendants and handle-relative
-  promotion/cleanup that is safe against directory replacement;
+- handle-relative promotion/cleanup that is safe against directory replacement;
 - a durable promotion commit/reconciliation record and stricter fresh-process
   side-effect containment; and
 - clean-base, staged, restart/rollback, and representative no-weight/live
@@ -135,6 +132,18 @@ claim. Qualification still requires, at minimum:
 Until those gates are closed, `installActionAvailable`,
 `activationAvailable`, and `cutoverReady` remain false. The compatibility
 routes do not make a candidate eligible by themselves.
+
+Qualification preparation now includes exact filename, URL, SHA-256, and size
+locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
+archive/executable pair for each supported target. The base installer writes a
+receipt only after rehashing the reviewed executable, and the overlay path
+rehashes it independently. Archive validation requires one matching METADATA,
+WHEEL, and complete unique RECORD; every non-RECORD row must carry the exact
+SHA-256 and size of its archived file, and RECORD must cover the archive exactly.
+On Windows, the watchdog enters a non-breakaway Job Object with kill-on-close
+before launching the installer, so cancellation or parent death contains the
+entire descendant tree. These controls remain dormant while action flags are
+false.
 
 ## Runtime features
 

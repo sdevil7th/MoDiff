@@ -59,6 +59,7 @@ from modiff.runtime_overlays import (
     verify_artifact_anchored_overlay,
     locked_artifact_file_seal,
 )
+from modiff.tool_locks import UV_TOOL_LOCKS
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,11 +77,6 @@ _CATALOG_ENVIRONMENT_LIMIT = 32
 _CATALOG_ENVIRONMENT_SCAN_LIMIT = 4096
 _CATALOG_INACTIVE_DOCUMENT_LIMIT = 2 * 1024 * 1024
 _CATALOG_PRIORITY_DOCUMENT_LIMIT = 8 * 1024 * 1024
-
-# Optional-runtime acquisition remains fail-closed until setup owns a reviewed
-# per-platform uv executable digest in source control. A mutable local receipt
-# cannot authenticate the executable that parses and extracts locked wheels.
-_REVIEWED_UV_EXECUTABLE_LOCKS: dict[tuple[str, str], dict[str, str]] = {}
 
 _STATE_LOCK = threading.RLock()
 
@@ -1281,10 +1277,13 @@ def public_catalog(
 
 
 def _verified_uv_executable() -> str:
-    tool_root = (MANAGED_ROOT / "tools" / "uv").resolve()
+    tool_root = _verified_existing_managed_directory(
+        MANAGED_ROOT / "tools" / "uv",
+        managed_root=MANAGED_ROOT,
+    )
     receipt = _read_json(tool_root / "receipt.json", {}, root=tool_root)
-    machine = platform.machine().strip().lower()
-    reviewed = _REVIEWED_UV_EXECUTABLE_LOCKS.get((_platform_name(), machine))
+    machine = _machine_name()
+    reviewed = UV_TOOL_LOCKS.get((_platform_name(), machine))
     if not reviewed:
         raise RuntimeError(
             "MoDiff has no reviewed immutable uv executable lock for this platform."
@@ -1329,12 +1328,17 @@ def _platform_name() -> str:
     return "linux"
 
 
+def _machine_name() -> str:
+    machine = platform.machine().strip().lower().replace("-", "_")
+    return {"amd64": "x86_64", "aarch64": "arm64"}.get(machine, machine)
+
+
 def _artifact_install_plan(profile) -> list[dict[str, Any]]:
     """Resolve one complete, immutable wheel set for this Python/platform."""
 
     platform_name = _platform_name()
     python_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
-    machine = platform.machine().strip().lower().replace("-", "_")
+    machine = _machine_name()
     expected = {package.distribution: package.version for package in profile.packages}
     from packaging.tags import sys_tags
     from packaging.utils import canonicalize_name, parse_wheel_filename
@@ -1356,6 +1360,7 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
         filename = str(artifact.get("filename") or "")
         url = str(artifact.get("url") or "")
         digest = str(artifact.get("sha256") or "").lower()
+        byte_size = artifact.get("byteSize")
         parsed = urlparse(url)
         try:
             port = parsed.port
@@ -1384,6 +1389,10 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
             or str(wheel_version) != version
             or len(digest) != 64
             or any(character not in "0123456789abcdef" for character in digest)
+            or isinstance(byte_size, bool)
+            or not isinstance(byte_size, int)
+            or byte_size <= 0
+            or byte_size > 512 * 1024**2
         ):
             raise RuntimeError("The optional-runtime artifact lock is invalid for this platform.")
         selected[distribution] = {
@@ -1392,6 +1401,7 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
             "filename": filename,
             "url": url,
             "sha256": digest,
+            "byteSize": byte_size,
             "platform": platform_name,
             "pythonTag": python_tag,
             "machine": artifact_machine,

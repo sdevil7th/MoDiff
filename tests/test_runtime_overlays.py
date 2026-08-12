@@ -1,6 +1,8 @@
 from dataclasses import replace
 import base64
+import csv
 import hashlib
+import io
 import os
 from pathlib import Path, PurePosixPath
 import stat
@@ -16,6 +18,7 @@ import zipfile
 
 from modiff import optimization_packages
 from modiff import runtime_overlays
+from modiff import install as modiff_install
 from modiff.optional_runtimes import TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
 
 
@@ -30,6 +33,19 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
 
     def tearDown(self):
         self.temporary.cleanup()
+
+    @staticmethod
+    def _with_complete_record(members, dist_info):
+        record_name = f"{dist_info}/RECORD"
+        files = [(name, body, *details) for name, body, *details in members if name != record_name]
+        rows = []
+        for name, body, *_details in files:
+            digest = base64.urlsafe_b64encode(hashlib.sha256(body).digest()).rstrip(b"=").decode("ascii")
+            rows.append((name, f"sha256={digest}", str(len(body))))
+        rows.append((record_name, "", ""))
+        output = io.StringIO(newline="")
+        csv.writer(output, lineterminator="\n").writerows(rows)
+        return [*files, (record_name, output.getvalue().encode("utf-8"))]
 
     @staticmethod
     def _default_members(
@@ -58,7 +74,6 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
                     "Tag: py3-none-any\n\n"
                 ).encode("utf-8"),
             ),
-            (f"{dist_info}/RECORD", b"reviewed-record\n"),
         ]
         if entry_points:
             members.append(
@@ -67,7 +82,7 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
                     b"[console_scripts]\ndemo-tool = demo_pkg:main\n",
                 )
             )
-        return members
+        return RuntimeOverlayArtifactTests._with_complete_record(members, dist_info)
 
     @staticmethod
     def _write_member(wheel, name, body, *, mode=stat.S_IFREG | 0o644):
@@ -102,6 +117,7 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             "filename": filename,
             "url": f"https://files.example.invalid/{filename}",
             "sha256": digest,
+            "byteSize": source.stat().st_size,
             "platform": "any",
             "pythonTag": "py3",
             "machine": "any",
@@ -133,8 +149,8 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
                     "Tag: py3-none-any\n\n"
                 ).encode("utf-8"),
             ),
-            (f"{dist_info}/RECORD", f"{distribution}=={version}\n".encode("utf-8")),
         ]
+        members = self._with_complete_record(members, dist_info)
         return self._store_locked_wheel(
             distribution=distribution,
             version=version,
@@ -272,10 +288,109 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             locked.to_spec_dict()["artifactLocks"][0]["sha256"],
         )
 
+    def test_optional_runtime_has_one_complete_wheel_closure_for_every_supported_target(self):
+        from packaging import tags
+
+        profile = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
+            TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+        ]
+        targets = {
+            ("linux", "x86_64"): "manylinux_2_17_x86_64",
+            ("linux", "arm64"): "manylinux_2_17_aarch64",
+            ("macos", "x86_64"): "macosx_10_12_x86_64",
+            ("macos", "arm64"): "macosx_11_0_arm64",
+            ("windows", "x86_64"): "win_amd64",
+            ("windows", "arm64"): "win_arm64",
+        }
+        for (platform_name, machine), wheel_platform in targets.items():
+            supported = set(
+                tags.cpython_tags(
+                    python_version=(3, 12),
+                    abis=["cp312"],
+                    platforms=[wheel_platform],
+                )
+            ) | set(
+                tags.compatible_tags(
+                    python_version=(3, 12),
+                    interpreter="cp312",
+                    platforms=[wheel_platform],
+                )
+            )
+            with (
+                self.subTest(platform=platform_name, machine=machine),
+                mock.patch.object(optimization_packages, "_platform_name", return_value=platform_name),
+                mock.patch.object(optimization_packages, "_machine_name", return_value=machine),
+                mock.patch.object(tags, "sys_tags", return_value=iter(supported)),
+            ):
+                selected = optimization_packages._artifact_install_plan(profile)
+            self.assertEqual(len(selected), 10)
+            self.assertEqual(
+                [item["distribution"] for item in selected],
+                [package.distribution for package in profile.packages],
+            )
+            self.assertTrue(all(item["byteSize"] > 0 for item in selected))
+
+        malformed = [dict(item) for item in profile.artifact_locks]
+        for item in malformed:
+            if item["platform"] == "windows" and item["machine"] == "x86_64":
+                item["byteSize"] = 0
+                break
+        windows_tags = set(
+            tags.cpython_tags(
+                python_version=(3, 12), abis=["cp312"], platforms=["win_amd64"]
+            )
+        ) | set(
+            tags.compatible_tags(
+                python_version=(3, 12), interpreter="cp312", platforms=["win_amd64"]
+            )
+        )
+        with (
+            mock.patch.object(optimization_packages, "_platform_name", return_value="windows"),
+            mock.patch.object(optimization_packages, "_machine_name", return_value="x86_64"),
+            mock.patch.object(tags, "sys_tags", return_value=iter(windows_tags)),
+            self.assertRaisesRegex(RuntimeError, "artifact lock is invalid"),
+        ):
+            optimization_packages._artifact_install_plan(replace(profile, artifact_locks=tuple(malformed)))
+
+    def test_base_installer_records_the_exact_uv_executable_for_overlay_reuse(self):
+        managed = self.root / "tool-managed"
+        tool_root = managed / "tools" / "uv"
+        tool_root.mkdir(parents=True)
+        executable = tool_root / "uv.exe"
+        executable.write_bytes(b"reviewed-uv-test-binary")
+        digest = hashlib.sha256(executable.read_bytes()).hexdigest()
+        lock = {
+            "url": "https://github.com/astral-sh/uv/releases/download/test/uv.zip",
+            "archiveSha256": "a" * 64,
+            "executable": "uv.exe",
+            "executableSha256": digest,
+        }
+        with (
+            mock.patch.object(modiff_install, "MANAGED_ROOT", managed),
+            mock.patch.object(modiff_install, "UV_TOOL_LOCKS", {("windows", "x86_64"): lock}),
+            mock.patch.object(modiff_install, "normalized_os", return_value="windows"),
+            mock.patch.object(modiff_install, "normalized_arch", return_value="x86_64"),
+        ):
+            self.assertEqual(Path(modiff_install._ensure_uv()), executable)
+        receipt = (tool_root / "receipt.json").read_text(encoding="utf-8")
+        self.assertIn(digest, receipt)
+        with (
+            mock.patch.object(optimization_packages, "MANAGED_ROOT", managed),
+            mock.patch.object(optimization_packages, "UV_TOOL_LOCKS", {("windows", "x86_64"): lock}),
+            mock.patch.object(optimization_packages, "_platform_name", return_value="windows"),
+            mock.patch.object(optimization_packages.platform, "machine", return_value="AMD64"),
+        ):
+            self.assertEqual(Path(optimization_packages._verified_uv_executable()), executable)
+            executable.write_bytes(b"tampered")
+            with self.assertRaisesRegex(RuntimeError, "integrity check"):
+                optimization_packages._verified_uv_executable()
+
     def test_normalization_removes_only_known_receipts_and_generated_scripts(self):
         artifact, archive = self._create_locked_wheel(
             self._default_members(entry_points=True)
         )
+        with zipfile.ZipFile(archive) as wheel:
+            reviewed_record = wheel.read("demo_pkg-1.0.0.dist-info/RECORD")
         self._extract(archive)
         dist_info = self.site_packages / "demo_pkg-1.0.0.dist-info"
         (dist_info / "RECORD").write_bytes(b"installer-rewritten-record\n")
@@ -289,7 +404,7 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             self.site_packages, [artifact], self.archive_root
         )
 
-        self.assertEqual((dist_info / "RECORD").read_bytes(), b"reviewed-record\n")
+        self.assertEqual((dist_info / "RECORD").read_bytes(), reviewed_record)
         for receipt in ("INSTALLER", "direct_url.json", "REQUESTED"):
             self.assertFalse((dist_info / receipt).exists())
         self.assertFalse(script.exists())
@@ -390,6 +505,26 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
         }
         for label, members in cases.items():
             with self.subTest(label=label):
+                self.assert_invalid_wheel(members)
+
+    def test_wheel_record_must_cover_exact_files_hashes_and_sizes(self):
+        defaults = self._default_members()
+        record_name = "demo_pkg-1.0.0.dist-info/RECORD"
+        record = next(body for name, body, *_details in defaults if name == record_name).decode("utf-8")
+        cases = {
+            "missing member": record.replace(next(line for line in record.splitlines(True) if line.startswith("demo_pkg/__init__.py,")), ""),
+            "unknown member": record + "demo_pkg/unknown.py,sha256=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,1\n",
+            "wrong digest": record.replace("sha256=", "sha256=A", 1),
+            "wrong size": record.replace(",19\n", ",20\n", 1),
+            "hashed self": record.replace(f"{record_name},,", f"{record_name},sha256=AAAA,1"),
+            "duplicate path": record + next(line for line in record.splitlines(True) if line.startswith("demo_pkg/__init__.py,")),
+        }
+        for label, malformed in cases.items():
+            with self.subTest(label=label):
+                members = [
+                    (name, malformed.encode("utf-8") if name == record_name else body, *details)
+                    for name, body, *details in defaults
+                ]
                 self.assert_invalid_wheel(members)
 
     def test_dist_info_metadata_project_and_version_must_match_lock(self):
@@ -585,6 +720,44 @@ else:
         time.sleep(1.25)
         self.assertFalse(escaped.exists())
 
+    @unittest.skipUnless(os.name == "nt", "Windows Job Object containment")
+    def test_windows_job_contains_breakaway_descendants(self):
+        managed = self.root / "breakaway-managed"
+        lock_path = managed / "optimizations" / "install.lock"
+        blocked = self.root / "breakaway-blocked"
+        launched = self.root / "breakaway-launched"
+        escaped = self.root / "breakaway-escaped"
+        grandchild = (
+            "import time; from pathlib import Path; "
+            f"time.sleep(0.5); Path({str(escaped)!r}).write_text('escaped')"
+        )
+        child = (
+            "import subprocess, sys; from pathlib import Path; "
+            "flags=subprocess.CREATE_BREAKAWAY_FROM_JOB|subprocess.CREATE_NEW_PROCESS_GROUP; "
+            "\ntry: subprocess.Popen([sys.executable, '-c', " + repr(grandchild) + "], creationflags=flags); "
+            "Path(" + repr(str(launched)) + ").write_text('launched')"
+            "\nexcept OSError: Path(" + repr(str(blocked)) + ").write_text('blocked')"
+        )
+        with (
+            mock.patch.object(runtime_overlays, "MANAGED_ROOT", managed),
+            mock.patch.object(runtime_overlays, "INSTALL_LEASE_PATH", lock_path),
+        ):
+            lease = runtime_overlays.reserve_install("test", "breakaway")
+            try:
+                result = runtime_overlays.run_cancellable_command(
+                    [sys.executable, "-I", "-c", child],
+                    environment=os.environ.copy(),
+                    lease=lease,
+                    timeout=10,
+                    cwd=self.root,
+                )
+            finally:
+                runtime_overlays.release_install(lease)
+        self.assertEqual(result["returnCode"], 0, result["stderr"])
+        self.assertTrue(blocked.exists() or launched.exists())
+        time.sleep(0.75)
+        self.assertFalse(escaped.exists())
+
     def test_parent_death_watchdog_retains_lease_until_tree_is_dead(self):
         managed = self.root / "watchdog-managed"
         lock_path = managed / "optimizations" / "install.lock"
@@ -673,7 +846,7 @@ finally:
         current = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
             TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
         ]
-        future = replace(current, install_action_available=True)
+        future = replace(current, install_action_available=True, artifact_locks=())
         self.assertEqual(future.artifact_locks, ())
         selector = mock.Mock(wraps=optimization_packages._artifact_install_plan)
         reserve = mock.Mock(side_effect=AssertionError("lease must not be reserved"))
