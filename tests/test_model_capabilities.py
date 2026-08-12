@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 36)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 35)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 43)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 44)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -166,8 +166,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["referenceImages", "maskImage"],
         )
         flux_dev = by_model["FluxDevPipeline"]
-        self.assertEqual(flux_dev["studioExecutionSpecModes"], ["edit_image", "text_to_image"])
-        self.assertEqual(flux_dev["pipelineClasses"], ["FluxImg2ImgPipeline", "FluxPipeline"])
+        self.assertEqual(flux_dev["studioExecutionSpecModes"], ["edit_image", "inpaint", "text_to_image"])
+        self.assertEqual(
+            flux_dev["pipelineClasses"],
+            ["FluxImg2ImgPipeline", "FluxInpaintPipeline", "FluxPipeline"],
+        )
         flux_dev_edit = next(
             item for item in flux_dev["studioExecutionSpecs"] if item["mode"] == "edit_image"
         )
@@ -175,6 +178,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             flux_dev["modeRequirements"]["edit_image"]["requiredImages"],
             ["referenceImages"],
+        )
+        flux_dev_inpaint = next(
+            item for item in flux_dev["studioExecutionSpecs"] if item["mode"] == "inpaint"
+        )
+        self.assertEqual(flux_dev_inpaint["pipelineClass"], "FluxInpaintPipeline")
+        self.assertEqual(
+            flux_dev["modeRequirements"]["inpaint"]["requiredImages"],
+            ["referenceImages", "maskImage"],
         )
         depth_spec = by_model["FluxDepthPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(by_model["FluxDepthPipeline"]["modes"], ["control_image"])

@@ -983,11 +983,16 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline")
             ],
             "supportsImageInput": True,
-            "modes": ["text_to_image", "edit_image"],
+            "supportsMask": True,
+            "modes": ["text_to_image", "edit_image", "inpaint"],
             "modeRequirements": {
                 "edit_image": {
                     "requiredImages": ["referenceImages"],
                     "note": "Requires one source image for image-to-image transformation.",
+                },
+                "inpaint": {
+                    "requiredImages": ["referenceImages", "maskImage"],
+                    "note": "Requires one source image and one mask image for inpainting.",
                 }
             },
         },
@@ -2662,6 +2667,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "bindings": _EDIT_GRAPH_BINDINGS
         + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
+    "flux-dev:inpaint:v1": {
+        "modelType": "FluxDevPipeline",
+        "mode": "inpaint",
+        "profile": _profile(
+            "flux-dev:inpaint-direct",
+            "FluxDevPipeline",
+            FLUX_DEV_REPO,
+            mode="inpaint",
+            pipeline_class="FluxInpaintPipeline",
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=20,
+            compatible_repos=(FLUX_DEV_FP8_REPO,),
+        ),
+        "roles": _INPAINT_GRAPH_ROLES,
+        "edges": _INPAINT_GRAPH_EDGES,
+        "bindings": _INPAINT_GRAPH_BINDINGS
+        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+    },
     "sdxl-base:text-to-image:v1": {
         "modelType": "StableDiffusionXLPipeline",
         "mode": "text_to_image",
@@ -2807,6 +2838,7 @@ _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-depth:direct",
     "flux-dev:direct",
     "flux-dev:img2img-direct",
+    "flux-dev:inpaint-direct",
     "flux-fill:direct",
     "flux-kontext:direct",
     "flux-krea:direct",

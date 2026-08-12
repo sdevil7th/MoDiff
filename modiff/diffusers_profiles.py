@@ -26,7 +26,6 @@ from modiff.studio_execution_specs import (
     FLUX_CANNY_VERIFIED_REPAIR_REPO as FLUX_CANNY_VERIFIED_REPAIR_REPO,
     FLUX_DEPTH_REPO as FLUX_DEPTH_REPO,
     FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
-    FLUX_DEV_REPO,
     FLUX_KREA_REPO as FLUX_KREA_REPO,
     FLUX_KONTEXT_NVFP4_REPO as FLUX_KONTEXT_NVFP4_REPO,
     FLUX_KONTEXT_REPO as FLUX_KONTEXT_REPO,
@@ -693,7 +692,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
     ),
     ("ZImageImg2ImgPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("edit_image",)),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
-    ("FluxInpaintPipeline", "image", FLUX_DEV_REPO, ("inpaint",)),
     (
         "FluxKontextInpaintPipeline",
         "image",
