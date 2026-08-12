@@ -46,11 +46,17 @@ these locks—does not make the contract runnable.
    invalidates the old Auto eligibility.
 
 The backend publishes bounded status, job, cancellation, activation, and
-rollback contracts so a future Setup surface does not have to invent a second
-lifecycle. Current package install and activation requests return a fail-closed
-conflict before a lease, job, network request, staged directory, or subprocess
-is created. Runtime-only optimization features may still be explicitly
-selected or qualified when their existing capability contract permits it.
+rollback contracts. Setup implements that lifecycle behind the backend-owned
+`contractState: qualified`, `cutoverReady`, and per-action availability flags:
+install or repair requires explicit consent, polls only the returned bounded job
+identity, supports cancellation, and keeps activation and rollback behind their
+own consent steps. Ambiguous staged environments do not expose activation.
+Current source flags keep the candidate unqualified, so Setup renders no package
+controls and sends no package mutation request. Direct install and activation
+requests still return a fail-closed conflict before a lease, job, network
+request, staged directory, or subprocess is created. Runtime-only optimization
+features may still be explicitly selected or qualified when their existing
+capability contract permits it.
 
 ## First-use execution boundary
 
