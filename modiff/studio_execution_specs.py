@@ -29,6 +29,7 @@ FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
+SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -137,6 +138,9 @@ _GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageGenerate", "strength", "strength"),
     ("diffusersImageGenerate", "output_type", "outputType"),
     ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
+)
+_SDXL_GRAPH_BINDINGS = _GRAPH_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
 )
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
@@ -682,6 +686,7 @@ _BINDING_SOURCES = frozenset(
     item[2]
     for item in (
         *_GRAPH_BINDINGS,
+        *_SDXL_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
@@ -2612,6 +2617,74 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _MODULAR_CONTROL_GRAPH_ROLES,
         "edges": _MODULAR_CONTROL_GRAPH_EDGES,
         "bindings": _MODULAR_CONTROL_GRAPH_BINDINGS,
+    },
+    "sdxl-base:text-to-image:v1": {
+        "modelType": "StableDiffusionXLPipeline",
+        "mode": "text_to_image",
+        "profile": {
+            "id": "sdxl-base:direct",
+            "model_type": "StableDiffusionXLPipeline",
+            "modes": ("text_to_image",),
+            "loader_module": "modules.DiffusersImage",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-image",
+            "pipeline_class": "StableDiffusionXLPipeline",
+            "default_repo": SDXL_BASE_REPO,
+            "fallback_repo": None,
+            "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 768,
+            "max_low_memory_steps": 30,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "bindings": _SDXL_GRAPH_BINDINGS,
+        "capability": {
+            "modelType": "StableDiffusionXLPipeline",
+            "label": "Stable Diffusion XL 1.0",
+            "displayName": "stable-diffusion-xl-base-1.0",
+            "family": "Stable Diffusion XL",
+            "defaultRepo": SDXL_BASE_REPO,
+            "artifactLabel": "Diffusers repo",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+            "recommendedSteps": 30,
+            "recommendedGuidance": 5.0,
+            "guidanceLabel": "Guidance",
+            "supportsImageInput": False,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": True,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "steps": 24,
+                "width": 768,
+                "height": 768,
+            },
+            "modes": ["text_to_image"],
+            "executionStatus": "expert_only",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO)],
+            "autoEligible": False,
+            "templateEligible": True,
+            "galleryEligible": False,
+        },
     },
 }
 

@@ -68,6 +68,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "Flux2KleinPipeline",
+            "StableDiffusionXLPipeline",
             "DummyCustomPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}

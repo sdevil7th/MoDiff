@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 40)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 39)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -74,7 +74,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 39)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 40)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -92,6 +92,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",
+            "StableDiffusionXLPipeline",
         ):
             self.assertEqual(
                 by_model[model_type]["studioExecutionSpecs"],
@@ -113,6 +114,18 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             payload["studioExecutionSpecs"][0]["edges"],
             payload["studioExecutionSpecs"][2]["edges"],
         )
+        sdxl = by_model["StableDiffusionXLPipeline"]
+        self.assertEqual(sdxl["studioExecutionSpecModes"], ["text_to_image"])
+        self.assertEqual(sdxl["pipelineClasses"], ["StableDiffusionXLPipeline"])
+        self.assertEqual(sdxl["executionProfiles"][0]["id"], "sdxl-base:direct")
+        self.assertEqual(
+            sdxl["revisionCandidates"],
+            ["462165984030d82259a11f4367a4eed129e94a7b"],
+        )
+        self.assertTrue(sdxl["templateEligible"])
+        self.assertFalse(sdxl["autoEligible"])
+        self.assertFalse(sdxl["galleryEligible"])
+        self.assertNotIn("StableDiffusionXLPipeline", experimental)
         depth_spec = by_model["FluxDepthPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(by_model["FluxDepthPipeline"]["modes"], ["control_image"])
         self.assertEqual(depth_spec["mode"], "control_image")
@@ -204,6 +217,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "WanVideoPipeline",
             "LTXVideoPipeline",
             "AceStepAudioPipeline",
+            "StableDiffusionXLPipeline",
         ):
             capability = by_model[model_type]
             self.assertEqual(
