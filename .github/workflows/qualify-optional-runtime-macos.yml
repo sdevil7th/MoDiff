@@ -28,18 +28,20 @@ jobs:
           diff --git a/pyproject.toml b/pyproject.toml
           --- a/pyproject.toml
           +++ b/pyproject.toml
-          @@ -12,14 +12,12 @@ dependencies = [
+          @@ -12,16 +12,14 @@ dependencies = [
              "aiohttp-cors>=0.7.0",
              "kornia>=0.8.1",
              "nanoid>=2.0.0",
-          -  "peft>=0.17.0",
+             # Keep unqualified targets base-delivered until their executable qualifier
+             # passes; Linux/Windows x86-64 receive the exact optional overlay on use.
+          -  "peft>=0.17.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
              "protobuf>=6.31.1",
              "scipy>=1.15.2",
              "sentencepiece>=0.2.0",
              "torch>=2.6.0",
              "torchsde>=0.2.6",
              "torchvision>=0.21.0",
-          -  "transformers>=4.49.0",
+          -  "transformers>=4.49.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
              "diffusers @ git+https://github.com/huggingface/diffusers.git@13a7bee4878d62fccc8d25f97e480e68de96fa03",
              "ftfy>=6.3.1",
              "huggingface-hub>=1.23.0,<2.0",
@@ -48,18 +50,20 @@ jobs:
           diff --git a/pyproject.toml b/pyproject.toml
           --- a/pyproject.toml
           +++ b/pyproject.toml
-          @@ -12,14 +12,12 @@ dependencies = [
+          @@ -12,16 +12,14 @@ dependencies = [
              "aiohttp-cors>=0.7.0",
              "kornia>=0.8.1",
              "nanoid>=2.0.0",
-          -  "peft>=0.17.0",
+             # Keep unqualified targets base-delivered until their executable qualifier
+             # passes; Linux/Windows x86-64 receive the exact optional overlay on use.
+          -  "peft>=0.17.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
              "protobuf>=6.31.1",
              "scipy>=1.15.2",
              "sentencepiece>=0.2.0",
              "torch>=2.6.0",
              "torchsde>=0.2.6",
              "torchvision>=0.21.0",
-          -  "transformers>=4.49.0",
+          -  "transformers>=4.49.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
              "diffusers @ git+https://github.com/huggingface/diffusers.git@13a7bee4878d62fccc8d25f97e480e68de96fa03",
              "ftfy>=6.3.1",
              "huggingface-hub>=1.23.0,<2.0",

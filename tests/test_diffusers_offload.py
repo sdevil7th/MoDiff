@@ -1811,7 +1811,19 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             },
         }
 
-        result = WebServer.execute_graph(server, graph)
+        with patch(
+            "modiff.server.graph_optional_runtime_requirement",
+            return_value={
+                "schemaVersion": 1,
+                "delivery": "optional_overlay",
+                "requiredNow": True,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["z-image:auto"],
+                "state": "active",
+                "reason": "optional_runtime_active",
+            },
+        ):
+            result = WebServer.execute_graph(server, graph)
         self.assertIsNone(result)
         self.assertEqual(calls["count"], 2)
         self.assertEqual(deterministic_calls, [1, 2])

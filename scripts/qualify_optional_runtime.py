@@ -269,24 +269,41 @@ def _future_profile():
     import modiff.optional_runtimes as optional_runtimes
 
     candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[PROFILE_ID]
-    if (
-        candidate.contract_state != "candidate_unqualified"
-        or candidate.cutover_ready
-        or candidate.install_action_available
-        or candidate.activation_available
-    ):
-        raise RuntimeError("qualification requires the production profile to remain dormant")
-    return candidate, replace(
-        candidate,
+    target = candidate.contract_for_target(
+        platform_name=_platform_name(),
+        machine=_machine_name(),
+    )
+    target_flags = (
+        target.cutover_ready,
+        target.install_action_available,
+        target.activation_available,
+    )
+    if target.contract_state == "qualified" and target_flags == (True, True, True):
+        return candidate, candidate
+    if target.contract_state != "candidate_unqualified" or target_flags != (False, False, False):
+        raise RuntimeError("qualification requires a coherent qualified or pending target contract")
+    qualified_target = replace(
+        target,
         contract_state="qualified",
         cutover_ready=True,
         install_action_available=True,
         activation_available=True,
     )
+    qualified_contracts = tuple(
+        qualified_target
+        if (contract.platform, contract.machine) == (target.platform, target.machine)
+        else contract
+        for contract in candidate.target_contracts
+    )
+    return candidate, replace(candidate, target_contracts=qualified_contracts)
 
 
 def qualification_preflight() -> dict[str, Any]:
     candidate, qualified = _future_profile()
+    source_target = candidate.contract_for_target(
+        platform_name=_platform_name(),
+        machine=_machine_name(),
+    )
     probe = _json_process(_PREFLIGHT_SCRIPT, str(ROOT), timeout=60)
     plan = probe.get("plan")
     present = probe.get("present")
@@ -310,7 +327,8 @@ def qualification_preflight() -> dict[str, Any]:
         "profileId": candidate.id,
         "candidateSpecDigest": candidate.spec_digest,
         "qualificationSpecDigest": qualified.spec_digest,
-        "sourceFlagsDormant": True,
+        "sourceFlagsDormant": not source_target.cutover_ready,
+        "sourceTargetQualified": source_target.cutover_ready,
         "cleanBase": not present,
         "stagedPackagesPresent": present,
         "managedUvReceiptPresent": uv_ready,

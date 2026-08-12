@@ -85,7 +85,7 @@ def _cpu_hardware():
 
 
 class OptionalRuntimeContractTests(unittest.TestCase):
-    def test_composite_contract_is_exact_hashed_and_never_claims_cutover_readiness(self):
+    def test_composite_contract_is_exact_hashed_and_platform_qualified(self):
         versions = {"transformers": "5.14.1", "peft": "0.20.0"}
         profile = public_optional_runtime_profiles(
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
@@ -93,10 +93,12 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         )[0]
 
         self.assertEqual(profile["schemaVersion"], 1)
-        self.assertEqual(profile["contractState"], "candidate_unqualified")
-        self.assertFalse(profile["cutoverReady"])
-        self.assertFalse(profile["installActionAvailable"])
-        self.assertFalse(profile["activationAvailable"])
+        self.assertEqual(profile["contractState"], "qualified")
+        self.assertTrue(profile["cutoverReady"])
+        self.assertTrue(profile["installActionAvailable"])
+        self.assertTrue(profile["activationAvailable"])
+        self.assertEqual((profile["platform"], profile["machine"]), ("linux", "x86_64"))
+        self.assertEqual(len(profile["targetContracts"]), 6)
         self.assertEqual(profile["installPolicy"], "explicit_first_use")
         self.assertEqual(profile["status"], "present_unqualified")
         self.assertEqual(
@@ -139,6 +141,18 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             version_resolver=_version_resolver({"transformers": "0.0.0"}),
         )[0]
         self.assertEqual(different_host["specDigest"], profile["specDigest"])
+
+        macos = public_optional_runtime_profiles(
+            [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+            version_resolver=_version_resolver(versions),
+            platform_name="macos",
+            machine="arm64",
+        )[0]
+        self.assertEqual(macos["contractState"], "candidate_unqualified")
+        self.assertFalse(macos["cutoverReady"])
+        self.assertFalse(macos["installActionAvailable"])
+        self.assertFalse(macos["activationAvailable"])
+        self.assertEqual(macos["specDigest"], profile["specDigest"])
 
     def test_status_distinguishes_missing_wrong_version_and_present_unqualified(self):
         missing_and_wrong = public_optional_runtime_profiles(
@@ -457,18 +471,12 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             )
             # This metadata-only slice must not affect the existing Auto result.
             self.assertEqual(plan["canAutoRun"], bool(plan["selectedCandidate"]))
-            self.assertEqual(
-                plan["optionalRuntimeProfiles"][0]["contractState"],
-                "candidate_unqualified",
-            )
-            self.assertFalse(plan["optionalRuntimeProfiles"][0]["cutoverReady"])
+            self.assertEqual(plan["optionalRuntimeProfiles"][0]["contractState"], "qualified")
+            self.assertTrue(plan["optionalRuntimeProfiles"][0]["cutoverReady"])
             self.assertEqual(template_open_response.status, 200)
             optional_runtime_catalog = json.loads(optional_runtime_response.text)
-            self.assertEqual(
-                optional_runtime_catalog["profiles"][0]["contractState"],
-                "candidate_unqualified",
-            )
-            self.assertFalse(optional_runtime_catalog["profiles"][0]["cutoverReady"])
+            self.assertEqual(optional_runtime_catalog["profiles"][0]["contractState"], "qualified")
+            self.assertTrue(optional_runtime_catalog["profiles"][0]["cutoverReady"])
 
             capabilities = json.loads(capabilities_response.text)
             self.assertEqual(
@@ -493,7 +501,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 graph_file["optionalRuntimeProfiles"][0]["contractState"],
-                "candidate_unqualified",
+                "qualified",
             )
 
 

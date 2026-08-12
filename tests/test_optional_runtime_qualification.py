@@ -15,7 +15,7 @@ SPEC.loader.exec_module(qualification)
 
 
 class OptionalRuntimeQualificationTests(unittest.TestCase):
-    def test_preflight_preserves_dormant_profile_and_reports_exact_artifact_plan(self):
+    def test_preflight_preserves_profile_and_reports_exact_artifact_plan(self):
         import modiff.optional_runtimes as optional_runtimes
 
         before = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[qualification.PROFILE_ID]
@@ -24,8 +24,9 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
 
         self.assertIs(before, after)
         self.assertEqual(result["candidateSpecDigest"], before.spec_digest)
-        self.assertNotEqual(result["qualificationSpecDigest"], before.spec_digest)
-        self.assertTrue(result["sourceFlagsDormant"])
+        self.assertEqual(result["qualificationSpecDigest"], before.spec_digest)
+        self.assertFalse(result["sourceFlagsDormant"])
+        self.assertTrue(result["sourceTargetQualified"])
         self.assertEqual(result["artifactCount"], len(before.packages))
         self.assertGreater(result["artifactBytes"], 0)
         self.assertRegex(result["artifactPlanDigest"], r"^sha256:[0-9a-f]{64}$")
@@ -40,19 +41,35 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
                 qualification.run_qualification(consent=False)
         preflight.assert_not_called()
 
-    def test_future_projection_refuses_changed_production_flags(self):
+    def test_target_contract_refuses_incoherent_production_flags(self):
         from dataclasses import replace
         import modiff.optional_runtimes as optional_runtimes
 
         candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[qualification.PROFILE_ID]
-        changed = replace(candidate, install_action_available=True)
-        with mock.patch.object(
-            optional_runtimes,
-            "OPTIONAL_RUNTIME_PROFILES",
-            {qualification.PROFILE_ID: changed},
+        current = candidate.contract_for_target()
+        with self.assertRaisesRegex(ValueError, "Invalid optional-runtime target contract"):
+            replace(current, activation_available=False)
+
+    def test_pending_macos_target_projects_only_that_target(self):
+        import modiff.optional_runtimes as optional_runtimes
+
+        candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[qualification.PROFILE_ID]
+        with (
+            mock.patch.object(qualification, "_platform_name", return_value="macos"),
+            mock.patch.object(qualification, "_machine_name", return_value="arm64"),
         ):
-            with self.assertRaisesRegex(RuntimeError, "remain dormant"):
-                qualification._future_profile()
+            source, projected = qualification._future_profile()
+        self.assertIs(source, candidate)
+        self.assertFalse(
+            source.contract_for_target(platform_name="macos", machine="arm64").cutover_ready
+        )
+        self.assertTrue(
+            projected.contract_for_target(platform_name="macos", machine="arm64").cutover_ready
+        )
+        self.assertEqual(
+            projected.contract_for_target(platform_name="linux", machine="x86_64"),
+            source.contract_for_target(platform_name="linux", machine="x86_64"),
+        )
 
     def test_verified_uv_copy_rejects_a_forged_executable(self):
         from modiff.tool_locks import UV_TOOL_LOCKS

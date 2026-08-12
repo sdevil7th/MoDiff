@@ -121,8 +121,25 @@ def overlay_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
         yield updated
 
 
+@contextmanager
+def base_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
+    original = DIFFUSERS_EXECUTION_PROFILES[profile_id]
+    updated = replace(
+        original,
+        optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+        optional_runtime_platform_deliveries=(),
+        **changes,
+    )
+    with mock.patch.dict(
+        DIFFUSERS_EXECUTION_PROFILES,
+        {profile_id: updated},
+        clear=False,
+    ):
+        yield updated
+
+
 class OptionalRuntimeRequirementTests(unittest.TestCase):
-    def test_every_current_profile_is_explicitly_base_delivered(self):
+    def test_every_current_profile_has_explicit_platform_scoped_delivery(self):
         expected_keys = {
             "schemaVersion",
             "delivery",
@@ -135,19 +152,36 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES)
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
-                self.assertEqual(
-                    profile.optional_runtime_delivery,
-                    OPTIONAL_RUNTIME_DELIVERY_BASE,
-                )
+                self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
                 requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
                 self.assertEqual(set(requirement), expected_keys)
-                self.assertEqual(requirement["delivery"], "base")
-                self.assertFalse(requirement["requiredNow"])
-                self.assertEqual(requirement["state"], "base_satisfied")
+                self.assertEqual(requirement["delivery"], "optional_overlay")
+                self.assertTrue(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "unavailable")
                 self.assertEqual(requirement["executionProfileIds"], [profile.id])
+                for platform_name, machine, expected in (
+                    ("linux", "x86_64", "optional_overlay"),
+                    ("windows", "x86_64", "optional_overlay"),
+                    ("linux", "arm64", "base"),
+                    ("windows", "arm64", "base"),
+                    ("macos", "x86_64", "base"),
+                    ("macos", "arm64", "base"),
+                ):
+                    targeted = declarative_requirement(
+                        (profile,),
+                        platform_name=platform_name,
+                        machine=machine,
+                    )
+                    self.assertEqual(targeted["delivery"], expected)
+                    self.assertEqual(targeted["requiredNow"], expected == "optional_overlay")
 
     def test_base_delivery_never_observes_runtime_catalog(self):
-        profile = DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID]
+        profile = replace(
+            DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID],
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+            optional_runtime_platform_deliveries=(),
+        )
         resolver = mock.Mock(side_effect=AssertionError("catalog must stay dormant"))
         requirement = optional_runtime_requirement_for_profiles(
             (profile,),
@@ -177,11 +211,16 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                 )
 
     def test_mixed_cutover_contract_fails_closed_but_pure_diffusers_is_neutral(self):
-        original = DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID]
+        original = replace(
+            DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID],
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+            optional_runtime_platform_deliveries=(),
+        )
         overlay = replace(
             original,
             id="fixture-overlay:direct",
             optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+            optional_runtime_platform_deliveries=(),
         )
         mixed = declarative_requirement((original, overlay))
         self.assertTrue(mixed["requiredNow"])
@@ -287,8 +326,8 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
 
-    def test_local_custom_and_malformed_shared_selectors_are_base_tolerated(self):
-        trap = mock.Mock(side_effect=AssertionError("catalog must stay dormant"))
+    def test_local_custom_and_malformed_shared_selectors_fail_closed_after_cutover(self):
+        catalog = mock.Mock(return_value=runtime_catalog("missing"))
         for selector in (
             {"source": "local", "value": "C:/models/flux"},
             {"source": "custom", "value": "repo"},
@@ -300,10 +339,12 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     "modules.DiffusersImage",
                     "LoadPipeline",
                     {"pipeline_class": "FluxPipeline", "model_id": selector},
-                    catalog_resolver=trap,
+                    catalog_resolver=catalog,
                 )
-                self.assertEqual(requirement["state"], "base_satisfied")
-        trap.assert_not_called()
+                self.assertEqual(requirement["state"], "unavailable")
+                self.assertTrue(requirement["requiredNow"])
+                self.assertTrue(requirement["reason"].startswith("execution_profile_"))
+        self.assertEqual(catalog.call_count, 0)
 
     def test_graph_requirement_uses_only_deduplicated_executable_path_nodes(self):
         graph = loader_graph()
@@ -507,7 +548,7 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_current_base_graph_survives_every_persistent_overlay_status(self):
         catalog = mock.Mock(side_effect=AssertionError("base graph must not scan catalog"))
-        with mock.patch(
+        with base_delivery(), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             catalog,
         ):
@@ -574,7 +615,7 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
         catalog = mock.Mock(
             side_effect=AssertionError("unrelated mutations must not scan catalog")
         )
-        with mock.patch(
+        with base_delivery(), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             catalog,
         ):
@@ -1085,7 +1126,7 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_base_direct_and_queued_field_actions_survive_persistent_states(self):
         catalog = mock.Mock(side_effect=AssertionError("base action must not scan catalog"))
-        with mock.patch(
+        with base_delivery(), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             catalog,
         ):
@@ -1192,6 +1233,7 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             side_effect=AssertionError("persistent restart state must short-circuit")
         )
         with (
+            base_delivery(),
             mock.patch.object(
                 server_module,
                 "validate_optional_runtime_activation_request",

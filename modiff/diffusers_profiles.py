@@ -16,6 +16,7 @@ from modiff.modular_workflow_contracts import (
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    optional_runtime_target,
     public_optional_runtime_profiles,
 )
 from modiff.studio_execution_specs import (
@@ -54,6 +55,14 @@ OPTIONAL_RUNTIME_DELIVERY_BASE = "base"
 OPTIONAL_RUNTIME_DELIVERY_OVERLAY = "optional_overlay"
 OPTIONAL_RUNTIME_DELIVERIES = frozenset(
     {OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY}
+)
+OPTIONAL_RUNTIME_PLATFORM_DELIVERIES = (
+    ("linux", "x86_64", OPTIONAL_RUNTIME_DELIVERY_OVERLAY),
+    ("linux", "arm64", OPTIONAL_RUNTIME_DELIVERY_BASE),
+    ("macos", "x86_64", OPTIONAL_RUNTIME_DELIVERY_BASE),
+    ("macos", "arm64", OPTIONAL_RUNTIME_DELIVERY_BASE),
+    ("windows", "x86_64", OPTIONAL_RUNTIME_DELIVERY_OVERLAY),
+    ("windows", "arm64", OPTIONAL_RUNTIME_DELIVERY_BASE),
 )
 _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
 _EXECUTION_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._:-]{0,127}")
@@ -194,10 +203,12 @@ class DiffusersExecutionProfile:
     # ``optional_runtime_profiles=()`` rather than inheriting this composite.
     optional_runtime_profiles: tuple[str, ...] = (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
     # Keep optional-runtime discovery metadata separate from executable
-    # delivery.  Every current profile is still satisfied by the reviewed base
-    # environment; only the atomic dependency cutover may change this to
-    # ``optional_overlay`` and make first-use status an execution prerequisite.
-    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
+    # delivery. Linux/Windows x86-64 use the qualified overlay; unqualified
+    # architectures remain explicitly base-delivered.
+    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = (
+        OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
+    )
     compatible_repos: tuple[str, ...] = ()
     expert_quantization_modes: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
@@ -234,12 +245,46 @@ class DiffusersExecutionProfile:
             or not set(self.expert_quantization_modes).issubset(reviewed_quantization_modes)
         ):
             raise ValueError(f"Diffusers execution profile {self.id!r} has invalid Expert quantization modes.")
+        targets = tuple(
+            (platform_name, machine)
+            for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
+            if delivery in OPTIONAL_RUNTIME_DELIVERIES
+        )
+        if (
+            self.optional_runtime_delivery not in OPTIONAL_RUNTIME_DELIVERIES
+            or len(targets) != len(self.optional_runtime_platform_deliveries)
+            or len(set(targets)) != len(targets)
+        ):
+            raise ValueError(
+                f"Diffusers execution profile {self.id!r} has invalid optional-runtime delivery targets."
+            )
 
     @property
     def backend_path(self) -> str:
         """Return the legacy combined loader key from the explicit target."""
 
         return f"{self.loader_module}.{self.loader_action}"
+
+    def optional_runtime_delivery_for_target(
+        self,
+        *,
+        platform_name: str | None = None,
+        machine: str | None = None,
+    ) -> str:
+        """Resolve reviewed delivery for one explicit OS/architecture target."""
+
+        if not self.optional_runtime_platform_deliveries:
+            return self.optional_runtime_delivery
+        selected_platform, selected_machine = optional_runtime_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
+        matches = tuple(
+            delivery
+            for target_platform, target_machine, delivery in self.optional_runtime_platform_deliveries
+            if target_platform == selected_platform and target_machine == selected_machine
+        )
+        return matches[0] if len(matches) == 1 else "invalid"
 
     def to_public_dict(
         self,
@@ -249,6 +294,11 @@ class DiffusersExecutionProfile:
     ) -> dict:
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target()
+        public["optional_runtime_platform_deliveries"] = [
+            {"platform": platform_name, "machine": machine, "delivery": delivery}
+            for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
+        ]
         if self.expert_cuda_policy:
             public["expert_cuda_policy"] = {
                 **public["expert_cuda_policy"],
@@ -719,6 +769,9 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
 
 def optional_runtime_requirement_for_profiles(
     profiles: tuple[DiffusersExecutionProfile, ...] | list[DiffusersExecutionProfile],
+    *,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> dict:
     """Describe whether selected execution profiles require an overlay now.
 
@@ -745,7 +798,10 @@ def optional_runtime_requirement_for_profiles(
                 execution_profile_ids.append(profile.id)
         else:
             invalid_profile_ids = True
-        delivery = profile.optional_runtime_delivery
+        delivery = profile.optional_runtime_delivery_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
         if delivery not in OPTIONAL_RUNTIME_DELIVERIES:
             deliveries.add("invalid")
         else:

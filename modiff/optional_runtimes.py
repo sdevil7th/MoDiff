@@ -12,6 +12,7 @@ from dataclasses import dataclass
 import hashlib
 from importlib import metadata
 import json
+import platform
 import sys
 from types import MappingProxyType
 from typing import Callable, Iterable, Mapping
@@ -29,6 +30,31 @@ _OPTIONAL_RUNTIME_TARGETS = (
     ("windows", "cp312", "x86_64"),
     ("windows", "cp312", "arm64"),
 )
+
+
+def optional_runtime_target(
+    *,
+    platform_name: str | None = None,
+    machine: str | None = None,
+) -> tuple[str, str]:
+    """Return one normalized runtime target without importing optional packages."""
+
+    selected_platform = str(platform_name or "").strip().lower()
+    if not selected_platform:
+        selected_platform = (
+            "windows"
+            if sys.platform.startswith("win")
+            else "macos"
+            if sys.platform == "darwin"
+            else "linux"
+        )
+    selected_machine = str(machine or platform.machine()).strip().lower()
+    normalized_machine = {
+        "amd64": "x86_64",
+        "x64": "x86_64",
+        "aarch64": "arm64",
+    }.get(selected_machine, selected_machine)
+    return selected_platform, normalized_machine
 _PURE_RUNTIME_WHEELS = (
     ("transformers", "5.14.1", "transformers-5.14.1-py3-none-any.whl", "https://files.pythonhosted.org/packages/6f/67/8d85ca2323233ae3c0365a659c4e52ee1f587b440e4bc577e7d8e4416d0f/transformers-5.14.1-py3-none-any.whl", "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725", 11625234),
     ("peft", "0.20.0", "peft-0.20.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/28/79/13bcabb8048126422d5c4b880575d40886c726f354db88cfeed4325525bb/peft-0.20.0-py3-none-any.whl", "0fbba16ffebfad3de96e06f2da6860fd860292324b85b6141909fa1e26ea9233", 775777),
@@ -135,6 +161,52 @@ class OptionalRuntimeBaseContract:
 
 
 @dataclass(frozen=True)
+class OptionalRuntimeTargetContract:
+    """Qualification and action policy for one exact OS/architecture target."""
+
+    platform: str
+    machine: str
+    contract_state: str
+    cutover_ready: bool
+    install_action_available: bool
+    activation_available: bool
+
+    def __post_init__(self) -> None:
+        if (
+            (self.platform, "cp312", self.machine) not in _OPTIONAL_RUNTIME_TARGETS
+            or self.contract_state not in {"qualified", "candidate_unqualified"}
+            or any(
+                type(value) is not bool
+                for value in (
+                    self.cutover_ready,
+                    self.install_action_available,
+                    self.activation_available,
+                )
+            )
+            or len(
+                {
+                    self.cutover_ready,
+                    self.install_action_available,
+                    self.activation_available,
+                }
+            )
+            != 1
+            or (self.contract_state == "qualified") != self.cutover_ready
+        ):
+            raise ValueError("Invalid optional-runtime target contract.")
+
+    def to_spec_dict(self) -> dict:
+        return {
+            "platform": self.platform,
+            "machine": self.machine,
+            "contractState": self.contract_state,
+            "cutoverReady": self.cutover_ready,
+            "installActionAvailable": self.install_action_available,
+            "activationAvailable": self.activation_available,
+        }
+
+
+@dataclass(frozen=True)
 class OptionalRuntimeProfile:
     """An exact composite runtime contract that is not yet executable."""
 
@@ -153,6 +225,49 @@ class OptionalRuntimeProfile:
     cutover_ready: bool = False
     install_action_available: bool = False
     activation_available: bool = False
+    target_contracts: tuple[OptionalRuntimeTargetContract, ...] = ()
+
+    def __post_init__(self) -> None:
+        targets = tuple((contract.platform, contract.machine) for contract in self.target_contracts)
+        if len(set(targets)) != len(targets):
+            raise ValueError("Optional-runtime target contracts must be unique.")
+
+    def contract_for_target(
+        self,
+        *,
+        platform_name: str | None = None,
+        machine: str | None = None,
+    ) -> OptionalRuntimeTargetContract:
+        """Resolve effective actions for one explicit target, failing closed."""
+
+        selected_platform, selected_machine = optional_runtime_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
+        if not self.target_contracts:
+            return OptionalRuntimeTargetContract(
+                platform=selected_platform,
+                machine=selected_machine,
+                contract_state=self.contract_state,
+                cutover_ready=self.cutover_ready,
+                install_action_available=self.install_action_available,
+                activation_available=self.activation_available,
+            )
+        matches = tuple(
+            contract
+            for contract in self.target_contracts
+            if contract.platform == selected_platform and contract.machine == selected_machine
+        )
+        if len(matches) == 1:
+            return matches[0]
+        return OptionalRuntimeTargetContract(
+            platform=selected_platform,
+            machine=selected_machine,
+            contract_state="unsupported_target",
+            cutover_ready=False,
+            install_action_available=False,
+            activation_available=False,
+        )
 
     def to_spec_dict(self) -> dict:
         """Return immutable fields used to identify the exact reviewed spec."""
@@ -166,6 +281,7 @@ class OptionalRuntimeProfile:
             "installActionAvailable": self.install_action_available,
             "activationAvailable": self.activation_available,
             "installPolicy": self.install_policy,
+            "targetContracts": [contract.to_spec_dict() for contract in self.target_contracts],
             "packages": [
                 package.to_spec_dict() for package in self.packages if package.role == "runtime_root"
             ],
@@ -490,6 +606,30 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
         ("get_list_adapters", ()),
         ("enable_lora_hotswap", ("kwargs",)),
     ),
+    # Windows and Linux x86-64 have executable qualification evidence. Other
+    # architectures stay base-delivered until the same qualifier runs there.
+    contract_state="qualified_platform_scoped",
+    cutover_ready=True,
+    install_action_available=True,
+    activation_available=True,
+    target_contracts=tuple(
+        OptionalRuntimeTargetContract(
+            platform=platform_name,
+            machine=machine,
+            contract_state=(
+                "qualified"
+                if (platform_name, machine) in {("linux", "x86_64"), ("windows", "x86_64")}
+                else "candidate_unqualified"
+            ),
+            cutover_ready=(platform_name, machine)
+            in {("linux", "x86_64"), ("windows", "x86_64")},
+            install_action_available=(platform_name, machine)
+            in {("linux", "x86_64"), ("windows", "x86_64")},
+            activation_available=(platform_name, machine)
+            in {("linux", "x86_64"), ("windows", "x86_64")},
+        )
+        for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    ),
 )
 
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
@@ -555,6 +695,8 @@ def public_optional_runtime_profiles(
     profile_ids: Iterable[str] | None = None,
     *,
     version_resolver: Callable[[str], str] | None = None,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> list[dict]:
     """Publish exact contracts plus local metadata-only presence observations.
 
@@ -566,6 +708,10 @@ def public_optional_runtime_profiles(
     resolve_version = version_resolver or metadata.version
     public_profiles = []
     for profile in _selected_profiles(profile_ids):
+        target_contract = profile.contract_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
         root_packages = [package for package in profile.packages if package.role == "runtime_root"]
         package_statuses = [
             _package_status(package, version_resolver=resolve_version)
@@ -582,6 +728,7 @@ def public_optional_runtime_profiles(
         public_profiles.append(
             {
                 **profile.to_spec_dict(),
+                **target_contract.to_spec_dict(),
                 "specDigest": profile.spec_digest,
                 "status": status,
                 "requirements": [package.requirement for package in root_packages],

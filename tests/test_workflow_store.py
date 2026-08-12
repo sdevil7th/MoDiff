@@ -293,21 +293,36 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         server.loop = asyncio.get_running_loop()
         server.node_cache["models-loader"] = cached_node
 
-        response = await server.field_action(
-            FakeRequest(
-                "models-loader",
-                {
-                    "node": "models-loader",
-                    "sid": "field-session",
-                    "module": module_name,
-                    "action": action_name,
-                    "fieldKey": "repo_id",
-                    "fn": "refresh_pipeline_identity",
-                    "values": {"repo_id": {"source": "hub", "value": "org/repo"}},
-                    "queue": False,
-                },
+        with patch(
+            "modiff.server.loader_optional_runtime_requirement",
+            return_value={
+                "schemaVersion": 1,
+                "delivery": "optional_overlay",
+                "requiredNow": True,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["qwen-image:modular"],
+                "state": "active",
+                "reason": "optional_runtime_active",
+            },
+        ):
+            response = await server.field_action(
+                FakeRequest(
+                    "models-loader",
+                    {
+                        "node": "models-loader",
+                        "sid": "field-session",
+                        "module": module_name,
+                        "action": action_name,
+                        "fieldKey": "repo_id",
+                        "fn": "refresh_pipeline_identity",
+                        "values": {
+                            "model_type": "QwenImageModularPipeline",
+                            "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                        },
+                        "queue": False,
+                    },
+                )
             )
-        )
 
         payload = json.loads(response.text)
         self.assertEqual(response.status, 200)
@@ -318,7 +333,10 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
             cached_node.calls,
             [
                 (
-                    {"repo_id": {"source": "hub", "value": "org/repo"}},
+                    {
+                        "model_type": "QwenImageModularPipeline",
+                        "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                    },
                     {"node": "models-loader", "key": "repo_id", "queue": False},
                 )
             ],

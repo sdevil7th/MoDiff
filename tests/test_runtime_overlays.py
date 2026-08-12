@@ -964,9 +964,22 @@ finally:
         profile = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
             TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
         ]
+        pending = replace(
+            profile,
+            contract_state="candidate_unqualified",
+            cutover_ready=False,
+            install_action_available=False,
+            activation_available=False,
+            target_contracts=(),
+        )
         selector = mock.Mock(side_effect=AssertionError("selector must not run"))
         reserve = mock.Mock(side_effect=AssertionError("lease must not be reserved"))
         with (
+            mock.patch.object(
+                optimization_packages,
+                "OPTIONAL_RUNTIME_PROFILES",
+                {pending.id: pending},
+            ),
             mock.patch.object(optimization_packages, "_artifact_install_plan", selector),
             mock.patch.object(optimization_packages, "reserve_install", reserve),
             mock.patch.object(
@@ -977,7 +990,7 @@ finally:
             self.assertRaisesRegex(RuntimeError, "not qualified for installation"),
         ):
             optimization_packages.validate_optional_runtime_install_request(
-                profile.id, profile.spec_digest, consent=True
+                pending.id, pending.spec_digest, consent=True
             )
 
         selector.assert_not_called()

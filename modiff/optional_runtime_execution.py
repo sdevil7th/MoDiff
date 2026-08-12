@@ -352,7 +352,7 @@ def graph_optional_runtime_requirement(
             if profile not in selected:
                 selected.append(profile)
         if resolution_reason and any(
-            profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+            profile.optional_runtime_delivery_for_target() == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
             for profile in profiles
         ):
             blocking_resolution_reason = resolution_reason

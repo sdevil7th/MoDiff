@@ -602,7 +602,11 @@ def _spec_is_current(record: dict[str, Any]) -> bool:
             current
             and record.get("specDigest") == current["specDigest"]
             and record.get("spec") == current["spec"]
-            and (kind != "optional_runtime" or current["spec"].get("activationAvailable") is True)
+            and (
+                kind != "optional_runtime"
+                or OPTIONAL_RUNTIME_PROFILES[identifier].contract_for_target().activation_available
+                is True
+            )
         )
     except (KeyError, TypeError, ValueError):
         return False
@@ -1598,7 +1602,7 @@ def validate_optional_runtime_install_request(
     profile = OPTIONAL_RUNTIME_PROFILES[profile_id]
     if spec_digest != spec["specDigest"]:
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
-    if profile.install_action_available is not True:
+    if profile.contract_for_target().install_action_available is not True:
         raise RuntimeError("This optional runtime is not qualified for installation.")
     base_contracts = list(optional_runtime_base_contracts([profile_id]))
     # Establish constraints, exact observed versions/origins, accelerator lock,
@@ -1627,7 +1631,7 @@ def validate_optional_runtime_activation_request(
     profile = OPTIONAL_RUNTIME_PROFILES[profile_id]
     if spec_digest != spec["specDigest"]:
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
-    if profile.activation_available is not True:
+    if profile.contract_for_target().activation_available is not True:
         raise RuntimeError("This optional runtime is not qualified for activation.")
     return spec
 
