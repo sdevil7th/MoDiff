@@ -112,6 +112,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "OmniGenPipeline",
             "OvisImagePipeline",
             "PRXPipeline",
+            "NucleusMoEImagePipeline",
             "AuraFlowPipeline",
             "ChromaPipeline",
             "CogView3PlusPipeline",

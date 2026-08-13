@@ -422,6 +422,13 @@
       "artifacts": []
     },
     {
+      "modelType": "NucleusMoEImagePipeline",
+      "baseRepo": "NucleusAI/Nucleus-Image",
+      "baseRevision": "5e963db4fd0a65c7e4faf53ca2d4eca567c4dcfa",
+      "baseLicense": "apache-2.0-declared-license-file-absent",
+      "artifacts": []
+    },
+    {
       "modelType": "ChromaPipeline",
       "baseRepo": "lodestones/Chroma1-HD",
       "baseRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T22:31:15.822Z",
+  "generatedAt": "2026-08-13T22:57:39.653Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 120,
-  "supportedPairCount": 132,
+  "supportedCanonicalPairCount": 121,
+  "supportedPairCount": 133,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2218,6 +2218,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "graphHash": "d98143499548db41d476a027c1958667efbe3734a2671332f7d7dba4237a2880"
+    },
+    {
+      "id": "NucleusMoEImagePipeline:text_to_image",
+      "modelType": "NucleusMoEImagePipeline",
+      "modelFamily": "Nucleus Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "NucleusAI/Nucleus-Image"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "NucleusMoEImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:nucleus-image:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/nucleus-mo-e-image-pipeline/text-to-image.json",
+      "graphHash": "4c09d4e08f5b0383623725a67852d56006aa9683521b2b8d54e65a8efcd6c8ea"
     },
     {
       "id": "OmniGenPipeline:edit_image",

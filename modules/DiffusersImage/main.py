@@ -70,6 +70,7 @@ LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
 OMNIGEN_REPO = "Shitao/OmniGen-v1-diffusers"
 OVIS_IMAGE_REPO = "ATH-MaaS/Ovis-Image-7B"
 PRX_REPO = "Photoroom/prx-512-t2i-sft"
+NUCLEUS_IMAGE_REPO = "NucleusAI/Nucleus-Image"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -622,6 +623,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_sequence_length=256,
         max_sequence_length_parameter="tokenizer_max_length",
     ),
+    "NucleusMoEImagePipeline": ImagePipelineAdapter(
+        "NucleusMoEImagePipeline",
+        frozenset({"text_to_image"}),
+        NUCLEUS_IMAGE_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=768,
+        max_output_side=1344,
+        output_side_step=32,
+        max_output_pixels=1184 * 896,
+        max_sequence_length=1024,
+    ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
         frozenset({"text_to_image"}),
@@ -1133,6 +1146,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         ),
     },
     "PRXPipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
+        ),
+    },
+    "NucleusMoEImagePipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
         ),
