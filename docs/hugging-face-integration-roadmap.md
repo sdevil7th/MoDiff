@@ -4549,8 +4549,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   litigation-termination terms. Immutable descriptors, class resolution,
   guardrail and remote heavy-hardware qualification, and physical macOS
   evidence remain pending; all resource envelopes are estimate-only.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, Cosmos 1/2/2.5,
-  Kandinsky5 Video, and other heavy video families.
+- [x] Evaluate gated Cosmos 1, Predict2, Predict2.5, and Transfer2.5 as
+  metadata-only candidates. Backend `7c6c29c` seals eight immutable
+  safetensors manifests: Cosmos 1 7B Text2World and Video2World; Predict2 2B
+  Text2Image plus 2B/14B Video2World; Predict2.5 2B post-trained; Transfer2.5
+  2B general; and its edge ControlNet. Their exact surfaces range from one
+  942,523,208-byte ControlNet file through 12 files / 41,564,530,104 bytes for
+  Cosmos 1 Video2World. Component totals, canonical manifest digests, branch
+  revisions, inaccessible model-index Git blob identities, and the pinned
+  Diffusers source contracts are recorded without downloading weights.
+
+  The source recipes remain evidence only: Cosmos 1 uses 704x1280 / 121 frames
+  / 36 steps / 30 fps; Predict2 uses 704x1280 / 93 frames / 35 steps / 16 fps;
+  Predict2.5 uses 93 frames / 36 steps / 16 fps; Transfer2.5 edge control uses
+  93-frame chunks, 36 steps, guidance 3, and control scale 1. All repositories
+  require click-through license acceptance before file bodies resolve. The
+  receipt independently hashes the January, April, and September 2025 NVIDIA
+  Open Model License prompts and preserves their license/notice, `Built on
+  NVIDIA Cosmos`, Trustworthy AI, and safety-guardrail obligations. No runtime
+  or download surface was added. License acceptance, gated component-index and
+  linked Trustworthy AI review, remote heavy execution, and physical macOS
+  evidence remain pending; resource envelopes are estimate-only.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, Kandinsky5 Video,
+  and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4788,4 +4809,4 @@ Add references only after the corresponding evidence exists.
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, Cosmos 1/2/2.5, Kandinsky5 Video, other heavy families, and long-form workflow qualification remain open as independent segments. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, Kandinsky5 Video, other heavy families, and long-form workflow qualification remain open as independent segments. |
