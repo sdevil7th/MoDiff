@@ -4470,8 +4470,31 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   heavy-hardware execution, and physical macOS evidence remain pending. The
   full backend gate passes (`1,341 passed, 3 skipped, 2,981 subtests`) with Ruff
   `E9,F` and a dependency-clean optional overlay.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, EasyAnimate,
-  SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
+- [x] Evaluate EasyAnimate V5.1 without publishing an unqualified runtime or
+  download surface. Backend `3c6da73` seals three public, ungated,
+  Apache-2.0 Diffusers conversions at immutable revisions: 7B text-to-video at
+  `f605a9340b46e725da4c1953dc891884dd694314`, 12B inpaint at
+  `8a257d883449752ecaa6bd4990caf932e927de33`, and 12B control at
+  `4daad26e8f7f701b37148ac91dc36a4981303af2`. Their exact safetensors
+  partitions are respectively 7 files / 31,189,417,564 bytes, 7 files /
+  41,159,117,300 bytes, and 7 files / 41,159,485,940 bytes. All share the same
+  five-shard Qwen2-VL text encoder and Magvit VAE, while their distinct
+  transformers use 16, 33, and 48 input channels; no fallback substitution is
+  allowed between them.
+
+  The receipt binds the pinned Diffusers source and documentation contract:
+  256-1024 dimensions, 1-49 frames with 49 preferred, and 8 fps export. It
+  separately records the exact source examples for 512x512 T2V with 50 steps
+  and guidance 6, 448x576 image conditioning through
+  `get_image_to_video_latent`, and 672x384 control through
+  `get_video_to_video_latent`. The inpaint and control tensor-preparation paths
+  still require reviewed MoDiff media adapters, and all three 31-41 GB
+  candidates require remote heavy-hardware execution. Therefore the family is
+  intentionally absent from runtime and download catalogs; resource envelopes
+  are estimate-only, physical macOS evidence remains pending independently,
+  and no weights or media were downloaded.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, SkyReels,
+  Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
