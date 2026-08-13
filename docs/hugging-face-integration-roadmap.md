@@ -5966,7 +5966,12 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     ceiling. Remote real-weight memory/output safety/quality review, model-card
     license-file clarification, and physical macOS execution remain pending
     independently; no weights or media were downloaded or retained.
-  - [ ] Evaluate the remaining large image and cascaded families independently.
+  - [x] Evaluate the remaining large image and cascaded families independently
+    at the source/admission tier. Every standard image family in Appendix B now
+    has an immutable source admission or an explicit fail-closed gate review;
+    this closes inventory research only. The parent heavy-hardware item remains
+    open for exact remote real-weight execution, output review, and physical
+    macOS evidence, and no static receipt is treated as live proof.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
   `inclusionAI/LLaDA2.1-mini` snapshot at
