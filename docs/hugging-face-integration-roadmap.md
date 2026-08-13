@@ -4391,8 +4391,31 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   and output-territory obligations. That inconsistency requires legal review.
   Remote execution and physical macOS evidence remain pending, and the resource
   envelope in `data/hunyuanvideo-1.5-artifact-review.json` is estimate-only.
-- [ ] Evaluate Helios/Pyramid, Wan 14B/22 Modular, full LTX/LTX2, EasyAnimate,
-  SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
+- [x] Evaluate Helios/Pyramid without widening the existing contract-only
+  surface. Backend `873f0ce` pins Helios Base, Mid, and Distilled at
+  `5c50b6bc90eae9bd815d2a50b0c9877e3fd2cf88`,
+  `477c55427ec0ea774bdebd0fbe736313cfc5a312`, and
+  `b991c0379a018f4de3227d95468237f56066f5bb`. Each repository contains 18
+  safetensors files / 137,730,908,420 bytes, but its declared standard index
+  selects only the shared text encoder and VAE plus `transformer/`: 12 files /
+  80,481,086,028 bytes. The extra 57,249,822,392-byte `transformer_init/` or
+  `transformer_ode/` partition is recorded and excluded from the candidate
+  runtime surface.
+
+  The three existing Modular contracts retain exact generic text-to-video,
+  image-to-video, and video-to-video workflows at the reviewed 384x640 and
+  132-frame defaults. The source receipt separately seals Base's 99-frame,
+  50-step, guidance-5 recipe and Distilled's 240-request/264-rounded frame,
+  `[2, 2, 2]` pyramid-step, guidance-1, amplify-first-chunk recipe at 24 fps.
+  Publisher claims for approximately 6 GB group-offload memory and 19.5 H100
+  fps are explicitly not live qualification evidence. No runtime or download
+  entry was admitted: every pinned upstream `modular_model_index.json` embeds
+  `revision: null` for all downloadable components, and the roughly 80.48 GB
+  selected partitions still require remote heavy-hardware execution. Physical
+  macOS evidence remains pending independently; no weights or media were
+  downloaded.
+- [ ] Evaluate Wan 14B/22 Modular, full LTX/LTX2, EasyAnimate, SkyReels,
+  Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4627,4 +4650,5 @@ Add references only after the corresponding evidence exists.
 | P6.3 MiniMax H3 contracts and artifact review | `baf7271` | `947a2ef` | Contract-only; legal and remote heavy-hardware qualification pending | Not required | Three generic joint video/audio contracts, disjunctive FL2VA requirements, exact immutable partition/hash receipt, conditioner/scheduler/reference bounds, and an estimate-only resource envelope are sealed. The territory-restricted repository remains outside the runtime/download catalog with zero runnable modes. The 1,318-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights or media were downloaded. |
 | P6.4 LTX2/LTX2.5 contracts and source recipe review | `7e4f99b`, `b887aef` | `9dfcf62` | Contract-only; gated artifact indexes, license acceptance, remote heavy-hardware execution, and physical macOS qualification pending | Not required | All eight generic joint video/audio workflows and the distinct convolutional/diffusion decode contracts are sealed. The three official LTX-2.5 source recipes, exact sigma schedules, latent upsampler, duration head, explicit Gemma-4 enhancement, explicit NATTEN setup, and audio/video handoffs are recorded without exposing any runnable mode. Public immutable metadata covers 31 weight files / 163,896,920,128 bytes, but denied gated file access prevents exact partition selection; no weights or media were downloaded. |
 | P6.5 HunyuanVideo 1.5 evaluation | `31cafc4` | Not required | Contract-only; territory/legal review and remote heavy-hardware execution pending | Not required | The existing two-workflow Modular contract, full official family, and immutable 480p T2V plus step-distilled I2V candidates are sealed with exact hashes, sizes, recipes, and estimate-only resource bounds. Conflicting territory language and additional commercial/distribution obligations keep all artifacts outside runtime and download catalogs. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflows remain open as independent segments. |
+| P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, Wan 14B/22 Modular, full LTX/LTX2, EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflows remain open as independent segments. |
