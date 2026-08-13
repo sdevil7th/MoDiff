@@ -2,8 +2,8 @@
 
 Derived from Hugging Face Diffusers'
 ``src/diffusers/modular_pipelines/mellon_node_utils.py`` at commit
-``13a7bee4878d62fccc8d25f97e480e68de96fa03`` (Apache-2.0):
-https://github.com/huggingface/diffusers/blob/13a7bee4878d62fccc8d25f97e480e68de96fa03/src/diffusers/modular_pipelines/mellon_node_utils.py
+``bb56997d4b7e87f0743f26a612f49ec4e7ce7213`` (Apache-2.0):
+https://github.com/huggingface/diffusers/blob/bb56997d4b7e87f0743f26a612f49ec4e7ce7213/src/diffusers/modular_pipelines/mellon_node_utils.py
 
 MoDiff changes the Mellon-facing names, metadata key, configuration filename,
 and imports to integrate the helper with MoDiff. The executable Diffusers
@@ -1914,6 +1914,7 @@ class MoDiffPipelineConfig:
         inputs = []
         model_inputs = []
         outputs = []
+        required_inputs = []
 
         # Process block inputs
         for input_param in block.inputs:
@@ -1922,7 +1923,8 @@ class MoDiffPipelineConfig:
             if input_param.name in input_types:
                 input_param = copy.copy(input_param)
                 input_param.metadata = {"modiff": input_types[input_param.name]}
-            print(f" processing input: {input_param.name}, metadata: {input_param.metadata}")
+            if input_param.required:
+                required_inputs.append(input_param.name)
             inputs.append(input_param_to_modiff_param(input_param))
 
         # Process block outputs
@@ -1946,7 +1948,7 @@ class MoDiffPipelineConfig:
             "inputs": inputs,
             "model_inputs": model_inputs,
             "outputs": outputs,
-            "required_inputs": [],
+            "required_inputs": required_inputs,
             "required_model_inputs": [],
             "block_name": "custom",
         }

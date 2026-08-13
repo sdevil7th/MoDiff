@@ -24,10 +24,10 @@ families and the treatment of formats that cannot carry comments.
 
 Portions of `modules/ModularDiffusers/pipeline_schema.py` are derived from
 Hugging Face Diffusers' `src/diffusers/modular_pipelines/mellon_node_utils.py`
-at commit `13a7bee4878d62fccc8d25f97e480e68de96fa03`. Diffusers is licensed under
+at commit `bb56997d4b7e87f0743f26a612f49ec4e7ce7213`. Diffusers is licensed under
 the Apache License 2.0; the project `LICENSE` contains that license text.
 
-Source: <https://github.com/huggingface/diffusers/blob/13a7bee4878d62fccc8d25f97e480e68de96fa03/src/diffusers/modular_pipelines/mellon_node_utils.py>
+Source: <https://github.com/huggingface/diffusers/blob/bb56997d4b7e87f0743f26a612f49ec4e7ce7213/src/diffusers/modular_pipelines/mellon_node_utils.py>
 
 ## Font software
 

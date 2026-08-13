@@ -178,7 +178,7 @@ class GuidedInstallerTests(unittest.TestCase):
         diffusers = next(item for item in project["project"]["dependencies"] if item.startswith("diffusers"))
         self.assertEqual(
             diffusers,
-            "diffusers @ git+https://github.com/huggingface/diffusers.git@13a7bee4878d62fccc8d25f97e480e68de96fa03",
+            "diffusers @ git+https://github.com/huggingface/diffusers.git@bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
         )
         self.assertNotIn("diffusers", project["tool"]["uv"].get("sources", {}))
 
