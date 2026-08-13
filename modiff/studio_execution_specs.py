@@ -47,6 +47,8 @@ COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 ERNIE_IMAGE_TURBO_REPO = "baidu/ERNIE-Image-Turbo"
 GLM_IMAGE_REPO = "zai-org/GLM-Image"
+JOYIMAGE_EDIT_REPO = "jdopensource/JoyAI-Image-Edit-Diffusers"
+JOYIMAGE_EDIT_PLUS_REPO = "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -6446,6 +6448,201 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["glm-image:text-to-image:v1"] = {
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
 }
+
+
+_JOYIMAGE_EDIT_PROFILE = {
+    "id": "joyimage-edit:direct",
+    "model_type": "JoyImageEditPipeline",
+    "modes": ("text_to_image", "edit_image"),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "JoyImageEditPipeline",
+    "default_repo": JOYIMAGE_EDIT_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 40,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_JOYIMAGE_EDIT_CAPABILITY = {
+    "modelType": "JoyImageEditPipeline",
+    "label": "JoyAI Image Edit",
+    "displayName": "JoyAI Image Edit 16B",
+    "family": "JoyAI Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": JOYIMAGE_EDIT_REPO,
+    "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 40,
+    "recommendedGuidance": 4.0,
+    "recommendedMaxSequenceLength": 2048,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 40,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image; the package center-crops it to a reviewed 1024-base bucket.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(JOYIMAGE_EDIT_REPO, model_type="JoyImageEditPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains twelve exact bfloat16 safetensors files and executes only package-owned Diffusers and Transformers classes.",
+        "MoDiff bounds the route to one 1024-base output bucket, 40 steps, guidance 4, at most 2048 prompt tokens, and one source image for edit mode.",
+        "The model repository declares Apache-2.0 but omits its linked LICENSE payload; the exact upstream project Apache receipt is recorded separately.",
+        "The approximately 50.32 GB weight surface is remote-only; the missing safety checker keeps Auto and Gallery disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["joyimage-edit:text-to-image:v1"] = {
+    "modelType": "JoyImageEditPipeline",
+    "mode": "text_to_image",
+    "profile": _JOYIMAGE_EDIT_PROFILE,
+    "capability": _JOYIMAGE_EDIT_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["joyimage-edit:edit-image:v1"] = {
+    "modelType": "JoyImageEditPipeline",
+    "mode": "edit_image",
+    "profile": _JOYIMAGE_EDIT_PROFILE,
+    "capability": _JOYIMAGE_EDIT_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+}
+
+
+_JOYIMAGE_EDIT_PLUS_PROFILE = {
+    "id": "joyimage-edit-plus:direct",
+    "model_type": "JoyImageEditPlusPipeline",
+    "modes": ("edit_image", "multi_image_reference_edit"),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "JoyImageEditPlusPipeline",
+    "default_repo": JOYIMAGE_EDIT_PLUS_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 30,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_JOYIMAGE_EDIT_PLUS_CAPABILITY = {
+    "modelType": "JoyImageEditPlusPipeline",
+    "label": "JoyAI Image Edit Plus",
+    "displayName": "JoyAI Image Edit Plus 16B",
+    "family": "JoyAI Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": JOYIMAGE_EDIT_PLUS_REPO,
+    "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 30,
+    "recommendedGuidance": 4.0,
+    "recommendedMaxSequenceLength": 2048,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": True,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 30,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["edit_image", "multi_image_reference_edit"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image.",
+        },
+        "multi_image_reference_edit": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires 1 to 5 source images; each reference is independently resized to a 1024-base bucket.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(JOYIMAGE_EDIT_PLUS_REPO, model_type="JoyImageEditPlusPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains twelve exact bfloat16 safetensors files; its repository inference.py is not selected or executed.",
+        "MoDiff maps the generic edit input to the package's images argument and bounds the route to 1-5 references, one 1024-base output bucket, 30 steps, guidance 4, and at most 2048 prompt tokens.",
+        "The model repository declares Apache-2.0 but omits a LICENSE payload; the exact upstream project Apache receipt is recorded separately.",
+        "The approximately 50.32 GB weight surface is remote-only; the missing safety checker keeps Auto and Gallery disabled pending live output review.",
+    ],
+}
+for _spec_id, _mode in (
+    ("joyimage-edit-plus:edit-image:v1", "edit_image"),
+    ("joyimage-edit-plus:multi-image-reference-edit:v1", "multi_image_reference_edit"),
+):
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[_spec_id] = {
+        "modelType": "JoyImageEditPlusPipeline",
+        "mode": _mode,
+        "profile": _JOYIMAGE_EDIT_PLUS_PROFILE,
+        "capability": _JOYIMAGE_EDIT_PLUS_CAPABILITY,
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+    }
 
 
 _DREAMLITE_BASE_PROFILE = {

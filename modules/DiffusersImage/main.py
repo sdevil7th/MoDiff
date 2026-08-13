@@ -68,6 +68,8 @@ COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 ERNIE_IMAGE_TURBO_REPO = "baidu/ERNIE-Image-Turbo"
 GLM_IMAGE_REPO = "zai-org/GLM-Image"
+JOYIMAGE_EDIT_REPO = "jdopensource/JoyAI-Image-Edit-Diffusers"
+JOYIMAGE_EDIT_PLUS_REPO = "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -118,6 +120,7 @@ class ImagePipelineAdapter:
     guidance_parameter: str | None = "guidance_scale"
     ignored_generation_parameters: frozenset[str] = frozenset()
     multi_image_strategy: str = "list"
+    image_parameter: str = "image"
     max_sequence_length: int = 512
     max_reference_images: int = 1
     max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
@@ -151,6 +154,8 @@ class ImagePipelineAdapter:
             raise ValueError("The minimum image guidance scale must be between 0 and 20.")
         if self.guidance_parameter is not None and not self.guidance_parameter:
             raise ValueError("An image guidance parameter cannot be blank.")
+        if not self.image_parameter:
+            raise ValueError("An image adapter input-image parameter cannot be blank.")
         unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale"}
         if unsupported_ignored:
             raise ValueError("Image adapters can ignore only reviewed no-op generation parameters.")
@@ -487,6 +492,33 @@ IMAGE_PIPELINE_ADAPTERS = {
         output_side_step=32,
         max_output_pixels=1024 * 1024,
         max_sequence_length=2048,
+    ),
+    "JoyImageEditPipeline": ImagePipelineAdapter(
+        "JoyImageEditPipeline",
+        frozenset({"text_to_image", "edit_image"}),
+        JOYIMAGE_EDIT_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=40,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=32,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=2048,
+    ),
+    "JoyImageEditPlusPipeline": ImagePipelineAdapter(
+        "JoyImageEditPlusPipeline",
+        frozenset({"edit_image", "multi_image_reference_edit"}),
+        JOYIMAGE_EDIT_PLUS_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=30,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=32,
+        max_output_pixels=1024 * 1024,
+        image_parameter="images",
+        max_sequence_length=2048,
+        max_reference_images=5,
+        max_reference_pixels=5 * 1024 * 1024,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
         "DreamLitePipeline",
@@ -886,6 +918,14 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "GlmImagePipeline": {
         "text_to_image": _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "JoyImageEditPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE)
+        for mode in ("text_to_image", "edit_image")
+    },
+    "JoyImageEditPlusPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE)
+        for mode in ("edit_image", "multi_image_reference_edit")
     },
     "DreamLitePipeline": {
         "text_to_image": _image_field_contract(
@@ -3271,7 +3311,12 @@ class Generate(NodeBase):
         finally:
             self._active_pipeline = None
         images = getattr(result, "images", result)
-        return {"images": images, "width_out": call_kwargs["width"], "height_out": call_kwargs["height"]}
+        actual_width, actual_height = output_image_dimensions(images, values["output_type"])
+        return {
+            "images": images,
+            "width_out": actual_width if actual_width is not None else call_kwargs["width"],
+            "height_out": actual_height if actual_height is not None else call_kwargs["height"],
+        }
 
 
 class Edit(Generate):
@@ -3304,7 +3349,7 @@ class Edit(Generate):
         pipeline = kwargs.get("pipeline")
         adapter, values = preflight_image_action(pipeline, "Edit", kwargs)
         image = prepare_reference_images(values.get("image"), adapter)
-        return self._execute_conditioned(values, {"image": image}, adapter=adapter)
+        return self._execute_conditioned(values, {adapter.image_parameter: image}, adapter=adapter)
 
     def _execute_conditioned(self, values, extra_kwargs, *, adapter):
         pipeline = values["pipeline"]

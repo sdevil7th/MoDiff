@@ -401,6 +401,20 @@
       "artifacts": []
     },
     {
+      "modelType": "JoyImageEditPipeline",
+      "baseRepo": "jdopensource/JoyAI-Image-Edit-Diffusers",
+      "baseRevision": "4b41fb25d961f37668750178ccbb380da326201c",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "JoyImageEditPlusPipeline",
+      "baseRepo": "jdopensource/JoyAI-Image-Edit-Plus-Diffusers",
+      "baseRevision": "c2686460c7b64d8aa11bc4d0da423fb316b33f9e",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",

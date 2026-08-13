@@ -46,6 +46,8 @@ STUDIO_MODEL_TYPES = {
     "CogView4Pipeline",
     "ErnieImagePipeline",
     "GlmImagePipeline",
+    "JoyImageEditPipeline",
+    "JoyImageEditPlusPipeline",
 }
 
 

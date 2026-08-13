@@ -47,6 +47,8 @@ from modules.DiffusersImage.main import (
     FLUX_SCHNELL_REPO,
     HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
     HUNYUAN_DIT_DISTILLED_REPO,
+    JOYIMAGE_EDIT_PLUS_REPO,
+    JOYIMAGE_EDIT_REPO,
     IMAGE_MODE_FIELD_CONTRACTS,
     IMAGE_PIPELINE_CLASSES,
     QWEN_IMAGE_2512_REPO,
@@ -889,6 +891,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "CogView4Pipeline": ({"text_to_image"}, COGVIEW4_6B_REPO, {"prompt"}),
             "ErnieImagePipeline": ({"text_to_image"}, ERNIE_IMAGE_TURBO_REPO, {"prompt"}),
             "GlmImagePipeline": ({"text_to_image"}, GLM_IMAGE_REPO, {"prompt"}),
+            "JoyImageEditPipeline": (
+                {"text_to_image", "edit_image"},
+                JOYIMAGE_EDIT_REPO,
+                {"prompt", "image"},
+            ),
+            "JoyImageEditPlusPipeline": (
+                {"edit_image", "multi_image_reference_edit"},
+                JOYIMAGE_EDIT_PLUS_REPO,
+                {"prompt", "images"},
+            ),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -997,6 +1009,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("CogView4Pipeline", "text_to_image", Generate, {}),
             ("ErnieImagePipeline", "text_to_image", Generate, {}),
             ("GlmImagePipeline", "text_to_image", Generate, {}),
+            ("JoyImageEditPipeline", "text_to_image", Generate, {}),
+            ("JoyImageEditPipeline", "edit_image", Edit, {"image": image}),
+            ("JoyImageEditPlusPipeline", "edit_image", Edit, {"image": image}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -1078,6 +1093,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "return_dict",
                     *action_inputs.keys(),
                 }
+                if action_class is Edit and "image" in initial:
+                    initial.remove("image")
+                    initial.add(adapter.image_parameter)
                 if action_class is Generate:
                     initial.update({"width", "height"})
                 expected_keys = initial | {

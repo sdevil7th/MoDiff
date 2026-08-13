@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T18:39:03.138Z",
+  "generatedAt": "2026-08-13T19:10:06.825Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 105,
-  "supportedPairCount": 117,
+  "supportedCanonicalPairCount": 109,
+  "supportedPairCount": 121,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1528,6 +1528,125 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
       "graphHash": "284765f71f658726b758ebd6f004de1a64723d2cc0a4a7c4f8257f1b8f0c7faa"
+    },
+    {
+      "id": "JoyImageEditPipeline:edit_image",
+      "modelType": "JoyImageEditPipeline",
+      "modelFamily": "JoyAI Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image; the package center-crops it to a reviewed 1024-base bucket."
+      },
+      "pipelineClasses": [
+        "JoyImageEditPipeline"
+      ],
+      "sourceTemplateId": "task-template:joyimage-edit:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/joy-image-edit-pipeline/edit-image.json",
+      "graphHash": "474f4c082fed261305b5d602b25022503d291a1031fa412269e1c7aee94a56a6"
+    },
+    {
+      "id": "JoyImageEditPipeline:text_to_image",
+      "modelType": "JoyImageEditPipeline",
+      "modelFamily": "JoyAI Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "JoyImageEditPipeline"
+      ],
+      "sourceTemplateId": "task-template:joyimage-edit:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/joy-image-edit-pipeline/text-to-image.json",
+      "graphHash": "fc8d8dec98306e94dd8a8b1c0cfbc6b8c15cc73c58b1317cf8108380eeb89645"
+    },
+    {
+      "id": "JoyImageEditPlusPipeline:edit_image",
+      "modelType": "JoyImageEditPlusPipeline",
+      "modelFamily": "JoyAI Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image."
+      },
+      "pipelineClasses": [
+        "JoyImageEditPlusPipeline"
+      ],
+      "sourceTemplateId": "task-template:joyimage-edit-plus:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/joy-image-edit-plus-pipeline/edit-image.json",
+      "graphHash": "2ec9e4cfa4a60d03d268ff73a584cccb6bbc4a98abe71d1d29b48d191ff390d7"
+    },
+    {
+      "id": "JoyImageEditPlusPipeline:multi_image_reference_edit",
+      "modelType": "JoyImageEditPlusPipeline",
+      "modelFamily": "JoyAI Image",
+      "mode": "multi_image_reference_edit",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires 1 to 5 source images; each reference is independently resized to a 1024-base bucket."
+      },
+      "pipelineClasses": [
+        "JoyImageEditPlusPipeline"
+      ],
+      "sourceTemplateId": "task-template:joyimage-edit-plus:multi-image-reference-edit:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
+      "graphHash": "87aea933e0a45c24f3ceb70bfb36aa987474a2debe6d29cd13931b65f0aaf8c3"
     },
     {
       "id": "LatentConsistencyModelPipeline:text_to_image",

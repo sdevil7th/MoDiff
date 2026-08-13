@@ -1,0 +1,348 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "capabilityExposed": true,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "JoyImageEditPipeline:text_to_image",
+      "JoyImageEditPipeline:edit_image",
+      "JoyImageEditPlusPipeline:edit_image",
+      "JoyImageEditPlusPipeline:multi_image_reference_edit"
+    ],
+    "fullWeightFilesDownloaded": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "repositoryPythonExecuted": false,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "templateEligible": true,
+    "unresolvedGates": [
+      "model_repository_license_payload_clarification",
+      "remote_heavy_hardware_memory_output_safety_and_quality_execution",
+      "physical_macos_execution"
+    ],
+    "userVisible": true,
+    "weightBytesDownloaded": 0
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "JoyAI Image",
+  "format": "safetensors",
+  "licenseReview": {
+    "commercialUsePermitted": true,
+    "declaredLicenseId": "apache-2.0",
+    "evidence": "Both immutable model cards declare Apache-2.0 and state that JoyAI-Image is licensed under Apache 2.0. Their LICENSE links resolve to absent files, while the official project repository contains an exact Apache 2.0 payload.",
+    "modelRepositoryLicenseLinksBroken": true,
+    "modelRepositoryLicensePayloadPresent": false,
+    "upstreamProjectLicense": {
+      "bytes": 10763,
+      "license": "apache-2.0",
+      "repository": "jd-opensource/JoyAI-Image",
+      "revision": "0dc5673f3a124d8a064f06daecc4300a4eb76b98",
+      "sha256": "8f3c59609542098876b49bb5c61ccd678999c6c5c3b810dec3e96791857fc1e3"
+    },
+    "weightSnapshotLicenseClarificationPending": true
+  },
+  "metadataSha256": {
+    "editModelIndex": "ac208770d058949f2ac2bbff992caf828197b4c0d308f55fc689b526d9b65dd7",
+    "editProcessorPreprocessorConfig": "93585062a80db5e8ca038efc7726a3e6411d9db948472d81d63c6303993be8c5",
+    "editReadme": "b00aee59882fac1bcdd3d02f65122b3c16827c87fcec44f3705ba11fdf016760",
+    "editSchedulerConfig": "b82f4ea5c214e7b156864f667147b1234d91f1a5a23199c97d6683b49b693d80",
+    "editTextEncoderConfig": "9534cdb388b5ec720b33b8e37f5cf4fcd9d06f16051be16e8e712040212741d3",
+    "editTextEncoderIndex": "859146bff8db1d617fca8b457a5223edff963bb70076b3645f2189fe0540a147",
+    "editTokenizerConfig": "59b3e9b9a46fd9e8447842ca20aba3fc4eb9c22cd10969ae28812f1bc7c3fa22",
+    "editTransformerConfig": "7c2f17865df5494fe3655a111ae10c15d0fb5f46e403d443b0ce11903bbacfa1",
+    "editTransformerIndex": "d89d634d3156e33d078119edb0e347b6ed9d8498d22a3f6d3ea094185c257592",
+    "editVaeConfig": "73551cedb518fa7b02827664b2fb9f21f4d4fff90eeee27b00aeebc1d44564b2",
+    "plusInferencePython": "c5653aac92081a4b4fdebd1b05376dfac8bdf978a16177b6459e284484e3182d",
+    "plusModelIndex": "beb9baf6f97b935505eb1ff2df159872566e141a777e393dc26390c293b1a33e",
+    "plusProcessorConfig": "d89ef49ce9cd37fbf510158e13c1ef063d9286411c1ec9049932dbe0487143b1",
+    "plusReadme": "27e95e1b3b828f1e29d5655760b87b9490e908a5cf670ffe2557a6b52e4eda51",
+    "plusSchedulerConfig": "a8526150e05e805ca39946ca4ad6f9e9c6780d16c2149fe450a52d9b8327db2c",
+    "plusTextEncoderConfig": "59d724e44782ea341c1bde92fb32a0f044a2dee6abe4612092a8996d51f14779",
+    "plusTextEncoderIndex": "dd08ff0fbf2bed6ef1827ef909e3e9057d6d75c4be0fac1273abb880d456b9ab",
+    "plusTokenizerConfig": "928c3c44a7d2168cede835051a5f630c22b9ef4c6f6bd672d2ba8677af2343b3",
+    "plusTransformerConfig": "28535b25388f33ae7269545d1b87d1ea3136348bf266462b7e01e9eb64795b44",
+    "plusTransformerIndex": "d89d634d3156e33d078119edb0e347b6ed9d8498d22a3f6d3ea094185c257592",
+    "plusVaeConfig": "cfcfc442b782781c6f87038c5d47d8cc75d4302c58a379313168c6e889d13848"
+  },
+  "pinnedRuntime": {
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds"
+    ],
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "interruptAvailable": true,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "packageOwnedClasses": [
+      "JoyImageEditPipeline",
+      "JoyImageEditPlusPipeline",
+      "JoyImageEditTransformer3DModel",
+      "JoyImageEditPlusTransformer3DModel",
+      "AutoencoderKLWan",
+      "FlowMatchEulerDiscreteScheduler"
+    ],
+    "repositoryPythonRequired": false,
+    "safetyCheckerAvailable": false,
+    "sourceSha256": {
+      "autoencoderKlWan": "a38de0c53adcb81887a0b48d44e3fb59737d7b1e4779a666febe83be666e8fa8",
+      "editPipeline": "3a9a59f55d7a148a1da353d0e8018ab8ec78c95543223995a20e589da14730bf",
+      "editPlusPipeline": "b3e1ee8d9891fe081ac85629bf9edc7265e211c1a1b37cfd9347eed0e657a580",
+      "editPlusTransformer": "3d448b5c77ccb12a9b7d8cb5bc751549b05218d8d6e2af15717c5666df6df40f",
+      "editTransformer": "493da90bd259125de3d29b9607e72d7a90913ed46f10ecb8b9ee550c485f4838",
+      "flowMatchEulerDiscreteScheduler": "1af27be5b2f92b7d139d3c50239be5ce3eafc4a7eddf59c2d30689f8ec31e93d",
+      "imageProcessor": "4460609c4d72c3e7e0bc5c4af237e109b93a42a31c64b0005a38839831b6de3f",
+      "pipelineOutput": "4039b0e52a96b5ea95483ac862c276b64fd25bee05fdc63a8c2e6da580eb4fdc"
+    },
+    "transformersClasses": [
+      "Qwen3VLForConditionalGeneration",
+      "Qwen3VLProcessor",
+      "Qwen2Tokenizer",
+      "Qwen2TokenizerFast"
+    ],
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContracts": {
+    "edit": {
+      "class": "JoyImageEditPipeline",
+      "defaultGuidanceScale": 4.0,
+      "defaultMaxSequenceLength": 4096,
+      "defaultNumImagesPerPrompt": 1,
+      "defaultNumInferenceSteps": 40,
+      "modelTextTokenMaximum": 2048,
+      "modes": [
+        "text_to_image",
+        "edit_image"
+      ],
+      "moDiffMaximumInferenceSteps": 40,
+      "moDiffMaximumReferenceImages": 1,
+      "moDiffMaximumSequenceLength": 2048,
+      "moDiffOutputBucket": {
+        "baseSize": 1024,
+        "maximumPixels": 1048576,
+        "maximumSide": 2048,
+        "minimumSide": 512
+      },
+      "negativePromptSupported": true,
+      "referenceImageOptionalForTextToImage": true
+    },
+    "editPlus": {
+      "class": "JoyImageEditPlusPipeline",
+      "defaultGuidanceScale": 4.0,
+      "defaultMaxSequenceLength": 4096,
+      "defaultNumInferenceSteps": 30,
+      "modelTextTokenMaximum": 2048,
+      "modes": [
+        "edit_image",
+        "multi_image_reference_edit"
+      ],
+      "moDiffImageParameter": "images",
+      "moDiffMaximumInferenceSteps": 30,
+      "moDiffMaximumReferenceImages": 5,
+      "moDiffMaximumSequenceLength": 2048,
+      "moDiffOutputBucket": {
+        "baseSize": 1024,
+        "maximumPixels": 1048576,
+        "maximumSide": 2048,
+        "minimumSide": 512
+      },
+      "negativePromptSupported": true,
+      "packageMaximumReferenceImages": null
+    },
+    "sharedUnboundedByPackage": [
+      "prompt_character_length",
+      "batch_size",
+      "num_inference_steps",
+      "guidance_scale",
+      "max_sequence_length"
+    ]
+  },
+  "remoteResourceEnvelope": {
+    "editPlusSelectedWeightBytes": 50315602038,
+    "editSelectedWeightBytes": 50315602078,
+    "minimumAcceleratorMemoryBytesEstimate": null,
+    "minimumSystemRamBytesEstimate": null,
+    "notes": [
+      "The selected-weight byte totals exclude configuration, tokenizer, processor, and package caches.",
+      "No local or remote hardware execution has qualified an accelerator or system-memory placement recipe."
+    ],
+    "status": "exact_disk_surface_runtime_memory_unqualified"
+  },
+  "repositories": [
+    {
+      "declaredLicense": "apache-2.0",
+      "fullRepositoryBytes": 50360235429,
+      "gated": false,
+      "modelIndexClass": "JoyImageEditPipeline",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "jdopensource/JoyAI-Image-Edit-Diffusers",
+      "revision": "4b41fb25d961f37668750178ccbb380da326201c",
+      "role": "single_image_edit_and_text_to_image",
+      "safetensorsDtypeParameterCounts": {
+        "BF16": 16263675968
+      },
+      "trustRemoteCodeRequired": false,
+      "weightBytes": 50315602078,
+      "weightFileCount": 12,
+      "weightInventorySha256": "bc316c2f8d7b9f83d692528a5e759c1b93e2a72cdf149d8af15d1b411094e12c"
+    },
+    {
+      "declaredLicense": "apache-2.0",
+      "fullRepositoryBytes": 50342526284,
+      "gated": false,
+      "modelIndexClass": "JoyImageEditPlusPipeline",
+      "private": false,
+      "pythonFilesPresent": true,
+      "repository": "jdopensource/JoyAI-Image-Edit-Plus-Diffusers",
+      "repositoryPythonSelectedForExecution": false,
+      "revision": "c2686460c7b64d8aa11bc4d0da423fb316b33f9e",
+      "role": "multi_image_instruction_edit",
+      "safetensorsDtypeParameterCounts": {
+        "BF16": 16263675968
+      },
+      "trustRemoteCodeRequired": false,
+      "weightBytes": 50315602038,
+      "weightFileCount": 12,
+      "weightInventorySha256": "7c029e787a7d03268d71d730de978aeb68498d2fff3b597266658b1b2274f947"
+    }
+  ],
+  "schemaVersion": 1,
+  "weightFiles": {
+    "edit": [
+      {
+        "byteSize": 4998056552,
+        "path": "text_encoder/model-00001-of-00004.safetensors",
+        "sha256": "25957be8f716e35cac06c585cae0a9781ab2291c22ed755b2e3dbe15ae2b8802"
+      },
+      {
+        "byteSize": 4915962464,
+        "path": "text_encoder/model-00002-of-00004.safetensors",
+        "sha256": "bf5e4e71070a7f97de1967958febc07e2dd270fc42ef0c11d8a9898759af81c1"
+      },
+      {
+        "byteSize": 4915962496,
+        "path": "text_encoder/model-00003-of-00004.safetensors",
+        "sha256": "09d28414b48233f0f5a3ad4ed09a5755fb63b0c7f2bc7c2373986b1789a4e540"
+      },
+      {
+        "byteSize": 2704357976,
+        "path": "text_encoder/model-00004-of-00004.safetensors",
+        "sha256": "68d3cbc94351ed9c6ca4027d7cb65b6925cfd092e8109d13a719ad6d0a777553"
+      },
+      {
+        "byteSize": 4970222408,
+        "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+        "sha256": "adcb100cae21cbdc71d75cd26de468531bd1c8e49e718e3d377530a0034ca33a"
+      },
+      {
+        "byteSize": 4967585880,
+        "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+        "sha256": "6c76310e69fa291b954280bc728a1a2de95533455ae01f6e6b6aaa58711b10e8"
+      },
+      {
+        "byteSize": 4866946400,
+        "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+        "sha256": "845645c96a41269d02e6b02de953d3c58ff2741f33a326823feaccdd65f7937f"
+      },
+      {
+        "byteSize": 4967584992,
+        "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+        "sha256": "722c95c3b39233f598dc6ffef589ecb411e8531ebfe4241c0d036f93c74e1bf8"
+      },
+      {
+        "byteSize": 4967609680,
+        "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+        "sha256": "0a8e110439a119ad132e1d56ba137b63c48c232ffbd974572c37140f2becbd8c"
+      },
+      {
+        "byteSize": 4967585000,
+        "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+        "sha256": "ab5e2cc1b6e15c57ca9fe8126d81141b5a52e9a19a1cbbff8afb7c9e130cee7e"
+      },
+      {
+        "byteSize": 2819921264,
+        "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+        "sha256": "b359f79a76e35db3b28be8470a3be1af8be23ec396861e2c641697538ffb8c55"
+      },
+      {
+        "byteSize": 253806966,
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "sha256": "39ffe6326a57bbc7c8a704d862e482588e3affc858bdbfc123a91b5ac3a3a42a"
+      }
+    ],
+    "editPlus": [
+      {
+        "byteSize": 4905357176,
+        "path": "text_encoder/model-00001-of-00004.safetensors",
+        "sha256": "b9ae2762e4d81c9b168d14a37d540bbe3d58e370c8e964488957831b0598b785"
+      },
+      {
+        "byteSize": 4915962456,
+        "path": "text_encoder/model-00002-of-00004.safetensors",
+        "sha256": "328ef00c46b51b697d7a5c7efb8f46f0439863c96ad7637a44a97a50aa619c51"
+      },
+      {
+        "byteSize": 4974674312,
+        "path": "text_encoder/model-00003-of-00004.safetensors",
+        "sha256": "4b375095244456e0a6b84980fe1033c190995cc61ff07e7de5b4e6954a20b1ea"
+      },
+      {
+        "byteSize": 2738345504,
+        "path": "text_encoder/model-00004-of-00004.safetensors",
+        "sha256": "73f5d73a7859ce0a5832e2a99d3bd3395568ffc0a00052eea1dead71a7df9445"
+      },
+      {
+        "byteSize": 4970222408,
+        "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+        "sha256": "1273aa85e705da950fd37ee4e7cb4dde46794d3fecc495d92358b6097ca6be28"
+      },
+      {
+        "byteSize": 4967585880,
+        "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+        "sha256": "410566a22c858a900a7ea76c81efefcf6a7aa39f03aee5218515accd61bd8c2c"
+      },
+      {
+        "byteSize": 4866946400,
+        "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+        "sha256": "1080ff300c71cbd685f0f9b8b8a5240949c0553d668a9ad068441822651a1833"
+      },
+      {
+        "byteSize": 4967584992,
+        "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+        "sha256": "f2a4117e80f7dec48aec065e96a4f571417ebfac2e2a2e9fc374cd8c53ca709f"
+      },
+      {
+        "byteSize": 4967609680,
+        "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+        "sha256": "de302cc81dab6dfdf9cb68bb107935275e85d0d61d6f2f1ddd5eff59504626a3"
+      },
+      {
+        "byteSize": 4967585000,
+        "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+        "sha256": "c392fcd663e60ff26308f8621e7b4e83fea8fe4a1761a1a14a2ee0a0c44659fe"
+      },
+      {
+        "byteSize": 2819921264,
+        "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+        "sha256": "e3f9d06e73fa6236969dc4d22e1f759167a2e142cfc1c616bfa57432c08ed9bc"
+      },
+      {
+        "byteSize": 253806966,
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "sha256": "39ffe6326a57bbc7c8a704d862e482588e3affc858bdbfc123a91b5ac3a3a42a"
+      }
+    ]
+  }
+}
