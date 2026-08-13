@@ -125,7 +125,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 91)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 92)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -164,6 +164,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionXLPAGPipeline",
             "SanaPipeline",
             "SanaSprintPipeline",
+            "PixArtSigmaPipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
@@ -339,6 +340,19 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sana_sprint["galleryEligible"])
         self.assertNotIn("SanaPipeline", experimental)
         self.assertNotIn("SanaSprintPipeline", experimental)
+        pixart = by_model["PixArtSigmaPipeline"]
+        self.assertEqual(
+            pixart["revisionCandidates"],
+            ["e102b3591cc82e97071b8b4cb90d834d0c487207"],
+        )
+        self.assertEqual(pixart["recommendedSteps"], 20)
+        self.assertEqual(pixart["recommendedGuidance"], 4.5)
+        self.assertEqual(pixart["recommendedMaxSequenceLength"], 300)
+        self.assertEqual(pixart["modes"], ["text_to_image"])
+        self.assertEqual(pixart["pipelineClasses"], ["PixArtSigmaPipeline"])
+        self.assertFalse(pixart["autoEligible"])
+        self.assertFalse(pixart["galleryEligible"])
+        self.assertNotIn("PixArtSigmaPipeline", experimental)
         dreamlite = by_model["DreamLitePipeline"]
         self.assertEqual(
             dreamlite["revisionCandidates"],

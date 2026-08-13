@@ -39,6 +39,7 @@ STUDIO_MODEL_TYPES = {
     "StableDiffusionPipeline",
     "LatentConsistencyModelPipeline",
     "StableDiffusionPAGPipeline",
+    "PixArtSigmaPipeline",
 }
 
 
@@ -87,6 +88,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("stabilityai/stable-video-diffusion-img2vid-xt-1-1"),
             "043843887ccd51926e3efed36270444a838e7861",
+        )
+        self.assertEqual(
+            catalog_revision("PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"),
+            "e102b3591cc82e97071b8b4cb90d834d0c487207",
         )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):

@@ -46,6 +46,7 @@ from modules.DiffusersImage.main import (
     QWEN_IMAGE_EDIT_REPO,
     LCM_DREAMSHAPER_REPO,
     MARIGOLD_DEPTH_LCM_REPO,
+    PIXART_SIGMA_REPO,
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
     SANA_REPO,
@@ -825,6 +826,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 SANA_SPRINT_REPO,
                 {"prompt", "image"},
             ),
+            "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -925,6 +927,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("SanaPipeline", "text_to_image", Generate, {}),
             ("SanaSprintPipeline", "text_to_image", Generate, {}),
             ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -1992,6 +1995,68 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 height=32,
                 num_inference_steps=5,
                 guidance_scale=4.5,
+            )
+
+    def test_pixart_sigma_loads_only_the_pinned_safetensors_and_bounds_recipe(self):
+        loaded = {}
+
+        class PixArtSigmaPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid PixArt settings must fail before inference")
+
+        node = LoadPipeline("pixart-sigma-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=PixArtSigmaPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=PIXART_SIGMA_REPO,
+                pipeline_class="PixArtSigmaPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(PIXART_SIGMA_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], PIXART_SIGMA_REPO)
+        self.assertEqual(
+            loaded["kwargs"]["revision"],
+            catalog_revision(PIXART_SIGMA_REPO),
+        )
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("pixart-sigma-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=4.5,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 300"):
+            Generate("pixart-sigma-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=20,
+                guidance_scale=4.5,
+                max_sequence_length=301,
             )
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T11:46:49.183Z",
+  "generatedAt": "2026-08-13T12:47:34.675Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 91,
-  "supportedPairCount": 103,
+  "supportedCanonicalPairCount": 92,
+  "supportedPairCount": 104,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1621,6 +1621,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
       "graphHash": "d9bef3a6a9c605444c0ff07981fd7a98203574102b253d7dc42a5cf63bb4db40"
+    },
+    {
+      "id": "PixArtSigmaPipeline:text_to_image",
+      "modelType": "PixArtSigmaPipeline",
+      "modelFamily": "PixArt",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "PixArtSigmaPipeline"
+      ],
+      "sourceTemplateId": "task-template:pixart-sigma-1024:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
+      "graphHash": "c8db41b72ad28c0692250cc1c57d04a194685e58b7aa46d775c4374b86ad964b"
     },
     {
       "id": "QwenImageEditModularPipeline:edit_image",

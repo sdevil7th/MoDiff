@@ -38,6 +38,7 @@ SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -5306,6 +5307,89 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-sprint-600m:edit-image:v1"] = {
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+}
+
+
+_PIXART_SIGMA_PROFILE = {
+    "id": "pixart-sigma-1024:direct",
+    "model_type": "PixArtSigmaPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "PixArtSigmaPipeline",
+    "default_repo": PIXART_SIGMA_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 20,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_PIXART_SIGMA_CAPABILITY = {
+    "modelType": "PixArtSigmaPipeline",
+    "label": "PixArt Sigma",
+    "displayName": "PixArt Sigma XL 1024px",
+    "family": "PixArt",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": PIXART_SIGMA_REPO,
+    "artifactLabel": "OpenRAIL++ Diffusers safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 20,
+    "recommendedGuidance": 4.5,
+    "recommendedMaxSequenceLength": 300,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 20,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(PIXART_SIGMA_REPO, model_type="PixArtSigmaPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains four safetensors files and uses only package-owned Diffusers and Transformers classes.",
+        "The reviewed 1024px recipe uses 20 steps, guidance 4.5, at most 300 prompt tokens, and explicit model or sequential CPU offload.",
+        "The approximately 21.83 GB selected weight surface is remote-only; Auto and Gallery remain disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["pixart-sigma-1024:text-to-image:v1"] = {
+    "modelType": "PixArtSigmaPipeline",
+    "mode": "text_to_image",
+    "profile": _PIXART_SIGMA_PROFILE,
+    "capability": _PIXART_SIGMA_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
 }
 
 

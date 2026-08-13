@@ -331,6 +331,13 @@
       "artifacts": []
     },
     {
+      "modelType": "PixArtSigmaPipeline",
+      "baseRepo": "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+      "baseRevision": "e102b3591cc82e97071b8b4cb90d834d0c487207",
+      "baseLicense": "openrail++",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",

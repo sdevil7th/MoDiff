@@ -202,6 +202,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("SanaPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "edit_image"),
+                ("PixArtSigmaPipeline", "text_to_image"),
                 ("DreamLitePipeline", "text_to_image"),
                 ("DreamLitePipeline", "edit_image"),
                 ("DreamLiteMobilePipeline", "text_to_image"),
@@ -382,6 +383,20 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(sana_sprint_edit["pipelineClass"], "SanaSprintImg2ImgPipeline")
         self.assertIn(("diffusersImageEdit", "strength", "strength"), sana_sprint_edit["bindings"])
         self.assertIn(("loadImage", "image", "diffusersImageEdit", "image"), sana_sprint_edit["edges"])
+        pixart = by_id["pixart-sigma-1024:text-to-image:v1"]
+        self.assertEqual(pixart["modelType"], "PixArtSigmaPipeline")
+        self.assertEqual(pixart["pipelineClass"], "PixArtSigmaPipeline")
+        self.assertEqual(
+            pixart["defaultRepo"],
+            "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+        )
+        self.assertEqual(
+            DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].max_low_memory_steps,
+            20,
+        )
+        self.assertFalse(
+            DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].live_proof
+        )
         dreamlite = by_id["dreamlite-base:text-to-image:v1"]
         self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
         self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")

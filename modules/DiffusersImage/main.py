@@ -59,6 +59,7 @@ SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -356,6 +357,14 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("SanaSprintPipeline",),
         safe_serialization_required=True,
         max_inference_steps=4,
+        max_sequence_length=300,
+    ),
+    "PixArtSigmaPipeline": ImagePipelineAdapter(
+        "PixArtSigmaPipeline",
+        frozenset({"text_to_image"}),
+        PIXART_SIGMA_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
         max_sequence_length=300,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
@@ -725,6 +734,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "SanaSprintImg2ImgPipeline": {
         "edit_image": _image_field_contract("width", "height", "guidance_scale", "strength", "max_sequence_length"),
+    },
+    "PixArtSigmaPipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
     "DreamLitePipeline": {
         "text_to_image": _image_field_contract(
