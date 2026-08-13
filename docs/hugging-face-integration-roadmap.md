@@ -6067,7 +6067,7 @@ This is a family inventory, not a requirement to create one node per family.
 ### Text diffusion
 
 - [x] `diffusion_gemma`
-- [ ] `llada2`
+- [x] `llada2`
 
 ### 3D and perception
 
