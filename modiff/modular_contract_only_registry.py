@@ -95,6 +95,28 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES = (
             ("ref2va", "reference_to_video_with_audio"),
         ),
     ),
+    ContractOnlyModularPipeline(
+        "LTX2ModularPipeline",
+        "LTX-2 (Contract only)",
+        "multimodal",
+        (
+            ("text2video", "text_to_video_with_audio"),
+            ("image2video", "image_to_video_with_audio"),
+            ("condition", "condition_to_video_with_audio"),
+            ("in_context", "in_context_to_video_with_audio"),
+        ),
+    ),
+    ContractOnlyModularPipeline(
+        "LTX25ModularPipeline",
+        "LTX-2.5 (Contract only)",
+        "multimodal",
+        (
+            ("text2video", "text_to_video_with_audio"),
+            ("image2video", "image_to_video_with_audio"),
+            ("condition", "condition_to_video_with_audio"),
+            ("in_context", "in_context_to_video_with_audio"),
+        ),
+    ),
 )
 
 CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES = (

@@ -17135,6 +17135,4355 @@
       ]
     },
     {
+      "blocksClass": "LTX25AutoBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "prompt_enhancer",
+          "reuseKey": [
+            "prompt_enhancer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.modeling_utils.PreTrainedModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "processor",
+          "reuseKey": [
+            "processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.processing_utils.ProcessorMixin"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "text_encoder",
+          "reuseKey": [
+            "text_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.modeling_utils.PreTrainedModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.tokenization_utils_base.PreTrainedTokenizerBase"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "connectors",
+          "reuseKey": [
+            "connectors",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.pipelines.ltx2.connectors.LTX2TextConnectors"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "duration_head",
+          "reuseKey": [
+            "duration_head",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.pipelines.ltx2.duration_head.LTX2DurationHead"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vae",
+          "reuseKey": [
+            "vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_ltx2.AutoencoderKLLTX2Video"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "video_processor",
+          "reuseKey": [
+            "video_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.video_processor.VideoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_ltx2.LTX2VideoTransformer3DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "audio_vae",
+          "reuseKey": [
+            "audio_vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_ltx2_audio.AutoencoderKLLTX2Audio"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "guider",
+          "reuseKey": [
+            "guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "audio_guider",
+          "reuseKey": [
+            "audio_guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "diffusion_decoder",
+          "reuseKey": [
+            "diffusion_decoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.ltx2_diffusion_decoder.LTX2VideoDiffusionDecoderModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vocoder",
+          "reuseKey": [
+            "vocoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.pipelines.ltx2.vocoder.LTX2Vocoder"
+        }
+      ],
+      "description": "Auto blocks for LTX-2.5 supporting text-to-video, image-to-video, condition-to-video and in-context (IC-LoRA) generation (joint video + audio). Identical to `LTX2AutoBlocks` except that the video decoder is `LTX2DiffusionVaeDecoderStep`, since the diffusion decoder is the native default from LTX-2.5 on. To decode with the convolutional VAE instead, swap the decode block: `blocks.sub_blocks[\"decode\"] = LTX2AutoDecoderStep()`.",
+      "kind": "auto",
+      "pipelineClass": "LTX25ModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "text2video",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Lower bound on the auto-predicted duration.",
+              "name": "min_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 20.0,
+              "description": "Upper bound on the auto-predicted duration. Must be strictly greater than `min_seconds`.",
+              "name": "max_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Interpolation factor between random noise and any provided latents. `None` (default) resolves to 0.0, which keeps the provided latents.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Text To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The predicted number of frames to generate.",
+              "name": "num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The resolved interpolation factor, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "min_seconds",
+            "max_seconds",
+            "frame_rate",
+            "num_videos_per_prompt",
+            "num_inference_steps",
+            "timesteps",
+            "sigmas",
+            "height",
+            "width",
+            "latents",
+            "noise_scale",
+            "generator",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2DurationStep",
+              "description": "Predicts `num_frames` from the connector text conditioning using the `duration_head`, producing a concrete frame count snapped to the VAE's temporal grid. Run only when `num_frames` was omitted (see `LTX2AutoDurationStep`).",
+              "kind": "block",
+              "path": "duration"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2SetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2PrepareLatentsStep",
+              "description": "Prepares the packed video noise latents for text-to-video generation. `noise_scale` is declared with a `None` default and resolved to 0.0 here rather than declared as 0.0: a blockset keeps the first non-`None` default across its blocks, so a literal 0.0 would shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution wherever the two share a blockset (`LTX2AutoBlocks`). The resolved value is written back to state for `LTX2PrepareAudioLatentsStep`.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2PrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count. `noise_scale` is declared with a `None` default for the reason given on `LTX2PrepareLatentsStep`, which runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2PrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps). CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2DenoiseStep",
+              "description": "Text-to-video denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2LoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2LoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2LoopBeforeDenoiser",
+              "description": "Text-to-video loop step that casts the video/audio latent inputs and expands the per-step timestep.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2LoopAfterDenoiser",
+              "description": "Text-to-video loop step that converts the guided x0 predictions to velocity and steps both schedulers.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2DiffusionVaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents with the LTX-2 diffusion decoder (or returns latents). Swap this in for `LTX2VaeDecoderStep` on checkpoints that ship the diffusion decoder, which from LTX-2.5 on is the native default. The decoder denoises rather than deterministically decoding, so it draws its own noise from `generator` and takes no decode timestep.",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "text_to_video_with_audio"
+        },
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "image2video",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Lower bound on the auto-predicted duration.",
+              "name": "min_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 20.0,
+              "description": "Upper bound on the auto-predicted duration. Must be strictly greater than `min_seconds`.",
+              "name": "max_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Reference image(s) for denoising. Can be a single image or list of images.",
+              "name": "image",
+              "required": true,
+              "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "H.264 CRF used to re-compress the conditioning `image` before VAE encode, matching the compression the model was trained against. `None` (default) resolves from the text-encoder generation (33 through LTX-2.3, 18 for LTX-2.5). Pass `0` to skip re-compression. Requires a `PIL.Image.Image` when re-compression runs.",
+              "name": "image_crf",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Interpolation factor between random noise and any provided latents. `None` (default) resolves to 0.0, which keeps the provided latents.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Image To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The predicted number of frames to generate.",
+              "name": "num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Normalized image latents (a single latent frame) for image-to-video conditioning.",
+              "name": "image_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The resolved interpolation factor, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Packed per-token mask marking the clean (image-conditioned) first latent frame.",
+              "name": "conditioning_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "image",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "min_seconds",
+            "max_seconds",
+            "frame_rate",
+            "image",
+            "height",
+            "width",
+            "image_crf",
+            "generator",
+            "num_videos_per_prompt",
+            "num_inference_steps",
+            "timesteps",
+            "sigmas",
+            "latents",
+            "noise_scale",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2DurationStep",
+              "description": "Predicts `num_frames` from the connector text conditioning using the `duration_head`, producing a concrete frame count snapped to the VAE's temporal grid. Run only when `num_frames` was omitted (see `LTX2AutoDurationStep`).",
+              "kind": "block",
+              "path": "duration"
+            },
+            {
+              "className": "LTX2VaeEncoderStep",
+              "description": "VAE encoder step that encodes the input `image` into normalized latents for image-to-video generation.",
+              "kind": "block",
+              "path": "vae_encoder"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2SetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2PrepareLatentsStep",
+              "description": "Prepares the packed video noise latents for text-to-video generation. `noise_scale` is declared with a `None` default and resolved to 0.0 here rather than declared as 0.0: a blockset keeps the first non-`None` default across its blocks, so a literal 0.0 would shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution wherever the two share a blockset (`LTX2AutoBlocks`). The resolved value is written back to state for `LTX2PrepareAudioLatentsStep`.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2Image2VideoPrepareLatentsStep",
+              "description": "Prepares image-to-video latents: blends the pre-encoded `image_latents` (kept clean on the first latent frame) with the noise `latents` via a conditioning mask. Expects pure-noise `latents` from `LTX2PrepareLatentsStep`.",
+              "kind": "block",
+              "path": "denoise.prepare_i2v_latents"
+            },
+            {
+              "className": "LTX2PrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count. `noise_scale` is declared with a `None` default for the reason given on `LTX2PrepareLatentsStep`, which runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2PrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps). CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2Image2VideoDenoiseStep",
+              "description": "Image-to-video denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2Image2VideoLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2Image2VideoLoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2Image2VideoLoopBeforeDenoiser",
+              "description": "Image-to-video loop step. Like the t2v variant, but zeroes the video timestep on the image-conditioned latent frame via the conditioning mask (audio timestep is unmasked).",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2Image2VideoLoopAfterDenoiser",
+              "description": "Image-to-video loop step. Steps the video scheduler only on the non-conditioning frames (keeping the clean image frame) and steps the audio scheduler as usual.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2DiffusionVaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents with the LTX-2 diffusion decoder (or returns latents). Swap this in for `LTX2VaeDecoderStep` on checkpoints that ship the diffusion decoder, which from LTX-2.5 on is the native default. The decoder denoises rather than deterministically decoding, so it draws its own noise from `generator` and takes no decode timestep.",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "image_to_video_with_audio"
+        },
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "condition",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Lower bound on the auto-predicted duration.",
+              "name": "min_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 20.0,
+              "description": "Upper bound on the auto-predicted duration. Must be strictly greater than `min_seconds`.",
+              "name": "max_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "`LTX2VideoCondition` (or list of them) placing image/video conditions at latent frame indices of the generated video.",
+              "name": "conditions",
+              "required": true,
+              "type": "builtins.list"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Initial noise level for the un-conditioned tokens. `None` (default) resolves to `sigmas[0]` when custom `sigmas` are supplied, else 1.0.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Condition To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The predicted number of frames to generate.",
+              "name": "num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Per-condition normalized VAE latents of shape [1, C, F, H, W].",
+              "name": "condition_latents",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition conditioning strengths.",
+              "name": "condition_strengths",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition latent frame index at which the condition is applied.",
+              "name": "condition_indices",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition trimmed pixel frame count, used to clamp the temporal extent of single-frame keyframe coordinates.",
+              "name": "condition_pixel_frames",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents, with any keyframe condition tokens appended.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-token conditioning strengths of shape [B, S, 1] in [0, 1]: 1 at fully-conditioned positions, 0 at free positions.",
+              "name": "conditioning_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Clean condition latents at conditioned positions, zeros elsewhere; same shape as `latents`.",
+              "name": "clean_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "RoPE coordinates of shape [B, 3, num_keyframe_tokens, 2] for the appended keyframe tokens, zero-width when there are none.",
+              "name": "appended_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of generated-video tokens, i.e. the sequence length before appended tokens.",
+              "name": "base_token_count",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The resolved initial noise level, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates, with the keyframe-condition coordinates appended.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "conditions",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "min_seconds",
+            "max_seconds",
+            "frame_rate",
+            "conditions",
+            "height",
+            "width",
+            "generator",
+            "num_videos_per_prompt",
+            "latents",
+            "noise_scale",
+            "sigmas",
+            "num_inference_steps",
+            "timesteps",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2DurationStep",
+              "description": "Predicts `num_frames` from the connector text conditioning using the `duration_head`, producing a concrete frame count snapped to the VAE's temporal grid. Run only when `num_frames` was omitted (see `LTX2AutoDurationStep`).",
+              "kind": "block",
+              "path": "duration"
+            },
+            {
+              "className": "LTX2ConditionEncoderStep",
+              "description": "Condition encoder step. Resizes and center-crops each frame condition to the target resolution, H.264 re-compresses single-frame image conditions at the model CRF, trims them to the VAE's temporal grid, and VAE-encodes them into normalized latents for `LTX2ConditionPrepareLatentsStep`.",
+              "kind": "block",
+              "path": "condition_encoder"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2ConditionPrepareLatentsStep",
+              "description": "Prepares the packed video latents for condition-based generation. Conditions at latent index 0 overwrite the tokens at the first-frame positions (`VideoConditionByLatentIndex` semantics); conditions at other latent indices are appended to the sequence as keyframe tokens carrying their own RoPE coordinates (`VideoConditionByKeyframeIndex` semantics). Emits the per-token `conditioning_mask` and `clean_latents` that drive the loop's masked timestep and x0 blend. Unlike `LTX2PrepareLatentsStep` this starts from zeros and samples the noise last, once the conditioning mask is known.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2ConditionSetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state. Unlike `LTX2SetTimestepsStep`, the resolution-aware shift `mu` is read off the packed `latents` sequence length, which for condition workflows includes the appended keyframe tokens -- so this block runs *after* `LTX2ConditionPrepareLatentsStep`, matching `LTX2ConditionPipeline`.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2ConditionPrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count, for condition-based generation. Two deliberate differences from `LTX2PrepareAudioLatentsStep`: 1. the noise is sampled directly in the packed shape [B, L, C * M], matching `LTX2ConditionPipeline.prepare_audio_latents`. The text-to-video/image-to-video pipelines sample unpacked [B, C, L, M] and pack afterwards; both draw the same number of values from the generator but lay them out differently, so sampling the wrong way silently desynchronizes the audio noise (and, through the joint attention, the video too). 2. `noise_scale` is declared with a `None` default: a blockset keeps the first non-`None` default across its blocks, so the text-to-video default of 0.0 would otherwise shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution. `LTX2ConditionPrepareLatentsStep` runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2ConditionPrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps) and appends the keyframe-condition coordinates onto the video coordinates, matching the order the keyframe tokens were appended to the latent sequence. CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2ConditionDenoiseStep",
+              "description": "Condition denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2ConditionLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2ConditionLoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2ConditionLoopBeforeDenoiser",
+              "description": "Condition loop step. Like the text-to-video variant, but scales the per-token video timestep by `1 - conditioning_mask`, so first-frame and keyframe condition tokens are seen at a reduced noise level (zero for `strength=1`). The audio timestep is unmasked.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2ConditionLoopAfterDenoiser",
+              "description": "Condition loop step. Blends the guided x0 prediction with the clean condition latents through the `conditioning_mask` (in x0 space, matching the reference `post_process_latent`), converts back to velocity, and steps both schedulers. Unlike the image-to-video variant the video step covers the whole sequence: appended keyframe tokens stay in place and are pinned by the mask rather than by slicing.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2TrimConditionTokensStep",
+              "description": "Drops the appended keyframe-condition tokens from the denoised latents, leaving only the generated-video tokens for the decoders.",
+              "kind": "block",
+              "path": "decode.trim_condition_tokens"
+            },
+            {
+              "className": "LTX2DiffusionVaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents with the LTX-2 diffusion decoder (or returns latents). Swap this in for `LTX2VaeDecoderStep` on checkpoints that ship the diffusion decoder, which from LTX-2.5 on is the native default. The decoder denoises rather than deterministically decoding, so it draws its own noise from `generator` and takes no decode timestep.",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "condition_to_video_with_audio"
+        },
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "in_context",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "`LTX2VideoCondition` (or list of them) placing image/video conditions at latent frame indices of the generated video.",
+              "name": "conditions",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The number of frames in the generated video. Omit to auto-predict via the `duration_head` (see `LTX2AutoDurationStep`).",
+              "name": "num_frames",
+              "required": true,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": null,
+              "description": "`LTX2ReferenceCondition` (or list of them) whose videos are encoded into extra latent tokens the IC-LoRA adapter attends to.",
+              "name": "reference_conditions",
+              "required": true,
+              "type": "builtins.list"
+            },
+            {
+              "default": 1,
+              "description": "Ratio between the target and reference resolutions; 2 means the reference is preprocessed at half the target resolution. Spatial coordinates are scaled by this factor so the reference tokens land in the target coordinate space. Must match the factor the IC-LoRA was trained with.",
+              "name": "reference_downscale_factor",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Scalar in [0, 1] controlling how strongly the noisy tokens and reference tokens attend to each other. 1.0 (default) leaves attention unmasked.",
+              "name": "conditioning_attention_strength",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Optional pixel-space mask of shape (1, 1, F, H, W) with values in [0, 1] giving spatially varying attention strength. Downsampled to the reference's latent grid and multiplied by `conditioning_attention_strength`.",
+              "name": "conditioning_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Initial noise level for the un-conditioned tokens. `None` (default) resolves to `sigmas[0]` when custom `sigmas` are supplied, else 1.0.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "In Context To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-condition normalized VAE latents of shape [1, C, F, H, W].",
+              "name": "condition_latents",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition conditioning strengths.",
+              "name": "condition_strengths",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition latent frame index at which the condition is applied.",
+              "name": "condition_indices",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition trimmed pixel frame count, used to clamp the temporal extent of single-frame keyframe coordinates.",
+              "name": "condition_pixel_frames",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Packed reference tokens of shape [1, total_reference_tokens, C].",
+              "name": "reference_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "RoPE coordinates for the reference tokens, of shape [1, 3, total_reference_tokens, 2].",
+              "name": "reference_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-reference token counts, in `reference_conditions` order.",
+              "name": "reference_token_counts",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-reference-token noisy<->reference attention strengths of shape [1, total_reference_tokens], or `None` when attention is left unmasked.",
+              "name": "reference_cross_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents, with keyframe and reference tokens appended.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-token conditioning strengths of shape [B, S, 1] in [0, 1]: 1 at fully-conditioned positions, 0 at free positions.",
+              "name": "conditioning_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Clean condition latents at conditioned positions, zeros elsewhere; same shape as `latents`.",
+              "name": "clean_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "RoPE coordinates of shape [B, 3, num_keyframe_tokens + num_reference_tokens, 2] for the appended tokens, zero-width when there are none.",
+              "name": "appended_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of generated-video tokens, i.e. the sequence length before appended tokens.",
+              "name": "base_token_count",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Number of reference tokens, which sit at the very end of the sequence.",
+              "name": "num_ref_tokens",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The resolved initial noise level, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates, with the keyframe-condition coordinates appended.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "num_frames",
+            "prompt",
+            "reference_conditions"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "conditions",
+            "height",
+            "width",
+            "num_frames",
+            "generator",
+            "reference_conditions",
+            "reference_downscale_factor",
+            "conditioning_attention_strength",
+            "conditioning_attention_mask",
+            "frame_rate",
+            "num_videos_per_prompt",
+            "latents",
+            "noise_scale",
+            "sigmas",
+            "num_inference_steps",
+            "timesteps",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2ConditionEncoderStep",
+              "description": "Condition encoder step. Resizes and center-crops each frame condition to the target resolution, H.264 re-compresses single-frame image conditions at the model CRF, trims them to the VAE's temporal grid, and VAE-encodes them into normalized latents for `LTX2ConditionPrepareLatentsStep`.",
+              "kind": "block",
+              "path": "condition_encoder"
+            },
+            {
+              "className": "LTX2ReferenceEncoderStep",
+              "description": "Reference encoder step for in-context (IC-LoRA) generation. Preprocesses each reference video to the (optionally downscaled) target resolution, VAE-encodes and packs it into tokens, and computes the positional coordinates that map those tokens into the target coordinate space. When `conditioning_attention_strength < 1.0` or a pixel-space `conditioning_attention_mask` is supplied it also produces the per-token cross-attention strengths driving the video self-attention mask.",
+              "kind": "block",
+              "path": "reference_encoder"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2InContextPrepareLatentsStep",
+              "description": "Prepares the packed video latents for in-context (IC-LoRA) generation. Same frame-condition handling as `LTX2ConditionPrepareLatentsStep` (first-frame overwrite, keyframe token append), then appends the encoded reference tokens after the keyframes with a per-token `conditioning_mask` of their own strength, giving a single `[base | keyframe | reference]` sequence. Mirrors `LTX2InContextPipeline.prepare_latents`, which likewise re-implements the condition version rather than extending it -- the two are kept side by side so each reads top to bottom.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2ConditionSetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state. Unlike `LTX2SetTimestepsStep`, the resolution-aware shift `mu` is read off the packed `latents` sequence length, which for condition workflows includes the appended keyframe tokens -- so this block runs *after* `LTX2ConditionPrepareLatentsStep`, matching `LTX2ConditionPipeline`.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2ConditionPrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count, for condition-based generation. Two deliberate differences from `LTX2PrepareAudioLatentsStep`: 1. the noise is sampled directly in the packed shape [B, L, C * M], matching `LTX2ConditionPipeline.prepare_audio_latents`. The text-to-video/image-to-video pipelines sample unpacked [B, C, L, M] and pack afterwards; both draw the same number of values from the generator but lay them out differently, so sampling the wrong way silently desynchronizes the audio noise (and, through the joint attention, the video too). 2. `noise_scale` is declared with a `None` default: a blockset keeps the first non-`None` default across its blocks, so the text-to-video default of 0.0 would otherwise shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution. `LTX2ConditionPrepareLatentsStep` runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2ConditionPrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps) and appends the keyframe-condition coordinates onto the video coordinates, matching the order the keyframe tokens were appended to the latent sequence. CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2ConditionDenoiseStep",
+              "description": "Condition denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2ConditionLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2ConditionLoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2ConditionLoopBeforeDenoiser",
+              "description": "Condition loop step. Like the text-to-video variant, but scales the per-token video timestep by `1 - conditioning_mask`, so first-frame and keyframe condition tokens are seen at a reduced noise level (zero for `strength=1`). The audio timestep is unmasked.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2ConditionLoopAfterDenoiser",
+              "description": "Condition loop step. Blends the guided x0 prediction with the clean condition latents through the `conditioning_mask` (in x0 space, matching the reference `post_process_latent`), converts back to velocity, and steps both schedulers. Unlike the image-to-video variant the video step covers the whole sequence: appended keyframe tokens stay in place and are pinned by the mask rather than by slicing.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2TrimConditionTokensStep",
+              "description": "Drops the appended keyframe-condition tokens from the denoised latents, leaving only the generated-video tokens for the decoders.",
+              "kind": "block",
+              "path": "decode.trim_condition_tokens"
+            },
+            {
+              "className": "LTX2DiffusionVaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents with the LTX-2 diffusion decoder (or returns latents). Swap this in for `LTX2VaeDecoderStep` on checkpoints that ship the diffusion decoder, which from LTX-2.5 on is the native default. The decoder denoises rather than deterministically decoding, so it draws its own noise from `generator` and takes no decode timestep.",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "in_context_to_video_with_audio"
+        }
+      ]
+    },
+    {
+      "blocksClass": "LTX2AutoBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "prompt_enhancer",
+          "reuseKey": [
+            "prompt_enhancer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.modeling_utils.PreTrainedModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "processor",
+          "reuseKey": [
+            "processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.processing_utils.ProcessorMixin"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "text_encoder",
+          "reuseKey": [
+            "text_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.modeling_utils.PreTrainedModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.tokenization_utils_base.PreTrainedTokenizerBase"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "connectors",
+          "reuseKey": [
+            "connectors",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.pipelines.ltx2.connectors.LTX2TextConnectors"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "duration_head",
+          "reuseKey": [
+            "duration_head",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.pipelines.ltx2.duration_head.LTX2DurationHead"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vae",
+          "reuseKey": [
+            "vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_ltx2.AutoencoderKLLTX2Video"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "video_processor",
+          "reuseKey": [
+            "video_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.video_processor.VideoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_ltx2.LTX2VideoTransformer3DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "audio_vae",
+          "reuseKey": [
+            "audio_vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_ltx2_audio.AutoencoderKLLTX2Audio"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "guider",
+          "reuseKey": [
+            "guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "audio_guider",
+          "reuseKey": [
+            "audio_guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vocoder",
+          "reuseKey": [
+            "vocoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.pipelines.ltx2.vocoder.LTX2Vocoder"
+        }
+      ],
+      "description": "Auto blocks for LTX-2 supporting text-to-video, image-to-video, condition-to-video and in-context (IC-LoRA) generation (joint video + audio).",
+      "kind": "auto",
+      "pipelineClass": "LTX2ModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "text2video",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Lower bound on the auto-predicted duration.",
+              "name": "min_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 20.0,
+              "description": "Upper bound on the auto-predicted duration. Must be strictly greater than `min_seconds`.",
+              "name": "max_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Interpolation factor between random noise and any provided latents. `None` (default) resolves to 0.0, which keeps the provided latents.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 0.0,
+              "description": "The timestep at which the VAE decodes the final latents.",
+              "name": "decode_timestep",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Noise interpolation factor applied to the latents at the decode timestep.",
+              "name": "decode_noise_scale",
+              "required": false,
+              "type": "opaque"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Text To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The predicted number of frames to generate.",
+              "name": "num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The resolved interpolation factor, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "min_seconds",
+            "max_seconds",
+            "frame_rate",
+            "num_videos_per_prompt",
+            "num_inference_steps",
+            "timesteps",
+            "sigmas",
+            "height",
+            "width",
+            "latents",
+            "noise_scale",
+            "generator",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type",
+            "decode_timestep",
+            "decode_noise_scale"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2DurationStep",
+              "description": "Predicts `num_frames` from the connector text conditioning using the `duration_head`, producing a concrete frame count snapped to the VAE's temporal grid. Run only when `num_frames` was omitted (see `LTX2AutoDurationStep`).",
+              "kind": "block",
+              "path": "duration"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2SetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2PrepareLatentsStep",
+              "description": "Prepares the packed video noise latents for text-to-video generation. `noise_scale` is declared with a `None` default and resolved to 0.0 here rather than declared as 0.0: a blockset keeps the first non-`None` default across its blocks, so a literal 0.0 would shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution wherever the two share a blockset (`LTX2AutoBlocks`). The resolved value is written back to state for `LTX2PrepareAudioLatentsStep`.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2PrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count. `noise_scale` is declared with a `None` default for the reason given on `LTX2PrepareLatentsStep`, which runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2PrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps). CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2DenoiseStep",
+              "description": "Text-to-video denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2LoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2LoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2LoopBeforeDenoiser",
+              "description": "Text-to-video loop step that casts the video/audio latent inputs and expands the per-step timestep.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2LoopAfterDenoiser",
+              "description": "Text-to-video loop step that converts the guided x0 predictions to velocity and steps both schedulers.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2VaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents into videos (or returns latents).",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "text_to_video_with_audio"
+        },
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "image2video",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Lower bound on the auto-predicted duration.",
+              "name": "min_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 20.0,
+              "description": "Upper bound on the auto-predicted duration. Must be strictly greater than `min_seconds`.",
+              "name": "max_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Reference image(s) for denoising. Can be a single image or list of images.",
+              "name": "image",
+              "required": true,
+              "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "H.264 CRF used to re-compress the conditioning `image` before VAE encode, matching the compression the model was trained against. `None` (default) resolves from the text-encoder generation (33 through LTX-2.3, 18 for LTX-2.5). Pass `0` to skip re-compression. Requires a `PIL.Image.Image` when re-compression runs.",
+              "name": "image_crf",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Interpolation factor between random noise and any provided latents. `None` (default) resolves to 0.0, which keeps the provided latents.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 0.0,
+              "description": "The timestep at which the VAE decodes the final latents.",
+              "name": "decode_timestep",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Noise interpolation factor applied to the latents at the decode timestep.",
+              "name": "decode_noise_scale",
+              "required": false,
+              "type": "opaque"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Image To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The predicted number of frames to generate.",
+              "name": "num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Normalized image latents (a single latent frame) for image-to-video conditioning.",
+              "name": "image_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The resolved interpolation factor, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Packed per-token mask marking the clean (image-conditioned) first latent frame.",
+              "name": "conditioning_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "image",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "min_seconds",
+            "max_seconds",
+            "frame_rate",
+            "image",
+            "height",
+            "width",
+            "image_crf",
+            "generator",
+            "num_videos_per_prompt",
+            "num_inference_steps",
+            "timesteps",
+            "sigmas",
+            "latents",
+            "noise_scale",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type",
+            "decode_timestep",
+            "decode_noise_scale"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2DurationStep",
+              "description": "Predicts `num_frames` from the connector text conditioning using the `duration_head`, producing a concrete frame count snapped to the VAE's temporal grid. Run only when `num_frames` was omitted (see `LTX2AutoDurationStep`).",
+              "kind": "block",
+              "path": "duration"
+            },
+            {
+              "className": "LTX2VaeEncoderStep",
+              "description": "VAE encoder step that encodes the input `image` into normalized latents for image-to-video generation.",
+              "kind": "block",
+              "path": "vae_encoder"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2SetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2PrepareLatentsStep",
+              "description": "Prepares the packed video noise latents for text-to-video generation. `noise_scale` is declared with a `None` default and resolved to 0.0 here rather than declared as 0.0: a blockset keeps the first non-`None` default across its blocks, so a literal 0.0 would shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution wherever the two share a blockset (`LTX2AutoBlocks`). The resolved value is written back to state for `LTX2PrepareAudioLatentsStep`.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2Image2VideoPrepareLatentsStep",
+              "description": "Prepares image-to-video latents: blends the pre-encoded `image_latents` (kept clean on the first latent frame) with the noise `latents` via a conditioning mask. Expects pure-noise `latents` from `LTX2PrepareLatentsStep`.",
+              "kind": "block",
+              "path": "denoise.prepare_i2v_latents"
+            },
+            {
+              "className": "LTX2PrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count. `noise_scale` is declared with a `None` default for the reason given on `LTX2PrepareLatentsStep`, which runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2PrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps). CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2Image2VideoDenoiseStep",
+              "description": "Image-to-video denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2Image2VideoLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2Image2VideoLoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2Image2VideoLoopBeforeDenoiser",
+              "description": "Image-to-video loop step. Like the t2v variant, but zeroes the video timestep on the image-conditioned latent frame via the conditioning mask (audio timestep is unmasked).",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2Image2VideoLoopAfterDenoiser",
+              "description": "Image-to-video loop step. Steps the video scheduler only on the non-conditioning frames (keeping the clean image frame) and steps the audio scheduler as usual.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2VaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents into videos (or returns latents).",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "image_to_video_with_audio"
+        },
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "condition",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Lower bound on the auto-predicted duration.",
+              "name": "min_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 20.0,
+              "description": "Upper bound on the auto-predicted duration. Must be strictly greater than `min_seconds`.",
+              "name": "max_seconds",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "`LTX2VideoCondition` (or list of them) placing image/video conditions at latent frame indices of the generated video.",
+              "name": "conditions",
+              "required": true,
+              "type": "builtins.list"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Initial noise level for the un-conditioned tokens. `None` (default) resolves to `sigmas[0]` when custom `sigmas` are supplied, else 1.0.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 0.0,
+              "description": "The timestep at which the VAE decodes the final latents.",
+              "name": "decode_timestep",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Noise interpolation factor applied to the latents at the decode timestep.",
+              "name": "decode_noise_scale",
+              "required": false,
+              "type": "opaque"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Condition To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The predicted number of frames to generate.",
+              "name": "num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Per-condition normalized VAE latents of shape [1, C, F, H, W].",
+              "name": "condition_latents",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition conditioning strengths.",
+              "name": "condition_strengths",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition latent frame index at which the condition is applied.",
+              "name": "condition_indices",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition trimmed pixel frame count, used to clamp the temporal extent of single-frame keyframe coordinates.",
+              "name": "condition_pixel_frames",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents, with any keyframe condition tokens appended.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-token conditioning strengths of shape [B, S, 1] in [0, 1]: 1 at fully-conditioned positions, 0 at free positions.",
+              "name": "conditioning_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Clean condition latents at conditioned positions, zeros elsewhere; same shape as `latents`.",
+              "name": "clean_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "RoPE coordinates of shape [B, 3, num_keyframe_tokens, 2] for the appended keyframe tokens, zero-width when there are none.",
+              "name": "appended_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of generated-video tokens, i.e. the sequence length before appended tokens.",
+              "name": "base_token_count",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The resolved initial noise level, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates, with the keyframe-condition coordinates appended.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "conditions",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "min_seconds",
+            "max_seconds",
+            "frame_rate",
+            "conditions",
+            "height",
+            "width",
+            "generator",
+            "num_videos_per_prompt",
+            "latents",
+            "noise_scale",
+            "sigmas",
+            "num_inference_steps",
+            "timesteps",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type",
+            "decode_timestep",
+            "decode_noise_scale"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2DurationStep",
+              "description": "Predicts `num_frames` from the connector text conditioning using the `duration_head`, producing a concrete frame count snapped to the VAE's temporal grid. Run only when `num_frames` was omitted (see `LTX2AutoDurationStep`).",
+              "kind": "block",
+              "path": "duration"
+            },
+            {
+              "className": "LTX2ConditionEncoderStep",
+              "description": "Condition encoder step. Resizes and center-crops each frame condition to the target resolution, H.264 re-compresses single-frame image conditions at the model CRF, trims them to the VAE's temporal grid, and VAE-encodes them into normalized latents for `LTX2ConditionPrepareLatentsStep`.",
+              "kind": "block",
+              "path": "condition_encoder"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2ConditionPrepareLatentsStep",
+              "description": "Prepares the packed video latents for condition-based generation. Conditions at latent index 0 overwrite the tokens at the first-frame positions (`VideoConditionByLatentIndex` semantics); conditions at other latent indices are appended to the sequence as keyframe tokens carrying their own RoPE coordinates (`VideoConditionByKeyframeIndex` semantics). Emits the per-token `conditioning_mask` and `clean_latents` that drive the loop's masked timestep and x0 blend. Unlike `LTX2PrepareLatentsStep` this starts from zeros and samples the noise last, once the conditioning mask is known.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2ConditionSetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state. Unlike `LTX2SetTimestepsStep`, the resolution-aware shift `mu` is read off the packed `latents` sequence length, which for condition workflows includes the appended keyframe tokens -- so this block runs *after* `LTX2ConditionPrepareLatentsStep`, matching `LTX2ConditionPipeline`.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2ConditionPrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count, for condition-based generation. Two deliberate differences from `LTX2PrepareAudioLatentsStep`: 1. the noise is sampled directly in the packed shape [B, L, C * M], matching `LTX2ConditionPipeline.prepare_audio_latents`. The text-to-video/image-to-video pipelines sample unpacked [B, C, L, M] and pack afterwards; both draw the same number of values from the generator but lay them out differently, so sampling the wrong way silently desynchronizes the audio noise (and, through the joint attention, the video too). 2. `noise_scale` is declared with a `None` default: a blockset keeps the first non-`None` default across its blocks, so the text-to-video default of 0.0 would otherwise shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution. `LTX2ConditionPrepareLatentsStep` runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2ConditionPrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps) and appends the keyframe-condition coordinates onto the video coordinates, matching the order the keyframe tokens were appended to the latent sequence. CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2ConditionDenoiseStep",
+              "description": "Condition denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2ConditionLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2ConditionLoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2ConditionLoopBeforeDenoiser",
+              "description": "Condition loop step. Like the text-to-video variant, but scales the per-token video timestep by `1 - conditioning_mask`, so first-frame and keyframe condition tokens are seen at a reduced noise level (zero for `strength=1`). The audio timestep is unmasked.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2ConditionLoopAfterDenoiser",
+              "description": "Condition loop step. Blends the guided x0 prediction with the clean condition latents through the `conditioning_mask` (in x0 space, matching the reference `post_process_latent`), converts back to velocity, and steps both schedulers. Unlike the image-to-video variant the video step covers the whole sequence: appended keyframe tokens stay in place and are pinned by the mask rather than by slicing.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2TrimConditionTokensStep",
+              "description": "Drops the appended keyframe-condition tokens from the denoised latents, leaving only the generated-video tokens for the decoders.",
+              "kind": "block",
+              "path": "decode.trim_condition_tokens"
+            },
+            {
+              "className": "LTX2VaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents into videos (or returns latents).",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "condition_to_video_with_audio"
+        },
+        {
+          "executionPipelineClass": "LTX2ModularPipeline",
+          "id": "in_context",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 1024,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "`LTX2VideoCondition` (or list of them) placing image/video conditions at latent frame indices of the generated video.",
+              "name": "conditions",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": 512,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 704,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The number of frames in the generated video. Omit to auto-predict via the `duration_head` (see `LTX2AutoDurationStep`).",
+              "name": "num_frames",
+              "required": true,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": null,
+              "description": "`LTX2ReferenceCondition` (or list of them) whose videos are encoded into extra latent tokens the IC-LoRA adapter attends to.",
+              "name": "reference_conditions",
+              "required": true,
+              "type": "builtins.list"
+            },
+            {
+              "default": 1,
+              "description": "Ratio between the target and reference resolutions; 2 means the reference is preprocessed at half the target resolution. Spatial coordinates are scaled by this factor so the reference tokens land in the target coordinate space. Must match the factor the IC-LoRA was trained with.",
+              "name": "reference_downscale_factor",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1.0,
+              "description": "Scalar in [0, 1] controlling how strongly the noisy tokens and reference tokens attend to each other. 1.0 (default) leaves attention unmasked.",
+              "name": "conditioning_attention_strength",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Optional pixel-space mask of shape (1, 1, F, H, W) with values in [0, 1] giving spatially varying attention strength. Downsampled to the reference's latent grid and multiplied by `conditioning_attention_strength`.",
+              "name": "conditioning_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": 24.0,
+              "description": "Frames per second of the generated video.",
+              "name": "frame_rate",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_videos_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Initial noise level for the un-conditioned tokens. `None` (default) resolves to `sigmas[0]` when custom `sigmas` are supplied, else 1.0.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Custom sigmas for the denoising process.",
+              "name": "sigmas",
+              "required": false,
+              "type": "list[builtins.float]"
+            },
+            {
+              "default": 30,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Timesteps for the denoising process.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Optional pre-encoded audio latents; random noise is used when not provided.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": true,
+              "description": "Whether to condition the transformer on a separate per-token cross timestep (LTX-2.3+).",
+              "name": "use_cross_timestep",
+              "required": false,
+              "type": "builtins.bool"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 0.0,
+              "description": "The timestep at which the VAE decodes the final latents.",
+              "name": "decode_timestep",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Noise interpolation factor applied to the latents at the decode timestep.",
+              "name": "decode_noise_scale",
+              "required": false,
+              "type": "opaque"
+            }
+          ],
+          "kind": "sequential",
+          "label": "In Context To Video With Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the prompt.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `prompt_embeds`.",
+              "name": "prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-layer Gemma hidden states for the negative prompt.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary attention mask for `negative_prompt_embeds`.",
+              "name": "negative_prompt_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The number of prompts being denoised (before per-prompt expansion).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the prompt embeddings.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (cond).",
+              "name": "connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (cond).",
+              "name": "connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (cond).",
+              "name": "connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Video-branch text conditioning (uncond).",
+              "name": "negative_connector_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio-branch text conditioning (uncond).",
+              "name": "negative_connector_audio_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Binary text attention mask (uncond).",
+              "name": "negative_connector_attention_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-condition normalized VAE latents of shape [1, C, F, H, W].",
+              "name": "condition_latents",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition conditioning strengths.",
+              "name": "condition_strengths",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition latent frame index at which the condition is applied.",
+              "name": "condition_indices",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-condition trimmed pixel frame count, used to clamp the temporal extent of single-frame keyframe coordinates.",
+              "name": "condition_pixel_frames",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Packed reference tokens of shape [1, total_reference_tokens, C].",
+              "name": "reference_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "RoPE coordinates for the reference tokens, of shape [1, 3, total_reference_tokens, 2].",
+              "name": "reference_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-reference token counts, in `reference_conditions` order.",
+              "name": "reference_token_counts",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Per-reference-token noisy<->reference attention strengths of shape [1, total_reference_tokens], or `None` when attention is left unmasked.",
+              "name": "reference_cross_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy video latents, with keyframe and reference tokens appended.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed per-token conditioning strengths of shape [B, S, 1] in [0, 1]: 1 at fully-conditioned positions, 0 at free positions.",
+              "name": "conditioning_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Clean condition latents at conditioned positions, zeros elsewhere; same shape as `latents`.",
+              "name": "clean_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "RoPE coordinates of shape [B, 3, num_keyframe_tokens + num_reference_tokens, 2] for the appended tokens, zero-width when there are none.",
+              "name": "appended_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of generated-video tokens, i.e. the sequence length before appended tokens.",
+              "name": "base_token_count",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Number of reference tokens, which sit at the very end of the sequence.",
+              "name": "num_ref_tokens",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The resolved initial noise level, forwarded to the audio latents step.",
+              "name": "noise_scale",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Independent deep copy of `scheduler` used to update the audio latents in the loop.",
+              "name": "audio_scheduler",
+              "required": false,
+              "type": "opaque"
+            },
+            {
+              "default": null,
+              "description": "Packed noisy audio latents.",
+              "name": "audio_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of audio latent frames.",
+              "name": "audio_num_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Video RoPE patch coordinates, with the keyframe-condition coordinates appended.",
+              "name": "video_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Audio RoPE patch coordinates.",
+              "name": "audio_coords",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The generated videos.",
+              "name": "videos",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The generated audio waveform.",
+              "name": "audio",
+              "required": false,
+              "type": "torch.Tensor"
+            }
+          ],
+          "requiredInputs": [
+            "num_frames",
+            "prompt",
+            "reference_conditions"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "conditions",
+            "height",
+            "width",
+            "num_frames",
+            "generator",
+            "reference_conditions",
+            "reference_downscale_factor",
+            "conditioning_attention_strength",
+            "conditioning_attention_mask",
+            "frame_rate",
+            "num_videos_per_prompt",
+            "latents",
+            "noise_scale",
+            "sigmas",
+            "num_inference_steps",
+            "timesteps",
+            "audio_latents",
+            "denoiser_input_fields",
+            "use_cross_timestep",
+            "attention_kwargs",
+            "output_type",
+            "decode_timestep",
+            "decode_noise_scale"
+          ],
+          "steps": [
+            {
+              "className": "LTX2TextEncoderStep",
+              "description": "Text encoder step. Encodes `prompt` and `negative_prompt` into packed per-layer Gemma hidden states that the connectors adapt for the video and audio branches, and reports the prompt count (`batch_size`) and embedding `dtype`.",
+              "kind": "block",
+              "path": "text_encoder.text_encoder"
+            },
+            {
+              "className": "LTX2TextConnectorStep",
+              "description": "Connector step. Adapts the Gemma hidden states into the separate video- and audio-branch text conditioning consumed by the transformer, for both the conditional and unconditional prompts.",
+              "kind": "block",
+              "path": "text_encoder.connectors"
+            },
+            {
+              "className": "LTX2ConditionEncoderStep",
+              "description": "Condition encoder step. Resizes and center-crops each frame condition to the target resolution, H.264 re-compresses single-frame image conditions at the model CRF, trims them to the VAE's temporal grid, and VAE-encodes them into normalized latents for `LTX2ConditionPrepareLatentsStep`.",
+              "kind": "block",
+              "path": "condition_encoder"
+            },
+            {
+              "className": "LTX2ReferenceEncoderStep",
+              "description": "Reference encoder step for in-context (IC-LoRA) generation. Preprocesses each reference video to the (optionally downscaled) target resolution, VAE-encodes and packs it into tokens, and computes the positional coordinates that map those tokens into the target coordinate space. When `conditioning_attention_strength < 1.0` or a pixel-space `conditioning_attention_mask` is supplied it also produces the per-token cross-attention strengths driving the video self-attention mask.",
+              "kind": "block",
+              "path": "reference_encoder"
+            },
+            {
+              "className": "LTX2TextInputStep",
+              "description": "Input processing step that expands the connector text conditioning (cond and uncond) by `num_videos_per_prompt`, so it matches the `batch_size * num_videos_per_prompt` batch of the video and audio latents. Runs at the head of the denoise stage, which keeps the text-conditioning stage's outputs reusable across denoise runs with different `num_videos_per_prompt`.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "LTX2InContextPrepareLatentsStep",
+              "description": "Prepares the packed video latents for in-context (IC-LoRA) generation. Same frame-condition handling as `LTX2ConditionPrepareLatentsStep` (first-frame overwrite, keyframe token append), then appends the encoded reference tokens after the keyframes with a per-token `conditioning_mask` of their own strength, giving a single `[base | keyframe | reference]` sequence. Mirrors `LTX2InContextPipeline.prepare_latents`, which likewise re-implements the condition version rather than extending it -- the two are kept side by side so each reads top to bottom.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "LTX2ConditionSetTimestepsStep",
+              "description": "Sets the flow-match timesteps for the video `scheduler` and produces a deep-copied `audio_scheduler` (with the same schedule) so the audio latents are denoised on an independent scheduler state. Unlike `LTX2SetTimestepsStep`, the resolution-aware shift `mu` is read off the packed `latents` sequence length, which for condition workflows includes the appended keyframe tokens -- so this block runs *after* `LTX2ConditionPrepareLatentsStep`, matching `LTX2ConditionPipeline`.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "LTX2ConditionPrepareAudioLatentsStep",
+              "description": "Prepares the packed audio noise latents and derives the audio latent frame count, for condition-based generation. Two deliberate differences from `LTX2PrepareAudioLatentsStep`: 1. the noise is sampled directly in the packed shape [B, L, C * M], matching `LTX2ConditionPipeline.prepare_audio_latents`. The text-to-video/image-to-video pipelines sample unpacked [B, C, L, M] and pack afterwards; both draw the same number of values from the generator but lay them out differently, so sampling the wrong way silently desynchronizes the audio noise (and, through the joint attention, the video too). 2. `noise_scale` is declared with a `None` default: a blockset keeps the first non-`None` default across its blocks, so the text-to-video default of 0.0 would otherwise shadow the condition workflow's `None -> sigmas[0] or 1.0` resolution. `LTX2ConditionPrepareLatentsStep` runs first and writes the resolved value back to state.",
+              "kind": "block",
+              "path": "denoise.prepare_audio_latents"
+            },
+            {
+              "className": "LTX2ConditionPrepareCoordsStep",
+              "description": "Pre-computes the video and audio RoPE positional coordinates (constant across denoising steps) and appends the keyframe-condition coordinates onto the video coordinates, matching the order the keyframe tokens were appended to the latent sequence. CFG/STG batch duplication is left to the denoise step.",
+              "kind": "block",
+              "path": "denoise.prepare_coords"
+            },
+            {
+              "className": "LTX2ConditionDenoiseStep",
+              "description": "Condition denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2ConditionLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2ConditionLoopAfterDenoiser`",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "LTX2ConditionLoopBeforeDenoiser",
+              "description": "Condition loop step. Like the text-to-video variant, but scales the per-token video timestep by `1 - conditioning_mask`, so first-frame and keyframe condition tokens are seen at a reduced noise level (zero for `strength=1`). The audio timestep is unmasked.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "LTX2LoopDenoiser",
+              "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "LTX2ConditionLoopAfterDenoiser",
+              "description": "Condition loop step. Blends the guided x0 prediction with the clean condition latents through the `conditioning_mask` (in x0 space, matching the reference `post_process_latent`), converts back to velocity, and steps both schedulers. Unlike the image-to-video variant the video step covers the whole sequence: appended keyframe tokens stay in place and are pinned by the mask rather than by slicing.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "LTX2TrimConditionTokensStep",
+              "description": "Drops the appended keyframe-condition tokens from the denoised latents, leaving only the generated-video tokens for the decoders.",
+              "kind": "block",
+              "path": "decode.trim_condition_tokens"
+            },
+            {
+              "className": "LTX2VaeDecoderStep",
+              "description": "Step that unpacks and decodes the denoised video latents into videos (or returns latents).",
+              "kind": "block",
+              "path": "decode.video_decode"
+            },
+            {
+              "className": "LTX2AudioDecoderStep",
+              "description": "Step that unpacks and decodes the denoised audio latents into a waveform via the audio VAE and vocoder (or returns the unpacked audio latents when `output_type='latent'`).",
+              "kind": "block",
+              "path": "decode.audio_decode"
+            }
+          ],
+          "taskId": "in_context_to_video_with_audio"
+        }
+      ]
+    },
+    {
       "blocksClass": "LTXAutoBlocks",
       "components": [
         {

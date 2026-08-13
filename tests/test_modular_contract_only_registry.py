@@ -45,7 +45,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 7)
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 3)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 5)
         self.assertTrue(
             all(item.batch == "image" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES)
         )
@@ -58,7 +58,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 18)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 20)
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
             with self.subTest(pipeline=specification.class_name):
@@ -143,6 +143,68 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 "transformer_ref",
             }.issubset(component_names)
         )
+
+    def test_ltx2_and_ltx25_publish_exact_joint_workflows_and_distinct_decoders(self):
+        expected_tasks = {
+            "text2video": "text_to_video_with_audio",
+            "image2video": "image_to_video_with_audio",
+            "condition": "condition_to_video_with_audio",
+            "in_context": "in_context_to_video_with_audio",
+        }
+        required_inputs = {
+            "text2video": ["prompt"],
+            "image2video": ["image", "prompt"],
+            "condition": ["conditions", "prompt"],
+            "in_context": ["num_frames", "prompt", "reference_conditions"],
+        }
+
+        ltx2 = reviewed_modular_workflow_contract("LTX2ModularPipeline")
+        ltx25 = reviewed_modular_workflow_contract("LTX25ModularPipeline")
+        self.assertEqual(ltx2["blocksClass"], "LTX2AutoBlocks")
+        self.assertEqual(ltx25["blocksClass"], "LTX25AutoBlocks")
+
+        for contract in (ltx2, ltx25):
+            workflows = {workflow["id"]: workflow for workflow in contract["workflows"]}
+            self.assertEqual(
+                {name: workflow["taskId"] for name, workflow in workflows.items()},
+                expected_tasks,
+            )
+            self.assertEqual(
+                {name: workflow["requiredInputs"] for name, workflow in workflows.items()},
+                required_inputs,
+            )
+            for workflow in workflows.values():
+                output_names = {output["name"] for output in workflow["outputs"]}
+                self.assertTrue({"videos", "audio"}.issubset(output_names))
+
+        ltx2_components = {item["name"] for item in ltx2["components"]}
+        ltx25_components = {item["name"] for item in ltx25["components"]}
+        shared_components = {
+            "prompt_enhancer",
+            "text_encoder",
+            "connectors",
+            "duration_head",
+            "transformer",
+            "scheduler",
+            "audio_vae",
+            "vocoder",
+        }
+        self.assertTrue(shared_components.issubset(ltx2_components))
+        self.assertTrue(shared_components.issubset(ltx25_components))
+        self.assertNotIn("diffusion_decoder", ltx2_components)
+        self.assertIn("diffusion_decoder", ltx25_components)
+
+        for workflow in ltx2["workflows"]:
+            input_names = {item["name"] for item in workflow["inputs"]}
+            self.assertTrue({"decode_timestep", "decode_noise_scale"}.issubset(input_names))
+            self.assertIn("LTX2VaeDecoderStep", {step["className"] for step in workflow["steps"]})
+        for workflow in ltx25["workflows"]:
+            input_names = {item["name"] for item in workflow["inputs"]}
+            self.assertTrue({"decode_timestep", "decode_noise_scale"}.isdisjoint(input_names))
+            self.assertIn(
+                "LTX2DiffusionVaeDecoderStep",
+                {step["className"] for step in workflow["steps"]},
+            )
 
     def test_models_loader_rejects_contract_only_class_before_artifact_or_index_resolution(self):
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
