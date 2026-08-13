@@ -4944,6 +4944,34 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     pass. Remote real-weight output safety/quality review and physical macOS
     execution remain pending independently; no weights or media were downloaded
     or retained.
+  - [x] **AnyFlow source and admission-gate review:** backend `09d3c98` seals
+    all four official public Diffusers snapshots: bidirectional Wan2.1 T2V 1.3B
+    at `4c2ec05c7fa4dbafbca131ad32430905c7ff2974`, bidirectional T2V 14B at
+    `ed91e001c08a88df8bbdc18f29b43b8078459627`, FAR 1.3B at
+    `915af337434035df8545797ecc910d79fa78cf29`, and FAR 14B at
+    `6207c4512a306d2a5a564df66b04a78668923740`. The exact seven-file /
+    26,074,853,036-byte and 26,075,642,740-byte 1.3B inventories and nine-file /
+    51,863,430,540-byte and 51,866,062,428-byte 14B inventories are bfloat16
+    safetensors only. All repositories contain complete identical license files,
+    no Python, and no remote-code requirement. Immutable metadata, model-card,
+    model-index, scheduler, transformer, VAE, artifact, and pinned package source
+    hashes are recorded in `data/anyflow-artifact-review.json` without
+    downloading weights.
+
+    This family is deliberately review-only. The NVIDIA One-Way Noncommercial
+    License restricts the models and derivatives to non-commercial research
+    activities or publications, so legal product-admission approval remains a
+    hard gate. The package-owned bidirectional T2V and FAR T2V/I2V/V2V contracts,
+    canonical 832x480/81-frame/4-step/guidance-1/16-FPS recipe, FAR chunk
+    partition, callback surface, and missing backend resource bounds are sealed.
+    The immutable model cards still import custom upstream pipelines and use
+    `context_sequence`, whereas the current package-owned API uses `video`; that
+    mismatch is explicit. No runtime/download catalog, capability, workflow,
+    client, Auto, template, or Gallery surface was added. The complete
+    1,446-test backend overlay with 3,183 subtests and three platform skips plus
+    static/dependency/preflight checks pass. Legal approval, bounded contracts,
+    remote execution, live output review, and physical macOS evidence remain
+    independent gates; no weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5057,7 +5085,7 @@ This is a family inventory, not a requirement to create one node per family.
 
 - [x] `allegro`
 - [x] `animatediff`
-- [ ] `anyflow`
+- [x] `anyflow`
 - [ ] `chronoedit`
 - [x] `cogvideo`
 - [ ] `consisid`
@@ -5215,4 +5243,5 @@ Add references only after the corresponding evidence exists.
 | P6.20 CogView4 6B text-to-image source admission | `495d07d` | `9822baa` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, eight-file / 31,108,954,670-byte bfloat16 Diffusers partition, immutable metadata and package source hashes, bounded 512-2048px/2^21-pixel recipe, Expert-only remote workflow, and estimate-only A100 batch-four resource envelope are sealed. The signature/docstring token discrepancy and contradictory 1920x1280 memory row are explicit. The deterministic 108-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.21 VisualCloze source and admission-gate review | `0f4d3c4` | Not required | Static artifact/source review only; generic visual-context-matrix contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | Exact public 384px and 512px revisions, two seven-file / 33,743,379,958-byte bfloat16 safetensors inventories, immutable metadata and package source hashes, nested matrix/generation/SDEdit contracts, and estimate-only resource envelopes are sealed. The legacy `.pth` LoRA artifacts are explicitly excluded. Contract mismatch and package validation gaps keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.22 Allegro text-to-video source admission | `6488462` | `05a2e15` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 25,293,069,108-byte bfloat16 Diffusers partition, excluded duplicate unsafe `.bin` partition, immutable metadata and package source hashes, bounded native 1280x720/88-frame recipe, float32 tiled VAE, Expert-only remote workflow, and conservative resource envelope are sealed. The deterministic 109-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.23 AnyFlow source and admission-gate review | `09d3c98` | Not required | Static artifact/source review only; noncommercial-license legal approval, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | All four exact public bidirectional/FAR 1.3B/14B revisions, their seven- or nine-file / 26.07-51.87 GB bfloat16 safetensors inventories, complete identical license files, immutable metadata and package source hashes, native T2V/I2V/V2V contracts, FAR chunking, and estimate-only resource envelopes are sealed. The restrictive NVIDIA license and stale custom-code model-card API examples keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
