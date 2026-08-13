@@ -4685,6 +4685,34 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     generated-media surface was added. License resolution, a maintained
     package-owned pipeline, remote heavy-hardware execution, and physical
     macOS evidence remain pending independently.
+  - [x] **DeepFloyd IF immutable artifact/source review:** backend `8d45c9f`
+    seals the canonical three-stage route at exact revisions:
+    `DeepFloyd/IF-I-XL-v1.0@c03d510e9b75bce9f9db5bb85148c1402ad7e694`,
+    `DeepFloyd/IF-II-L-v1.0@609476ce702b2d94aff7d1f944dcc54d4f972901`,
+    and
+    `stabilityai/stable-diffusion-x4-upscaler@572c99286543a273bfd17fac263db5a77be12c4c`.
+    All three repositories contain no Python and require no remote code. The
+    reviewed 64px, 256px, and 1024px path selects 11 repository-scoped
+    safetensors files / 27,326,661,461 bytes, or 26,718,655,226 bytes after
+    deduplicating the identical Stage I/II safety-checker and watermarker
+    blobs. Full inventory digests, selected file hashes, immutable metadata
+    blob identities, all seven pinned package-owned pipeline source hashes,
+    stage defaults, prompt-embedding reuse, safety handoff, and estimate-only
+    resource bounds are recorded in
+    `data/deepfloyd-if-artifact-review.json`; a no-weight API probe passed.
+
+    The family remains unadmitted. Stage I and II require account/contact
+    acceptance of the DeepFloyd License, which limits use and distribution to
+    noncommercial research and also restricts data produced by the software.
+    Anonymous access can inventory immutable blobs but returns HTTP 401 for the
+    gated model indexes and component configurations, so their payloads were
+    not treated as reviewed. The pinned pipelines provide a legacy per-step
+    callback and enforce prompt token/noise or strength constraints, but do not
+    own upper bounds for batch, image count, step count, or Stage I/II output
+    dimensions. No runtime/download catalog, workflow, client, Auto, template,
+    Gallery, or generated-media surface was added. License acceptance,
+    authenticated configuration review, backend-owned bounds, remote
+    heavy-hardware execution, and physical macOS evidence remain pending.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4829,7 +4857,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `controlnet_sd3`
 - [ ] `ddim`
 - [ ] `ddpm`
-- [ ] `deepfloyd_if`
+- [x] `deepfloyd_if`
 - [ ] `dit`
 - [ ] `dreamlite`
 - [ ] `ernie_image`
@@ -4946,4 +4974,5 @@ Add references only after the corresponding evidence exists.
 | P6.10 LLaDA2 immutable-code security review | `444152a` | Not required | Static review only; explicit task-scoped authorization, bounded adapter controls, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact remote-code blobs and eight-shard safetensors inventory are sealed. Static review found no prohibited primitive but did identify a process-global Transformers registry mutation and cannot prove runtime safety. `trust_remote_code` remains fail-closed; no runtime/download catalog or user-facing surface was admitted. |
 | P6.11 DiffusionGemma artifact/source review | `42b609e` | Not required | No-weight API probe only; bounded generic diffusion-text contract, remote heavy-hardware execution, multimodal safety review, and physical macOS evidence pending | Not required | Exact official 11-shard / 51,647,701,024-byte safetensors inventory, Apache-2.0 rights, package-owned class/source hashes, 256-token/48-step entropy-bound recipe, callback support, and estimate-only resource envelope are sealed. The model remains remote-only and absent from runtime/download catalogs and user-facing capabilities. |
 | P6.12 Stable Cascade artifact/source review | `b55983b` | Not required | Static artifact/source review only; license resolution, maintained package-owned pipeline support, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact prior/decoder revisions, six-file / 13,728,020,596-byte selected bf16 partition, full inventories, source hashes, two-stage recipe, and estimate-only resource envelope are sealed. The noncommercial license, upstream deprecation, and unpinned connected-repository metadata keep the family outside runtime/download catalogs and user-facing capabilities. |
+| P6.13 DeepFloyd IF artifact/source review | `8d45c9f` | Not required | Static artifact/source review and no-weight API probe only; authenticated gated-config review, backend-owned bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Three immutable stage revisions, 11-file / 27,326,661,461-byte repository-scoped selected surface, deduplicated weight size, source hashes, 64px-to-256px-to-1024px recipe, safety/watermark handoff, and estimate-only resource envelope are sealed. The gated noncommercial-research license keeps the family outside runtime/download catalogs and user-facing capabilities. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
