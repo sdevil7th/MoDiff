@@ -4755,6 +4755,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     real-weight execution, output safety and quality review, and physical macOS
     execution remain pending independently; no weights or media were
     downloaded or retained.
+  - [x] **Bria 3.2 source and admission-gate review:** backend `30a4667`
+    records the package-owned `BriaPipeline` and `BriaTransformer2DModel`
+    sources at the pinned Diffusers revision, their exact source hashes,
+    no-weight call signatures, callback surface, 1024px/30-step/guidance-5
+    defaults, 128-token default and 512-token package maximum, and the public
+    `briaai/BRIA-3.2` file-tree observations in
+    `data/bria-3.2-source-review.json`.
+
+    The family is not admitted. The official repository is gated, labels the
+    weights for non-commercial use, links CC BY-NC 4.0, and directs commercial
+    users to a separate paid agreement. Anonymous model APIs and file payloads
+    return HTTP 401, so an immutable head, exact artifact sizes and hashes,
+    model index, component configurations, and repository license payload
+    cannot be treated as reviewed. The pinned inference recipe also requires
+    bf16 T5 placement with every final `DenseReluDense.wo` projection restored
+    to float32 plus a float32 VAE when its shift factor is zero; the generic
+    loader does not currently own a validated per-layer dtype contract. No
+    runtime/download catalog, workflow, client, Auto, template, Gallery, or
+    generated-media surface was added. Authenticated artifact and license
+    review, a backend-owned precision/bounds contract, remote heavy-hardware
+    execution, and physical macOS evidence remain pending independently. The
+    focused 10-test review/catalog matrix and static checks pass; no weights or
+    media were downloaded.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4888,7 +4911,7 @@ This is a family inventory, not a requirement to create one node per family.
 ### Image, unconditional, and generic
 
 - [x] `aura_flow`
-- [ ] `bria`
+- [x] `bria`
 - [ ] `bria_fibo`
 - [ ] `chroma`
 - [ ] `cogview3`
@@ -5019,4 +5042,5 @@ Add references only after the corresponding evidence exists.
 | P6.13 DeepFloyd IF artifact/source review | `8d45c9f` | Not required | Static artifact/source review and no-weight API probe only; authenticated gated-config review, backend-owned bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Three immutable stage revisions, 11-file / 27,326,661,461-byte repository-scoped selected surface, deduplicated weight size, source hashes, 64px-to-256px-to-1024px recipe, safety/watermark handoff, and estimate-only resource envelope are sealed. The gated noncommercial-research license keeps the family outside runtime/download catalogs and user-facing capabilities. |
 | P6.14 PixArt Sigma 1024px source admission | `4fd1a66` (`8bca634` declarative-field fix) | `235c9d3` (`60b0269` exact-contract fix) | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public OpenRAIL++ revision, four-file / 21,827,405,446-byte safetensors inventory, package-owned pipeline/source hashes, bounded 1024px recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 104-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.15 AuraFlow v0.3 source admission | `8117b39` | `7d52469` (`c5e02ea` exact-contract fixture) | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, four-file / 16,835,036,374-byte fp16 safetensors partition, package-owned pipeline/source hashes, bounded native 1536x768 recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 105-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.16 Bria 3.2 source and admission-gate review | `30a4667` | Not required | Static package/API and public gated-tree review only; authenticated exact artifact/license review, backend-owned precision and bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Package-owned classes, source hashes, call contract, public rounded safetensors observations, gated non-commercial terms, and HTTP-401 metadata limits are sealed without inventing an immutable artifact identity. The family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
