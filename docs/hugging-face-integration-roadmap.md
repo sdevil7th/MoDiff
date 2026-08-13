@@ -4660,6 +4660,31 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     absent from runtime/download catalogs and every user-facing capability.
     Backend-owned bounds, multimodal input/output safety policy, exact remote
     heavy-hardware measurements, and physical macOS evidence remain pending.
+  - [x] **Stable Cascade immutable artifact/source review:** backend `b55983b`
+    seals the exact public prior snapshot
+    `stabilityai/stable-cascade-prior@7ca32c21c3b4d4e35bbb94fcfedfb4fa2259bd91`
+    and decoder snapshot
+    `stabilityai/stable-cascade@a89f66d459ae653e3b4d4f992a7c3789d0dc4d16`.
+    Neither repository contains Python or requires remote code. The selected
+    full-size bf16 partition is six safetensors files / 13,728,020,596 bytes;
+    exact component hashes, canonical selected/full inventory digests, model
+    indexes, scheduler configuration, pinned Diffusers sources, and the
+    identical repository license bytes are recorded in
+    `data/stable-cascade-artifact-review.json` without downloading weights.
+
+    This family is not admitted. Its Stability AI Non-Commercial Research
+    Community License prohibits the production and hosted-service uses MoDiff
+    cannot silently assume. In addition, all three upstream Stable Cascade
+    pipelines are deprecated after Diffusers 0.35.2 while MoDiff pins a later
+    revision. The combined loader names the connected prior repository but not
+    its immutable revision, so it cannot safely identify the two distinct
+    snapshots with one shared revision. Any future reviewed path must load the
+    prior and decoder independently, pass image embeddings explicitly, and
+    retain the reviewed 1024px/20-step prior plus 10-step decoder recipe. No
+    runtime/download catalog, workflow, client, Auto, template, Gallery, or
+    generated-media surface was added. License resolution, a maintained
+    package-owned pipeline, remote heavy-hardware execution, and physical
+    macOS evidence remain pending independently.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4832,7 +4857,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `pixart_alpha`
 - [ ] `prx`
 - [ ] `sana`
-- [ ] `stable_cascade`
+- [x] `stable_cascade`
 - [ ] `stable_diffusion`
 - [ ] `stable_diffusion_3`
 - [ ] `t2i_adapter`
@@ -4920,4 +4945,5 @@ Add references only after the corresponding evidence exists.
 | P6.9 Wan 2.1 14B Modular variants | `e4c2385` | Not required | Exact repository-scoped loader admission; remote heavy-hardware and physical macOS execution pending | Not required | T2V-14B and I2V-14B-720P join the already reviewed I2V-480P and FLF-720P variants under exact immutable catalog/index/component contracts. The focused clean-overlay matrix passes 100 tests plus 175 subtests. No new high-level mode, client branch, Auto/template/Gallery surface, weights, or media were added. |
 | P6.10 LLaDA2 immutable-code security review | `444152a` | Not required | Static review only; explicit task-scoped authorization, bounded adapter controls, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact remote-code blobs and eight-shard safetensors inventory are sealed. Static review found no prohibited primitive but did identify a process-global Transformers registry mutation and cannot prove runtime safety. `trust_remote_code` remains fail-closed; no runtime/download catalog or user-facing surface was admitted. |
 | P6.11 DiffusionGemma artifact/source review | `42b609e` | Not required | No-weight API probe only; bounded generic diffusion-text contract, remote heavy-hardware execution, multimodal safety review, and physical macOS evidence pending | Not required | Exact official 11-shard / 51,647,701,024-byte safetensors inventory, Apache-2.0 rights, package-owned class/source hashes, 256-token/48-step entropy-bound recipe, callback support, and estimate-only resource envelope are sealed. The model remains remote-only and absent from runtime/download catalogs and user-facing capabilities. |
+| P6.12 Stable Cascade artifact/source review | `b55983b` | Not required | Static artifact/source review only; license resolution, maintained package-owned pipeline support, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact prior/decoder revisions, six-file / 13,728,020,596-byte selected bf16 partition, full inventories, source hashes, two-stage recipe, and estimate-only resource envelope are sealed. The noncommercial license, upstream deprecation, and unpinned connected-repository metadata keep the family outside runtime/download catalogs and user-facing capabilities. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
