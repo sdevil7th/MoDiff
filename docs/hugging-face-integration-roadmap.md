@@ -5196,6 +5196,36 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     bytes. Remote real-weight memory/output safety/quality review and physical
     macOS execution remain pending independently; no weights or media were
     downloaded or retained.
+  - [x] **Stable Diffusion 3 ControlNet source and admission-gate review:** the
+    pinned package contains official package-owned Canny/Tile and inpainting
+    pipelines, `SD3ControlNetModel`, flow-matching scheduler, callback support,
+    model CPU offload, and finite prompt/resolution/control bounds. The exact
+    gated base
+    `stabilityai/stable-diffusion-3-medium-diffusers@ea42f8cef0f178587cf766dc8129abd379c90671`,
+    public InstantX Canny and Tile revisions, and public Alimama inpainting
+    revision are sealed in `data/sd3-controlnet-artifact-review.json`. The
+    review records the base's six-file / 15,499,002,486-byte selected fp16
+    safetensors partition, all three auxiliary weight hashes and header-derived
+    parameter counts, three reproducible assembly digests, metadata and package
+    source hashes, native 1024px/28-step recipes, and estimate-only resource
+    envelopes. Only 125,040 safetensors-header bytes were fetched; no full
+    weights or media were downloaded.
+
+    Admission is deliberately blocked. The required base's model index and
+    component configs return HTTP 401 without accepted authenticated access,
+    so the executable partition cannot be fully reviewed here. Its exact
+    immutable license is non-commercial-only and forbids production and
+    hosted/API use without a separate license. The Canny and Tile repositories
+    publish neither license metadata nor a license file. The inpainting
+    repository's copied Stability Community License notice does not
+    unambiguously reconcile its derivative-weight grant with the exact older
+    base license. The package pipelines also have no safety checker or
+    equivalent output guardrail. Accordingly no runtime/download catalog,
+    capability, canonical graph, client, Auto, template, or Gallery surface is
+    added. Authenticated artifact review, auxiliary rights resolution, legal
+    product approval, backend-owned optional-runtime and execution bounds,
+    remote heavy-hardware safety/quality review, and physical macOS execution
+    remain independent gates.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5337,7 +5367,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `consistency_models`
 - [x] `controlnet`
 - [x] `controlnet_hunyuandit`
-- [ ] `controlnet_sd3`
+- [x] `controlnet_sd3`
 - [x] `ddim`
 - [x] `ddpm`
 - [x] `deepfloyd_if`
@@ -5475,4 +5505,5 @@ Add references only after the corresponding evidence exists.
 | P6.28 Mochi 1 Preview text-to-video source admission | `fb3e39f` | `c0afea5` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, eight-file / 40,024,303,350-byte selected safetensors partition, excluded duplicate original-format, unindexed T5, and float32 partitions, immutable metadata and package source hashes, bounded native 848x480/31-frame recipe, explicit indexed T5 preload, mandatory VAE tiling, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 111-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.29 SANA-Video 2B 480p text/image-to-video source admission | `081a083` | `6ed67bf` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 13,963,813,420-byte mixed-precision safetensors partition, excluded unsafe original-format, distinct 720p, and duplicate-heavy LongLive repositories, immutable metadata and package source hashes, bounded native 832x480/81-frame T2V and I2V recipes, FP32 tiled Wan VAE, Expert-only remote workflows, and estimate-only resource envelope are sealed. The deterministic 113-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.30 Hunyuan-DiT v1.2 ControlNet Canny source admission | `72185d0` | `f134f98` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public distilled-base and Canny revisions, six-file / 17,399,623,404-byte float32 safetensors inventory, optional exact Depth/Pose substitutions, immutable Tencent license receipt and acknowledgement, metadata and package source hashes, bounded native 1024px/50-step/guidance-6/scale-1 Canny recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 114-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
+| P6.31 Stable Diffusion 3 ControlNet source and admission-gate review | `0f924dc` | Not required | Static artifact/source review only; authenticated base-config review, auxiliary-weight rights resolution, legal product approval, backend-owned optional-runtime/bounds, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Exact gated base plus public Canny, Tile, and inpainting revisions; three safetensors-only assembly receipts; immutable license/metadata and package source hashes; native 1024px recipes; and estimate-only resource envelopes are sealed. Base access/license restrictions, undeclared InstantX weight rights, ambiguous inpainting derivative terms, and absent safety guardrails keep the family outside all runtime/download and user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
