@@ -4691,6 +4691,37 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   removed. Remote real-weight memory/output safety/quality review,
   model-snapshot license-file clarification, and physical macOS execution
   remain pending independently, and no media has been generated.
+- [x] Evaluate Kolors and keep its custom model license fail-closed. Backend
+  `3788fe8` seals the exact public
+  `Kwai-Kolors/Kolors-diffusers@7e091c75199e910a26cd1b51ed52c28de5db3711`
+  snapshot. It is ungated, contains no repository Python, requires no remote
+  code, and exposes a five-file / 17,813,668,046-byte fp16 safetensors
+  partition. The canonical inventory, immutable metadata, and pinned
+  package-owned Kolors text-to-image, image-to-image, ChatGLM encoder,
+  tokenizer, and output source hashes are sealed in
+  `data/kolors-artifact-review.json` without fetching weight bytes.
+
+  The source review records both 1024px routes, the package's 50-step,
+  guidance-5, 256-token defaults, image-edit strength 0.3, modern callbacks,
+  interrupt flag, and CPU-offload sequence. It also records the missing
+  package bounds for step count, input pixels, and output pixels and the absent
+  safety checker. Those gaps require backend bounds and remote output review,
+  but they are not the primary admission blocker.
+
+  The immutable model card carries an Apache-2.0 tag and describes the code as
+  Apache-2.0, while the same snapshot contains a distinct 14,920-byte
+  `MODEL_LICENSE`. That model agreement purports to take effect on use or
+  access, requires source/license and enforceable restriction propagation,
+  prohibits using the model or its outputs to improve other large models, and
+  requires separate authorization for cloud vendors or licensees over 100
+  million monthly users. The README separately requests commercial
+  registration. No task-scoped product acceptance, commercial registration,
+  or legal approval was supplied, so no runtime/download catalog, capability,
+  graph, client, Auto, or Gallery surface was added. In particular, the model
+  was not submitted to the app download queue. The five focused review tests
+  and complete 1,582-test backend overlay with 3,443 subtests and three
+  platform skips pass; remote heavy-hardware review and physical macOS
+  execution remain pending independently.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5722,8 +5753,8 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `joyimage`
 - [x] `kandinsky`
 - [x] `kandinsky2_2`
-- [ ] `kandinsky3`
-- [ ] `kolors`
+- [x] `kandinsky3`
+- [x] `kolors`
 - [ ] `krea2`
 - [x] `latent_consistency_models`
 - [ ] `latent_diffusion`
@@ -5857,4 +5888,5 @@ Add references only after the corresponding evidence exists.
 | P6.40 Kandinsky 2.1 source and admission-gate review | `c04f151` | Not required | Static artifact/source review only; exact connected-prior binding, full-job cancellation, backend-owned composite bounds, output guardrails, model-snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Three exact public decoder/prior/inpaint revisions, their 13.23 GB composite safetensors-only surfaces, immutable metadata and package source hashes, upstream Apache receipt, three combined-mode contracts, and bounded header evidence are sealed. The package reuses the decoder revision on the distinct prior repository or downloads its moving branch, while the prior stage has no callback; the family remains outside every runtime/download and user-facing surface, and no full weights or media were downloaded. |
 | P6.41 Kandinsky 2.2 source and admission-gate review | `75bb0ac` | Not required | Static artifact/source review only; exact connected-prior binding, backend-owned two-stage assembly/bounds, safe ControlNet/refiner artifacts, output guardrails, snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Five exact official repositories, safe 15.86 GB decoder/prior composite surfaces, immutable metadata and package source hashes, two-stage callback contracts, and upstream Apache receipt are sealed. The connected loader remains revision-inexact; official depth-ControlNet and refiner snapshots are legacy `.bin`-only, and the refiner names the 2.1 pipeline without card/license metadata. No runtime/download or user-facing surface was added, and no full weights or media were downloaded. |
 | P6.42 Kandinsky 3 text-to-image and image-edit source admission | `b85b073` | `3007bf3` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, seven-file / 28,390,829,958-byte fp16 safetensors partition, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded single-stage 1024px/25-step/guidance-3 routes, and two Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 123-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
+| P6.43 Kolors source and custom-license gate review | `3788fe8` | Not required | Static artifact/source/license review only; task-scoped license acceptance, commercial registration/legal approval, downstream restriction implementation, backend-owned bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact public five-file / 17,813,668,046-byte fp16 safetensors partition, immutable metadata/license and package source hashes, and two package-owned 1024px routes are sealed. The custom model agreement conflicts with the Apache-2.0 presentation, purports to trigger on use/access, propagates restrictions, and requires separate authorization for cloud vendors or licensees over 100M monthly users. No runtime/download or user-facing surface was added, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
