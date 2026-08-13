@@ -3752,10 +3752,33 @@ Assets: generated remotely even when a local smoke is allowed.
       preflight confirmed port 8088 and required imports are ready but remains
       non-ready only for the previously recorded local CPU profile digest
       drift (`74d79558...` installed versus `60aa03fa...` current).
-- [ ] **P3.3 Generic perception output**
+- [x] **P3.3 Generic perception output**
   - Add prediction-map output semantics and integrate Marigold depth first.
   - Add normals, intrinsics, and uncertainty only after the shared output
     contract is stable.
+  - Evidence 2026-08-13: backend `957ab31` and client `1802291` add the
+    generic `Predict Map` boundary and exact Marigold depth Studio workflow.
+    The reviewed Apache-2.0 repository
+    `prs-eth/marigold-depth-lcm-v1-0` is pinned to immutable revision
+    `04a73502f7fd8fc5e59947b9df3b2266d71d6849`; the node returns a
+    schema-versioned normalized float32 NHWC relative-depth map and a
+    grayscale preview. Processing resolution and input-resolution matching
+    are explicit bounded graph bindings. Normals, intrinsics, and uncertainty
+    remain deliberately unavailable rather than being inferred from depth.
+  - The exact safetensors/config snapshot was installed with legacy unsafe
+    weights excluded. An offline cached CPU `LoadPipeline` plus generic
+    `PredictMap` smoke loaded in `0.330s` and completed one step at `64x64` in
+    `0.254s`. The in-memory prediction had shape `[1, 64, 64, 1]`, range
+    `[0.0, 1.0]`, and SHA-256
+    `3cd1069551742ea3ec3c79e1897207c1f5bc97b6bd1bffad3b316b3866ce4911`;
+    no output file was retained.
+  - The backend gate passed (`1269 passed, 3 skipped, 2618 subtests`) with
+    Ruff `E9,F`, package, shell, compile, and diff checks; all 79 canonical
+    workflows verified. `npm run check` passed and the complete mocked Studio
+    browser sweep passed (`105 passed`). Auto and Gallery remain disabled
+    pending remote quality review and immutable Dataset publication. The
+    standalone preflight remains non-ready only for the previously recorded
+    local CPU profile digest drift.
 - [x] **P3.4 Adopt the official Hugging Face library boundary in repository policy**
   - Update backend and client `AGENTS.md`, contributor guidance, Hugging Face
     standards, dependency/runtime contracts, and the former Diffusers-only
@@ -4080,7 +4103,8 @@ Add references only after the corresponding evidence exists.
 | P3.2c Latent Consistency Model | `6a1b579` | `9f7b7da` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the exact immutable DreamShaper LCM pair uses the generic image nodes, the 77-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2b Stable Diffusion 2.x | Pending: official repository access required | Pending | Pending | Pending | Deferred independently: the official Stability AI repositories are gated to the current unauthenticated environment; no substitute or fabricated immutable revision was admitted. |
 | P3.2d Perturbed-attention guidance | `662aa10` | `42c4dd6` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the exact PAG pair reuses the immutable SD1.5 safetensors base through generic image nodes, both PAG controls bind through the backend specification, the 78-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
-| P3.3, P3.5 | Pending; add one row per slice | Pending; add one row per slice | Pending | Pending | Not started |
+| P3.3 Generic perception / Marigold depth | `957ab31` | `1802291` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the immutable Marigold Depth LCM pair uses a generic schema-versioned prediction-map boundary, the 79-workflow deterministic catalog and complete gates passed, and no generated media was retained. Normals, intrinsics, uncertainty, Auto, and Gallery remain disabled pending their separate qualification gates. |
+| P3.5 Transformers speech-to-text | Pending | Pending | Pending | Pending | In progress |
 | P4.1-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
