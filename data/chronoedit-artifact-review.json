@@ -1,0 +1,293 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "runtimeCatalogExposed": false,
+    "status": "review_complete_not_admitted_guardrail_and_license",
+    "unresolvedGates": [
+      "immutable_governing_license_terms_or_legal_approval",
+      "safe_serialized_complete_guardrail_integration",
+      "generic_image_edit_with_optional_reasoning_video_contract",
+      "backend_owned_resolution_frame_step_batch_and_reasoning_bounds",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "ChronoEdit",
+  "format": "safetensors",
+  "guardrailReview": {
+    "bundledDirectoryBytes": 7171449905,
+    "bundledDirectoryFileCount": 102,
+    "diffusersPipelineSafetyCheckerPresent": false,
+    "modelCardTerminationCondition": "The immutable model card says license rights automatically terminate if a contained safety guardrail is bypassed, disabled, circumvented, or made less effective.",
+    "reasonNotAdmitted": "The package-owned pipeline does not execute the bundled Cosmos guardrail, and the bundled guardrail includes unsafe PyTorch serialization that MoDiff cannot silently load or omit under the governing model-card condition.",
+    "unsafeFiles": [
+      {
+        "byteSize": 109497761,
+        "path": "Cosmos-Guardrail1/face_blur_filter/Resnet50_Final.pth",
+        "sha256": "6d1de9c2944f2ccddca5f5e010ea5ae64a39845a86311af6fdf30841b0a5a16d"
+      },
+      {
+        "byteSize": 5814682,
+        "path": "Cosmos-Guardrail1/video_content_safety_filter/safety_filter.pt",
+        "sha256": "a408f177d33943b475e3c0644553e38d8499b199eaf1bbf95c9f773f9997a575"
+      }
+    ]
+  },
+  "license": {
+    "acceptanceRequiredForDownload": false,
+    "commercialUseClaimedByModelCard": true,
+    "evidence": "The immutable card is tagged Apache-2.0 but names the mutable external NVIDIA Open Model License Agreement as governing terms and contains a safety-guardrail termination condition.",
+    "governingTermsUrl": "https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/",
+    "id": "nvidia-open-model-license-with-apache-2.0-additional-information",
+    "licenseFilePresent": false,
+    "mutableExternalTerms": true
+  },
+  "metadataSha256": {
+    "imageEncoderConfig": "9fd3be17cab0bb25ecfc7552b3563a7b4bb0e7cc96ca8acc46403e0d7a88c784",
+    "imageProcessorConfig": "8fb547403656e9019b0982d2310b045bef39b9d2a811a0c98756e52d48e25db6",
+    "modelCard": "d5daf991473403bc38e7950c6bcae6819146d154e96917912eba0c401c96b530",
+    "modelIndex": "c7771549d6303ef8f825aa7c013d05cf0fbea2c7f2acfeb464df2ccbd95b1bbe",
+    "schedulerConfig": "ce6dde76f628148614283baccb348cddf886b407ddbeab65c9520eebdd5d3d12",
+    "textEncoderConfig": "25539d0730bcac164d609248433bd11b900f6c3ddbb5f3c8c3060ccf07c6d084",
+    "textEncoderSafetensorsIndex": "8af791f24a6447aa30c95786f40adf23d3c9df97470d2f36159c8f1113f120b4",
+    "tokenizerConfig": "89bef11d01c80a229079666dd470d536aba87b8eaa00b51cc481ba625be59269",
+    "transformerConfig": "e29a2f3ae1fb55f4968fe0944caa3577fb4e467094cfa0fe80e3294c22484182",
+    "transformerSafetensorsIndex": "7eeadf6743b4c35fd5d22baa234ac9186c4c29ac6fabb9e11e6b03055764a3b0",
+    "vaeConfig": "d6940c23be2026a4cdaa34cf11eebfbb5d1e708102d63ccccef3ceb5482e2d79"
+  },
+  "modelIndexCompatibility": {
+    "artifactImageEncoderClass": "CLIPVisionModelWithProjection",
+    "artifactPipelineClass": "WanImageToVideoPipeline",
+    "artifactSchedulerClass": "UniPCMultistepScheduler",
+    "artifactTransformerClass": "WanTransformer3DModel",
+    "packageRecipeRequiresExplicitComponentOverrides": true,
+    "reviewedImageEncoderClass": "CLIPVisionModel",
+    "reviewedPipelineClass": "ChronoEditPipeline",
+    "reviewedTransformerClass": "ChronoEditTransformer3DModel"
+  },
+  "optionalArtifacts": [
+    {
+      "byteSize": 375905424,
+      "purpose": "eight-step-distillation-lora",
+      "repository": "nvidia/ChronoEdit-14B-Diffusers",
+      "revision": "26b33e0d056203dc30c733ad02b86ac225eb17d5",
+      "safetensorsPath": "lora/chronoedit_distill_lora.safetensors",
+      "sha256": "0af09f4b30ffeb8baddb3a18b279707520af89bb16eb9041ad97de432deb24f1"
+    },
+    {
+      "byteSize": 306807944,
+      "purpose": "upscaler-lora",
+      "repository": "nvidia/ChronoEdit-14B-Diffusers-Upscaler-Lora",
+      "revision": "80dad01baaa04f227a9222e37b5029656105f42e",
+      "safetensorsPath": "upsample_lora_diffusers.safetensors",
+      "sha256": "7b7f47060eb40cc25330ea32c0560f7c87366699e1fe27ce215c026389779eca"
+    },
+    {
+      "byteSize": 306807944,
+      "purpose": "paint-brush-lora",
+      "repository": "nvidia/ChronoEdit-14B-Diffusers-Paint-Brush-Lora",
+      "revision": "326f3d002be3f744432594d82ff3daede7a1c21f",
+      "safetensorsPath": "paintbrush_lora_diffusers.safetensors",
+      "sha256": "2bf701edb90f1ea2968c62bd3803ad27710f6dea0a4ddf8d61feeb1465e70577"
+    }
+  ],
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "modelCpuOffloadSequence": "text_encoder->image_encoder->transformer->vae",
+    "outputClass": "ChronoEditPipelineOutput",
+    "outputSha256": "2fd895f42d881694ec38f9914da5c744f5ac0e14322b852714b3cd858fbf6c2e",
+    "pipelineClass": "ChronoEditPipeline",
+    "pipelineSha256": "e5eaa4d0e132facfa4f4e116b664067fe9709c205c34093a650cfb1ac7af9ac9",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "ChronoEditTransformer3DModel",
+    "transformerSha256": "7417e7272d915939c2bdde9b4fb7930b060e55ed5e5948873ef488a5bcc7555a",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "baseRecipe": {
+      "enableTemporalReasoning": false,
+      "guidanceScale": 5.0,
+      "maxAreaPixels": 921600,
+      "numFrames": 5,
+      "numInferenceSteps": 50,
+      "numTemporalReasoningSteps": 0
+    },
+    "distilledRecipe": {
+      "enableTemporalReasoning": false,
+      "guidanceScale": 1.0,
+      "numFrames": 5,
+      "numInferenceSteps": 8,
+      "schedulerFlowShift": 2.0
+    },
+    "input": "one RGB image plus one edit instruction",
+    "maxSequenceLength": 512,
+    "modelCardRecommendedResolutions": [
+      "1280x720",
+      "720x1280",
+      "960x960",
+      "1024x1024"
+    ],
+    "output": "a frame sequence whose final frame is the edited image",
+    "packageValidationGaps": [
+      "no maximum batch or videos-per-prompt bound",
+      "no maximum resolution or cumulative output-pixel bound",
+      "no maximum denoising-step bound",
+      "no validation that temporal reasoning steps are within the denoising schedule",
+      "non-temporal mode silently forces five frames",
+      "out-of-congruence temporal frame counts are rounded with a warning"
+    ],
+    "temporalReasoningRecipe": {
+      "enableTemporalReasoning": true,
+      "framesPerSecond": 16,
+      "guidanceScale": 5.0,
+      "numFrames": 29,
+      "numInferenceSteps": 50,
+      "numTemporalReasoningSteps": 50
+    }
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytes": 42949672960,
+    "minimumSelectiveDiskBytes": 96636764160,
+    "minimumSystemRamBytes": 137438953472,
+    "status": "upstream_measured_modiff_qualification_pending",
+    "upstreamReportedGpuMemoryGB": {
+      "cpuOffload": 34,
+      "cpuOffloadWithTemporalReasoning": 38
+    }
+  },
+  "repository": {
+    "gated": false,
+    "hubSafetensorsDtypeParameterMetadata": {
+      "F32": 16394878784
+    },
+    "licenseFilePresent": false,
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "nvidia/ChronoEdit-14B-Diffusers",
+    "repositoryBytesIncludingExcludedArtifacts": 97649130926,
+    "revision": "26b33e0d056203dc30c733ad02b86ac225eb17d5",
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 90075130404,
+    "weightFileCount": 21,
+    "weightInventorySha256": "2879b04e99b5631157ebd936b1c7c4116b43a10f76027759c108dbf575a46373"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 1264217760,
+      "path": "image_encoder/model.safetensors",
+      "sha256": "f5c0bbf4f43f319a80335387d371742333807589c5bb4130a1a2a5d4abf6bf72"
+    },
+    {
+      "byteSize": 4972389712,
+      "path": "text_encoder/model-00001-of-00005.safetensors",
+      "sha256": "c0ef3a140898e228a3520c9adec60743d2e8e5b3d229651bb37f1a3921919f99"
+    },
+    {
+      "byteSize": 4899225672,
+      "path": "text_encoder/model-00002-of-00005.safetensors",
+      "sha256": "481c7b2b39771c44df6dd8d13ee12ed072d731b4a650bd092885d4d52db229ad"
+    },
+    {
+      "byteSize": 4966309504,
+      "path": "text_encoder/model-00003-of-00005.safetensors",
+      "sha256": "f93148bcc04052a169e1e49bfcf6125df6cf9bf243cb9c627da75266cf8e35c3"
+    },
+    {
+      "byteSize": 4999880704,
+      "path": "text_encoder/model-00004-of-00005.safetensors",
+      "sha256": "a451792c739c05bca4606190cc2dd16731411bac03b4cf6aacc5767321f857c9"
+    },
+    {
+      "byteSize": 2885866152,
+      "path": "text_encoder/model-00005-of-00005.safetensors",
+      "sha256": "7e76e18d224531b8197a46231cb53daf7f2f6ca707130252becf933026ac4eea"
+    },
+    {
+      "byteSize": 4929119864,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00014.safetensors",
+      "sha256": "57ce02b80bf9076b0613a712063ba73dafc529b4ec561f957bd787ace0d8dc42"
+    },
+    {
+      "byteSize": 4950949632,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00014.safetensors",
+      "sha256": "7fcf4da082ff6b5ddee62f46c655228531671ff1912806fb4ef90db1cc805f11"
+    },
+    {
+      "byteSize": 4950949632,
+      "path": "transformer/diffusion_pytorch_model-00003-of-00014.safetensors",
+      "sha256": "b894a463740cee0a719b7515fc5c8f21a6a86f4c48356bdb42670fc3a385ffc7"
+    },
+    {
+      "byteSize": 4951011392,
+      "path": "transformer/diffusion_pytorch_model-00004-of-00014.safetensors",
+      "sha256": "47d6a1fe997ab83f1f454edfb9439927acdd28eb12b3d468807ed60195f3d4b5"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00005-of-00014.safetensors",
+      "sha256": "09ce729b14b9266ad931e54646d5ba8f1eae58d6075c6c712114fc97bdcf804d"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00006-of-00014.safetensors",
+      "sha256": "4da75351b422095d4473b2939e8f0ed815427457004824aed7b9a3e2e42072a1"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00007-of-00014.safetensors",
+      "sha256": "1d549d76eb41f9823aec08af284a58495cf8915dcec2bb8449c6163fb0aac974"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00008-of-00014.safetensors",
+      "sha256": "0108f1d847155ebe6bd24027208c164b7765c6cd1006354db0aaaa237000788a"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00009-of-00014.safetensors",
+      "sha256": "9ad9a00df03e0b5724007942e7fdab16a79d17b9ca44332a009ff4f361c7b29d"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00010-of-00014.safetensors",
+      "sha256": "77b5d1af99d3abf0c7b4df0834a9bc682e89064bcd07c38782a1caea46860944"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00011-of-00014.safetensors",
+      "sha256": "bd744c3c154056b604bee622f3f36042b9e53d2746f40bca5fed34069a276854"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00012-of-00014.safetensors",
+      "sha256": "64af859948bbe32a0bdebf35a9aa2028071d53f7689c45b7bb3cd9e8217a0cf8"
+    },
+    {
+      "byteSize": 4846071440,
+      "path": "transformer/diffusion_pytorch_model-00013-of-00014.safetensors",
+      "sha256": "e03175a316fa025f967c84c952392088730e7f7c2369303fee961bc8cbed46a3"
+    },
+    {
+      "byteSize": 2182975528,
+      "path": "transformer/diffusion_pytorch_model-00014-of-00014.safetensors",
+      "sha256": "294be98e9033186d4e38d20e8035a7952b7eb8b3375b1a5e9b78c509361afd58"
+    },
+    {
+      "byteSize": 507591892,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  ]
+}
