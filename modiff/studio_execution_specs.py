@@ -60,6 +60,7 @@ FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
 STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
+COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -802,6 +803,32 @@ _ANIMATEDIFF_GRAPH_BINDINGS = tuple(
 ) + (
     ("wanPipeline", "motion_adapter_id", "repo"),
     ("wanPipeline", "motion_adapter_revision", "revision"),
+)
+_COGVIDEOX_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "empty"
+        if (role, param)
+        in {
+            ("diffusersQuantization", "components"),
+            ("diffusersRecipe", "attention_components"),
+        }
+        else "nativeMath"
+        if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "false"
+        if (role, param)
+        in {
+            ("diffusersRecipe", "vae_tiling"),
+            ("diffusersRecipe", "regional_compile"),
+            ("diffusersRecipe", "denoiser_cache"),
+            ("diffusersRecipe", "layerwise_casting"),
+            ("diffusersRecipe", "channels_last"),
+        }
+        else source,
+    )
+    for role, param, source in _VIDEO_REVISION_GRAPH_BINDINGS
+    if not (role == "wanGenerate" and param == "scheduler_flow_shift")
 )
 _WAN_ANIMATE_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
     ("loadImage", "modules.Image.Load", -520, 300),
@@ -3964,6 +3991,68 @@ def _animatediff_capability(model_type: str, *, lcm: bool) -> dict[str, Any]:
     }
 
 
+def _cogvideox_capability() -> dict[str, Any]:
+    return {
+        "modelType": "CogVideoXPipeline",
+        "label": "CogVideoX-2B",
+        "displayName": "CogVideoX-2B",
+        "family": "CogVideoX",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": COGVIDEOX_2B_REPO,
+        "artifactLabel": "Official Apache-2.0 safetensors Diffusers repo",
+        "defaultDtype": "float16",
+        "defaultSize": {"width": 720, "height": 480, "aspectRatio": "custom"},
+        "recommendedSteps": 25,
+        "recommendedGuidance": 6.0,
+        "recommendedMaxSequenceLength": 226,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": False,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": False,
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 25,
+        "recommendedFps": 8,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_MODEL_CPU,
+            "lowVram": OFFLOAD_MODE_MODEL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "float16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "steps": 16,
+            "width": 720,
+            "height": 480,
+            "numFrames": 9,
+        },
+        "modes": ["text_to_video"],
+        "modeRequirements": {
+            "text_to_video": {
+                "note": "Uses the exact CogVideoX-2B safetensors snapshot with VAE tiling and model CPU offload."
+            }
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(COGVIDEOX_2B_REPO)],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "The admitted source graph is bounded to 9-25 frames in 4k+1 form at the native 720x480 size.",
+            "The publisher's representative quality recipe remains 49 frames and 50 steps; this shorter graph needs remote output review.",
+            "Auto and Gallery publication remain disabled until exact remote runtime and quality proof is reviewed.",
+        ],
+    }
+
+
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
@@ -4010,6 +4099,13 @@ _P2_VIDEO_PROFILES = {
         ("text_to_video",),
         "AnimateLCMPipeline",
         SD15_BASE_REPO,
+    ),
+    "cogvideox-2b": _planning_video_profile(
+        "cogvideox-2b:direct",
+        "CogVideoXPipeline",
+        ("text_to_video",),
+        "CogVideoXPipeline",
+        COGVIDEOX_2B_REPO,
     ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
@@ -4187,6 +4283,15 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _ANIMATEDIFF_GRAPH_BINDINGS,
+        },
+        "cogvideox-2b:text-to-video:v1": {
+            "modelType": "CogVideoXPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["cogvideox-2b"],
+            "capability": _cogvideox_capability(),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
         },
         "wan-flf:image-to-video:v1": {
             "modelType": "WanImage2VideoModularPipeline",

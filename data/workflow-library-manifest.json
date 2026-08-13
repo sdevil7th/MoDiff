@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T08:00:02.286Z",
+  "generatedAt": "2026-08-13T08:31:38.377Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 86,
-  "supportedPairCount": 98,
+  "supportedCanonicalPairCount": 87,
+  "supportedPairCount": 99,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -289,6 +289,34 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
       "graphHash": "3d12073437be488529f71034602c94b8952eb580bb21d9d2c8e56abd4e763f84"
+    },
+    {
+      "id": "CogVideoXPipeline:text_to_video",
+      "modelType": "CogVideoXPipeline",
+      "modelFamily": "CogVideoX",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "zai-org/CogVideoX-2b"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact CogVideoX-2B safetensors snapshot with VAE tiling and model CPU offload."
+      },
+      "pipelineClasses": [
+        "CogVideoXPipeline"
+      ],
+      "sourceTemplateId": "task-template:cogvideox-2b:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
+      "graphHash": "6b9b9badc24068955b8beab40f3f8990292bd70d0c9dfd46dc5d295133245316"
     },
     {
       "id": "ConsistencyModelPipeline:unconditional_image",

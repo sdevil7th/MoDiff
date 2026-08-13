@@ -57,6 +57,8 @@ ANIMATELCM_MOTION_REVISION = "3d4d00fc113225e1040f4d3bec504b6ec750c10c"
 ANIMATELCM_LORA_WEIGHT_NAME = "AnimateLCM_sd15_t2v_lora.safetensors"
 ANIMATELCM_LORA_ADAPTER_NAME = "animatelcm-lora"
 ANIMATELCM_LORA_SCALE = 0.8
+COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
+COGVIDEOX_2B_REVISION = "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01"
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -300,6 +302,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("text_to_video",),
         max_prompt_tokens=77,
     ),
+    "CogVideoXPipeline": VideoPipelineAdapter(
+        id="cogvideox-2b",
+        pipeline_class="CogVideoXPipeline",
+        diffusers_class="CogVideoXPipeline",
+        default_repo=COGVIDEOX_2B_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=226,
+    ),
 }
 
 
@@ -444,6 +454,7 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     },
     "AnimateDiffPipeline": {"text_to_video": _video_field_contract()},
     "AnimateLCMPipeline": {"text_to_video": _video_field_contract()},
+    "CogVideoXPipeline": {"text_to_video": _video_field_contract()},
 }
 
 
@@ -472,6 +483,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "StableVideoDiffusionPipeline": "_load_stable_video_diffusion",
     "AnimateDiffPipeline": "_load_animatediff",
     "AnimateLCMPipeline": "_load_animatediff",
+    "CogVideoXPipeline": "_load_cogvideox",
 }
 
 
@@ -490,6 +502,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "StableVideoDiffusionPipeline": "_execute_stable_video_diffusion",
     "AnimateDiffPipeline": "_execute_animatediff",
     "AnimateLCMPipeline": "_execute_animatediff",
+    "CogVideoXPipeline": "_execute_cogvideox",
 }
 
 
@@ -661,6 +674,16 @@ def _require_animatediff_artifacts(
     if motion_revision != reviewed_motion_revision or motion_revision != expected_motion_revision:
         raise ValueError(f"{adapter.pipeline_class} MotionAdapter is pinned to {expected_motion_revision}.")
     return base_revision, expected_motion_repo, reviewed_motion_revision
+
+
+def _require_cogvideox_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != COGVIDEOX_2B_REPO:
+        raise ValueError(f"CogVideoX-2B currently requires the exact reviewed Hub artifact {COGVIDEOX_2B_REPO}.")
+    reviewed_revision = require_catalog_revision(COGVIDEOX_2B_REPO, model_type="CogVideoXPipeline")
+    if revision != reviewed_revision or revision != COGVIDEOX_2B_REVISION:
+        raise ValueError(f"CogVideoX-2B is pinned to {COGVIDEOX_2B_REVISION}.")
+    return reviewed_revision
 
 
 _MISSING_VIDEO_PIPELINE_TAG = object()
@@ -1643,6 +1666,53 @@ class LoadPipeline(WanVACELoadPipeline):
         self.mm_add(pipeline, priority=2)
         return pipeline
 
+    def _load_cogvideox(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        from diffusers import CogVideoXPipeline
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _require_cogvideox_artifact(
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+        )
+        if str(kwargs.get("dtype") or "float16") != "float16":
+            raise ValueError("CogVideoX-2B source qualification requires dtype=float16.")
+        dtype = str_to_dtype("float16")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError("CogVideoX-2B source qualification does not admit on-load quantization or a device map.")
+        load_kwargs = {
+            "torch_dtype": dtype,
+            "use_safetensors": True,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "revision": revision,
+            "local_files_only": local_files_only(model_id),
+        }
+        if CONFIG.hf.get("cache_dir"):
+            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
+
+        logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
+        self.progress(-1, phase="loading", message="Loading CogVideoX-2B")
+        pipeline = CogVideoXPipeline.from_pretrained(model_id, **load_kwargs)
+        vae = getattr(pipeline, "vae", None)
+        enable_tiling = getattr(vae, "enable_tiling", None)
+        if not callable(enable_tiling):
+            raise RuntimeError("CogVideoX-2B did not expose the documented VAE tiling hook.")
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        # The specialized Studio graph keeps its generic VAE-tiling switch off
+        # so this reviewed pipeline requirement cannot be disabled by users.
+        enable_tiling()
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
     def _load_wan_video_to_video(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
         import torch
         from diffusers import AutoencoderKLWan, WanVideoToVideoPipeline
@@ -2360,6 +2430,136 @@ class Generate(WanVACEGenerate):
             "frames_out": len(frames) if isinstance(frames, list) else num_frames,
         }
 
+    def _execute_cogvideox(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "text_to_video":
+            raise ValueError("CogVideoX-2B supports text_to_video generation only.")
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != COGVIDEOX_2B_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != COGVIDEOX_2B_REVISION
+        ):
+            raise ValueError("The connected CogVideoX-2B pipeline does not match the reviewed artifact.")
+        for field, label in (
+            ("video", "source video"),
+            ("mask", "mask"),
+            ("pose_video", "pose video"),
+            ("face_video", "face video"),
+            ("background_video", "background video"),
+        ):
+            if ensure_video_list(kwargs.get(field), label) is not None:
+                raise ValueError(f"CogVideoX-2B text_to_video does not accept {label} input.")
+        if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
+            raise ValueError("CogVideoX-2B text_to_video does not accept image conditioning.")
+
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        if not isinstance(prompt, str):
+            raise ValueError("CogVideoX-2B requires one nonempty prompt string.")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        if negative_prompt is not None and not isinstance(negative_prompt, str):
+            raise ValueError("CogVideoX-2B negative prompt must be one string.")
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError("CogVideoX-2B source qualification supports one video per prompt.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError("CogVideoX-2B source qualification requires output_type=pil.")
+
+        width = _bounded_short_video_int(
+            kwargs.get("width"),
+            family="CogVideoX-2B",
+            default=720,
+            label="width",
+            minimum=720,
+            maximum=720,
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"),
+            family="CogVideoX-2B",
+            default=480,
+            label="height",
+            minimum=480,
+            maximum=480,
+        )
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"),
+            family="CogVideoX-2B",
+            default=25,
+            label="frame count",
+            minimum=9,
+            maximum=25,
+        )
+        if (num_frames - 1) % 4:
+            raise ValueError("CogVideoX-2B frame count must be 4k+1 within the admitted 9 through 25 range.")
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family="CogVideoX-2B",
+            default=25,
+            label="step count",
+            minimum=1,
+            maximum=50,
+        )
+        guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="CogVideoX-2B",
+            default=6.0,
+            label="guidance",
+            minimum=1.0,
+            maximum=12.0,
+        )
+        max_sequence_length = _bounded_short_video_int(
+            kwargs.get("max_sequence_length"),
+            family="CogVideoX-2B",
+            default=226,
+            label="maximum prompt sequence length",
+            minimum=1,
+            maximum=226,
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                num_inference_steps=steps,
+                guidance_scale=guidance,
+                use_dynamic_cfg=False,
+                num_videos_per_prompt=1,
+                generator=generator,
+                output_type=output_type,
+                return_dict=True,
+                attention_kwargs=parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+                max_sequence_length=max_sequence_length,
+            )
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        if not isinstance(frames, list) or len(frames) != num_frames:
+            received = len(frames) if isinstance(frames, list) else "an unknown number of"
+            raise RuntimeError(f"CogVideoX-2B returned {received} frames; expected {num_frames}.")
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames),
+        }
+
     def _execute_wan_text_to_video(
         self,
         pipeline: Any,
@@ -2605,7 +2805,6 @@ class Generate(WanVACEGenerate):
         _validate_ltx_dimensions(width, height)
         num_frames = _normalize_ltx_frames(int(kwargs.get("num_frames", 97)))
         import torch
-        from diffusers.pipelines.ltx.pipeline_ltx_condition import LTXVideoCondition
 
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed", 0)))
@@ -2648,6 +2847,8 @@ class Generate(WanVACEGenerate):
             call_kwargs["negative_prompt"] = None
             call_kwargs["timesteps"] = list(LTX_DISTILLED_TIMESTEPS)
         if mode in {"image_to_video", "reference_to_video"}:
+            from diffusers.pipelines.ltx.pipeline_ltx_condition import LTXVideoCondition
+
             condition_strength = float(kwargs.get("strength", 1.0))
             if len(reference_images) == 1:
                 # The qualified 0.9.8 distilled checkpoint is stable when an
@@ -2667,6 +2868,8 @@ class Generate(WanVACEGenerate):
                     for index, image in enumerate(reference_images)
                 ]
         elif mode == "video_to_video":
+            from diffusers.pipelines.ltx.pipeline_ltx_condition import LTXVideoCondition
+
             call_kwargs["conditions"] = [
                 LTXVideoCondition(
                     video=video,
@@ -2796,10 +2999,11 @@ class Generate(WanVACEGenerate):
         num_frames = _normalize_ltx_frames(int(kwargs.get("num_frames") or 121))
         strength = float(_value_or_default(kwargs, "strength", 1))
         import torch
-        from diffusers.pipelines.ltx2.pipeline_ltx2_condition import LTX2VideoCondition
 
         conditions = None
         if references:
+            from diffusers.pipelines.ltx2.pipeline_ltx2_condition import LTX2VideoCondition
+
             conditions = [
                 LTX2VideoCondition(
                     frames=image,
@@ -2809,6 +3013,8 @@ class Generate(WanVACEGenerate):
                 for index, image in enumerate(references)
             ]
         elif video:
+            from diffusers.pipelines.ltx2.pipeline_ltx2_condition import LTX2VideoCondition
+
             conditions = [LTX2VideoCondition(frames=video, index=0, strength=strength)]
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))

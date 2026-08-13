@@ -72,6 +72,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "StableVideoDiffusionPipeline",
             "AnimateDiffPipeline",
             "AnimateLCMPipeline",
+            "CogVideoXPipeline",
             "AceStepAudioPipeline",
             "StableAudioPipeline",
             "LongCatAudioDiTPipeline",

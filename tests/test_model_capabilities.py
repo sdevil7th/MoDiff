@@ -106,6 +106,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 ["text_to_video"],
                 "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
             ),
+            "CogVideoXPipeline": (
+                ["text_to_video"],
+                "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01",
+            ),
             "WanImage2VideoModularPipeline": (
                 ["image_to_video"],
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
@@ -121,7 +125,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 86)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 87)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",

@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from contextlib import chdir
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from types import ModuleType, SimpleNamespace
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 from PIL import Image
@@ -31,6 +31,8 @@ from modules.DiffusersVideo.main import (
     ANIMATELCM_LORA_WEIGHT_NAME,
     ANIMATELCM_MOTION_REPO,
     ANIMATELCM_MOTION_REVISION,
+    COGVIDEOX_2B_REPO,
+    COGVIDEOX_2B_REVISION,
     FRAMEPACK_BASE_REPO,
     FRAMEPACK_VISION_REPO,
     LTX_DISTILLED_TIMESTEPS,
@@ -46,6 +48,21 @@ from modules.DiffusersVideo.main import (
     _resolve_loader_revision,
     get_video_pipeline_adapter,
 )
+
+
+class FakeLTXVideoCondition:
+    def __init__(self, image=None, video=None, frame_index=0, strength=1.0):
+        self.image = image
+        self.video = video
+        self.frame_index = frame_index
+        self.strength = strength
+
+
+class FakeLTX2VideoCondition:
+    def __init__(self, frames=None, index=0, strength=1.0):
+        self.frames = frames
+        self.index = index
+        self.strength = strength
 
 
 class DiffusersVideoRegistryTests(unittest.TestCase):
@@ -1708,16 +1725,21 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 return Output()
 
         pipeline = FakePipeline()
-        result = GenerateVideoAudio().execute(
-            pipeline=pipeline,
-            mode="image_to_video",
-            reference_images=[object()],
-            prompt="A continuous walking shot with natural synchronized ambience",
-            width=768,
-            height=512,
-            num_frames=121,
-            frame_rate=24,
-        )
+        condition_module = SimpleNamespace(LTX2VideoCondition=FakeLTX2VideoCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx2.pipeline_ltx2_condition": condition_module},
+        ):
+            result = GenerateVideoAudio().execute(
+                pipeline=pipeline,
+                mode="image_to_video",
+                reference_images=[object()],
+                prompt="A continuous walking shot with natural synchronized ambience",
+                width=768,
+                height=512,
+                num_frames=121,
+                frame_rate=24,
+            )
 
         self.assertEqual(result["frames_out"], 2)
         self.assertEqual(result["sample_rate_out"], 24000)
@@ -2026,20 +2048,33 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
     def test_framepack_loader_composes_the_official_transformer_base_and_vision_repositories(self):
         adapter = get_video_pipeline_adapter("HunyuanVideoFramepackPipeline")
+        try:
+            import transformers  # noqa: F401
+        except ModuleNotFoundError:
+            pass
+        else:
+            import diffusers
+
+            # Resolve Diffusers' lazy FramePack exports before replacing the
+            # optional dependency with the bounded loader fixture below.
+            diffusers.HunyuanVideoFramepackPipeline
+            diffusers.HunyuanVideoFramepackTransformer3DModel
         transformer = object()
         feature_extractor = object()
         image_encoder = object()
         pipeline = object()
         node = LoadPipeline()
+        load_processor = MagicMock(return_value=feature_extractor)
+        load_encoder = MagicMock(return_value=image_encoder)
+        transformers_module = ModuleType("transformers")
+        transformers_module.SiglipImageProcessor = SimpleNamespace(from_pretrained=load_processor)
+        transformers_module.SiglipVisionModel = SimpleNamespace(from_pretrained=load_encoder)
 
         with (
+            patch.dict(sys.modules, {"transformers": transformers_module}),
             patch(
                 "diffusers.HunyuanVideoFramepackTransformer3DModel.from_pretrained", return_value=transformer
             ) as load_transformer,
-            patch(
-                "transformers.SiglipImageProcessor.from_pretrained", return_value=feature_extractor
-            ) as load_processor,
-            patch("transformers.SiglipVisionModel.from_pretrained", return_value=image_encoder) as load_encoder,
             patch("diffusers.HunyuanVideoFramepackPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch.object(node, "progress"),
             patch.object(node, "mm_add"),
@@ -2247,17 +2282,22 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         source = object()
         pipeline = FakePipeline()
-        Generate().execute(
-            pipeline=pipeline,
-            mode="image_to_video",
-            reference_images=[source],
-            prompt="Water pours while the camera moves laterally.",
-            width=704,
-            height=480,
-            num_frames=81,
-            num_inference_steps=4,
-            strength=0.85,
-        )
+        condition_module = SimpleNamespace(LTXVideoCondition=FakeLTXVideoCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx.pipeline_ltx_condition": condition_module},
+        ):
+            Generate().execute(
+                pipeline=pipeline,
+                mode="image_to_video",
+                reference_images=[source],
+                prompt="Water pours while the camera moves laterally.",
+                width=704,
+                height=480,
+                num_frames=81,
+                num_inference_steps=4,
+                strength=0.85,
+            )
 
         condition = pipeline.calls[0]["conditions"][0]
         self.assertEqual(condition.video, [source])
@@ -2283,17 +2323,22 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         source_frames = [object(), object(), object()]
         pipeline = FakePipeline()
-        Generate().execute(
-            pipeline=pipeline,
-            mode="video_to_video",
-            video=source_frames,
-            prompt="Preserve motion and restyle the season.",
-            width=704,
-            height=480,
-            num_frames=81,
-            num_inference_steps=4,
-            strength=0.55,
-        )
+        condition_module = SimpleNamespace(LTXVideoCondition=FakeLTXVideoCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx.pipeline_ltx_condition": condition_module},
+        ):
+            Generate().execute(
+                pipeline=pipeline,
+                mode="video_to_video",
+                video=source_frames,
+                prompt="Preserve motion and restyle the season.",
+                width=704,
+                height=480,
+                num_frames=81,
+                num_inference_steps=4,
+                strength=0.55,
+            )
 
         conditions = pipeline.calls[0]["conditions"]
         self.assertEqual(len(conditions), 1)
@@ -2678,6 +2723,137 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 num_frames=8,
                 num_inference_steps=9,
             )
+
+    def test_cogvideox_loader_pins_safe_weights_and_documented_tiling(self):
+        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_tiling=MagicMock()))
+        node = LoadPipeline("cogvideox-loader")
+        ordered_calls = MagicMock()
+        with (
+            patch("diffusers.CogVideoXPipeline.from_pretrained", return_value=pipeline) as from_pretrained,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            ordered_calls.attach_mock(apply_recipe, "apply_recipe")
+            ordered_calls.attach_mock(pipeline.vae.enable_tiling, "enable_tiling")
+            result = node.execute(
+                pipeline_class="CogVideoXPipeline",
+                model_id={"source": "hub", "value": COGVIDEOX_2B_REPO},
+                revision=COGVIDEOX_2B_REVISION,
+                dtype="float16",
+                device="cpu",
+                offload_mode="model_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], COGVIDEOX_2B_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "CogVideoXPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, COGVIDEOX_2B_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, COGVIDEOX_2B_REVISION)
+        load_args, load_kwargs = from_pretrained.call_args
+        self.assertEqual(load_args, (COGVIDEOX_2B_REPO,))
+        self.assertEqual(load_kwargs["revision"], COGVIDEOX_2B_REVISION)
+        self.assertIs(load_kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_kwargs)
+        self.assertNotIn("quantization_config", load_kwargs)
+        self.assertNotIn("device_map", load_kwargs)
+        pipeline.vae.enable_tiling.assert_called_once_with()
+        apply_recipe.assert_called_once_with(pipeline, {})
+        self.assertEqual(
+            ordered_calls.method_calls[:2],
+            [
+                call.apply_recipe(pipeline, {}),
+                call.enable_tiling(),
+            ],
+        )
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="cogvideox-loader",
+            scope="cogvideox-2b",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_cogvideox_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-cogvideox-loader")
+        with patch("diffusers.CogVideoXPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="CogVideoXPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-cogvideo"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="float16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_cogvideox_generate_seals_native_short_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(25)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "CogVideoXPipeline"
+            _modiff_video_repo = COGVIDEOX_2B_REPO
+            _modiff_video_revision = COGVIDEOX_2B_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A red kite crosses a quiet winter sky.",
+            negative_prompt="camera shake",
+            width=720,
+            height=480,
+            num_frames=25,
+            num_inference_steps=25,
+            guidance_scale=6,
+            seed=29,
+            output_type="pil",
+            max_sequence_length=226,
+        )
+
+        self.assertEqual(result, {"video_out": Output.frames[0], "width_out": 720, "height_out": 480, "frames_out": 25})
+        call = pipeline.calls[0]
+        self.assertEqual(call["num_frames"], 25)
+        self.assertEqual(call["num_inference_steps"], 25)
+        self.assertEqual(call["guidance_scale"], 6)
+        self.assertIs(call["use_dynamic_cfg"], False)
+        self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertEqual(call["max_sequence_length"], 226)
+        self.assertNotIn("image", call)
+
+    def test_cogvideox_invalid_short_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="CogVideoXPipeline",
+            _modiff_video_repo=COGVIDEOX_2B_REPO,
+            _modiff_video_revision=COGVIDEOX_2B_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 8}, "integer from 9 through 25"),
+            ({"num_frames": 24}, r"4k\+1"),
+            ({"width": 712}, "integer from 720 through 720"),
+            ({"reference_images": [Image.new("RGB", (720, 480))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 227}, "integer from 1 through 226"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A red kite crosses a quiet winter sky.",
+                            **update,
+                        )
 
     def test_stable_video_loader_rejects_unreviewed_artifacts_before_diffusers(self):
         node = LoadPipeline("strict-stable-video-loader")
