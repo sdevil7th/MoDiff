@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 27)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 28)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)

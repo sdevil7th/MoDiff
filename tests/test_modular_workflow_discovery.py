@@ -28,8 +28,8 @@ class ModularWorkflowDiscoveryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         snapshot = load_reviewed_modular_workflow_snapshot()
         self.assertEqual(snapshot["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
-        self.assertEqual(len(snapshot["contracts"]), 28)
-        self.assertEqual(sum(len(item["workflows"]) for item in snapshot["contracts"]), 80)
+        self.assertEqual(len(snapshot["contracts"]), 29)
+        self.assertEqual(sum(len(item["workflows"]) for item in snapshot["contracts"]), 83)
 
     def test_auto_sequential_loop_state_and_component_reuse_are_normalized(self):
         flux = reviewed_modular_workflow_contract("FluxModularPipeline")
@@ -70,6 +70,30 @@ class ModularWorkflowDiscoveryTests(unittest.TestCase):
         with self.assertRaisesRegex(ModularWorkflowContractError, "missing required inputs: image"):
             select_modular_workflow(contract, "image_to_image", {"prompt": "missing image"})
 
+        minimax = reviewed_modular_workflow_contract("MiniMaxH3ModularPipeline")
+        with self.assertRaisesRegex(ModularWorkflowContractError, "requires one complete input set"):
+            select_modular_workflow(
+                minimax,
+                "first_last_frame_to_video_with_audio",
+                {"prompt": "missing both keyframes", "num_inference_steps": 50},
+            )
+        self.assertEqual(
+            select_modular_workflow(
+                minimax,
+                "first_last_frame_to_video_with_audio",
+                {"prompt": "first frame", "image": object(), "num_inference_steps": 50},
+            )["id"],
+            "fl2va",
+        )
+        self.assertEqual(
+            select_modular_workflow(
+                minimax,
+                "first_last_frame_to_video_with_audio",
+                {"prompt": "last frame", "last_image": object(), "num_inference_steps": 50},
+            )["id"],
+            "fl2va",
+        )
+
     def test_runtime_snapshot_reader_does_not_import_diffusers(self):
         code = (
             "import sys; "
@@ -85,6 +109,16 @@ class ModularWorkflowDiscoveryTests(unittest.TestCase):
             timeout=10,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_alternative_required_input_sets_fail_closed_when_ambiguous_or_tampered(self):
+        contract = json.loads(json.dumps(reviewed_modular_workflow_contract("MiniMaxH3ModularPipeline")))
+        workflow = next(item for item in contract["workflows"] if item["id"] == "fl2va")
+        workflow["requiredInputAlternatives"] = [
+            ["image", "num_inference_steps", "prompt"],
+            ["image", "num_inference_steps", "prompt"],
+        ]
+        with self.assertRaisesRegex(ModularWorkflowContractError, "must be unique"):
+            validate_modular_workflow_contract(contract)
 
     def test_snapshot_reader_rejects_unreviewed_or_malformed_contracts(self):
         snapshot = json.loads(MODULAR_WORKFLOW_SNAPSHOT.read_text(encoding="utf-8"))

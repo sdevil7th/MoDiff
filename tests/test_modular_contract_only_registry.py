@@ -45,7 +45,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 7)
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 2)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 3)
         self.assertTrue(
             all(item.batch == "image" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES)
         )
@@ -58,7 +58,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 17)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 18)
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
             with self.subTest(pipeline=specification.class_name):
@@ -105,6 +105,44 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
         self.assertEqual(turbo_inputs["num_inference_steps"]["default"], 8)
         self.assertNotIn("negative_prompt", turbo_inputs)
         self.assertNotIn("guider", {item["name"] for item in turbo["components"]})
+
+    def test_minimax_h3_publishes_three_generic_joint_video_audio_contracts(self):
+        contract = reviewed_modular_workflow_contract("MiniMaxH3ModularPipeline")
+        self.assertEqual(contract["blocksClass"], "MiniMaxH3Blocks")
+        workflows = {workflow["id"]: workflow for workflow in contract["workflows"]}
+        self.assertEqual(
+            {name: workflow["taskId"] for name, workflow in workflows.items()},
+            {
+                "t2va": "text_to_video_with_audio",
+                "fl2va": "first_last_frame_to_video_with_audio",
+                "ref2va": "reference_to_video_with_audio",
+            },
+        )
+        self.assertEqual(workflows["t2va"]["requiredInputs"], ["num_inference_steps", "prompt"])
+        self.assertEqual(workflows["fl2va"]["requiredInputs"], ["num_inference_steps", "prompt"])
+        self.assertEqual(
+            workflows["fl2va"]["requiredInputAlternatives"],
+            [
+                ["image", "num_inference_steps", "prompt"],
+                ["last_image", "num_inference_steps", "prompt"],
+            ],
+        )
+        self.assertEqual(
+            workflows["ref2va"]["requiredInputs"],
+            ["num_frames", "num_inference_steps", "prompt", "references"],
+        )
+        component_names = {item["name"] for item in contract["components"]}
+        self.assertTrue(
+            {
+                "text_encoder",
+                "vae",
+                "audio_vae",
+                "scheduler",
+                "audio_scheduler",
+                "transformer",
+                "transformer_ref",
+            }.issubset(component_names)
+        )
 
     def test_models_loader_rejects_contract_only_class_before_artifact_or_index_resolution(self):
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:

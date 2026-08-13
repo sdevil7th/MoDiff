@@ -144,6 +144,23 @@ def _component_contracts(pipeline: Any) -> list[dict[str, Any]]:
     return components
 
 
+def _workflow_requirement_sets(value: Any, workflow_id: str) -> list[set[str]]:
+    """Normalize one upstream workflow predicate, including OR alternatives."""
+
+    if isinstance(value, Mapping):
+        candidates = (value,)
+    elif isinstance(value, tuple) and value and all(isinstance(item, Mapping) for item in value):
+        candidates = value
+    else:
+        raise ModularWorkflowContractError(
+            f"Workflow {workflow_id!r} has an unsupported upstream requirement map."
+        )
+    return [
+        {str(name) for name, required in candidate.items() if required is True}
+        for candidate in candidates
+    ]
+
+
 def build_modular_workflow_contract(
     pipeline: Any,
     *,
@@ -182,22 +199,27 @@ def build_modular_workflow_contract(
         workflow = selected_workflow.get_execution_blocks()
         initialized = workflow.init_pipeline()
         execution_pipeline_class = _name(type(initialized).__name__, "Execution pipeline class")
-        workflow_map_requirements = {
-            str(name)
-            for name, required in (workflow_map.get(workflow_id, {}) if workflow_map is not None else {}).items()
-            if required is True
-        }
         input_fields = [field for field in workflow.inputs if isinstance(getattr(field, "name", None), str)]
         input_names = {field.name for field in input_fields}
+        workflow_requirement_sets = (
+            _workflow_requirement_sets(workflow_map[workflow_id], workflow_id)
+            if workflow_map is not None
+            else [set()]
+        )
         # Auto workflow maps may also contain selector-only predicates (for
         # example Cosmos ``enable_sound``) that are not execution inputs. Only
         # publish requirements the selected execution blocks can receive.
-        required_inputs = workflow_map_requirements & input_names
-        required_inputs.update(
-            str(field.name)
-            for field in input_fields
-            if getattr(field, "required", False) is True
-        )
+        intrinsic_required = {
+            str(field.name) for field in input_fields if getattr(field, "required", False) is True
+        }
+        filtered_requirement_sets = [
+            (requirements & input_names) | intrinsic_required for requirements in workflow_requirement_sets
+        ]
+        required_inputs = set.intersection(*filtered_requirement_sets)
+        distinct_requirement_sets: list[set[str]] = []
+        for requirements in filtered_requirement_sets:
+            if requirements not in distinct_requirement_sets:
+                distinct_requirement_sets.append(requirements)
         inputs = [_field_contract(field, required_names=required_inputs) for field in input_fields]
         outputs = [
             _field_contract(field, required_names=set())
@@ -224,20 +246,24 @@ def build_modular_workflow_contract(
                 raise ModularWorkflowContractError(f"Workflow {workflow_id!r} returned an invalid block state.")
             state_keys = [_name(name, "State key") for name in values]
         task_id = _name(aliases.get(workflow_id, workflow_id), "Task id")
-        workflows.append(
-            {
-                "id": workflow_id,
-                "taskId": task_id,
-                "label": task_id.replace("_", " ").replace("-", " ").title(),
-                "executionPipelineClass": execution_pipeline_class,
-                "kind": _block_kind(workflow),
-                "requiredInputs": sorted(required_inputs),
-                "inputs": inputs,
-                "outputs": outputs,
-                "stateKeys": state_keys,
-                "steps": _block_steps(workflow),
-            }
-        )
+        workflow_contract = {
+            "id": workflow_id,
+            "taskId": task_id,
+            "label": task_id.replace("_", " ").replace("-", " ").title(),
+            "executionPipelineClass": execution_pipeline_class,
+            "kind": _block_kind(workflow),
+            "requiredInputs": sorted(required_inputs),
+            "inputs": inputs,
+            "outputs": outputs,
+            "stateKeys": state_keys,
+            "steps": _block_steps(workflow),
+        }
+        if len(distinct_requirement_sets) > 1:
+            workflow_contract["requiredInputAlternatives"] = sorted(
+                (sorted(requirements) for requirements in distinct_requirement_sets),
+                key=lambda names: tuple(names),
+            )
+        workflows.append(workflow_contract)
     if len({workflow["taskId"] for workflow in workflows}) != len(workflows):
         raise ModularWorkflowContractError("Reviewed workflow aliases must be unique.")
     unknown_aliases = set(aliases) - {workflow["id"] for workflow in workflows}
@@ -322,7 +348,7 @@ def validate_modular_workflow_contract(value: Any) -> dict[str, Any]:
     task_ids = set()
     all_input_names = set()
     for workflow in workflows:
-        if not isinstance(workflow, dict) or set(workflow) != {
+        workflow_keys = {
             "id",
             "taskId",
             "label",
@@ -333,6 +359,10 @@ def validate_modular_workflow_contract(value: Any) -> dict[str, Any]:
             "outputs",
             "stateKeys",
             "steps",
+        }
+        if not isinstance(workflow, dict) or set(workflow) not in {
+            frozenset(workflow_keys),
+            frozenset(workflow_keys | {"requiredInputAlternatives"}),
         }:
             raise ModularWorkflowContractError("Workflow entry is malformed.")
         workflow_id = _name(workflow.get("id"), "Workflow id")
@@ -381,6 +411,31 @@ def validate_modular_workflow_contract(value: Any) -> dict[str, Any]:
                 all_input_names.update(field_names)
         if not set(workflow["requiredInputs"]).issubset({field["name"] for field in workflow["inputs"]}):
             raise ModularWorkflowContractError("Required workflow inputs must exist in the input contract.")
+        alternatives = workflow.get("requiredInputAlternatives")
+        if alternatives is not None:
+            input_names = {field["name"] for field in workflow["inputs"]}
+            if not isinstance(alternatives, list) or not 2 <= len(alternatives) <= _MAX_FIELDS:
+                raise ModularWorkflowContractError("Required workflow input alternatives are malformed.")
+            normalized_alternatives = []
+            for alternative in alternatives:
+                if (
+                    not isinstance(alternative, list)
+                    or not alternative
+                    or len(alternative) > _MAX_FIELDS
+                    or len(set(alternative)) != len(alternative)
+                ):
+                    raise ModularWorkflowContractError("Required workflow input alternatives are malformed.")
+                for name in alternative:
+                    _name(name, "Required workflow input alternative")
+                if not set(alternative).issubset(input_names):
+                    raise ModularWorkflowContractError("Required workflow input alternatives target unknown inputs.")
+                normalized_alternatives.append(frozenset(alternative))
+            if len(set(normalized_alternatives)) != len(normalized_alternatives):
+                raise ModularWorkflowContractError("Required workflow input alternatives must be unique.")
+            if set.intersection(*(set(item) for item in alternatives)) != set(workflow["requiredInputs"]):
+                raise ModularWorkflowContractError(
+                    "Required workflow inputs must equal the intersection of their alternatives."
+                )
         steps = workflow.get("steps")
         if not isinstance(steps, list) or not steps or len(steps) > _MAX_STEPS:
             raise ModularWorkflowContractError("Workflow steps are malformed.")
@@ -419,6 +474,12 @@ def select_modular_workflow(
     if missing:
         raise ModularWorkflowContractError(
             f"Modular workflow task {task_id!r} is missing required inputs: {', '.join(missing)}."
+        )
+    alternatives = workflow.get("requiredInputAlternatives")
+    if alternatives and not any(all(values.get(name) is not None for name in names) for names in alternatives):
+        choices = " or ".join(" + ".join(names) for names in alternatives)
+        raise ModularWorkflowContractError(
+            f"Modular workflow task {task_id!r} requires one complete input set: {choices}."
         )
     return workflow
 

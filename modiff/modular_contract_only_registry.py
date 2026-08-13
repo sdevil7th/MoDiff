@@ -85,6 +85,16 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES = (
             ("video2video_with_sound", "video_to_video_with_audio"),
         ),
     ),
+    ContractOnlyModularPipeline(
+        "MiniMaxH3ModularPipeline",
+        "MiniMax H3 (Contract only)",
+        "multimodal",
+        (
+            ("t2va", "text_to_video_with_audio"),
+            ("fl2va", "first_last_frame_to_video_with_audio"),
+            ("ref2va", "reference_to_video_with_audio"),
+        ),
+    ),
 )
 
 CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES = (
