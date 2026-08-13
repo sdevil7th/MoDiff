@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T08:31:38.377Z",
+  "generatedAt": "2026-08-13T11:46:49.183Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 87,
-  "supportedPairCount": 99,
+  "supportedCanonicalPairCount": 91,
+  "supportedPairCount": 103,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -395,6 +395,124 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ddpmpipeline/unconditional-image.json",
       "graphHash": "c3cbd284e7bbbc55e1335b71ac5e69c14aa0b69d91fed81a188fa2c2508d8fca"
+    },
+    {
+      "id": "DreamLiteMobilePipeline:edit_image",
+      "modelType": "DreamLiteMobilePipeline",
+      "modelFamily": "DreamLite",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-mobile"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for distilled instruction editing."
+      },
+      "pipelineClasses": [
+        "DreamLiteMobilePipeline"
+      ],
+      "sourceTemplateId": "task-template:dreamlite-mobile:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/dream-lite-mobile-pipeline/edit-image.json",
+      "graphHash": "3ab28cdc0cd0782e3b7a03717c9127d0365a1639bd922b0247fdd4bc0fbec9cc"
+    },
+    {
+      "id": "DreamLiteMobilePipeline:text_to_image",
+      "modelType": "DreamLiteMobilePipeline",
+      "modelFamily": "DreamLite",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-mobile"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "DreamLiteMobilePipeline"
+      ],
+      "sourceTemplateId": "task-template:dreamlite-mobile:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/dream-lite-mobile-pipeline/text-to-image.json",
+      "graphHash": "1f5a2b3b02a4a266133d695a79539191dc7652aa80607e7fb06a839e66da6281"
+    },
+    {
+      "id": "DreamLitePipeline:edit_image",
+      "modelType": "DreamLitePipeline",
+      "modelFamily": "DreamLite",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-base"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for instruction-guided dual-CFG editing."
+      },
+      "pipelineClasses": [
+        "DreamLitePipeline"
+      ],
+      "sourceTemplateId": "task-template:dreamlite-base:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/dream-lite-pipeline/edit-image.json",
+      "graphHash": "7b0a0a8f61125ee39cbf40383044ce8959dac5b5950622b46889555bb98ccca5"
+    },
+    {
+      "id": "DreamLitePipeline:text_to_image",
+      "modelType": "DreamLitePipeline",
+      "modelFamily": "DreamLite",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-base"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "DreamLitePipeline"
+      ],
+      "sourceTemplateId": "task-template:dreamlite-base:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/dream-lite-pipeline/text-to-image.json",
+      "graphHash": "c55d65890ac84a17c61788ab37085055c9479882f7af44c98aaf5382b2c65243"
     },
     {
       "id": "Flux2KleinPipeline:edit_image",

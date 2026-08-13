@@ -38,6 +38,8 @@ SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
+DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 WHISPER_TINY_REPO = "openai/whisper-tiny"
@@ -509,6 +511,40 @@ _PAG_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
 )
 _SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
     ("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),
+)
+_DREAMLITE_GRAPH_BINDINGS = tuple(
+    item for item in _SDXL_GRAPH_BINDINGS if item[:2] != ("diffusersImageGenerate", "strength")
+)
+_DREAMLITE_EDIT_GRAPH_BINDINGS = tuple(
+    item
+    for item in _SDXL_EDIT_GRAPH_BINDINGS
+    if item[:2]
+    not in {
+        ("diffusersImageEdit", "strength"),
+        ("diffusersImageEdit", "reference_strength"),
+        ("diffusersImageEdit", "max_sequence_length"),
+    }
+) + (("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),)
+_DREAMLITE_MOBILE_GRAPH_BINDINGS = tuple(
+    item
+    for item in _DREAMLITE_GRAPH_BINDINGS
+    if item[:2]
+    not in {
+        ("diffusersImageGenerate", "negative_prompt"),
+        ("diffusersImageGenerate", "guidance_scale"),
+    }
+)
+_DREAMLITE_MOBILE_EDIT_GRAPH_BINDINGS = tuple(
+    item
+    for item in _SDXL_EDIT_GRAPH_BINDINGS
+    if item[:2]
+    not in {
+        ("diffusersImageEdit", "negative_prompt"),
+        ("diffusersImageEdit", "guidance_scale"),
+        ("diffusersImageEdit", "strength"),
+        ("diffusersImageEdit", "reference_strength"),
+        ("diffusersImageEdit", "max_sequence_length"),
+    }
 )
 _INPAINT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -5270,6 +5306,214 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-sprint-600m:edit-image:v1"] = {
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+}
+
+
+_DREAMLITE_BASE_PROFILE = {
+    "id": "dreamlite-base:direct",
+    "model_type": "DreamLitePipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "DreamLitePipeline",
+    "default_repo": DREAMLITE_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 28,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_DREAMLITE_BASE_CAPABILITY = {
+    "modelType": "DreamLitePipeline",
+    "label": "DreamLite Base",
+    "displayName": "DreamLite Base 1024px",
+    "family": "DreamLite",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": DREAMLITE_BASE_REPO,
+    "artifactLabel": "Non-commercial Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 28,
+    "recommendedGuidance": 3.5,
+    "recommendedMaxSequenceLength": 200,
+    "guidanceLabel": "Text guidance",
+    "conditioningScale": 1.5,
+    "supportsNegativePrompt": True,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 28,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for instruction-guided dual-CFG editing.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(DREAMLITE_BASE_REPO, model_type="DreamLitePipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable diffusers-branch snapshot contains only reviewed safetensors and library-owned classes; repository Python remains disabled.",
+        "The 1024px recipe uses 28 steps, text guidance 3.5, image guidance 1.5 for edit mode, and at most 200 prompt tokens.",
+        "CC-BY-NC-4.0 prohibits commercial use. Auto and Gallery remain disabled pending live remote and physical macOS review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["dreamlite-base:text-to-image:v1"] = {
+    "modelType": "DreamLitePipeline",
+    "mode": "text_to_image",
+    "profile": _DREAMLITE_BASE_PROFILE,
+    "capability": _DREAMLITE_BASE_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _DREAMLITE_GRAPH_BINDINGS,
+}
+_DREAMLITE_BASE_EDIT_PROFILE = {
+    **_DREAMLITE_BASE_PROFILE,
+    "id": "dreamlite-base:edit-direct",
+    "modes": ("edit_image",),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["dreamlite-base:edit-image:v1"] = {
+    "modelType": "DreamLitePipeline",
+    "mode": "edit_image",
+    "profile": _DREAMLITE_BASE_EDIT_PROFILE,
+    "capability": _DREAMLITE_BASE_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _DREAMLITE_EDIT_GRAPH_BINDINGS,
+}
+
+_DREAMLITE_MOBILE_PROFILE = {
+    "id": "dreamlite-mobile:direct",
+    "model_type": "DreamLiteMobilePipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "DreamLiteMobilePipeline",
+    "default_repo": DREAMLITE_MOBILE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 8,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_DREAMLITE_MOBILE_CAPABILITY = {
+    "modelType": "DreamLiteMobilePipeline",
+    "label": "DreamLite Mobile",
+    "displayName": "DreamLite Mobile 1024px",
+    "family": "DreamLite",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": DREAMLITE_MOBILE_REPO,
+    "artifactLabel": "Non-commercial Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 4,
+    "recommendedGuidance": 0.0,
+    "recommendedMaxSequenceLength": 200,
+    "guidanceLabel": "Distilled; guidance disabled",
+    "conditioningScale": 0.0,
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 4,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for distilled instruction editing.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            DREAMLITE_MOBILE_REPO,
+            model_type="DreamLiteMobilePipeline",
+        )
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable diffusers-branch snapshot contains only reviewed safetensors and library-owned classes; repository Python remains disabled.",
+        "The distilled 1024px recipe supports one through eight steps and uses four by default; text and image guidance inputs are intentionally not sent because the pipeline ignores them.",
+        "CC-BY-NC-4.0 prohibits commercial use. Auto and Gallery remain disabled pending live remote and physical macOS review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["dreamlite-mobile:text-to-image:v1"] = {
+    "modelType": "DreamLiteMobilePipeline",
+    "mode": "text_to_image",
+    "profile": _DREAMLITE_MOBILE_PROFILE,
+    "capability": _DREAMLITE_MOBILE_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _DREAMLITE_MOBILE_GRAPH_BINDINGS,
+}
+_DREAMLITE_MOBILE_EDIT_PROFILE = {
+    **_DREAMLITE_MOBILE_PROFILE,
+    "id": "dreamlite-mobile:edit-direct",
+    "modes": ("edit_image",),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["dreamlite-mobile:edit-image:v1"] = {
+    "modelType": "DreamLiteMobilePipeline",
+    "mode": "edit_image",
+    "profile": _DREAMLITE_MOBILE_EDIT_PROFILE,
+    "capability": _DREAMLITE_MOBILE_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _DREAMLITE_MOBILE_EDIT_GRAPH_BINDINGS,
 }
 
 

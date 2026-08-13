@@ -59,6 +59,8 @@ SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
+DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
@@ -99,7 +101,8 @@ class ImagePipelineAdapter:
     max_inference_steps: int = 100
     fixed_guidance_scale: float | None = None
     minimum_image_guidance_scale: float = 0.0
-    guidance_parameter: str = "guidance_scale"
+    guidance_parameter: str | None = "guidance_scale"
+    ignored_generation_parameters: frozenset[str] = frozenset()
     multi_image_strategy: str = "list"
     max_sequence_length: int = 512
     max_reference_images: int = 1
@@ -122,6 +125,11 @@ class ImagePipelineAdapter:
             raise ValueError("An exact text guidance scale must be between 0 and 20.")
         if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
             raise ValueError("The minimum image guidance scale must be between 0 and 20.")
+        if self.guidance_parameter is not None and not self.guidance_parameter:
+            raise ValueError("An image guidance parameter cannot be blank.")
+        unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale"}
+        if unsupported_ignored:
+            raise ValueError("Image adapters can ignore only reviewed no-op generation parameters.")
         if self.weight_variant is not None and self.weight_variant != "fp16":
             raise ValueError("Only the reviewed fp16 image weight variant is supported.")
         component_names = [name for name, _dtype in self.component_dtype_overrides]
@@ -183,6 +191,8 @@ class ImagePipelineAdapter:
             "image_guidance_scale": "image_guidance_scale",
         }
         for source, destination in aliases.items():
+            if source in self.ignored_generation_parameters:
+                continue
             value = values.get(source)
             # The graph uses zero to mean "no crop". Diffusers uses None for
             # that contract; passing 0 enters Qwen's overlay path and can make
@@ -192,7 +202,11 @@ class ImagePipelineAdapter:
                 continue
             if supports_arg(pipeline, destination) and value is not None:
                 target[destination] = value
-        if supports_arg(pipeline, self.guidance_parameter) and values.get("guidance_scale") is not None:
+        if (
+            self.guidance_parameter
+            and supports_arg(pipeline, self.guidance_parameter)
+            and values.get("guidance_scale") is not None
+        ):
             target[self.guidance_parameter] = values.get("guidance_scale")
         if (
             self.conditioning_scale_parameter
@@ -343,6 +357,26 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         max_inference_steps=4,
         max_sequence_length=300,
+    ),
+    "DreamLitePipeline": ImagePipelineAdapter(
+        "DreamLitePipeline",
+        frozenset({"text_to_image", "edit_image"}),
+        DREAMLITE_BASE_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        minimum_image_guidance_scale=0.0,
+        max_sequence_length=200,
+    ),
+    "DreamLiteMobilePipeline": ImagePipelineAdapter(
+        "DreamLiteMobilePipeline",
+        frozenset({"text_to_image", "edit_image"}),
+        DREAMLITE_MOBILE_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=8,
+        fixed_guidance_scale=0.0,
+        guidance_parameter=None,
+        ignored_generation_parameters=frozenset({"image_guidance_scale"}),
+        max_sequence_length=200,
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -691,6 +725,18 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "SanaSprintImg2ImgPipeline": {
         "edit_image": _image_field_contract("width", "height", "guidance_scale", "strength", "max_sequence_length"),
+    },
+    "DreamLitePipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
+        ),
+        "edit_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "image_guidance_scale"
+        ),
+    },
+    "DreamLiteMobilePipeline": {
+        "text_to_image": _image_field_contract("width", "height", "max_sequence_length"),
+        "edit_image": _image_field_contract("width", "height"),
     },
     "StableDiffusionXLImg2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),

@@ -202,6 +202,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("SanaPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "edit_image"),
+                ("DreamLitePipeline", "text_to_image"),
+                ("DreamLitePipeline", "edit_image"),
+                ("DreamLiteMobilePipeline", "text_to_image"),
+                ("DreamLiteMobilePipeline", "edit_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -378,6 +382,51 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(sana_sprint_edit["pipelineClass"], "SanaSprintImg2ImgPipeline")
         self.assertIn(("diffusersImageEdit", "strength", "strength"), sana_sprint_edit["bindings"])
         self.assertIn(("loadImage", "image", "diffusersImageEdit", "image"), sana_sprint_edit["edges"])
+        dreamlite = by_id["dreamlite-base:text-to-image:v1"]
+        self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
+        self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")
+        self.assertIn(
+            ("diffusersImageGenerate", "guidance_scale", "guidanceScale"),
+            dreamlite["bindings"],
+        )
+        dreamlite_edit = by_id["dreamlite-base:edit-image:v1"]
+        self.assertIn(
+            ("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),
+            dreamlite_edit["bindings"],
+        )
+        self.assertNotIn(
+            ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
+            dreamlite_edit["bindings"],
+        )
+        dreamlite_mobile = by_id["dreamlite-mobile:text-to-image:v1"]
+        self.assertEqual(dreamlite_mobile["defaultRepo"], "carlofkl/DreamLite-mobile")
+        self.assertEqual(dreamlite_mobile["pipelineClass"], "DreamLiteMobilePipeline")
+        self.assertFalse(
+            any(
+                role == "diffusersImageGenerate"
+                and parameter in {"guidance_scale", "negative_prompt"}
+                for role, parameter, _source in dreamlite_mobile["bindings"]
+            )
+        )
+        dreamlite_mobile_edit = by_id["dreamlite-mobile:edit-image:v1"]
+        self.assertFalse(
+            any(
+                role == "diffusersImageEdit"
+                and parameter
+                in {
+                    "guidance_scale",
+                    "image_guidance_scale",
+                    "negative_prompt",
+                }
+                for role, parameter, _source in dreamlite_mobile_edit["bindings"]
+            )
+        )
+        self.assertFalse(
+            DIFFUSERS_EXECUTION_PROFILES[dreamlite["executionProfileId"]].live_proof
+        )
+        self.assertFalse(
+            DIFFUSERS_EXECUTION_PROFILES[dreamlite_mobile["executionProfileId"]].live_proof
+        )
         self.assertIn(
             ("loadMask", "image", "diffusersImageInpaint", "mask_image"),
             sdxl_pag_inpaint["edges"],

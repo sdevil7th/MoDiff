@@ -29,6 +29,8 @@ from modules.DiffusersImage import (
 from modules.DiffusersImage.main import (
     CONSISTENCY_IMAGENET64_REPO,
     DDPM_CIFAR10_REPO,
+    DREAMLITE_BASE_REPO,
+    DREAMLITE_MOBILE_REPO,
     FLUX2_KLEIN_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
@@ -823,6 +825,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 SANA_SPRINT_REPO,
                 {"prompt", "image"},
             ),
+            "DreamLitePipeline": (
+                {"text_to_image", "edit_image"},
+                DREAMLITE_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "DreamLiteMobilePipeline": (
+                {"text_to_image", "edit_image"},
+                DREAMLITE_MOBILE_REPO,
+                {"prompt", "image"},
+            ),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -870,7 +882,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertIn("num_inference_steps", parameters)
                 self.assertIn("generator", parameters)
                 self.assertIn("output_type", parameters)
-                self.assertIn(adapter.guidance_parameter, parameters)
+                if adapter.guidance_parameter is not None:
+                    self.assertIn(adapter.guidance_parameter, parameters)
 
         for deferred in (
             "Flux2Pipeline",
@@ -886,8 +899,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "ZImageControlNetPipeline",
             "ZImageControlNetInpaintPipeline",
             "ZImageOmniPipeline",
-            "DreamLitePipeline",
-            "DreamLiteMobilePipeline",
         ):
             with self.subTest(deferred=deferred):
                 self.assertNotIn(deferred, IMAGE_PIPELINE_ADAPTERS)
@@ -914,6 +925,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("SanaPipeline", "text_to_image", Generate, {}),
             ("SanaSprintPipeline", "text_to_image", Generate, {}),
             ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("DreamLitePipeline", "text_to_image", Generate, {}),
+            ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
+            ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
+            ("DreamLiteMobilePipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
@@ -991,17 +1006,22 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     destination
                     for source, destination in aliases.items()
                     if values.get(source) is not None and destination in upstream_parameters
+                    and source not in adapter.ignored_generation_parameters
                 }
-                expected_keys.add(adapter.guidance_parameter)
+                if adapter.guidance_parameter is not None:
+                    expected_keys.add(adapter.guidance_parameter)
 
                 with patch("modules.DiffusersImage.main.add_progress_callback"):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
                 self.assertEqual(set(received), expected_keys)
-                self.assertEqual(
-                    received[adapter.guidance_parameter],
-                    adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0,
-                )
+                if adapter.guidance_parameter is not None:
+                    self.assertEqual(
+                        received[adapter.guidance_parameter],
+                        adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0,
+                    )
+                else:
+                    self.assertNotIn("guidance_scale", received)
                 if "negative_prompt" in upstream_parameters:
                     self.assertEqual(received["negative_prompt"], "artifact")
 
@@ -1972,6 +1992,78 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 height=32,
                 num_inference_steps=5,
                 guidance_scale=4.5,
+            )
+
+    def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
+        loaded = {}
+
+        def pipeline_class(name):
+            def from_pretrained(cls, repo, **kwargs):
+                loaded[name] = {"repo": repo, "kwargs": kwargs}
+                return cls()
+
+            def call(self, **_kwargs):
+                raise AssertionError("invalid DreamLite settings must fail before inference")
+
+            return type(name, (), {"from_pretrained": classmethod(from_pretrained), "__call__": call})
+
+        for name, repository, mode in (
+            ("DreamLitePipeline", DREAMLITE_BASE_REPO, "text_to_image"),
+            ("DreamLiteMobilePipeline", DREAMLITE_MOBILE_REPO, "edit_image"),
+        ):
+            with self.subTest(pipeline=name):
+                node = LoadPipeline(f"{name}-load-probe")
+                node.progress = lambda *args, **kwargs: None
+                node.mm_add = lambda *args, **kwargs: None
+                with (
+                    patch(
+                        "modules.DiffusersImage.main.pipeline_class_from_name",
+                        return_value=pipeline_class(name),
+                    ),
+                    patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+                    patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+                ):
+                    node.execute(
+                        model_id=repository,
+                        pipeline_class=name,
+                        mode=mode,
+                        revision=catalog_revision(repository),
+                        dtype="bfloat16",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+
+                self.assertEqual(loaded[name]["repo"], repository)
+                self.assertEqual(loaded[name]["kwargs"]["revision"], catalog_revision(repository))
+                self.assertEqual(loaded[name]["kwargs"]["torch_dtype"], "bfloat16")
+                self.assertTrue(loaded[name]["kwargs"]["use_safetensors"])
+                self.assertNotIn("variant", loaded[name]["kwargs"])
+                self.assertNotIn("trust_remote_code", loaded[name]["kwargs"])
+
+        base = tag_test_image_pipeline(
+            pipeline_class("DreamLitePipeline")(),
+            "DreamLitePipeline",
+            "text_to_image",
+        )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("dreamlite-base-step-contract").execute(
+                pipeline=base,
+                prompt="reviewed fixture",
+                num_inference_steps=51,
+                guidance_scale=3.5,
+            )
+
+        mobile = tag_test_image_pipeline(
+            pipeline_class("DreamLiteMobilePipeline")(),
+            "DreamLiteMobilePipeline",
+            "text_to_image",
+        )
+        with self.assertRaisesRegex(ValueError, "requires guidance_scale=0"):
+            Generate("dreamlite-mobile-guidance-contract").execute(
+                pipeline=mobile,
+                prompt="reviewed fixture",
+                num_inference_steps=4,
+                guidance_scale=1.0,
             )
 
     def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):

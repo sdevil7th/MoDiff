@@ -331,6 +331,20 @@
       "artifacts": []
     },
     {
+      "modelType": "DreamLitePipeline",
+      "baseRepo": "carlofkl/DreamLite-base",
+      "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",
+      "baseLicense": "cc-by-nc-4.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "DreamLiteMobilePipeline",
+      "baseRepo": "carlofkl/DreamLite-mobile",
+      "baseRevision": "6695c3f4be230f0493fa5dbf78be3bc4d3bb2ab4",
+      "baseLicense": "cc-by-nc-4.0",
+      "artifacts": []
+    },
+    {
       "modelType": "MarigoldDepthPipeline",
       "baseRepo": "prs-eth/marigold-depth-lcm-v1-0",
       "baseRevision": "04a73502f7fd8fc5e59947b9df3b2266d71d6849",

@@ -125,7 +125,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 87)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 91)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -164,6 +164,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionXLPAGPipeline",
             "SanaPipeline",
             "SanaSprintPipeline",
+            "DreamLitePipeline",
+            "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
@@ -337,6 +339,42 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sana_sprint["galleryEligible"])
         self.assertNotIn("SanaPipeline", experimental)
         self.assertNotIn("SanaSprintPipeline", experimental)
+        dreamlite = by_model["DreamLitePipeline"]
+        self.assertEqual(
+            dreamlite["revisionCandidates"],
+            ["751cb8dbb9072a8c8ffd8684e0f254b50f20531b"],
+        )
+        self.assertEqual(dreamlite["recommendedSteps"], 28)
+        self.assertEqual(dreamlite["recommendedGuidance"], 3.5)
+        self.assertEqual(dreamlite["conditioningScale"], 1.5)
+        self.assertEqual(dreamlite["recommendedMaxSequenceLength"], 200)
+        self.assertEqual(dreamlite["modes"], ["text_to_image", "edit_image"])
+        self.assertEqual(dreamlite["pipelineClasses"], ["DreamLitePipeline"])
+        self.assertEqual(
+            dreamlite["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertFalse(dreamlite["autoEligible"])
+        self.assertFalse(dreamlite["galleryEligible"])
+        self.assertNotIn("DreamLitePipeline", experimental)
+        dreamlite_mobile = by_model["DreamLiteMobilePipeline"]
+        self.assertEqual(
+            dreamlite_mobile["revisionCandidates"],
+            ["6695c3f4be230f0493fa5dbf78be3bc4d3bb2ab4"],
+        )
+        self.assertEqual(dreamlite_mobile["recommendedSteps"], 4)
+        self.assertEqual(dreamlite_mobile["recommendedGuidance"], 0.0)
+        self.assertEqual(dreamlite_mobile["conditioningScale"], 0.0)
+        self.assertEqual(dreamlite_mobile["recommendedMaxSequenceLength"], 200)
+        self.assertEqual(dreamlite_mobile["modes"], ["text_to_image", "edit_image"])
+        self.assertEqual(
+            dreamlite_mobile["pipelineClasses"],
+            ["DreamLiteMobilePipeline"],
+        )
+        self.assertFalse(dreamlite_mobile["supportsNegativePrompt"])
+        self.assertFalse(dreamlite_mobile["autoEligible"])
+        self.assertFalse(dreamlite_mobile["galleryEligible"])
+        self.assertNotIn("DreamLiteMobilePipeline", experimental)
         sdxl_inpaint = next(
             item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
         )
