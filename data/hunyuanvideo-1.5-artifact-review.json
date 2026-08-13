@@ -1,0 +1,330 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The Tencent Hunyuan community license has territory restrictions whose preamble and Territory definition are not identical, and remote heavy-hardware execution is unqualified.",
+    "runtimeCatalogExposed": false,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "legal_territory_review",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "candidateRecipes": {
+    "imageToVideo480pStepDistilled": {
+      "attentionKernelOptional": true,
+      "dtype": "bfloat16",
+      "fps": 24,
+      "guidanceScale": 1.0,
+      "modelCpuOffload": true,
+      "numFrames": 121,
+      "pipelineClass": "HunyuanVideo15ImageToVideoPipeline",
+      "recommendedNumInferenceSteps": [
+        8,
+        12
+      ],
+      "repositoryRole": "diffusers480pImageToVideoStepDistilled",
+      "reviewedDefaultNumInferenceSteps": 12,
+      "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+      "schedulerShift": 7.0,
+      "useMeanflow": true,
+      "vaeTiling": true
+    },
+    "textToVideo480p": {
+      "attentionKernelOptional": true,
+      "dtype": "bfloat16",
+      "fps": 24,
+      "guidanceScale": 6.0,
+      "modelCpuOffload": true,
+      "numFrames": 121,
+      "numInferenceSteps": 50,
+      "pipelineClass": "HunyuanVideo15Pipeline",
+      "repositoryRole": "diffusers480pTextToVideo",
+      "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+      "schedulerShift": 5.0,
+      "vaeTiling": true
+    }
+  },
+  "format": "safetensors",
+  "license": {
+    "byteSize": 16424,
+    "commercialLicenseThresholdMonthlyActiveUsers": 100000000,
+    "definedTerritoryExcludes": [
+      "European Union"
+    ],
+    "distributionNoticeRequired": true,
+    "generatedContentDisclosureRequired": true,
+    "id": "tencent-hunyuan-community-license-agreement",
+    "outputUseOutsideTerritoryProhibited": true,
+    "path": "LICENSE",
+    "preambleExcludedTerritories": [
+      "European Union",
+      "South Korea",
+      "United Kingdom"
+    ],
+    "repository": "tencent/HunyuanVideo-1.5",
+    "revision": "9b49404b3f5df2a8f0b31df27a0c7ab872e7b038",
+    "sha256": "c38236952096107a4adbc164f44cd1768745b0a20090ea858e0954c96a6b8391",
+    "territoryTextRequiresLegalReview": true
+  },
+  "modularContract": {
+    "blocksClass": "HunyuanVideo15AutoBlocks",
+    "defaultNumFrames": 121,
+    "defaultNumInferenceSteps": 50,
+    "output": "videos",
+    "pipelineClass": "HunyuanVideo15ModularPipeline",
+    "promptRewriteDuringDiscoveryAllowed": false,
+    "workflows": {
+      "image2video": {
+        "requiredInputs": [
+          "image",
+          "prompt"
+        ],
+        "taskId": "image_to_video"
+      },
+      "text2video": {
+        "requiredInputs": [
+          "prompt"
+        ],
+        "taskId": "text_to_video"
+      }
+    }
+  },
+  "remoteResourceEnvelope": {
+    "basis": "Immutable BF16 weight totals, publisher offload guidance, and conservative loading headroom; no live proof.",
+    "imageToVideoMinimumAcceleratorMemoryBytes": 17179869184,
+    "imageToVideoMinimumSelectiveDiskBytes": 51539607552,
+    "imageToVideoMinimumSystemRamBytes": 68719476736,
+    "publisherMinimumAcceleratorMemoryBytesWithOffload": 15032385536,
+    "status": "estimate_only_qualification_pending",
+    "textToVideoMinimumAcceleratorMemoryBytes": 17179869184,
+    "textToVideoMinimumSelectiveDiskBytes": 68719476736,
+    "textToVideoMinimumSystemRamBytes": 103079215104
+  },
+  "repositories": [
+    {
+      "gated": false,
+      "private": false,
+      "repository": "tencent/HunyuanVideo-1.5",
+      "revision": "9b49404b3f5df2a8f0b31df27a0c7ab872e7b038",
+      "role": "upstreamFamily",
+      "weightBytes": 371759988572,
+      "weightFileCount": 14,
+      "weightFiles": [
+        {
+          "byteSize": 33325793672,
+          "path": "transformer/1080p_sr_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "691dc1b81b49d942e2eb95e6d61b91321e17b868536eaa4e843db6e406390411"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/480p_i2v/diffusion_pytorch_model.safetensors",
+          "sha256": "f4d7d3e61404f5c742b57260f1b6a3bc41bb12fc880438252bf37913487dec56"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/480p_i2v_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "f51fe1c4302be44e25afcd1a9186385606482da8a77e2ee7793b0e8385b9cd57"
+        },
+        {
+          "byteSize": 33325523336,
+          "path": "transformer/480p_i2v_step_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "29418e43ef5bfa1868703c26f9b45c622b473960c479dc5be43bba7bd0004f6d"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/480p_t2v/diffusion_pytorch_model.safetensors",
+          "sha256": "71f9affa1115fef2b14bd41fba30eab966fe80c9ed98e0fcba495dbc6d8fff86"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/480p_t2v_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "0f35dc10a4037a618b22fef4ee20f8a9d972b4cf2e684764ed8f442fc7a2583f"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/720p_i2v/diffusion_pytorch_model.safetensors",
+          "sha256": "0ffd6e2e1c2de585fd011ace1a64105804830aa331ddb25a2fb4a32497f159a4"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/720p_i2v_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "542a9a4367ebfe5c584d925308f63f11070d044e3615b07af95edd4e0500240a"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/720p_i2v_distilled_sparse/diffusion_pytorch_model.safetensors",
+          "sha256": "47345844cc15df1e64a38cc9715fa31471c2c1c68a2857404eda027d60f355a6"
+        },
+        {
+          "byteSize": 33325793672,
+          "path": "transformer/720p_sr_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "8fcab24a2404731a5e42d5f4adf7731a69771a3b2fc7786f90233f599947794a"
+        },
+        {
+          "byteSize": 33306632192,
+          "path": "transformer/720p_t2v/diffusion_pytorch_model.safetensors",
+          "sha256": "acb0a23ccd0b6c662a22bcc9783544fd917418227a5bdf5e2cbecb22a142c3cc"
+        },
+        {
+          "byteSize": 201404760,
+          "path": "upsampler/1080p_sr_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "a3630a7e0ab21084aa69e5a649f59fba34a7110733c9ca3d4fee781323758198"
+        },
+        {
+          "byteSize": 85854616,
+          "path": "upsampler/720p_sr_distilled/diffusion_pytorch_model.safetensors",
+          "sha256": "9f04d9306f4f2159bd6351f069c0d0e7e0b8c1dc047eb7fd3954f0d357f85203"
+        },
+        {
+          "byteSize": 5042560980,
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "sha256": "2609ed7033c052fdf164afcac71e8a7c82afccdbb001d673444a72f194fbb918"
+        }
+      ]
+    },
+    {
+      "gated": false,
+      "private": false,
+      "repository": "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v",
+      "revision": "286be7ce72277246578a3e3cc2487e95ddae5bcf",
+      "role": "diffusers480pTextToVideo",
+      "weightBytes": 53367753676,
+      "weightFileCount": 13,
+      "weightFiles": [
+        {
+          "byteSize": 4877660152,
+          "path": "text_encoder/model-00001-of-00003.safetensors",
+          "sha256": "a1b9f95e60d6844963933dc20c11cf712d902441ef50d0926e5f2b3521a2f01d"
+        },
+        {
+          "byteSize": 4932750280,
+          "path": "text_encoder/model-00002-of-00003.safetensors",
+          "sha256": "ab32a0fe73edfa4af4eb0c7f17633c44704335d80755f9230200cf16fea42b7e"
+        },
+        {
+          "byteSize": 4330864528,
+          "path": "text_encoder/model-00003-of-00003.safetensors",
+          "sha256": "fe26b2e0da51f3c6522b46056b26603f0642f866a60eacec09ebe66a025cb7ee"
+        },
+        {
+          "byteSize": 877273128,
+          "path": "text_encoder_2/model.safetensors",
+          "sha256": "3f3b22f7926015b76022ca4842a3130d83c477d4ecee8a5275252650d96bf97a"
+        },
+        {
+          "byteSize": 4974650312,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+          "sha256": "b415e1d865d2dd6159af16610044f02596d0f967e798bbb0c043a68cecbe49f1"
+        },
+        {
+          "byteSize": 4984921240,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+          "sha256": "1150f60e40c82dbe3f30d164742909b5fe14646e7a3802cf28bdece57ee0cd71"
+        },
+        {
+          "byteSize": 4984921840,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+          "sha256": "7b7058e5a03e021ff5f8aabdc14125a44a3c4c0be001061ab00605b516d58cb4"
+        },
+        {
+          "byteSize": 4968109672,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+          "sha256": "56fba1c5928b25491302b51f9e19d7a8950500de8656ff4bcec9ad09d56b637c"
+        },
+        {
+          "byteSize": 4900967800,
+          "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+          "sha256": "b505a2bc6ee052a84ccb34ba80f5c50f22b58b741a0fb916c79c26b6a577f5ee"
+        },
+        {
+          "byteSize": 4934563168,
+          "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+          "sha256": "fd93ca43e13ea18af359d0f7080dad6b3b26bcbc4f25e7b3057c01f5306be230"
+        },
+        {
+          "byteSize": 3558508600,
+          "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+          "sha256": "f4f016011645aba0e5581be95f7e4f1ef89864e6dde7f6a09d1921c679556ed3"
+        },
+        {
+          "byteSize": 4929270112,
+          "path": "vae/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "sha256": "59574f24717e0306bd1c0af33fc5006c42625f615cda08f57246cc14d7f82571"
+        },
+        {
+          "byteSize": 113292844,
+          "path": "vae/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "sha256": "7258d3080448036656835e8cf1bfa78e5e4d33b2c56fab6deab844dd2a5fdcc6"
+        }
+      ]
+    },
+    {
+      "gated": false,
+      "private": false,
+      "repository": "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v_step_distilled",
+      "revision": "854c04a4c8a53d990b418c7478f0802c0fc8c726",
+      "role": "diffusers480pImageToVideoStepDistilled",
+      "weightBytes": 34620593582,
+      "weightFileCount": 8,
+      "weightFiles": [
+        {
+          "byteSize": 856506120,
+          "path": "image_encoder/model.safetensors",
+          "sha256": "d769e3a32a6a9bac72d4d93b989e44491f71b50f02bfa14cd9187758d4a68ff1"
+        },
+        {
+          "byteSize": 4877660152,
+          "path": "text_encoder/model-00001-of-00003.safetensors",
+          "sha256": "a1b9f95e60d6844963933dc20c11cf712d902441ef50d0926e5f2b3521a2f01d"
+        },
+        {
+          "byteSize": 4932750280,
+          "path": "text_encoder/model-00002-of-00003.safetensors",
+          "sha256": "ab32a0fe73edfa4af4eb0c7f17633c44704335d80755f9230200cf16fea42b7e"
+        },
+        {
+          "byteSize": 4330864528,
+          "path": "text_encoder/model-00003-of-00003.safetensors",
+          "sha256": "fe26b2e0da51f3c6522b46056b26603f0642f866a60eacec09ebe66a025cb7ee"
+        },
+        {
+          "byteSize": 438643328,
+          "path": "text_encoder_2/model.safetensors",
+          "sha256": "f0a1043fa206aa16927e24ebf25ed122500a2066b5535bcab1047e976b847919"
+        },
+        {
+          "byteSize": 9999371152,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "sha256": "a3ce050556ba8e01b182382d438e60018599dc752f0c80c5c121ac1687c24717"
+        },
+        {
+          "byteSize": 6663503104,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "sha256": "374683b899a8087a6c4b0a6da09710f3b13b4f642d1e334ef7d0f5927dd901f6"
+        },
+        {
+          "byteSize": 2521294918,
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "sha256": "89dcb55c5fc9f854a23e03dbac7512208d3576547b145f27b18ba0f2ab26a009"
+        }
+      ]
+    }
+  ],
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "schemaVersion": 1,
+  "sourceFiles": {
+    "imageToVideoModelIndexSha256": "42d59fd7ad898c137391c7c88f8c3d114b636f216e3051d8b02e2c2ac3a32a29",
+    "textToVideoModelIndexSha256": "e6573b14a5b008a680f5ff1606003bf8715f82adaf89674917950939578403bb",
+    "upstreamModelCard": {
+      "byteSize": 59386,
+      "sha256": "fdf86982e7cd3d467e832d622e8779ce4588cb3a05fd09f4e3f5e47caf119437"
+    },
+    "upstreamNotice": {
+      "byteSize": 25734,
+      "sha256": "534cc588b18839005089731fd3907af266386d18288b4349be4d75a7705bbfdf"
+    }
+  }
+}
