@@ -4833,6 +4833,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     check, and deterministic workflow verification pass. Remote real-weight
     execution and physical macOS execution remain pending independently; no
     weights or media were downloaded or retained.
+  - [x] **CogView3 Plus 3B text-to-image source admission:** backend `f74c806`
+    and client `a4d0b99` admit the exact public snapshot
+    `zai-org/CogView3-Plus-3B@5d70e40732ac0efac98524c51a7fa9c82707f1e5`
+    through the generic Diffusers image facade. The repository is package-owned,
+    contains no Python, requires no remote code, and exposes seven bfloat16
+    safetensors files / 25,559,227,422 bytes. Exact file hashes, canonical
+    inventory digest, immutable metadata identities, 2,848,836,672-parameter
+    safetensors metadata, and pinned package pipeline/output/transformer source
+    hashes are sealed in `data/cogview3-plus-3b-artifact-review.json` without
+    downloading weights. The model-card metadata declares Apache-2.0 and links
+    `LICENSE.md`, but neither that path nor `LICENSE` exists in the immutable
+    tree; this missing linked license file is recorded rather than silently
+    treated as stronger repository evidence.
+
+    The admitted text-to-image workflow is Expert-only and remote-only.
+    Backend-owned contracts require bfloat16, constrain both sides to
+    512-2048 pixels in 32-pixel increments, cap inference at 50 steps and 224
+    prompt tokens, and preserve the reviewed 1024x1024/guidance-7 recipe. The
+    upstream A100 memory figures are recorded as estimates only. The
+    deterministic 107-workflow catalog is graph-qualified but explicitly
+    runtime-unqualified; Auto and Gallery remain disabled. The complete
+    1,419-test backend overlay with 3,130 subtests and three platform skips,
+    project static checks, complete client check, and deterministic workflow
+    verification pass. Remote real-weight output safety/quality review and
+    physical macOS execution remain pending independently; no weights or media
+    were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4969,7 +4995,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `bria`
 - [x] `bria_fibo`
 - [x] `chroma`
-- [ ] `cogview3`
+- [x] `cogview3`
 - [ ] `cogview4`
 - [ ] `consistency_models`
 - [ ] `controlnet`
@@ -5100,4 +5126,5 @@ Add references only after the corresponding evidence exists.
 | P6.16 Bria 3.2 source and admission-gate review | `30a4667` | Not required | Static package/API and public gated-tree review only; authenticated exact artifact/license review, backend-owned precision and bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Package-owned classes, source hashes, call contract, public rounded safetensors observations, gated non-commercial terms, and HTTP-401 metadata limits are sealed without inventing an immutable artifact identity. The family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.17 Bria FIBO generation/edit source and admission-gate review | `a826a5e` | Not required | Static package/API/custom-code review only; license acceptance, authenticated config/license review, explicit remote-code authorization, backend-owned structured-JSON/device/model pinning and bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact generation/edit heads, current and archived safetensors partitions, package source hashes, structured generation/edit/inpaint contracts, promptifier code revisions, and nested VLM inventories are sealed. Gated non-commercial weights plus revision-unbound CUDA-only custom promptifiers keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.18 Chroma1-HD text-to-image source admission | `5d3bc8f` | `86cbd92` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 27,492,403,238-byte selected bfloat16 Diffusers partition, excluded duplicate single-file artifact, immutable metadata and package source hashes, bounded 1024px recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 106-workflow catalog is graph-qualified/runtime-unqualified; image-to-image, Auto, and Gallery remain disabled, upstream declares no safety alignment, and no weights or media were downloaded. |
+| P6.19 CogView3 Plus 3B text-to-image source admission | `f74c806` | `a4d0b99` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, seven-file / 25,559,227,422-byte bfloat16 Diffusers partition, immutable metadata and package source hashes, bounded 512-2048px recipe, Expert-only remote workflow, and estimate-only A100 resource envelope are sealed. Model-card metadata declares Apache-2.0, but its linked `LICENSE.md` is absent from the immutable tree. The deterministic 107-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
