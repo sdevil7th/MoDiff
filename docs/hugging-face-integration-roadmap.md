@@ -4054,8 +4054,56 @@ default. Assets: remote Dataset only.
     availability remain healthy. Auto, Gallery, live output, remote quality,
     and physical macOS qualification remain pending. No weights or output media
     were downloaded or retained.
-- [ ] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
+- [x] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
   and AudioLDM2 general audio.
+  - [x] **Stable Audio quality contract:** the existing generic
+    `StableAudioPipeline` route remains pinned to automatic-gated
+    `stabilityai/stable-audio-open-1.0` commit
+    `f21265c1e2710b3bd2386596943f0007f55f802e` under the Stability AI
+    Community License. Its reviewed bounded recipe remains 30 seconds, 100
+    steps, guidance 7, one waveform, and 48 kHz. This slice makes safe
+    serialization explicit in the loader. Its canonical graph hash is
+    `895eb04d3f30f5468df8c7eee0296963b5980f7f3578e5add0ea03e1239a7256`.
+  - [x] **LongCat AudioDiT:** exact upstream
+    `LongCatAudioDiTPipeline` support uses the reviewed Diffusers-format
+    `ruixiangma/LongCat-AudioDiT-1B-Diffusers` conversion at immutable commit
+    `f4c063ea37f262ba5e6129ebd80095a6d6a9de4d`. The approximately 5.70 GB
+    MIT-aligned snapshot is ungated, safetensors-only, and contains no
+    repository Python. The backend-owned recipe is 5 seconds, 16 steps,
+    guidance 4, one waveform, and native 24 kHz, with a hard 30-second bound.
+    Its canonical graph hash is
+    `294e3be641d069938edb8fa5c631f5a8aef321297795dfb0638e8cf1c8cf5be3`.
+  - [x] **AudioLDM2 general audio:** exact upstream `AudioLDM2Pipeline`
+    support uses official `cvssp/audioldm2` commit
+    `c8e7e189d324425c05c4c2f81214041ef4107983`. The selected approximately
+    4.48 GB execution envelope is safetensors-only even though the repository
+    also retains legacy `.bin` files; `use_safetensors=True` prevents unsafe
+    fallback. CC-BY-NC-SA-4.0 remains visible for later release review. The
+    bounded recipe is 10 seconds, 200 steps, guidance 3.5, three waveforms,
+    and native 16 kHz. Its canonical graph hash is
+    `be80299c1142f548e7504a6276aff313d821b0e44651b1d5337359030363f283`.
+  - The generic audio adapter now owns family-specific duration, step,
+    guidance, waveform, sample-rate, callback, and output-shape contracts.
+    Declarative loader/generator metadata actions remain available without
+    activating the optional runtime, while actual model loading and execution
+    still require the exact qualified runtime. Client finalization invokes
+    those actions and waits for the backend-owned pipeline/task contract before
+    sealing a managed graph, fixing the previously stale ACE-default schema for
+    non-ACE audio workflows.
+  - P4.4 source commits are backend `4d6a4d3` and client `f0958e6`; client
+    commit `2c55d7c` separately consolidates the media fallback required to
+    retain the strict bundle ceiling. The complete backend gate passed (`1290
+    passed, 3 skipped, 2871 subtests`) with Ruff `E9,F`, compile, package,
+    build, shell, workflow-generation, and diff checks. All 94 workflows verify
+    deterministically. `npm run check` passed, including 84 profile/template
+    and 43 graph-visual contract cases; the production bundle is within budget
+    at `528923 / 529408` total gzip bytes and `279752 / 448512` for the entry
+    chunk. The local managed CPU runtime still reports only the previously
+    recorded source-digest drift (`74d795...` installed versus `60aa03...`
+    current) while required imports, package compatibility, device validation,
+    and port availability remain healthy; no runtime was mutated. Auto,
+    Gallery, live output, remote quality, and physical macOS qualification
+    remain pending. No weights or output media were downloaded or retained.
 - [ ] **P4.5 Diffusers text-to-speech:** AudioLDM2 TTS with a generic speech
   synthesis task contract. Require a reviewed safetensors artifact or an
   explicit documented unsafe-deserialization exception before execution.
@@ -4197,8 +4245,8 @@ This is a family inventory, not a requirement to create one node per family.
 
 ### Audio
 
-- [ ] `audioldm2`
-- [ ] `longcat_audio_dit`
+- [x] `audioldm2`
+- [x] `longcat_audio_dit`
 
 ### Text diffusion
 
@@ -4343,7 +4391,7 @@ Add references only after the corresponding evidence exists.
 | P4.2e SDXL PAG text-to-image | `2a9c29b` | `379936e` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, upstream PAG pipeline, exact 1024px/50-step/guidance-5/PAG-3/adaptive-0 contract, 87-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2f SDXL PAG image-to-image and inpaint | `63f9075` | `c0f2e2b` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, exact upstream PAG edit/inpaint classes, reviewed 1024px/50-step/guidance-5/strength-0.8/PAG-3/adaptive-0 contracts, 89-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
 | P4.3 Sana/Sana Sprint and DreamLite admission | `7117c80` | `c41d1c6` | Remote and physical macOS pending | Pending | Complete source slice for Sana and Sana Sprint: exact safe immutable artifacts, upstream classes, bounded recipes, three canonical graphs, and complete gates passed. DreamLite is independently deferred because its required classes are absent from the qualified Diffusers pin. Auto and Gallery remain disabled. |
-| P4.4 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.4 generic audio generation | `4d6a4d3` | `f0958e6` | Remote and physical macOS pending | Pending | Complete source slice: Stable Audio safe loading was revalidated and exact LongCat AudioDiT plus AudioLDM2 families now use immutable reviewed artifacts, bounded native-rate recipes, backend-owned declarative task contracts, two new canonical graphs, and complete gates. Auto and Gallery remain disabled. |
 | P4.5 | Pending | Pending | Remote pending | Pending | Not started |
 | P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
