@@ -4437,9 +4437,41 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   heavy-hardware qualification; physical macOS evidence remains independently
   pending. The existing standard graph-only adapters and artifact pins are
   unchanged.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, full LTX/LTX2,
-  EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video
-  families.
+- [x] Evaluate the full classic LTX/LTX2 artifact surfaces and remove the
+  identity-changing classic fallback. Backend `0f96a92` removes
+  `Lightricks/LTX-Video` from all four 13B Distilled execution profiles: at the
+  pinned `8984fa25007f376c1a299016d0957a37a2f797bb` revision that family
+  repository's standard index selects a two-shard 2B transformer, so it cannot
+  silently replace the six-shard 13B default. It remains pinned in the artifact
+  catalog for explicit review but is no longer a published execution candidate.
+
+  Backend `474b83d` seals three immutable inventories. The 13B Distilled
+  repository at `7c64400e1861cc0d7b98d570a1926d5408ec60cd` contains 21
+  safetensors files / 92,762,951,244 bytes, while its standard index selects 11
+  files / 47,628,403,428 bytes and excludes nested duplicate encoder/transformer
+  shards. The classic family repository contains 27 files /
+  253,809,013,320 bytes but selects only 7 files / 28,419,691,124 bytes. LTX-2
+  at `47da56e2ad66ce4125a9922b4a8826bf407f9d0a` contains 44 files /
+  314,290,794,056 bytes; its exact pipeline partition is 23 files /
+  92,034,380,210 bytes after its model indexes exclude eight root alternatives,
+  the concurrent twelve-shard Diffusers-named Gemma layout, and the separately
+  invoked latent upsampler. Canonical full and selected inventory digests,
+  component index hashes, and exact sizes are recorded without downloading
+  weights.
+
+  The existing two-workflow `LTXModularPipeline` contract and all eight classic
+  LTX/LTX2 graph surfaces remain unchanged. The LTX-2 two-stage source recipe is
+  bound at 768x512, 121 frames, 24 fps, 40-step guidance-4 latent generation,
+  then x2 latent upsampling and a three-step guidance-1 distilled tail that
+  reuses stage-1 audio latents. The classic 13B Distilled card's Diffusers
+  example targets the dev repository and its distilled YAML link points to the
+  dev YAML, so it is explicitly not accepted as exact recipe proof. Classic
+  immutable license text, LTX-2 commercial-license acceptance, remote
+  heavy-hardware execution, and physical macOS evidence remain pending. The
+  full backend gate passes (`1,341 passed, 3 skipped, 2,981 subtests`) with Ruff
+  `E9,F` and a dependency-clean optional overlay.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, EasyAnimate,
+  SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4676,4 +4708,5 @@ Add references only after the corresponding evidence exists.
 | P6.5 HunyuanVideo 1.5 evaluation | `31cafc4` | Not required | Contract-only; territory/legal review and remote heavy-hardware execution pending | Not required | The existing two-workflow Modular contract, full official family, and immutable 480p T2V plus step-distilled I2V candidates are sealed with exact hashes, sizes, recipes, and estimate-only resource bounds. Conflicting territory language and additional commercial/distribution obligations keep all artifacts outside runtime and download catalogs. No weights or media were downloaded. |
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, full LTX/LTX2, EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflows remain open as independent segments. |
+| P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflows remain open as independent segments. |
