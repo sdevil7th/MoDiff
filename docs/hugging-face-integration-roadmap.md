@@ -4887,6 +4887,36 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     workflow verification pass. Remote real-weight output safety/quality review
     and physical macOS execution remain pending independently; no weights or
     media were downloaded or retained.
+  - [x] **VisualCloze source and admission-gate review:** backend `0f4d3c4`
+    seals the exact public full-model snapshots
+    `VisualCloze/VisualClozePipeline-384@59c469d2772d927ffe55f3543c4d3bd556fd46a4`
+    and
+    `VisualCloze/VisualClozePipeline-512@feaad2dd83d3d42bad197b9d31fe2f6c5b4cb1bb`.
+    Each immutable repository contains seven bfloat16 safetensors files /
+    33,743,379,958 bytes, no Python, and no remote-code requirement. Exact file
+    hashes, canonical inventory digests, immutable metadata identities,
+    11,902,391,360-parameter safetensors metadata, and pinned package-owned
+    combined/generation/processor source hashes are recorded in
+    `data/visualcloze-artifact-review.json` without downloading weights. Both
+    model cards declare Apache-2.0 in metadata, but neither immutable tree
+    contains a license file. The two 2,482,363,148-byte legacy `.pth` LoRA
+    checkpoints are separately sealed and excluded under the safe-serialization
+    policy; the full Diffusers snapshots do not require them.
+
+    This family is deliberately review-only. Its task input is a nested,
+    rectangular image matrix containing one or more explicit null target cells,
+    with distinct task/content prompts and an optional second SDEdit upsampling
+    stage. Mapping that shape onto an existing single-image edit or inpaint
+    alias would be incorrect. The pinned package supplies no maximum batch,
+    row, column, cumulative input-pixel, denoising-step, or upsampling-dimension
+    bounds. Accordingly no runtime/download catalog, workflow, client, Auto,
+    template, or Gallery surface was added. A generic visual-context-matrix
+    contract, backend-owned resource bounds, license-file clarification, remote
+    heavy-hardware execution, live output review, and physical macOS evidence
+    remain independent gates. The complete 1,430-test backend overlay with
+    3,154 subtests and three platform skips, project static/dependency/preflight
+    checks, and the focused immutable review matrix pass; no weights or media
+    were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4994,7 +5024,7 @@ This is a family inventory, not a requirement to create one node per family.
 
 - [x] `shap_e`
 - [x] `marigold`
-- [ ] `visualcloze`
+- [x] `visualcloze`
 
 ### Video
 
@@ -5156,4 +5186,5 @@ Add references only after the corresponding evidence exists.
 | P6.18 Chroma1-HD text-to-image source admission | `5d3bc8f` | `86cbd92` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 27,492,403,238-byte selected bfloat16 Diffusers partition, excluded duplicate single-file artifact, immutable metadata and package source hashes, bounded 1024px recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 106-workflow catalog is graph-qualified/runtime-unqualified; image-to-image, Auto, and Gallery remain disabled, upstream declares no safety alignment, and no weights or media were downloaded. |
 | P6.19 CogView3 Plus 3B text-to-image source admission | `f74c806` | `a4d0b99` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, seven-file / 25,559,227,422-byte bfloat16 Diffusers partition, immutable metadata and package source hashes, bounded 512-2048px recipe, Expert-only remote workflow, and estimate-only A100 resource envelope are sealed. Model-card metadata declares Apache-2.0, but its linked `LICENSE.md` is absent from the immutable tree. The deterministic 107-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.20 CogView4 6B text-to-image source admission | `495d07d` | `9822baa` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, eight-file / 31,108,954,670-byte bfloat16 Diffusers partition, immutable metadata and package source hashes, bounded 512-2048px/2^21-pixel recipe, Expert-only remote workflow, and estimate-only A100 batch-four resource envelope are sealed. The signature/docstring token discrepancy and contradictory 1920x1280 memory row are explicit. The deterministic 108-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.21 VisualCloze source and admission-gate review | `0f4d3c4` | Not required | Static artifact/source review only; generic visual-context-matrix contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | Exact public 384px and 512px revisions, two seven-file / 33,743,379,958-byte bfloat16 safetensors inventories, immutable metadata and package source hashes, nested matrix/generation/SDEdit contracts, and estimate-only resource envelopes are sealed. The legacy `.pth` LoRA artifacts are explicitly excluded. Contract mismatch and package validation gaps keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
