@@ -5003,6 +5003,37 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     edit-plus-reasoning contract, remote execution, live output review, and
     physical macOS evidence remain independent gates; no weights or media were
     downloaded or retained.
+  - [x] **ConsisID source and admission-gate review:** backend `a52c7ec`
+    seals the exact public snapshot
+    `BestWishYsh/ConsisID-preview@950bc3f0902db44799e223a12ad972f9c52b341d`.
+    Its generator contains five bfloat16 safetensors files /
+    22,821,396,692 bytes, no Python, and no remote-code requirement. Exact file
+    hashes, canonical inventory digest, immutable model-card/component/index
+    identities, 6,217,102,912-parameter Hub metadata, and pinned package
+    pipeline/output/transformer/face-utility source hashes are recorded in
+    `data/consisid-artifact-review.json`. The official Diffusers documentation
+    also names `BestWishYsh/ConsisID-1.5`, but that repository returns not found
+    to unauthenticated metadata lookup as of 2026-08-13 and is not invented as
+    an available artifact. The preview card declares Apache-2.0 in metadata but
+    the immutable tree contains no license file.
+
+    This family is deliberately review-only. Its required package-owned face
+    preparation hard-requires InsightFace, FaceXLib, a custom EVA-CLIP package,
+    OpenCV, TorchVision, and ONNX Runtime; hardcodes CUDA execution providers;
+    and consumes an eight-artifact / 1,446,798,634-byte identity stack containing
+    five ONNX models plus three required unsafe `.pt`/`.pth` files. Four more
+    unused unsafe preprocessing/face artifacts are separately sealed. The
+    package describes identity tensors as crucial but does not require them in
+    pipeline input validation, so exposing the generator alone would silently
+    defeat the family's identity-preserving contract. Biometric privacy,
+    consent, and misuse controls are also unresolved. No runtime/download
+    catalog, capability, workflow, client, Auto, template, or Gallery surface
+    was added. The complete 1,460-test backend overlay with 3,183 subtests and
+    three platform skips plus static/dependency/preflight checks pass. A safe
+    cross-platform face stack, bounded generic identity-video contract, license
+    clarification, remote execution, live identity/safety review, and physical
+    macOS evidence remain independent gates; no weights or media were downloaded
+    or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5119,7 +5150,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `anyflow`
 - [x] `chronoedit`
 - [x] `cogvideo`
-- [ ] `consisid`
+- [x] `consisid`
 - [x] `cosmos`
 - [x] `easyanimate`
 - [x] `helios`
@@ -5276,4 +5307,5 @@ Add references only after the corresponding evidence exists.
 | P6.22 Allegro text-to-video source admission | `6488462` | `05a2e15` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 25,293,069,108-byte bfloat16 Diffusers partition, excluded duplicate unsafe `.bin` partition, immutable metadata and package source hashes, bounded native 1280x720/88-frame recipe, float32 tiled VAE, Expert-only remote workflow, and conservative resource envelope are sealed. The deterministic 109-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.23 AnyFlow source and admission-gate review | `09d3c98` | Not required | Static artifact/source review only; noncommercial-license legal approval, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | All four exact public bidirectional/FAR 1.3B/14B revisions, their seven- or nine-file / 26.07-51.87 GB bfloat16 safetensors inventories, complete identical license files, immutable metadata and package source hashes, native T2V/I2V/V2V contracts, FAR chunking, and estimate-only resource envelopes are sealed. The restrictive NVIDIA license and stale custom-code model-card API examples keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.24 ChronoEdit source and admission-gate review | `70640ae` | Not required | Static artifact/source review only; governing-license approval, complete safe guardrail integration, generic edit/reasoning contract, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public 21-file / 90,075,130,404-byte safetensors core, three optional LoRA artifacts, immutable metadata and package source hashes, native image-edit/temporal-reasoning recipes, stale model-index identities, and measured upstream offload figures are sealed. The external governing terms' guardrail condition, package pipeline's missing safety checker, and bundled unsafe `.pth`/`.pt` guardrail artifacts keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
+| P6.25 ConsisID source and admission-gate review | `a52c7ec` | Not required | Static artifact/source review only; safe cross-platform face stack, biometric privacy/consent controls, generic identity-video contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live identity/safety review, and physical macOS evidence pending | Not required | The exact public five-file / 22,821,396,692-byte safetensors generator and eight-artifact / 1,446,798,634-byte required identity stack, immutable metadata and package source hashes, native 720x480/49-frame recipe, and measured upstream memory figures are sealed. Required unsafe face weights, CUDA-only ONNX providers, weak identity-input validation, and the unavailable second documented checkpoint keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
