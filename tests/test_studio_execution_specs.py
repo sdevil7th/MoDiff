@@ -154,6 +154,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPipeline", "text_to_image"),
                 ("StableDiffusionPipeline", "edit_image"),
                 ("StableDiffusionPipeline", "inpaint"),
+                ("StableDiffusionPipeline", "control_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -217,6 +218,26 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertIn(
                     ("diffusersImagePipeline", "revision", "defaultRevision"), specification["bindings"]
                 )
+        controlnet = by_id["sd15-controlnet-canny:control-image:v1"]
+        self.assertEqual(controlnet["pipelineClass"], "StableDiffusionControlNetPipeline")
+        self.assertIn(("diffusersImagePipeline", "conditioning_kind", "kind"), controlnet["bindings"])
+        self.assertIn(("diffusersImagePipeline", "conditioning_model_id", "repo"), controlnet["bindings"])
+        self.assertIn(("diffusersImagePipeline", "conditioning_revision", "revision"), controlnet["bindings"])
+        self.assertIn(
+            ("loadImage", "image", "controlPreprocessor", "image"),
+            controlnet["edges"],
+        )
+        self.assertIn(
+            ("controlPreprocessor", "output", "diffusersImageControl", "control_image"),
+            controlnet["edges"],
+        )
+        self.assertIn(("controlPreprocessor", "low_threshold", "cannyLowThreshold"), controlnet["bindings"])
+        self.assertIn(("controlPreprocessor", "high_threshold", "cannyHighThreshold"), controlnet["bindings"])
+        self.assertIn(
+            ("diffusersImageControl", "conditioning_scale", "conditioningScale"),
+            controlnet["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[controlnet["executionProfileId"]].live_proof)
         lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
         self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
         self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")

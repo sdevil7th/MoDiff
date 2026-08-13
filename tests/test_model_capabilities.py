@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 69)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 70)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -213,6 +213,18 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             sdxl["modeRequirements"]["inpaint"]["requiredImages"],
             ["referenceImages", "maskImage"],
+        )
+        sd15 = by_model["StableDiffusionPipeline"]
+        self.assertEqual(
+            sd15["studioExecutionSpecModes"],
+            ["control_image", "edit_image", "inpaint", "text_to_image"],
+        )
+        self.assertTrue(sd15["supportsControlImage"])
+        self.assertFalse(sd15["autoEligible"])
+        self.assertFalse(sd15["galleryEligible"])
+        self.assertEqual(
+            sd15["modeRequirements"]["control_image"]["modelRequirements"][0]["revision"],
+            "115a470d547982438f70198e353a921996e2e819",
         )
         flux_dev = by_model["FluxDevPipeline"]
         self.assertEqual(flux_dev["studioExecutionSpecModes"], ["edit_image", "inpaint", "text_to_image"])

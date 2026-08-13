@@ -45,6 +45,7 @@ from modules.DiffusersImage.main import (
     LCM_DREAMSHAPER_REPO,
     MARIGOLD_DEPTH_LCM_REPO,
     SD15_BASE_REPO,
+    SD15_CONTROLNET_CANNY_REPO,
     SDXL_BASE_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
@@ -71,7 +72,17 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
     pipeline.__class__.__name__ = adapter.allowed_runtime_classes[0]
     repository = repo or adapter.default_repo
     resolved_revision = revision or catalog_revision(repository) or CUSTOM_IMAGE_REVISION
-    _tag_image_pipeline(pipeline, adapter, mode, repository, "hub", resolved_revision)
+    conditioning_repo = adapter.default_conditioning_repo
+    _tag_image_pipeline(
+        pipeline,
+        adapter,
+        mode,
+        repository,
+        "hub",
+        resolved_revision,
+        conditioning_repo=conditioning_repo,
+        conditioning_revision=(catalog_revision(conditioning_repo) if conditioning_repo else None),
+    )
     return pipeline
 
 
@@ -497,6 +508,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "pipeline_class": "FluxPipeline",
                 "mode": "text_to_image",
                 "revision": expected_revision,
+                "conditioning_kind": "none",
+                "conditioning_model_id": {"source": "hub", "value": ""},
+                "conditioning_revision": "",
             },
         )
         self.assertIs(result["pipeline"], pipeline)
@@ -666,6 +680,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "reference_strength",
             "pag_scale",
             "pag_adaptive_scale",
+            "conditioning_scale",
         }
         for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
             with self.subTest(pipeline_class=pipeline_class):
@@ -694,6 +709,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         pag = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionPAGPipeline"], "text_to_image")
         self.assertFalse(pag["fieldParams"]["pag_scale"]["hidden"])
         self.assertFalse(pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
+        controlnet = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"], "control_image"
+        )
+        self.assertFalse(controlnet["fieldParams"]["conditioning_scale"]["hidden"])
 
     def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
         for fields in (("unknown",), ("strength", "strength")):
@@ -705,6 +724,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "StableDiffusionPAGPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
             "LatentConsistencyModelPipeline": ({"text_to_image"}, LCM_DREAMSHAPER_REPO, {"prompt"}),
             "StableDiffusionPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
+            "StableDiffusionControlNetPipeline": (
+                {"control_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image"},
+            ),
             "StableDiffusionImg2ImgPipeline": ({"edit_image"}, SD15_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -913,6 +937,20 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             )
         resolve_pipeline.assert_not_called()
 
+    def test_t2i_adapter_is_not_advertised_with_legacy_only_official_weights(self):
+        self.assertNotIn("StableDiffusionAdapterPipeline", IMAGE_PIPELINE_CLASSES)
+        node = LoadPipeline("removed-t2i-adapter-probe")
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name") as resolve_pipeline,
+            self.assertRaisesRegex(ValueError, "legacy PyTorch .bin weights only"),
+        ):
+            node(
+                model_id=SD15_BASE_REPO,
+                pipeline_class="StableDiffusionAdapterPipeline",
+                mode="control_image",
+            )
+        resolve_pipeline.assert_not_called()
+
     def test_pipeline_field_action_publishes_backend_owned_options_defaults_and_signal(self):
         self.assertEqual(LoadPipeline.params["model_id"]["onChange"], "update_pipeline_contract")
         self.assertEqual(
@@ -978,6 +1016,20 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"image_contract": selected},
                 {"key": "pipeline"},
             )
+
+    def test_control_generate_field_action_accepts_the_exact_sd15_controlnet_contract(self):
+        node = ControlGenerate("sd15-controlnet-contract-action")
+        node.set_field_params = Mock()
+        selected = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"],
+            "control_image",
+        )
+
+        node.update_image_contract({"image_contract": selected}, {"key": "pipeline"})
+
+        updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+        self.assertEqual(updates["conditioning_scale"], {"hidden": False})
+        self.assertEqual(updates["strength"], {"hidden": True})
 
     def test_model_field_action_couples_repository_and_exact_revision_without_stale_pins(self):
         node = LoadPipeline("image-model-revision-action")
@@ -1915,6 +1967,115 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         self.assertEqual(loaded[0][1]["revision"], "741f7c3ce8b383c54771c7003378a50191e9efe9")
         self.assertEqual(len(loaded), 1)
+
+    def test_conditioned_loader_assembles_pinned_safetensors_component(self):
+        calls = {}
+
+        class FakeControlNet:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+        node = LoadPipeline("sd15-controlnet-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "ControlNetModel": FakeControlNet,
+                    "StableDiffusionControlNetPipeline": FakePipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = node.execute(
+                model_id={"source": "hub", "value": SD15_BASE_REPO},
+                revision=catalog_revision(SD15_BASE_REPO),
+                pipeline_class="StableDiffusionControlNetPipeline",
+                mode="control_image",
+                conditioning_kind="controlnet",
+                conditioning_model_id={"source": "hub", "value": SD15_CONTROLNET_CANNY_REPO},
+                conditioning_revision=catalog_revision(SD15_CONTROLNET_CANNY_REPO),
+                dtype="float32",
+                device="cpu",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, SD15_CONTROLNET_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(SD15_CONTROLNET_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        pipeline_repo, pipeline_kwargs = calls["pipeline"]
+        self.assertEqual(pipeline_repo, SD15_BASE_REPO)
+        self.assertEqual(pipeline_kwargs["revision"], catalog_revision(SD15_BASE_REPO))
+        self.assertTrue(pipeline_kwargs["use_safetensors"])
+        self.assertIsInstance(pipeline_kwargs["controlnet"], FakeControlNet)
+        self.assertEqual(result["pipeline"]._modiff_conditioning_kind, "controlnet")
+        self.assertEqual(
+            result["pipeline"]._modiff_conditioning_revision,
+            catalog_revision(SD15_CONTROLNET_CANNY_REPO),
+        )
+
+    def test_conditioned_control_action_uses_upstream_image_and_scale_parameters(self):
+        calls = {}
+
+        class StableDiffusionControlNetPipeline:
+            device = "cpu"
+
+            def __call__(
+                self,
+                prompt=None,
+                image=None,
+                controlnet_conditioning_scale=1.0,
+                width=None,
+                height=None,
+                **kwargs,
+            ):
+                calls.update(
+                    prompt=prompt,
+                    image=image,
+                    controlnet_conditioning_scale=controlnet_conditioning_scale,
+                    kwargs=kwargs,
+                )
+                return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
+
+        pipeline = StableDiffusionControlNetPipeline()
+        tag_test_image_pipeline(
+            pipeline,
+            "StableDiffusionControlNetPipeline",
+            "control_image",
+        )
+        control = Image.new("RGB", (32, 32), "black")
+        result = ControlGenerate("sd15-controlnet-generate").execute(
+            pipeline=pipeline,
+            control_image=control,
+            prompt="rights-safe edge fixture",
+            width=32,
+            height=32,
+            num_inference_steps=1,
+            guidance_scale=1.0,
+            conditioning_scale=0.65,
+        )
+
+        self.assertIs(calls["image"], control)
+        self.assertEqual(calls["controlnet_conditioning_scale"], 0.65)
+        self.assertNotIn("control_image", calls["kwargs"])
+        self.assertEqual(result["width_out"], 32)
+        self.assertEqual(result["height_out"], 32)
 
     def test_flux_redux_bundle_delegates_multiple_reference_fusion_to_diffusers(self):
         import torch

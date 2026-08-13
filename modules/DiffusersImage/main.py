@@ -52,6 +52,7 @@ FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
@@ -91,6 +92,24 @@ class ImagePipelineAdapter:
     max_reference_images: int = 1
     max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
     unconditional_optional_fields: tuple[str, ...] = ()
+    conditioning_kind: str | None = None
+    default_conditioning_repo: str | None = None
+    conditioning_component_class: str | None = None
+    conditioning_component_parameter: str | None = None
+    control_image_parameter: str = "control_image"
+    conditioning_scale_parameter: str | None = None
+
+    def __post_init__(self) -> None:
+        conditioning_fields = (
+            self.conditioning_kind,
+            self.default_conditioning_repo,
+            self.conditioning_component_class,
+            self.conditioning_component_parameter,
+        )
+        if any(value is not None for value in conditioning_fields) and not all(
+            isinstance(value, str) and value for value in conditioning_fields
+        ):
+            raise ValueError("Conditioned image adapters must declare one complete auxiliary component contract.")
 
     @property
     def managed_repos(self) -> frozenset[str]:
@@ -136,6 +155,12 @@ class ImagePipelineAdapter:
                 target[destination] = value
         if supports_arg(pipeline, self.guidance_parameter) and values.get("guidance_scale") is not None:
             target[self.guidance_parameter] = values.get("guidance_scale")
+        if (
+            self.conditioning_scale_parameter
+            and supports_arg(pipeline, self.conditioning_scale_parameter)
+            and values.get("conditioning_scale") is not None
+        ):
+            target[self.conditioning_scale_parameter] = values["conditioning_scale"]
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -197,6 +222,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         "StableDiffusionPipeline",
         frozenset({"text_to_image"}),
         SD15_BASE_REPO,
+    ),
+    "StableDiffusionControlNetPipeline": ImagePipelineAdapter(
+        "StableDiffusionControlNetPipeline",
+        frozenset({"control_image"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline",),
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SD15_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        control_image_parameter="image",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
     "StableDiffusionImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionImg2ImgPipeline",
@@ -379,6 +416,7 @@ _IMAGE_CONTRACT_VISIBILITY_FIELDS = (
     "reference_strength",
     "pag_scale",
     "pag_adaptive_scale",
+    "conditioning_scale",
 )
 
 
@@ -478,6 +516,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "StableDiffusionPipeline": {
         "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
     },
+    "StableDiffusionControlNetPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
+        ),
+    },
     "StableDiffusionImg2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
     },
@@ -568,7 +611,12 @@ _REMOVED_IMAGE_PIPELINE_ERRORS = {
         "FluxControlNetPipeline requires a separately loaded FluxControlNetModel, but the generic Diffusers image "
         "loader does not yet expose that component-assembly contract. Use FluxControlPipeline for the self-contained "
         "FLUX Depth/Canny checkpoints until generic ControlNet assembly is available."
-    )
+    ),
+    "StableDiffusionAdapterPipeline": (
+        "StableDiffusionAdapterPipeline requires a separately loaded T2IAdapter. The reviewed official SD1.5 "
+        "Canny adapter currently publishes legacy PyTorch .bin weights only, so MoDiff cannot expose an exact "
+        "runnable pair under its safetensors-only auxiliary policy."
+    ),
 }
 
 
@@ -717,6 +765,72 @@ def resolve_image_pipeline_revision(model_selection: Any, revision: Any) -> str:
     return requested
 
 
+def resolve_image_conditioning_selection(
+    adapter: ImagePipelineAdapter,
+    kind: Any,
+    model_selection: Any,
+    revision: Any,
+) -> tuple[dict[str, str] | None, str | None]:
+    """Resolve one immutable, safetensors-only auxiliary image component."""
+
+    if adapter.conditioning_kind is None:
+        if kind not in (None, "", "none"):
+            raise ValueError(f"{adapter.pipeline_class} does not accept an auxiliary conditioning component.")
+        if revision not in (None, ""):
+            raise ValueError(f"{adapter.pipeline_class} does not accept an auxiliary conditioning revision.")
+        return None, None
+
+    if kind in (None, ""):
+        kind = adapter.conditioning_kind
+    if kind != adapter.conditioning_kind:
+        raise ValueError(
+            f"{adapter.pipeline_class} requires conditioning_kind={adapter.conditioning_kind!r}."
+        )
+    if model_selection in (None, "", {}):
+        model_selection = {"source": "hub", "value": adapter.default_conditioning_repo}
+    if isinstance(model_selection, str):
+        source = "hub"
+        selected = model_selection
+    elif isinstance(model_selection, dict):
+        source = _canonical_image_model_source(
+            model_selection.get("source"), label="Diffusers image conditioning model"
+        )
+        selected = model_selection.get("value")
+    else:
+        raise ValueError("Diffusers image conditioning model must be a Hub selection object.")
+    if source != "hub":
+        raise ValueError(
+            "Local image conditioning components remain contract-only until a reviewed local safetensors index exists."
+        )
+    if not isinstance(selected, str) or not selected or selected != selected.strip():
+        raise ValueError("Diffusers image conditioning model requires an exact repository ID.")
+    repository = _validated_image_hub_repository(
+        selected, label="Diffusers image conditioning model repository"
+    )
+    pin = catalog_repository_pin(repository)
+    canonical_repository = str(pin.get("repo")) if pin is not None else repository
+    requested_revision = _normalize_image_revision(revision)
+    if pin is not None:
+        expected_revision = catalog_revision(canonical_repository)
+        if requested_revision and requested_revision != expected_revision:
+            raise ValueError(
+                f"Cataloged conditioning repository {canonical_repository!r} must use its reviewed commit "
+                f"{expected_revision}; received {requested_revision!r}."
+            )
+        resolved_revision = str(expected_revision)
+    else:
+        if not requested_revision:
+            raise ValueError(
+                f"Custom conditioning repository {repository!r} requires an explicit lowercase 40-character commit."
+            )
+        if requested_revision != requested_revision.lower() or not IMMUTABLE_HUB_REVISION.fullmatch(
+            requested_revision
+        ):
+            raise ValueError("A custom conditioning revision must be a lowercase 40-character commit.")
+        resolved_revision = requested_revision
+    return {"source": "hub", "value": canonical_repository}, resolved_revision
+
+
 def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
     classes = list(adapter.model_filter_classes)
     return {
@@ -786,6 +900,9 @@ def _tag_image_pipeline(
     repo: str,
     source: str,
     revision: str | None,
+    *,
+    conditioning_repo: str | None = None,
+    conditioning_revision: str | None = None,
 ) -> None:
     setattr(pipeline, "_modiff_image_adapter", adapter)
     setattr(pipeline, "_modiff_image_pipeline_class", adapter.pipeline_class)
@@ -793,6 +910,11 @@ def _tag_image_pipeline(
     setattr(pipeline, "_modiff_image_repo", repo)
     setattr(pipeline, "_modiff_image_source", source)
     setattr(pipeline, "_modiff_image_revision", revision)
+    if adapter.conditioning_kind is not None:
+        setattr(pipeline, "_modiff_conditioning_kind", adapter.conditioning_kind)
+        setattr(pipeline, "_modiff_conditioning_component_class", adapter.conditioning_component_class)
+        setattr(pipeline, "_modiff_conditioning_repo", conditioning_repo)
+        setattr(pipeline, "_modiff_conditioning_revision", conditioning_revision)
 
 
 def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
@@ -866,6 +988,33 @@ def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
                     )
         elif revision not in (None, ""):
             raise ValueError("A local Diffusers image pipeline must not carry a Hub revision tag.")
+        if adapter.conditioning_kind is not None:
+            conditioning_tags = {
+                "kind": getattr(pipeline, "_modiff_conditioning_kind", None),
+                "component class": getattr(pipeline, "_modiff_conditioning_component_class", None),
+                "repository": getattr(pipeline, "_modiff_conditioning_repo", None),
+                "revision": getattr(pipeline, "_modiff_conditioning_revision", None),
+            }
+            if conditioning_tags["kind"] != adapter.conditioning_kind:
+                raise ValueError("Diffusers image conditioning kind does not match its reviewed adapter.")
+            if conditioning_tags["component class"] != adapter.conditioning_component_class:
+                raise ValueError("Diffusers image conditioning component class does not match its reviewed adapter.")
+            conditioning_repo = conditioning_tags["repository"]
+            conditioning_revision = conditioning_tags["revision"]
+            if not isinstance(conditioning_repo, str) or not conditioning_repo:
+                raise ValueError("Diffusers image conditioning repository tag is missing.")
+            pin = catalog_repository_pin(conditioning_repo)
+            if pin is not None:
+                if conditioning_repo != pin.get("repo"):
+                    raise ValueError("Diffusers image conditioning repository is not canonically spelled.")
+                if conditioning_revision != catalog_revision(conditioning_repo):
+                    raise ValueError("Diffusers image conditioning revision does not match its reviewed pin.")
+            elif (
+                not isinstance(conditioning_revision, str)
+                or conditioning_revision != conditioning_revision.lower()
+                or not IMMUTABLE_HUB_REVISION.fullmatch(conditioning_revision)
+            ):
+                raise ValueError("A custom image conditioning component requires an immutable commit tag.")
         return adapter
 
     candidates = [
@@ -1125,6 +1274,13 @@ def preflight_image_action(
         default=1.0,
         minimum=0.0,
         maximum=1.0,
+    )
+    values["conditioning_scale"] = _bounded_image_float(
+        values.get("conditioning_scale"),
+        field="conditioning_scale",
+        default=1.0,
+        minimum=0.0,
+        maximum=2.0,
     )
 
     output_type = (
@@ -1866,6 +2022,29 @@ class LoadPipeline(NodeBase):
             "onChange": "update_pipeline_contract",
         },
         "revision": {"label": "Revision", "type": "string", "default": ""},
+        "conditioning_kind": {
+            "label": "Conditioning Kind",
+            "type": "string",
+            "options": ["none", "controlnet", "t2i_adapter"],
+            "default": "none",
+            "fieldOptions": {"noValidation": True},
+        },
+        "conditioning_model_id": {
+            "label": "Conditioning Model",
+            "display": "modelselect",
+            "type": "string",
+            "value": {"source": "hub", "value": SD15_CONTROLNET_CANNY_REPO},
+            "fieldOptions": {
+                "noValidation": True,
+                "sources": ["hub"],
+                "filter": {"hub": {"className": ["ControlNetModel"]}},
+            },
+        },
+        "conditioning_revision": {
+            "label": "Conditioning Revision",
+            "type": "string",
+            "default": "",
+        },
         "dtype": {
             "label": "DType",
             "type": "string",
@@ -1928,6 +2107,20 @@ class LoadPipeline(NodeBase):
         values["mode"] = requested_mode
         values["model_id"] = resolve_image_model_selection(adapter, values.get("model_id"))
         values["revision"] = resolve_image_pipeline_revision(values["model_id"], values.get("revision"))
+        conditioning_selection, conditioning_revision = resolve_image_conditioning_selection(
+            adapter,
+            values.get("conditioning_kind"),
+            values.get("conditioning_model_id"),
+            values.get("conditioning_revision"),
+        )
+        if adapter.conditioning_kind is not None:
+            values["conditioning_kind"] = adapter.conditioning_kind
+            values["conditioning_model_id"] = conditioning_selection
+            values["conditioning_revision"] = conditioning_revision
+        else:
+            values["conditioning_kind"] = "none"
+            values["conditioning_model_id"] = ""
+            values["conditioning_revision"] = ""
         result = super().__call__(**values)
         pipeline = result.get("pipeline") if isinstance(result, dict) else None
         if pipeline is not None:
@@ -1938,6 +2131,12 @@ class LoadPipeline(NodeBase):
                 repo_value(values["model_id"]),
                 values["model_id"]["source"],
                 values["revision"],
+                conditioning_repo=(
+                    repo_value(values["conditioning_model_id"])
+                    if conditioning_selection is not None
+                    else None
+                ),
+                conditioning_revision=conditioning_revision,
             )
         return result
 
@@ -2043,6 +2242,12 @@ class LoadPipeline(NodeBase):
         dtype = str_to_dtype(kwargs.get("dtype") or "bfloat16")
         device = execution_recipe.get("device") or kwargs.get("device") or DEFAULT_DEVICE
         revision = resolve_image_pipeline_revision(model_selection, kwargs.get("revision"))
+        conditioning_selection, conditioning_revision = resolve_image_conditioning_selection(
+            adapter,
+            kwargs.get("conditioning_kind"),
+            kwargs.get("conditioning_model_id"),
+            kwargs.get("conditioning_revision"),
+        )
         auto_offload = bool(kwargs.get("auto_offload", True))
         recipe_offload = execution_recipe.get("offload_mode")
         if recipe_offload is not None:
@@ -2135,11 +2340,43 @@ class LoadPipeline(NodeBase):
                     tokenizer_2=None,
                 )
             pipeline = FluxReduxPipelineBundle(prior, base)
+        elif adapter.conditioning_kind is not None:
+            conditioning_model_id = repo_value(conditioning_selection)
+            component_class = pipeline_class_from_name(str(adapter.conditioning_component_class))
+            pipeline_class = pipeline_class_from_name(pipeline_class_name)
+            component_kwargs = {
+                "torch_dtype": dtype,
+                "revision": conditioning_revision,
+                "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+                "local_files_only": local_files_only(conditioning_model_id),
+                "use_safetensors": True,
+            }
+            base_load_kwargs = {
+                **load_kwargs,
+                "use_safetensors": True,
+                str(adapter.conditioning_component_parameter): None,
+            }
+            with self.diffusers_loading_progress():
+                conditioning_component = component_class.from_pretrained(
+                    conditioning_model_id,
+                    **component_kwargs,
+                )
+                base_load_kwargs[str(adapter.conditioning_component_parameter)] = conditioning_component
+                pipeline = pipeline_class.from_pretrained(model_id, **base_load_kwargs)
         else:
             pipeline_class = pipeline_class_from_name(pipeline_class_name)
             with self.diffusers_loading_progress():
                 pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
-        _tag_image_pipeline(pipeline, adapter, requested_mode, model_id, model_source, revision)
+        _tag_image_pipeline(
+            pipeline,
+            adapter,
+            requested_mode,
+            model_id,
+            model_source,
+            revision,
+            conditioning_repo=(repo_value(conditioning_selection) if conditioning_selection is not None else None),
+            conditioning_revision=conditioning_revision,
+        )
         runtime_recipe = {
             **execution_recipe,
             "vae_slicing": bool(execution_recipe.get("vae_slicing", kwargs.get("enable_vae_slicing", True))),
@@ -2674,6 +2911,16 @@ class ControlGenerate(Edit):
     params = {
         **Generate.params,
         "control_image": {"label": "Control Image", "display": "input", "type": "image", "required": True},
+        "conditioning_scale": {
+            "label": "Conditioning Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.0,
+            "max": 2.0,
+            "step": 0.05,
+            "hidden": True,
+        },
     }
 
     def execute(self, **kwargs):
@@ -2681,7 +2928,7 @@ class ControlGenerate(Edit):
         adapter, values = preflight_image_action(pipeline, "ControlGenerate", kwargs)
         return self._execute_conditioned(
             values,
-            {"control_image": values["control_image"]},
+            {adapter.control_image_parameter: values["control_image"]},
             adapter=adapter,
         )
 

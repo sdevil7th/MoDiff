@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T01:00:40.536Z",
+  "generatedAt": "2026-08-13T01:56:30.664Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 69,
-  "supportedPairCount": 81,
+  "supportedCanonicalPairCount": 70,
+  "supportedPairCount": 82,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1706,6 +1706,54 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-pagpipeline/text-to-image.json",
       "graphHash": "f30cc2bb11ada8ed39ed629b561737f3383f053b7379e1a0437ab6d86e62f3ed"
+    },
+    {
+      "id": "StableDiffusionPipeline:control_image",
+      "modelType": "StableDiffusionPipeline",
+      "modelFamily": "Stable Diffusion 1.x",
+      "mode": "control_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "id": "sd15-controlnet-canny",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "revision": "115a470d547982438f70198e353a921996e2e819",
+            "kind": "controlnet",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "description": "Required by the generic SD1.5 Canny ControlNet workflow."
+          }
+        ],
+        "requiredImages": [
+          "controlImage"
+        ],
+        "note": "Requires one control image and the immutable Canny ControlNet component."
+      },
+      "pipelineClasses": [
+        "StableDiffusionControlNetPipeline",
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "sourceTemplateId": "task-template:sd15-controlnet-canny:control-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-pipeline/control-image.json",
+      "graphHash": "983294ce6827b4bbb5c4b2c6c7c72dfb8c5620318e57b35d42086e8b5ae04bf3"
     },
     {
       "id": "StableDiffusionPipeline:edit_image",

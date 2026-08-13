@@ -32,6 +32,7 @@ _CONTROLLED_PIPELINE_CONTRACTS = {
     ("modules.DiffusersVideo", "LoadPipeline"),
 }
 _CONTROLLED_UPSCALER_CONTRACT = ("modules.Spandrel", "Upscaler")
+_CONTROLLED_IMAGE_PIPELINE_CONTRACT = ("modules.DiffusersImage", "LoadPipeline")
 
 
 @dataclass(frozen=True)
@@ -270,6 +271,47 @@ def _pipeline_receipt(node: Mapping[str, Any]) -> dict[str, Any]:
     return {**payload, "descriptorSha256": _canonical_digest(payload)}
 
 
+def _image_conditioning_receipt(node: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Bind an assembled image pipeline's auxiliary component to admission."""
+
+    from modules.DiffusersImage.main import (
+        get_image_pipeline_adapter,
+        repo_value,
+        resolve_image_conditioning_selection,
+    )
+
+    pipeline_class = _graph_param_value(node, "pipeline_class")
+    adapter = get_image_pipeline_adapter(pipeline_class)
+    raw_kind = _graph_param_value(node, "conditioning_kind", "none")
+    if adapter.conditioning_kind is None and raw_kind in (None, "", "none"):
+        return None
+    selection, revision = resolve_image_conditioning_selection(
+        adapter,
+        raw_kind,
+        _graph_param_value(node, "conditioning_model_id"),
+        _graph_param_value(node, "conditioning_revision"),
+    )
+    if selection is None or revision is None:
+        raise ValueError("A conditioned image pipeline requires one exact auxiliary artifact.")
+    payload = {
+        "schemaVersion": 1,
+        "kind": "diffusers_conditioning_component",
+        "module": node.get("module"),
+        "action": node.get("action"),
+        "artifact": {
+            "source": "hub",
+            "repository": repo_value(selection),
+            "revision": revision,
+        },
+        "conditioningKind": adapter.conditioning_kind,
+        "componentClass": adapter.conditioning_component_class,
+        "componentParameter": adapter.conditioning_component_parameter,
+        "pipelineClass": adapter.pipeline_class,
+        "safeSerializationRequired": True,
+    }
+    return {**payload, "descriptorSha256": _canonical_digest(payload)}
+
+
 def _is_primary_pipeline(node: Mapping[str, Any], primary_candidate: Mapping[str, Any] | None) -> bool:
     if not isinstance(primary_candidate, Mapping):
         return False
@@ -308,6 +350,10 @@ def controlled_artifact_receipts_from_graph(
         contract = (node.get("module"), node.get("action"))
         if contract == _CONTROLLED_UPSCALER_CONTRACT:
             receipts.append(resolve_upscaler_artifact(_graph_param_value(node, "model_id")).receipt)
+        elif contract == _CONTROLLED_IMAGE_PIPELINE_CONTRACT:
+            receipt = _image_conditioning_receipt(node)
+            if receipt is not None:
+                receipts.append(receipt)
         elif contract in _CONTROLLED_PIPELINE_CONTRACTS and (
             not _is_primary_pipeline(node, primary_candidate)
             and (isinstance(primary_candidate, Mapping) or len(pipeline_nodes) > 1)

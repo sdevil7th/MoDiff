@@ -31,6 +31,7 @@ FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 WHISPER_TINY_REPO = "openai/whisper-tiny"
@@ -54,6 +55,17 @@ DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
 CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    ("StableDiffusionPipeline", "control_image"): (
+        {
+            "id": "sd15-controlnet-canny",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": SD15_CONTROLNET_CANNY_REPO,
+            "revision": require_catalog_revision(SD15_CONTROLNET_CANNY_REPO),
+            "kind": "controlnet",
+            "requiredForModes": ["control_image"],
+            "description": "Required by the generic SD1.5 Canny ControlNet workflow.",
+        },
+    ),
     ("QwenImageModularPipeline", "control_image"): (
         {
             "id": "qwen-controlnet-union",
@@ -349,6 +361,23 @@ _CONTROL_GRAPH_EDGES = (
     ("loadImage", "image", "diffusersImageControl", "control_image"),
     ("diffusersImageControl", "images", "preview", "image"),
 )
+_CONDITIONED_CONTROL_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -900, 300),
+    ("controlPreprocessor", "modules.ImageFilters.Canny", -520, 300),
+    ("diffusersImageControl", "modules.DiffusersImage.ControlGenerate", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_CONDITIONED_CONTROL_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageControl", "pipeline"),
+    ("loadImage", "image", "controlPreprocessor", "image"),
+    ("controlPreprocessor", "output", "diffusersImageControl", "control_image"),
+    ("diffusersImageControl", "images", "preview", "image"),
+)
 _CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("loadImage", "file", "controlImage"),
     ("loadImage", "alpha_channel", "alphaMode"),
@@ -360,6 +389,27 @@ _CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageControl", "num_inference_steps", "steps"),
     ("diffusersImageControl", "guidance_scale", "guidanceScale"),
     ("diffusersImageControl", "strength", "strength"),
+    ("diffusersImageControl", "output_type", "outputType"),
+    ("diffusersImageControl", "max_sequence_length", "maxSequenceLength"),
+)
+_CONDITIONED_CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("diffusersImagePipeline", "conditioning_kind", "kind"),
+    ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+    ("diffusersImagePipeline", "conditioning_revision", "revision"),
+    ("loadImage", "file", "controlImage"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("controlPreprocessor", "low_threshold", "cannyLowThreshold"),
+    ("controlPreprocessor", "high_threshold", "cannyHighThreshold"),
+    ("controlPreprocessor", "device", "device"),
+    ("diffusersImageControl", "prompt", "prompt"),
+    ("diffusersImageControl", "negative_prompt", "negativePrompt"),
+    ("diffusersImageControl", "width", "width"),
+    ("diffusersImageControl", "height", "height"),
+    ("diffusersImageControl", "seed", "seed"),
+    ("diffusersImageControl", "num_inference_steps", "steps"),
+    ("diffusersImageControl", "guidance_scale", "guidanceScale"),
+    ("diffusersImageControl", "conditioning_scale", "conditioningScale"),
     ("diffusersImageControl", "output_type", "outputType"),
     ("diffusersImageControl", "max_sequence_length", "maxSequenceLength"),
 )
@@ -1002,6 +1052,7 @@ _BINDING_SOURCES = frozenset(
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
         *_CONTROL_GRAPH_BINDINGS,
+        *_CONDITIONED_CONTROL_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
         *_QWEN_OUTPAINT_GRAPH_BINDINGS,
@@ -3848,6 +3899,48 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
         for spec_id, profile_id, mode, pipeline_class, roles, edges, bindings in _P3_SD15_DEFINITIONS
     }
 )
+
+_SD15_CONTROLNET_CAPABILITY = deepcopy(_SD15_CAPABILITY)
+_SD15_CONTROLNET_CAPABILITY.update(
+    {
+        "supportsControlImage": True,
+        "modes": ["text_to_image", "edit_image", "inpaint", "control_image"],
+        "modeRequirements": {
+            **_SD15_CONTROLNET_CAPABILITY["modeRequirements"],
+            "control_image": {
+                "modelRequirements": studio_model_requirements_for_pair(
+                    "StableDiffusionPipeline", "control_image"
+                ),
+                "requiredImages": ["controlImage"],
+                "note": "Requires one control image and the immutable Canny ControlNet component.",
+            },
+        },
+        "notes": [
+            "Base, img2img, inpaint, and Canny ControlNet reuse generic Diffusers image nodes.",
+            "The ControlNet component is pinned independently and requires safetensors during assembly.",
+            "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+        ],
+    }
+)
+for _sd15_spec_id, *_unused in _P3_SD15_DEFINITIONS:
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[_sd15_spec_id]["capability"] = deepcopy(
+        _SD15_CONTROLNET_CAPABILITY
+    )
+_SD15_CONTROLNET_PROFILE = _sd15_profile(
+    "sd15-controlnet-canny:direct",
+    "control_image",
+    "StableDiffusionControlNetPipeline",
+)
+_SD15_CONTROLNET_PROFILE["live_proof"] = False
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-controlnet-canny:control-image:v1"] = {
+    "modelType": "StableDiffusionPipeline",
+    "mode": "control_image",
+    "profile": _SD15_CONTROLNET_PROFILE,
+    "capability": _SD15_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
 
 
 _LCM_PROFILE = {
