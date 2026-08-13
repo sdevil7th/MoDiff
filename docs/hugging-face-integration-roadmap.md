@@ -5336,7 +5336,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `cogview4`
 - [x] `consistency_models`
 - [x] `controlnet`
-- [ ] `controlnet_hunyuandit`
+- [x] `controlnet_hunyuandit`
 - [ ] `controlnet_sd3`
 - [x] `ddim`
 - [x] `ddpm`
