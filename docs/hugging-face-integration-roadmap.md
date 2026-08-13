@@ -5226,6 +5226,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     product approval, backend-owned optional-runtime and execution bounds,
     remote heavy-hardware safety/quality review, and physical macOS execution
     remain independent gates.
+  - [x] **DiT source and admission-gate review:** the pinned package contains
+    the official package-owned `DiTPipeline`, `DiTTransformer2DModel`, DDIM
+    scheduler, fixed ImageNet class-label contract, model CPU offload, and
+    finite 256px and 512px shapes. The only two exact Facebook repositories,
+    `facebook/DiT-XL-2-256@eab87f77abd5aef071a632f08807fbaab0b704d0`
+    and
+    `facebook/DiT-XL-2-512@101a3d462b22d64c4afdd4d0c8c59a2c0b961b99`,
+    are sealed in `data/dit-artifact-review.json`. The review records both
+    8-file / 3,334,284,997-byte repositories, all four immutable weight
+    identities, repository metadata and package source hashes, exact
+    1,000-class input/output contracts, the package's 25/50/250-step example,
+    call-default, and docstring discrepancy, and estimate-only resource
+    envelopes. No weight bytes or media were downloaded.
+
+    Admission is deliberately blocked. Both official snapshots publish their
+    3,334,245,438-byte selected partitions only as legacy pickle-based PyTorch
+    `.bin` files and publish no safetensors alternative. Both declare CC BY-NC
+    4.0 only in model-card metadata, do not bundle a license file, and cannot be
+    admitted for commercial product use. The package pipeline has neither a
+    safety checker nor a step callback for cooperative cancellation.
+    Accordingly no community conversion, runtime/download catalog, capability,
+    canonical graph, client, Auto, template, or Gallery surface is added. An
+    official safe-serialization snapshot, commercial product rights, a bundled
+    license receipt, backend-owned loading/bounds and cancellation, remote
+    heavy-hardware safety/quality review, and physical macOS execution remain
+    independent gates.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5371,7 +5397,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `ddim`
 - [x] `ddpm`
 - [x] `deepfloyd_if`
-- [ ] `dit`
+- [x] `dit`
 - [x] `dreamlite`
 - [ ] `ernie_image`
 - [ ] `glm_image`
@@ -5506,4 +5532,5 @@ Add references only after the corresponding evidence exists.
 | P6.29 SANA-Video 2B 480p text/image-to-video source admission | `081a083` | `6ed67bf` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 13,963,813,420-byte mixed-precision safetensors partition, excluded unsafe original-format, distinct 720p, and duplicate-heavy LongLive repositories, immutable metadata and package source hashes, bounded native 832x480/81-frame T2V and I2V recipes, FP32 tiled Wan VAE, Expert-only remote workflows, and estimate-only resource envelope are sealed. The deterministic 113-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.30 Hunyuan-DiT v1.2 ControlNet Canny source admission | `72185d0` | `f134f98` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public distilled-base and Canny revisions, six-file / 17,399,623,404-byte float32 safetensors inventory, optional exact Depth/Pose substitutions, immutable Tencent license receipt and acknowledgement, metadata and package source hashes, bounded native 1024px/50-step/guidance-6/scale-1 Canny recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 114-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.31 Stable Diffusion 3 ControlNet source and admission-gate review | `0f924dc` | Not required | Static artifact/source review only; authenticated base-config review, auxiliary-weight rights resolution, legal product approval, backend-owned optional-runtime/bounds, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Exact gated base plus public Canny, Tile, and inpainting revisions; three safetensors-only assembly receipts; immutable license/metadata and package source hashes; native 1024px recipes; and estimate-only resource envelopes are sealed. Base access/license restrictions, undeclared InstantX weight rights, ambiguous inpainting derivative terms, and absent safety guardrails keep the family outside all runtime/download and user-facing surfaces; no weights or media were downloaded. |
+| P6.32 DiT source and admission-gate review | `17ccba9` | Not required | Static artifact/source review only; safe official artifacts, commercial product rights, backend-owned loader/bounds/cancellation, remote heavy-hardware output review, and physical macOS evidence pending | Not required | The only two exact Facebook 256px/512px revisions, immutable metadata and package source hashes, four legacy weight identities, fixed ImageNet class-label contracts, and estimate-only resource envelopes are sealed. Legacy pickle-only serialization, CC BY-NC licensing without a bundled license file, absent safety guardrails, and absent cooperative cancellation keep the family outside all runtime/download and user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
