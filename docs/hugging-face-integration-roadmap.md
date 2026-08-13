@@ -5129,6 +5129,40 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     safety/quality review, license-file clarification, and physical macOS
     execution remain pending independently; no weights or media were downloaded
     or retained.
+  - [x] **SANA-Video 2B 480p text/image-to-video source admission:** backend
+    `081a083` and client `6ed67bf` admit the exact public snapshot
+    `Efficient-Large-Model/SANA-Video_2B_480p_diffusers@db5f398b13ca086d09a50ce156c20527773841b1`
+    through the generic Diffusers video facade. The immutable repository is
+    ungated, contains a complete Apache-2.0 license file, contains no Python,
+    and requires no remote code. Its exact five-file / 13,963,813,420-byte
+    mixed BF16/FP32 safetensors partition, canonical inventory digest,
+    immutable metadata identities, parameter counts from safetensors headers,
+    and pinned package pipeline/output/transformer/Wan-VAE/scheduler source
+    hashes are sealed in `data/sana-video-artifact-review.json` without
+    downloading weights. The unsafe original 480p and 720p `.pth` repositories,
+    the distinct 18.35 GB safe 720p partition, and the duplicate-heavy separate
+    LongLiveSANA contract are explicitly excluded.
+
+    The two admitted workflows are Expert-only and remote-only. Their
+    backend-owned contracts preserve the official native 832x480, 81-frame,
+    50-step, guidance-6, 300-token, 16-FPS recipe; append the reviewed motion
+    score of 30; keep the transformer and text encoder in BF16; preload the Wan
+    VAE in FP32; mandate VAE tiling and sequential CPU offload; disable
+    resolution binning; and distinguish text-only input from exactly one I2V
+    opening image. The pinned package's MPS rotary-frequency float32 workaround
+    is recorded, as is its decode-OOM branch that may not produce a decoded
+    value; mandatory tiling does not overstate live qualification. Conservative
+    estimate-only planning reserves 24 GiB accelerator memory, 24 GiB selective
+    disk, and 48 GiB system RAM. The deterministic 113-workflow catalog is
+    graph-qualified but explicitly runtime-unqualified; Auto and Gallery remain
+    disabled. The client stays within its unchanged bundle ceiling by sharing
+    equivalent offload constants and removing only prose duplicated by typed
+    media requirements. The complete 1,498-test backend overlay with 3,270
+    subtests and three platform skips, Ruff E9/F, compile, 66-package
+    compatibility, preflight, complete client check, and deterministic workflow
+    verification pass at 530,406 / 530,432 gzip bytes. Remote real-weight output
+    safety/quality review and physical macOS execution remain pending
+    independently; no weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5255,7 +5289,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `lucy`
 - [x] `mochi`
 - [x] `motif_video`
-- [ ] `sana_video`
+- [x] `sana_video`
 - [x] `skyreels_v2`
 - [x] `stable_video_diffusion`
 
@@ -5406,4 +5440,5 @@ Add references only after the corresponding evidence exists.
 | P6.26 Latte text-to-video source admission | `180917e` | `847ed6c` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 23,614,979,636-byte safetensors partition, excluded unsafe legacy `.pt` checkpoint and unreferenced optional temporal VAE, immutable metadata and package source hashes, bounded native 512x512/16-frame recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 110-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.27 Lucy Edit source and admission-gate review | `6ab1033` | Not required | Static artifact/source review only; commercial-license and legal product approval, immutable governing terms, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public five-file / 34,182,223,896-byte float32 safetensors inventory, immutable metadata, external license-document receipt, package source hashes, and native 832x480/81-frame edit recipe are sealed. The non-commercial/non-production license defines hosted remote access as distribution, and the package does not bind `num_frames` to input-video length, so the family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.28 Mochi 1 Preview text-to-video source admission | `fb3e39f` | `c0afea5` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, eight-file / 40,024,303,350-byte selected safetensors partition, excluded duplicate original-format, unindexed T5, and float32 partitions, immutable metadata and package source hashes, bounded native 848x480/31-frame recipe, explicit indexed T5 preload, mandatory VAE tiling, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 111-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.29 SANA-Video 2B 480p text/image-to-video source admission | `081a083` | `6ed67bf` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 13,963,813,420-byte mixed-precision safetensors partition, excluded unsafe original-format, distinct 720p, and duplicate-heavy LongLive repositories, immutable metadata and package source hashes, bounded native 832x480/81-frame T2V and I2V recipes, FP32 tiled Wan VAE, Expert-only remote workflows, and estimate-only resource envelope are sealed. The deterministic 113-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
