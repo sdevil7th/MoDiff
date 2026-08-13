@@ -3853,6 +3853,31 @@ default. Assets: remote Dataset only.
 
 - [ ] **P4.1 Control adapters:** SD1.5 ControlNet and T2I Adapter with pinned
   preprocessors and auxiliary models.
+  - [x] **P4.1a SD1.5 ControlNet Canny:** the generic Diffusers image loader
+    assembles `StableDiffusionControlNetPipeline` from the existing immutable
+    SD1.5 base plus `lllyasviel/control_v11p_sd15_canny` commit
+    `115a470d547982438f70198e353a921996e2e819`. Both repository loads require
+    safetensors, the auxiliary kind/class/parameter and independent revision
+    are backend-owned, and the admission receipt binds the complete assembly.
+    The canonical graph runs the existing generic Canny node at exact
+    thresholds `0.1/0.2` before `ControlGenerate`; a CPU tiny fixture verifies
+    the preprocessor extent and non-empty output. The generated workflow is the
+    82nd deterministic catalog entry. Auto, Gallery, and live proof remain off
+    pending remote output review.
+  - [ ] **P4.1b SD1.5 T2I Adapter:** deferred independently. The reviewed
+    official `TencentARC/t2iadapter_canny_sd15v2` snapshot at
+    `a18baf4f0ff002f34dc2f19c4b93fe00d4cce9ee` publishes legacy PyTorch `.bin`
+    weights rather than safetensors. The generic loader rejects
+    `StableDiffusionAdapterPipeline`; no unsafe-deserialization exception or
+    unlicensed community conversion was admitted.
+  - P4.1a source commits are backend `539650a` and client `785b43e`. The final
+    backend gate passed (`1280 passed, 3 skipped, 2661 subtests`) with Ruff
+    `E9,F`, package, shell, compile, and diff checks. All 82 workflows verify;
+    `npm run check` passed, the mocked Studio sweep passed (`106 passed`), and
+    shared-control browser coverage passed (`2 passed`). The production bundle
+    remains within budget at `528981 / 529408` total gzip bytes and
+    `280348 / 448512` for the entry chunk. No weights or output media were
+    downloaded or retained.
 - [ ] **P4.2 SDXL expansion:** Turbo first, then the reviewed text, image,
   inpaint, instruct, ControlNet, adapter, PAG, and related combinations.
 - [ ] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
@@ -3867,9 +3892,10 @@ default. Assets: remote Dataset only.
 
 ### Phase 4 test and asset gate
 
-- [ ] Unit and tiny-fixture tests cover adapters, outputs, and cleanup.
-- [ ] Backend/client integrated gates pass for each independent segment.
-- [ ] No Phase 4 live model is required to run locally.
+- [x] Unit and tiny-fixture tests cover adapters, outputs, and cleanup for each
+  completed Phase 4 segment.
+- [x] Backend/client integrated gates pass for each completed independent segment.
+- [x] No Phase 4 live model is required to run locally.
 - [ ] Remote receipts include peak memory, runtime, dependency/model revisions,
   graph hash, media checks, and cleanup result.
 - [ ] Gallery activation follows rights and anonymous byte verification.
@@ -4136,6 +4162,8 @@ Add references only after the corresponding evidence exists.
 | P3.2d Perturbed-attention guidance | `662aa10` | `42c4dd6` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the exact PAG pair reuses the immutable SD1.5 safetensors base through generic image nodes, both PAG controls bind through the backend specification, the 78-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.3 Generic perception / Marigold depth | `957ab31` | `1802291` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the immutable Marigold Depth LCM pair uses a generic schema-versioned prediction-map boundary, the 79-workflow deterministic catalog and complete gates passed, and no generated media was retained. Normals, intrinsics, uncertainty, Auto, and Gallery remain disabled pending their separate qualification gates. |
 | P3.5 Transformers speech-to-text | `82522ba` | `571facf` | Local cached CPU loader/action smoke passed with Transformers 5.14.1; remote spoken-fixture quality review pending | Pending | Complete source/live-smoke slice: two exact generic speech pairs use the immutable Whisper Tiny safetensors snapshot through the P0.5 optional runtime; the 81-workflow catalog and complete gates passed, and no fixture or output media was retained. Auto and Gallery remain disabled pending remote rights and quality review. |
-| P4.1-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.1a SD1.5 ControlNet Canny | `539650a` | `785b43e` | Remote pending | Pending | Complete source slice: the immutable safetensors-only SD1.5/ControlNet assembly, exact generic Canny preprocessor, controlled artifact receipt, 82-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review. |
+| P4.1b SD1.5 T2I Adapter | Deferred: reviewed official snapshot is legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently under the safetensors-only auxiliary policy; no unsafe exception or community conversion was admitted. |
+| P4.2-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
