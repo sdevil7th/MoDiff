@@ -4519,7 +4519,37 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   long-form recipe, remote heavy-hardware execution, and physical macOS
   evidence remain pending. Resource envelopes are estimate-only; no media was
   generated or committed.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, Cosmos/Cosmos3,
+- [x] Evaluate Cosmos3 Omni and Distilled without widening their existing
+  contract-only surfaces. Backend `8ba89fa` seals the public Nano snapshot at
+  `411f42a8fdfb8c5b2583cb8786e0938f49796eaa`, Super at
+  `e0262be9d8f7586bc24c069a2aed2b665bdff266`, Super T2I 4-Step at
+  `0573a4b26b8e15d13d416e51f4680c8bc8b8c33d`, and Super I2V 4-Step
+  at `81da615b7f92dc710c6359b072beee06f675979c`. Their exact
+  safetensors surfaces are respectively 10 files / 34,894,818,144 bytes, 30 /
+  132,624,780,208, 29 / 131,391,926,304, and 28 / 129,405,417,712.
+  Component totals, canonical inventory digests, index hashes, and the
+  36-layer Nano versus 64-layer Super transformer contracts are recorded
+  without downloading weights.
+
+  The existing Modular discovery contracts remain unchanged: Omni exposes ten
+  text/image/video, optional-sound, and action workflows; Distilled exposes
+  four vision workflows with the exact four-sigma schedule, guidance fixed at
+  1, and negative prompts ignored. The full source recipe is sealed at
+  720x1280, 189 frames, 24 fps, 35 steps, guidance 6, UniPC flow shift 10,
+  while prompt upsampling remains an explicit external action forbidden during
+  discovery. Task-pipeline safety defaults on; Modular use additionally calls
+  `enable_safety_checker()` and depends on `cosmos_guardrail`.
+
+  No runtime or download entry was admitted. Nano/Super Modular descriptors
+  set every component revision to null, distilled descriptors omit revision,
+  and the Nano/Super standard indexes name `Cosmos3OmniDiffusersPipeline`,
+  which the pinned Diffusers build does not export. Both distilled standard
+  indexes configure no safety checker. OpenMDW 1.1 is linked but not embedded;
+  its reviewed mutable web response is recorded with distribution-notice and
+  litigation-termination terms. Immutable descriptors, class resolution,
+  guardrail and remote heavy-hardware qualification, and physical macOS
+  evidence remain pending; all resource envelopes are estimate-only.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, Cosmos 1/2/2.5,
   Kandinsky5 Video, and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
@@ -4758,4 +4788,4 @@ Add references only after the corresponding evidence exists.
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflow qualification remain open as independent segments. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, Cosmos 1/2/2.5, Kandinsky5 Video, other heavy families, and long-form workflow qualification remain open as independent segments. |
