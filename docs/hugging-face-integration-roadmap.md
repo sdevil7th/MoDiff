@@ -4593,8 +4593,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   recipe evidence, remote heavy-hardware execution, and physical macOS proof
   remain pending; resource envelopes are estimate-only and no media was
   generated.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants and other heavy
-  video families.
+- [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
+  variants without claiming live execution. Backend `e4c2385` adds exact
+  repository-scoped Models Loader aliases for T2V-14B at
+  `38ec498cb3208fb688890f8cc7e94ede2cbd7f68` and I2V-14B-720P at
+  `eb849f76dfa246545b65774a9e25943ee69b3fa3`, alongside the already reviewed
+  I2V-14B-480P and FLF-14B-720P snapshots. The four exact safetensors surfaces
+  are respectively 18 files / 80,385,341,396 bytes, 21 files /
+  90,075,953,948 bytes for each I2V variant, and 21 files /
+  90,077,762,204 bytes for FLF. Canonical inventory digests, all transformer
+  shard hashes, standard index/config hashes, immutable revisions, source
+  recipes, and estimate-only resource bounds are sealed without downloading
+  weights.
+
+  The admission remains generic and fail-closed: T2V-14B must resolve from
+  `WanPipeline` to the pinned `WanModularPipeline`; both I2V repositories must
+  resolve from `WanImageToVideoPipeline` to the pinned
+  `WanImage2VideoModularPipeline`; and FLF retains its distinct processor,
+  positional-embedding, and last-image contract. I2V-480P and I2V-720P can
+  satisfy only image-to-video routing, while the FLF artifact can satisfy only
+  first/last-frame routing. Wrong repository, workflow, revision, component
+  type, or index class fails before block initialization. No high-level mode,
+  client model-name branch, Auto path, template, Gallery asset, generated
+  media, or live qualification claim was added. The clean optional overlay
+  passes the 100-test focused matrix with 175 subtests; remote heavy-hardware
+  execution and physical macOS evidence remain pending independently.
+- [ ] Evaluate other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4832,4 +4856,5 @@ Add references only after the corresponding evidence exists.
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
+| P6.9 Wan 2.1 14B Modular variants | `e4c2385` | Not required | Exact repository-scoped loader admission; remote heavy-hardware and physical macOS execution pending | Not required | T2V-14B and I2V-14B-720P join the already reviewed I2V-480P and FLF-720P variants under exact immutable catalog/index/component contracts. The focused clean-overlay matrix passes 100 tests plus 175 subtests. No new high-level mode, client branch, Auto/template/Gallery surface, weights, or media were added. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
