@@ -225,6 +225,10 @@ class DiffusersExecutionProfile:
             "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-diffusers-audio": ("modules.DiffusersAudio", "LoadPipeline"),
+            "direct-huggingface-speech": (
+                "modules.HuggingFaceSpeech",
+                "LoadSpeechRecognitionModel",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(

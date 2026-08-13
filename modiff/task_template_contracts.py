@@ -34,7 +34,7 @@ _OUTPUT_NODE_KEYS = {
     "audio": ("modules.Audio.Export",),
     "json": ("modules.Primitive.DataViewer",),
 }
-_OUTPUT_INPUT_HANDLES = {"image": "image", "video": "video", "audio": "audio", "json": "data"}
+_OUTPUT_INPUT_HANDLES = {"image": "image", "video": "video", "audio": "audio", "json": "value"}
 
 
 class TaskTemplateContractError(ValueError):

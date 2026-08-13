@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T00:19:25.092Z",
+  "generatedAt": "2026-08-13T01:00:40.536Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 67,
-  "supportedPairCount": 79,
+  "supportedCanonicalPairCount": 69,
+  "supportedPairCount": 81,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -925,6 +925,68 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "HuggingFaceSpeechRecognitionModel:speech_to_text",
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "modelFamily": "Whisper",
+      "mode": "speech_to_text",
+      "mediaKind": "json",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "openai/whisper-tiny"
+      ],
+      "requiredInputs": {
+        "requiredAudio": [
+          "sourceAudio"
+        ],
+        "note": "Requires one bounded local audio source and returns a normalized transcript."
+      },
+      "pipelineClasses": [
+        "AutoModelForSpeechSeq2Seq"
+      ],
+      "sourceTemplateId": "task-template:whisper-tiny:speech-to-text:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
+      "graphHash": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce"
+    },
+    {
+      "id": "HuggingFaceSpeechRecognitionModel:speech_translation",
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "modelFamily": "Whisper",
+      "mode": "speech_translation",
+      "mediaKind": "json",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "openai/whisper-tiny"
+      ],
+      "requiredInputs": {
+        "requiredAudio": [
+          "sourceAudio"
+        ],
+        "note": "Requires one bounded local audio source and translates recognized speech to English."
+      },
+      "pipelineClasses": [
+        "AutoModelForSpeechSeq2Seq"
+      ],
+      "sourceTemplateId": "task-template:whisper-tiny:speech-translation:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/hugging-face-speech-recognition-model/speech-translation.json",
+      "graphHash": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4"
     },
     {
       "id": "HunyuanVideoFramepackPipeline:image_to_video",

@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 67)
+        self.assertEqual(len(self.contracts), 69)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -135,6 +135,8 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("HunyuanVideoFramepackPipeline", "image_to_video"): [("image", "referenceImages")],
             ("AceStepAudioPipeline", "audio_continuation"): [("audio", "sourceAudio")],
             ("MarigoldDepthPipeline", "depth_estimation"): [("image", "referenceImages")],
+            ("HuggingFaceSpeechRecognitionModel", "speech_to_text"): [("audio", "sourceAudio")],
+            ("HuggingFaceSpeechRecognitionModel", "speech_translation"): [("audio", "sourceAudio")],
         }
         for pair, required in expected.items():
             with self.subTest(pair=pair):
@@ -149,6 +151,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             "image": {"modules.Image.Preview"},
             "video": {"modules.Video.Export", "modules.Video.ExportWithAudio"},
             "audio": {"modules.Audio.Export"},
+            "json": {"modules.Primitive.DataViewer"},
         }
         for contract in self.contracts:
             with self.subTest(output=contract["id"]):

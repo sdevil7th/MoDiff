@@ -284,6 +284,13 @@
       "baseRevision": "04a73502f7fd8fc5e59947b9df3b2266d71d6849",
       "baseLicense": "apache-2.0",
       "artifacts": []
+    },
+    {
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "baseRepo": "openai/whisper-tiny",
+      "baseRevision": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
     }
   ]
 }

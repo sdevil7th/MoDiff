@@ -157,6 +157,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
+                ("HuggingFaceSpeechRecognitionModel", "speech_to_text"),
+                ("HuggingFaceSpeechRecognitionModel", "speech_translation"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -193,6 +195,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersPredictMap", "preview_images", "preview", "image"), marigold["edges"])
         self.assertIn(("diffusersPredictMap", "processing_resolution", "processingResolution"), marigold["bindings"])
         self.assertIn(("diffusersPredictMap", "match_input_resolution", "matchInputResolution"), marigold["bindings"])
+        whisper = by_id["whisper-tiny:speech-to-text:v1"]
+        self.assertEqual(whisper["pipelineClass"], "AutoModelForSpeechSeq2Seq")
+        self.assertIn(("speechModel", "model", "transcribeAudio", "model"), whisper["edges"])
+        self.assertIn(("loadAudio", "audio", "transcribeAudio", "audio"), whisper["edges"])
+        self.assertIn(("transcribeAudio", "transcript", "transcriptPreview", "value"), whisper["edges"])
+        self.assertIn(("transcribeAudio", "task", "transcribe"), whisper["bindings"])
+        translation = by_id["whisper-tiny:speech-translation:v1"]
+        self.assertIn(("transcribeAudio", "task", "translate"), translation["bindings"])
         for spec_id, mode, pipeline_class in (
             ("sd15-base:text-to-image:v1", "text_to_image", "StableDiffusionPipeline"),
             ("sd15-base:edit-image:v1", "edit_image", "StableDiffusionImg2ImgPipeline"),

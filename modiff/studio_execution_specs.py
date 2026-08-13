@@ -33,6 +33,7 @@ SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
+WHISPER_TINY_REPO = "openai/whisper-tiny"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -183,6 +184,33 @@ _PERCEPTION_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersPredictMap", "num_inference_steps", "steps"),
     ("diffusersPredictMap", "processing_resolution", "processingResolution"),
     ("diffusersPredictMap", "match_input_resolution", "matchInputResolution"),
+)
+_SPEECH_GRAPH_ROLES = (
+    ("speechModel", "modules.HuggingFaceSpeech.LoadSpeechRecognitionModel", -720, -80),
+    ("loadAudio", "modules.Audio.Load", -720, 280),
+    ("transcribeAudio", "modules.HuggingFaceSpeech.TranscribeAudio", -240, -80),
+    ("transcriptPreview", "modules.Primitive.DataViewer", 240, -80),
+)
+_SPEECH_GRAPH_EDGES = (
+    ("speechModel", "model", "transcribeAudio", "model"),
+    ("loadAudio", "audio", "transcribeAudio", "audio"),
+    ("transcribeAudio", "transcript", "transcriptPreview", "value"),
+)
+_SPEECH_TRANSCRIPTION_GRAPH_BINDINGS = (
+    ("speechModel", "model_id", "artifact"),
+    ("speechModel", "revision", "defaultRevision"),
+    ("speechModel", "dtype", "dtype"),
+    ("speechModel", "device", "device"),
+    ("loadAudio", "file", "sourceAudio"),
+    ("transcribeAudio", "task", "transcribe"),
+    ("transcribeAudio", "language", "speechLanguage"),
+    ("transcribeAudio", "timestamps", "speechTimestamps"),
+    ("transcribeAudio", "chunk_length_seconds", "speechChunkSeconds"),
+    ("transcribeAudio", "stride_length_seconds", "speechStrideSeconds"),
+)
+_SPEECH_TRANSLATION_GRAPH_BINDINGS = tuple(
+    (role, param, "translate" if source == "transcribe" else source)
+    for role, param, source in _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS
 )
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
@@ -967,6 +995,8 @@ _BINDING_SOURCES = frozenset(
         *_SDXL_GRAPH_BINDINGS,
         *_PAG_GRAPH_BINDINGS,
         *_PERCEPTION_GRAPH_BINDINGS,
+        *_SPEECH_TRANSCRIPTION_GRAPH_BINDINGS,
+        *_SPEECH_TRANSLATION_GRAPH_BINDINGS,
         *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
@@ -4059,6 +4089,105 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["marigold-depth-lcm-v1-0:depth-estimation:v1"]
     "roles": _PERCEPTION_GRAPH_ROLES,
     "edges": _PERCEPTION_GRAPH_EDGES,
     "bindings": _PERCEPTION_GRAPH_BINDINGS,
+}
+
+_WHISPER_TINY_PROFILE = {
+    "id": "whisper-tiny:direct",
+    "model_type": "HuggingFaceSpeechRecognitionModel",
+    "modes": ("speech_to_text", "speech_translation"),
+    "loader_module": "modules.HuggingFaceSpeech",
+    "loader_action": "LoadSpeechRecognitionModel",
+    "execution_path": "direct-huggingface-speech",
+    "pipeline_class": "AutoModelForSpeechSeq2Seq",
+    "default_repo": WHISPER_TINY_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": True,
+    "compatible_repos": (),
+}
+_WHISPER_TINY_CAPABILITY = {
+    "modelType": "HuggingFaceSpeechRecognitionModel",
+    "label": "Whisper Tiny",
+    "displayName": "Whisper Tiny",
+    "family": "Whisper",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": WHISPER_TINY_REPO,
+    "artifactLabel": "Transformers safetensors repo",
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 1, "height": 1, "aspectRatio": "audio"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "json",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 1,
+        "height": 1,
+    },
+    "modes": ["speech_to_text", "speech_translation"],
+    "modeRequirements": {
+        "speech_to_text": {
+            "requiredAudio": ["sourceAudio"],
+            "note": "Requires one bounded local audio source and returns a normalized transcript.",
+        },
+        "speech_translation": {
+            "requiredAudio": ["sourceAudio"],
+            "note": "Requires one bounded local audio source and translates recognized speech to English.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(WHISPER_TINY_REPO, model_type="HuggingFaceSpeechRecognitionModel")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The generic speech boundary returns a versioned transcript, plain text, timestamp segments, and duration.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["whisper-tiny:speech-to-text:v1"] = {
+    "modelType": "HuggingFaceSpeechRecognitionModel",
+    "mode": "speech_to_text",
+    "profile": _WHISPER_TINY_PROFILE,
+    "capability": _WHISPER_TINY_CAPABILITY,
+    "roles": _SPEECH_GRAPH_ROLES,
+    "edges": _SPEECH_GRAPH_EDGES,
+    "bindings": _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["whisper-tiny:speech-translation:v1"] = {
+    "modelType": "HuggingFaceSpeechRecognitionModel",
+    "mode": "speech_translation",
+    "profile": _WHISPER_TINY_PROFILE,
+    "capability": _WHISPER_TINY_CAPABILITY,
+    "roles": _SPEECH_GRAPH_ROLES,
+    "edges": _SPEECH_GRAPH_EDGES,
+    "bindings": _SPEECH_TRANSLATION_GRAPH_BINDINGS,
 }
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
