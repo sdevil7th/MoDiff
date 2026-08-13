@@ -4119,8 +4119,29 @@ default. Assets: remote Dataset only.
   not expose or execute either TTS repository. Revisit this segment only when
   a reviewed safetensors artifact exists or the owner approves a narrowly
   documented exception with isolated conversion and provenance review.
-- [ ] **P4.6 Generic 3D artifacts:** Shap-E rendered output first; mesh/PLY/OBJ/GLB
-  only after a safe artifact/export contract exists.
+- [x] **P4.6 Generic 3D artifacts:** Shap-E rendered output is admitted from
+  official `openai/shap-e` commit
+  `7bd337afdea1c17842e1c3cc45c4e268356dba40` through explicit safe component
+  assembly: the fp16 safetensors `prior`, safe text encoder, and the reviewed
+  pre-rename safetensors `renderer`. The renamed `shap_e_renderer` directory is
+  deliberately excluded because its reviewed snapshot exposes only legacy
+  `.bin` weights. The backend seals a bounded 1-120 frame, 64-256px rendered
+  orbit and rejects unsafe artifact identity, quantization, or device-map
+  overrides; mesh/PLY/OBJ/GLB remain unavailable until a separate safe export
+  contract exists. The canonical graph hash is
+  `da3650ce1a40f12e29760ee1ea58baaab3edb4f57b89683339be76ed4400d7c0`.
+  Source commits are backend `21d819f` and client `d684fc4`. The complete
+  backend gate passed (`1297 passed, 3 skipped, 2888 subtests`) with Ruff
+  `E9,F`, compile, package, build, shell, workflow-generation, and diff checks.
+  All 95 workflows verify deterministically; `npm run check` passed with 86
+  profile/template and 43 graph-visual contract cases, and the production
+  bundle remains within budget at `529351 / 529408` total gzip bytes and
+  `279914 / 448512` for the entry chunk. The 106-case mocked Studio sweep has
+  complete passing evidence: 101 cases passed in the full run and the five
+  stale audio-mock failures all passed after the mock was aligned with the
+  backend-owned action contract. Auto, Gallery, live output, remote quality,
+  and physical macOS qualification remain pending. No model weights or output
+  media were downloaded or retained.
 
 ### Phase 4 test and asset gate
 
@@ -4267,7 +4288,7 @@ This is a family inventory, not a requirement to create one node per family.
 
 ### 3D and perception
 
-- [ ] `shap_e`
+- [x] `shap_e`
 - [ ] `marigold`
 - [ ] `visualcloze`
 
@@ -4405,6 +4426,6 @@ Add references only after the corresponding evidence exists.
 | P4.3 Sana/Sana Sprint and DreamLite admission | `7117c80` | `c41d1c6` | Remote and physical macOS pending | Pending | Complete source slice for Sana and Sana Sprint: exact safe immutable artifacts, upstream classes, bounded recipes, three canonical graphs, and complete gates passed. DreamLite is independently deferred because its required classes are absent from the qualified Diffusers pin. Auto and Gallery remain disabled. |
 | P4.4 generic audio generation | `4d6a4d3` | `f0958e6` | Remote and physical macOS pending | Pending | Complete source slice: Stable Audio safe loading was revalidated and exact LongCat AudioDiT plus AudioLDM2 families now use immutable reviewed artifacts, bounded native-rate recipes, backend-owned declarative task contracts, two new canonical graphs, and complete gates. Auto and Gallery remain disabled. |
 | P4.5 AudioLDM2 text-to-speech | Deferred: reviewed TTS snapshots are legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently: the exact generic speech API is present at the pin, but both reviewed AudioLDM2 speech repositories require unsafe deserialization and no exception was approved. |
-| P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.6 Shap-E rendered output | `21d819f` | `d684fc4` | Remote and physical macOS pending | Pending | Complete source slice: exact immutable official artifacts are assembled only from reviewed safe components, a bounded rendered-orbit boundary is sealed in the 95-workflow catalog, and complete backend/client gates passed. Unsafe renamed-renderer weights and mesh/export surfaces remain excluded. Auto and Gallery remain disabled. |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
