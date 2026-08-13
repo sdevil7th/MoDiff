@@ -4493,8 +4493,34 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   intentionally absent from runtime and download catalogs; resource envelopes
   are estimate-only, physical macOS evidence remains pending independently,
   and no weights or media were downloaded.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, SkyReels,
-  Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
+- [x] Evaluate the full SkyReels V2 Diffusers surface without admitting an
+  ambiguous-license or unqualified long-form runtime. Backend `5b53632` seals
+  all eight official immutable conversions: two 14B T2V, three I2V, and three
+  diffusion-forcing repositories across 540p and 720p families. Their exact
+  safetensors partitions range from 8 files / 28,973,450,372 bytes for 1.3B
+  diffusion forcing through 21 files / 91,339,283,940 bytes for 14B I2V.
+  Canonical inventory digests, component totals, model indexes, transformer
+  configurations, and the distinct 16-channel T2V/DF versus 36-channel I2V
+  contracts are recorded without downloading weights.
+
+  The pinned source exposes base T2V/I2V plus diffusion-forcing T2V/I2V/V2V.
+  The reviewed DF recipe binds 97-frame windows, 30 denoising steps per
+  five-latent-frame block, `ar_step=5`, five blocks, and 50 total scheduler rows;
+  the source-only long-form example advances three windows over 257 frames with
+  17-frame overlaps. That is not live qualification. The pinned documentation's
+  first/last-frame and V2V examples instead target the unlisted and publicly
+  unresolvable `SkyReels-V2-DF-1.3B-720P-Diffusers`, while the separate V2V
+  source example omits its required `video` argument.
+
+  No runtime or download entry was admitted. Each model snapshot embeds only a
+  short notice linking a mutable PDF; the exact linked PDF was frozen at its
+  source commit for review, but it defines the licensed model as
+  `Skywork-13B`, not SkyReels V2. Legal scope review, a corrected immutable
+  long-form recipe, remote heavy-hardware execution, and physical macOS
+  evidence remain pending. Resource envelopes are estimate-only; no media was
+  generated or committed.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, Cosmos/Cosmos3,
+  Kandinsky5 Video, and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4732,4 +4758,4 @@ Add references only after the corresponding evidence exists.
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflows remain open as independent segments. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflow qualification remain open as independent segments. |
