@@ -66,6 +66,7 @@ AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
+ERNIE_IMAGE_TURBO_REPO = "baidu/ERNIE-Image-Turbo"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -447,6 +448,19 @@ IMAGE_PIPELINE_ADAPTERS = {
         output_side_step=32,
         max_output_pixels=2**21,
         max_sequence_length=1024,
+    ),
+    "ErnieImagePipeline": ImagePipelineAdapter(
+        "ErnieImagePipeline",
+        frozenset({"text_to_image"}),
+        ERNIE_IMAGE_TURBO_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=8,
+        min_output_side=1024,
+        max_output_side=1024,
+        output_side_step=32,
+        max_output_pixels=1024 * 1024,
+        fixed_guidance_scale=1.0,
+        max_sequence_length=2048,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
         "DreamLitePipeline",
@@ -835,6 +849,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "CogView4Pipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "ErnieImagePipeline": {
+        "text_to_image": _image_field_contract("width", "height"),
     },
     "DreamLitePipeline": {
         "text_to_image": _image_field_contract(

@@ -380,6 +380,13 @@
       "artifacts": []
     },
     {
+      "modelType": "ErnieImagePipeline",
+      "baseRepo": "baidu/ERNIE-Image-Turbo",
+      "baseRevision": "bc68c81e2a1730a394d5fc9fae70713dee940140",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",

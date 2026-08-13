@@ -35,6 +35,7 @@ from modules.DiffusersImage.main import (
     DDPM_CIFAR10_REPO,
     DREAMLITE_BASE_REPO,
     DREAMLITE_MOBILE_REPO,
+    ERNIE_IMAGE_TURBO_REPO,
     FLUX2_KLEIN_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
@@ -755,6 +756,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             )
         self.assertEqual(cogview4["maxOutputPixels"], 2**21)
         self.assertEqual(cogview4["fieldParams"]["max_sequence_length"]["max"], 1024)
+        ernie = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["ErnieImagePipeline"], "text_to_image")
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: ernie["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 1024, "max": 1024, "step": 32},
+            )
+        self.assertEqual(ernie["maxOutputPixels"], 1024 * 1024)
+        self.assertTrue(ernie["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertTrue(ernie["fieldParams"]["guidance_scale"]["hidden"])
+        self.assertTrue(ernie["fieldParams"]["max_sequence_length"]["hidden"])
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -864,6 +875,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
             "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
             "CogView4Pipeline": ({"text_to_image"}, COGVIEW4_6B_REPO, {"prompt"}),
+            "ErnieImagePipeline": ({"text_to_image"}, ERNIE_IMAGE_TURBO_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -969,6 +981,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("ChromaPipeline", "text_to_image", Generate, {}),
             ("CogView3PlusPipeline", "text_to_image", Generate, {}),
             ("CogView4Pipeline", "text_to_image", Generate, {}),
+            ("ErnieImagePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -2409,6 +2422,102 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 guidance_scale=3.5,
                 max_sequence_length=1025,
             )
+
+    def test_ernie_image_turbo_loads_safe_bfloat16_and_enforces_the_exact_recipe(self):
+        loaded = {}
+        called = {}
+
+        class ErnieImagePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                negative_prompt="",
+                height=1024,
+                width=1024,
+                num_inference_steps=50,
+                guidance_scale=4.0,
+                generator=None,
+                output_type="pil",
+                return_dict=True,
+                callback_on_step_end=None,
+                callback_on_step_end_tensor_inputs=None,
+                use_pe=True,
+            ):
+                called.update(locals())
+                return SimpleNamespace(images=[Image.new("RGB", (width, height))])
+
+        node = LoadPipeline("ernie-image-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=ErnieImagePipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=ERNIE_IMAGE_TURBO_REPO,
+                pipeline_class="ErnieImagePipeline",
+                mode="text_to_image",
+                revision=catalog_revision(ERNIE_IMAGE_TURBO_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], ERNIE_IMAGE_TURBO_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(ERNIE_IMAGE_TURBO_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+
+        generate = Generate("ernie-image-generate-probe")
+        generate.progress = lambda *args, **kwargs: None
+        generated = generate.execute(
+            pipeline=result["pipeline"],
+            prompt="reviewed fixture",
+            negative_prompt="",
+            width=1024,
+            height=1024,
+            num_inference_steps=8,
+            guidance_scale=1.0,
+            max_sequence_length=2048,
+            seed=7,
+            output_type="pil",
+        )
+        self.assertEqual(generated["width_out"], 1024)
+        self.assertEqual(generated["height_out"], 1024)
+        self.assertEqual(called["num_inference_steps"], 8)
+        self.assertEqual(called["guidance_scale"], 1.0)
+        self.assertTrue(called["use_pe"])
+        self.assertNotIn("max_sequence_length", called)
+
+        for field, value, message in (
+            ("width", 1008, "between 1024 and 1024"),
+            ("height", 1056, "between 1024 and 1024"),
+            ("num_inference_steps", 9, "between 1 and 8"),
+            ("guidance_scale", 1.1, "requires guidance_scale=1"),
+        ):
+            values = {
+                "pipeline": result["pipeline"],
+                "prompt": "reviewed fixture",
+                "width": 1024,
+                "height": 1024,
+                "num_inference_steps": 8,
+                "guidance_scale": 1.0,
+                "max_sequence_length": 2048,
+            }
+            values[field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
+                Generate(f"ernie-image-{field}-contract").execute(**values)
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
         loaded = {}

@@ -213,6 +213,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("ChromaPipeline", "text_to_image"),
                 ("CogView3PlusPipeline", "text_to_image"),
                 ("CogView4Pipeline", "text_to_image"),
+                ("ErnieImagePipeline", "text_to_image"),
                 ("DreamLitePipeline", "text_to_image"),
                 ("DreamLitePipeline", "edit_image"),
                 ("DreamLiteMobilePipeline", "text_to_image"),
@@ -455,6 +456,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(cogview4_profile.max_low_memory_side, 1024)
         self.assertEqual(cogview4_profile.max_low_memory_steps, 50)
         self.assertFalse(cogview4_profile.live_proof)
+        ernie = by_id["ernie-image-turbo:text-to-image:v1"]
+        self.assertEqual(ernie["modelType"], "ErnieImagePipeline")
+        self.assertEqual(ernie["pipelineClass"], "ErnieImagePipeline")
+        self.assertEqual(ernie["defaultRepo"], "baidu/ERNIE-Image-Turbo")
+        ernie_profile = DIFFUSERS_EXECUTION_PROFILES[ernie["executionProfileId"]]
+        self.assertEqual(ernie_profile.max_low_memory_side, 1024)
+        self.assertEqual(ernie_profile.max_low_memory_steps, 8)
+        self.assertFalse(ernie_profile.live_proof)
         dreamlite = by_id["dreamlite-base:text-to-image:v1"]
         self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
         self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")

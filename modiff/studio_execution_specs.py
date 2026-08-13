@@ -45,6 +45,7 @@ AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
+ERNIE_IMAGE_TURBO_REPO = "baidu/ERNIE-Image-Turbo"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -6192,6 +6193,89 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["cogview4-6b:text-to-image:v1"] = {
     "mode": "text_to_image",
     "profile": _COGVIEW4_6B_PROFILE,
     "capability": _COGVIEW4_6B_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_ERNIE_IMAGE_TURBO_PROFILE = {
+    "id": "ernie-image-turbo:direct",
+    "model_type": "ErnieImagePipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "ErnieImagePipeline",
+    "default_repo": ERNIE_IMAGE_TURBO_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 8,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_ERNIE_IMAGE_TURBO_CAPABILITY = {
+    "modelType": "ErnieImagePipeline",
+    "label": "ERNIE Image Turbo",
+    "displayName": "ERNIE Image Turbo 1024px",
+    "family": "ERNIE Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": ERNIE_IMAGE_TURBO_REPO,
+    "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 8,
+    "recommendedGuidance": 1.0,
+    "recommendedMaxSequenceLength": 2048,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 8,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(ERNIE_IMAGE_TURBO_REPO, model_type="ErnieImagePipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public Apache-2.0 snapshot uses only package-owned Diffusers and Transformers classes and five bfloat16 safetensors weight files.",
+        "The reviewed Turbo route is fixed to 1024x1024, 8 steps, guidance 1, the repository's optional prompt enhancer, and the tokenizer's 2048-token ceiling.",
+        "The approximately 31.60 GB weight surface is remote-only; the missing safety checker keeps Auto and Gallery disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["ernie-image-turbo:text-to-image:v1"] = {
+    "modelType": "ErnieImagePipeline",
+    "mode": "text_to_image",
+    "profile": _ERNIE_IMAGE_TURBO_PROFILE,
+    "capability": _ERNIE_IMAGE_TURBO_CAPABILITY,
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,

@@ -145,7 +145,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 102)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 103)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -195,6 +195,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "ChromaPipeline",
             "CogView3PlusPipeline",
             "CogView4Pipeline",
+            "ErnieImagePipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
@@ -439,6 +440,21 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(cogview4["autoEligible"])
         self.assertFalse(cogview4["galleryEligible"])
         self.assertNotIn("CogView4Pipeline", experimental)
+        ernie = by_model["ErnieImagePipeline"]
+        self.assertEqual(
+            ernie["revisionCandidates"],
+            ["bc68c81e2a1730a394d5fc9fae70713dee940140"],
+        )
+        self.assertEqual(ernie["defaultSize"], {"width": 1024, "height": 1024, "aspectRatio": "1:1"})
+        self.assertEqual(ernie["recommendedSteps"], 8)
+        self.assertEqual(ernie["recommendedGuidance"], 1.0)
+        self.assertEqual(ernie["recommendedMaxSequenceLength"], 2048)
+        self.assertEqual(ernie["modes"], ["text_to_image"])
+        self.assertEqual(ernie["pipelineClasses"], ["ErnieImagePipeline"])
+        self.assertFalse(ernie["supportsNegativePrompt"])
+        self.assertFalse(ernie["autoEligible"])
+        self.assertFalse(ernie["galleryEligible"])
+        self.assertNotIn("ErnieImagePipeline", experimental)
         dreamlite = by_model["DreamLitePipeline"]
         self.assertEqual(
             dreamlite["revisionCandidates"],

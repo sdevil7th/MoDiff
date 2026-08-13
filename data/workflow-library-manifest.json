@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T16:56:37.839Z",
+  "generatedAt": "2026-08-13T17:45:25.906Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 102,
-  "supportedPairCount": 114,
+  "supportedCanonicalPairCount": 103,
+  "supportedPairCount": 115,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -645,6 +645,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/dream-lite-pipeline/text-to-image.json",
       "graphHash": "c55d65890ac84a17c61788ab37085055c9479882f7af44c98aaf5382b2c65243"
+    },
+    {
+      "id": "ErnieImagePipeline:text_to_image",
+      "modelType": "ErnieImagePipeline",
+      "modelFamily": "ERNIE Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "baidu/ERNIE-Image-Turbo"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "ErnieImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:ernie-image-turbo:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
+      "graphHash": "88f090cf47611e346230bacdcf758edbbe6256de7bd7621ae2582d7a5302c83d"
     },
     {
       "id": "Flux2KleinPipeline:edit_image",
