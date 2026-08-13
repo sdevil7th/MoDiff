@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 75)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 77)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -266,6 +266,23 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sdxl_pag["recommendedGuidance"], 5.0)
         self.assertEqual(sdxl_pag["recommendedPagScale"], 3.0)
         self.assertEqual(sdxl_pag["recommendedPagAdaptiveScale"], 0.0)
+        self.assertEqual(sdxl_pag["modes"], ["text_to_image", "edit_image", "inpaint"])
+        self.assertEqual(
+            sdxl_pag["pipelineClasses"],
+            [
+                "StableDiffusionXLPAGImg2ImgPipeline",
+                "StableDiffusionXLPAGInpaintPipeline",
+                "StableDiffusionXLPAGPipeline",
+            ],
+        )
+        self.assertEqual(
+            sdxl_pag["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertEqual(
+            sdxl_pag["modeRequirements"]["inpaint"]["requiredImages"],
+            ["referenceImages", "maskImage"],
+        )
         self.assertFalse(sdxl_pag["autoEligible"])
         self.assertFalse(sdxl_pag["galleryEligible"])
         self.assertNotIn("StableDiffusionXLPAGPipeline", experimental)

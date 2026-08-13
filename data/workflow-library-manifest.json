@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T03:38:06.000Z",
+  "generatedAt": "2026-08-13T03:54:59.989Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 75,
-  "supportedPairCount": 87,
+  "supportedCanonicalPairCount": 77,
+  "supportedPairCount": 89,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1973,6 +1973,75 @@
       "graphHash": "46bcc862706ffe2feb22005d563a4218f26ec2e627c7749fa859f7b99c324c8c"
     },
     {
+      "id": "StableDiffusionXLPAGPipeline:edit_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "modelFamily": "Stable Diffusion XL",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for PAG image-to-image transformation."
+      },
+      "pipelineClasses": [
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "sourceTemplateId": "task-template:sdxl-pag:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/edit-image.json",
+      "graphHash": "2a74886a72cdf5c66b90a58fc4b31797d2e94073e44c61833da350979a21065f"
+    },
+    {
+      "id": "StableDiffusionXLPAGPipeline:inpaint",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "modelFamily": "Stable Diffusion XL",
+      "mode": "inpaint",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ],
+        "note": "Requires one source image and one mask image for PAG inpainting."
+      },
+      "pipelineClasses": [
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "sourceTemplateId": "task-template:sdxl-pag:inpaint:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/inpaint.json",
+      "graphHash": "6903adcae1149856449ba860706b887214f7493b365cb2264afc0ce4ebc1f762"
+    },
+    {
       "id": "StableDiffusionXLPAGPipeline:text_to_image",
       "modelType": "StableDiffusionXLPAGPipeline",
       "modelFamily": "Stable Diffusion XL",
@@ -1986,10 +2055,13 @@
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
         "stabilityai/stable-diffusion-xl-base-1.0"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
         "StableDiffusionXLPAGPipeline"
       ],
       "sourceTemplateId": "task-template:sdxl-pag:text-to-image:v1",

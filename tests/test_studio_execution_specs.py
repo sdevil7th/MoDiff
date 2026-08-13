@@ -190,6 +190,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
                 ("StableDiffusionXLAdapterPipeline", "control_image"),
                 ("StableDiffusionXLPAGPipeline", "text_to_image"),
+                ("StableDiffusionXLPAGPipeline", "edit_image"),
+                ("StableDiffusionXLPAGPipeline", "inpaint"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -329,6 +331,31 @@ class StudioExecutionSpecTests(unittest.TestCase):
             sdxl_pag["bindings"],
         )
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_pag["executionProfileId"]].live_proof)
+        sdxl_pag_edit = by_id["sdxl-pag:edit-image:v1"]
+        self.assertEqual(sdxl_pag_edit["pipelineClass"], "StableDiffusionXLPAGImg2ImgPipeline")
+        self.assertIn(("diffusersImageEdit", "pag_scale", "pagScale"), sdxl_pag_edit["bindings"])
+        self.assertIn(
+            ("diffusersImageEdit", "pag_adaptive_scale", "pagAdaptiveScale"),
+            sdxl_pag_edit["bindings"],
+        )
+        self.assertIn(
+            ("loadImage", "image", "diffusersImageEdit", "image"),
+            sdxl_pag_edit["edges"],
+        )
+        sdxl_pag_inpaint = by_id["sdxl-pag:inpaint:v1"]
+        self.assertEqual(sdxl_pag_inpaint["pipelineClass"], "StableDiffusionXLPAGInpaintPipeline")
+        self.assertIn(
+            ("diffusersImageInpaint", "pag_scale", "pagScale"),
+            sdxl_pag_inpaint["bindings"],
+        )
+        self.assertIn(
+            ("diffusersImageInpaint", "pag_adaptive_scale", "pagAdaptiveScale"),
+            sdxl_pag_inpaint["bindings"],
+        )
+        self.assertIn(
+            ("loadMask", "image", "diffusersImageInpaint", "mask_image"),
+            sdxl_pag_inpaint["edges"],
+        )
         lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
         self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
         self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")

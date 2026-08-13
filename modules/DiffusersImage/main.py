@@ -294,6 +294,22 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         weight_variant="fp16",
     ),
+    "StableDiffusionXLPAGImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+    ),
+    "StableDiffusionXLPAGInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLPAGInpaintPipeline",
+        frozenset({"inpaint"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+    ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
         frozenset({"edit_image"}),
@@ -614,6 +630,23 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "StableDiffusionXLPAGPipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "pag_scale", "pag_adaptive_scale"
+        ),
+    },
+    "StableDiffusionXLPAGImg2ImgPipeline": {
+        "edit_image": _image_field_contract(
+            "negative_prompt", "guidance_scale", "strength", "pag_scale", "pag_adaptive_scale"
+        ),
+    },
+    "StableDiffusionXLPAGInpaintPipeline": {
+        "inpaint": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "pag_scale",
+            "pag_adaptive_scale",
         ),
     },
     "StableDiffusionXLImg2ImgPipeline": {

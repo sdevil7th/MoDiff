@@ -719,6 +719,15 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertFalse(sdxl_pag["fieldParams"]["pag_scale"]["hidden"])
         self.assertFalse(sdxl_pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
+        for pipeline_name, mode in (
+            ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
+            ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
+        ):
+            with self.subTest(pipeline=pipeline_name):
+                contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
+                self.assertFalse(contract["fieldParams"]["pag_scale"]["hidden"])
+                self.assertFalse(contract["fieldParams"]["pag_adaptive_scale"]["hidden"])
+                self.assertFalse(contract["fieldParams"]["strength"]["hidden"])
         controlnet = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"], "control_image"
         )
@@ -781,6 +790,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image"},
             ),
             "StableDiffusionXLPAGPipeline": ({"text_to_image"}, SDXL_BASE_REPO, {"prompt"}),
+            "StableDiffusionXLPAGImg2ImgPipeline": (
+                {"edit_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionXLPAGInpaintPipeline": (
+                {"inpaint"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -860,6 +879,13 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLPAGPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            (
+                "StableDiffusionXLPAGInpaintPipeline",
+                "inpaint",
+                Inpaint,
+                {"image": image, "mask_image": mask},
+            ),
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
@@ -1784,41 +1810,47 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 )
 
     def test_sdxl_pag_loads_the_reviewed_fp16_safetensors_variant(self):
-        loaded = {}
-
-        class StableDiffusionXLPAGPipeline:
-            @classmethod
-            def from_pretrained(cls, repo, **kwargs):
-                loaded.update({"repo": repo, "kwargs": kwargs})
-                return cls()
-
-        node = LoadPipeline("sdxl-pag-load-probe")
-        node.progress = lambda *args, **kwargs: None
-        node.mm_add = lambda *args, **kwargs: None
-        with (
-            patch(
-                "modules.DiffusersImage.main.pipeline_class_from_name",
-                return_value=StableDiffusionXLPAGPipeline,
-            ) as resolve_pipeline,
-            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        for pipeline_name, mode in (
+            ("StableDiffusionXLPAGPipeline", "text_to_image"),
+            ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
+            ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
         ):
-            result = node.execute(
-                model_id=SDXL_BASE_REPO,
-                pipeline_class="StableDiffusionXLPAGPipeline",
-                mode="text_to_image",
-                revision=catalog_revision(SDXL_BASE_REPO),
-                dtype="float16",
-                auto_offload=False,
-                offload_mode="none",
-            )
+            with self.subTest(pipeline=pipeline_name):
+                loaded = {}
 
-        resolve_pipeline.assert_called_once_with("StableDiffusionXLPAGPipeline")
-        self.assertEqual(loaded["repo"], SDXL_BASE_REPO)
-        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_BASE_REPO))
-        self.assertTrue(loaded["kwargs"]["use_safetensors"])
-        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
-        self.assertNotIn("trust_remote_code", loaded["kwargs"])
-        self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, "StableDiffusionXLPAGPipeline")
+                class ReviewedPAGPipeline:
+                    @classmethod
+                    def from_pretrained(cls, repo, **kwargs):
+                        loaded.update({"repo": repo, "kwargs": kwargs})
+                        return cls()
+
+                node = LoadPipeline(f"sdxl-pag-load-probe-{mode}")
+                node.progress = lambda *args, **kwargs: None
+                node.mm_add = lambda *args, **kwargs: None
+                with (
+                    patch(
+                        "modules.DiffusersImage.main.pipeline_class_from_name",
+                        return_value=ReviewedPAGPipeline,
+                    ) as resolve_pipeline,
+                    patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+                ):
+                    result = node.execute(
+                        model_id=SDXL_BASE_REPO,
+                        pipeline_class=pipeline_name,
+                        mode=mode,
+                        revision=catalog_revision(SDXL_BASE_REPO),
+                        dtype="float16",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+
+                resolve_pipeline.assert_called_once_with(pipeline_name)
+                self.assertEqual(loaded["repo"], SDXL_BASE_REPO)
+                self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_BASE_REPO))
+                self.assertTrue(loaded["kwargs"]["use_safetensors"])
+                self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+                self.assertNotIn("trust_remote_code", loaded["kwargs"])
+                self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
 
     def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):
         loaded = {}

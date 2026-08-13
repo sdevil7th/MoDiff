@@ -472,6 +472,10 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
 _SDXL_EDIT_GRAPH_BINDINGS = _EDIT_GRAPH_BINDINGS + (
     ("diffusersImagePipeline", "revision", "defaultRevision"),
 )
+_PAG_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
+    ("diffusersImageEdit", "pag_scale", "pagScale"),
+    ("diffusersImageEdit", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
 _SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
     ("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),
 )
@@ -511,6 +515,10 @@ _INPAINT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
 )
 _SDXL_INPAINT_GRAPH_BINDINGS = _INPAINT_GRAPH_BINDINGS + (
     ("diffusersImagePipeline", "revision", "defaultRevision"),
+)
+_PAG_INPAINT_GRAPH_BINDINGS = _SDXL_INPAINT_GRAPH_BINDINGS + (
+    ("diffusersImageInpaint", "pag_scale", "pagScale"),
+    ("diffusersImageInpaint", "pag_adaptive_scale", "pagAdaptiveScale"),
 )
 _QWEN_OUTPAINT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -4357,8 +4365,8 @@ _SDXL_PAG_CAPABILITY = {
     "recommendedPagScale": 3.0,
     "recommendedPagAdaptiveScale": 0.0,
     "guidanceLabel": "Guidance",
-    "supportsImageInput": False,
-    "supportsMask": False,
+    "supportsImageInput": True,
+    "supportsMask": True,
     "supportsMultiImage": False,
     "supportsControlImage": False,
     "supportsLayers": False,
@@ -4378,8 +4386,17 @@ _SDXL_PAG_CAPABILITY = {
         "width": 1024,
         "height": 1024,
     },
-    "modes": ["text_to_image"],
-    "modeRequirements": {},
+    "modes": ["text_to_image", "edit_image", "inpaint"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for PAG image-to-image transformation.",
+        },
+        "inpaint": {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "note": "Requires one source image and one mask image for PAG inpainting.",
+        },
+    },
     "executionStatus": "expert_only",
     "revisionCandidates": [
         require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLPAGPipeline")
@@ -4401,6 +4418,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _PAG_GRAPH_BINDINGS,
+}
+_SDXL_PAG_IMG2IMG_PROFILE = {
+    **_SDXL_PAG_PROFILE,
+    "id": "sdxl-pag:img2img-direct",
+    "modes": ("edit_image",),
+    "pipeline_class": "StableDiffusionXLPAGImg2ImgPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag:edit-image:v1"] = {
+    "modelType": "StableDiffusionXLPAGPipeline",
+    "mode": "edit_image",
+    "profile": _SDXL_PAG_IMG2IMG_PROFILE,
+    "capability": _SDXL_PAG_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _PAG_EDIT_GRAPH_BINDINGS,
+}
+_SDXL_PAG_INPAINT_PROFILE = {
+    **_SDXL_PAG_PROFILE,
+    "id": "sdxl-pag:inpaint-direct",
+    "modes": ("inpaint",),
+    "pipeline_class": "StableDiffusionXLPAGInpaintPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag:inpaint:v1"] = {
+    "modelType": "StableDiffusionXLPAGPipeline",
+    "mode": "inpaint",
+    "profile": _SDXL_PAG_INPAINT_PROFILE,
+    "capability": _SDXL_PAG_CAPABILITY,
+    "roles": _INPAINT_GRAPH_ROLES,
+    "edges": _INPAINT_GRAPH_EDGES,
+    "bindings": _PAG_INPAINT_GRAPH_BINDINGS,
 }
 
 
