@@ -58,6 +58,8 @@ WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 LTX2_REPO = "Lightricks/LTX-2"
 FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
 STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
+ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
+ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -65,6 +67,28 @@ DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
 CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    ("AnimateDiffPipeline", "text_to_video"): (
+        {
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": ANIMATEDIFF_MOTION_REPO,
+            "revision": require_catalog_revision(ANIMATEDIFF_MOTION_REPO),
+            "kind": "adapter",
+            "requiredForModes": ["text_to_video"],
+            "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe.",
+        },
+    ),
+    ("AnimateLCMPipeline", "text_to_video"): (
+        {
+            "id": "animatelcm-motion-adapter-and-lora",
+            "label": "AnimateLCM MotionAdapter and spatial LoRA",
+            "repo": ANIMATELCM_MOTION_REPO,
+            "revision": require_catalog_revision(ANIMATELCM_MOTION_REPO),
+            "kind": "adapter",
+            "requiredForModes": ["text_to_video"],
+            "description": "Exact fp16 safetensors motion module and named safetensors LoRA for the LCM recipe.",
+        },
+    ),
     ("StableDiffusionXLAdapterPipeline", "control_image"): (
         {
             "id": "sdxl-t2i-adapter-canny",
@@ -749,6 +773,35 @@ _STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS = tuple(
         else source,
     )
     for role, param, source in _I2V_REVISION_GRAPH_BINDINGS
+)
+_ANIMATEDIFF_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "empty"
+        if (role, param)
+        in {
+            ("diffusersQuantization", "components"),
+            ("diffusersRecipe", "attention_components"),
+        }
+        else "nativeMath"
+        if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "false"
+        if (role, param)
+        in {
+            ("diffusersRecipe", "vae_tiling"),
+            ("diffusersRecipe", "regional_compile"),
+            ("diffusersRecipe", "denoiser_cache"),
+            ("diffusersRecipe", "layerwise_casting"),
+            ("diffusersRecipe", "channels_last"),
+        }
+        else source,
+    )
+    for role, param, source in _VIDEO_REVISION_GRAPH_BINDINGS
+    if not (role == "wanGenerate" and param == "scheduler_flow_shift")
+) + (
+    ("wanPipeline", "motion_adapter_id", "repo"),
+    ("wanPipeline", "motion_adapter_revision", "revision"),
 )
 _WAN_ANIMATE_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
     ("loadImage", "modules.Image.Load", -520, 300),
@@ -3844,6 +3897,73 @@ def _planning_video_capability(
     }
 
 
+def _animatediff_capability(model_type: str, *, lcm: bool) -> dict[str, Any]:
+    requirements = studio_model_requirements_for_pair(model_type, "text_to_video")
+    return {
+        "modelType": model_type,
+        "label": "AnimateLCM SD1.5" if lcm else "AnimateDiff SD1.5 v2",
+        "displayName": "AnimateLCM" if lcm else "AnimateDiff motion adapter v1.5.2",
+        "family": "AnimateDiff",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": SD15_BASE_REPO,
+        "artifactLabel": "SD1.5 safetensors base plus pinned fp16 safetensors motion adapter",
+        "defaultDtype": "float16",
+        "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+        "recommendedSteps": 6 if lcm else 25,
+        "recommendedGuidance": 1.5 if lcm else 7.5,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": False,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": False,
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 16,
+        "recommendedFps": 8,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_MODEL_CPU,
+            "lowVram": OFFLOAD_MODE_MODEL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "float16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "steps": 4 if lcm else 16,
+            "width": 512,
+            "height": 512,
+            "numFrames": 8,
+        },
+        "modes": ["text_to_video"],
+        "modeRequirements": {
+            "text_to_video": {
+                "modelRequirements": requirements,
+                "note": (
+                    "Uses the exact AnimateLCM motion module, linear-beta LCM scheduler, and named spatial LoRA."
+                    if lcm
+                    else "Uses the exact AnimateDiff SD1.5 v2 motion module and documented linear-beta DDIM scheduler."
+                ),
+            }
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(SD15_BASE_REPO, model_type="StableDiffusionPipeline")],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "The SD1.5 base and motion component revisions are pinned independently and load only safetensors weights.",
+            "The motion repository does not declare a weight license; users must establish authorization before use.",
+            "Auto and Gallery publication remain disabled until exact remote runtime, quality, and rights proof is reviewed.",
+        ],
+    }
+
+
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
@@ -3876,6 +3996,20 @@ _P2_VIDEO_PROFILES = {
         ("image_to_video",),
         "StableVideoDiffusionPipeline",
         STABLE_VIDEO_DIFFUSION_REPO,
+    ),
+    "animatediff": _planning_video_profile(
+        "animatediff-sd15-v2:direct",
+        "AnimateDiffPipeline",
+        ("text_to_video",),
+        "AnimateDiffPipeline",
+        SD15_BASE_REPO,
+    ),
+    "animatelcm": _planning_video_profile(
+        "animatelcm-sd15:direct",
+        "AnimateLCMPipeline",
+        ("text_to_video",),
+        "AnimateLCMPipeline",
+        SD15_BASE_REPO,
     ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
@@ -4035,6 +4169,24 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _I2V_GRAPH_ROLES,
             "edges": _I2V_GRAPH_EDGES,
             "bindings": _STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS,
+        },
+        "animatediff:text-to-video:v1": {
+            "modelType": "AnimateDiffPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["animatediff"],
+            "capability": _animatediff_capability("AnimateDiffPipeline", lcm=False),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _ANIMATEDIFF_GRAPH_BINDINGS,
+        },
+        "animatelcm:text-to-video:v1": {
+            "modelType": "AnimateLCMPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["animatelcm"],
+            "capability": _animatediff_capability("AnimateLCMPipeline", lcm=True),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _ANIMATEDIFF_GRAPH_BINDINGS,
         },
         "wan-flf:image-to-video:v1": {
             "modelType": "WanImage2VideoModularPipeline",

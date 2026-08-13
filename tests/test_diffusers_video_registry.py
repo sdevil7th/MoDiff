@@ -22,6 +22,15 @@ from modules.DiffusersVideo import (
     PlanLongVideo,
 )
 from modules.DiffusersVideo.main import (
+    ANIMATEDIFF_BASE_REPO,
+    ANIMATEDIFF_BASE_REVISION,
+    ANIMATEDIFF_MOTION_REPO,
+    ANIMATEDIFF_MOTION_REVISION,
+    ANIMATELCM_LORA_ADAPTER_NAME,
+    ANIMATELCM_LORA_SCALE,
+    ANIMATELCM_LORA_WEIGHT_NAME,
+    ANIMATELCM_MOTION_REPO,
+    ANIMATELCM_MOTION_REVISION,
     FRAMEPACK_BASE_REPO,
     FRAMEPACK_VISION_REPO,
     LTX_DISTILLED_TIMESTEPS,
@@ -2497,6 +2506,178 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             scope="stable-video-diffusion",
         )
         mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_animatediff_loader_pins_safe_base_motion_adapter_and_ddim_scheduler(self):
+        motion_adapter = object()
+        scheduler = object()
+        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_slicing=MagicMock()))
+        node = LoadPipeline("animatediff-loader")
+        with (
+            patch("diffusers.MotionAdapter.from_pretrained", return_value=motion_adapter) as load_motion,
+            patch("diffusers.DDIMScheduler.from_pretrained", return_value=scheduler) as load_scheduler,
+            patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="AnimateDiffPipeline",
+                model_id={"source": "hub", "value": ANIMATEDIFF_BASE_REPO},
+                revision=ANIMATEDIFF_BASE_REVISION,
+                motion_adapter_id={"source": "hub", "value": ANIMATEDIFF_MOTION_REPO},
+                motion_adapter_revision=ANIMATEDIFF_MOTION_REVISION,
+                dtype="float16",
+                device="cpu",
+                offload_mode="model_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "AnimateDiffPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, ANIMATEDIFF_BASE_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, ANIMATEDIFF_BASE_REVISION)
+        self.assertEqual(pipeline._modiff_video_motion_adapter_repo, ANIMATEDIFF_MOTION_REPO)
+        self.assertEqual(pipeline._modiff_video_motion_adapter_revision, ANIMATEDIFF_MOTION_REVISION)
+        motion_args, motion_kwargs = load_motion.call_args
+        self.assertEqual(motion_args, (ANIMATEDIFF_MOTION_REPO,))
+        self.assertEqual(motion_kwargs["revision"], ANIMATEDIFF_MOTION_REVISION)
+        self.assertEqual(motion_kwargs["variant"], "fp16")
+        self.assertIs(motion_kwargs["use_safetensors"], True)
+        scheduler_args, scheduler_kwargs = load_scheduler.call_args
+        self.assertEqual(scheduler_args, (ANIMATEDIFF_BASE_REPO,))
+        self.assertEqual(scheduler_kwargs["subfolder"], "scheduler")
+        self.assertEqual(scheduler_kwargs["revision"], ANIMATEDIFF_BASE_REVISION)
+        self.assertIs(scheduler_kwargs["clip_sample"], False)
+        self.assertEqual(scheduler_kwargs["timestep_spacing"], "linspace")
+        self.assertEqual(scheduler_kwargs["beta_schedule"], "linear")
+        self.assertEqual(scheduler_kwargs["steps_offset"], 1)
+        base_args, base_kwargs = load_pipeline.call_args
+        self.assertEqual(base_args, (ANIMATEDIFF_BASE_REPO,))
+        self.assertIs(base_kwargs["motion_adapter"], motion_adapter)
+        self.assertIs(base_kwargs["scheduler"], scheduler)
+        self.assertEqual(base_kwargs["revision"], ANIMATEDIFF_BASE_REVISION)
+        self.assertEqual(base_kwargs["variant"], "fp16")
+        self.assertIs(base_kwargs["use_safetensors"], True)
+        pipeline.vae.enable_slicing.assert_called_once_with()
+        apply_recipe.assert_called_once_with(pipeline, {})
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="animatediff-loader",
+            scope="animatediff",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_animatelcm_loader_pins_linear_scheduler_and_named_safe_lora(self):
+        replacement_scheduler = object()
+        pipeline = SimpleNamespace(
+            scheduler=SimpleNamespace(config={"beta_schedule": "scaled_linear"}),
+            vae=SimpleNamespace(enable_slicing=MagicMock()),
+            load_lora_weights=MagicMock(),
+            set_adapters=MagicMock(),
+        )
+        node = LoadPipeline("animatelcm-loader")
+        with (
+            patch("diffusers.MotionAdapter.from_pretrained", return_value=object()) as load_motion,
+            patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline),
+            patch("diffusers.LCMScheduler.from_config", return_value=replacement_scheduler) as lcm_scheduler,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+            patch.object(node, "mm_add"),
+        ):
+            node.execute(
+                pipeline_class="AnimateLCMPipeline",
+                model_id={"source": "hub", "value": ANIMATEDIFF_BASE_REPO},
+                revision=ANIMATEDIFF_BASE_REVISION,
+                motion_adapter_id={"source": "hub", "value": ANIMATELCM_MOTION_REPO},
+                motion_adapter_revision=ANIMATELCM_MOTION_REVISION,
+                dtype="float16",
+                device="cpu",
+            )
+
+        self.assertEqual(load_motion.call_args.args, (ANIMATELCM_MOTION_REPO,))
+        self.assertEqual(load_motion.call_args.kwargs["revision"], ANIMATELCM_MOTION_REVISION)
+        lcm_scheduler.assert_called_once_with({"beta_schedule": "scaled_linear"}, beta_schedule="linear")
+        self.assertIs(pipeline.scheduler, replacement_scheduler)
+        pipeline.load_lora_weights.assert_called_once_with(
+            ANIMATELCM_MOTION_REPO,
+            weight_name=ANIMATELCM_LORA_WEIGHT_NAME,
+            adapter_name=ANIMATELCM_LORA_ADAPTER_NAME,
+            revision=ANIMATELCM_MOTION_REVISION,
+            local_files_only=True,
+            use_safetensors=True,
+        )
+        pipeline.set_adapters.assert_called_once_with(
+            [ANIMATELCM_LORA_ADAPTER_NAME],
+            [ANIMATELCM_LORA_SCALE],
+        )
+
+    def test_animatediff_loader_rejects_unreviewed_components_before_weight_loading(self):
+        node = LoadPipeline("strict-animatediff-loader")
+        with patch("diffusers.MotionAdapter.from_pretrained") as load_motion:
+            with self.assertRaisesRegex(ValueError, "requires MotionAdapter"):
+                node.execute(
+                    pipeline_class="AnimateDiffPipeline",
+                    model_id={"source": "hub", "value": ANIMATEDIFF_BASE_REPO},
+                    revision=ANIMATEDIFF_BASE_REVISION,
+                    motion_adapter_id={"source": "hub", "value": ANIMATELCM_MOTION_REPO},
+                    motion_adapter_revision=ANIMATELCM_MOTION_REVISION,
+                    dtype="float16",
+                )
+        load_motion.assert_not_called()
+
+    def test_animatediff_generate_seals_the_short_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(8)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "AnimateLCMPipeline"
+            _modiff_video_repo = ANIMATEDIFF_BASE_REPO
+            _modiff_video_revision = ANIMATEDIFF_BASE_REVISION
+            _modiff_video_motion_adapter_repo = ANIMATELCM_MOTION_REPO
+            _modiff_video_motion_adapter_revision = ANIMATELCM_MOTION_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A paper kite circles above a quiet field.",
+            negative_prompt="flicker",
+            width=512,
+            height=512,
+            num_frames=8,
+            num_inference_steps=6,
+            guidance_scale=1.5,
+            seed=23,
+            output_type="pil",
+        )
+
+        self.assertEqual(result["frames_out"], 8)
+        call = pipeline.calls[0]
+        self.assertEqual(call["num_frames"], 8)
+        self.assertEqual(call["num_inference_steps"], 6)
+        self.assertEqual(call["guidance_scale"], 1.5)
+        self.assertEqual(call["decode_chunk_size"], 16)
+        self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertNotIn("image", call)
+        with self.assertRaisesRegex(ValueError, "step count must be an integer from 1 through 8"):
+            Generate().execute(
+                pipeline=pipeline,
+                mode="text_to_video",
+                prompt="A paper kite circles above a quiet field.",
+                width=512,
+                height=512,
+                num_frames=8,
+                num_inference_steps=9,
+            )
 
     def test_stable_video_loader_rejects_unreviewed_artifacts_before_diffusers(self):
         node = LoadPipeline("strict-stable-video-loader")

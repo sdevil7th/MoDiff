@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T06:42:17.582Z",
+  "generatedAt": "2026-08-13T08:00:02.286Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 84,
-  "supportedPairCount": 96,
+  "supportedCanonicalPairCount": 86,
+  "supportedPairCount": 98,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -179,6 +179,90 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
       "graphHash": "e02a08b1ac4e6182716dca08064c2557bebd92743aab23143dd918769dcd9296"
+    },
+    {
+      "id": "AnimateDiffPipeline:text_to_video",
+      "modelType": "AnimateDiffPipeline",
+      "modelFamily": "AnimateDiff",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "guoyww/animatediff-motion-adapter-v1-5-2"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+            "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906",
+            "kind": "adapter",
+            "requiredForModes": [
+              "text_to_video"
+            ],
+            "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe."
+          }
+        ],
+        "note": "Uses the exact AnimateDiff SD1.5 v2 motion module and documented linear-beta DDIM scheduler."
+      },
+      "pipelineClasses": [
+        "AnimateDiffPipeline"
+      ],
+      "sourceTemplateId": "task-template:animatediff:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
+      "graphHash": "a39d33676afba9bcfd364c5f9a1d8c3afb146a537e82d8818babfe156528c4cf"
+    },
+    {
+      "id": "AnimateLCMPipeline:text_to_video",
+      "modelType": "AnimateLCMPipeline",
+      "modelFamily": "AnimateDiff",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "wangfuyun/AnimateLCM"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "id": "animatelcm-motion-adapter-and-lora",
+            "label": "AnimateLCM MotionAdapter and spatial LoRA",
+            "repo": "wangfuyun/AnimateLCM",
+            "revision": "3d4d00fc113225e1040f4d3bec504b6ec750c10c",
+            "kind": "adapter",
+            "requiredForModes": [
+              "text_to_video"
+            ],
+            "description": "Exact fp16 safetensors motion module and named safetensors LoRA for the LCM recipe."
+          }
+        ],
+        "note": "Uses the exact AnimateLCM motion module, linear-beta LCM scheduler, and named spatial LoRA."
+      },
+      "pipelineClasses": [
+        "AnimateLCMPipeline"
+      ],
+      "sourceTemplateId": "task-template:animatelcm:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
+      "graphHash": "658dff27b265437ef3528b6cdb46d7a7bd865b69727329658603bda7804ae726"
     },
     {
       "id": "AudioLDM2Pipeline:text_to_audio",

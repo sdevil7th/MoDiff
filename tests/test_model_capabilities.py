@@ -98,6 +98,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 ["image_to_video"],
                 "043843887ccd51926e3efed36270444a838e7861",
             ),
+            "AnimateDiffPipeline": (
+                ["text_to_video"],
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            ),
+            "AnimateLCMPipeline": (
+                ["text_to_video"],
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            ),
             "WanImage2VideoModularPipeline": (
                 ["image_to_video"],
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
@@ -113,7 +121,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 84)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 86)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -135,6 +143,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "LTX2ConditionPipeline",
             "HunyuanVideoFramepackPipeline",
             "StableVideoDiffusionPipeline",
+            "AnimateDiffPipeline",
+            "AnimateLCMPipeline",
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",

@@ -181,6 +181,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTX2ConditionPipeline", "video_to_video"),
                 ("HunyuanVideoFramepackPipeline", "image_to_video"),
                 ("StableVideoDiffusionPipeline", "image_to_video"),
+                ("AnimateDiffPipeline", "text_to_video"),
+                ("AnimateLCMPipeline", "text_to_video"),
                 ("WanImage2VideoModularPipeline", "image_to_video"),
                 ("DDPMPipeline", "unconditional_image"),
                 ("DDIMPipeline", "unconditional_image"),

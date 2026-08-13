@@ -48,6 +48,15 @@ FRAMEPACK_VISION_REPO = "lllyasviel/flux_redux_bfl"
 STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
 STABLE_VIDEO_DIFFUSION_REVISION = "043843887ccd51926e3efed36270444a838e7861"
 STABLE_VIDEO_DIFFUSION_VARIANT = "fp16"
+ANIMATEDIFF_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+ANIMATEDIFF_BASE_REVISION = "451f4fe16113bff5a5d2269ed5ad43b0592e9a14"
+ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
+ANIMATEDIFF_MOTION_REVISION = "6167b88ffe39b4441fdf2113e77b99a6f56b7906"
+ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
+ANIMATELCM_MOTION_REVISION = "3d4d00fc113225e1040f4d3bec504b6ec750c10c"
+ANIMATELCM_LORA_WEIGHT_NAME = "AnimateLCM_sd15_t2v_lora.safetensors"
+ANIMATELCM_LORA_ADAPTER_NAME = "animatelcm-lora"
+ANIMATELCM_LORA_SCALE = 0.8
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -275,6 +284,22 @@ VIDEO_PIPELINE_ADAPTERS = {
         default_repo=STABLE_VIDEO_DIFFUSION_REPO,
         modes=("image_to_video",),
     ),
+    "AnimateDiffPipeline": VideoPipelineAdapter(
+        id="animatediff",
+        pipeline_class="AnimateDiffPipeline",
+        diffusers_class="AnimateDiffPipeline",
+        default_repo=ANIMATEDIFF_BASE_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=77,
+    ),
+    "AnimateLCMPipeline": VideoPipelineAdapter(
+        id="animatelcm",
+        pipeline_class="AnimateLCMPipeline",
+        diffusers_class="AnimateDiffPipeline",
+        default_repo=ANIMATEDIFF_BASE_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=77,
+    ),
 }
 
 
@@ -417,6 +442,8 @@ VIDEO_MODE_FIELD_CONTRACTS = {
             required_fields=("reference_images",),
         )
     },
+    "AnimateDiffPipeline": {"text_to_video": _video_field_contract()},
+    "AnimateLCMPipeline": {"text_to_video": _video_field_contract()},
 }
 
 
@@ -443,6 +470,8 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "LTX2ConditionPipeline": "_load_ltx2",
     "HunyuanVideoFramepackPipeline": "_load_framepack",
     "StableVideoDiffusionPipeline": "_load_stable_video_diffusion",
+    "AnimateDiffPipeline": "_load_animatediff",
+    "AnimateLCMPipeline": "_load_animatediff",
 }
 
 
@@ -459,6 +488,8 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "LTX2ConditionPipeline": "_execute_ltx2",
     "HunyuanVideoFramepackPipeline": "_execute_framepack",
     "StableVideoDiffusionPipeline": "_execute_stable_video_diffusion",
+    "AnimateDiffPipeline": "_execute_animatediff",
+    "AnimateLCMPipeline": "_execute_animatediff",
 }
 
 
@@ -592,6 +623,44 @@ def _require_stable_video_artifact(model_selection: Any, model_id: str, revision
     if revision != reviewed_revision or revision != STABLE_VIDEO_DIFFUSION_REVISION:
         raise ValueError(f"Stable Video Diffusion is pinned to {STABLE_VIDEO_DIFFUSION_REVISION}.")
     return reviewed_revision
+
+
+def _require_animatediff_artifacts(
+    adapter: VideoPipelineAdapter,
+    model_selection: Any,
+    model_id: str,
+    revision: Any,
+    motion_selection: Any,
+    motion_revision: Any,
+) -> tuple[str, str, str]:
+    if adapter.pipeline_class not in {"AnimateDiffPipeline", "AnimateLCMPipeline"}:
+        raise ValueError("AnimateDiff artifact validation requires a reviewed AnimateDiff adapter.")
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != ANIMATEDIFF_BASE_REPO:
+        raise ValueError(f"{adapter.pipeline_class} requires the exact reviewed SD1.5 Hub base.")
+    base_revision = require_catalog_revision(ANIMATEDIFF_BASE_REPO, model_type="StableDiffusionPipeline")
+    if revision != base_revision or revision != ANIMATEDIFF_BASE_REVISION:
+        raise ValueError(f"AnimateDiff's SD1.5 base is pinned to {ANIMATEDIFF_BASE_REVISION}.")
+
+    expected_motion_repo = (
+        ANIMATELCM_MOTION_REPO
+        if adapter.pipeline_class == "AnimateLCMPipeline"
+        else ANIMATEDIFF_MOTION_REPO
+    )
+    expected_motion_revision = (
+        ANIMATELCM_MOTION_REVISION
+        if adapter.pipeline_class == "AnimateLCMPipeline"
+        else ANIMATEDIFF_MOTION_REVISION
+    )
+    if not isinstance(motion_selection, dict) or motion_selection.get("source") != "hub":
+        raise ValueError(f"{adapter.pipeline_class} requires an exact reviewed Hub MotionAdapter.")
+    motion_repo = str(motion_selection.get("value") or "")
+    if motion_repo != expected_motion_repo:
+        raise ValueError(f"{adapter.pipeline_class} requires MotionAdapter {expected_motion_repo}.")
+    reviewed_motion_revision = require_catalog_revision(expected_motion_repo)
+    if motion_revision != reviewed_motion_revision or motion_revision != expected_motion_revision:
+        raise ValueError(f"{adapter.pipeline_class} MotionAdapter is pinned to {expected_motion_revision}.")
+    return base_revision, expected_motion_repo, reviewed_motion_revision
 
 
 _MISSING_VIDEO_PIPELINE_TAG = object()
@@ -1019,45 +1088,47 @@ def _validate_ltx_dimensions(width: int, height: int):
         raise ValueError(f"LTX Video width and height must be divisible by 32; received {width}x{height}.")
 
 
-def _bounded_stable_video_int(
+def _bounded_short_video_int(
     value: Any,
     *,
+    family: str,
     default: int,
     label: str,
     minimum: int,
     maximum: int,
 ) -> int:
     if isinstance(value, bool):
-        raise ValueError(f"Stable Video Diffusion {label} must be an integer from {minimum} through {maximum}.")
+        raise ValueError(f"{family} {label} must be an integer from {minimum} through {maximum}.")
     try:
         number = float(default if value is None else value)
     except (TypeError, ValueError, OverflowError) as error:
         raise ValueError(
-            f"Stable Video Diffusion {label} must be an integer from {minimum} through {maximum}."
+            f"{family} {label} must be an integer from {minimum} through {maximum}."
         ) from error
     if not isfinite(number) or not number.is_integer() or not minimum <= number <= maximum:
-        raise ValueError(f"Stable Video Diffusion {label} must be an integer from {minimum} through {maximum}.")
+        raise ValueError(f"{family} {label} must be an integer from {minimum} through {maximum}.")
     return int(number)
 
 
-def _bounded_stable_video_float(
+def _bounded_short_video_float(
     value: Any,
     *,
+    family: str,
     default: float,
     label: str,
     minimum: float,
     maximum: float,
 ) -> float:
     if isinstance(value, bool):
-        raise ValueError(f"Stable Video Diffusion {label} must be finite and from {minimum:g} through {maximum:g}.")
+        raise ValueError(f"{family} {label} must be finite and from {minimum:g} through {maximum:g}.")
     try:
         number = float(default if value is None else value)
     except (TypeError, ValueError, OverflowError) as error:
         raise ValueError(
-            f"Stable Video Diffusion {label} must be finite and from {minimum:g} through {maximum:g}."
+            f"{family} {label} must be finite and from {minimum:g} through {maximum:g}."
         ) from error
     if not isfinite(number) or not minimum <= number <= maximum:
-        raise ValueError(f"Stable Video Diffusion {label} must be finite and from {minimum:g} through {maximum:g}.")
+        raise ValueError(f"{family} {label} must be finite and from {minimum:g} through {maximum:g}.")
     return number
 
 
@@ -1146,6 +1217,20 @@ class LoadPipeline(WanVACELoadPipeline):
             "fieldOptions": {"noValidation": True},
             "onChange": "select_adapter",
         },
+        "motion_adapter_id": {
+            "label": "Motion Adapter",
+            "display": "modelselect",
+            "type": "string",
+            "value": "",
+            "hidden": True,
+            "fieldOptions": {"noValidation": True, "sources": ["hub"]},
+        },
+        "motion_adapter_revision": {
+            "label": "Motion Adapter Revision",
+            "type": "string",
+            "default": "",
+            "hidden": True,
+        },
         "resolved_artifact": {"label": "Resolved Artifact", "display": "output", "type": "string"},
     }
 
@@ -1158,6 +1243,7 @@ class LoadPipeline(WanVACELoadPipeline):
         values["model_id"] = _resolve_adapter_model_selection(adapter, values.get("model_id"))
         model_id = repo_value(values["model_id"])
         values["revision"] = _resolve_loader_revision(values["model_id"], model_id, values.get("revision"))
+        values.setdefault("motion_adapter_id", "")
         return super().__call__(**values)
 
     def execute(self, **kwargs):
@@ -1174,6 +1260,9 @@ class LoadPipeline(WanVACELoadPipeline):
         setattr(pipeline, "_modiff_video_pipeline_class", adapter.pipeline_class)
         setattr(pipeline, "_modiff_video_repo", model_id or adapter.default_repo)
         setattr(pipeline, "_modiff_video_revision", values["revision"])
+        if adapter.pipeline_class in {"AnimateDiffPipeline", "AnimateLCMPipeline"}:
+            setattr(pipeline, "_modiff_video_motion_adapter_repo", repo_value(values.get("motion_adapter_id")))
+            setattr(pipeline, "_modiff_video_motion_adapter_revision", values.get("motion_adapter_revision"))
         return {
             "pipeline": pipeline,
             "resolved_artifact": model_id or adapter.default_repo,
@@ -1406,6 +1495,102 @@ class LoadPipeline(WanVACELoadPipeline):
             **common_kwargs,
             **recipe_load_kwargs,
         )
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
+    def _load_animatediff(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        base_revision, motion_repo, motion_revision = _require_animatediff_artifacts(
+            adapter,
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+            kwargs.get("motion_adapter_id"),
+            kwargs.get("motion_adapter_revision"),
+        )
+        if str(kwargs.get("dtype") or "float16") != "float16":
+            raise ValueError("AnimateDiff source qualification requires dtype=float16.")
+        dtype = str_to_dtype("float16")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError("AnimateDiff source qualification does not admit on-load quantization or a device map.")
+
+        from diffusers import AnimateDiffPipeline, DDIMScheduler, LCMScheduler, MotionAdapter
+
+        common = {
+            "torch_dtype": dtype,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "local_files_only": local_files_only(model_id),
+            "use_safetensors": True,
+        }
+        cache_dir = CONFIG.hf.get("cache_dir")
+        if cache_dir:
+            common["cache_dir"] = cache_dir
+        motion_kwargs = {
+            **common,
+            "revision": motion_revision,
+            "variant": "fp16",
+            "local_files_only": local_files_only(motion_repo),
+        }
+        base_kwargs = {
+            **common,
+            "revision": base_revision,
+            "variant": "fp16",
+            **recipe_load_kwargs,
+        }
+
+        self.progress(-1, phase="loading", message=f"Loading {adapter.pipeline_class} MotionAdapter")
+        motion_adapter = MotionAdapter.from_pretrained(motion_repo, **motion_kwargs)
+        if adapter.pipeline_class == "AnimateDiffPipeline":
+            scheduler_kwargs = {
+                "subfolder": "scheduler",
+                "revision": base_revision,
+                "clip_sample": False,
+                "timestep_spacing": "linspace",
+                "beta_schedule": "linear",
+                "steps_offset": 1,
+                "local_files_only": local_files_only(model_id),
+            }
+            if cache_dir:
+                scheduler_kwargs["cache_dir"] = cache_dir
+            scheduler = DDIMScheduler.from_pretrained(model_id, **scheduler_kwargs)
+            base_kwargs["scheduler"] = scheduler
+
+        self.progress(-1, phase="loading", message=f"Loading {adapter.pipeline_class} SD1.5 base")
+        pipeline = AnimateDiffPipeline.from_pretrained(
+            model_id,
+            motion_adapter=motion_adapter,
+            **base_kwargs,
+        )
+        if adapter.pipeline_class == "AnimateLCMPipeline":
+            pipeline.scheduler = LCMScheduler.from_config(pipeline.scheduler.config, beta_schedule="linear")
+            lora_kwargs = {
+                "weight_name": ANIMATELCM_LORA_WEIGHT_NAME,
+                "adapter_name": ANIMATELCM_LORA_ADAPTER_NAME,
+                "revision": motion_revision,
+                "local_files_only": local_files_only(motion_repo),
+                "use_safetensors": True,
+            }
+            if cache_dir:
+                lora_kwargs["cache_dir"] = cache_dir
+            pipeline.load_lora_weights(motion_repo, **lora_kwargs)
+            pipeline.set_adapters([ANIMATELCM_LORA_ADAPTER_NAME], [ANIMATELCM_LORA_SCALE])
+
+        vae = getattr(pipeline, "vae", None)
+        enable_slicing = getattr(vae, "enable_slicing", None)
+        if not callable(enable_slicing):
+            raise RuntimeError("AnimateDiff did not expose the documented VAE slicing hook.")
+        enable_slicing()
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
@@ -1918,6 +2103,140 @@ class Generate(WanVACEGenerate):
             "frames_out": len(frames) if isinstance(frames, list) else num_frames,
         }
 
+    def _execute_animatediff(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "text_to_video":
+            raise ValueError(f"{adapter.pipeline_class} supports text_to_video generation only.")
+        expected_motion_repo = (
+            ANIMATELCM_MOTION_REPO
+            if adapter.pipeline_class == "AnimateLCMPipeline"
+            else ANIMATEDIFF_MOTION_REPO
+        )
+        expected_motion_revision = (
+            ANIMATELCM_MOTION_REVISION
+            if adapter.pipeline_class == "AnimateLCMPipeline"
+            else ANIMATEDIFF_MOTION_REVISION
+        )
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != ANIMATEDIFF_BASE_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != ANIMATEDIFF_BASE_REVISION
+            or getattr(pipeline, "_modiff_video_motion_adapter_repo", None) != expected_motion_repo
+            or getattr(pipeline, "_modiff_video_motion_adapter_revision", None) != expected_motion_revision
+        ):
+            raise ValueError(f"The connected {adapter.pipeline_class} does not match its reviewed artifact assembly.")
+        for field, label in (
+            ("video", "source video"),
+            ("mask", "mask"),
+            ("pose_video", "pose video"),
+            ("face_video", "face video"),
+            ("background_video", "background video"),
+        ):
+            if ensure_video_list(kwargs.get(field), label) is not None:
+                raise ValueError(f"{adapter.pipeline_class} text_to_video does not accept {label} input.")
+        if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
+            raise ValueError(f"{adapter.pipeline_class} text_to_video does not accept image conditioning.")
+
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        if not isinstance(prompt, str):
+            raise ValueError(f"{adapter.pipeline_class} requires one nonempty prompt string.")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        if negative_prompt is not None and not isinstance(negative_prompt, str):
+            raise ValueError(f"{adapter.pipeline_class} negative prompt must be one string.")
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError(f"{adapter.pipeline_class} source qualification supports one video per prompt.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError(f"{adapter.pipeline_class} source qualification requires output_type=pil.")
+
+        width = _bounded_short_video_int(
+            kwargs.get("width"),
+            family=adapter.pipeline_class,
+            default=512,
+            label="width",
+            minimum=512,
+            maximum=512,
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"),
+            family=adapter.pipeline_class,
+            default=512,
+            label="height",
+            minimum=512,
+            maximum=512,
+        )
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"),
+            family=adapter.pipeline_class,
+            default=16,
+            label="frame count",
+            minimum=8,
+            maximum=16,
+        )
+        max_steps = 8 if adapter.pipeline_class == "AnimateLCMPipeline" else 25
+        default_steps = 6 if adapter.pipeline_class == "AnimateLCMPipeline" else 25
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family=adapter.pipeline_class,
+            default=default_steps,
+            label="step count",
+            minimum=1,
+            maximum=max_steps,
+        )
+        max_guidance = 2.0 if adapter.pipeline_class == "AnimateLCMPipeline" else 12.0
+        default_guidance = 1.5 if adapter.pipeline_class == "AnimateLCMPipeline" else 7.5
+        guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family=adapter.pipeline_class,
+            default=default_guidance,
+            label="guidance",
+            minimum=0.0,
+            maximum=max_guidance,
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                num_inference_steps=steps,
+                guidance_scale=guidance,
+                num_videos_per_prompt=1,
+                generator=generator,
+                output_type=output_type,
+                return_dict=True,
+                decode_chunk_size=16,
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+            )
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        if not isinstance(frames, list) or len(frames) != num_frames:
+            received = len(frames) if isinstance(frames, list) else "an unknown number of"
+            raise RuntimeError(f"{adapter.pipeline_class} returned {received} frames; expected {num_frames}.")
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames),
+        }
+
     def _execute_stable_video_diffusion(
         self,
         pipeline: Any,
@@ -1949,27 +2268,57 @@ class Generate(WanVACEGenerate):
         if output_type != "pil":
             raise ValueError("Stable Video Diffusion source qualification requires output_type=pil.")
 
-        width = _bounded_stable_video_int(
-            kwargs.get("width"), default=1024, label="width", minimum=256, maximum=1024
+        width = _bounded_short_video_int(
+            kwargs.get("width"),
+            family="Stable Video Diffusion",
+            default=1024,
+            label="width",
+            minimum=256,
+            maximum=1024,
         )
-        height = _bounded_stable_video_int(
-            kwargs.get("height"), default=576, label="height", minimum=256, maximum=576
+        height = _bounded_short_video_int(
+            kwargs.get("height"),
+            family="Stable Video Diffusion",
+            default=576,
+            label="height",
+            minimum=256,
+            maximum=576,
         )
         if width % 8 or height % 8:
             raise ValueError(
                 f"Stable Video Diffusion width and height must be divisible by 8; received {width}x{height}."
             )
-        num_frames = _bounded_stable_video_int(
-            kwargs.get("num_frames"), default=25, label="frame count", minimum=8, maximum=25
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"),
+            family="Stable Video Diffusion",
+            default=25,
+            label="frame count",
+            minimum=8,
+            maximum=25,
         )
-        steps = _bounded_stable_video_int(
-            kwargs.get("num_inference_steps"), default=25, label="step count", minimum=1, maximum=50
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family="Stable Video Diffusion",
+            default=25,
+            label="step count",
+            minimum=1,
+            maximum=50,
         )
-        fps = _bounded_stable_video_int(
-            kwargs.get("frame_rate"), default=7, label="frame rate", minimum=1, maximum=30
+        fps = _bounded_short_video_int(
+            kwargs.get("frame_rate"),
+            family="Stable Video Diffusion",
+            default=7,
+            label="frame rate",
+            minimum=1,
+            maximum=30,
         )
-        max_guidance = _bounded_stable_video_float(
-            kwargs.get("guidance_scale"), default=3.0, label="maximum guidance", minimum=1.0, maximum=10.0
+        max_guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="Stable Video Diffusion",
+            default=3.0,
+            label="maximum guidance",
+            minimum=1.0,
+            maximum=10.0,
         )
 
         import torch
