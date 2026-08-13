@@ -4743,6 +4743,27 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   safe official artifacts, cooperative cancellation, backend-owned resource
   bounds, immutable license receipt, remote execution/output review, and
   physical macOS evidence remain independent gates.
+- [x] Evaluate LEDITS++ as a package transform over the already-managed Stable
+  Diffusion bases and keep its multi-stage lifecycle fail-closed. Backend
+  `7bddd15` binds the package-owned SD 1.5 and SDXL edit classes to MoDiff's
+  existing exact base revisions, their already-recorded OpenRAIL terms, and
+  the pinned Diffusers source hashes in `data/ledits-pp-source-review.json`.
+  LEDITS++ is not a distinct model artifact, so it requires zero new weight
+  bytes and no family-specific app download was submitted.
+
+  Both routes require an inversion call followed by a separate edit call. The
+  edit loop exposes a modern callback, but the mandatory inversion loop exposes
+  neither a callback nor an interrupt flag, so the complete job cannot satisfy
+  MoDiff's cooperative cancellation contract. Inversion also stores request
+  latents/noise state on the pipeline instance; a shared generic facade would
+  need an explicit isolation and lifecycle contract. The package does not
+  bound inversion steps, image count, prompt count, dimensions, or input
+  pixels; the SDXL route has no safety checker; and current package
+  documentation warns that perfect inversion is no longer guaranteed. No
+  runtime/download catalog, capability, graph, client, Auto, or Gallery surface
+  was added. Five focused review tests pass; cancellation, request isolation,
+  backend-owned bounds, generic multi-prompt editing, SDXL output guardrails,
+  remote output review, and physical macOS evidence remain independent gates.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5779,7 +5800,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `krea2`
 - [x] `latent_consistency_models`
 - [x] `latent_diffusion`
-- [ ] `ledits_pp`
+- [x] `ledits_pp`
 - [ ] `longcat_image`
 - [ ] `lumina`
 - [ ] `lumina2`
@@ -5911,4 +5932,5 @@ Add references only after the corresponding evidence exists.
 | P6.42 Kandinsky 3 text-to-image and image-edit source admission | `b85b073` | `3007bf3` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, seven-file / 28,390,829,958-byte fp16 safetensors partition, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded single-stage 1024px/25-step/guidance-3 routes, and two Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 123-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.43 Kolors source and custom-license gate review | `3788fe8` | Not required | Static artifact/source/license review only; task-scoped license acceptance, commercial registration/legal approval, downstream restriction implementation, backend-owned bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact public five-file / 17,813,668,046-byte fp16 safetensors partition, immutable metadata/license and package source hashes, and two package-owned 1024px routes are sealed. The custom model agreement conflicts with the Apache-2.0 presentation, purports to trigger on use/access, propagates restrictions, and requires separate authorization for cloud vendors or licensees over 100M monthly users. No runtime/download or user-facing surface was added, and no weights or media were downloaded. |
 | P6.44 Latent Diffusion source and admission-gate review | `79db3b8` | Not required | Static artifact/source review only; safe official artifacts, cooperative full-job cancellation, backend-owned resource/output bounds, immutable model-license receipt, remote output review, and physical macOS execution pending | Not required | The exact public three-file / 6,152,286,891-byte legacy weight partition, immutable metadata and package source hashes, and the package's 256px text-to-image contract are sealed without fetching weight bytes. The snapshot has only executable pickle `.bin` model components, while the package exposes no callback, interrupt flag, safety checker, or upper resource bounds. No runtime/download or user-facing surface was added. |
+| P6.45 LEDITS++ source and admission-gate review | `7bddd15` | Not required | Static package/source review over existing exact SD 1.5 and SDXL bases; full-job cancellation, request-state isolation, backend-owned resource/input bounds, generic multi-prompt editing, SDXL guardrails, remote output review, and physical macOS execution pending | Not required | The two package-owned source identities and stateful invert-then-edit contracts are sealed against MoDiff's existing exact base snapshots. The mandatory inversion phase has no callback or interrupt check and stores request state on the pipeline instance. LEDITS++ needs no distinct model snapshot, so no new weight bytes or family-specific app download were required, and no runtime or user-facing surface was added. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
