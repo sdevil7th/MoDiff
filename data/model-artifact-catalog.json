@@ -345,6 +345,13 @@
       "artifacts": []
     },
     {
+      "modelType": "ChromaPipeline",
+      "baseRepo": "lodestones/Chroma1-HD",
+      "baseRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",

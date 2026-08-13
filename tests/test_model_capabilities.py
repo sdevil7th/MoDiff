@@ -125,7 +125,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 93)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 94)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -166,6 +166,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "SanaSprintPipeline",
             "PixArtSigmaPipeline",
             "AuraFlowPipeline",
+            "ChromaPipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
@@ -368,6 +369,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(auraflow["autoEligible"])
         self.assertFalse(auraflow["galleryEligible"])
         self.assertNotIn("AuraFlowPipeline", experimental)
+        chroma = by_model["ChromaPipeline"]
+        self.assertEqual(
+            chroma["revisionCandidates"],
+            ["0e0c60ece1e82b17cb7f77342d765ba5024c40c0"],
+        )
+        self.assertEqual(chroma["defaultSize"], {"width": 1024, "height": 1024, "aspectRatio": "1:1"})
+        self.assertEqual(chroma["recommendedSteps"], 40)
+        self.assertEqual(chroma["recommendedGuidance"], 3.0)
+        self.assertEqual(chroma["recommendedMaxSequenceLength"], 512)
+        self.assertEqual(chroma["modes"], ["text_to_image"])
+        self.assertEqual(chroma["pipelineClasses"], ["ChromaPipeline"])
+        self.assertFalse(chroma["autoEligible"])
+        self.assertFalse(chroma["galleryEligible"])
+        self.assertNotIn("ChromaPipeline", experimental)
         dreamlite = by_model["DreamLitePipeline"]
         self.assertEqual(
             dreamlite["revisionCandidates"],

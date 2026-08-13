@@ -40,6 +40,7 @@ SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
+CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -5471,6 +5472,90 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["auraflow-v0.3:text-to-image:v1"] = {
     "mode": "text_to_image",
     "profile": _AURAFLOW_V03_PROFILE,
     "capability": _AURAFLOW_V03_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_CHROMA1_HD_PROFILE = {
+    "id": "chroma1-hd:direct",
+    "model_type": "ChromaPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "ChromaPipeline",
+    "default_repo": CHROMA1_HD_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 40,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_CHROMA1_HD_CAPABILITY = {
+    "modelType": "ChromaPipeline",
+    "label": "Chroma",
+    "displayName": "Chroma1-HD 1024px",
+    "family": "Chroma",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": CHROMA1_HD_REPO,
+    "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 40,
+    "recommendedGuidance": 3.0,
+    "recommendedMaxSequenceLength": 512,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 40,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(CHROMA1_HD_REPO, model_type="ChromaPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot uses package-owned Diffusers and Transformers code and a five-file bfloat16 safetensors partition.",
+        "The reviewed recipe is bounded to 1024x1024, 40 steps, guidance 3, at most 512 prompt tokens, and explicit model or sequential CPU offload.",
+        "The approximately 27.49 GB selected weight surface is remote-only; image-to-image, Auto, and Gallery remain disabled pending live review.",
+        "The upstream model card states that the model has no safety alignment, so output safety review is an explicit unresolved gate.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["chroma1-hd:text-to-image:v1"] = {
+    "modelType": "ChromaPipeline",
+    "mode": "text_to_image",
+    "profile": _CHROMA1_HD_PROFILE,
+    "capability": _CHROMA1_HD_CAPABILITY,
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,

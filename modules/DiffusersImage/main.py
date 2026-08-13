@@ -61,6 +61,7 @@ SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
+CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -380,6 +381,15 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_inference_steps=50,
         max_output_side=1536,
         max_sequence_length=256,
+    ),
+    "ChromaPipeline": ImagePipelineAdapter(
+        "ChromaPipeline",
+        frozenset({"text_to_image"}),
+        CHROMA1_HD_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=40,
+        max_output_side=1024,
+        max_sequence_length=512,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
         "DreamLitePipeline",
@@ -753,6 +763,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
     "AuraFlowPipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "ChromaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
     "DreamLitePipeline": {

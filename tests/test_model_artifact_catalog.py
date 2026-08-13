@@ -41,6 +41,7 @@ STUDIO_MODEL_TYPES = {
     "StableDiffusionPAGPipeline",
     "PixArtSigmaPipeline",
     "AuraFlowPipeline",
+    "ChromaPipeline",
 }
 
 
@@ -97,6 +98,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("fal/AuraFlow-v0.3"),
             "2cd8588f04c886002be4571697d84654a50e3af3",
+        )
+        self.assertEqual(
+            catalog_revision("lodestones/Chroma1-HD"),
+            "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
         )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):

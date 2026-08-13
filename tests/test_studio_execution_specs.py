@@ -204,6 +204,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("SanaSprintPipeline", "edit_image"),
                 ("PixArtSigmaPipeline", "text_to_image"),
                 ("AuraFlowPipeline", "text_to_image"),
+                ("ChromaPipeline", "text_to_image"),
                 ("DreamLitePipeline", "text_to_image"),
                 ("DreamLitePipeline", "edit_image"),
                 ("DreamLiteMobilePipeline", "text_to_image"),
@@ -406,6 +407,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(auraflow_profile.max_low_memory_side, 1536)
         self.assertEqual(auraflow_profile.max_low_memory_steps, 50)
         self.assertFalse(auraflow_profile.live_proof)
+        chroma = by_id["chroma1-hd:text-to-image:v1"]
+        self.assertEqual(chroma["modelType"], "ChromaPipeline")
+        self.assertEqual(chroma["pipelineClass"], "ChromaPipeline")
+        self.assertEqual(chroma["defaultRepo"], "lodestones/Chroma1-HD")
+        chroma_profile = DIFFUSERS_EXECUTION_PROFILES[chroma["executionProfileId"]]
+        self.assertEqual(chroma_profile.max_low_memory_side, 1024)
+        self.assertEqual(chroma_profile.max_low_memory_steps, 40)
+        self.assertFalse(chroma_profile.live_proof)
         dreamlite = by_id["dreamlite-base:text-to-image:v1"]
         self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
         self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")

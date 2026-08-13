@@ -28,6 +28,7 @@ from modules.DiffusersImage import (
 )
 from modules.DiffusersImage.main import (
     AURAFLOW_V03_REPO,
+    CHROMA1_HD_REPO,
     CONSISTENCY_IMAGENET64_REPO,
     DDPM_CIFAR10_REPO,
     DREAMLITE_BASE_REPO,
@@ -731,6 +732,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         auraflow = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["AuraFlowPipeline"], "text_to_image")
         self.assertEqual(auraflow["fieldParams"]["width"]["max"], 1536)
         self.assertEqual(auraflow["fieldParams"]["height"]["max"], 1536)
+        chroma = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["ChromaPipeline"], "text_to_image")
+        self.assertEqual(chroma["fieldParams"]["width"]["max"], 1024)
+        self.assertEqual(chroma["fieldParams"]["height"]["max"], 1024)
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -832,6 +836,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ),
             "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
             "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
+            "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -934,6 +939,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
             ("AuraFlowPipeline", "text_to_image", Generate, {}),
+            ("ChromaPipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -2134,6 +2140,77 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 num_inference_steps=50,
                 guidance_scale=3.5,
                 max_sequence_length=257,
+            )
+
+    def test_chroma_loads_only_the_pinned_safe_partition_and_bounds_reviewed_recipe(self):
+        loaded = {}
+
+        class ChromaPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Chroma settings must fail before inference")
+
+        node = LoadPipeline("chroma1-hd-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=ChromaPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=CHROMA1_HD_REPO,
+                pipeline_class="ChromaPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(CHROMA1_HD_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], CHROMA1_HD_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(CHROMA1_HD_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value in (("width", 1040), ("height", 1040)):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "between 16 and 1024"):
+                Generate(f"chroma-{field}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1024,
+                    height=value if field == "height" else 1024,
+                    num_inference_steps=40,
+                    guidance_scale=3.0,
+                    max_sequence_length=512,
+                )
+        with self.assertRaisesRegex(ValueError, "between 1 and 40"):
+            Generate("chroma-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=41,
+                guidance_scale=3.0,
+                max_sequence_length=512,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 512"):
+            Generate("chroma-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=40,
+                guidance_scale=3.0,
+                max_sequence_length=513,
             )
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):

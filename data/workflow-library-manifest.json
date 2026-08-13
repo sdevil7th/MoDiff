@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T13:06:55.280Z",
+  "generatedAt": "2026-08-13T13:44:53.139Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 93,
-  "supportedPairCount": 105,
+  "supportedCanonicalPairCount": 94,
+  "supportedPairCount": 106,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -315,6 +315,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
       "graphHash": "3b948485feee8adac387ece1a22c6519f8d09fe86871be2e056d5bd3cffe996c"
+    },
+    {
+      "id": "ChromaPipeline:text_to_image",
+      "modelType": "ChromaPipeline",
+      "modelFamily": "Chroma",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lodestones/Chroma1-HD"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "ChromaPipeline"
+      ],
+      "sourceTemplateId": "task-template:chroma1-hd:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/chroma-pipeline/text-to-image.json",
+      "graphHash": "49ff06911ef69bce9fa31c3a4b82b9a496fa3a029d51adaa3e9d628449b38914"
     },
     {
       "id": "CogVideoXPipeline:text_to_video",

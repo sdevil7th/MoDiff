@@ -1,0 +1,151 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "ChromaPipeline:text_to_image"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "chroma_img2img_review",
+      "remote_real_weight_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "excludedWeightFiles": [
+    {
+      "byteSize": 17800038288,
+      "path": "Chroma1-HD.safetensors",
+      "reason": "duplicate original single-file distribution outside the selected Diffusers component partition",
+      "sha256": "d446d9695d08276f61e53653e025289dd96f7a489c27982a1fa54ecabc06642a"
+    }
+  ],
+  "family": "Chroma",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Apache-2.0 identifier in the immutable model-card metadata; the repository contains no standalone license file",
+    "id": "apache-2.0",
+    "licenseFilePresent": false
+  },
+  "metadataSha256": {
+    "modelCard": "7fb4b45c76fd5e2028d540dd76b59491eb547edd6271f88769a513c4ac1336be",
+    "modelIndex": "cf83237e214327ef542d8b139cade5537fb44b8eb3aa33911ad6a5f8b4356202",
+    "schedulerConfig": "5420bd572b9a520774c50d79a8bb511f73bf58e691c2a38e4763435625cea197",
+    "textEncoderConfig": "a5052c13f27780d720c78338cb51235395aabb2ed65813dbf6b305727727fb62",
+    "textEncoderIndex": "c5809e56de8e23807f2a901d63a55d42773419080a072458da93c250e4436eac",
+    "tokenizerAddedTokens": "ea5a91a3234f66ea642c8e672d67f0f493759a9bee6910ae304ea9b9492118b5",
+    "tokenizerConfig": "00ded71621afa8f055c4dccf1805d6f2cab12eebe5fd61a95491a009c8c13878",
+    "tokenizerSpecialTokens": "7a1985a994c41886db38c719d2a3d2f40606663cc19d7c5d6a85d349320e06d2",
+    "transformerConfig": "ccd21d38e4f3f2e745118d1e6604c51078067e346f7eeccfc03a4e1e64f5a6d6",
+    "transformerIndex": "bc392d3de12793adafca3a1a8330097ffd3aca8d306b856dc5f71a3cbd573bd3",
+    "vaeConfig": "e423b4a9e49572574de14faf263494416bc757e1bdd62645cfade7284a912565"
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "img2imgPipelineClass": "ChromaImg2ImgPipeline",
+    "img2imgPipelineSha256": "4dfa9751d317efb5cbae8faadc4a77b53312a98a9920675afb44bab01aae0a09",
+    "pipelineClass": "ChromaPipeline",
+    "pipelineOutputClass": "ChromaPipelineOutput",
+    "pipelineOutputSha256": "e9bda254a901e6f53037aa27b3fc93176f92f26159cd82a47d7f5fd3a9c7da39",
+    "pipelineSha256": "3fb52fdc4442d0b1ed03431ff35392cf9a9aa84395fa5ef0ff58b5289b62734e",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "ChromaTransformer2DModel",
+    "transformerSha256": "9b91b47a4137c30167d14be15e8b87c317e4226e87db9facc8c819000d71dd36",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "admittedModes": [
+      "text_to_image"
+    ],
+    "deferredModes": [
+      "image_to_image"
+    ],
+    "defaultGuidanceScale": 3.0,
+    "defaultHeight": 1024,
+    "defaultNumInferenceSteps": 40,
+    "defaultWidth": 1024,
+    "maxSequenceLength": 512,
+    "maximumMoDiffInferenceSteps": 40,
+    "maximumMoDiffOutputSide": 1024,
+    "outputType": "ChromaPipelineOutput",
+    "supportsNegativePrompt": true,
+    "upstreamPipelineDefaultGuidanceScale": 5.0,
+    "upstreamPipelineDefaultNumInferenceSteps": 35
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 25769803776,
+    "minimumSelectiveDiskBytes": 42949672960,
+    "minimumSystemRamBytes": 68719476736,
+    "notes": [
+      "The estimate applies to the admitted unquantized bfloat16 route with model or sequential CPU offload.",
+      "The excluded original single-file distribution is not needed by this route.",
+      "No local or remote measurement has qualified this envelope."
+    ],
+    "status": "estimate_only_qualification_pending"
+  },
+  "repository": {
+    "fullWeightBytes": 45292441526,
+    "fullWeightFileCount": 6,
+    "gated": false,
+    "modelIndexClass": "ChromaPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "lodestones/Chroma1-HD",
+    "repositoryBytes": 45300383271,
+    "revision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+    "selectedWeightBytes": 27492403238,
+    "selectedWeightFileCount": 5,
+    "selectedWeightInventorySha256": "67109c875996d7a90abca6ea9190cefad1907f51e8a58d115af0c387c1aeb3a7",
+    "trustRemoteCodeRequired": false
+  },
+  "safety": {
+    "modelCardDeclaresSafetyAlignment": false,
+    "modelCardWarning": "The upstream card states that Chroma has no safety alignment and may produce harmful, explicit, or offensive content.",
+    "pipelineSafetyCheckerPresent": false
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4994582224,
+      "path": "text_encoder/model-00001-of-00002.safetensors",
+      "sha256": "ec87bffd1923e8b2774a6d240c922a41f6143081d52cf83b8fe39e9d838c893e"
+    },
+    {
+      "byteSize": 4530066360,
+      "path": "text_encoder/model-00002-of-00002.safetensors",
+      "sha256": "a5640855b301fcdbceddfa90ae8066cd9414aff020552a201a255ecf2059da00"
+    },
+    {
+      "byteSize": 9946193392,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "sha256": "59f0b26eccaabb8301e4166e653f1bcdebd7c46a4a07b02fe33d7a2c46d78eba"
+    },
+    {
+      "byteSize": 7853894360,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "sha256": "65e6541afdabbb96568a3f8975eeef929f0a7e0eef3d2c4741b1bf911ac3a6d5"
+    },
+    {
+      "byteSize": 167666902,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3"
+    }
+  ]
+}
