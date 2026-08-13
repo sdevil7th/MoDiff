@@ -4722,6 +4722,27 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   and complete 1,582-test backend overlay with 3,443 subtests and three
   platform skips pass; remote heavy-hardware review and physical macOS
   execution remain pending independently.
+- [x] Evaluate classic Latent Diffusion and keep legacy serialization and
+  cancellation gaps fail-closed. Backend `79db3b8` seals the exact public
+  `CompVis/ldm-text2im-large-256@30de525ca11a880baea4962827fb6cb0bb268955`
+  snapshot, its three-file / 6,152,286,891-byte required weight inventory,
+  immutable metadata hashes, and pinned package-owned pipeline/encoder source
+  identities in `data/latent-diffusion-artifact-review.json` without fetching
+  any model weight bytes.
+
+  All three required model components are legacy PyTorch pickle `.bin`
+  artifacts, and the immutable repository provides no safetensors partition.
+  The static Hub scanner's typical-Torch import result does not make executable
+  pickle deserialization admissible under MoDiff's managed artifact policy.
+  The package pipeline also exposes neither a denoising-step callback nor an
+  interrupt flag, has no safety checker, and does not bound steps, output sides,
+  or output pixels. The model card declares Apache-2.0 but the exact snapshot
+  contains no license file. Consequently no runtime/download catalog,
+  capability, graph, client, Auto, or Gallery surface was added, and the model
+  was not submitted to the app download queue. Five focused review tests pass;
+  safe official artifacts, cooperative cancellation, backend-owned resource
+  bounds, immutable license receipt, remote execution/output review, and
+  physical macOS evidence remain independent gates.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5757,7 +5778,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `kolors`
 - [ ] `krea2`
 - [x] `latent_consistency_models`
-- [ ] `latent_diffusion`
+- [x] `latent_diffusion`
 - [ ] `ledits_pp`
 - [ ] `longcat_image`
 - [ ] `lumina`
@@ -5889,4 +5910,5 @@ Add references only after the corresponding evidence exists.
 | P6.41 Kandinsky 2.2 source and admission-gate review | `75bb0ac` | Not required | Static artifact/source review only; exact connected-prior binding, backend-owned two-stage assembly/bounds, safe ControlNet/refiner artifacts, output guardrails, snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Five exact official repositories, safe 15.86 GB decoder/prior composite surfaces, immutable metadata and package source hashes, two-stage callback contracts, and upstream Apache receipt are sealed. The connected loader remains revision-inexact; official depth-ControlNet and refiner snapshots are legacy `.bin`-only, and the refiner names the 2.1 pipeline without card/license metadata. No runtime/download or user-facing surface was added, and no full weights or media were downloaded. |
 | P6.42 Kandinsky 3 text-to-image and image-edit source admission | `b85b073` | `3007bf3` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, seven-file / 28,390,829,958-byte fp16 safetensors partition, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded single-stage 1024px/25-step/guidance-3 routes, and two Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 123-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.43 Kolors source and custom-license gate review | `3788fe8` | Not required | Static artifact/source/license review only; task-scoped license acceptance, commercial registration/legal approval, downstream restriction implementation, backend-owned bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact public five-file / 17,813,668,046-byte fp16 safetensors partition, immutable metadata/license and package source hashes, and two package-owned 1024px routes are sealed. The custom model agreement conflicts with the Apache-2.0 presentation, purports to trigger on use/access, propagates restrictions, and requires separate authorization for cloud vendors or licensees over 100M monthly users. No runtime/download or user-facing surface was added, and no weights or media were downloaded. |
+| P6.44 Latent Diffusion source and admission-gate review | `79db3b8` | Not required | Static artifact/source review only; safe official artifacts, cooperative full-job cancellation, backend-owned resource/output bounds, immutable model-license receipt, remote output review, and physical macOS execution pending | Not required | The exact public three-file / 6,152,286,891-byte legacy weight partition, immutable metadata and package source hashes, and the package's 256px text-to-image contract are sealed without fetching weight bytes. The snapshot has only executable pickle `.bin` model components, while the package exposes no callback, interrupt flag, safety checker, or upper resource bounds. No runtime/download or user-facing surface was added. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
