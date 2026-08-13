@@ -4621,8 +4621,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 - [ ] Evaluate other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
-- [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
-  immutable-code security review.
+- [x] Complete an explicit immutable-code security review and keep LLaDA2
+  blocked. Backend `444152a` seals the public
+  `inclusionAI/LLaDA2.1-mini` snapshot at
+  `20e64e2ad21644d0e5248586ed9c942cdd45de0f`, its exact eight-file /
+  32,513,130,952-byte safetensors inventory, configuration and index hashes,
+  pinned Diffusers pipeline/scheduler source hashes, and both repository Python
+  blobs. Full visual and static AST/string/import review found no evident file,
+  network, process, unsafe-deserialization, dynamic-import, or dynamic-code
+  primitive in those two immutable files. That is narrow evidence rather than
+  a claim of runtime safety: importing the implementation mutates Transformers'
+  process-global layer-normalization registry, and static review cannot bound
+  dependencies or resource consumption.
+
+  The official loading route still requires `trust_remote_code=True`, which
+  would execute repository Python with all backend-process permissions. The
+  pinned pipeline validates positive values but supplies no backend-owned upper
+  bounds for prompt length, generation/block length, step counts, output size,
+  or cooperative cancellation. This roadmap request is not fresh task-scoped
+  operator authorization for that exact code. Accordingly no runtime/download
+  catalog, capability, workflow, client, Auto, template, or Gallery surface was
+  added. Explicit task-scoped authorization, bounded adapter controls, remote
+  heavy-hardware execution, and physical macOS evidence remain independent
+  gates.
 - [ ] Build the 30-minute video workflow only after chunk generation, checkpoint
   resume, deterministic stitching, audio mux, cancellation, and recovery pass
   independently.
@@ -4857,4 +4878,5 @@ Add references only after the corresponding evidence exists.
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
 | P6.9 Wan 2.1 14B Modular variants | `e4c2385` | Not required | Exact repository-scoped loader admission; remote heavy-hardware and physical macOS execution pending | Not required | T2V-14B and I2V-14B-720P join the already reviewed I2V-480P and FLF-720P variants under exact immutable catalog/index/component contracts. The focused clean-overlay matrix passes 100 tests plus 175 subtests. No new high-level mode, client branch, Auto/template/Gallery surface, weights, or media were added. |
+| P6.10 LLaDA2 immutable-code security review | `444152a` | Not required | Static review only; explicit task-scoped authorization, bounded adapter controls, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact remote-code blobs and eight-shard safetensors inventory are sealed. Static review found no prohibited primitive but did identify a process-global Transformers registry mutation and cannot prove runtime safety. `trust_remote_code` remains fail-closed; no runtime/download catalog or user-facing surface was admitted. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
