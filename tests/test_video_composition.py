@@ -1,7 +1,15 @@
 import numpy as np
 from PIL import Image
 
-from modules.Video.main import Compose, ExportWithAudio, LyricOverlay
+from modiff import media_assets
+from modules.Video.main import (
+    Compose,
+    ConcatenateAssets,
+    ExportAsset,
+    ExportWithAudio,
+    LyricOverlay,
+    MuxAudioAsset,
+)
 from modules import MODULE_MAP
 
 
@@ -57,3 +65,28 @@ def test_export_with_audio_muxes_mp4(tmp_path):
     assert output.stat().st_size > 0
     assert result["frames"] == 16
     assert result["duration_seconds"] == 1
+
+
+def test_retained_segments_stitch_and_mux_audio_without_materializing_the_join(tmp_path, monkeypatch):
+    monkeypatch.setattr(media_assets, "asset_root", lambda root=None: tmp_path)
+    first = ExportAsset("retain-red").execute(video=solid("red", count=8, size=(32, 24)), fps=8, pin=True)
+    second = ExportAsset("retain-blue").execute(video=solid("blue", count=8, size=(32, 24)), fps=8, pin=True)
+
+    joined = ConcatenateAssets("join-segments").execute(
+        clips=[first["asset"], second["asset"]],
+        transition_seconds=0.25,
+        pin=True,
+    )
+    samples = np.zeros((84000, 1), dtype=np.float32)
+    muxed = MuxAudioAsset("mux-segments").execute(
+        video=joined["asset"],
+        audio={"samples": samples, "sample_rate": 48000},
+        fit="match_video",
+        pin=True,
+    )
+
+    assert joined["frames"] == 14
+    assert joined["duration_seconds"] == 1.75
+    assert muxed["frames"] == joined["frames"]
+    assert muxed["duration_seconds"] == joined["duration_seconds"]
+    assert media_assets.coerce_video_asset(muxed["asset"])["path"] == muxed["file"]

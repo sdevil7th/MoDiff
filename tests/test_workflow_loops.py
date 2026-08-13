@@ -121,6 +121,33 @@ class WorkflowLoopTests(unittest.TestCase):
         self.assertEqual(result["collection"], [0, 1, 2])
         self.assertTrue(any("Resuming after 1" in item.get("message", "") for item in self.messages))
 
+    def test_interrupted_loop_resumes_after_its_last_completed_checkpoint(self):
+        graph = self._graph()
+        prepared = self.server._prepare_graph_loops(graph)
+        original_execute = self.server.execute_node
+        completed_result_indexes = []
+
+        def interrupt_after_first_result(node_id, node, sid, **kwargs):
+            output = original_execute(node_id, node, sid, **kwargs)
+            if node_id == "result":
+                index = self.server.node_cache["index"].output["index"]
+                completed_result_indexes.append(index)
+                if index == 0:
+                    self.server.interrupt_flag = True
+            return output
+
+        self.server.execute_node = interrupt_after_first_result
+        with self.assertRaisesRegex(InterruptedError, "interrupted before iteration 2"):
+            self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
+
+        self.server.interrupt_flag = False
+        self.server.node_cache.clear()
+        result = self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
+
+        self.assertEqual(result["collection"], [0, 1, 2])
+        self.assertEqual(completed_result_indexes, [0, 1, 2])
+        self.assertTrue(any("Resuming after 1" in item.get("message", "") for item in self.messages))
+
     def test_loop_rejects_unbounded_or_overlapping_body_contracts(self):
         graph = self._graph()
         graph["loops"][0]["iterations"] = 11
