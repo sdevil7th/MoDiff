@@ -4331,12 +4331,43 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   live claim is made. The complete backend suite passes at 1,318 tests plus
   2,969 subtests, the complete client check and bundle gate pass, and all 106
   mocked Studio cases pass. No weights or media were downloaded.
-- [ ] Add the post-pin `LTX2ModularPipeline` and `LTX25ModularPipeline`, then
-  separately qualify LTX-2.5 distilled single-stage, full/SFT plus stage-2 LoRA,
-  and distilled two-stage recipes. Bind the exact sigma schedules, latent
-  upsampler, duration head, Gemma-4 prompt enhancer, diffusion decoder/NATTEN
-  path, and audio/video output handoff; prompt enhancement must remain an
-  explicit execution action and may not download during discovery or planning.
+- [x] Add the post-pin `LTX2ModularPipeline` and `LTX25ModularPipeline` and
+  complete their no-weight source/recipe review. Backend `7e4f99b` and client
+  `9dfcf62` register both as Expert-visible, contract-only multimodal surfaces,
+  with four generic joint video/audio workflows each: text, image, condition,
+  and in-context generation. Both publish the shared conditioner, duration
+  head, audio VAE, and vocoder contracts and return video plus audio; in-context
+  generation requires an explicit frame count. LTX-2 retains convolutional VAE
+  decode controls, while LTX-2.5 replaces them with the diffusion decoder.
+  Neither class has a runnable mode, default repository, Auto path, template,
+  or Gallery surface, and both fail closed before artifact resolution. The
+  deterministic snapshot now contains all 31 reviewed Modular contracts and 91
+  upstream workflows. The complete client check and focused mocked-browser
+  contract test pass; no weights or media were downloaded.
+
+  Backend `b887aef` separately seals the immutable LTX-2.5 source review in
+  `data/ltx-2.5-artifact-review.json`. It binds distilled single-stage to the
+  exact eight-sigma schedule with guidance disabled; full/SFT stage 1 to dynamic
+  shifting plus x2 latent upsampling, the distilled LoRA, and the exact
+  three-sigma stage-2 tail while retaining stage-1 audio; and distilled
+  two-stage to the same eight/three sigma schedules with one generator and audio
+  latents carried into stage 2. The receipt also binds the duration head,
+  48 kHz audio-VAE/vocoder handoff, diffusion decode with tiled NATTEN attention
+  and seeded `denormalize=False`, and the separate Gemma-4 enhancement recipe.
+  Prompt enhancement and NATTEN kernel provisioning are explicit execution/setup
+  actions and may not download during discovery or planning.
+- [ ] Complete LTX-2.5 artifact and live recipe qualification after gated access
+  is granted and the LTX-2.x Community License is accepted. The official
+  `Lightricks/LTX-2.5-Diffusers` snapshot is pinned at
+  `a6de4b5354f078db24d9cf4778c14846788aea3d`; its public metadata seals 31
+  safetensors files and 163,896,920,128 bytes, but the repository denies file
+  access on this machine. Consequently the gated component indexes cannot yet
+  resolve the concurrent four-shard/eight-shard `transformer/` layouts, no exact
+  selective partition or remote resource envelope is claimed, and the artifact
+  remains outside both runtime and download catalogs. The reviewed license
+  requires a paid commercial agreement at USD 10 million aggregate annual
+  entity revenue and places obligations on derivative transfers. Remote heavy
+  execution and physical macOS evidence remain pending independently.
 - [ ] Evaluate HunyuanVideo 1.5, Helios/Pyramid, Wan 14B/22 Modular, full LTX/LTX2,
   EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video
   families.
@@ -4380,9 +4411,8 @@ Complete this research before implementing any pipeline or model entry:
 
 ## Appendix A — Missing Modular classes
 
-The current inventory contains 20 classes. All are now present at the MoDiff
-pin: 18 are registered contract-only and the two remaining post-pin classes
-still require isolated MoDiff registration and workflow review.
+The current inventory contains 20 classes. All are present at the MoDiff pin and
+all 20 are registered contract-only with reviewed no-weight workflow contracts.
 
 Present in the current pin but not registered by MoDiff:
 
@@ -4402,13 +4432,13 @@ Present in the current pin but not registered by MoDiff:
 - [x] `Wan22ModularPipeline`
 - [x] `Wan22Image2VideoModularPipeline`
 
-Present at the current pin and require MoDiff registration:
+Post-pin classes registered and reviewed by MoDiff:
 
 - [x] `Krea2ModularPipeline`
 - [x] `Krea2TurboModularPipeline`
 - [x] `MiniMaxH3ModularPipeline`
-- [ ] `LTX2ModularPipeline`
-- [ ] `LTX25ModularPipeline`
+- [x] `LTX2ModularPipeline`
+- [x] `LTX25ModularPipeline`
 
 ## Appendix B — Missing standard pipeline families
 
@@ -4573,4 +4603,5 @@ Add references only after the corresponding evidence exists.
 | P6.1 Diffusers pin update | `5ee9e1d` | Compatible client gate revalidated; no client change required | No live run required; remote model qualification remains pending | Not required | Complete isolated pin slice: the exact 73-commit delta was reviewed, existing no-weight Modular contracts remained structurally stable, required custom inputs were synchronized, the full backend suite passed at the proposed pin, and the repaired clean base is dependency-clean and preflight-ready. |
 | P6.2 Krea2 Modular contracts | `1753384` | `ec2a349` | Contract-only; remote execution qualification pending | Not required | Both pinned classes are Expert-visible with exact, distinct base/Turbo contracts and fail closed before artifact resolution. The 28-contract snapshot, 1,313-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights were downloaded. |
 | P6.3 MiniMax H3 contracts and artifact review | `baf7271` | `947a2ef` | Contract-only; legal and remote heavy-hardware qualification pending | Not required | Three generic joint video/audio contracts, disjunctive FL2VA requirements, exact immutable partition/hash receipt, conditioner/scheduler/reference bounds, and an estimate-only resource envelope are sealed. The territory-restricted repository remains outside the runtime/download catalog with zero runnable modes. The 1,318-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX2/LTX2.5, other heavy families, and long-form workflows remain open as independent segments. |
+| P6.4 LTX2/LTX2.5 contracts and source recipe review | `7e4f99b`, `b887aef` | `9dfcf62` | Contract-only; gated artifact indexes, license acceptance, remote heavy-hardware execution, and physical macOS qualification pending | Not required | All eight generic joint video/audio workflows and the distinct convolutional/diffusion decode contracts are sealed. The three official LTX-2.5 source recipes, exact sigma schedules, latent upsampler, duration head, explicit Gemma-4 enhancement, explicit NATTEN setup, and audio/video handoffs are recorded without exposing any runnable mode. Public immutable metadata covers 31 weight files / 163,896,920,128 bytes, but denied gated file access prevents exact partition selection; no weights or media were downloaded. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflows remain open as independent segments. |
