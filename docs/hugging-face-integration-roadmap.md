@@ -4629,6 +4629,27 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   backend composite revision binding and bounds, absent output safety checks,
   model-snapshot license-file clarification, remote execution, live output
   review, and physical macOS evidence remain independent gates.
+- [x] Evaluate Kandinsky 2.2 without weakening composite or serialization
+  policy. Backend `75bb0ac` seals all five official versioned repositories:
+  decoder, prior, inpaint decoder, depth ControlNet, and decoder refiner. The
+  first three expose exact safetensors surfaces of 2 files / 5,283,689,948
+  bytes, 3 files / 10,573,556,608 bytes, and 2 files / 5,283,759,068 bytes.
+  Immutable metadata, six unique bounded safetensors headers, all nine package
+  pipeline sources, and an upstream Apache-2.0 receipt are recorded without
+  downloading full weights.
+
+  Version 2.2 improves the execution contract: its combined text-to-image,
+  image-to-image, and inpaint pipelines expose separate modern callbacks for
+  the prior and decoder, so both denoising stages can be aborted. Admission is
+  nevertheless closed because the connected loader still reuses the primary
+  repository revision on the distinct prior repository, or downloads the
+  prior's moving branch. The official depth-ControlNet and refiner snapshots
+  contain only legacy pickle `.bin` weights; the refiner also names the 2.1
+  pipeline class and has no model card or declared license. Backend two-stage
+  assembly/bounds, safe auxiliary artifacts, output guardrails, snapshot
+  license clarification, remote output review, and physical macOS evidence
+  remain pending. No runtime, download, graph, capability, client, or media
+  surface was added.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5659,7 +5680,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `ideogram4`
 - [x] `joyimage`
 - [x] `kandinsky`
-- [ ] `kandinsky2_2`
+- [x] `kandinsky2_2`
 - [ ] `kandinsky3`
 - [ ] `kolors`
 - [ ] `krea2`
@@ -5793,4 +5814,5 @@ Add references only after the corresponding evidence exists.
 | P6.38 Ideogram 4 source, terms, and admission-gate review | `f09b06c` | Not required | Static gated source/terms review only; task-scoped terms acceptance, authenticated artifact review, commercial agreement/legal approval, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Three exact gated official heads, anonymous visible weight sizes, immutable June 3, 2026 noncommercial terms, and pinned package pipeline/transformer/prompt-enhancer/scheduler/VAE/modular source hashes are sealed without accepting the gate or downloading weights. Masked LFS identities, HTTP-401 configs, commercial/hosted-distribution restrictions, and absent package safety guardrails keep the family outside every runtime/download and user-facing surface. |
 | P6.39 JoyAI Image Edit and Edit Plus source admission | `6d507eb` | `b1cbde7` | Remote real-weight memory/output safety/quality, model-card license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared basic and Plus revisions, two twelve-file / approximately 50.32 GB BF16 safetensors partitions, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded 1024-base bucket recipes, one- and five-reference generic edit contracts, and four Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 121-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.40 Kandinsky 2.1 source and admission-gate review | `c04f151` | Not required | Static artifact/source review only; exact connected-prior binding, full-job cancellation, backend-owned composite bounds, output guardrails, model-snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Three exact public decoder/prior/inpaint revisions, their 13.23 GB composite safetensors-only surfaces, immutable metadata and package source hashes, upstream Apache receipt, three combined-mode contracts, and bounded header evidence are sealed. The package reuses the decoder revision on the distinct prior repository or downloads its moving branch, while the prior stage has no callback; the family remains outside every runtime/download and user-facing surface, and no full weights or media were downloaded. |
+| P6.41 Kandinsky 2.2 source and admission-gate review | `75bb0ac` | Not required | Static artifact/source review only; exact connected-prior binding, backend-owned two-stage assembly/bounds, safe ControlNet/refiner artifacts, output guardrails, snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Five exact official repositories, safe 15.86 GB decoder/prior composite surfaces, immutable metadata and package source hashes, two-stage callback contracts, and upstream Apache receipt are sealed. The connected loader remains revision-inexact; official depth-ControlNet and refiner snapshots are legacy `.bin`-only, and the refiner names the 2.1 pipeline without card/license metadata. No runtime/download or user-facing surface was added, and no full weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
