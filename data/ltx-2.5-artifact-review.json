@@ -1,0 +1,341 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The official artifact is gated and file access is not authorized on this machine; component indexes, license acceptance, exact selected partitions, and remote execution remain unresolved.",
+    "runtimeCatalogExposed": false,
+    "sourceRecipesReviewed": true,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "gated_component_index_access",
+      "license_acceptance",
+      "exact_selected_partition_review",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventory": {
+    "indexFilesAccessible": false,
+    "partitionAmbiguity": "The transformer folder contains concurrent four-shard and eight-shard safetensors layouts. The gated index must be reviewed before selecting either set.",
+    "repositoryWeightBytes": 163896920128,
+    "repositoryWeightFileCount": 31,
+    "status": "metadata_reviewed_partition_selection_pending",
+    "weightFiles": [
+      {
+        "byteSize": 106507972,
+        "path": "audio_vae/diffusion_pytorch_model.safetensors",
+        "sha256": "45dcb1c3cffc8c8b7710a04dd19500e481daff31f5ea8e8529f2cf697c439d12"
+      },
+      {
+        "byteSize": 4999998520,
+        "path": "connectors/diffusion_pytorch_model-00001-of-00002.safetensors",
+        "sha256": "c5bf0768831b67def0322423f3dae012ac3a4528268f6e7c12555e7e918904fa"
+      },
+      {
+        "byteSize": 1344490576,
+        "path": "connectors/diffusion_pytorch_model-00002-of-00002.safetensors",
+        "sha256": "5971a625f1a29f09ac3bfa37fae912aaddbdc93688080528503a43d2d5ac3c3a"
+      },
+      {
+        "byteSize": 6344489120,
+        "path": "connectors/diffusion_pytorch_model.safetensors",
+        "sha256": "3100defaa2f7464acf98fc97e8712860428f2ba3a0156e7763aa9a708d41b786"
+      },
+      {
+        "byteSize": 834313048,
+        "path": "diffusion_decoder/diffusion_pytorch_model.safetensors",
+        "sha256": "f51cdd8fd9af095f1edf35e78545a5d6b053ef873d620a61bdbfe9338eaa5305"
+      },
+      {
+        "byteSize": 3808466,
+        "path": "duration_head/diffusion_pytorch_model.safetensors",
+        "sha256": "282732cae8d2fdfdaa5b0818920513904eb1a443e65ac92f352b4ca0c9184c9a"
+      },
+      {
+        "byteSize": 995743320,
+        "path": "latent_upsampler/diffusion_pytorch_model.safetensors",
+        "sha256": "e2753d6c35d1d8b9daec7529f07a8f6f0e318e091566bb1b2ef7dc2e1bdcb6a5"
+      },
+      {
+        "byteSize": 9699368752,
+        "path": "ltx-2.5-22b-distilled-lora-450-bf16.safetensors",
+        "sha256": "d0ead6a74f62306c8528c81bb9e9a710ccf111b27bb90360e2eef7a51e03b1da"
+      },
+      {
+        "byteSize": 4961189118,
+        "path": "text_encoder/model-00001-of-00005.safetensors",
+        "sha256": "8d296b3a429b9656177ea977b121fd5fdc75f0e1691d762313db15a82ab64381"
+      },
+      {
+        "byteSize": 4966688198,
+        "path": "text_encoder/model-00002-of-00005.safetensors",
+        "sha256": "8b76326b2a1d477901aba51e22b86647955a2697be8ddf5f5f0c7a5ff70f44ba"
+      },
+      {
+        "byteSize": 4884113678,
+        "path": "text_encoder/model-00003-of-00005.safetensors",
+        "sha256": "7fab265ccfac3d0b245d996346b4cf9995163417adb34f1e838f2b6df6793122"
+      },
+      {
+        "byteSize": 4986341908,
+        "path": "text_encoder/model-00004-of-00005.safetensors",
+        "sha256": "cfb34499d755cb0fdd72179a320e3097f37887c94beb1257ba469bf59734b468"
+      },
+      {
+        "byteSize": 4121215522,
+        "path": "text_encoder/model-00005-of-00005.safetensors",
+        "sha256": "cab56a1e843ecec4eb132706ad1ba9ec8cca9baa9adb34c0943b026c18b7bb59"
+      },
+      {
+        "byteSize": 9932336016,
+        "path": "transformer/diffusion_pytorch_model-00001-of-00004.safetensors",
+        "sha256": "a2156e3b2320eab9a2d949dfba0a3f8f5a907a68a2bad9a40a8e4ec6ff04570c"
+      },
+      {
+        "byteSize": 4990503552,
+        "path": "transformer/diffusion_pytorch_model-00001-of-00008.safetensors",
+        "sha256": "4fe269caee6cdb0092da5f8772e358681e0114c3fe10db5559c5fc98fd4b3b78"
+      },
+      {
+        "byteSize": 9919463480,
+        "path": "transformer/diffusion_pytorch_model-00002-of-00004.safetensors",
+        "sha256": "314170928006c629c0e015ad062fb5c1090a0f90ca48111eb3534c15a3de2456"
+      },
+      {
+        "byteSize": 4944207280,
+        "path": "transformer/diffusion_pytorch_model-00002-of-00008.safetensors",
+        "sha256": "7ec4b93d4e1ef61533d1146a1fafb00c22f093fac0c5cf3a37404900baa7e03b"
+      },
+      {
+        "byteSize": 9986144288,
+        "path": "transformer/diffusion_pytorch_model-00003-of-00004.safetensors",
+        "sha256": "2afb34ed41945ff95fa7c33f90ac33cfc766ea6dcb0bb6bc04e228e2471c6f86"
+      },
+      {
+        "byteSize": 4994406312,
+        "path": "transformer/diffusion_pytorch_model-00003-of-00008.safetensors",
+        "sha256": "25356f12d01719be8c2188ba07326711ba61aeffec082332616151073982c2a2"
+      },
+      {
+        "byteSize": 8138277304,
+        "path": "transformer/diffusion_pytorch_model-00004-of-00004.safetensors",
+        "sha256": "a6073fee2aceec165e826d7de162f4e05f19dc72ead8b6e7de9554855fce1d4e"
+      },
+      {
+        "byteSize": 4927612248,
+        "path": "transformer/diffusion_pytorch_model-00004-of-00008.safetensors",
+        "sha256": "1dd7ec777845fe43b687757a6b63cc48f3d1fa8d90af01abae25b8e28b182d65"
+      },
+      {
+        "byteSize": 4977316000,
+        "path": "transformer/diffusion_pytorch_model-00005-of-00008.safetensors",
+        "sha256": "e3ba521808f25219ab30035c16e5d81d72ee91065c18044e40474a02e649cbc1"
+      },
+      {
+        "byteSize": 4994597480,
+        "path": "transformer/diffusion_pytorch_model-00006-of-00008.safetensors",
+        "sha256": "87e27689aba58aab29014786fe003eb1fcbd43c22fc26bcba8d500028e61bb9a"
+      },
+      {
+        "byteSize": 4994098576,
+        "path": "transformer/diffusion_pytorch_model-00007-of-00008.safetensors",
+        "sha256": "9b7b8b1b2b43567525a1be6feefaff3a7d03f6ab0edb05b6a787b4a961e8c016"
+      },
+      {
+        "byteSize": 3162930056,
+        "path": "transformer/diffusion_pytorch_model-00008-of-00008.safetensors",
+        "sha256": "d9b20b0ee4849924129d26d10d383b44787d564678d0288645b844ebc9a6bf88"
+      },
+      {
+        "byteSize": 9932336016,
+        "path": "transformer_full/diffusion_pytorch_model-00001-of-00004.safetensors",
+        "sha256": "d1a688c6c9cb1cf5c778593125f1f7db3ff9d44f30e242a04363c74036caf178"
+      },
+      {
+        "byteSize": 9919463480,
+        "path": "transformer_full/diffusion_pytorch_model-00002-of-00004.safetensors",
+        "sha256": "d7764111e6405d252ba59de66f14d41ba27af4f4ae1cbe10dc0fc872be7c07fb"
+      },
+      {
+        "byteSize": 9986144288,
+        "path": "transformer_full/diffusion_pytorch_model-00003-of-00004.safetensors",
+        "sha256": "992d1bf01790dfdce2215d31567545180286a0f2364eb61a81c1bc050ed3bb64"
+      },
+      {
+        "byteSize": 8138277304,
+        "path": "transformer_full/diffusion_pytorch_model-00004-of-00004.safetensors",
+        "sha256": "a8c215f2eed11d1e304b092087d4283efa04d9f7f8a8e318ce39377b18dd0be4"
+      },
+      {
+        "byteSize": 1452233194,
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "sha256": "425f0dfa227dee5d0ff3d9720563370810409a439c302ca74f0f944057ce55c5"
+      },
+      {
+        "byteSize": 258305056,
+        "path": "vocoder/diffusion_pytorch_model.safetensors",
+        "sha256": "c99dde145a982974bc4c39608b3b929f232f0126a55d8326a47ad54f486ae23c"
+      }
+    ]
+  },
+  "componentContracts": {
+    "diffusionDecoder": {
+      "attentionProcessor": "LTX2VideoVaeNeighborhoodNattenProcessor",
+      "denormalizeLatents": false,
+      "explicitRuntimeSetupRequired": true,
+      "implicitKernelDownloadAllowed": false,
+      "modelClass": "LTX2VideoDiffusionDecoderModel",
+      "path": "diffusion_decoder",
+      "pipelineClass": "LTX2VideoDiffusionDecodePipeline",
+      "reproducibleDecodeRequiresGenerator": true,
+      "requiresKernelsPackage": true,
+      "tilingRequiredForBoundedPeakMemory": true
+    },
+    "durationHead": {
+      "automaticDurationAvailable": true,
+      "inContextRequiresExplicitNumFrames": true,
+      "path": "duration_head"
+    },
+    "latentOutputAudioDecode": {
+      "outputSampleRate": 48000,
+      "steps": [
+        "audio_vae.decode",
+        "vocoder"
+      ]
+    },
+    "promptEnhancement": {
+      "artifactShipsComponent": false,
+      "discoveryDownloadAllowed": false,
+      "exampleModel": "google/gemma-4-E2B-it",
+      "generation": {
+        "doSample": false,
+        "noRepeatNgramSize": 5
+      },
+      "implicit": false,
+      "maxNewTokens": 600,
+      "requiredExecutionAction": true,
+      "seed": 10
+    }
+  },
+  "format": "safetensors",
+  "hub": {
+    "fileAccessAuthorized": false,
+    "gated": "auto",
+    "modelCardByteSize": 25315,
+    "modelCardSha256": "9dbb43eed8c252d021c0e0ec222edfa279ab5edd5b504c855a27b7ae42e8de75",
+    "private": false
+  },
+  "license": {
+    "byteSize": 30938,
+    "commercialUseAgreementThresholdUsdAnnualRevenue": 10000000,
+    "derivativeTransferObligations": true,
+    "entityRevenueAggregatesAffiliates": true,
+    "id": "ltx-2.x-community-license-agreement",
+    "path": "LICENSE.md",
+    "sha256": "4e7dd26d9c9294e1e0549587505dcf4ba40c7c82c50850559f846f92245f6120",
+    "sourceRepository": "Lightricks/LTX-2",
+    "sourceRevision": "fd4ded7f2d88d3da713abcdd4ad41ecc4a9314ca"
+  },
+  "recipeContracts": {
+    "distilledSingleStage": {
+      "audioVideoHandoff": "joint_pipeline_outputs",
+      "guidance": {
+        "audioGuidanceScale": 1.0,
+        "audioModalityScale": 1.0,
+        "audioStgScale": 0.0,
+        "guidanceScale": 1.0,
+        "modalityScale": 1.0,
+        "stgScale": 0.0
+      },
+      "numInferenceStepsSubstitutionAllowed": false,
+      "pipelineClass": "LTX2Pipeline",
+      "sigmas": [
+        1.0,
+        0.99375,
+        0.9875,
+        0.98125,
+        0.975,
+        0.909375,
+        0.725,
+        0.421875
+      ],
+      "transformerPath": "transformer",
+      "videoDecode": "vae_convolutional"
+    },
+    "distilledTwoStage": {
+      "audioVideoHandoff": "carry_audio_latents_into_stage2",
+      "latentUpsamplerPath": "latent_upsampler",
+      "latentUpsamplerSpatialScale": 2,
+      "pipelineClass": "LTX2Pipeline",
+      "reuseGeneratorAcrossStages": true,
+      "stage1Sigmas": [
+        1.0,
+        0.99375,
+        0.9875,
+        0.98125,
+        0.975,
+        0.909375,
+        0.725,
+        0.421875
+      ],
+      "stage2NoiseScale": 0.909375,
+      "stage2Sigmas": [
+        0.909375,
+        0.725,
+        0.421875
+      ],
+      "transformerPath": "transformer"
+    },
+    "fullSftWithStage2Lora": {
+      "audioVideoHandoff": "retain_stage1_audio_and_stage2_video",
+      "latentUpsamplerPath": "latent_upsampler",
+      "latentUpsamplerSpatialScale": 2,
+      "pipelineClass": "LTX2Pipeline",
+      "stage1Scheduler": {
+        "class": "FlowMatchEulerDiscreteScheduler",
+        "shiftTerminal": 0.1,
+        "useDynamicShifting": true
+      },
+      "stage1TransformerPath": "transformer_full",
+      "stage2LoraPath": "ltx-2.5-22b-distilled-lora-450-bf16.safetensors",
+      "stage2NoiseScale": 0.909375,
+      "stage2Sigmas": [
+        0.909375,
+        0.725,
+        0.421875
+      ],
+      "stage2TransformerPath": "transformer_full"
+    }
+  },
+  "remoteResourceEnvelope": {
+    "basis": "No live execution or exact gated index review was performed.",
+    "status": "not_established_until_partition_selection"
+  },
+  "repository": "Lightricks/LTX-2.5-Diffusers",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "revision": "a6de4b5354f078db24d9cf4778c14846788aea3d",
+  "schemaVersion": 1,
+  "sourceReview": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "files": [
+      {
+        "byteSize": 8679,
+        "path": "packages/ltx-pipelines/src/ltx_pipelines/utils/constants.py",
+        "sha256": "cf319487a700c11f6e80eb2d756f742e71470a8f7cc0ac57831a63cccf86fbbd"
+      },
+      {
+        "byteSize": 14618,
+        "path": "packages/ltx-pipelines/src/ltx_pipelines/ti2vid_two_stages.py",
+        "sha256": "3ff0b75079107c55536af71a72e0886d300064dafe131a62c67ff5e15f433c3f"
+      },
+      {
+        "byteSize": 14419,
+        "path": "packages/ltx-pipelines/src/ltx_pipelines/distilled.py",
+        "sha256": "da3e97fcee9a3d355641b59581240bbf51f5741ef9e44537dd9057c20fe2846a"
+      }
+    ],
+    "ltxRepository": "Lightricks/LTX-2",
+    "ltxRevision": "fd4ded7f2d88d3da713abcdd4ad41ecc4a9314ca"
+  }
+}
