@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 72)
+        self.assertEqual(len(self.contracts), 73)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -86,6 +86,9 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionXLTurboPipeline", "text_to_image"): [],
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"): [
                 ("image", "referenceImages"),
+            ],
+            ("StableDiffusionXLControlNetPipeline", "control_image"): [
+                ("image", "controlImage"),
             ],
             ("StableDiffusionXLPipeline", "edit_image"): [
                 ("image", "referenceImages"),
@@ -176,6 +179,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionXLPipeline", "inpaint"),
             ("StableDiffusionXLTurboPipeline", "text_to_image"),
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
+            ("StableDiffusionXLControlNetPipeline", "control_image"),
             ("StableDiffusionPipeline", "text_to_image"),
             ("StableDiffusionPipeline", "edit_image"),
             ("StableDiffusionPipeline", "inpaint"),

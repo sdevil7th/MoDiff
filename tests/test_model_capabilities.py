@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 72)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 73)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -140,6 +140,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionPipeline",
             "StableDiffusionXLTurboPipeline",
             "StableDiffusionXLInstructPix2PixPipeline",
+            "StableDiffusionXLControlNetPipeline",
             "LatentConsistencyModelPipeline",
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
@@ -216,6 +217,25 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(instruct["autoEligible"])
         self.assertFalse(instruct["galleryEligible"])
         self.assertNotIn("StableDiffusionXLInstructPix2PixPipeline", experimental)
+        sdxl_controlnet = by_model["StableDiffusionXLControlNetPipeline"]
+        self.assertEqual(
+            sdxl_controlnet["revisionCandidates"],
+            ["462165984030d82259a11f4367a4eed129e94a7b"],
+        )
+        self.assertEqual(sdxl_controlnet["recommendedSteps"], 50)
+        self.assertEqual(sdxl_controlnet["recommendedGuidance"], 5.0)
+        self.assertEqual(sdxl_controlnet["conditioningScale"], 0.5)
+        self.assertEqual(
+            sdxl_controlnet["modeRequirements"]["control_image"]["modelRequirements"][0]["revision"],
+            "eb115a19a10d14909256db740ed109532ab1483c",
+        )
+        self.assertEqual(
+            sdxl_controlnet["modeRequirements"]["control_image"]["requiredImages"],
+            ["controlImage"],
+        )
+        self.assertFalse(sdxl_controlnet["autoEligible"])
+        self.assertFalse(sdxl_controlnet["galleryEligible"])
+        self.assertNotIn("StableDiffusionXLControlNetPipeline", experimental)
         sdxl_inpaint = next(
             item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
         )

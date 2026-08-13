@@ -56,6 +56,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "control_image",
         )
         redux = studio_model_dependencies_for_pair("FluxReduxPipeline", "edit_image")
+        sdxl_controlnet = studio_model_dependencies_for_pair(
+            "StableDiffusionXLControlNetPipeline",
+            "control_image",
+        )
 
         self.assertEqual(
             qwen,
@@ -76,6 +80,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
                     "kind": "base",
                     "repo": "black-forest-labs/FLUX.1-dev",
                     "revision": "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+                }
+            ],
+        )
+        self.assertEqual(
+            sdxl_controlnet,
+            [
+                {
+                    "id": "sdxl-controlnet-canny",
+                    "kind": "controlnet",
+                    "repo": "diffusers/controlnet-canny-sdxl-1.0",
+                    "revision": "eb115a19a10d14909256db740ed109532ab1483c",
                 }
             ],
         )
@@ -157,6 +172,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPipeline", "control_image"),
                 ("StableDiffusionXLTurboPipeline", "text_to_image"),
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
+                ("StableDiffusionXLControlNetPipeline", "control_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -252,6 +268,23 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(instruct["defaultRepo"], "diffusers/sdxl-instructpix2pix-768")
         self.assertIn(("diffusersImageEdit", "image_guidance_scale", "conditioningScale"), instruct["bindings"])
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[instruct["executionProfileId"]].live_proof)
+        sdxl_controlnet = by_id["sdxl-controlnet-canny:control-image:v1"]
+        self.assertEqual(sdxl_controlnet["modelType"], "StableDiffusionXLControlNetPipeline")
+        self.assertEqual(sdxl_controlnet["pipelineClass"], "StableDiffusionXLControlNetPipeline")
+        self.assertEqual(sdxl_controlnet["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertIn(
+            ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+            sdxl_controlnet["bindings"],
+        )
+        self.assertIn(
+            ("controlPreprocessor", "output", "diffusersImageControl", "control_image"),
+            sdxl_controlnet["edges"],
+        )
+        self.assertIn(
+            ("diffusersImageControl", "conditioning_scale", "conditioningScale"),
+            sdxl_controlnet["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_controlnet["executionProfileId"]].live_proof)
         lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
         self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
         self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")

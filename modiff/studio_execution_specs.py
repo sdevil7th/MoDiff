@@ -32,6 +32,7 @@ FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
+SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -57,6 +58,17 @@ DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
 CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    ("StableDiffusionXLControlNetPipeline", "control_image"): (
+        {
+            "id": "sdxl-controlnet-canny",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": SDXL_CONTROLNET_CANNY_REPO,
+            "revision": require_catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
+            "kind": "controlnet",
+            "requiredForModes": ["control_image"],
+            "description": "Required by the generic SDXL Canny ControlNet workflow.",
+        },
+    ),
     ("StableDiffusionPipeline", "control_image"): (
         {
             "id": "sd15-controlnet-canny",
@@ -4114,6 +4126,96 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-instruct-pix2pix:edit-image:v1"] = {
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS,
+}
+
+
+_SDXL_CONTROLNET_CAPABILITY = {
+    "modelType": "StableDiffusionXLControlNetPipeline",
+    "label": "Stable Diffusion XL ControlNet",
+    "displayName": "SDXL ControlNet Canny",
+    "family": "Stable Diffusion XL",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SDXL_BASE_REPO,
+    "artifactLabel": "Diffusers fp16 safetensors assembly",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 5.0,
+    "guidanceLabel": "Guidance",
+    "conditioningScale": 0.5,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": True,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["control_image"],
+    "modeRequirements": {
+        "control_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionXLControlNetPipeline", "control_image"
+            ),
+            "requiredImages": ["controlImage"],
+            "note": "Requires one control image and the immutable SDXL Canny ControlNet component.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLControlNetPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The Canny ControlNet component is pinned independently and loaded from its reviewed fp16 safetensors variant.",
+        "The generic Canny preprocessor uses the same exact 0.1/0.2 threshold contract as the SD1.5 workflow.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+_SDXL_CONTROLNET_PROFILE = {
+    "id": "sdxl-controlnet-canny:direct",
+    "model_type": "StableDiffusionXLControlNetPipeline",
+    "modes": ("control_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "StableDiffusionXLControlNetPipeline",
+    "default_repo": SDXL_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-image:v1"] = {
+    "modelType": "StableDiffusionXLControlNetPipeline",
+    "mode": "control_image",
+    "profile": _SDXL_CONTROLNET_PROFILE,
+    "capability": _SDXL_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
 }
 
 

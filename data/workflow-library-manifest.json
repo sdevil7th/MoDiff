@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T02:40:15.034Z",
+  "generatedAt": "2026-08-13T02:59:37.974Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 72,
-  "supportedPairCount": 84,
+  "supportedCanonicalPairCount": 73,
+  "supportedPairCount": 85,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1849,6 +1849,51 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-pipeline/text-to-image.json",
       "graphHash": "50366d1593997562e7b916c5e419097f6c2a6e04be9851f16dcd5e07653ce022"
+    },
+    {
+      "id": "StableDiffusionXLControlNetPipeline:control_image",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "modelFamily": "Stable Diffusion XL",
+      "mode": "control_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "id": "sdxl-controlnet-canny",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": "diffusers/controlnet-canny-sdxl-1.0",
+            "revision": "eb115a19a10d14909256db740ed109532ab1483c",
+            "kind": "controlnet",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "description": "Required by the generic SDXL Canny ControlNet workflow."
+          }
+        ],
+        "requiredImages": [
+          "controlImage"
+        ],
+        "note": "Requires one control image and the immutable SDXL Canny ControlNet component."
+      },
+      "pipelineClasses": [
+        "StableDiffusionXLControlNetPipeline"
+      ],
+      "sourceTemplateId": "task-template:sdxl-controlnet-canny:control-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-xlcontrol-net-pipeline/control-image.json",
+      "graphHash": "82b5656f35d3bd69c6c7a7a1e21aa5c10ea3484b8072e370b5104dc899567cd8"
     },
     {
       "id": "StableDiffusionXLInstructPix2PixPipeline:edit_image",

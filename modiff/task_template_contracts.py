@@ -279,19 +279,16 @@ def validate_task_template_graph(
 
     loader = nodes_by_role[contract["loaderRole"]]
     params = loader["data"].get("params", {})
-    binding_sources = {
-        source: (role, param)
-        for role, param, source in specification["bindings"]
-        if role == contract["loaderRole"]
-    }
+    binding_sources = {}
+    for role, param, source in specification["bindings"]:
+        if role == contract["loaderRole"]:
+            binding_sources.setdefault(source, (role, param))
     expected_loader_values = {
         "pipelineClass": contract["pipelineClass"],
         "mode": contract["mode"],
     }
-    for source in ("artifact", "repo"):
-        target = binding_sources.get(source)
-        if target is None:
-            continue
+    target = binding_sources.get("artifact") or binding_sources.get("repo")
+    if target is not None:
         if _field_value(params.get(target[1])) not in contract["loaderRepositories"]:
             raise TaskTemplateContractError("Task-template graph loader identity is not exact.")
     for source, expected in expected_loader_values.items():

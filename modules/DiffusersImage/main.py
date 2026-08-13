@@ -53,6 +53,7 @@ Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
+SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -104,6 +105,7 @@ class ImagePipelineAdapter:
     default_conditioning_repo: str | None = None
     conditioning_component_class: str | None = None
     conditioning_component_parameter: str | None = None
+    conditioning_weight_variant: str | None = None
     control_image_parameter: str = "control_image"
     conditioning_scale_parameter: str | None = None
 
@@ -128,6 +130,11 @@ class ImagePipelineAdapter:
             isinstance(value, str) and value for value in conditioning_fields
         ):
             raise ValueError("Conditioned image adapters must declare one complete auxiliary component contract.")
+        if self.conditioning_weight_variant is not None:
+            if self.conditioning_kind is None:
+                raise ValueError("A conditioning weight variant requires an auxiliary component contract.")
+            if self.conditioning_weight_variant != "fp16":
+                raise ValueError("Only the reviewed fp16 conditioning weight variant is supported.")
 
     @property
     def managed_repos(self) -> frozenset[str]:
@@ -247,6 +254,21 @@ IMAGE_PIPELINE_ADAPTERS = {
         SDXL_INSTRUCT_PIX2PIX_REPO,
         safe_serialization_required=True,
         minimum_image_guidance_scale=1.0,
+    ),
+    "StableDiffusionXLControlNetPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLControlNetPipeline",
+        frozenset({"control_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SDXL_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_weight_variant="fp16",
+        control_image_parameter="image",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -553,6 +575,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "StableDiffusionXLInstructPix2PixPipeline": {
         "edit_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "image_guidance_scale"
+        ),
+    },
+    "StableDiffusionXLControlNetPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
         ),
     },
     "StableDiffusionXLImg2ImgPipeline": {
@@ -2417,6 +2444,8 @@ class LoadPipeline(NodeBase):
                 "local_files_only": local_files_only(conditioning_model_id),
                 "use_safetensors": True,
             }
+            if adapter.conditioning_weight_variant is not None:
+                component_kwargs["variant"] = adapter.conditioning_weight_variant
             base_load_kwargs = {
                 **load_kwargs,
                 "use_safetensors": True,

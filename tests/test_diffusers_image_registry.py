@@ -47,6 +47,7 @@ from modules.DiffusersImage.main import (
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
     SDXL_BASE_REPO,
+    SDXL_CONTROLNET_CANNY_REPO,
     SDXL_INSTRUCT_PIX2PIX_REPO,
     SDXL_TURBO_REPO,
     Z_IMAGE_REPO,
@@ -716,6 +717,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"], "control_image"
         )
         self.assertFalse(controlnet["fieldParams"]["conditioning_scale"]["hidden"])
+        sdxl_controlnet = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLControlNetPipeline"], "control_image"
+        )
+        self.assertFalse(sdxl_controlnet["fieldParams"]["conditioning_scale"]["hidden"])
         turbo = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLTurboPipeline"], "text_to_image"
         )
@@ -754,6 +759,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"edit_image"},
                 SDXL_INSTRUCT_PIX2PIX_REPO,
                 {"prompt", "image", "image_guidance_scale"},
+            ),
+            "StableDiffusionXLControlNetPipeline": (
+                {"control_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image"},
             ),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
@@ -2168,6 +2178,70 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(
             result["pipeline"]._modiff_conditioning_revision,
             catalog_revision(SD15_CONTROLNET_CANNY_REPO),
+        )
+
+    def test_sdxl_conditioned_loader_uses_only_pinned_fp16_safetensors_variants(self):
+        calls = {}
+
+        class FakeControlNet:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+        node = LoadPipeline("sdxl-controlnet-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "ControlNetModel": FakeControlNet,
+                    "StableDiffusionXLControlNetPipeline": FakePipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = node.execute(
+                model_id={"source": "hub", "value": SDXL_BASE_REPO},
+                revision=catalog_revision(SDXL_BASE_REPO),
+                pipeline_class="StableDiffusionXLControlNetPipeline",
+                mode="control_image",
+                conditioning_kind="controlnet",
+                conditioning_model_id={"source": "hub", "value": SDXL_CONTROLNET_CANNY_REPO},
+                conditioning_revision=catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
+                dtype="float16",
+                device="cpu",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, SDXL_CONTROLNET_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(SDXL_CONTROLNET_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertEqual(component_kwargs["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        pipeline_repo, pipeline_kwargs = calls["pipeline"]
+        self.assertEqual(pipeline_repo, SDXL_BASE_REPO)
+        self.assertEqual(pipeline_kwargs["revision"], catalog_revision(SDXL_BASE_REPO))
+        self.assertTrue(pipeline_kwargs["use_safetensors"])
+        self.assertEqual(pipeline_kwargs["variant"], "fp16")
+        self.assertIsInstance(pipeline_kwargs["controlnet"], FakeControlNet)
+        self.assertEqual(result["pipeline"]._modiff_conditioning_kind, "controlnet")
+        self.assertEqual(
+            result["pipeline"]._modiff_conditioning_revision,
+            catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
         )
 
     def test_conditioned_control_action_uses_upstream_image_and_scale_parameters(self):
