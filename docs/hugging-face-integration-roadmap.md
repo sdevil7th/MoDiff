@@ -5034,6 +5034,39 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     clarification, remote execution, live identity/safety review, and physical
     macOS evidence remain independent gates; no weights or media were downloaded
     or retained.
+  - [x] **Latte text-to-video source admission:** backend `180917e` and client
+    `847ed6c` admit the exact public snapshot
+    `maxin-cn/Latte-1@0653024365272f061fc44d1078134df22842b687`
+    through the generic Diffusers video facade. The immutable repository
+    contains no Python and requires no remote code. Six selected safetensors
+    files / 23,614,979,636 bytes, their exact hashes and canonical inventory
+    digest, immutable component/model-card/model-index identities, Hub
+    safetensors metadata, and pinned package pipeline/transformer/VAE source
+    hashes are sealed in `data/latte-artifact-review.json` without downloading
+    weights. The 4,231,339,889-byte unsafe legacy `.pt` checkpoint and the
+    391,017,740-byte optional temporal VAE that is not referenced by the native
+    model index are explicitly excluded. The immutable card declares
+    Apache-2.0, but the repository contains no license file.
+
+    The admitted text-to-video workflow is Expert-only and remote-only. Its
+    backend-owned contract preserves the native 512x512, 16-frame, 50-step,
+    guidance-7.5, 120-token, 8-FPS recipe; requires float16 safe loading; uses
+    one output, raw-caption encoding, the documented feature mask and temporal
+    attentions, 14-frame decode chunks, callbacks, and sequential CPU offload;
+    and rejects every image, video, and mask input. The package signature's
+    50-step/guidance-7.5 defaults are authoritative and the conflicting
+    100-step/guidance-7.0 docstring values are recorded explicitly.
+    Conservative estimate-only planning reserves 16 GiB accelerator memory,
+    32 GiB disk, and 48 GiB system RAM because upstream reports A100 timing but
+    no peak-memory measurement. The deterministic 110-workflow catalog is
+    graph-qualified but explicitly runtime-unqualified; Auto and Gallery remain
+    disabled. The complete 1,471-test backend overlay with 3,204 subtests and
+    three platform skips, Ruff E9/F, compile, 66-package compatibility,
+    preflight, complete client check, and deterministic workflow verification
+    pass. The unchanged client bundle ceiling passes at 530,428 / 530,432 gzip
+    bytes. Remote real-weight output safety/quality review, license-file
+    clarification, and physical macOS execution remain pending independently;
+    no weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5156,7 +5189,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `helios`
 - [x] `hunyuan_video1_5`
 - [x] `kandinsky5`
-- [ ] `latte`
+- [x] `latte`
 - [ ] `lucy`
 - [ ] `mochi`
 - [x] `motif_video`
@@ -5308,4 +5341,5 @@ Add references only after the corresponding evidence exists.
 | P6.23 AnyFlow source and admission-gate review | `09d3c98` | Not required | Static artifact/source review only; noncommercial-license legal approval, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | All four exact public bidirectional/FAR 1.3B/14B revisions, their seven- or nine-file / 26.07-51.87 GB bfloat16 safetensors inventories, complete identical license files, immutable metadata and package source hashes, native T2V/I2V/V2V contracts, FAR chunking, and estimate-only resource envelopes are sealed. The restrictive NVIDIA license and stale custom-code model-card API examples keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.24 ChronoEdit source and admission-gate review | `70640ae` | Not required | Static artifact/source review only; governing-license approval, complete safe guardrail integration, generic edit/reasoning contract, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public 21-file / 90,075,130,404-byte safetensors core, three optional LoRA artifacts, immutable metadata and package source hashes, native image-edit/temporal-reasoning recipes, stale model-index identities, and measured upstream offload figures are sealed. The external governing terms' guardrail condition, package pipeline's missing safety checker, and bundled unsafe `.pth`/`.pt` guardrail artifacts keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.25 ConsisID source and admission-gate review | `a52c7ec` | Not required | Static artifact/source review only; safe cross-platform face stack, biometric privacy/consent controls, generic identity-video contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live identity/safety review, and physical macOS evidence pending | Not required | The exact public five-file / 22,821,396,692-byte safetensors generator and eight-artifact / 1,446,798,634-byte required identity stack, immutable metadata and package source hashes, native 720x480/49-frame recipe, and measured upstream memory figures are sealed. Required unsafe face weights, CUDA-only ONNX providers, weak identity-input validation, and the unavailable second documented checkpoint keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
+| P6.26 Latte text-to-video source admission | `180917e` | `847ed6c` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 23,614,979,636-byte safetensors partition, excluded unsafe legacy `.pt` checkpoint and unreferenced optional temporal VAE, immutable metadata and package source hashes, bounded native 512x512/16-frame recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 110-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
