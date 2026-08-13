@@ -415,6 +415,13 @@
       "artifacts": []
     },
     {
+      "modelType": "PRXPipeline",
+      "baseRepo": "Photoroom/prx-512-t2i-sft",
+      "baseRevision": "2996423bc26e8eaca48774fac1797484214dfea0",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "ChromaPipeline",
       "baseRepo": "lodestones/Chroma1-HD",
       "baseRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",

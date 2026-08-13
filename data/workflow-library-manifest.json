@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T22:06:44.420Z",
+  "generatedAt": "2026-08-13T22:31:15.822Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 119,
-  "supportedPairCount": 131,
+  "supportedCanonicalPairCount": 120,
+  "supportedPairCount": 132,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2358,6 +2358,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
       "graphHash": "c8db41b72ad28c0692250cc1c57d04a194685e58b7aa46d775c4374b86ad964b"
+    },
+    {
+      "id": "PRXPipeline:text_to_image",
+      "modelType": "PRXPipeline",
+      "modelFamily": "PRX",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Photoroom/prx-512-t2i-sft"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "PRXPipeline"
+      ],
+      "sourceTemplateId": "task-template:prx-512-sft:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/prx-pipeline/text-to-image.json",
+      "graphHash": "d75ca98f23098c2c7fb6eee390a7b945cb856510670746ec54f071bc096b3d14"
     },
     {
       "id": "QwenImageEditModularPipeline:edit_image",

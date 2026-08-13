@@ -59,6 +59,7 @@ from modules.DiffusersImage.main import (
     MARIGOLD_DEPTH_LCM_REPO,
     OMNIGEN_REPO,
     OVIS_IMAGE_REPO,
+    PRX_REPO,
     PIXART_SIGMA_REPO,
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
@@ -912,6 +913,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 OVIS_IMAGE_REPO,
                 {"prompt"},
             ),
+            "PRXPipeline": ({"text_to_image"}, PRX_REPO, {"prompt"}),
             "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
             "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
             "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
@@ -1035,6 +1037,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("OmniGenPipeline", "text_to_image", Generate, {}),
             ("OmniGenPipeline", "edit_image", Edit, {"image": image}),
             ("OvisImagePipeline", "text_to_image", Generate, {}),
+            ("PRXPipeline", "text_to_image", Generate, {}),
             ("AuraFlowPipeline", "text_to_image", Generate, {}),
             ("ChromaPipeline", "text_to_image", Generate, {}),
             ("CogView3PlusPipeline", "text_to_image", Generate, {}),
@@ -1070,7 +1073,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "negative_prompt": "negative_prompt",
             "width": "width",
             "height": "height",
-            "max_sequence_length": "max_sequence_length",
             "strength": "strength",
             "padding_mask_crop": "padding_mask_crop",
             "reference_strength": "reference_strength",
@@ -1136,6 +1138,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     if values.get(source) is not None and destination in upstream_parameters
                     and source not in adapter.ignored_generation_parameters
                 }
+                if (
+                    values.get("max_sequence_length") is not None
+                    and adapter.max_sequence_length_parameter in upstream_parameters
+                    and "max_sequence_length" not in adapter.ignored_generation_parameters
+                ):
+                    expected_keys.add(adapter.max_sequence_length_parameter)
                 if adapter.guidance_parameter is not None:
                     expected_keys.add(adapter.guidance_parameter)
                 if (

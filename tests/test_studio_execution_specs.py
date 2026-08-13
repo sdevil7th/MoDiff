@@ -220,6 +220,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("OmniGenPipeline", "edit_image"),
                 ("OmniGenPipeline", "multi_image_reference_edit"),
                 ("OvisImagePipeline", "text_to_image"),
+                ("PRXPipeline", "text_to_image"),
                 ("AuraFlowPipeline", "text_to_image"),
                 ("ChromaPipeline", "text_to_image"),
                 ("CogView3PlusPipeline", "text_to_image"),

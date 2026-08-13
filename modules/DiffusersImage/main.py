@@ -69,6 +69,7 @@ LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
 LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
 OMNIGEN_REPO = "Shitao/OmniGen-v1-diffusers"
 OVIS_IMAGE_REPO = "ATH-MaaS/Ovis-Image-7B"
+PRX_REPO = "Photoroom/prx-512-t2i-sft"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -133,6 +134,7 @@ class ImagePipelineAdapter:
     reference_prompt_placeholders: bool = False
     max_input_image_size: int | None = None
     max_sequence_length: int = 512
+    max_sequence_length_parameter: str = "max_sequence_length"
     max_reference_images: int = 1
     max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
     min_reference_aspect_ratio: float | None = None
@@ -191,6 +193,8 @@ class ImagePipelineAdapter:
             or self.max_input_image_size % 16
         ):
             raise ValueError("An image adapter maximum input side must be a 16-pixel multiple between 16 and 8192.")
+        if not self.max_sequence_length_parameter:
+            raise ValueError("An image adapter prompt-length parameter cannot be blank.")
         unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale"}
         if unsupported_ignored:
             raise ValueError("Image adapters can ignore only reviewed no-op generation parameters.")
@@ -260,7 +264,7 @@ class ImagePipelineAdapter:
             "negative_prompt": "negative_prompt",
             "width": "width",
             "height": "height",
-            "max_sequence_length": "max_sequence_length",
+            "max_sequence_length": self.max_sequence_length_parameter,
             "strength": "strength",
             "padding_mask_crop": "padding_mask_crop",
             "reference_strength": "reference_strength",
@@ -604,6 +608,19 @@ IMAGE_PIPELINE_ADAPTERS = {
         output_side_step=16,
         max_output_pixels=1024 * 1024,
         max_sequence_length=256,
+    ),
+    "PRXPipeline": ImagePipelineAdapter(
+        "PRXPipeline",
+        frozenset({"text_to_image"}),
+        PRX_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=28,
+        min_output_side=352,
+        max_output_side=704,
+        output_side_step=32,
+        max_output_pixels=512 * 512,
+        max_sequence_length=256,
+        max_sequence_length_parameter="tokenizer_max_length",
     ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
@@ -1111,6 +1128,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         },
     },
     "OvisImagePipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
+        ),
+    },
+    "PRXPipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
         ),
