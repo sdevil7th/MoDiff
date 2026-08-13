@@ -5353,7 +5353,7 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     assembly and bounds, remote heavy-hardware safety/quality review, and
     physical macOS execution remain independent gates.
   - [x] **HunyuanImage 2.1 source and territory-gate review:** backend `4987495`
-    commit seals the exact public package-owned conversion
+    seals the exact public package-owned conversion
     `hunyuanvideo-community/HunyuanImage-2.1-Diffusers@7e7b7a177de58591aeaffca0929f4765003d7ced`
     and the governing upstream receipt
     `tencent/HunyuanImage-2.1@e435da11d9e8795a25e224c5ba27b099ed45c55b`.
@@ -5378,6 +5378,36 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     territory enforcement, an immutable composite terms receipt, remote
     heavy-hardware safety/quality/cancellation qualification, and physical
     macOS execution remain independent gates.
+  - [x] **Hunyuan-DiT v1.2 Distilled standalone source admission:** backend
+    `1e97362` and client `e6e306f` expose the already reviewed exact public
+    snapshot
+    `Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled@ba991d1546d8c50936c4c16398ed0a87b9b99fb1`
+    as a distinct package-owned text-to-image workflow. The same base remains
+    independently reusable by the Canny ControlNet assembly; the standalone
+    route does not load or silently require that auxiliary component. Its
+    exact five-file / 14,422,655,700-byte float32 safetensors inventory,
+    canonical digest, immutable metadata/package-source hashes, and sealed
+    Tencent terms receipt are recorded in
+    `data/hunyuan-dit-artifact-review.json` without downloading weights.
+
+    The backend-owned Expert contract fixes the distilled path to 1024x1024,
+    25 steps, package-default guidance 5, BERT/T5 limits of 77/256, float16
+    loading, and explicit CPU offload, while retaining the package callback
+    and interrupt surface. The snapshot declares a required safety checker
+    but ships none, so Auto and Gallery remain disabled. The optional runtime
+    now explicitly validates the base and ControlNet HunyuanDiT pipeline and
+    transformer symbols. Its committed clean-base Linux profile digest
+    `sha256:f6962cd6c533197d19b3767e56595e21955d0514f89106bb2a37b0f118c77c33`
+    passed locked install, validation, activation, the finite CLIP+LoRA child,
+    rollback, and a second fresh clean-base process. The bounded 1,553-byte
+    evidence has SHA-256
+    `532322a065a3fce184fc8ba2bcabdde885226c4af91cc2be3764f76d9dd04c2f`
+    and retained no managed state. The deterministic 117-workflow catalog,
+    complete 1,543-test backend overlay with 3,355 subtests and three platform
+    skips, Ruff E9/F, complete client gates plus the new exact recipe test, and
+    unchanged 530,432-byte gzip ceiling pass. Remote real-weight
+    memory/output safety/quality review and physical macOS execution remain
+    pending independently; no weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5529,7 +5559,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `glm_image`
 - [x] `hidream_image`
 - [x] `hunyuan_image`
-- [ ] `hunyuandit`
+- [x] `hunyuandit`
 - [ ] `ideogram4`
 - [ ] `joyimage`
 - [ ] `kandinsky`
@@ -5663,4 +5693,5 @@ Add references only after the corresponding evidence exists.
 | P6.34 GLM-Image text-to-image source admission | `c338824` | `d42a15c` | Remote real-weight memory/output safety/quality, bundled-license clarification, and physical macOS execution pending | Not required | Exact public MIT-declared revision, incorporated Apache-2.0 tokenizer terms, nine-file / 35,765,307,854-byte mixed BF16/FP32 safetensors inventory, immutable metadata and package/Transformers source hashes, fixed 1024px/50-step/guidance-1.5 recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The revised optional-runtime symbol contract passed a clean-base locked install/activation/workload/rollback qualification. The deterministic 116-workflow catalog is graph-qualified/runtime-unqualified; the missing negative-prompt API and safety checker keep Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.35 HiDream-I1 source and admission-gate review | `0685ee5` | Not required | Authenticated Llama 3.1 terms/artifact review, composite license receipt, backend-owned external encoder assembly/bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public Full/Dev/Fast revisions, three 12-file / approximately 47.18 GB safetensors partitions, shared and variant-specific immutable weight identities, package source hashes, official 50/28/16-step recipes, callbacks, and estimate-only 63.24 GB composite runtime surface are sealed. Every public snapshot omits the required Llama tokenizer/encoder; its manual gate masks artifact identities before acceptance. No runtime/download or user-facing surface is added, and no weights or media were downloaded. |
 | P6.36 HunyuanImage 2.1 source and territory-gate review | `4987495` | Not required | Legal territory/distribution approval, product territory enforcement, immutable composite terms receipt, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public package-owned conversion and governing upstream revisions, ten-file / 53,124,614,990-byte BF16 safetensors inventory, immutable license/notice/config and package source hashes, 2K/50-step/APG-3.5 first-stage recipe, callbacks, and estimate-only resource envelope are sealed. Express EU/UK/South-Korea exclusions keep the family contract-only and outside every runtime/download and user-facing surface; no weights or media were downloaded. |
+| P6.37 Hunyuan-DiT v1.2 Distilled standalone source admission | `1e97362` | `e6e306f` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | The existing exact public distilled base is now a standalone five-file / 14,422,655,700-byte float32 safetensors source with an independently bounded 1024px/25-step/guidance-5 Expert workflow and immutable Tencent terms acknowledgement. The expanded HunyuanDiT optional-runtime symbol surface passed clean-base locked installation, activation, finite workload, rollback, and clean restoration. The deterministic 117-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
