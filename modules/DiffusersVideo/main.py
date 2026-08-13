@@ -4296,7 +4296,7 @@ class PlanLongVideo(NodeBase):
             "type": "image",
             "required": False,
         },
-        "target_seconds": {"label": "Approximate Duration", "type": "float", "default": 30, "min": 1, "max": 600},
+        "target_seconds": {"label": "Approximate Duration", "type": "float", "default": 30, "min": 1, "max": 1800},
         "fps": {"label": "FPS", "type": "int", "default": 16, "min": 1, "max": 60},
         "strategy": {
             "label": "Strategy",
@@ -4306,6 +4306,24 @@ class PlanLongVideo(NodeBase):
         },
         "chunk_seconds": {"label": "Chunk Duration", "type": "float", "default": 5, "min": 1, "max": 30},
         "overlap_seconds": {"label": "Boundary Overlap", "type": "float", "default": 0.25, "min": 0, "max": 5},
+        "max_jobs": {"label": "Maximum Jobs", "type": "int", "default": 512, "min": 1, "max": 10000},
+        "width": {"label": "Width", "type": "int", "default": 704, "min": 16, "max": 2048},
+        "height": {"label": "Height", "type": "int", "default": 480, "min": 16, "max": 2048},
+        "steps": {"label": "Steps", "type": "int", "default": 8, "min": 1, "max": 100},
+        "guidance_scale": {"label": "Guidance", "type": "float", "default": 1, "min": 0, "max": 20},
+        "conditioning_strength": {
+            "label": "Opening Strength",
+            "type": "float",
+            "default": 1,
+            "min": 0,
+            "max": 1,
+        },
+        "negative_prompt": {
+            "label": "Negative Prompt",
+            "display": "textarea",
+            "type": "text",
+            "default": "",
+        },
         "shot_prompts": {
             "label": "Optional Shot Prompts (JSON)",
             "display": "textarea",
@@ -4317,6 +4335,7 @@ class PlanLongVideo(NodeBase):
         "job_count": {"label": "Jobs", "display": "output", "type": "int"},
         "planned_frames": {"label": "Planned Frames", "display": "output", "type": "int"},
         "planned_seconds": {"label": "Planned Duration", "display": "output", "type": "float"},
+        "overlap_frames": {"label": "Overlap Frames", "display": "output", "type": "int"},
     }
 
     @staticmethod
@@ -4342,8 +4361,69 @@ class PlanLongVideo(NodeBase):
         opening_image = kwargs.get("opening_image")
         if strategy != "multi_shot" and opening_image is None:
             raise ValueError(f"{strategy} needs an opening image for its first segment.")
-        fps = max(1, int(kwargs.get("fps") or 16))
-        target_frames = max(1, round(float(kwargs.get("target_seconds") or 30) * fps))
+        fps = _bounded_short_video_int(
+            kwargs.get("fps"), family="Long video", default=16, label="FPS", minimum=1, maximum=60
+        )
+        target_seconds = _bounded_short_video_float(
+            kwargs.get("target_seconds"),
+            family="Long video",
+            default=30,
+            label="target duration",
+            minimum=1,
+            maximum=1800,
+        )
+        chunk_seconds = _bounded_short_video_float(
+            kwargs.get("chunk_seconds"),
+            family="Long video",
+            default=5,
+            label="chunk duration",
+            minimum=1,
+            maximum=30,
+        )
+        overlap_seconds = _bounded_short_video_float(
+            kwargs.get("overlap_seconds"),
+            family="Long video",
+            default=0.25,
+            label="overlap duration",
+            minimum=0,
+            maximum=5,
+        )
+        if overlap_seconds >= chunk_seconds:
+            raise ValueError("Long video overlap duration must be shorter than its chunk duration.")
+        maximum_jobs = _bounded_short_video_int(
+            kwargs.get("max_jobs"),
+            family="Long video",
+            default=512,
+            label="maximum jobs",
+            minimum=1,
+            maximum=10000,
+        )
+        width = _bounded_short_video_int(
+            kwargs.get("width"), family="Long video", default=704, label="width", minimum=16, maximum=2048
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"), family="Long video", default=480, label="height", minimum=16, maximum=2048
+        )
+        steps = _bounded_short_video_int(
+            kwargs.get("steps"), family="Long video", default=8, label="steps", minimum=1, maximum=100
+        )
+        guidance_scale = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="Long video",
+            default=1,
+            label="guidance",
+            minimum=0,
+            maximum=20,
+        )
+        conditioning_strength = _bounded_short_video_float(
+            kwargs.get("conditioning_strength"),
+            family="Long video",
+            default=1,
+            label="conditioning strength",
+            minimum=0,
+            maximum=1,
+        )
+        target_frames = max(1, round(target_seconds * fps))
         seed = int(kwargs.get("seed") or 0)
         raw_shots = kwargs.get("shot_prompts") or "[]"
         try:
@@ -4356,16 +4436,25 @@ class PlanLongVideo(NodeBase):
             raise ValueError("Shot prompts must be a JSON array of non-empty strings.")
 
         if strategy == "framepack_continuous":
+            if target_seconds > 600:
+                raise ValueError(
+                    "FramePack continuous planning remains capped at 600 seconds until its single-job output "
+                    "memory is remotely qualified; use a chunked continuation strategy for 30-minute plans."
+                )
             chunk_frames = target_frames
             count = 1
         else:
-            chunk_frames = self._legal_frames(strategy, round(float(kwargs.get("chunk_seconds") or 5) * fps))
+            chunk_frames = self._legal_frames(strategy, round(chunk_seconds * fps))
             overlap = min(
-                max(0, round(float(kwargs.get("overlap_seconds") or 0) * fps)),
+                max(0, round(overlap_seconds * fps)),
                 max(0, chunk_frames - 1),
             )
             stride = max(1, chunk_frames - overlap)
             count = max(1, ceil(max(0, target_frames - overlap) / stride))
+        if count > maximum_jobs:
+            raise ValueError(
+                f"Long video planning needs {count} jobs, above the configured maximum of {maximum_jobs}."
+            )
         jobs = []
         for index in range(count):
             authored = shot_prompts[index % len(shot_prompts)].strip() if shot_prompts else prompt
@@ -4376,6 +4465,13 @@ class PlanLongVideo(NodeBase):
                     "prompt": authored,
                     "seed": seed + index,
                     "num_frames": chunk_frames,
+                    "fps": fps,
+                    "width": width,
+                    "height": height,
+                    "steps": steps,
+                    "guidance_scale": guidance_scale,
+                    "conditioning_strength": conditioning_strength,
+                    "negative_prompt": str(kwargs.get("negative_prompt") or "").strip(),
                     "mode": "image_to_video" if strategy != "multi_shot" else "text_to_video",
                     "opening_image": opening_image if index == 0 else None,
                     "uses_previous_last_frame": continuity,
@@ -4386,7 +4482,7 @@ class PlanLongVideo(NodeBase):
             0
             if count == 1
             else min(
-                max(0, round(float(kwargs.get("overlap_seconds") or 0) * fps)),
+                max(0, round(overlap_seconds * fps)),
                 max(0, chunk_frames - 1),
             )
         )
@@ -4396,4 +4492,5 @@ class PlanLongVideo(NodeBase):
             "job_count": len(jobs),
             "planned_frames": planned_frames,
             "planned_seconds": planned_frames / fps,
+            "overlap_frames": overlap_frames,
         }

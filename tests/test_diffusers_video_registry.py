@@ -273,6 +273,83 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 strategy="ltx_continuation",
             )
 
+    def test_long_video_planner_emits_a_bounded_30_minute_ltx_job_collection(self):
+        opening = Image.new("RGB", (8, 6), "black")
+        result = PlanLongVideo().execute(
+            prompt="A continuous 30-minute tracking shot.",
+            opening_image=opening,
+            target_seconds=1800,
+            fps=16,
+            strategy="ltx_continuation",
+            chunk_seconds=5,
+            overlap_seconds=0.25,
+            max_jobs=512,
+            width=704,
+            height=480,
+            steps=8,
+            guidance_scale=1,
+            conditioning_strength=0.75,
+            negative_prompt="flicker",
+            seed=40,
+        )
+
+        self.assertEqual(PlanLongVideo.params["target_seconds"]["max"], 1800)
+        self.assertEqual(result["job_count"], 374)
+        self.assertEqual(result["overlap_frames"], 4)
+        self.assertEqual(result["planned_frames"], 28802)
+        self.assertEqual(result["planned_seconds"], 1800.125)
+        self.assertIs(result["jobs"][0]["opening_image"], opening)
+        self.assertIsNone(result["jobs"][1]["opening_image"])
+        self.assertFalse(result["jobs"][0]["uses_previous_last_frame"])
+        self.assertTrue(all(job["uses_previous_last_frame"] for job in result["jobs"][1:]))
+        self.assertEqual(result["jobs"][-1]["seed"], 413)
+        for job in result["jobs"]:
+            self.assertEqual(
+                {
+                    "num_frames": job["num_frames"],
+                    "fps": job["fps"],
+                    "width": job["width"],
+                    "height": job["height"],
+                    "steps": job["steps"],
+                    "guidance_scale": job["guidance_scale"],
+                    "conditioning_strength": job["conditioning_strength"],
+                    "negative_prompt": job["negative_prompt"],
+                },
+                {
+                    "num_frames": 81,
+                    "fps": 16,
+                    "width": 704,
+                    "height": 480,
+                    "steps": 8,
+                    "guidance_scale": 1,
+                    "conditioning_strength": 0.75,
+                    "negative_prompt": "flicker",
+                },
+            )
+
+    def test_long_video_planner_rejects_unbounded_duration_job_count_and_framepack_memory(self):
+        opening = Image.new("RGB", (8, 6), "black")
+        common = {
+            "prompt": "A continuous tracking shot.",
+            "opening_image": opening,
+            "fps": 16,
+            "strategy": "ltx_continuation",
+            "chunk_seconds": 5,
+            "overlap_seconds": 0.25,
+        }
+        with self.assertRaisesRegex(ValueError, "target duration.*1 through 1800"):
+            PlanLongVideo().execute(**common, target_seconds=1801)
+        with self.assertRaisesRegex(ValueError, "needs 374 jobs.*maximum of 300"):
+            PlanLongVideo().execute(**common, target_seconds=1800, max_jobs=300)
+        with self.assertRaisesRegex(ValueError, "FramePack continuous planning remains capped at 600 seconds"):
+            PlanLongVideo().execute(
+                prompt=common["prompt"],
+                opening_image=opening,
+                target_seconds=1800,
+                fps=16,
+                strategy="framepack_continuous",
+            )
+
     def test_facade_has_normalized_contract(self):
         self.assertEqual(LoadPipeline.category, "Diffusers Video")
         self.assertEqual(LoadPipeline.params["pipeline"]["type"], "video_diffusion_pipeline")
