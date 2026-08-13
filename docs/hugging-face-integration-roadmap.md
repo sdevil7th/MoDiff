@@ -5163,6 +5163,39 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     verification pass at 530,406 / 530,432 gzip bytes. Remote real-weight output
     safety/quality review and physical macOS execution remain pending
     independently; no weights or media were downloaded or retained.
+  - [x] **Hunyuan-DiT v1.2 ControlNet Canny source admission:** backend
+    `72185d0` and client `f134f98` admit the exact public distilled base
+    `Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled@ba991d1546d8c50936c4c16398ed0a87b9b99fb1`
+    with the exact Canny component
+    `Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny@b2d21391ebcf78939344cfec84891932f9d53aa0`
+    through the generic Diffusers image facade. Both snapshots are ungated,
+    safetensors-only for the admitted partition, contain no Python, and require
+    no remote code. Their exact six-file / 17,399,623,404-byte float32 weight
+    inventory, canonical digest, safetensors-header parameter counts, immutable
+    metadata identities, and pinned package pipeline/model/VAE/scheduler/output
+    source hashes are sealed in
+    `data/hunyuan-dit-controlnet-artifact-review.json` without downloading
+    weights. The exact Depth and Pose component revisions are cataloged as
+    reviewed Expert substitutions but intentionally have no canonical graph.
+
+    The shared Tencent Hunyuan Community License is sealed from its immutable
+    14,614-byte source and requires one explicit client acknowledgement for the
+    base-plus-ControlNet assembly. Its 100-million-MAU commercial threshold,
+    distribution notices, public machine-generation disclosure, output-use,
+    acceptable-use, and military-use restrictions are recorded without
+    overstating rights. The admitted Expert-only, remote-only graph preserves
+    the official 1024x1024, 50-step, guidance-6, scale-1 Canny recipe, both text
+    ceilings, float16 loading, exact artifact revisions, model CPU offload,
+    and bounded control preprocessing. The base declares a required safety
+    checker but ships none, so Auto and Gallery remain disabled. The
+    deterministic 114-workflow catalog is graph-qualified but explicitly
+    runtime-unqualified. The complete 1,505-test backend overlay with 3,289
+    subtests and three platform skips, Ruff E9/F, compile, 66-package
+    compatibility, modular-contract check, preflight, complete client check,
+    and deterministic workflow verification pass at 530,393 / 530,432 gzip
+    bytes. Remote real-weight memory/output safety/quality review and physical
+    macOS execution remain pending independently; no weights or media were
+    downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5441,4 +5474,5 @@ Add references only after the corresponding evidence exists.
 | P6.27 Lucy Edit source and admission-gate review | `6ab1033` | Not required | Static artifact/source review only; commercial-license and legal product approval, immutable governing terms, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public five-file / 34,182,223,896-byte float32 safetensors inventory, immutable metadata, external license-document receipt, package source hashes, and native 832x480/81-frame edit recipe are sealed. The non-commercial/non-production license defines hosted remote access as distribution, and the package does not bind `num_frames` to input-video length, so the family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.28 Mochi 1 Preview text-to-video source admission | `fb3e39f` | `c0afea5` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, eight-file / 40,024,303,350-byte selected safetensors partition, excluded duplicate original-format, unindexed T5, and float32 partitions, immutable metadata and package source hashes, bounded native 848x480/31-frame recipe, explicit indexed T5 preload, mandatory VAE tiling, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 111-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.29 SANA-Video 2B 480p text/image-to-video source admission | `081a083` | `6ed67bf` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 13,963,813,420-byte mixed-precision safetensors partition, excluded unsafe original-format, distinct 720p, and duplicate-heavy LongLive repositories, immutable metadata and package source hashes, bounded native 832x480/81-frame T2V and I2V recipes, FP32 tiled Wan VAE, Expert-only remote workflows, and estimate-only resource envelope are sealed. The deterministic 113-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.30 Hunyuan-DiT v1.2 ControlNet Canny source admission | `72185d0` | `f134f98` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public distilled-base and Canny revisions, six-file / 17,399,623,404-byte float32 safetensors inventory, optional exact Depth/Pose substitutions, immutable Tencent license receipt and acknowledgement, metadata and package source hashes, bounded native 1024px/50-step/guidance-6/scale-1 Canny recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 114-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
