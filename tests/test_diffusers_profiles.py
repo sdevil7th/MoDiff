@@ -97,6 +97,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "StableDiffusionXLTurboPipeline",
             "StableDiffusionXLInstructPix2PixPipeline",
             "StableDiffusionXLControlNetPipeline",
+            "HunyuanDiTPipeline",
             "HunyuanDiTControlNetPipeline",
             "StableDiffusionXLAdapterPipeline",
             "StableDiffusionXLPAGPipeline",

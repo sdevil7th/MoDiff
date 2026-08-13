@@ -853,6 +853,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 SDXL_BASE_REPO,
                 {"prompt", "image"},
             ),
+            "HunyuanDiTPipeline": ({"text_to_image"}, HUNYUAN_DIT_DISTILLED_REPO, {"prompt"}),
             "HunyuanDiTControlNetPipeline": (
                 {"control_image"},
                 HUNYUAN_DIT_DISTILLED_REPO,
@@ -977,6 +978,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
+            ("HunyuanDiTPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLPAGPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             (

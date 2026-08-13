@@ -317,6 +317,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         control_image_parameter="image",
         conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
+    "HunyuanDiTPipeline": ImagePipelineAdapter(
+        "HunyuanDiTPipeline",
+        frozenset({"text_to_image"}),
+        HUNYUAN_DIT_DISTILLED_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=25,
+        min_output_side=1024,
+        max_output_side=1024,
+        output_side_step=32,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=256,
+    ),
     "HunyuanDiTControlNetPipeline": ImagePipelineAdapter(
         "HunyuanDiTControlNetPipeline",
         frozenset({"control_image"}),
@@ -806,6 +818,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "StableDiffusionXLControlNetPipeline": {
         "control_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
+        ),
+    },
+    "HunyuanDiTPipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
         ),
     },
     "HunyuanDiTControlNetPipeline": {

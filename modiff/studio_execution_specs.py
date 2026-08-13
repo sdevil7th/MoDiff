@@ -5296,6 +5296,90 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-image:v1"] = {
 }
 
 
+_HUNYUAN_DIT_PROFILE = {
+    "id": "hunyuan-dit-v1-2-distilled:direct",
+    "model_type": "HunyuanDiTPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "HunyuanDiTPipeline",
+    "default_repo": HUNYUAN_DIT_DISTILLED_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 25,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_HUNYUAN_DIT_CAPABILITY = {
+    "modelType": "HunyuanDiTPipeline",
+    "label": "Hunyuan-DiT",
+    "displayName": "Hunyuan-DiT v1.2 Distilled",
+    "family": "Hunyuan-DiT",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": HUNYUAN_DIT_DISTILLED_REPO,
+    "artifactLabel": "Official Tencent community-license safetensors snapshot",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 25,
+    "recommendedGuidance": 5.0,
+    "recommendedMaxSequenceLength": 256,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 25,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(HUNYUAN_DIT_DISTILLED_REPO, model_type="HunyuanDiTPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The exact v1.2 distilled snapshot is shared with the separately admitted Canny ControlNet assembly.",
+        "The bounded standalone recipe uses 1024x1024, the model card's 25-step distilled path, package-default guidance 5, and at most 256 T5 tokens.",
+        "The Tencent community license and acceptable-use obligations require explicit acknowledgement before graph creation or installation.",
+        "The immutable model index declares a required safety checker but ships none; Auto and Gallery remain disabled until live safety and quality review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["hunyuan-dit-v1-2-distilled:text-to-image:v1"] = {
+    "modelType": "HunyuanDiTPipeline",
+    "mode": "text_to_image",
+    "profile": _HUNYUAN_DIT_PROFILE,
+    "capability": _HUNYUAN_DIT_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
 _HUNYUAN_DIT_CONTROLNET_CAPABILITY = {
     "modelType": "HunyuanDiTControlNetPipeline",
     "label": "Hunyuan-DiT v1.2 ControlNet",

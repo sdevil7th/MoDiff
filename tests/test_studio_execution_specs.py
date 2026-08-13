@@ -200,6 +200,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLTurboPipeline", "text_to_image"),
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
+                ("HunyuanDiTPipeline", "text_to_image"),
                 ("HunyuanDiTControlNetPipeline", "control_image"),
                 ("StableDiffusionXLAdapterPipeline", "control_image"),
                 ("StableDiffusionXLPAGPipeline", "text_to_image"),

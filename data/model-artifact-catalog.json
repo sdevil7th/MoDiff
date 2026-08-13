@@ -324,6 +324,13 @@
       "artifacts": []
     },
     {
+      "modelType": "HunyuanDiTPipeline",
+      "baseRepo": "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
+      "baseRevision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+      "baseLicense": "tencent-hunyuan-community",
+      "artifacts": []
+    },
+    {
       "modelType": "HunyuanDiTControlNetPipeline",
       "baseRepo": "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
       "baseRevision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",

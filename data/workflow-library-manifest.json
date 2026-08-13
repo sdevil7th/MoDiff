@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T18:11:56.161Z",
+  "generatedAt": "2026-08-13T18:39:03.138Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 104,
-  "supportedPairCount": 116,
+  "supportedCanonicalPairCount": 105,
+  "supportedPairCount": 117,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1472,6 +1472,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
       "graphHash": "04412684fd4308b651f24768c7dbe5f2a67670e8b19629944cc8e3dd5412a67f"
+    },
+    {
+      "id": "HunyuanDiTPipeline:text_to_image",
+      "modelType": "HunyuanDiTPipeline",
+      "modelFamily": "Hunyuan-DiT",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "HunyuanDiTPipeline"
+      ],
+      "sourceTemplateId": "task-template:hunyuan-dit-v1-2-distilled:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/hunyuan-di-t-pipeline/text-to-image.json",
+      "graphHash": "63d2f08a38fd2dd788b1b980c03c94d05094b12e2bc0beabe4c5aff1a505fc27"
     },
     {
       "id": "HunyuanVideoFramepackPipeline:image_to_video",
