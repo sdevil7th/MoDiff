@@ -192,6 +192,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLPAGPipeline", "text_to_image"),
                 ("StableDiffusionXLPAGPipeline", "edit_image"),
                 ("StableDiffusionXLPAGPipeline", "inpaint"),
+                ("SanaPipeline", "text_to_image"),
+                ("SanaSprintPipeline", "text_to_image"),
+                ("SanaSprintPipeline", "edit_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -352,6 +355,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
             ("diffusersImageInpaint", "pag_adaptive_scale", "pagAdaptiveScale"),
             sdxl_pag_inpaint["bindings"],
         )
+        sana = by_id["sana-600m:text-to-image:v1"]
+        self.assertEqual(sana["modelType"], "SanaPipeline")
+        self.assertEqual(sana["pipelineClass"], "SanaPipeline")
+        self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sana["bindings"])
+        self.assertEqual(DIFFUSERS_EXECUTION_PROFILES[sana["executionProfileId"]].max_low_memory_steps, 20)
+        sana_sprint = by_id["sana-sprint-600m:text-to-image:v1"]
+        self.assertEqual(sana_sprint["pipelineClass"], "SanaSprintPipeline")
+        self.assertEqual(
+            DIFFUSERS_EXECUTION_PROFILES[sana_sprint["executionProfileId"]].max_low_memory_steps,
+            4,
+        )
+        sana_sprint_edit = by_id["sana-sprint-600m:edit-image:v1"]
+        self.assertEqual(sana_sprint_edit["modelType"], "SanaSprintPipeline")
+        self.assertEqual(sana_sprint_edit["pipelineClass"], "SanaSprintImg2ImgPipeline")
+        self.assertIn(("diffusersImageEdit", "strength", "strength"), sana_sprint_edit["bindings"])
+        self.assertIn(("loadImage", "image", "diffusersImageEdit", "image"), sana_sprint_edit["edges"])
         self.assertIn(
             ("loadMask", "image", "diffusersImageInpaint", "mask_image"),
             sdxl_pag_inpaint["edges"],

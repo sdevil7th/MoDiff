@@ -57,6 +57,8 @@ SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
+SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
+SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
@@ -93,6 +95,7 @@ class ImagePipelineAdapter:
     upstream_pipeline_class: str | None = None
     safe_serialization_required: bool = False
     weight_variant: str | None = None
+    component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     max_inference_steps: int = 100
     fixed_guidance_scale: float | None = None
     minimum_image_guidance_scale: float = 0.0
@@ -121,6 +124,11 @@ class ImagePipelineAdapter:
             raise ValueError("The minimum image guidance scale must be between 0 and 20.")
         if self.weight_variant is not None and self.weight_variant != "fp16":
             raise ValueError("Only the reviewed fp16 image weight variant is supported.")
+        component_names = [name for name, _dtype in self.component_dtype_overrides]
+        if len(component_names) != len(set(component_names)) or any(not name for name in component_names):
+            raise ValueError("Image component dtype overrides must name unique non-empty components.")
+        if any(dtype not in {"float32", "float16", "bfloat16"} for _name, dtype in self.component_dtype_overrides):
+            raise ValueError("Image component dtype overrides must use a supported torch dtype.")
         conditioning_fields = (
             self.conditioning_kind,
             self.default_conditioning_repo,
@@ -309,6 +317,32 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("StableDiffusionXLPipeline",),
         safe_serialization_required=True,
         weight_variant="fp16",
+    ),
+    "SanaPipeline": ImagePipelineAdapter(
+        "SanaPipeline",
+        frozenset({"text_to_image"}),
+        SANA_REPO,
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        component_dtype_overrides=(("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+        max_sequence_length=300,
+    ),
+    "SanaSprintPipeline": ImagePipelineAdapter(
+        "SanaSprintPipeline",
+        frozenset({"text_to_image"}),
+        SANA_SPRINT_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=4,
+        max_sequence_length=300,
+    ),
+    "SanaSprintImg2ImgPipeline": ImagePipelineAdapter(
+        "SanaSprintImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        SANA_SPRINT_REPO,
+        artifact_pipeline_classes=("SanaSprintPipeline",),
+        safe_serialization_required=True,
+        max_inference_steps=4,
+        max_sequence_length=300,
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -648,6 +682,15 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "pag_scale",
             "pag_adaptive_scale",
         ),
+    },
+    "SanaPipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "SanaSprintPipeline": {
+        "text_to_image": _image_field_contract("width", "height", "guidance_scale", "max_sequence_length"),
+    },
+    "SanaSprintImg2ImgPipeline": {
+        "edit_image": _image_field_contract("width", "height", "guidance_scale", "strength", "max_sequence_length"),
     },
     "StableDiffusionXLImg2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
@@ -2529,6 +2572,13 @@ class LoadPipeline(NodeBase):
             pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
                 pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+        for component_name, component_dtype in adapter.component_dtype_overrides:
+            component = getattr(pipeline, component_name, None)
+            if component is None or not callable(getattr(component, "to", None)):
+                raise RuntimeError(
+                    f"{pipeline_class_name} did not expose its reviewed {component_name} component for dtype placement."
+                )
+            component.to(str_to_dtype(component_dtype))
         _tag_image_pipeline(
             pipeline,
             adapter,

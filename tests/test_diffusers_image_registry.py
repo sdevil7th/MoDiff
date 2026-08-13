@@ -46,6 +46,8 @@ from modules.DiffusersImage.main import (
     MARIGOLD_DEPTH_LCM_REPO,
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
+    SANA_REPO,
+    SANA_SPRINT_REPO,
     SDXL_BASE_REPO,
     SDXL_CONTROLNET_CANNY_REPO,
     SDXL_INSTRUCT_PIX2PIX_REPO,
@@ -719,6 +721,20 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertFalse(sdxl_pag["fieldParams"]["pag_scale"]["hidden"])
         self.assertFalse(sdxl_pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
+        sana = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["SanaPipeline"], "text_to_image")
+        self.assertFalse(sana["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertFalse(sana["fieldParams"]["max_sequence_length"]["hidden"])
+        sana_sprint = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
+        )
+        self.assertTrue(sana_sprint["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertFalse(sana_sprint["fieldParams"]["max_sequence_length"]["hidden"])
+        sana_sprint_edit = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["SanaSprintImg2ImgPipeline"], "edit_image"
+        )
+        self.assertFalse(sana_sprint_edit["fieldParams"]["width"]["hidden"])
+        self.assertFalse(sana_sprint_edit["fieldParams"]["height"]["hidden"])
+        self.assertFalse(sana_sprint_edit["fieldParams"]["strength"]["hidden"])
         for pipeline_name, mode in (
             ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
             ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
@@ -800,6 +816,13 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 SDXL_BASE_REPO,
                 {"prompt", "image", "mask_image"},
             ),
+            "SanaPipeline": ({"text_to_image"}, SANA_REPO, {"prompt"}),
+            "SanaSprintPipeline": ({"text_to_image"}, SANA_SPRINT_REPO, {"prompt"}),
+            "SanaSprintImg2ImgPipeline": (
+                {"edit_image"},
+                SANA_SPRINT_REPO,
+                {"prompt", "image"},
+            ),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -863,6 +886,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "ZImageControlNetPipeline",
             "ZImageControlNetInpaintPipeline",
             "ZImageOmniPipeline",
+            "DreamLitePipeline",
+            "DreamLiteMobilePipeline",
         ):
             with self.subTest(deferred=deferred):
                 self.assertNotIn(deferred, IMAGE_PIPELINE_ADAPTERS)
@@ -886,6 +911,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 Inpaint,
                 {"image": image, "mask_image": mask},
             ),
+            ("SanaPipeline", "text_to_image", Generate, {}),
+            ("SanaSprintPipeline", "text_to_image", Generate, {}),
+            ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
@@ -1851,6 +1879,100 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertEqual(loaded["kwargs"]["variant"], "fp16")
                 self.assertNotIn("trust_remote_code", loaded["kwargs"])
                 self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
+
+    def test_sana_loads_the_reviewed_mixed_precision_safetensors_variant(self):
+        loaded = {}
+
+        class PrecisionComponent:
+            def __init__(self):
+                self.to_calls = []
+
+            def to(self, dtype):
+                self.to_calls.append(dtype)
+                return self
+
+        class SanaPipeline:
+            def __init__(self):
+                self.text_encoder = PrecisionComponent()
+                self.vae = PrecisionComponent()
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+        node = LoadPipeline("sana-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=SanaPipeline),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SANA_REPO,
+                pipeline_class="SanaPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(SANA_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], SANA_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SANA_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        self.assertEqual(result["pipeline"].text_encoder.to_calls, ["bfloat16"])
+        self.assertEqual(result["pipeline"].vae.to_calls, ["bfloat16"])
+
+    def test_sana_sprint_loads_native_bfloat16_safetensors_and_bounds_steps(self):
+        loaded = {}
+
+        class SanaSprintPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Sprint settings must fail before inference")
+
+        node = LoadPipeline("sana-sprint-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=SanaSprintPipeline),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SANA_SPRINT_REPO,
+                pipeline_class="SanaSprintPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(SANA_SPRINT_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], SANA_SPRINT_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SANA_SPRINT_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        with self.assertRaisesRegex(ValueError, "between 1 and 4"):
+            Generate("sana-sprint-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=32,
+                height=32,
+                num_inference_steps=5,
+                guidance_scale=4.5,
+            )
 
     def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):
         loaded = {}

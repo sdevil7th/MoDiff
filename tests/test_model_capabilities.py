@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 77)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 80)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -143,6 +143,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionXLControlNetPipeline",
             "StableDiffusionXLAdapterPipeline",
             "StableDiffusionXLPAGPipeline",
+            "SanaPipeline",
+            "SanaSprintPipeline",
             "LatentConsistencyModelPipeline",
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
@@ -286,6 +288,36 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sdxl_pag["autoEligible"])
         self.assertFalse(sdxl_pag["galleryEligible"])
         self.assertNotIn("StableDiffusionXLPAGPipeline", experimental)
+        sana = by_model["SanaPipeline"]
+        self.assertEqual(sana["revisionCandidates"], ["28f3af7689de15f3883d5863059a2fca0aa9b829"])
+        self.assertEqual(sana["recommendedSteps"], 20)
+        self.assertEqual(sana["recommendedGuidance"], 4.5)
+        self.assertEqual(sana["recommendedMaxSequenceLength"], 300)
+        self.assertEqual(sana["defaultDtype"], "float16")
+        self.assertEqual(sana["pipelineClasses"], ["SanaPipeline"])
+        self.assertFalse(sana["autoEligible"])
+        self.assertFalse(sana["galleryEligible"])
+        sana_sprint = by_model["SanaSprintPipeline"]
+        self.assertEqual(
+            sana_sprint["revisionCandidates"],
+            ["aa76e7f4f4928f378716b6716a2130fba3caf5b1"],
+        )
+        self.assertEqual(sana_sprint["recommendedSteps"], 2)
+        self.assertEqual(sana_sprint["recommendedStrength"], 0.5)
+        self.assertEqual(sana_sprint["recommendedMaxSequenceLength"], 300)
+        self.assertEqual(sana_sprint["modes"], ["text_to_image", "edit_image"])
+        self.assertEqual(
+            sana_sprint["pipelineClasses"],
+            ["SanaSprintImg2ImgPipeline", "SanaSprintPipeline"],
+        )
+        self.assertEqual(
+            sana_sprint["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertFalse(sana_sprint["autoEligible"])
+        self.assertFalse(sana_sprint["galleryEligible"])
+        self.assertNotIn("SanaPipeline", experimental)
+        self.assertNotIn("SanaSprintPipeline", experimental)
         sdxl_inpaint = next(
             item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
         )

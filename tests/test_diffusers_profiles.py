@@ -85,6 +85,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "StableDiffusionXLControlNetPipeline",
             "StableDiffusionXLAdapterPipeline",
             "StableDiffusionXLPAGPipeline",
+            "SanaPipeline",
+            "SanaSprintPipeline",
             "DummyCustomPipeline",
             "DDPMPipeline",
             "DDIMPipeline",

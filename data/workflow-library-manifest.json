@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T03:54:59.989Z",
+  "generatedAt": "2026-08-13T04:20:46.590Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 77,
-  "supportedPairCount": 89,
+  "supportedCanonicalPairCount": 80,
+  "supportedPairCount": 92,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1654,6 +1654,94 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "SanaPipeline:text_to_image",
+      "modelType": "SanaPipeline",
+      "modelFamily": "Sana",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "Efficient-Large-Model/Sana_600M_1024px_diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "SanaPipeline"
+      ],
+      "sourceTemplateId": "task-template:sana-600m:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/sana-pipeline/text-to-image.json",
+      "graphHash": "3184feed07ae57e6f0cdcc3cca8e07f36d3b205e564c6c8fdea2a83ebc94dc6d"
+    },
+    {
+      "id": "SanaSprintPipeline:edit_image",
+      "modelType": "SanaSprintPipeline",
+      "modelFamily": "Sana",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for the reviewed two-step Sprint transformation."
+      },
+      "pipelineClasses": [
+        "SanaSprintImg2ImgPipeline",
+        "SanaSprintPipeline"
+      ],
+      "sourceTemplateId": "task-template:sana-sprint-600m:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/sana-sprint-pipeline/edit-image.json",
+      "graphHash": "9a9ef604ec5da99da3616dd38b118162e75657c322b80e2c57f53b745b1d9bda"
+    },
+    {
+      "id": "SanaSprintPipeline:text_to_image",
+      "modelType": "SanaSprintPipeline",
+      "modelFamily": "Sana",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "SanaSprintImg2ImgPipeline",
+        "SanaSprintPipeline"
+      ],
+      "sourceTemplateId": "task-template:sana-sprint-600m:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/sana-sprint-pipeline/text-to-image.json",
+      "graphHash": "1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe"
     },
     {
       "id": "StableAudioPipeline:text_to_audio",

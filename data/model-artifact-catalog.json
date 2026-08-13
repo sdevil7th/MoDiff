@@ -284,6 +284,20 @@
       "artifacts": []
     },
     {
+      "modelType": "SanaPipeline",
+      "baseRepo": "Efficient-Large-Model/Sana_600M_1024px_diffusers",
+      "baseRevision": "28f3af7689de15f3883d5863059a2fca0aa9b829",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "SanaSprintPipeline",
+      "baseRepo": "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers",
+      "baseRevision": "aa76e7f4f4928f378716b6716a2130fba3caf5b1",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "MarigoldDepthPipeline",
       "baseRepo": "prs-eth/marigold-depth-lcm-v1-0",
       "baseRevision": "04a73502f7fd8fc5e59947b9df3b2266d71d6849",

@@ -36,6 +36,8 @@ SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
+SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
+SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 WHISPER_TINY_REPO = "openai/whisper-tiny"
@@ -4448,6 +4450,190 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag:inpaint:v1"] = {
     "roles": _INPAINT_GRAPH_ROLES,
     "edges": _INPAINT_GRAPH_EDGES,
     "bindings": _PAG_INPAINT_GRAPH_BINDINGS,
+}
+
+
+_SANA_PROFILE = {
+    "id": "sana-600m:direct",
+    "model_type": "SanaPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "SanaPipeline",
+    "default_repo": SANA_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 20,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SANA_CAPABILITY = {
+    "modelType": "SanaPipeline",
+    "label": "Sana 0.6B",
+    "displayName": "Sana 0.6B 1024px",
+    "family": "Sana",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SANA_REPO,
+    "artifactLabel": "Diffusers fp16 safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 20,
+    "recommendedGuidance": 4.5,
+    "recommendedMaxSequenceLength": 300,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 20,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(SANA_REPO, model_type="SanaPipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable 0.6B snapshot loads its reviewed fp16 variant with the text encoder and VAE placed in bfloat16 as documented upstream.",
+        "The selected snapshot is approximately 7.70 GB before cache overhead; model and sequential CPU offload are bounded retry paths.",
+        "Apache-2.0 applies alongside the bundled Gemma terms and prohibited-use policy; Auto and Gallery remain disabled pending live review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-600m:text-to-image:v1"] = {
+    "modelType": "SanaPipeline",
+    "mode": "text_to_image",
+    "profile": _SANA_PROFILE,
+    "capability": _SANA_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+_SANA_SPRINT_PROFILE = {
+    "id": "sana-sprint-600m:direct",
+    "model_type": "SanaSprintPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "SanaSprintPipeline",
+    "default_repo": SANA_SPRINT_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 4,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SANA_SPRINT_CAPABILITY = {
+    "modelType": "SanaSprintPipeline",
+    "label": "Sana Sprint 0.6B",
+    "displayName": "Sana Sprint 0.6B 1024px",
+    "family": "Sana",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SANA_SPRINT_REPO,
+    "artifactLabel": "Diffusers bfloat16 safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 2,
+    "recommendedGuidance": 4.5,
+    "recommendedStrength": 0.5,
+    "recommendedMaxSequenceLength": 300,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 2,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for the reviewed two-step Sprint transformation.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(SANA_SPRINT_REPO, model_type="SanaSprintPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable 0.6B Sprint snapshot uses its native bfloat16 safetensors and one-to-four-step scheduler contract.",
+        "The selected snapshot is approximately 7.70 GB before cache overhead; the reviewed recipe uses two steps and image strength 0.5.",
+        "Apache-2.0 applies alongside the bundled Gemma terms and prohibited-use policy; Auto and Gallery remain disabled pending live review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-sprint-600m:text-to-image:v1"] = {
+    "modelType": "SanaSprintPipeline",
+    "mode": "text_to_image",
+    "profile": _SANA_SPRINT_PROFILE,
+    "capability": _SANA_SPRINT_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+_SANA_SPRINT_IMG2IMG_PROFILE = {
+    **_SANA_SPRINT_PROFILE,
+    "id": "sana-sprint-600m:img2img-direct",
+    "modes": ("edit_image",),
+    "pipeline_class": "SanaSprintImg2ImgPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-sprint-600m:edit-image:v1"] = {
+    "modelType": "SanaSprintPipeline",
+    "mode": "edit_image",
+    "profile": _SANA_SPRINT_IMG2IMG_PROFILE,
+    "capability": _SANA_SPRINT_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
 }
 
 
