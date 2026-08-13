@@ -4993,28 +4993,28 @@ This is a family inventory, not a requirement to create one node per family.
 ### 3D and perception
 
 - [x] `shap_e`
-- [ ] `marigold`
+- [x] `marigold`
 - [ ] `visualcloze`
 
 ### Video
 
 - [ ] `allegro`
-- [ ] `animatediff`
+- [x] `animatediff`
 - [ ] `anyflow`
 - [ ] `chronoedit`
-- [ ] `cogvideo`
+- [x] `cogvideo`
 - [ ] `consisid`
-- [ ] `cosmos`
-- [ ] `easyanimate`
-- [ ] `helios`
-- [ ] `hunyuan_video1_5`
-- [ ] `kandinsky5`
+- [x] `cosmos`
+- [x] `easyanimate`
+- [x] `helios`
+- [x] `hunyuan_video1_5`
+- [x] `kandinsky5`
 - [ ] `latte`
 - [ ] `lucy`
 - [ ] `mochi`
-- [ ] `motif_video`
+- [x] `motif_video`
 - [ ] `sana_video`
-- [ ] `skyreels_v2`
+- [x] `skyreels_v2`
 - [x] `stable_video_diffusion`
 
 ### Image, unconditional, and generic
@@ -5025,15 +5025,15 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `chroma`
 - [x] `cogview3`
 - [x] `cogview4`
-- [ ] `consistency_models`
-- [ ] `controlnet`
+- [x] `consistency_models`
+- [x] `controlnet`
 - [ ] `controlnet_hunyuandit`
 - [ ] `controlnet_sd3`
-- [ ] `ddim`
-- [ ] `ddpm`
+- [x] `ddim`
+- [x] `ddpm`
 - [x] `deepfloyd_if`
 - [ ] `dit`
-- [ ] `dreamlite`
+- [x] `dreamlite`
 - [ ] `ernie_image`
 - [ ] `glm_image`
 - [ ] `hidream_image`
@@ -5046,7 +5046,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `kandinsky3`
 - [ ] `kolors`
 - [ ] `krea2`
-- [ ] `latent_consistency_models`
+- [x] `latent_consistency_models`
 - [ ] `latent_diffusion`
 - [ ] `ledits_pp`
 - [ ] `longcat_image`
@@ -5055,14 +5055,14 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `nucleusmoe_image`
 - [ ] `omnigen`
 - [ ] `ovis_image`
-- [ ] `pag`
+- [x] `pag`
 - [x] `pixart_alpha`
 - [ ] `prx`
-- [ ] `sana`
+- [x] `sana`
 - [x] `stable_cascade`
-- [ ] `stable_diffusion`
+- [x] `stable_diffusion`
 - [ ] `stable_diffusion_3`
-- [ ] `t2i_adapter`
+- [x] `t2i_adapter`
 
 ## Completion ledger
 
