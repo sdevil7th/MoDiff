@@ -367,6 +367,8 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
             ("modules.DiffusersAudio", "Generate", "update_audio_contract"),
             ("modules.DiffusersThreeD", "LoadPipeline", "update_three_d_contract"),
             ("modules.DiffusersThreeD", "GenerateRenderedArtifact", "update_three_d_contract"),
+            ("modules.DiffusersVideo", "LoadPipeline", "select_adapter"),
+            ("modules.DiffusersVideo", "Generate", "update_adapter_modes"),
         )
         for module, action, method_name in cases:
             with self.subTest(module=module, action=action):

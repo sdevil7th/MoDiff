@@ -2514,6 +2514,7 @@ class WebServer:
             {
                 "workflowTabId": data.get("workflowTabId"),
                 "workflowCanvasEpoch": data.get("workflowCanvasEpoch"),
+                "workflowFormEpoch": data.get("workflowFormEpoch"),
             }
         )
 
@@ -5399,6 +5400,7 @@ class WebServer:
         run_input_hash = runtime_hints.get("runInputHash")
         workflow_tab_id = runtime_hints.get("workflowTabId")
         workflow_canvas_epoch = runtime_hints.get("workflowCanvasEpoch")
+        workflow_form_epoch = runtime_hints.get("workflowFormEpoch")
         node_id = runtime_hints.get("nodeId")
         if client_run_id:
             payload["client_run_id"] = client_run_id
@@ -5408,6 +5410,8 @@ class WebServer:
             payload["workflow_tab_id"] = workflow_tab_id
         if workflow_canvas_epoch is not None:
             payload["workflow_canvas_epoch"] = workflow_canvas_epoch
+        if workflow_form_epoch is not None:
+            payload["workflow_form_epoch"] = workflow_form_epoch
         if node_id:
             payload["node_id"] = node_id
         return payload
@@ -6132,6 +6136,7 @@ class WebServer:
             "runInputHash",
             "workflowTabId",
             "workflowCanvasEpoch",
+            "workflowFormEpoch",
             "workflowTitle",
             "workflowSnapshot",
             "nodeId",
@@ -6227,6 +6232,15 @@ class WebServer:
             or workflow_canvas_epoch > 9_007_199_254_740_991
         ):
             hints.pop("workflowCanvasEpoch", None)
+
+        workflow_form_epoch = hints.get("workflowFormEpoch")
+        if workflow_form_epoch is not None and (
+            isinstance(workflow_form_epoch, bool)
+            or not isinstance(workflow_form_epoch, int)
+            or workflow_form_epoch < 0
+            or workflow_form_epoch > 9_007_199_254_740_991
+        ):
+            hints.pop("workflowFormEpoch", None)
 
         known_offload_modes = {
             OFFLOAD_MODE_NONE,

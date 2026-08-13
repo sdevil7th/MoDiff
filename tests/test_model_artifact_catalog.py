@@ -84,6 +84,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("lllyasviel/FramePackI2V_HY"),
             "86cef4396041b6002c957852daac4c91aaa47c79",
         )
+        self.assertEqual(
+            catalog_revision("stabilityai/stable-video-diffusion-img2vid-xt-1-1"),
+            "043843887ccd51926e3efed36270444a838e7861",
+        )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(

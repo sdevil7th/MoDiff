@@ -57,6 +57,7 @@ WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
 WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 LTX2_REPO = "Lightricks/LTX-2"
 FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
+STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -724,6 +725,30 @@ _VIDEO_REVISION_GRAPH_BINDINGS = tuple(
 _I2V_REVISION_GRAPH_BINDINGS = tuple(
     (role, param, "defaultRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
     for role, param, source in _I2V_GRAPH_BINDINGS
+)
+_STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "empty"
+        if (role, param) in {
+            ("diffusersQuantization", "components"),
+            ("diffusersRecipe", "attention_components"),
+        }
+        else "nativeMath"
+        if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "false"
+        if (role, param) in {
+            ("diffusersRecipe", "regional_compile"),
+            ("diffusersRecipe", "denoiser_cache"),
+            ("diffusersRecipe", "layerwise_casting"),
+            ("diffusersRecipe", "channels_last"),
+        }
+        else "empty"
+        if role == "wanGenerate" and param in {"prompt", "negative_prompt"}
+        else source,
+    )
+    for role, param, source in _I2V_REVISION_GRAPH_BINDINGS
 )
 _WAN_ANIMATE_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
     ("loadImage", "modules.Image.Load", -520, 300),
@@ -3845,6 +3870,13 @@ _P2_VIDEO_PROFILES = {
         "HunyuanVideoFramepackPipeline",
         FRAMEPACK_REPO,
     ),
+    "stable-video-diffusion": _planning_video_profile(
+        "stable-video-diffusion:direct",
+        "StableVideoDiffusionPipeline",
+        ("image_to_video",),
+        "StableVideoDiffusionPipeline",
+        STABLE_VIDEO_DIFFUSION_REPO,
+    ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
         "WanImage2VideoModularPipeline",
@@ -3963,6 +3995,46 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _FRAMEPACK_GRAPH_ROLES,
             "edges": _FRAMEPACK_GRAPH_EDGES,
             "bindings": _FRAMEPACK_GRAPH_BINDINGS,
+        },
+        "stable-video-diffusion:image-to-video:v1": {
+            "modelType": "StableVideoDiffusionPipeline",
+            "mode": "image_to_video",
+            "profile": _P2_VIDEO_PROFILES["stable-video-diffusion"],
+            "capability": {
+                **_planning_video_capability(
+                    "StableVideoDiffusionPipeline",
+                    "Stable Video Diffusion XT 1.1",
+                    "Stable Video Diffusion",
+                    STABLE_VIDEO_DIFFUSION_REPO,
+                    ("image_to_video",),
+                    {"image_to_video": {"requiredImages": ["referenceImages"]}},
+                ),
+                "defaultDtype": "float16",
+                "defaultSize": {"width": 1024, "height": 576, "aspectRatio": "16:9"},
+                "recommendedSteps": 25,
+                "recommendedGuidance": 3.0,
+                "recommendedFrames": 25,
+                "recommendedFps": 7,
+                "autoEligible": False,
+                "galleryEligible": False,
+                "lowVram": {
+                    "dtype": "float16",
+                    "autoOffload": True,
+                    "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                    "steps": 25,
+                    "width": 1024,
+                    "height": 576,
+                    "numFrames": 8,
+                },
+                "notes": [
+                    "This exact gated source requires prior acceptance of the publisher's Hub access terms.",
+                    "The reviewed recipe uses safetensors-only fp16 loading, model CPU offload, UNet forward chunking, and decode chunks of two.",
+                    "Auto and Gallery publication remain disabled until an exact live receipt is reviewed.",
+                ],
+            },
+            "roles": _I2V_GRAPH_ROLES,
+            "edges": _I2V_GRAPH_EDGES,
+            "bindings": _STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS,
         },
         "wan-flf:image-to-video:v1": {
             "modelType": "WanImage2VideoModularPipeline",

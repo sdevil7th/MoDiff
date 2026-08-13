@@ -45,6 +45,9 @@ logger = logging.getLogger("modiff")
 LTX_DISTILLED_TIMESTEPS = [1000, 900, 700, 500, 300, 200, 100, 40]
 FRAMEPACK_BASE_REPO = "hunyuanvideo-community/HunyuanVideo"
 FRAMEPACK_VISION_REPO = "lllyasviel/flux_redux_bfl"
+STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
+STABLE_VIDEO_DIFFUSION_REVISION = "043843887ccd51926e3efed36270444a838e7861"
+STABLE_VIDEO_DIFFUSION_VARIANT = "fp16"
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -265,6 +268,13 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("image_to_video",),
         max_prompt_tokens=256,
     ),
+    "StableVideoDiffusionPipeline": VideoPipelineAdapter(
+        id="stable-video-diffusion",
+        pipeline_class="StableVideoDiffusionPipeline",
+        diffusers_class="StableVideoDiffusionPipeline",
+        default_repo=STABLE_VIDEO_DIFFUSION_REPO,
+        modes=("image_to_video",),
+    ),
 }
 
 
@@ -400,6 +410,13 @@ VIDEO_MODE_FIELD_CONTRACTS = {
             required_fields=("reference_images",),
         )
     },
+    "StableVideoDiffusionPipeline": {
+        "image_to_video": _video_field_contract(
+            "reference_images",
+            "frame_rate",
+            required_fields=("reference_images",),
+        )
+    },
 }
 
 
@@ -425,6 +442,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "LTXI2VLongMultiPromptPipeline": "_load_ltx_long",
     "LTX2ConditionPipeline": "_load_ltx2",
     "HunyuanVideoFramepackPipeline": "_load_framepack",
+    "StableVideoDiffusionPipeline": "_load_stable_video_diffusion",
 }
 
 
@@ -440,6 +458,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "LTXI2VLongMultiPromptPipeline": "_execute_ltx_long",
     "LTX2ConditionPipeline": "_execute_ltx2",
     "HunyuanVideoFramepackPipeline": "_execute_framepack",
+    "StableVideoDiffusionPipeline": "_execute_stable_video_diffusion",
 }
 
 
@@ -557,6 +576,22 @@ def _resolve_loader_revision(model_selection: Any, model_id: str, revision: Any)
             f"the requested revision {revision} does not match."
         )
     return revision
+
+
+def _require_stable_video_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != STABLE_VIDEO_DIFFUSION_REPO:
+        raise ValueError(
+            "Stable Video Diffusion currently requires the exact reviewed gated Hub artifact "
+            f"{STABLE_VIDEO_DIFFUSION_REPO}."
+        )
+    reviewed_revision = require_catalog_revision(
+        STABLE_VIDEO_DIFFUSION_REPO,
+        model_type="StableVideoDiffusionPipeline",
+    )
+    if revision != reviewed_revision or revision != STABLE_VIDEO_DIFFUSION_REVISION:
+        raise ValueError(f"Stable Video Diffusion is pinned to {STABLE_VIDEO_DIFFUSION_REVISION}.")
+    return reviewed_revision
 
 
 _MISSING_VIDEO_PIPELINE_TAG = object()
@@ -984,6 +1019,48 @@ def _validate_ltx_dimensions(width: int, height: int):
         raise ValueError(f"LTX Video width and height must be divisible by 32; received {width}x{height}.")
 
 
+def _bounded_stable_video_int(
+    value: Any,
+    *,
+    default: int,
+    label: str,
+    minimum: int,
+    maximum: int,
+) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"Stable Video Diffusion {label} must be an integer from {minimum} through {maximum}.")
+    try:
+        number = float(default if value is None else value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(
+            f"Stable Video Diffusion {label} must be an integer from {minimum} through {maximum}."
+        ) from error
+    if not isfinite(number) or not number.is_integer() or not minimum <= number <= maximum:
+        raise ValueError(f"Stable Video Diffusion {label} must be an integer from {minimum} through {maximum}.")
+    return int(number)
+
+
+def _bounded_stable_video_float(
+    value: Any,
+    *,
+    default: float,
+    label: str,
+    minimum: float,
+    maximum: float,
+) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"Stable Video Diffusion {label} must be finite and from {minimum:g} through {maximum:g}.")
+    try:
+        number = float(default if value is None else value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(
+            f"Stable Video Diffusion {label} must be finite and from {minimum:g} through {maximum:g}."
+        ) from error
+    if not isfinite(number) or not minimum <= number <= maximum:
+        raise ValueError(f"Stable Video Diffusion {label} must be finite and from {minimum:g} through {maximum:g}.")
+    return number
+
+
 def _validate_prompt_token_limit(pipeline: Any, prompt: str | None, label: str, limit: int | None):
     if not prompt or not limit:
         return
@@ -1329,6 +1406,52 @@ class LoadPipeline(WanVACELoadPipeline):
             **common_kwargs,
             **recipe_load_kwargs,
         )
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
+    def _load_stable_video_diffusion(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        from diffusers import StableVideoDiffusionPipeline
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _require_stable_video_artifact(
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+        )
+        dtype = str_to_dtype(kwargs.get("dtype") or "float16")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError(
+                "Stable Video Diffusion source qualification does not admit on-load quantization or a device map."
+            )
+        load_kwargs = {
+            "torch_dtype": dtype,
+            "variant": STABLE_VIDEO_DIFFUSION_VARIANT,
+            "use_safetensors": True,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "revision": revision,
+            "local_files_only": local_files_only(model_id),
+        }
+        if CONFIG.hf.get("cache_dir"):
+            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
+
+        logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
+        self.progress(-1, phase="loading", message="Loading Stable Video Diffusion")
+        pipeline = StableVideoDiffusionPipeline.from_pretrained(model_id, **load_kwargs)
+        unet = getattr(pipeline, "unet", None)
+        enable_forward_chunking = getattr(unet, "enable_forward_chunking", None)
+        if not callable(enable_forward_chunking):
+            raise RuntimeError("Stable Video Diffusion did not expose the documented UNet forward-chunking hook.")
+        enable_forward_chunking()
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
@@ -1783,6 +1906,99 @@ class Generate(WanVACEGenerate):
         self._active_pipeline = pipeline
         try:
             result = pipeline(**call_kwargs)
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames) if isinstance(frames, list) else num_frames,
+        }
+
+    def _execute_stable_video_diffusion(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "image_to_video":
+            raise ValueError("Stable Video Diffusion supports image_to_video generation only.")
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != STABLE_VIDEO_DIFFUSION_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != STABLE_VIDEO_DIFFUSION_REVISION
+        ):
+            raise ValueError("The connected Stable Video Diffusion pipeline does not match the reviewed artifact.")
+        if ensure_video_list(kwargs.get("video"), "video") is not None:
+            raise ValueError("Stable Video Diffusion does not accept a source video.")
+        if ensure_video_list(kwargs.get("mask"), "mask") is not None:
+            raise ValueError("Stable Video Diffusion does not accept a mask.")
+        if kwargs.get("last_image") is not None:
+            raise ValueError("Stable Video Diffusion does not accept last-image conditioning.")
+        if none_if_blank(kwargs.get("prompt")) is not None or none_if_blank(kwargs.get("negative_prompt")) is not None:
+            raise ValueError("Stable Video Diffusion is image-conditioned and does not accept prompt text.")
+        references = ensure_reference_images(kwargs.get("reference_images"))
+        if not references or len(references) != 1:
+            raise ValueError("Stable Video Diffusion needs exactly one opening reference image.")
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError("Stable Video Diffusion currently supports one video per reference image.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError("Stable Video Diffusion source qualification requires output_type=pil.")
+
+        width = _bounded_stable_video_int(
+            kwargs.get("width"), default=1024, label="width", minimum=256, maximum=1024
+        )
+        height = _bounded_stable_video_int(
+            kwargs.get("height"), default=576, label="height", minimum=256, maximum=576
+        )
+        if width % 8 or height % 8:
+            raise ValueError(
+                f"Stable Video Diffusion width and height must be divisible by 8; received {width}x{height}."
+            )
+        num_frames = _bounded_stable_video_int(
+            kwargs.get("num_frames"), default=25, label="frame count", minimum=8, maximum=25
+        )
+        steps = _bounded_stable_video_int(
+            kwargs.get("num_inference_steps"), default=25, label="step count", minimum=1, maximum=50
+        )
+        fps = _bounded_stable_video_int(
+            kwargs.get("frame_rate"), default=7, label="frame rate", minimum=1, maximum=30
+        )
+        max_guidance = _bounded_stable_video_float(
+            kwargs.get("guidance_scale"), default=3.0, label="maximum guidance", minimum=1.0, maximum=10.0
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                image=references[0],
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                num_inference_steps=steps,
+                min_guidance_scale=1.0,
+                max_guidance_scale=max_guidance,
+                fps=fps,
+                motion_bucket_id=127,
+                noise_aug_strength=0.02,
+                decode_chunk_size=2,
+                num_videos_per_prompt=1,
+                generator=generator,
+                output_type=output_type,
+                return_dict=True,
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+            )
         finally:
             self._active_pipeline = None
         frames = getattr(result, "frames", result)

@@ -69,6 +69,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "LTXI2VLongMultiPromptPipeline",
             "LTX2ConditionPipeline",
             "HunyuanVideoFramepackPipeline",
+            "StableVideoDiffusionPipeline",
             "AceStepAudioPipeline",
             "StableAudioPipeline",
             "LongCatAudioDiTPipeline",

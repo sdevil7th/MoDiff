@@ -320,6 +320,16 @@ _DECLARATIVE_FIELD_ACTIONS = frozenset(
             "GenerateRenderedArtifact",
             "update_three_d_contract",
         ),
+        (
+            "modules.DiffusersVideo",
+            "LoadPipeline",
+            "select_adapter",
+        ),
+        (
+            "modules.DiffusersVideo",
+            "Generate",
+            "update_adapter_modes",
+        ),
     }
 )
 

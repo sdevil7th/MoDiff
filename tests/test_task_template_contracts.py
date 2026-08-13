@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 83)
+        self.assertEqual(len(self.contracts), 84)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -156,6 +156,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("LTX2ConditionPipeline", "reference_to_video"): [("image", "referenceImages")],
             ("LTX2ConditionPipeline", "video_to_video"): [("video", "sourceVideo")],
             ("HunyuanVideoFramepackPipeline", "image_to_video"): [("image", "referenceImages")],
+            ("StableVideoDiffusionPipeline", "image_to_video"): [("image", "referenceImages")],
             ("AceStepAudioPipeline", "audio_continuation"): [("audio", "sourceAudio")],
             ("MarigoldDepthPipeline", "depth_estimation"): [("image", "referenceImages")],
             ("HuggingFaceSpeechRecognitionModel", "speech_to_text"): [("audio", "sourceAudio")],
@@ -223,6 +224,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("LTX2ConditionPipeline", "reference_to_video"),
             ("LTX2ConditionPipeline", "video_to_video"),
             ("HunyuanVideoFramepackPipeline", "image_to_video"),
+            ("StableVideoDiffusionPipeline", "image_to_video"),
             ("WanImage2VideoModularPipeline", "image_to_video"),
             ("AceStepAudioPipeline", "audio_continuation"),
             ("StableAudioPipeline", "text_to_audio"),

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T05:44:10.279Z",
+  "generatedAt": "2026-08-13T06:42:17.582Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 83,
-  "supportedPairCount": 95,
+  "supportedCanonicalPairCount": 84,
+  "supportedPairCount": 96,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1042,7 +1042,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
-      "graphHash": "cd397f4b4d351bff07338f604e5d1058072419dfe469ce8362e33dd74eb667b4"
+      "graphHash": "284765f71f658726b758ebd6f004de1a64723d2cc0a4a7c4f8257f1b8f0c7faa"
     },
     {
       "id": "LatentConsistencyModelPipeline:text_to_image",
@@ -1239,8 +1239,8 @@
       "sourceTemplateId": "task-template:ltx-long:image-to-video:v1",
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/ltxi2-vlong-multi-prompt-pipeline/image-to-video.json",
-      "graphHash": "2e5b40d9c2f302cf29c6aa7e8e770308fe411d820957c12c6f22eadfbf906794"
+      "graphPath": "studio/ltxi2-v-long-multi-prompt-pipeline/image-to-video.json",
+      "graphHash": "7c840f4e5123636f6e125b48396aaa5aff98de322a072e302501e6a29a3c880a"
     },
     {
       "id": "LTXVideoPipeline:image_to_video",
@@ -2357,6 +2357,36 @@
       "graphHash": "49f93b98bbebbf573017052d366437f513160774bef66406adc1b6141be7cfb1"
     },
     {
+      "id": "StableVideoDiffusionPipeline:image_to_video",
+      "modelType": "StableVideoDiffusionPipeline",
+      "modelFamily": "Stable Video Diffusion",
+      "mode": "image_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "StableVideoDiffusionPipeline"
+      ],
+      "sourceTemplateId": "task-template:stable-video-diffusion:image-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
+      "graphHash": "f84e9c44bd7ad1f7c77a376dfc898fe7d3bef5ddd2247a5e055f28ec0fb3ae02"
+    },
+    {
       "id": "Wan22Pipeline:text_to_video",
       "modelType": "Wan22Pipeline",
       "modelFamily": "Wan Video",
@@ -2414,7 +2444,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/wan-animate-pipeline/character-animate.json",
-      "graphHash": "bb03ae717a66a322b448b14f21d8ff167267a07c0ca850b4f506f2774fb0652e"
+      "graphHash": "e5fca12dccb6acb010d8cbf4db4ffad447704a017b81de3d0e26656045dae83d"
     },
     {
       "id": "WanAnimatePipeline:character_replace",
@@ -2450,7 +2480,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/wan-animate-pipeline/character-replace.json",
-      "graphHash": "79cab9524d369c58ebcb433d001a4932a0c745369cf68ae95e939d839f6a5754"
+      "graphHash": "a878554bbbab7bb6fbac8cee52f9ecd4b9c5a3fb5c284ed26565b2a578d85a3a"
     },
     {
       "id": "WanImage2VideoModularPipeline:image_to_video",

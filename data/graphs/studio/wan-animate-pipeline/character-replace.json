@@ -202,7 +202,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "788a6a23c367a24df7ef804fb9196021a42406005920cc7f30ec711b256f7323",
+    "positionHash": "a480406a42606ecbf986366a6f9061017e37d73d5a1a14367545eed6c817a8cf",
     "verticalGap": 72
   },
   "nodes": [
@@ -1108,7 +1108,7 @@
       "id": "node-03",
       "position": {
         "x": 0,
-        "y": 1094
+        "y": 1468
       },
       "type": "custom"
     },
@@ -1467,7 +1467,7 @@
       "id": "node-07",
       "position": {
         "x": 0,
-        "y": 1468
+        "y": 1094
       },
       "type": "custom"
     },
@@ -1576,6 +1576,8 @@
         "params": {
           "adain_factor": {
             "default": 0.25,
+            "disabled": false,
+            "hidden": true,
             "label": "Long Color Consistency",
             "max": 1,
             "min": 0,
@@ -1590,10 +1592,12 @@
             "value": ""
           },
           "background_video": {
+            "disabled": false,
             "display": "input",
+            "hidden": false,
             "isConnected": true,
             "label": "Background Video",
-            "required": false,
+            "required": true,
             "type": [
               "video",
               "str"
@@ -1608,7 +1612,7 @@
             "default": 1,
             "disabled": false,
             "display": "slider",
-            "hidden": false,
+            "hidden": true,
             "label": "Conditioning Scale",
             "max": 2,
             "min": 0,
@@ -1628,10 +1632,12 @@
             "value": 0.8
           },
           "face_video": {
+            "disabled": false,
             "display": "input",
+            "hidden": false,
             "isConnected": true,
             "label": "Face Video",
-            "required": false,
+            "required": true,
             "type": [
               "video",
               "str"
@@ -1639,6 +1645,8 @@
           },
           "frame_rate": {
             "default": 25,
+            "disabled": false,
+            "hidden": true,
             "label": "Frame rate",
             "max": 60,
             "min": 1,
@@ -1647,6 +1655,8 @@
           },
           "framepack_sampling": {
             "default": "inverted_anti_drifting",
+            "disabled": false,
+            "hidden": true,
             "label": "FramePack Sampling",
             "options": [
               {
@@ -1686,7 +1696,9 @@
           },
           "guidance_scale_2": {
             "default": 0,
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Guidance 2",
             "max": 20,
             "min": 0,
@@ -1710,7 +1722,9 @@
             "type": "int"
           },
           "last_image": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Optional Last Image",
             "required": false,
@@ -1718,6 +1732,8 @@
           },
           "latent_window_size": {
             "default": 9,
+            "disabled": false,
+            "hidden": true,
             "label": "FramePack Window",
             "max": 32,
             "min": 1,
@@ -1733,10 +1749,10 @@
           "mask": {
             "disabled": false,
             "display": "input",
-            "hidden": true,
+            "hidden": false,
             "isConnected": true,
             "label": "Mask video",
-            "required": false,
+            "required": true,
             "type": "video"
           },
           "max_sequence_length": {
@@ -1748,26 +1764,23 @@
             "value": 512
           },
           "mode": {
-            "default": "text_to_video",
+            "default": "character_animate",
             "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Mode",
             "options": [
-              "text_to_video",
-              "video_to_video",
-              "video_inpaint",
-              "video_outpaint",
-              "reference_to_video",
-              "control_to_video",
-              "video_color_edit"
+              "character_animate",
+              "character_replace"
             ],
             "type": "string",
-            "value": "text_to_video"
+            "value": "character_replace"
           },
           "motion_encode_batch_size": {
             "default": 1,
+            "disabled": false,
+            "hidden": false,
             "label": "Motion Batch",
             "max": 32,
             "min": 1,
@@ -1846,21 +1859,23 @@
             "value": "pil"
           },
           "pipeline": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "video_diffusion_pipeline"
           },
           "pose_video": {
+            "disabled": false,
             "display": "input",
+            "hidden": false,
             "isConnected": true,
             "label": "Pose Video",
-            "required": false,
+            "required": true,
             "type": [
               "video",
               "str"
@@ -1868,6 +1883,8 @@
           },
           "previous_conditioning_frames": {
             "default": 1,
+            "disabled": false,
+            "hidden": false,
             "label": "Previous Frames",
             "max": 16,
             "min": 1,
@@ -1890,21 +1907,25 @@
           },
           "prompt_segments_json": {
             "default": "",
+            "disabled": false,
             "display": "textarea",
+            "hidden": true,
             "label": "Timed Prompt Segments",
             "type": "text"
           },
           "reference_images": {
             "disabled": false,
             "display": "input",
-            "hidden": true,
+            "hidden": false,
             "isConnected": true,
             "label": "Reference images",
-            "required": false,
+            "required": true,
             "type": "image"
           },
           "scheduler_flow_shift": {
             "default": 0,
+            "disabled": false,
+            "hidden": true,
             "label": "Flow Shift",
             "max": 32,
             "min": 0,
@@ -1914,6 +1935,8 @@
           },
           "secondary_guidance_scale": {
             "default": 3.5,
+            "disabled": false,
+            "hidden": true,
             "label": "Low-noise Guidance",
             "max": 20,
             "min": 0,
@@ -1934,6 +1957,8 @@
           },
           "segment_frame_length": {
             "default": 77,
+            "disabled": false,
+            "hidden": false,
             "label": "Segment Frames",
             "max": 241,
             "min": 5,
@@ -1963,6 +1988,8 @@
           },
           "temporal_overlap": {
             "default": 24,
+            "disabled": false,
+            "hidden": true,
             "label": "Temporal Overlap",
             "max": 128,
             "min": 1,
@@ -1970,6 +1997,8 @@
           },
           "temporal_overlap_condition_strength": {
             "default": 0.5,
+            "disabled": false,
+            "hidden": true,
             "label": "Overlap Preservation",
             "max": 1,
             "min": 0,
@@ -1978,6 +2007,8 @@
           },
           "temporal_tile_size": {
             "default": 80,
+            "disabled": false,
+            "hidden": true,
             "label": "Temporal Window",
             "max": 257,
             "min": 17,
@@ -1985,6 +2016,8 @@
           },
           "true_cfg_scale": {
             "default": 1,
+            "disabled": false,
+            "hidden": true,
             "label": "True CFG",
             "max": 20,
             "min": 0,
@@ -1992,6 +2025,8 @@
           },
           "use_guidance_scale_2": {
             "default": false,
+            "disabled": false,
+            "hidden": true,
             "label": "Use guidance 2",
             "type": "bool",
             "value": false
@@ -2028,15 +2063,10 @@
               "library": "diffusers",
               "mediaKind": "video",
               "modes": [
-                "text_to_video",
-                "video_to_video",
-                "video_inpaint",
-                "video_outpaint",
-                "reference_to_video",
-                "control_to_video",
-                "video_color_edit"
+                "character_animate",
+                "character_replace"
               ],
-              "pipelineClass": "WanVACEPipeline",
+              "pipelineClass": "WanAnimatePipeline",
               "schemaVersion": 1
             }
           },
@@ -2171,7 +2201,7 @@
             "type": "bool"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -2244,6 +2274,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -2255,7 +2286,7 @@
           },
           "pipeline_class": {
             "default": "WanVACEPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -2348,6 +2379,14 @@
                 "label": "HunyuanVideoFramepackPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanVideoFramepackPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableVideoDiffusionPipeline",
+                "schemaVersion": 1,
+                "value": "StableVideoDiffusionPipeline"
               }
             ],
             "type": "string",

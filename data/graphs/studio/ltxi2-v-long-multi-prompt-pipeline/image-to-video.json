@@ -261,8 +261,7 @@
             ],
             "type": "string",
             "value": [
-              "transformer",
-              "transformer_2"
+              "transformer"
             ]
           },
           "dtype": {
@@ -543,13 +542,13 @@
               }
             ],
             "type": "string",
-            "value": "_native_flash"
+            "value": "_native_math"
           },
           "attention_components": {
             "default": "",
             "label": "Attention Components",
             "type": "string",
-            "value": "transformer,transformer_2"
+            "value": ""
           },
           "cache_options": {
             "default": "{}",
@@ -1158,12 +1157,13 @@
           "adain_factor": {
             "default": 0.25,
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Long Color Consistency",
             "max": 1,
             "min": 0,
             "step": 0.05,
-            "type": "float"
+            "type": "float",
+            "value": 0.25
           },
           "attention_kwargs_json": {
             "default": "",
@@ -1227,7 +1227,7 @@
           "frame_rate": {
             "default": 25,
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Frame rate",
             "max": 60,
             "min": 1,
@@ -1237,7 +1237,7 @@
           "framepack_sampling": {
             "default": "inverted_anti_drifting",
             "disabled": false,
-            "hidden": false,
+            "hidden": true,
             "label": "FramePack Sampling",
             "options": [
               {
@@ -1257,8 +1257,7 @@
                 "value": "vanilla"
               }
             ],
-            "type": "string",
-            "value": "inverted_anti_drifting"
+            "type": "string"
           },
           "frames_out": {
             "display": "output",
@@ -1306,7 +1305,7 @@
           "last_image": {
             "disabled": false,
             "display": "input",
-            "hidden": false,
+            "hidden": true,
             "isConnected": false,
             "label": "Optional Last Image",
             "required": false,
@@ -1315,12 +1314,11 @@
           "latent_window_size": {
             "default": 9,
             "disabled": false,
-            "hidden": false,
+            "hidden": true,
             "label": "FramePack Window",
             "max": 32,
             "min": 1,
-            "type": "int",
-            "value": 9
+            "type": "int"
           },
           "latents": {
             "display": "input",
@@ -1489,9 +1487,10 @@
             "default": "",
             "disabled": false,
             "display": "textarea",
-            "hidden": true,
+            "hidden": false,
             "label": "Timed Prompt Segments",
-            "type": "text"
+            "type": "text",
+            "value": ""
           },
           "reference_images": {
             "disabled": false,
@@ -1556,7 +1555,7 @@
                 "transform": "identity"
               }
             },
-            "hidden": true,
+            "hidden": false,
             "label": "Condition strength",
             "max": 1,
             "min": 0,
@@ -1567,40 +1566,42 @@
           "temporal_overlap": {
             "default": 24,
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Temporal Overlap",
             "max": 128,
             "min": 1,
-            "type": "int"
+            "type": "int",
+            "value": 24
           },
           "temporal_overlap_condition_strength": {
             "default": 0.5,
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Overlap Preservation",
             "max": 1,
             "min": 0,
             "step": 0.05,
-            "type": "float"
+            "type": "float",
+            "value": 0.5
           },
           "temporal_tile_size": {
             "default": 80,
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Temporal Window",
             "max": 257,
             "min": 17,
-            "type": "int"
+            "type": "int",
+            "value": 80
           },
           "true_cfg_scale": {
             "default": 1,
             "disabled": false,
-            "hidden": false,
+            "hidden": true,
             "label": "True CFG",
             "max": 20,
             "min": 0,
-            "type": "float",
-            "value": 1
+            "type": "float"
           },
           "use_guidance_scale_2": {
             "default": false,
@@ -1644,7 +1645,7 @@
               "modes": [
                 "image_to_video"
               ],
-              "pipelineClass": "HunyuanVideoFramepackPipeline",
+              "pipelineClass": "LTXI2VLongMultiPromptPipeline",
               "schemaVersion": 1
             }
           },
@@ -1792,7 +1793,7 @@
             "type": "string",
             "value": {
               "source": "hub",
-              "value": "lllyasviel/FramePackI2V_HY"
+              "value": "Lightricks/LTX-Video-0.9.8-13B-distilled"
             }
           },
           "offload_mode": {
@@ -1968,7 +1969,7 @@
               }
             ],
             "type": "string",
-            "value": "HunyuanVideoFramepackPipeline"
+            "value": "LTXI2VLongMultiPromptPipeline"
           },
           "resolved_artifact": {
             "display": "output",
@@ -1980,7 +1981,7 @@
             "default": "",
             "label": "Revision",
             "type": "string",
-            "value": "86cef4396041b6002c957852daac4c91aaa47c79"
+            "value": "7c64400e1861cc0d7b98d570a1926d5408ec60cd"
           }
         },
         "resizable": true,

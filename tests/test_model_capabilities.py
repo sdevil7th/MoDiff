@@ -94,6 +94,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 ["image_to_video"],
                 "86cef4396041b6002c957852daac4c91aaa47c79",
             ),
+            "StableVideoDiffusionPipeline": (
+                ["image_to_video"],
+                "043843887ccd51926e3efed36270444a838e7861",
+            ),
             "WanImage2VideoModularPipeline": (
                 ["image_to_video"],
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
@@ -109,7 +113,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 83)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 84)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -130,6 +134,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "LTXI2VLongMultiPromptPipeline",
             "LTX2ConditionPipeline",
             "HunyuanVideoFramepackPipeline",
+            "StableVideoDiffusionPipeline",
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",
@@ -654,6 +659,19 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(shap_e["recommendedFrames"], 20)
         self.assertEqual(shap_e["revisionCandidates"], ["7bd337afdea1c17842e1c3cc45c4e268356dba40"])
         self.assertEqual(shap_e["studioExecutionSpecs"][0]["executionPath"], "direct-diffusers-three-d")
+        stable_video = by_model["StableVideoDiffusionPipeline"]
+        self.assertEqual(stable_video["runnableModes"], ["image_to_video"])
+        self.assertEqual(stable_video["defaultDtype"], "float16")
+        self.assertEqual(stable_video["defaultSize"], {"width": 1024, "height": 576, "aspectRatio": "16:9"})
+        self.assertEqual(stable_video["recommendedSteps"], 25)
+        self.assertEqual(stable_video["recommendedFrames"], 25)
+        self.assertEqual(stable_video["recommendedFps"], 7)
+        self.assertEqual(
+            stable_video["revisionCandidates"],
+            ["043843887ccd51926e3efed36270444a838e7861"],
+        )
+        self.assertFalse(stable_video["autoEligible"])
+        self.assertFalse(stable_video["galleryEligible"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],

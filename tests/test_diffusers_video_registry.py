@@ -25,6 +25,8 @@ from modules.DiffusersVideo.main import (
     FRAMEPACK_BASE_REPO,
     FRAMEPACK_VISION_REPO,
     LTX_DISTILLED_TIMESTEPS,
+    STABLE_VIDEO_DIFFUSION_REPO,
+    STABLE_VIDEO_DIFFUSION_REVISION,
     VIDEO_PIPELINE_ADAPTERS,
     VIDEO_PIPELINE_EXECUTE_HANDLERS,
     VIDEO_PIPELINE_LOAD_HANDLERS,
@@ -2449,6 +2451,152 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertAlmostEqual(pipeline.scheduler.calls[0][1]["mu"], expected_mu)
         self.assertIn("timesteps", pipeline.scheduler_signature)
         self.assertEqual(pipeline.scheduler.set_timesteps, original_set_timesteps)
+
+    def test_stable_video_loader_uses_only_the_reviewed_safe_chunked_recipe(self):
+        pipeline = SimpleNamespace(
+            unet=SimpleNamespace(enable_forward_chunking=MagicMock()),
+        )
+        node = LoadPipeline("stable-video-loader")
+        with (
+            patch(
+                "diffusers.StableVideoDiffusionPipeline.from_pretrained",
+                return_value=pipeline,
+            ) as from_pretrained,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="StableVideoDiffusionPipeline",
+                model_id={"source": "hub", "value": STABLE_VIDEO_DIFFUSION_REPO},
+                dtype="float16",
+                device="cpu",
+                offload_mode="model_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], STABLE_VIDEO_DIFFUSION_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "StableVideoDiffusionPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, STABLE_VIDEO_DIFFUSION_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, STABLE_VIDEO_DIFFUSION_REVISION)
+        load_args, load_kwargs = from_pretrained.call_args
+        self.assertEqual(load_args, (STABLE_VIDEO_DIFFUSION_REPO,))
+        self.assertEqual(load_kwargs["revision"], STABLE_VIDEO_DIFFUSION_REVISION)
+        self.assertEqual(load_kwargs["variant"], "fp16")
+        self.assertIs(load_kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_kwargs)
+        self.assertNotIn("quantization_config", load_kwargs)
+        self.assertNotIn("device_map", load_kwargs)
+        pipeline.unet.enable_forward_chunking.assert_called_once_with()
+        apply_recipe.assert_called_once_with(pipeline, {})
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="stable-video-loader",
+            scope="stable-video-diffusion",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_stable_video_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-stable-video-loader")
+        custom_revision = "0123456789abcdef0123456789abcdef01234567"
+        with patch("diffusers.StableVideoDiffusionPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed gated Hub artifact"):
+                node.execute(
+                    pipeline_class="StableVideoDiffusionPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-svd"},
+                    revision=custom_revision,
+                )
+        from_pretrained.assert_not_called()
+
+    def test_stable_video_generate_seals_image_only_short_video_arguments(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(8)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "StableVideoDiffusionPipeline"
+            _modiff_video_repo = STABLE_VIDEO_DIFFUSION_REPO
+            _modiff_video_revision = STABLE_VIDEO_DIFFUSION_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        reference = Image.new("RGB", (1024, 576))
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="image_to_video",
+            reference_images=[reference],
+            width=1024,
+            height=576,
+            num_frames=8,
+            num_inference_steps=12,
+            guidance_scale=3,
+            frame_rate=7,
+            seed=17,
+            output_type="pil",
+        )
+
+        self.assertEqual(result, {"video_out": Output.frames[0], "width_out": 1024, "height_out": 576, "frames_out": 8})
+        call = pipeline.calls[0]
+        self.assertIs(call["image"], reference)
+        self.assertEqual(call["num_frames"], 8)
+        self.assertEqual(call["num_inference_steps"], 12)
+        self.assertEqual(call["min_guidance_scale"], 1.0)
+        self.assertEqual(call["max_guidance_scale"], 3.0)
+        self.assertEqual(call["motion_bucket_id"], 127)
+        self.assertEqual(call["noise_aug_strength"], 0.02)
+        self.assertEqual(call["decode_chunk_size"], 2)
+        self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertEqual(call["output_type"], "pil")
+
+    def test_stable_video_invalid_contracts_fail_before_torch_or_pipeline_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="StableVideoDiffusionPipeline",
+            _modiff_video_repo=STABLE_VIDEO_DIFFUSION_REPO,
+            _modiff_video_revision=STABLE_VIDEO_DIFFUSION_REVISION,
+        )
+        reference = Image.new("RGB", (1024, 576))
+        invalid = (
+            ({"prompt": "ignored text"}, "does not accept prompt text"),
+            ({"num_frames": 26}, "frame count must be an integer from 8 through 25"),
+            ({"width": 1023}, "must be divisible by 8"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"reference_images": [reference, reference]}, "exactly one opening reference image"),
+            ({"last_image": reference}, "does not accept last-image conditioning"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    values = {
+                        "pipeline": pipeline,
+                        "mode": "image_to_video",
+                        "reference_images": [reference],
+                        "width": 1024,
+                        "height": 576,
+                        "num_frames": 8,
+                        **update,
+                    }
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(**values)
+
+        unreviewed = SimpleNamespace(
+            _modiff_video_pipeline_class="StableVideoDiffusionPipeline",
+            _modiff_video_repo="organization/custom-svd",
+            _modiff_video_revision=STABLE_VIDEO_DIFFUSION_REVISION,
+        )
+        with self.assertRaisesRegex(ValueError, "does not match the reviewed artifact"):
+            Generate().execute(
+                pipeline=unreviewed,
+                mode="image_to_video",
+                reference_images=[reference],
+            )
 
     def test_only_generic_video_module_key_is_registered(self):
         self.assertNotIn("modules.WanVACE", module_registry.MODULE_MAP)

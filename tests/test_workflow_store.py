@@ -180,6 +180,7 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
                 "queue": True,
                 "workflowTabId": "workflow-field",
                 "workflowCanvasEpoch": 17,
+                "workflowFormEpoch": 23,
             },
         )
 
@@ -196,12 +197,14 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(field_message["task_id"], task_id)
         self.assertEqual(field_message["workflow_tab_id"], "workflow-field")
         self.assertEqual(field_message["workflow_canvas_epoch"], 17)
+        self.assertEqual(field_message["workflow_form_epoch"], 23)
         self.assertEqual(field_message["sid"], "field-session")
 
         completed = next(message for message in messages if message.get("type") == "task_completed")
         self.assertEqual(completed["task_id"], task_id)
         self.assertEqual(completed["workflow_tab_id"], "workflow-field")
         self.assertEqual(completed["workflow_canvas_epoch"], 17)
+        self.assertEqual(completed["workflow_form_epoch"], 23)
         self.assertEqual(completed["args"][1]["node"], "field-node")
 
     async def test_field_action_rejects_unknown_or_undeclared_targets_before_import(self):

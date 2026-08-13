@@ -180,6 +180,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTX2ConditionPipeline", "reference_to_video"),
                 ("LTX2ConditionPipeline", "video_to_video"),
                 ("HunyuanVideoFramepackPipeline", "image_to_video"),
+                ("StableVideoDiffusionPipeline", "image_to_video"),
                 ("WanImage2VideoModularPipeline", "image_to_video"),
                 ("DDPMPipeline", "unconditional_image"),
                 ("DDIMPipeline", "unconditional_image"),
@@ -993,6 +994,21 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersThreeDPipeline", "revision", "defaultRevision"), spec["bindings"])
         self.assertIn(("diffusersThreeDGenerate", "frame_size", "width"), spec["bindings"])
         self.assertIn(("diffusersThreeDGenerate", "video", "videoExport", "video"), spec["edges"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_stable_video_diffusion_seals_exact_safe_image_to_video_route(self):
+        spec = studio_execution_spec_for_pair("StableVideoDiffusionPipeline", "image_to_video")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "stable-video-diffusion:direct")
+        self.assertEqual(spec["executionPath"], "direct-diffusers-video")
+        self.assertEqual(spec["defaultRepo"], "stabilityai/stable-video-diffusion-img2vid-xt-1-1")
+        self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
+        self.assertIn(("wanGenerate", "prompt", "empty"), spec["bindings"])
+        self.assertIn(("wanGenerate", "negative_prompt", "empty"), spec["bindings"])
+        self.assertIn(("loadImage", "image", "wanGenerate", "reference_images"), spec["edges"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
