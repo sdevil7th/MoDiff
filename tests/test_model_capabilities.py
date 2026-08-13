@@ -765,7 +765,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ltx["executionProfiles"][0]["backend_path"], "modules.DiffusersVideo.LoadPipeline")
         self.assertEqual(ltx["maxPromptTokens"], 128)
         self.assertEqual(ltx["defaultRepo"], "Lightricks/LTX-Video-0.9.8-13B-distilled")
-        self.assertIn("Lightricks/LTX-Video", ltx["artifactCandidates"])
+        self.assertEqual(
+            ltx["artifactCandidates"],
+            ["Lightricks/LTX-Video-0.9.8-13B-distilled"],
+        )
         self.assertEqual(len(ltx["downloadFiles"]), 22)
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", ltx["downloadFiles"])
 

@@ -12,6 +12,7 @@ from modiff.diffusers_profiles import (
     MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY,
     QWEN_EXPERT_CUDA_POLICY,
     QWEN_EXPERT_QUANTIZATION_POLICY,
+    execution_profiles_for_execution,
 )
 from modiff.model_artifact_catalog import catalog_revision
 from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
@@ -107,6 +108,18 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)
+
+    def test_ltx_13b_profiles_do_not_silently_fallback_to_the_2b_family_index(self):
+        for mode in ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"):
+            profiles = execution_profiles_for_execution("LTXVideoPipeline", mode)
+            self.assertEqual(len(profiles), 1)
+            with self.subTest(mode=mode):
+                profile = profiles[0]
+                self.assertEqual(
+                    profile.default_repo,
+                    "Lightricks/LTX-Video-0.9.8-13B-distilled",
+                )
+                self.assertIsNone(profile.fallback_repo)
 
     def test_video_profile_uses_generic_facade(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["wan-vace:direct"]
