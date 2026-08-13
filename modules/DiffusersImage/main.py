@@ -62,6 +62,7 @@ SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -140,8 +141,8 @@ class ImagePipelineAdapter:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
         if not 16 <= self.min_output_side <= self.max_output_side <= 2048:
             raise ValueError("Image adapters must bound output sides between 16 and 2048.")
-        if self.output_side_step not in {16, 32}:
-            raise ValueError("Image adapter output-side increments must be 16 or 32 pixels.")
+        if self.output_side_step not in {16, 32, 64}:
+            raise ValueError("Image adapter output-side increments must be 16, 32, or 64 pixels.")
         if self.min_output_side % self.output_side_step or (
             self.max_output_side - self.min_output_side
         ) % self.output_side_step:
@@ -424,6 +425,34 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         max_inference_steps=50,
         max_sequence_length=300,
+    ),
+    "Kandinsky3Pipeline": ImagePipelineAdapter(
+        "Kandinsky3Pipeline",
+        frozenset({"text_to_image"}),
+        KANDINSKY3_REPO,
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        max_inference_steps=50,
+        min_output_side=1024,
+        max_output_side=1024,
+        output_side_step=64,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=128,
+    ),
+    "Kandinsky3Img2ImgPipeline": ImagePipelineAdapter(
+        "Kandinsky3Img2ImgPipeline",
+        frozenset({"edit_image"}),
+        KANDINSKY3_REPO,
+        artifact_pipeline_classes=("Kandinsky3Pipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        max_inference_steps=50,
+        min_output_side=1024,
+        max_output_side=1024,
+        output_side_step=64,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=128,
+        max_reference_pixels=1024 * 1024,
     ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
@@ -901,6 +930,12 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "PixArtSigmaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
+    "Kandinsky3Pipeline": {
+        "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
+    },
+    "Kandinsky3Img2ImgPipeline": {
+        "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
+    },
     "AuraFlowPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
@@ -1296,6 +1331,7 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
     if adapter.max_sequence_length != 512:
         field_params["max_sequence_length"] = {
             **field_params["max_sequence_length"],
+            "default": min(256, adapter.max_sequence_length),
             "max": adapter.max_sequence_length,
         }
     actions = {
@@ -1746,7 +1782,7 @@ def preflight_image_action(
     values["max_sequence_length"] = _bounded_image_int(
         values.get("max_sequence_length"),
         field="max_sequence_length",
-        default=256,
+        default=min(256, adapter.max_sequence_length),
         minimum=1,
         maximum=adapter.max_sequence_length,
     )

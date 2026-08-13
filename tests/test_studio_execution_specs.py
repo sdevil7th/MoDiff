@@ -210,6 +210,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("SanaSprintPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "edit_image"),
                 ("PixArtSigmaPipeline", "text_to_image"),
+                ("Kandinsky3Pipeline", "text_to_image"),
+                ("Kandinsky3Pipeline", "edit_image"),
                 ("AuraFlowPipeline", "text_to_image"),
                 ("ChromaPipeline", "text_to_image"),
                 ("CogView3PlusPipeline", "text_to_image"),
@@ -430,6 +432,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertFalse(
             DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].live_proof
         )
+        kandinsky3 = by_id["kandinsky3:text-to-image:v1"]
+        self.assertEqual(kandinsky3["modelType"], "Kandinsky3Pipeline")
+        self.assertEqual(kandinsky3["pipelineClass"], "Kandinsky3Pipeline")
+        self.assertEqual(kandinsky3["defaultRepo"], "kandinsky-community/kandinsky-3")
+        kandinsky3_profile = DIFFUSERS_EXECUTION_PROFILES[kandinsky3["executionProfileId"]]
+        self.assertEqual(kandinsky3_profile.max_low_memory_side, 1024)
+        self.assertEqual(kandinsky3_profile.max_low_memory_steps, 25)
+        self.assertFalse(kandinsky3_profile.live_proof)
+        kandinsky3_edit = by_id["kandinsky3:edit-image:v1"]
+        self.assertEqual(kandinsky3_edit["pipelineClass"], "Kandinsky3Img2ImgPipeline")
+        self.assertIn(("loadImage", "image", "diffusersImageEdit", "image"), kandinsky3_edit["edges"])
+        self.assertIn(("diffusersImageEdit", "strength", "strength"), kandinsky3_edit["bindings"])
         auraflow = by_id["auraflow-v0.3:text-to-image:v1"]
         self.assertEqual(auraflow["modelType"], "AuraFlowPipeline")
         self.assertEqual(auraflow["pipelineClass"], "AuraFlowPipeline")

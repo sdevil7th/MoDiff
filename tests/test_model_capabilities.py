@@ -145,7 +145,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 109)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 111)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -192,6 +192,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "SanaPipeline",
             "SanaSprintPipeline",
             "PixArtSigmaPipeline",
+            "Kandinsky3Pipeline",
             "AuraFlowPipeline",
             "ChromaPipeline",
             "CogView3PlusPipeline",
@@ -388,6 +389,26 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(pixart["autoEligible"])
         self.assertFalse(pixart["galleryEligible"])
         self.assertNotIn("PixArtSigmaPipeline", experimental)
+        kandinsky3 = by_model["Kandinsky3Pipeline"]
+        self.assertEqual(
+            kandinsky3["revisionCandidates"],
+            ["bf79e6c219da8a94abb50235fdc4567eb8fb4632"],
+        )
+        self.assertEqual(kandinsky3["recommendedSteps"], 25)
+        self.assertEqual(kandinsky3["recommendedGuidance"], 3.0)
+        self.assertEqual(kandinsky3["recommendedMaxSequenceLength"], 128)
+        self.assertEqual(kandinsky3["modes"], ["text_to_image", "edit_image"])
+        self.assertEqual(
+            kandinsky3["pipelineClasses"],
+            ["Kandinsky3Img2ImgPipeline", "Kandinsky3Pipeline"],
+        )
+        self.assertEqual(
+            kandinsky3["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertFalse(kandinsky3["autoEligible"])
+        self.assertFalse(kandinsky3["galleryEligible"])
+        self.assertNotIn("Kandinsky3Pipeline", experimental)
         auraflow = by_model["AuraFlowPipeline"]
         self.assertEqual(
             auraflow["revisionCandidates"],

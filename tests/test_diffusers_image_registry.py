@@ -49,6 +49,7 @@ from modules.DiffusersImage.main import (
     HUNYUAN_DIT_DISTILLED_REPO,
     JOYIMAGE_EDIT_PLUS_REPO,
     JOYIMAGE_EDIT_REPO,
+    KANDINSKY3_REPO,
     IMAGE_MODE_FIELD_CONTRACTS,
     IMAGE_PIPELINE_CLASSES,
     QWEN_IMAGE_2512_REPO,
@@ -791,6 +792,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertFalse(sana_sprint_edit["fieldParams"]["height"]["hidden"])
         self.assertFalse(sana_sprint_edit["fieldParams"]["strength"]["hidden"])
         for pipeline_name, mode in (
+            ("Kandinsky3Pipeline", "text_to_image"),
+            ("Kandinsky3Img2ImgPipeline", "edit_image"),
+        ):
+            kandinsky3 = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
+            self.assertTrue(kandinsky3["fieldParams"]["max_sequence_length"]["hidden"])
+            self.assertEqual(kandinsky3["fieldParams"]["max_sequence_length"]["default"], 128)
+            self.assertEqual(kandinsky3["fieldParams"]["max_sequence_length"]["max"], 128)
+        for pipeline_name, mode in (
             ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
             ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
         ):
@@ -885,6 +894,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image"},
             ),
             "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
+            "Kandinsky3Pipeline": ({"text_to_image"}, KANDINSKY3_REPO, {"prompt"}),
+            "Kandinsky3Img2ImgPipeline": (
+                {"edit_image"},
+                KANDINSKY3_REPO,
+                {"prompt", "image"},
+            ),
             "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
             "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
             "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
@@ -1003,6 +1018,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("SanaSprintPipeline", "text_to_image", Generate, {}),
             ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
+            ("Kandinsky3Pipeline", "text_to_image", Generate, {}),
+            ("Kandinsky3Img2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("AuraFlowPipeline", "text_to_image", Generate, {}),
             ("ChromaPipeline", "text_to_image", Generate, {}),
             ("CogView3PlusPipeline", "text_to_image", Generate, {}),
@@ -2152,6 +2169,104 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 num_inference_steps=20,
                 guidance_scale=4.5,
                 max_sequence_length=301,
+            )
+
+    def test_kandinsky3_loads_exact_fp16_safetensors_and_bounds_both_routes(self):
+        loads = []
+
+        class Kandinsky3Pipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loads.append((cls.__name__, repo, kwargs))
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Kandinsky 3 settings must fail before inference")
+
+        class Kandinsky3Img2ImgPipeline(Kandinsky3Pipeline):
+            pass
+
+        pipeline_classes = {
+            "Kandinsky3Pipeline": Kandinsky3Pipeline,
+            "Kandinsky3Img2ImgPipeline": Kandinsky3Img2ImgPipeline,
+        }
+        loaded_pipelines = {}
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: pipeline_classes[name],
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            for mode, pipeline_class in (
+                ("text_to_image", "Kandinsky3Pipeline"),
+                ("edit_image", "Kandinsky3Img2ImgPipeline"),
+            ):
+                node = LoadPipeline(f"kandinsky3-{mode}-load-probe")
+                node.progress = lambda *args, **kwargs: None
+                node.mm_add = lambda *args, **kwargs: None
+                loaded_pipelines[mode] = node.execute(
+                    model_id=KANDINSKY3_REPO,
+                    pipeline_class=pipeline_class,
+                    mode=mode,
+                    revision=catalog_revision(KANDINSKY3_REPO),
+                    dtype="float16",
+                    auto_offload=False,
+                    offload_mode="none",
+                )["pipeline"]
+
+        self.assertEqual(
+            [item[0] for item in loads],
+            ["Kandinsky3Pipeline", "Kandinsky3Img2ImgPipeline"],
+        )
+        for _pipeline_class, repo, kwargs in loads:
+            self.assertEqual(repo, KANDINSKY3_REPO)
+            self.assertEqual(kwargs["revision"], catalog_revision(KANDINSKY3_REPO))
+            self.assertEqual(kwargs["torch_dtype"], "float16")
+            self.assertTrue(kwargs["use_safetensors"])
+            self.assertEqual(kwargs["variant"], "fp16")
+            self.assertNotIn("trust_remote_code", kwargs)
+
+        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+            Generate("kandinsky3-size-contract").execute(
+                pipeline=loaded_pipelines["text_to_image"],
+                prompt="reviewed fixture",
+                width=960,
+                height=1024,
+                num_inference_steps=25,
+                guidance_scale=3.0,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("kandinsky3-step-contract").execute(
+                pipeline=loaded_pipelines["text_to_image"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=3.0,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 128"):
+            Generate("kandinsky3-sequence-contract").execute(
+                pipeline=loaded_pipelines["text_to_image"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=25,
+                guidance_scale=3.0,
+                max_sequence_length=129,
+            )
+        with self.assertRaisesRegex(ValueError, "1048576-pixel cumulative input limit"):
+            Edit("kandinsky3-input-contract").execute(
+                pipeline=loaded_pipelines["edit_image"],
+                image=Image.new("RGB", (1025, 1024), "black"),
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=25,
+                guidance_scale=3.0,
+                strength=0.75,
+                max_sequence_length=128,
             )
 
     def test_auraflow_loads_only_the_pinned_fp16_partition_and_bounds_native_recipe(self):

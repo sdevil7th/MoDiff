@@ -41,6 +41,7 @@ SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -5951,6 +5952,104 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["pixart-sigma-1024:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_KANDINSKY3_PROFILE = {
+    "id": "kandinsky3:direct",
+    "model_type": "Kandinsky3Pipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "Kandinsky3Pipeline",
+    "default_repo": KANDINSKY3_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 25,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_KANDINSKY3_CAPABILITY = {
+    "modelType": "Kandinsky3Pipeline",
+    "label": "Kandinsky 3",
+    "displayName": "Kandinsky 3",
+    "family": "Kandinsky",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": KANDINSKY3_REPO,
+    "artifactLabel": "Apache-2.0-declared fp16 Diffusers safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 25,
+    "recommendedGuidance": 3.0,
+    "recommendedMaxSequenceLength": 128,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 25,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(KANDINSKY3_REPO, model_type="Kandinsky3Pipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains only package-owned Diffusers and Transformers classes and seven fp16 safetensors files.",
+        "The reviewed single-stage routes use the package's 1024px default, 25 steps, guidance 3, at most 128 prompt tokens, and explicit model or sequential CPU offload.",
+        "The approximately 28.39 GB selected weight surface has no safety checker and remains remote-only; Auto and Gallery are disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["kandinsky3:text-to-image:v1"] = {
+    "modelType": "Kandinsky3Pipeline",
+    "mode": "text_to_image",
+    "profile": _KANDINSKY3_PROFILE,
+    "capability": _KANDINSKY3_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+_KANDINSKY3_IMG2IMG_PROFILE = {
+    **_KANDINSKY3_PROFILE,
+    "id": "kandinsky3:img2img-direct",
+    "modes": ("edit_image",),
+    "pipeline_class": "Kandinsky3Img2ImgPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["kandinsky3:edit-image:v1"] = {
+    "modelType": "Kandinsky3Pipeline",
+    "mode": "edit_image",
+    "profile": _KANDINSKY3_IMG2IMG_PROFILE,
+    "capability": _KANDINSKY3_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
 }
 
 

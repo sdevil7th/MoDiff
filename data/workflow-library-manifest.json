@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T19:10:06.825Z",
+  "generatedAt": "2026-08-13T20:19:12.072Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 109,
-  "supportedPairCount": 121,
+  "supportedCanonicalPairCount": 111,
+  "supportedPairCount": 123,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1647,6 +1647,64 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
       "graphHash": "87aea933e0a45c24f3ceb70bfb36aa987474a2debe6d29cd13931b65f0aaf8c3"
+    },
+    {
+      "id": "Kandinsky3Pipeline:edit_image",
+      "modelType": "Kandinsky3Pipeline",
+      "modelFamily": "Kandinsky",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "kandinsky-community/kandinsky-3"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "Kandinsky3Img2ImgPipeline",
+        "Kandinsky3Pipeline"
+      ],
+      "sourceTemplateId": "task-template:kandinsky3:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/kandinsky3-pipeline/edit-image.json",
+      "graphHash": "da119b49fbe98603163b90c3777fd3b3f3d9c972ca9a51e9fe6fc4788392824c"
+    },
+    {
+      "id": "Kandinsky3Pipeline:text_to_image",
+      "modelType": "Kandinsky3Pipeline",
+      "modelFamily": "Kandinsky",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "kandinsky-community/kandinsky-3"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Kandinsky3Img2ImgPipeline",
+        "Kandinsky3Pipeline"
+      ],
+      "sourceTemplateId": "task-template:kandinsky3:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
+      "graphHash": "35ae4e67f4e12f04e9167218afdaad80d21f3a3c1dc9daf9f8ad44636e0ee50e"
     },
     {
       "id": "LatentConsistencyModelPipeline:text_to_image",

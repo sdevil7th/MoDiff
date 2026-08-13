@@ -40,6 +40,7 @@ STUDIO_MODEL_TYPES = {
     "LatentConsistencyModelPipeline",
     "StableDiffusionPAGPipeline",
     "PixArtSigmaPipeline",
+    "Kandinsky3Pipeline",
     "AuraFlowPipeline",
     "ChromaPipeline",
     "CogView3PlusPipeline",
@@ -104,6 +105,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("fal/AuraFlow-v0.3"),
             "2cd8588f04c886002be4571697d84654a50e3af3",
+        )
+        self.assertEqual(
+            catalog_revision("kandinsky-community/kandinsky-3"),
+            "bf79e6c219da8a94abb50235fdc4567eb8fb4632",
         )
         self.assertEqual(
             catalog_revision("lodestones/Chroma1-HD"),
