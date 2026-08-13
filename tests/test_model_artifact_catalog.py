@@ -117,6 +117,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("rhymes-ai/Allegro"),
             "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
         )
+        self.assertEqual(
+            catalog_revision("maxin-cn/Latte-1"),
+            "0653024365272f061fc44d1078134df22842b687",
+        )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(

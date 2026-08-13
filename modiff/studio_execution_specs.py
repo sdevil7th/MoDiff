@@ -69,6 +69,7 @@ ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 ALLEGRO_REPO = "rhymes-ai/Allegro"
+LATTE_REPO = "maxin-cn/Latte-1"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -4157,6 +4158,68 @@ def _allegro_capability() -> dict[str, Any]:
     }
 
 
+def _latte_capability() -> dict[str, Any]:
+    return {
+        "modelType": "LattePipeline",
+        "label": "Latte",
+        "displayName": "Latte",
+        "family": "Latte",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": LATTE_REPO,
+        "artifactLabel": "Official Apache-2.0 safetensors Diffusers repo",
+        "defaultDtype": "float16",
+        "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+        "recommendedSteps": 50,
+        "recommendedGuidance": 7.5,
+        "recommendedMaxSequenceLength": 120,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": False,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": False,
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 16,
+        "recommendedFps": 8,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "float16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "steps": 50,
+            "width": 512,
+            "height": 512,
+            "numFrames": 16,
+        },
+        "modes": ["text_to_video"],
+        "modeRequirements": {
+            "text_to_video": {
+                "note": "Uses the exact Latte safetensors snapshot and its native 16-frame recipe with sequential CPU offload."
+            }
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(LATTE_REPO)],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "The admitted source graph is fixed to the native 16-frame 512x512 recipe at 8 FPS.",
+            "The unsafe legacy .pt checkpoint and unreferenced optional temporal VAE are excluded from execution.",
+            "Auto and Gallery publication remain disabled until exact remote runtime, safety, and quality proof is reviewed.",
+        ],
+    }
+
+
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
@@ -4217,6 +4280,13 @@ _P2_VIDEO_PROFILES = {
         ("text_to_video",),
         "AllegroPipeline",
         ALLEGRO_REPO,
+    ),
+    "latte": _planning_video_profile(
+        "latte:direct",
+        "LattePipeline",
+        ("text_to_video",),
+        "LattePipeline",
+        LATTE_REPO,
     ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
@@ -4409,6 +4479,15 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "text_to_video",
             "profile": _P2_VIDEO_PROFILES["allegro"],
             "capability": _allegro_capability(),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+        },
+        "latte:text-to-video:v1": {
+            "modelType": "LattePipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["latte"],
+            "capability": _latte_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _COGVIDEOX_GRAPH_BINDINGS,

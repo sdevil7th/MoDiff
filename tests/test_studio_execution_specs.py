@@ -185,6 +185,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("AnimateLCMPipeline", "text_to_video"),
                 ("CogVideoXPipeline", "text_to_video"),
                 ("AllegroPipeline", "text_to_video"),
+                ("LattePipeline", "text_to_video"),
                 ("WanImage2VideoModularPipeline", "image_to_video"),
                 ("DDPMPipeline", "unconditional_image"),
                 ("DDIMPipeline", "unconditional_image"),
@@ -1133,6 +1134,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIsNotNone(spec)
         self.assertEqual(spec["executionProfileId"], "allegro:direct")
         self.assertEqual(spec["defaultRepo"], "rhymes-ai/Allegro")
+        self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
+        self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_latte_seals_exact_safe_native_text_to_video_route(self):
+        spec = studio_execution_spec_for_pair("LattePipeline", "text_to_video")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "latte:direct")
+        self.assertEqual(spec["defaultRepo"], "maxin-cn/Latte-1")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
         self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])

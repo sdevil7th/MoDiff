@@ -61,6 +61,8 @@ COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 COGVIDEOX_2B_REVISION = "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01"
 ALLEGRO_REPO = "rhymes-ai/Allegro"
 ALLEGRO_REVISION = "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6"
+LATTE_REPO = "maxin-cn/Latte-1"
+LATTE_REVISION = "0653024365272f061fc44d1078134df22842b687"
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -320,6 +322,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("text_to_video",),
         max_prompt_tokens=512,
     ),
+    "LattePipeline": VideoPipelineAdapter(
+        id="latte",
+        pipeline_class="LattePipeline",
+        diffusers_class="LattePipeline",
+        default_repo=LATTE_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=120,
+    ),
 }
 
 
@@ -466,6 +476,7 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "AnimateLCMPipeline": {"text_to_video": _video_field_contract()},
     "CogVideoXPipeline": {"text_to_video": _video_field_contract()},
     "AllegroPipeline": {"text_to_video": _video_field_contract()},
+    "LattePipeline": {"text_to_video": _video_field_contract()},
 }
 
 
@@ -496,6 +507,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "AnimateLCMPipeline": "_load_animatediff",
     "CogVideoXPipeline": "_load_cogvideox",
     "AllegroPipeline": "_load_allegro",
+    "LattePipeline": "_load_latte",
 }
 
 
@@ -516,6 +528,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "AnimateLCMPipeline": "_execute_animatediff",
     "CogVideoXPipeline": "_execute_cogvideox",
     "AllegroPipeline": "_execute_allegro",
+    "LattePipeline": "_execute_latte",
 }
 
 
@@ -706,6 +719,16 @@ def _require_allegro_artifact(model_selection: Any, model_id: str, revision: Any
     reviewed_revision = require_catalog_revision(ALLEGRO_REPO, model_type="AllegroPipeline")
     if revision != reviewed_revision or revision != ALLEGRO_REVISION:
         raise ValueError(f"Allegro is pinned to {ALLEGRO_REVISION}.")
+    return reviewed_revision
+
+
+def _require_latte_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != LATTE_REPO:
+        raise ValueError(f"Latte currently requires the exact reviewed Hub artifact {LATTE_REPO}.")
+    reviewed_revision = require_catalog_revision(LATTE_REPO, model_type="LattePipeline")
+    if revision != reviewed_revision or revision != LATTE_REVISION:
+        raise ValueError(f"Latte is pinned to {LATTE_REVISION}.")
     return reviewed_revision
 
 
@@ -1178,7 +1201,14 @@ def _bounded_short_video_float(
     return number
 
 
-def _validate_prompt_token_limit(pipeline: Any, prompt: str | None, label: str, limit: int | None):
+def _validate_prompt_token_limit(
+    pipeline: Any,
+    prompt: str | None,
+    label: str,
+    limit: int | None,
+    *,
+    family: str = "LTX",
+):
     if not prompt or not limit:
         return
     tokenizer = getattr(pipeline, "tokenizer", None)
@@ -1191,7 +1221,7 @@ def _validate_prompt_token_limit(pipeline: Any, prompt: str | None, label: str, 
     token_count = len(token_ids or [])
     if token_count > limit:
         raise ValueError(
-            f"LTX {label} uses {token_count} tokens, but this artifact supports at most {limit}. "
+            f"{family} {label} uses {token_count} tokens, but this artifact supports at most {limit}. "
             "Shorten the text so motion and preservation constraints are not truncated."
         )
 
@@ -1787,6 +1817,50 @@ class LoadPipeline(WanVACELoadPipeline):
             raise RuntimeError("Allegro did not expose the documented VAE tiling hook.")
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         enable_tiling()
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
+    def _load_latte(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        import torch
+        from diffusers import LattePipeline
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _require_latte_artifact(
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+        )
+        if str(kwargs.get("dtype") or "float16") != "float16":
+            raise ValueError("Latte source qualification requires dtype=float16.")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode="sequential_cpu",
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError("Latte source qualification does not admit on-load quantization or a device map.")
+        load_kwargs = {
+            "torch_dtype": torch.float16,
+            "use_safetensors": True,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "revision": revision,
+            "local_files_only": local_files_only(model_id),
+        }
+        if CONFIG.hf.get("cache_dir"):
+            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
+
+        logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
+        self.progress(-1, phase="loading", message="Loading Latte")
+        pipeline = LattePipeline.from_pretrained(
+            model_id,
+            **load_kwargs,
+            **recipe_load_kwargs,
+        )
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
         self.mm_add(pipeline, priority=2)
@@ -2761,6 +2835,122 @@ class Generate(WanVACEGenerate):
         if not isinstance(frames, list) or len(frames) != num_frames:
             received = len(frames) if isinstance(frames, list) else "an unknown number of"
             raise RuntimeError(f"Allegro returned {received} frames; expected {num_frames}.")
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames),
+        }
+
+    def _execute_latte(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "text_to_video":
+            raise ValueError("Latte supports text_to_video generation only.")
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != LATTE_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != LATTE_REVISION
+        ):
+            raise ValueError("The connected Latte pipeline does not match the reviewed artifact.")
+        for field, label in (
+            ("video", "source video"),
+            ("mask", "mask"),
+            ("pose_video", "pose video"),
+            ("face_video", "face video"),
+            ("background_video", "background video"),
+        ):
+            if ensure_video_list(kwargs.get(field), label) is not None:
+                raise ValueError(f"Latte text_to_video does not accept {label} input.")
+        if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
+            raise ValueError("Latte text_to_video does not accept image conditioning.")
+
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        if not isinstance(prompt, str):
+            raise ValueError("Latte requires one nonempty prompt string.")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        if negative_prompt is None:
+            negative_prompt = ""
+        if not isinstance(negative_prompt, str):
+            raise ValueError("Latte negative prompt must be one string.")
+        _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens, family="Latte")
+        _validate_prompt_token_limit(
+            pipeline,
+            negative_prompt,
+            "negative prompt",
+            adapter.max_prompt_tokens,
+            family="Latte",
+        )
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError("Latte source qualification supports one video per prompt.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError("Latte source qualification requires output_type=pil.")
+
+        width = _bounded_short_video_int(
+            kwargs.get("width"), family="Latte", default=512, label="width", minimum=512, maximum=512
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"), family="Latte", default=512, label="height", minimum=512, maximum=512
+        )
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"), family="Latte", default=16, label="frame count", minimum=16, maximum=16
+        )
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family="Latte",
+            default=50,
+            label="step count",
+            minimum=1,
+            maximum=50,
+        )
+        guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="Latte",
+            default=7.5,
+            label="guidance",
+            minimum=1.0,
+            maximum=12.0,
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                height=height,
+                width=width,
+                video_length=num_frames,
+                num_inference_steps=steps,
+                guidance_scale=guidance,
+                num_images_per_prompt=1,
+                generator=generator,
+                output_type=output_type,
+                return_dict=True,
+                clean_caption=False,
+                mask_feature=True,
+                enable_temporal_attentions=True,
+                decode_chunk_size=14,
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+            )
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        if not isinstance(frames, list) or len(frames) != num_frames:
+            received = len(frames) if isinstance(frames, list) else "an unknown number of"
+            raise RuntimeError(f"Latte returned {received} frames; expected {num_frames}.")
         return {
             "video_out": frames,
             "width_out": width,

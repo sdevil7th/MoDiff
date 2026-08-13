@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T14:50:12.284Z",
+  "generatedAt": "2026-08-13T15:33:35.756Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 97,
-  "supportedPairCount": 109,
+  "supportedCanonicalPairCount": 98,
+  "supportedPairCount": 110,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1431,6 +1431,34 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
       "graphHash": "16c33fbfe1882c0726e2f90a8bb2357d761e997d0cddf741b12af809ca694610"
+    },
+    {
+      "id": "LattePipeline:text_to_video",
+      "modelType": "LattePipeline",
+      "modelFamily": "Latte",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "maxin-cn/Latte-1"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Latte safetensors snapshot and its native 16-frame recipe with sequential CPU offload."
+      },
+      "pipelineClasses": [
+        "LattePipeline"
+      ],
+      "sourceTemplateId": "task-template:latte:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/latte-pipeline/text-to-video.json",
+      "graphHash": "ec4bea1bca45f98672b76ff10a669ad1b776c59c0a4207b7b3957a6139beff4b"
     },
     {
       "id": "LongCatAudioDiTPipeline:text_to_audio",

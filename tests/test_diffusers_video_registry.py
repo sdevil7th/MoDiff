@@ -37,6 +37,8 @@ from modules.DiffusersVideo.main import (
     COGVIDEOX_2B_REVISION,
     FRAMEPACK_BASE_REPO,
     FRAMEPACK_VISION_REPO,
+    LATTE_REPO,
+    LATTE_REVISION,
     LTX_DISTILLED_TIMESTEPS,
     STABLE_VIDEO_DIFFUSION_REPO,
     STABLE_VIDEO_DIFFUSION_REVISION,
@@ -2992,6 +2994,131 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                             pipeline=pipeline,
                             mode="text_to_video",
                             prompt="A sailboat crosses a sunlit bay.",
+                            **update,
+                        )
+
+    def test_latte_loader_pins_safe_float16_weights_and_sequential_offload(self):
+        pipeline = SimpleNamespace()
+        node = LoadPipeline("latte-loader")
+        with (
+            patch("diffusers.LattePipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="LattePipeline",
+                model_id={"source": "hub", "value": LATTE_REPO},
+                revision=LATTE_REVISION,
+                dtype="float16",
+                device="cpu",
+                offload_mode="sequential_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], LATTE_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "LattePipeline")
+        self.assertEqual(pipeline._modiff_video_repo, LATTE_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, LATTE_REVISION)
+        self.assertEqual(load_pipeline.call_args.args, (LATTE_REPO,))
+        self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.float16")
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], LATTE_REVISION)
+        self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+        self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+        self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        apply_recipe.assert_called_once_with(pipeline, {})
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="latte-loader",
+            scope="latte",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_latte_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-latte-loader")
+        with patch("diffusers.LattePipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="LattePipeline",
+                    model_id={"source": "hub", "value": "organization/custom-latte"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="float16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_latte_generate_seals_native_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(16)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "LattePipeline"
+            _modiff_video_repo = LATTE_REPO
+            _modiff_video_revision = LATTE_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A coffee cup steams beside a rain-streaked window.",
+            negative_prompt="flicker",
+            width=512,
+            height=512,
+            num_frames=16,
+            num_inference_steps=50,
+            guidance_scale=7.5,
+            seed=37,
+            output_type="pil",
+        )
+
+        self.assertEqual(
+            result,
+            {"video_out": Output.frames[0], "width_out": 512, "height_out": 512, "frames_out": 16},
+        )
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["video_length"], 16)
+        self.assertEqual(call_kwargs["num_inference_steps"], 50)
+        self.assertEqual(call_kwargs["guidance_scale"], 7.5)
+        self.assertEqual(call_kwargs["num_images_per_prompt"], 1)
+        self.assertEqual(call_kwargs["decode_chunk_size"], 14)
+        self.assertIs(call_kwargs["clean_caption"], False)
+        self.assertIs(call_kwargs["mask_feature"], True)
+        self.assertIs(call_kwargs["enable_temporal_attentions"], True)
+        self.assertNotIn("image", call_kwargs)
+
+    def test_latte_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="LattePipeline",
+            _modiff_video_repo=LATTE_REPO,
+            _modiff_video_revision=LATTE_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 15}, "integer from 16 through 16"),
+            ({"width": 504}, "integer from 512 through 512"),
+            ({"height": 520}, "integer from 512 through 512"),
+            ({"num_inference_steps": 51}, "integer from 1 through 50"),
+            ({"reference_images": [Image.new("RGB", (512, 512))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"guidance_scale": 12.1}, "finite and from 1 through 12"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A coffee cup steams beside a rain-streaked window.",
                             **update,
                         )
 
