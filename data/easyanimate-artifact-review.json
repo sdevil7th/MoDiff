@@ -1,0 +1,281 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The three immutable Diffusers conversions are safe and public, but their 31.19-41.16 GB partitions have not run on qualified heavy hardware and the inpaint/control tensor-preparation paths do not yet have reviewed MoDiff media adapters.",
+    "runtimeCatalogExposed": false,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "remote_heavy_hardware_execution",
+      "generic_media_preprocessing_contracts",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "commonWeightFiles": [
+    {
+      "byteSize": 3898649896,
+      "path": "text_encoder/model-00001-of-00005.safetensors",
+      "sha256": "eab4f4dc1abf860794c98ce3759b4ace1059fc0fc041ede76b88988b3557c132"
+    },
+    {
+      "byteSize": 3864726320,
+      "path": "text_encoder/model-00002-of-00005.safetensors",
+      "sha256": "0546b7cd070ff239de0f61a28770de6a0ac517ad313071e151653e38911ffb25"
+    },
+    {
+      "byteSize": 3864726424,
+      "path": "text_encoder/model-00003-of-00005.safetensors",
+      "sha256": "11368ea1e9c0039ca54012a74ac32d543a9e9d980b2d0ad7e93af0341ace1fe6"
+    },
+    {
+      "byteSize": 3864733680,
+      "path": "text_encoder/model-00004-of-00005.safetensors",
+      "sha256": "381e110d74db594cc24956af0e74a01ae02104497113a78926990c5bd1f395f6"
+    },
+    {
+      "byteSize": 1089994880,
+      "path": "text_encoder/model-00005-of-00005.safetensors",
+      "sha256": "e76ec4dc2e7c0dcbe3432e58fae08e62204a2ef2323069d85c8fa0affb87332a"
+    },
+    {
+      "byteSize": 977527308,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "9e2c9105c2562bc8ff85da15900753ee0dc653a2c080e1460fa548c871c1565e"
+    }
+  ],
+  "family": "EasyAnimate V5.1",
+  "format": "safetensors",
+  "license": {
+    "embeddedLicenseFilePresent": false,
+    "evidence": "Pinned model-card metadata on all three Diffusers conversion repositories",
+    "id": "apache-2.0",
+    "metadataOnly": true
+  },
+  "pipelineContracts": [
+    {
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 512,
+      "defaultNumFrames": 49,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 512,
+      "pipelineClass": "EasyAnimatePipeline",
+      "repositoryRole": "textToVideo7B",
+      "requiredInputs": [
+        "prompt"
+      ],
+      "taskId": "text_to_video",
+      "transformerInputChannels": 16
+    },
+    {
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 512,
+      "defaultNumFrames": 49,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 512,
+      "pipelineClass": "EasyAnimateInpaintPipeline",
+      "preparationHelper": "get_image_to_video_latent",
+      "repositoryRole": "inpaint12B",
+      "requiredPipelineTensorInputs": [
+        "video",
+        "mask_video"
+      ],
+      "supportedSourceTasks": [
+        "image_to_video",
+        "video_to_video",
+        "video_inpaint"
+      ],
+      "transformerInputChannels": 33
+    },
+    {
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 512,
+      "defaultNumFrames": 49,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 512,
+      "pipelineClass": "EasyAnimateControlPipeline",
+      "preparationHelper": "get_video_to_video_latent",
+      "repositoryRole": "control12B",
+      "requiredPipelineTensorInputs": [
+        "control_video"
+      ],
+      "taskId": "control_to_video",
+      "transformerInputChannels": 48
+    }
+  ],
+  "remoteResourceEnvelopes": {
+    "control12B": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 103079215104,
+      "status": "estimate_only_qualification_pending"
+    },
+    "inpaint12B": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 103079215104,
+      "status": "estimate_only_qualification_pending"
+    },
+    "textToVideo7B": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 17179869184,
+      "minimumSelectiveDiskBytes": 51539607552,
+      "minimumSystemRamBytes": 68719476736,
+      "status": "estimate_only_qualification_pending"
+    }
+  },
+  "repositories": [
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 441,
+        "className": "EasyAnimatePipeline",
+        "sha256": "fe4b52e76f6c798822ac019e987c7e88ff4a0311d545619f3a12a679f27104cf"
+      },
+      "private": false,
+      "repository": "alibaba-pai/EasyAnimateV5.1-7b-zh-diffusers",
+      "revision": "f605a9340b46e725da4c1953dc891884dd694314",
+      "role": "textToVideo7B",
+      "transformer": {
+        "byteSize": 13629059056,
+        "configSha256": "d1f9eaebeeb2a6b273ed88cf22982cb80a71fc538a01d17a221469bf67555371",
+        "inputChannels": 16,
+        "layers": 36,
+        "path": "transformer/diffusion_pytorch_model.safetensors",
+        "sha256": "8e393959858422aff6614d4a0bf25bd3e475e819f0c15ad28a29cd6f1f41468a"
+      },
+      "weightBytes": 31189417564,
+      "weightFileCount": 7,
+      "weightInventorySha256": "6a7fd30076c7cdeeaa2844ba84b41ba5f8f65776f924d0c75f07f52b5a8a1f93"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 448,
+        "className": "EasyAnimateInpaintPipeline",
+        "sha256": "d11b4f6f9341bc0acc7bec770079a72a081e7dc440c028829b697f7caf9be7a3"
+      },
+      "private": false,
+      "repository": "alibaba-pai/EasyAnimateV5.1-12b-zh-InP-diffusers",
+      "revision": "8a257d883449752ecaa6bd4990caf932e927de33",
+      "role": "inpaint12B",
+      "transformer": {
+        "byteSize": 23598758792,
+        "configSha256": "e5e4647d4c4230f4fe6a267f97a62ffee112e06f12e381cfaa4d8a9f0deec34c",
+        "inputChannels": 33,
+        "layers": 48,
+        "path": "transformer/diffusion_pytorch_model.safetensors",
+        "sha256": "9b8adc74de49590059310979a2d9eff088cc69baa598ecab62b3a448ef5a06e0"
+      },
+      "weightBytes": 41159117300,
+      "weightFileCount": 7,
+      "weightInventorySha256": "5a0364d791f9cc0e37ebf390d61b54971c3c0c58cd72ff77d447d5cac83d95c9"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 448,
+        "className": "EasyAnimateControlPipeline",
+        "sha256": "3949703e85c2667fe7b0292522a3c7f7696f14d812d5334f2af3ede27ba4a594"
+      },
+      "private": false,
+      "repository": "alibaba-pai/EasyAnimateV5.1-12b-zh-Control-diffusers",
+      "revision": "4daad26e8f7f701b37148ac91dc36a4981303af2",
+      "role": "control12B",
+      "transformer": {
+        "byteSize": 23599127432,
+        "configSha256": "163397f31a0f3defa0139379f4f01aeed09b17584aa9d906c0744f83878503e3",
+        "inputChannels": 48,
+        "layers": 48,
+        "path": "transformer/diffusion_pytorch_model.safetensors",
+        "sha256": "ff97d200eee12f847629034aac9c39d3b63cf07eca45daeac498fb1fa90abb21"
+      },
+      "weightBytes": 41159485940,
+      "weightFileCount": 7,
+      "weightInventorySha256": "7786ce4ddb33063576ec7a63517b7402c79a986987441e2d8a1ce61e6b888150"
+    }
+  ],
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "reviewedRecipes": {
+    "controlToVideo": {
+      "dtype": "bfloat16",
+      "fps": 8,
+      "guidanceScale": 5.0,
+      "height": 672,
+      "numFrames": 49,
+      "numInferenceSteps": 50,
+      "pipelineClass": "EasyAnimateControlPipeline",
+      "preparationHelper": "get_video_to_video_latent",
+      "repositoryRole": "control12B",
+      "width": 384
+    },
+    "imageToVideo": {
+      "dtype": "bfloat16",
+      "endImage": null,
+      "fps": 8,
+      "guidanceScale": 5.0,
+      "height": 448,
+      "numFrames": 49,
+      "numInferenceSteps": 50,
+      "pipelineClass": "EasyAnimateInpaintPipeline",
+      "preparationHelper": "get_image_to_video_latent",
+      "repositoryRole": "inpaint12B",
+      "width": 576
+    },
+    "textToVideo": {
+      "dtype": "float16",
+      "fps": 8,
+      "guidanceScale": 6.0,
+      "height": 512,
+      "numFrames": 49,
+      "numInferenceSteps": 50,
+      "pipelineClass": "EasyAnimatePipeline",
+      "repositoryRole": "textToVideo7B",
+      "width": 512
+    }
+  },
+  "sourceContract": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "documentation": {
+      "bestNumFrames": 49,
+      "byteSize": 4484,
+      "maximumDimension": 1024,
+      "maximumNumFrames": 49,
+      "minimumDimension": 256,
+      "minimumNumFrames": 1,
+      "recommendedExportFps": 8,
+      "sha256": "4d421ea3ef293e08388c17a411885b0f65510d8649b0a98cc53396bf36d8fc80"
+    },
+    "pipelineSources": {
+      "EasyAnimateControlPipeline": {
+        "byteSize": 46689,
+        "sha256": "d18e13408d2aa3f45556f49e009d0778f23491af8ad2eb228b28a8a0913d7af8"
+      },
+      "EasyAnimateInpaintPipeline": {
+        "byteSize": 58840,
+        "sha256": "b712429a07f38e53376d8a9c9eef31ce0c9453cc2988c2efa206cea3f18051b9"
+      },
+      "EasyAnimatePipeline": {
+        "byteSize": 35709,
+        "sha256": "63555ce1f0ad862fff87922ed05d98b8da1f87ef9e56f1c0dc60a9afef5b4ee7"
+      }
+    },
+    "remoteCodeRequired": false
+  },
+  "vae": {
+    "configSha256": "d5ce386d8c7d03dc176eac248e83cbd71f40eabb4034766a1edb16785b7ab11a",
+    "scalingFactor": 0.7125,
+    "sharedAcrossRepositories": true
+  },
+  "schemaVersion": 1
+}
