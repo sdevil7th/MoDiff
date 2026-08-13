@@ -6009,10 +6009,10 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     The focused video/loop matrix passes 129 tests and 216 subtests; the
     complete backend overlay passes 1,640 tests, 3,580 subtests, and three
     platform skips, with Ruff E9/F and package compatibility green. No model,
-    media, or live inference was used. Durable process-restart checkpoints,
-    deterministic retained-asset stitching, audio mux/cancellation recovery,
-    the actual 30-minute graph, remote execution, and physical macOS evidence
-    remain independent gates.
+    media, or live inference was used. Durable process-restart checkpoints are
+    closed by the later P6.57 slice; retained-asset stitching,
+    audio mux/cancellation recovery, the actual 30-minute graph, remote
+    execution, and physical macOS evidence remain independent gates.
   - [x] **In-process checkpoint, stitching, mux, and cancellation recovery:**
     backend `53e22f2` revalidates the generic implementation originally landed
     in `76bbafe` with stronger synthetic integration evidence. A collection
@@ -6025,9 +6025,9 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     passes 135 tests and 216 subtests; the complete backend overlay passes
     1,642 tests, 3,580 subtests, and three platform skips, with Ruff E9/F and
     package compatibility green. Test media existed only in the temporary test
-    directory. Process-restart persistence, the actual 30-minute graph, remote
-    six-hour execution, asset publication, and physical macOS evidence remain
-    pending.
+    directory. Process-restart persistence is closed by the later P6.57 slice;
+    the actual 30-minute graph, remote six-hour execution, asset publication,
+    and physical macOS evidence remain pending.
   - [x] **Bounded 30-minute chunk planning:** backend `88b5d33` extends the
     generic planner's declared and enforced duration ceiling from 600 to 1,800
     seconds while retaining a separate 600-second ceiling for unqualified
@@ -6041,8 +6041,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     component gate passes 137 tests and 216 subtests; the complete backend
     overlay passes 1,644 tests, 3,580 subtests, and three platform skips, with
     Ruff E9/F and package compatibility green. No model or media was used. The
-    executable 30-minute graph, process-restart persistence, remote six-hour
-    run, asset publication, and physical macOS evidence remain pending.
+    process-restart persistence is closed by the following slice; the
+    executable 30-minute graph, remote six-hour run, asset publication, and
+    physical macOS evidence remain pending.
+  - [x] **Durable retained-segment restart recovery:** backend `d648417` and
+    client `19620f9` add an explicit `durable` visual-loop contract for
+    file-backed video segments. The Studio loop UI exposes the opt-in, the
+    managed quality-video sequence seals it into its schema-v3 graph proof,
+    and the API export carries it without making ordinary loops durable.
+    Durable execution requires the exact `workflowTabId` plus `runInputHash`,
+    accepts only bounded retained-video metadata whose file remains inside
+    MoDiff's managed media directory, and atomically commits each successful
+    iteration. A synthetic process-replacement test interrupts after segment
+    1, constructs a new server with a different task ID, restores the exact
+    input-scoped checkpoint, and executes only segment 2. Successful graph
+    completion deletes checkpoint metadata; interrupted or failed exact-input
+    runs retain it for recovery. The focused backend video/runtime matrix
+    passes 205 tests and 246 subtests; the complete backend overlay passes
+    1,646 tests, 3,580 subtests, and three platform skips, with Ruff E9/F and
+    package compatibility green. The complete client gate, the focused
+    controlled-workflow browser proof, and the 530,915-byte total gzip budget
+    pass. Test files existed only under a temporary directory. The executable
+    30-minute graph, remote six-hour run, asset publication, and physical macOS
+    evidence remain pending.
 
 ### Phase 6 test and asset gate
 
@@ -6320,5 +6341,6 @@ Add references only after the corresponding evidence exists.
 | P6.53 Stable Diffusion 3 standard source and admission-gate review | `e6061d9` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial license/legal approval, authenticated component review, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact gated official revision, Python-free 31.01 GB snapshot, six-file / 15.50 GB fp16 base inventory shared with the prior SD3 ControlNet review, three package-owned routes, source receipts, recipes, and estimate-only envelope are sealed. Noncommercial-only terms, inaccessible gated configs, missing safety checker/bounds, and a 21.41 GB queue-aware app preflight deficit keep the family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no base weight bytes were fetched. |
 | P6.54 Long-video continuation boundary handoff | `67010c7` | Not required | Synthetic graph/loop proof only; durable restart checkpoints, retained-asset stitching, mux/cancellation recovery, final 30-minute graph, remote execution, and physical macOS pending | Not required | The generic planner now binds the first opening anchor and the generic shot executor consumes the preceding loop segment only for explicitly marked continuation jobs. Missing carry and unknown strategies fail before inference; a two-iteration synthetic graph proves exact last-frame handoff. No model, media, or live inference was used. |
 | P6.55 Long-video component recovery gate | `53e22f2` (revalidates `76bbafe`) | Not required | Synthetic loop interruption/resume and temporary real-file FFmpeg proof only; process-restart persistence, final 30-minute graph, remote execution, and physical macOS pending | Not required | A completed loop segment survives node-cache clearing and cancellation recovery without regeneration. Two temporary retained MP4s stitch deterministically to 14 frames / 1.75 seconds and retain those values after audio mux. No model or live inference was used, and all test media was temporary. |
-| P6.56 Bounded 30-minute chunk planner | `88b5d33` | Not required | Deterministic planning proof only; executable graph, process-restart persistence, remote execution, and physical macOS pending | Not required | Exact 1,800-second LTX planning produces 374 bounded continuation jobs at 16 FPS with explicit execution controls and a 512-job default ceiling. Oversized duration/job-count and unqualified long single-job FramePack plans fail before inference. No model or media was used. |
+| P6.56 Bounded 30-minute chunk planner | `88b5d33` | Not required | Deterministic planning proof only; durable restart recovery follows in P6.57, while the executable graph, remote execution, and physical macOS remain pending | Not required | Exact 1,800-second LTX planning produces 374 bounded continuation jobs at 16 FPS with explicit execution controls and a 512-job default ceiling. Oversized duration/job-count and unqualified long single-job FramePack plans fail before inference. No model or media was used. |
+| P6.57 Durable long-video loop restart recovery | `d648417` | `19620f9` | Synthetic process-replacement and temporary retained-file proof only; executable 30-minute graph, remote execution, and physical macOS pending | Not required | Opt-in durable loops persist bounded managed video-asset metadata after each completed iteration, bind recovery to the exact workflow/input identity, and remove the checkpoint on graph success. A replacement server with a different task ID resumes after segment 1 and runs only segment 2; generic and in-memory loops remain non-durable. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |

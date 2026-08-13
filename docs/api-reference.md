@@ -497,6 +497,16 @@ The actual `params` schema is node-defined and can include display metadata, sup
 
 `POST /graph` accepts the API graph exported by the client. A submitted `sid` associates WebSocket events with the initiating session. A successful response includes a generated `task_id`; it means the graph was queued, not that execution succeeded.
 
+Visual loop metadata may set `durable: true` only when its `Loop Result`
+returns a retained file-backed video asset. Durable loops require both
+`workflowTabId` and `runInputHash` in `runtimeHints`. After each successful
+iteration the backend atomically checkpoints bounded asset metadata under the
+runtime data directory; a replacement worker can resume the same exact input
+without regenerating completed segments. Checkpoints reject in-memory media,
+files outside MoDiff's retained-media directory, malformed identities, and
+missing retained files. Successful graph completion removes its checkpoint;
+failed or interrupted runs retain it for an exact-input retry.
+
 Workflow-owned asynchronous requests should include `workflowTabId` and the
 non-negative integer `workflowCanvasEpoch` in graph `runtimeHints` and in
 `POST /fields/action`. Dynamic `node_definition`, `set_field_visibility`,
