@@ -4111,6 +4111,13 @@ class GenerateShotJob(NodeBase):
             "required": True,
         },
         "job": {"label": "Shot Job", "display": "input", "type": "any", "required": True},
+        "previous_video": {
+            "label": "Previous Video Segment",
+            "display": "input",
+            "type": ["video_asset", "video", "str"],
+            "required": False,
+            "description": "Optional retained or in-memory segment used only by an explicit continuation job.",
+        },
         "video_out": {"label": "Video", "display": "output", "type": "video"},
         "width_out": {"label": "Width", "display": "output", "type": "int"},
         "height_out": {"label": "Height", "display": "output", "type": "int"},
@@ -4128,6 +4135,18 @@ class GenerateShotJob(NodeBase):
         prompt = str(job.get("prompt") or "").strip()
         opening = job.get("opening_image")
         mode = str(job.get("mode") or "image_to_video")
+        if job.get("uses_previous_last_frame"):
+            previous_video = kwargs.get("previous_video")
+            if previous_video is None:
+                raise ValueError("A continuation video shot job needs the previous video segment.")
+            from modules.Video.main import FrameExtract
+
+            extracted = FrameExtract().execute(
+                video=previous_video,
+                mode="last",
+                fps=float(job.get("fps") or 16),
+            )
+            opening = extracted["frames"][0]
         if not prompt or (mode == "image_to_video" and opening is None):
             raise ValueError("A video shot job needs a prompt and image-to-video jobs also need opening_image.")
 
@@ -4271,6 +4290,12 @@ class PlanLongVideo(NodeBase):
     resizable = True
     params = {
         "prompt": {"label": "Prompt", "display": "textarea", "type": "text", "default": ""},
+        "opening_image": {
+            "label": "Opening Image",
+            "display": "input",
+            "type": "image",
+            "required": False,
+        },
         "target_seconds": {"label": "Approximate Duration", "type": "float", "default": 30, "min": 1, "max": 600},
         "fps": {"label": "FPS", "type": "int", "default": 16, "min": 1, "max": 60},
         "strategy": {
@@ -4312,6 +4337,11 @@ class PlanLongVideo(NodeBase):
         if not prompt:
             raise ValueError("Plan Long Video needs a prompt.")
         strategy = str(kwargs.get("strategy") or "ltx_continuation")
+        if strategy not in {"framepack_continuous", "ltx_continuation", "wan_continuation", "multi_shot"}:
+            raise ValueError(f"Unsupported long-video strategy {strategy!r}.")
+        opening_image = kwargs.get("opening_image")
+        if strategy != "multi_shot" and opening_image is None:
+            raise ValueError(f"{strategy} needs an opening image for its first segment.")
         fps = max(1, int(kwargs.get("fps") or 16))
         target_frames = max(1, round(float(kwargs.get("target_seconds") or 30) * fps))
         seed = int(kwargs.get("seed") or 0)
@@ -4347,6 +4377,7 @@ class PlanLongVideo(NodeBase):
                     "seed": seed + index,
                     "num_frames": chunk_frames,
                     "mode": "image_to_video" if strategy != "multi_shot" else "text_to_video",
+                    "opening_image": opening_image if index == 0 else None,
                     "uses_previous_last_frame": continuity,
                     "strategy": strategy,
                 }

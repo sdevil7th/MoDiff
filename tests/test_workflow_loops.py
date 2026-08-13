@@ -1,4 +1,7 @@
 import unittest
+from unittest.mock import patch
+
+from PIL import Image
 
 from modiff.server import WebServer
 from modules import MODULE_MAP
@@ -154,6 +157,88 @@ class WorkflowLoopTests(unittest.TestCase):
         result = self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
 
         self.assertEqual(result["collection"], ["first", "second", "third"])
+
+    def test_collection_loop_carries_the_previous_video_boundary_into_a_continuation_job(self):
+        opening = Image.new("RGB", (8, 6), "black")
+        first_last = Image.new("RGB", (8, 6), "red")
+        second_last = Image.new("RGB", (8, 6), "blue")
+        jobs = [
+            {
+                "prompt": "Start the continuous move.",
+                "mode": "image_to_video",
+                "opening_image": opening,
+                "uses_previous_last_frame": False,
+            },
+            {
+                "prompt": "Continue the same move.",
+                "mode": "image_to_video",
+                "opening_image": None,
+                "uses_previous_last_frame": True,
+            },
+        ]
+        graph = {
+            "sid": "test",
+            "nodes": {
+                "carry": {
+                    "module": "modules.WorkflowControl",
+                    "action": "LoopInput",
+                    # Connected outputs are deliberately non-null. The opening
+                    # image is a harmless one-frame video seed on iteration 1;
+                    # continuation extraction begins only on iteration 2.
+                    "params": {"initial": _param([opening])},
+                },
+                "items": {
+                    "module": "modules.WorkflowControl",
+                    "action": "LoopItems",
+                    "params": {"collection": _param(jobs), "item_index": _param(0)},
+                },
+                "generate": {
+                    "module": "modules.DiffusersVideo",
+                    "action": "GenerateShotJob",
+                    "params": {
+                        "pipeline": _param(object()),
+                        "job": _param(source_id="items", source_key="item"),
+                        "previous_video": _param(source_id="carry", source_key="value"),
+                    },
+                },
+                "result": {
+                    "module": "modules.WorkflowControl",
+                    "action": "LoopResult",
+                    "params": {
+                        "value_input": _param(source_id="generate", source_key="video_out"),
+                        "stop_input": _param(False),
+                    },
+                },
+            },
+            "paths": [["carry", "items", "generate", "result"]],
+            "loops": [
+                {
+                    "id": "video-loop",
+                    "bodyNodeIds": ["carry", "items", "generate", "result"],
+                    "iterations": 2,
+                    "maxIterations": 2,
+                    "inputNodeId": "carry",
+                    "itemNodeId": "items",
+                    "resultNodeId": "result",
+                    "iterationMode": "collection",
+                    "carry": True,
+                    "collect": True,
+                }
+            ],
+        }
+        generated = [
+            {"video_out": [opening, first_last], "frames_out": 2},
+            {"video_out": [first_last, second_last], "frames_out": 2},
+        ]
+        prepared = self.server._prepare_graph_loops(graph)
+
+        with patch("modules.DiffusersVideo.main.Generate.execute", side_effect=generated) as execute:
+            result = self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
+
+        self.assertEqual(result["collection"], [[opening, first_last], [first_last, second_last]])
+        self.assertEqual(execute.call_count, 2)
+        self.assertEqual(execute.call_args_list[0].kwargs["reference_images"], [opening])
+        self.assertEqual(execute.call_args_list[1].kwargs["reference_images"], [first_last])
 
     def test_only_loop_result_may_cross_the_container_boundary(self):
         graph = self._graph()

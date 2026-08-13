@@ -201,9 +201,45 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(execute.call_args.kwargs["secondary_guidance_scale"], 0)
         self.assertEqual(execute.call_args.kwargs["strength"], 0)
 
+    def test_generate_shot_job_extracts_the_previous_segment_boundary_for_continuation(self):
+        first = Image.new("RGB", (8, 6), "red")
+        last = Image.new("RGB", (8, 6), "blue")
+        with patch.object(
+            Generate,
+            "execute",
+            return_value={"video_out": [last], "frames_out": 1},
+        ) as execute:
+            GenerateShotJob().execute(
+                pipeline=object(),
+                previous_video=[first, last],
+                job={
+                    "prompt": "Continue the same camera move.",
+                    "mode": "image_to_video",
+                    "uses_previous_last_frame": True,
+                    "fps": 16,
+                },
+            )
+
+        self.assertEqual(execute.call_args.kwargs["reference_images"], [last])
+
+    def test_generate_shot_job_fails_closed_when_a_continuation_segment_is_missing(self):
+        with patch.object(Generate, "execute") as execute:
+            with self.assertRaisesRegex(ValueError, "needs the previous video segment"):
+                GenerateShotJob().execute(
+                    pipeline=object(),
+                    job={
+                        "prompt": "Continue the same camera move.",
+                        "mode": "image_to_video",
+                        "uses_previous_last_frame": True,
+                    },
+                )
+        execute.assert_not_called()
+
     def test_long_video_planner_emits_loop_ready_ltx_chunks_and_one_framepack_job(self):
+        opening = Image.new("RGB", (8, 6), "black")
         ltx = PlanLongVideo().execute(
             prompt="A continuous tracking shot",
+            opening_image=opening,
             target_seconds=30,
             fps=16,
             strategy="ltx_continuation",
@@ -213,6 +249,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         framepack = PlanLongVideo().execute(
             prompt="A continuous tracking shot",
+            opening_image=opening,
             target_seconds=30,
             fps=16,
             strategy="framepack_continuous",
@@ -221,9 +258,20 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         self.assertGreater(ltx["job_count"], 1)
         self.assertTrue(all((job["num_frames"] - 1) % 8 == 0 for job in ltx["jobs"]))
+        self.assertIs(ltx["jobs"][0]["opening_image"], opening)
+        self.assertIsNone(ltx["jobs"][1]["opening_image"])
         self.assertTrue(ltx["jobs"][1]["uses_previous_last_frame"])
         self.assertEqual(framepack["job_count"], 1)
         self.assertEqual(framepack["planned_frames"], 480)
+
+    def test_long_video_planner_requires_a_first_segment_anchor_for_continuation(self):
+        with self.assertRaisesRegex(ValueError, "needs an opening image"):
+            PlanLongVideo().execute(
+                prompt="A continuous tracking shot",
+                target_seconds=30,
+                fps=16,
+                strategy="ltx_continuation",
+            )
 
     def test_facade_has_normalized_contract(self):
         self.assertEqual(LoadPipeline.category, "Diffusers Video")
