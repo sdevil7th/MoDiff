@@ -4053,23 +4053,40 @@ default. Assets: remote Dataset only.
     `1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe`
     and `9a9ef604ec5da99da3616dd38b118162e75657c322b80e2c57f53b745b1d9bda`.
     The same Apache/Gemma rights surface remains visible for later review.
-  - [ ] **DreamLite:** the earlier class-availability blocker is removed by the
-    reviewed Phase 6 Diffusers pin, which now exports `DreamLitePipeline` and
-    `DreamLiteMobilePipeline`. The reviewed base and mobile snapshots remain
-    immutable, safetensors-only, ungated, and CC-BY-NC-4.0. Admission is still
-    open as its own post-pin model/recipe segment; no speculative loader was
-    folded into the pin update.
-  - P4.3 source commits are backend `7117c80` and client `c41d1c6`. The complete
-    backend gate passed (`1288 passed, 3 skipped, 2837 subtests`) with Ruff
-    `E9,F`, compile, package, build, and diff checks. All 92 workflows verify
-    deterministically. `npm run check` passed, including 83 template/profile
-    cases; the production bundle remains within budget at `529358 / 529408`
-    total gzip bytes and `280364 / 448512` for the entry chunk. The local
-    managed CPU runtime reports only the pre-existing source-digest drift while
-    required imports, device validation, package compatibility, and port
-    availability remain healthy. Auto, Gallery, live output, remote quality,
-    and physical macOS qualification remain pending. No weights or output media
-    were downloaded or retained.
+  - [x] **DreamLite base and mobile generation/editing:** the reviewed Phase 6
+    Diffusers pin exports `DreamLitePipeline` and `DreamLiteMobilePipeline`.
+    Exact immutable `diffusers`-branch snapshots
+    `carlofkl/DreamLite-base@751cb8dbb9072a8c8ffd8684e0f254b50f20531b`
+    and
+    `carlofkl/DreamLite-mobile@6695c3f4be230f0493fa5dbf78be3bc4d3bb2ab4`
+    are ungated, contain no repository Python, and expose three safetensors
+    weight files / 5,040,118,270 bytes each. Both remain non-commercial under
+    CC-BY-NC-4.0. Base uses 1024px, 28 steps, text guidance 3.5, edit image
+    guidance 1.5, and at most 200 prompt tokens. Mobile is bounded to one
+    through eight steps with four recommended; its ignored text/image guidance
+    inputs are omitted from the graph rather than presented as functional
+    controls. The base text/edit graph hashes are
+    `c55d65890ac84a17c61788ab37085055c9479882f7af44c98aaf5382b2c65243`
+    and `7b0a0a8f61125ee39cbf40383044ce8959dac5b5950622b46889555bb98ccca5`;
+    the mobile text/edit hashes are
+    `1f5a2b3b02a4a266133d695a79539191dc7652aa80607e7fb06a839e66da6281`
+    and `3ab28cdc0cd0782e3b7a03717c9127d0365a1639bd922b0247fdd4bc0fbec9cc`.
+    Upstream does not expose a per-step callback for these pipelines, so exact
+    step-level progress/cancellation remains unavailable pending an upstream
+    contract; task-level cancellation remains unchanged.
+  - P4.3 source commits are backend `7117c80` and `a56e9c0`, client `c41d1c6`
+    and `96f444b`; client generator-race fix `2c99769` made canonical graph
+    generation wait for authoritative capability discovery. The earlier Sana
+    complete backend gate passed (`1288 passed, 3 skipped, 2837 subtests`) with
+    Ruff `E9,F`, compile, package, build, and diff checks. DreamLite's clean
+    optional-runtime gate passed 158 focused backend tests; compile, JSON,
+    workflow, and diff checks passed, and all 103 workflows verify
+    deterministically. `npm run check` passed after the final DreamLite and
+    generator changes, including 90 template/profile cases and the production
+    bundle budget (`529948 / 530432` total gzip bytes and `279775 / 448512` for
+    the entry chunk). Auto, Gallery, live output, remote quality, and physical
+    macOS qualification remain pending. No weights or output media were
+    downloaded or retained.
 - [x] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
   and AudioLDM2 general audio.
   - [x] **Stable Audio quality contract:** the existing generic
@@ -4860,7 +4877,7 @@ Add references only after the corresponding evidence exists.
 | P4.2d SDXL T2I-Adapter Canny | `2d14051` | `b13d65d` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors base/component assembly, exact Canny preprocessor and 1024px/30-step/guidance-7.5/scale-0.8 contract, 86-workflow catalog, complete backend/client gates, and shared-control regression coverage passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2e SDXL PAG text-to-image | `2a9c29b` | `379936e` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, upstream PAG pipeline, exact 1024px/50-step/guidance-5/PAG-3/adaptive-0 contract, 87-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2f SDXL PAG image-to-image and inpaint | `63f9075` | `c0f2e2b` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, exact upstream PAG edit/inpaint classes, reviewed 1024px/50-step/guidance-5/strength-0.8/PAG-3/adaptive-0 contracts, 89-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
-| P4.3 Sana/Sana Sprint and DreamLite admission | `7117c80` | `c41d1c6` | Remote and physical macOS pending | Pending | Complete source slice for Sana and Sana Sprint: exact safe immutable artifacts, upstream classes, bounded recipes, three canonical graphs, and complete gates passed. DreamLite is independently deferred because its required classes are absent from the qualified Diffusers pin. Auto and Gallery remain disabled. |
+| P4.3 Sana/Sana Sprint and DreamLite admission | `7117c80`, `a56e9c0` | `c41d1c6`, `96f444b` (`2c99769` generator race fix) | Remote and physical macOS pending; DreamLite upstream per-step callback unavailable | Pending | Complete source slice: exact safe immutable artifacts, upstream classes, bounded distinct base/mobile recipes, seven canonical graphs, focused DreamLite gates, and complete client gate passed. DreamLite is Expert-only and CC-BY-NC-4.0; Auto and Gallery remain disabled. |
 | P4.4 generic audio generation | `4d6a4d3` | `f0958e6` | Remote and physical macOS pending | Pending | Complete source slice: Stable Audio safe loading was revalidated and exact LongCat AudioDiT plus AudioLDM2 families now use immutable reviewed artifacts, bounded native-rate recipes, backend-owned declarative task contracts, two new canonical graphs, and complete gates. Auto and Gallery remain disabled. |
 | P4.5 AudioLDM2 text-to-speech | Deferred: reviewed TTS snapshots are legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently: the exact generic speech API is present at the pin, but both reviewed AudioLDM2 speech repositories require unsafe deserialization and no exception was approved. |
 | P4.6 Shap-E rendered output | `21d819f` | `d684fc4` | Remote and physical macOS pending | Pending | Complete source slice: exact immutable official artifacts are assembled only from reviewed safe components, a bounded rendered-orbit boundary is sealed in the 95-workflow catalog, and complete backend/client gates passed. Unsafe renamed-renderer weights and mesh/export surfaces remain excluded. Auto and Gallery remain disabled. |
