@@ -4570,8 +4570,31 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   or download surface was added. License acceptance, gated component-index and
   linked Trustworthy AI review, remote heavy execution, and physical macOS
   evidence remain pending; resource envelopes are estimate-only.
-- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, Kandinsky5 Video,
-  and other heavy video families.
+- [x] Evaluate Kandinsky 5 Video without admitting a remote-heavy runtime.
+  Backend `08e2550` seals all ten public official Diffusers snapshots at
+  immutable revisions: Pro T2V/I2V plus Lite SFT, no-CFG, distilled-16-step,
+  and pretrain variants for both 5-second and 10-second generation. Every
+  selected artifact is safetensors-only and MIT-declared. The exact selected
+  surfaces are 8 files / 23,854,029,536 bytes for each Lite snapshot,
+  8 files / 62,666,834,400 bytes for Pro T2V, and 8 files /
+  96,526,404,752 bytes for Pro I2V; component hashes, canonical manifest
+  digests, model indexes, transformer configurations, and the shared
+  19,280,899,008-byte text-encoder/CLIP/VAE partition are recorded without
+  downloading weights.
+
+  Pinned source contracts and recipes are sealed for 512x768 Lite generation,
+  121-frame 5-second and 241-frame 10-second runs at 24 fps, guidance 1 for
+  no-CFG/distilled variants, and the 16-step distilled schedule. Pro T2V's
+  documented 768x1024 recipe and required FlexAttention/compile/offload setup
+  are evidence only. The pinned video guide's nominal image-to-video example
+  incorrectly constructs the T2V pipeline and never supplies its loaded image;
+  the pipeline source instead requires `Kandinsky5I2VPipeline` and an `image`
+  argument. No runtime or download entry was admitted. Corrected upstream
+  recipe evidence, remote heavy-hardware execution, and physical macOS proof
+  remain pending; resource envelopes are estimate-only and no media was
+  generated.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants and other heavy
+  video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4809,4 +4832,4 @@ Add references only after the corresponding evidence exists.
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
 | P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, Kandinsky5 Video, other heavy families, and long-form workflow qualification remain open as independent segments. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
