@@ -4764,6 +4764,51 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   was added. Five focused review tests pass; cancellation, request isolation,
   backend-owned bounds, generic multi-prompt editing, SDXL output guardrails,
   remote output review, and physical macOS evidence remain independent gates.
+- [x] Admit LongCat Image generation and single-image editing without claiming
+  live execution. Backend `212997c` and client `d1e5d7e` expose the exact
+  public snapshots
+  `meituan-longcat/LongCat-Image@d2ea50b79a930074c37b9b97ce45e3b2ea8cf4d8`
+  and
+  `meituan-longcat/LongCat-Image-Edit@7b54ef423aa7854be7861600024be5c56ab7875a`.
+  Each selected partition contains seven safetensors files and approximately
+  29.29 GB of weights; the immutable identities, repository metadata, pinned
+  package pipeline/transformer/output sources, Transformers symbol contract,
+  and upstream Apache-2.0 receipt are sealed in
+  `data/longcat-image-artifact-review.json`. The model cards declare
+  Apache-2.0 while both exact model snapshots omit the license file, so
+  snapshot-specific clarification remains explicit.
+
+  The two Expert-only routes use distinct immutable transformers while sharing
+  the text encoder and VAE identities. Generation is bounded to 512-2048px
+  sides in 16px increments, at most 1,048,576 output pixels and 50 steps, and
+  disables the package's autoregressive prompt rewrite. Editing accepts exactly
+  one at-most-1,048,576-pixel source between 1:4 and 4:1 aspect ratio and caps
+  the package-derived rounded output at 1,088,000 pixels and 50 steps. Both
+  package loops expose an interrupt flag checked per denoising step, but no
+  safety checker; Auto and Gallery therefore remain disabled pending remote
+  output review.
+
+  The expanded optional-runtime surface passed clean-base locked installation,
+  validation, fresh-process activation, a finite CLIP+PEFT workload, rollback,
+  and clean restoration on Linux x86-64 at profile digest
+  `sha256:76e4f0c1e4389bcefa0958c813ab1cbf3e745051b7435ec50df4d374f327520b`.
+  The bounded 1,553-byte evidence has SHA-256
+  `e2a73cd9fc7320ac84bb12a31efd3277ea3d3474591fed2a2dad2d7f787214fe`
+  and retained no managed state. Two canonical graphs bring the deterministic
+  catalog to 125 supported workflows. The complete backend overlay passes
+  1,598 tests, 3,469 subtests, and three platform skips; Ruff E9/F,
+  deterministic workflow verification, and the complete client gate also
+  pass. The intentional client surface measures 530,610 compressed JavaScript
+  bytes under the 531,456-byte ceiling.
+
+  Both exact app-managed downloads were accepted only after per-snapshot and
+  aggregate queue-reservation checks: 643,626,504,192 free bytes covered the
+  existing 438,331,905,395-byte queue reservation, both new reservations of
+  29,327,729,635 and 29,322,429,940 bytes, and the 68,719,476,736-byte safety
+  reserve with 77,924,962,486 bytes of headroom. They remain queued/in progress;
+  no older model was deleted and no media has been generated. Remote real-weight
+  memory/output safety/quality review, model-snapshot license-file
+  clarification, and physical macOS execution remain pending independently.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5801,7 +5846,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `latent_consistency_models`
 - [x] `latent_diffusion`
 - [x] `ledits_pp`
-- [ ] `longcat_image`
+- [x] `longcat_image`
 - [ ] `lumina`
 - [ ] `lumina2`
 - [ ] `nucleusmoe_image`
@@ -5933,4 +5978,5 @@ Add references only after the corresponding evidence exists.
 | P6.43 Kolors source and custom-license gate review | `3788fe8` | Not required | Static artifact/source/license review only; task-scoped license acceptance, commercial registration/legal approval, downstream restriction implementation, backend-owned bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact public five-file / 17,813,668,046-byte fp16 safetensors partition, immutable metadata/license and package source hashes, and two package-owned 1024px routes are sealed. The custom model agreement conflicts with the Apache-2.0 presentation, purports to trigger on use/access, propagates restrictions, and requires separate authorization for cloud vendors or licensees over 100M monthly users. No runtime/download or user-facing surface was added, and no weights or media were downloaded. |
 | P6.44 Latent Diffusion source and admission-gate review | `79db3b8` | Not required | Static artifact/source review only; safe official artifacts, cooperative full-job cancellation, backend-owned resource/output bounds, immutable model-license receipt, remote output review, and physical macOS execution pending | Not required | The exact public three-file / 6,152,286,891-byte legacy weight partition, immutable metadata and package source hashes, and the package's 256px text-to-image contract are sealed without fetching weight bytes. The snapshot has only executable pickle `.bin` model components, while the package exposes no callback, interrupt flag, safety checker, or upper resource bounds. No runtime/download or user-facing surface was added. |
 | P6.45 LEDITS++ source and admission-gate review | `7bddd15` | Not required | Static package/source review over existing exact SD 1.5 and SDXL bases; full-job cancellation, request-state isolation, backend-owned resource/input bounds, generic multi-prompt editing, SDXL guardrails, remote output review, and physical macOS execution pending | Not required | The two package-owned source identities and stateful invert-then-edit contracts are sealed against MoDiff's existing exact base snapshots. The mandatory inversion phase has no callback or interrupt check and stores request state on the pipeline instance. LEDITS++ needs no distinct model snapshot, so no new weight bytes or family-specific app download were required, and no runtime or user-facing surface was added. |
+| P6.46 LongCat Image generation and edit source admission | `212997c` | `d1e5d7e` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Two exact public Apache-2.0-declared revisions, two seven-file / approximately 29.29 GB safetensors partitions, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded 1024-base generation and single-image edit recipes, and two Expert-only remote workflows are sealed. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 125-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Both exact snapshots are queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
