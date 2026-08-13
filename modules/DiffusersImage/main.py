@@ -63,6 +63,7 @@ PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
+COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -88,6 +89,7 @@ _IMAGE_MODE_ORDER = (
 _IMAGE_MODEL_SOURCES = frozenset({"hub", "local"})
 _MAX_IMAGE_INPUT_DIMENSION = 8192
 _MAX_IMAGE_INPUT_PIXELS = 16 * 1024 * 1024
+_MAX_IMAGE_OUTPUT_PIXELS = 2048 * 2048
 
 
 @dataclass(frozen=True)
@@ -106,6 +108,7 @@ class ImagePipelineAdapter:
     min_output_side: int = 16
     max_output_side: int = 2048
     output_side_step: int = 16
+    max_output_pixels: int = _MAX_IMAGE_OUTPUT_PIXELS
     fixed_guidance_scale: float | None = None
     minimum_image_guidance_scale: float = 0.0
     guidance_parameter: str | None = "guidance_scale"
@@ -136,6 +139,8 @@ class ImagePipelineAdapter:
             self.max_output_side - self.min_output_side
         ) % self.output_side_step:
             raise ValueError("Image adapter output-side bounds must align to their declared increment.")
+        if not self.min_output_side**2 <= self.max_output_pixels <= _MAX_IMAGE_OUTPUT_PIXELS:
+            raise ValueError("Image adapters must declare a bounded output-pixel ceiling covering the minimum size.")
         if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= 20.0:
             raise ValueError("An exact text guidance scale must be between 0 and 20.")
         if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
@@ -410,6 +415,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_output_side=2048,
         output_side_step=32,
         max_sequence_length=224,
+    ),
+    "CogView4Pipeline": ImagePipelineAdapter(
+        "CogView4Pipeline",
+        frozenset({"text_to_image"}),
+        COGVIEW4_6B_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=32,
+        max_output_pixels=2**21,
+        max_sequence_length=1024,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
         "DreamLitePipeline",
@@ -791,6 +808,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "CogView3PlusPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
+    "CogView4Pipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
     "DreamLitePipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
@@ -1157,6 +1177,11 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
                 "max": adapter.max_output_side,
                 "step": adapter.output_side_step,
             }
+    if adapter.max_sequence_length != 512:
+        field_params["max_sequence_length"] = {
+            **field_params["max_sequence_length"],
+            "max": adapter.max_sequence_length,
+        }
     actions = {
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
@@ -1171,6 +1196,8 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         "actions": {action: modes for action, modes in actions.items() if modes},
         "fieldParams": field_params,
     }
+    if adapter.max_output_pixels != _MAX_IMAGE_OUTPUT_PIXELS:
+        contract["maxOutputPixels"] = adapter.max_output_pixels
     if mode == "unconditional_image":
         optional_fields = set(adapter.unconditional_optional_fields)
         contract["actionFieldParams"] = {
@@ -1551,6 +1578,12 @@ def preflight_image_action(
         maximum=adapter.max_output_side,
         step=adapter.output_side_step,
     )
+    output_pixels = values["width"] * values["height"]
+    if output_pixels > adapter.max_output_pixels:
+        raise ValueError(
+            f"{adapter.pipeline_class} output cannot exceed {adapter.max_output_pixels} pixels; "
+            f"received {values['width']}x{values['height']} ({output_pixels} pixels)."
+        )
     values["seed"] = _bounded_image_int(values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295)
     values["num_inference_steps"] = _bounded_image_int(
         values.get("num_inference_steps"),

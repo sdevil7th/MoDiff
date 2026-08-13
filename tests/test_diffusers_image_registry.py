@@ -30,6 +30,7 @@ from modules.DiffusersImage.main import (
     AURAFLOW_V03_REPO,
     CHROMA1_HD_REPO,
     COGVIEW3_PLUS_REPO,
+    COGVIEW4_6B_REPO,
     CONSISTENCY_IMAGENET64_REPO,
     DDPM_CIFAR10_REPO,
     DREAMLITE_BASE_REPO,
@@ -744,6 +745,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {key: cogview3["fieldParams"][field][key] for key in ("min", "max", "step")},
                 {"min": 512, "max": 2048, "step": 32},
             )
+        cogview4 = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["CogView4Pipeline"], "text_to_image")
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: cogview4["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 512, "max": 2048, "step": 32},
+            )
+        self.assertEqual(cogview4["maxOutputPixels"], 2**21)
+        self.assertEqual(cogview4["fieldParams"]["max_sequence_length"]["max"], 1024)
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -847,6 +856,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
             "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
             "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
+            "CogView4Pipeline": ({"text_to_image"}, COGVIEW4_6B_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -951,6 +961,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("AuraFlowPipeline", "text_to_image", Generate, {}),
             ("ChromaPipeline", "text_to_image", Generate, {}),
             ("CogView3PlusPipeline", "text_to_image", Generate, {}),
+            ("CogView4Pipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -2297,6 +2308,91 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 num_inference_steps=50,
                 guidance_scale=7.0,
                 max_sequence_length=225,
+            )
+
+    def test_cogview4_loads_only_the_pinned_bfloat16_partition_and_bounds_native_recipe(self):
+        loaded = {}
+
+        class CogView4Pipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid CogView4 settings must fail before inference")
+
+        node = LoadPipeline("cogview4-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=CogView4Pipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=COGVIEW4_6B_REPO,
+                pipeline_class="CogView4Pipeline",
+                mode="text_to_image",
+                revision=catalog_revision(COGVIEW4_6B_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], COGVIEW4_6B_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(COGVIEW4_6B_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value, message in (
+            ("width", 480, "between 512 and 2048"),
+            ("height", 2080, "between 512 and 2048"),
+            ("width", 528, "increments of 32 from 512"),
+        ):
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, message):
+                Generate(f"cogview4-{field}-{value}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1024,
+                    height=value if field == "height" else 1024,
+                    num_inference_steps=50,
+                    guidance_scale=3.5,
+                    max_sequence_length=1024,
+                )
+        with self.assertRaisesRegex(ValueError, "cannot exceed 2097152 pixels"):
+            Generate("cogview4-pixel-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=2048,
+                height=1056,
+                num_inference_steps=50,
+                guidance_scale=3.5,
+                max_sequence_length=1024,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("cogview4-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=3.5,
+                max_sequence_length=1024,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 1024"):
+            Generate("cogview4-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=50,
+                guidance_scale=3.5,
+                max_sequence_length=1025,
             )
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):

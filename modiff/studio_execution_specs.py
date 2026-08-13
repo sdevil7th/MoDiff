@@ -42,6 +42,7 @@ PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
+COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -5641,6 +5642,87 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["cogview3-plus-3b:text-to-image:v1"] = {
     "mode": "text_to_image",
     "profile": _COGVIEW3_PLUS_PROFILE,
     "capability": _COGVIEW3_PLUS_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_COGVIEW4_6B_PROFILE = {
+    "id": "cogview4-6b:direct",
+    "model_type": "CogView4Pipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "CogView4Pipeline",
+    "default_repo": COGVIEW4_6B_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_COGVIEW4_6B_CAPABILITY = {
+    "modelType": "CogView4Pipeline",
+    "label": "CogView4",
+    "displayName": "CogView4 6B",
+    "family": "CogView4",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": COGVIEW4_6B_REPO,
+    "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 3.5,
+    "recommendedMaxSequenceLength": 1024,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(COGVIEW4_6B_REPO, model_type="CogView4Pipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public Apache-2.0 snapshot uses only package-owned Diffusers and Transformers classes and eight bfloat16 safetensors files.",
+        "The reviewed route supports 512-to-2048px sides in 32px increments, at most 2^21 output pixels, 50 steps, guidance 3.5, and at most 1024 prompt tokens.",
+        "The approximately 31.11 GB weight surface is remote-only; Auto and Gallery remain disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["cogview4-6b:text-to-image:v1"] = {
+    "modelType": "CogView4Pipeline",
+    "mode": "text_to_image",
+    "profile": _COGVIEW4_6B_PROFILE,
+    "capability": _COGVIEW4_6B_CAPABILITY,
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,

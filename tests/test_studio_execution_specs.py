@@ -206,6 +206,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("AuraFlowPipeline", "text_to_image"),
                 ("ChromaPipeline", "text_to_image"),
                 ("CogView3PlusPipeline", "text_to_image"),
+                ("CogView4Pipeline", "text_to_image"),
                 ("DreamLitePipeline", "text_to_image"),
                 ("DreamLitePipeline", "edit_image"),
                 ("DreamLiteMobilePipeline", "text_to_image"),
@@ -424,6 +425,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(cogview3_profile.max_low_memory_side, 1024)
         self.assertEqual(cogview3_profile.max_low_memory_steps, 50)
         self.assertFalse(cogview3_profile.live_proof)
+        cogview4 = by_id["cogview4-6b:text-to-image:v1"]
+        self.assertEqual(cogview4["modelType"], "CogView4Pipeline")
+        self.assertEqual(cogview4["pipelineClass"], "CogView4Pipeline")
+        self.assertEqual(cogview4["defaultRepo"], "zai-org/CogView4-6B")
+        cogview4_profile = DIFFUSERS_EXECUTION_PROFILES[cogview4["executionProfileId"]]
+        self.assertEqual(cogview4_profile.max_low_memory_side, 1024)
+        self.assertEqual(cogview4_profile.max_low_memory_steps, 50)
+        self.assertFalse(cogview4_profile.live_proof)
         dreamlite = by_id["dreamlite-base:text-to-image:v1"]
         self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
         self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")

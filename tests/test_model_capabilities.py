@@ -125,7 +125,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 95)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 96)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -168,6 +168,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "AuraFlowPipeline",
             "ChromaPipeline",
             "CogView3PlusPipeline",
+            "CogView4Pipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
@@ -398,6 +399,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(cogview3["autoEligible"])
         self.assertFalse(cogview3["galleryEligible"])
         self.assertNotIn("CogView3PlusPipeline", experimental)
+        cogview4 = by_model["CogView4Pipeline"]
+        self.assertEqual(
+            cogview4["revisionCandidates"],
+            ["63a52b7f6dace7033380cd6da14d0915eab3e6b5"],
+        )
+        self.assertEqual(cogview4["defaultSize"], {"width": 1024, "height": 1024, "aspectRatio": "1:1"})
+        self.assertEqual(cogview4["recommendedSteps"], 50)
+        self.assertEqual(cogview4["recommendedGuidance"], 3.5)
+        self.assertEqual(cogview4["recommendedMaxSequenceLength"], 1024)
+        self.assertEqual(cogview4["modes"], ["text_to_image"])
+        self.assertEqual(cogview4["pipelineClasses"], ["CogView4Pipeline"])
+        self.assertFalse(cogview4["autoEligible"])
+        self.assertFalse(cogview4["galleryEligible"])
+        self.assertNotIn("CogView4Pipeline", experimental)
         dreamlite = by_model["DreamLitePipeline"]
         self.assertEqual(
             dreamlite["revisionCandidates"],

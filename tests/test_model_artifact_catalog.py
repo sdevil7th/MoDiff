@@ -43,6 +43,7 @@ STUDIO_MODEL_TYPES = {
     "AuraFlowPipeline",
     "ChromaPipeline",
     "CogView3PlusPipeline",
+    "CogView4Pipeline",
 }
 
 
@@ -107,6 +108,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("zai-org/CogView3-Plus-3B"),
             "5d70e40732ac0efac98524c51a7fa9c82707f1e5",
+        )
+        self.assertEqual(
+            catalog_revision("zai-org/CogView4-6B"),
+            "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
         )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):

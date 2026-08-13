@@ -100,6 +100,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "AuraFlowPipeline",
             "ChromaPipeline",
             "CogView3PlusPipeline",
+            "CogView4Pipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "DummyCustomPipeline",

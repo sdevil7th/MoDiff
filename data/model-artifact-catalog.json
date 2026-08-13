@@ -359,6 +359,13 @@
       "artifacts": []
     },
     {
+      "modelType": "CogView4Pipeline",
+      "baseRepo": "zai-org/CogView4-6B",
+      "baseRevision": "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",
