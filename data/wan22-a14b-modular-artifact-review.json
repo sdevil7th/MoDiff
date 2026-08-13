@@ -1,0 +1,318 @@
+{
+  "admission": {
+    "executableModes": [],
+    "existingStandardAdaptersPreserved": [
+      "Wan22Pipeline:text_to_video",
+      "WanImageToVideoPipeline:image_to_video"
+    ],
+    "liveQualified": false,
+    "newDownloadCatalogEntryAdded": false,
+    "reason": "The standard model indexes have an immutable fallback mapping to the reviewed Modular classes, but the approximately 126.18 GB dual-expert artifacts have no Modular index and require remote heavy-hardware execution before a Modular runtime profile can be admitted.",
+    "runtimeCatalogExposed": false,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "remote_heavy_hardware_execution",
+      "modular_fallback_assembly_qualification",
+      "physical_macos_execution"
+    ]
+  },
+  "commonWeightFiles": [
+    {
+      "byteSize": 4935812536,
+      "path": "text_encoder/model-00001-of-00003.safetensors",
+      "sha256": "a8e861969c7433e707cc5a74065d795d36cca07ec96eb6763eb4083df7248f58"
+    },
+    {
+      "byteSize": 4983103192,
+      "path": "text_encoder/model-00002-of-00003.safetensors",
+      "sha256": "d57d948ece4837d850b7a859a4415121d57cacf8b9ee1d4db200c67f592902d7"
+    },
+    {
+      "byteSize": 1442935480,
+      "path": "text_encoder/model-00003-of-00003.safetensors",
+      "sha256": "0da9ee284e21d1406df708788db1d502d95d75f69faa25cd26151bf8829b7c5f"
+    },
+    {
+      "byteSize": 507591892,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  ],
+  "family": "Wan 2.2 A14B Modular",
+  "format": "safetensors",
+  "license": {
+    "embeddedLicenseFilePresent": false,
+    "evidence": "Pinned model-card metadata on both repositories",
+    "id": "apache-2.0",
+    "metadataOnly": true
+  },
+  "modularContracts": [
+    {
+      "blocksClass": "Wan22Blocks",
+      "defaultGuidanceScales": [
+        5.0,
+        3.0
+      ],
+      "defaultNumInferenceSteps": 50,
+      "pipelineClass": "Wan22ModularPipeline",
+      "repositoryRole": "textToVideoA14B",
+      "workflow": {
+        "id": "default",
+        "requiredInputs": [],
+        "taskId": "text_to_video"
+      }
+    },
+    {
+      "blocksClass": "Wan22Image2VideoBlocks",
+      "defaultGuidanceScales": [
+        5.0,
+        3.0
+      ],
+      "defaultHeight": 480,
+      "defaultNumFrames": 81,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 832,
+      "pipelineClass": "Wan22Image2VideoModularPipeline",
+      "repositoryRole": "imageToVideoA14B",
+      "workflow": {
+        "id": "default",
+        "requiredInputs": [
+          "image"
+        ],
+        "taskId": "image_to_video"
+      }
+    }
+  ],
+  "remoteResourceEnvelope": {
+    "basis": "Exact BF16 repository totals, the existing graph-only offload contract, and conservative loading/output headroom; no live proof.",
+    "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+    "minimumSelectiveDiskBytes": 171798691840,
+    "minimumSystemRamBytes": 137438953472,
+    "publisherNativeMinimumAcceleratorMemoryBytes": 85899345920,
+    "publisherResourceClaimAcceptedAsLiveEvidence": false,
+    "status": "estimate_only_qualification_pending"
+  },
+  "repositories": [
+    {
+      "boundaryRatio": 0.875,
+      "expertInputChannels": 16,
+      "expertShardPairs": [
+        {
+          "byteSize": 4863171808,
+          "highNoiseSha256": "299e6304544f2783896372fa919e755a8bb9ab8caf898ce08a678dae391e1179",
+          "lowNoiseSha256": "a9278e6e9c82d174e6c67b3c97d8b97fef30af51dcf59160f2fc241f6819f5dc",
+          "shard": "00001"
+        },
+        {
+          "byteSize": 4919594456,
+          "highNoiseSha256": "4eab1c97044607b5cd4c7647dc84d2274214b361018bbfb37f54206521d16440",
+          "lowNoiseSha256": "db9212d47d0c3ce8b0e96e2f4def48e16a55b6f044067e6eff2647098c16eaa8",
+          "shard": "00002"
+        },
+        {
+          "byteSize": 4919465128,
+          "highNoiseSha256": "2404f3bbd9a23e19d831ac7f3c115806f46251e2d2d175080b0ad8cdbe95abf9",
+          "lowNoiseSha256": "4764464b6d2023e7f24f135d9703fca28cc437793879292cecf229e0f2dcd564",
+          "shard": "00003"
+        },
+        {
+          "byteSize": 4919594536,
+          "highNoiseSha256": "b18cf5d61c46273ba8d347279694b58a6bdc9e29d4e517724c358430c5daa71a",
+          "lowNoiseSha256": "dad95c9d4a568a8222b42cee5d391df2fd0f7c22cea03d8f5f28c71a2070f348",
+          "shard": "00004"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "928c0d327b1f2634be2efc2d577cd3570a229ac5af28bcd49a7687ab84206765",
+          "lowNoiseSha256": "f11242f8014d046bb65736a64a20bbb6f8efe566373628307bfd687c811fecc3",
+          "shard": "00005"
+        },
+        {
+          "byteSize": 4919594552,
+          "highNoiseSha256": "0083cb21891978e4657b46491b406f008b15dfe5da82762e30b3c9810e2838de",
+          "lowNoiseSha256": "8581b91ab7ecab2bae7f607176119bd8b8ec65ce9f67915ba7a6d9e9a36d2571",
+          "shard": "00006"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "53d13464c39397bea88a5e1ee4c5cee522c9f3e094e4e49b4f4d2f88ef20ccd5",
+          "lowNoiseSha256": "fc658a5689cd15edfc24bf1396bcd9644237ebfa18c2309ece986c99d0c9b054",
+          "shard": "00007"
+        },
+        {
+          "byteSize": 4919594552,
+          "highNoiseSha256": "55bb416621d2ab08ac17542f854b98775040bd46937d8a4358e5d975f9c54a55",
+          "lowNoiseSha256": "c1e13c829853f10bd31725b62dc6cfc632de5a168d2520022fa3958edad63334",
+          "shard": "00008"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "147369a6e7ec0344214b6cbca628461ca67d1a5933798dbb5be8af75f64647b5",
+          "lowNoiseSha256": "60cf08760beac7129e9194ecba8ecf394e484b882987704e5b54a1170837f3ba",
+          "shard": "00009"
+        },
+        {
+          "byteSize": 4919594552,
+          "highNoiseSha256": "88dd8a815f6458daaea0554dea7a0693c74d22bd38f116a0b489754ce6743b35",
+          "lowNoiseSha256": "f63297e6ecbe7f67654b87f9a1abdd93f6b369c07c91fd8e2fc9df42bd01d6f2",
+          "shard": "00010"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "e9f0719271fa6363a1eae653e8922b4f5083be18f7db650f0c112ca4a39bc3d4",
+          "lowNoiseSha256": "11fdb612135d52ac770304261f5e1a846882b72a5e81be15970c051edf20b518",
+          "shard": "00011"
+        },
+        {
+          "byteSize": 3095607280,
+          "highNoiseSha256": "79b5fe7a2de29c3fc2a8eb0833f9d8465b3a070a7ac32bb3cc4a2577b20509cd",
+          "lowNoiseSha256": "23dbf3244e8dd60ef4fb1867d75407f627c771e3d248e87fba57164b4cd91593",
+          "shard": "00012"
+        }
+      ],
+      "expertWeightBytesEach": 57154077760,
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 498,
+        "className": "WanPipeline",
+        "modularIndexPresent": false,
+        "resolvedModularPipelineClass": "Wan22ModularPipeline",
+        "sha256": "9787428872b458feb75008857091964da11cd37a606dbd89eb0c8a4939c7c798"
+      },
+      "private": false,
+      "repository": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+      "revision": "5be7df9619b54f4e2667b2755bc6a756675b5cd7",
+      "role": "textToVideoA14B",
+      "weightBytes": 126177598620,
+      "weightFileCount": 28
+    },
+    {
+      "boundaryRatio": 0.9,
+      "expertInputChannels": 36,
+      "expertShardPairs": [
+        {
+          "byteSize": 4864810208,
+          "highNoiseSha256": "0400c403bd7cfe6c1c29b47ff9cb575495dc590c9be2511a3b44ae5795add106",
+          "lowNoiseSha256": "95256668a2f7f60fd80db7b0ef2edd0700d18bfd44365a546c4eb75150b43518",
+          "shard": "00001"
+        },
+        {
+          "byteSize": 4919594456,
+          "highNoiseSha256": "0da8ce107f7ccbe323be7b35c5e81ce90504995b9cf0a0c06e4132f836474ba4",
+          "lowNoiseSha256": "3af2c8d8990a9a214fa13d2206dabc6ddd7148260ceffa570a93ff3a077d0ea0",
+          "shard": "00002"
+        },
+        {
+          "byteSize": 4919465128,
+          "highNoiseSha256": "4bee4dbbb916f167ce96d3f795ae316cd221713302ee427b7df457ea4dafe034",
+          "lowNoiseSha256": "47895d51e50eb833cfb729a55c0a88d69801171c3da64b895b44a2128315894f",
+          "shard": "00003"
+        },
+        {
+          "byteSize": 4919594536,
+          "highNoiseSha256": "e6fec68a39ce49cfde2e6464061df64b853f0354151ca17931f8dd028dd47ff6",
+          "lowNoiseSha256": "c60f290bf6173bcd451ce4bb69054de077e6bc68609dc575033123996feebe70",
+          "shard": "00004"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "cf66f3fcf66788d2e939d0e60da015fa0953c48da92ae67f04ff085c4e826104",
+          "lowNoiseSha256": "fa53bebbb015efcf3de972a3029a34d4a8535a8d098f8f6e6210ea92d392b8f3",
+          "shard": "00005"
+        },
+        {
+          "byteSize": 4919594552,
+          "highNoiseSha256": "cdc4bb9e21d17e8577c915215429827ad5d58bee2021ed0d63c6854596b06c90",
+          "lowNoiseSha256": "11afdf78c0219e950484e72e046ee0aa2a583052d048f57c339ce4eee3737130",
+          "shard": "00006"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "c9c48dfd22c8546e20a805a5e5d698f6fbebc7b1426db92d693b75ccd10e574c",
+          "lowNoiseSha256": "8dc3fc3f8398854f6e1a521ef79d7e2199da7d039caa38625929acf83ab0f41c",
+          "shard": "00007"
+        },
+        {
+          "byteSize": 4919594552,
+          "highNoiseSha256": "1bed82c03707de72ef06f624f2bbc9d43370cc208d657989dd07b08b1ff998ab",
+          "lowNoiseSha256": "fcf286f8a4745b6e7dd557d50f2e8126ac20037c1f4c3d75493b2a32861b29a4",
+          "shard": "00008"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "779d7d8901239b5deef86597f74a4eccaf91fee674f05854dfc3d808e556805b",
+          "lowNoiseSha256": "2571fe8aefce8557b97809e9879e7d2650b9033944cf28e77007977cb1b6d7b7",
+          "shard": "00009"
+        },
+        {
+          "byteSize": 4919594552,
+          "highNoiseSha256": "ea1ebb7975f001bda912c56bf8095865605e6a019b0c180e1de74129cfbfef98",
+          "lowNoiseSha256": "8496ff20bb26d39484c940bc27047f0a7ca107f8ee23ef4ba7b2bd2f36c1dbfd",
+          "shard": "00010"
+        },
+        {
+          "byteSize": 4919465224,
+          "highNoiseSha256": "38d9349f1c29a99c1f78ef53d228c1f51dde301bd3e33296db1a7e7f8c25f6fe",
+          "lowNoiseSha256": "2bb74907c0cfffcdae0be5efe462a05179f199eee21be79b5ad20ea296a45869",
+          "shard": "00011"
+        },
+        {
+          "byteSize": 3095607280,
+          "highNoiseSha256": "978ff94fe927dab5dc2a60030297043abff35a7d93524ce286b07c49025edfe1",
+          "lowNoiseSha256": "2d3f1aca89bc664f029efd5a9cf848b47fa671d781681ce05dfeb4671a5bd77d",
+          "shard": "00012"
+        }
+      ],
+      "expertWeightBytesEach": 57155716160,
+      "gated": false,
+      "imageEncoderComponentsNull": true,
+      "modelIndex": {
+        "byteSize": 600,
+        "className": "WanImageToVideoPipeline",
+        "modularIndexPresent": false,
+        "resolvedModularPipelineClass": "Wan22Image2VideoModularPipeline",
+        "sha256": "50ba96f2b36888eab6b33afb4a74254652fb4f43be4767cea633f4bcda67f5d8"
+      },
+      "private": false,
+      "repository": "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+      "revision": "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+      "role": "imageToVideoA14B",
+      "weightBytes": 126180875420,
+      "weightFileCount": 28
+    }
+  ],
+  "reviewedRecipes": {
+    "imageToVideo": {
+      "dtype": "bfloat16",
+      "fps": 16,
+      "guidanceScale": 3.5,
+      "guidanceScale2": "inherits_guidance_scale",
+      "maxArea": 399360,
+      "numFrames": 81,
+      "numInferenceSteps": 40,
+      "pipelineClass": "WanImageToVideoPipeline",
+      "preserveInputAspectRatio": true,
+      "repositoryRole": "imageToVideoA14B"
+    },
+    "textToVideo": {
+      "dtype": "bfloat16",
+      "fps": 16,
+      "guidanceScale": 4.0,
+      "guidanceScale2": 3.0,
+      "height": 720,
+      "numFrames": 81,
+      "numInferenceSteps": 40,
+      "pipelineClass": "WanPipeline",
+      "repositoryRole": "textToVideoA14B",
+      "vaeDtype": "float32",
+      "width": 1280
+    }
+  },
+  "schemaVersion": 1,
+  "standardFallbackAssembly": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "modelIndexFallbackSupported": true,
+    "remoteCodeRequired": false,
+    "selectionRule": "A standard Wan model index containing non-null boundary_ratio resolves through the pinned Diffusers Wan map to the Wan 2.2 Modular class for that standard pipeline family."
+  }
+}
