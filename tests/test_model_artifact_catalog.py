@@ -42,6 +42,7 @@ STUDIO_MODEL_TYPES = {
     "PixArtSigmaPipeline",
     "AuraFlowPipeline",
     "ChromaPipeline",
+    "CogView3PlusPipeline",
 }
 
 
@@ -102,6 +103,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("lodestones/Chroma1-HD"),
             "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+        )
+        self.assertEqual(
+            catalog_revision("zai-org/CogView3-Plus-3B"),
+            "5d70e40732ac0efac98524c51a7fa9c82707f1e5",
         )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):

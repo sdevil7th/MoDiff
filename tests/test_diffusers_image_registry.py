@@ -29,6 +29,7 @@ from modules.DiffusersImage import (
 from modules.DiffusersImage.main import (
     AURAFLOW_V03_REPO,
     CHROMA1_HD_REPO,
+    COGVIEW3_PLUS_REPO,
     CONSISTENCY_IMAGENET64_REPO,
     DDPM_CIFAR10_REPO,
     DREAMLITE_BASE_REPO,
@@ -735,6 +736,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         chroma = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["ChromaPipeline"], "text_to_image")
         self.assertEqual(chroma["fieldParams"]["width"]["max"], 1024)
         self.assertEqual(chroma["fieldParams"]["height"]["max"], 1024)
+        cogview3 = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["CogView3PlusPipeline"], "text_to_image"
+        )
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: cogview3["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 512, "max": 2048, "step": 32},
+            )
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -837,6 +846,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
             "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
             "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
+            "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -940,6 +950,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
             ("AuraFlowPipeline", "text_to_image", Generate, {}),
             ("ChromaPipeline", "text_to_image", Generate, {}),
+            ("CogView3PlusPipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -992,8 +1003,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "pipeline": pipeline,
                     "prompt": "render the reviewed fixture",
                     "negative_prompt": "artifact",
-                    "width": 32,
-                    "height": 32,
+                    "width": max(32, adapter.min_output_side),
+                    "height": max(32, adapter.min_output_side),
                     "num_inference_steps": 2,
                     "guidance_scale": (
                         adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0
@@ -2211,6 +2222,81 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 num_inference_steps=40,
                 guidance_scale=3.0,
                 max_sequence_length=513,
+            )
+
+    def test_cogview3_loads_only_the_pinned_bfloat16_partition_and_bounds_native_recipe(self):
+        loaded = {}
+
+        class CogView3PlusPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid CogView3 settings must fail before inference")
+
+        node = LoadPipeline("cogview3-plus-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=CogView3PlusPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=COGVIEW3_PLUS_REPO,
+                pipeline_class="CogView3PlusPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(COGVIEW3_PLUS_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], COGVIEW3_PLUS_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(COGVIEW3_PLUS_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value, message in (
+            ("width", 480, "between 512 and 2048"),
+            ("height", 2080, "between 512 and 2048"),
+            ("width", 528, "increments of 32 from 512"),
+        ):
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, message):
+                Generate(f"cogview3-{field}-{value}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1024,
+                    height=value if field == "height" else 1024,
+                    num_inference_steps=50,
+                    guidance_scale=7.0,
+                    max_sequence_length=224,
+                )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("cogview3-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=7.0,
+                max_sequence_length=224,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 224"):
+            Generate("cogview3-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=50,
+                guidance_scale=7.0,
+                max_sequence_length=225,
             )
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):

@@ -62,6 +62,7 @@ SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
+COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -102,7 +103,9 @@ class ImagePipelineAdapter:
     weight_variant: str | None = None
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     max_inference_steps: int = 100
+    min_output_side: int = 16
     max_output_side: int = 2048
+    output_side_step: int = 16
     fixed_guidance_scale: float | None = None
     minimum_image_guidance_scale: float = 0.0
     guidance_parameter: str | None = "guidance_scale"
@@ -125,8 +128,14 @@ class ImagePipelineAdapter:
             raise ValueError("An upstream image pipeline class cannot be blank.")
         if not 1 <= self.max_inference_steps <= 100:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
-        if not 16 <= self.max_output_side <= 2048 or self.max_output_side % 16:
-            raise ValueError("Image adapters must bound output sides to a multiple of 16 between 16 and 2048.")
+        if not 16 <= self.min_output_side <= self.max_output_side <= 2048:
+            raise ValueError("Image adapters must bound output sides between 16 and 2048.")
+        if self.output_side_step not in {16, 32}:
+            raise ValueError("Image adapter output-side increments must be 16 or 32 pixels.")
+        if self.min_output_side % self.output_side_step or (
+            self.max_output_side - self.min_output_side
+        ) % self.output_side_step:
+            raise ValueError("Image adapter output-side bounds must align to their declared increment.")
         if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= 20.0:
             raise ValueError("An exact text guidance scale must be between 0 and 20.")
         if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
@@ -390,6 +399,17 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_inference_steps=40,
         max_output_side=1024,
         max_sequence_length=512,
+    ),
+    "CogView3PlusPipeline": ImagePipelineAdapter(
+        "CogView3PlusPipeline",
+        frozenset({"text_to_image"}),
+        COGVIEW3_PLUS_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=32,
+        max_sequence_length=224,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
         "DreamLitePipeline",
@@ -768,6 +788,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "ChromaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
+    "CogView3PlusPipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
     "DreamLitePipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
@@ -1122,9 +1145,18 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
 def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[str, Any]:
     field_contract = get_image_mode_field_contract(adapter, mode)
     field_params = field_contract.field_param_overlay()
-    if adapter.max_output_side != 2048:
+    if (
+        adapter.min_output_side != 16
+        or adapter.max_output_side != 2048
+        or adapter.output_side_step != 16
+    ):
         for field in ("width", "height"):
-            field_params[field] = {**field_params[field], "max": adapter.max_output_side}
+            field_params[field] = {
+                **field_params[field],
+                "min": adapter.min_output_side,
+                "max": adapter.max_output_side,
+                "step": adapter.output_side_step,
+            }
     actions = {
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
@@ -1507,17 +1539,17 @@ def preflight_image_action(
         values.get("width"),
         field="width",
         default=1024,
-        minimum=16,
+        minimum=adapter.min_output_side,
         maximum=adapter.max_output_side,
-        step=16,
+        step=adapter.output_side_step,
     )
     values["height"] = _bounded_image_int(
         values.get("height"),
         field="height",
         default=1024,
-        minimum=16,
+        minimum=adapter.min_output_side,
         maximum=adapter.max_output_side,
-        step=16,
+        step=adapter.output_side_step,
     )
     values["seed"] = _bounded_image_int(values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295)
     values["num_inference_steps"] = _bounded_image_int(
