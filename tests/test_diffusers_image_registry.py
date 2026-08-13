@@ -49,6 +49,7 @@ from modules.DiffusersImage.main import (
     SDXL_BASE_REPO,
     SDXL_CONTROLNET_CANNY_REPO,
     SDXL_INSTRUCT_PIX2PIX_REPO,
+    SDXL_T2I_ADAPTER_CANNY_REPO,
     SDXL_TURBO_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
@@ -721,6 +722,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLControlNetPipeline"], "control_image"
         )
         self.assertFalse(sdxl_controlnet["fieldParams"]["conditioning_scale"]["hidden"])
+        sdxl_adapter = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLAdapterPipeline"], "control_image"
+        )
+        self.assertFalse(sdxl_adapter["fieldParams"]["conditioning_scale"]["hidden"])
         turbo = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLTurboPipeline"], "text_to_image"
         )
@@ -761,6 +766,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image", "image_guidance_scale"},
             ),
             "StableDiffusionXLControlNetPipeline": (
+                {"control_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionXLAdapterPipeline": (
                 {"control_image"},
                 SDXL_BASE_REPO,
                 {"prompt", "image"},
@@ -2243,6 +2253,100 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             result["pipeline"]._modiff_conditioning_revision,
             catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
         )
+
+    def test_sdxl_t2i_adapter_loader_and_action_use_pinned_generic_contract(self):
+        calls = {}
+
+        class FakeAdapter:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class StableDiffusionXLAdapterPipeline:
+            device = "cpu"
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                image=None,
+                adapter_conditioning_scale=1.0,
+                width=None,
+                height=None,
+                **kwargs,
+            ):
+                calls["generation"] = {
+                    "prompt": prompt,
+                    "image": image,
+                    "adapter_conditioning_scale": adapter_conditioning_scale,
+                    "kwargs": kwargs,
+                }
+                return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
+
+        node = LoadPipeline("sdxl-t2i-adapter-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "T2IAdapter": FakeAdapter,
+                    "StableDiffusionXLAdapterPipeline": StableDiffusionXLAdapterPipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = node.execute(
+                model_id={"source": "hub", "value": SDXL_BASE_REPO},
+                revision=catalog_revision(SDXL_BASE_REPO),
+                pipeline_class="StableDiffusionXLAdapterPipeline",
+                mode="control_image",
+                conditioning_kind="t2i_adapter",
+                conditioning_model_id={"source": "hub", "value": SDXL_T2I_ADAPTER_CANNY_REPO},
+                conditioning_revision=catalog_revision(SDXL_T2I_ADAPTER_CANNY_REPO),
+                dtype="float16",
+                device="cpu",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, SDXL_T2I_ADAPTER_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(SDXL_T2I_ADAPTER_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertEqual(component_kwargs["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        pipeline_repo, pipeline_kwargs = calls["pipeline"]
+        self.assertEqual(pipeline_repo, SDXL_BASE_REPO)
+        self.assertEqual(pipeline_kwargs["revision"], catalog_revision(SDXL_BASE_REPO))
+        self.assertTrue(pipeline_kwargs["use_safetensors"])
+        self.assertEqual(pipeline_kwargs["variant"], "fp16")
+        self.assertIsInstance(pipeline_kwargs["adapter"], FakeAdapter)
+        self.assertEqual(result["pipeline"]._modiff_conditioning_kind, "t2i_adapter")
+
+        control = Image.new("RGB", (32, 32), "black")
+        generated = ControlGenerate("sdxl-t2i-adapter-generate").execute(
+            pipeline=result["pipeline"],
+            control_image=control,
+            prompt="rights-safe edge fixture",
+            width=32,
+            height=32,
+            num_inference_steps=30,
+            guidance_scale=7.5,
+            conditioning_scale=0.8,
+        )
+        self.assertEqual(generated["images"][0].size, (32, 32))
+        self.assertIs(calls["generation"]["image"], control)
+        self.assertEqual(calls["generation"]["adapter_conditioning_scale"], 0.8)
 
     def test_conditioned_control_action_uses_upstream_image_and_scale_parameters(self):
         calls = {}

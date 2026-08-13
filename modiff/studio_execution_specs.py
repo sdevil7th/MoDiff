@@ -33,6 +33,7 @@ SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
 SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
+SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -58,6 +59,17 @@ DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
 CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    ("StableDiffusionXLAdapterPipeline", "control_image"): (
+        {
+            "id": "sdxl-t2i-adapter-canny",
+            "label": "Stable Diffusion XL Canny T2I Adapter",
+            "repo": SDXL_T2I_ADAPTER_CANNY_REPO,
+            "revision": require_catalog_revision(SDXL_T2I_ADAPTER_CANNY_REPO),
+            "kind": "t2i_adapter",
+            "requiredForModes": ["control_image"],
+            "description": "Required by the generic SDXL Canny T2I-Adapter workflow.",
+        },
+    ),
     ("StableDiffusionXLControlNetPipeline", "control_image"): (
         {
             "id": "sdxl-controlnet-canny",
@@ -4213,6 +4225,96 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-image:v1"] = {
     "mode": "control_image",
     "profile": _SDXL_CONTROLNET_PROFILE,
     "capability": _SDXL_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+
+
+_SDXL_T2I_ADAPTER_CAPABILITY = {
+    "modelType": "StableDiffusionXLAdapterPipeline",
+    "label": "Stable Diffusion XL T2I Adapter",
+    "displayName": "SDXL T2I-Adapter Canny",
+    "family": "Stable Diffusion XL",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SDXL_BASE_REPO,
+    "artifactLabel": "Diffusers fp16 safetensors assembly",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 30,
+    "recommendedGuidance": 7.5,
+    "guidanceLabel": "Guidance",
+    "conditioningScale": 0.8,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": True,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 30,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["control_image"],
+    "modeRequirements": {
+        "control_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionXLAdapterPipeline", "control_image"
+            ),
+            "requiredImages": ["controlImage"],
+            "note": "Requires one control image and the immutable SDXL Canny T2I-Adapter component.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLAdapterPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The Canny T2I-Adapter component is pinned independently and loaded from its reviewed fp16 safetensors variant.",
+        "The generic Canny preprocessor uses exact 0.1/0.2 thresholds before the documented 30-step, guidance-7.5, scale-0.8 recipe.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+_SDXL_T2I_ADAPTER_PROFILE = {
+    "id": "sdxl-t2i-adapter-canny:direct",
+    "model_type": "StableDiffusionXLAdapterPipeline",
+    "modes": ("control_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "StableDiffusionXLAdapterPipeline",
+    "default_repo": SDXL_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 30,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-t2i-adapter-canny:control-image:v1"] = {
+    "modelType": "StableDiffusionXLAdapterPipeline",
+    "mode": "control_image",
+    "profile": _SDXL_T2I_ADAPTER_PROFILE,
+    "capability": _SDXL_T2I_ADAPTER_CAPABILITY,
     "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
     "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
     "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,

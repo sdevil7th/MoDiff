@@ -60,6 +60,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "StableDiffusionXLControlNetPipeline",
             "control_image",
         )
+        sdxl_adapter = studio_model_dependencies_for_pair(
+            "StableDiffusionXLAdapterPipeline",
+            "control_image",
+        )
 
         self.assertEqual(
             qwen,
@@ -91,6 +95,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
                     "kind": "controlnet",
                     "repo": "diffusers/controlnet-canny-sdxl-1.0",
                     "revision": "eb115a19a10d14909256db740ed109532ab1483c",
+                }
+            ],
+        )
+        self.assertEqual(
+            sdxl_adapter,
+            [
+                {
+                    "id": "sdxl-t2i-adapter-canny",
+                    "kind": "t2i_adapter",
+                    "repo": "TencentARC/t2i-adapter-canny-sdxl-1.0",
+                    "revision": "2d7244ba45ded9129cfbf8e96a4befb7f6094210",
                 }
             ],
         )
@@ -173,6 +188,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLTurboPipeline", "text_to_image"),
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
+                ("StableDiffusionXLAdapterPipeline", "control_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -285,6 +301,23 @@ class StudioExecutionSpecTests(unittest.TestCase):
             sdxl_controlnet["bindings"],
         )
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_controlnet["executionProfileId"]].live_proof)
+        sdxl_adapter = by_id["sdxl-t2i-adapter-canny:control-image:v1"]
+        self.assertEqual(sdxl_adapter["modelType"], "StableDiffusionXLAdapterPipeline")
+        self.assertEqual(sdxl_adapter["pipelineClass"], "StableDiffusionXLAdapterPipeline")
+        self.assertEqual(sdxl_adapter["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertIn(
+            ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+            sdxl_adapter["bindings"],
+        )
+        self.assertIn(
+            ("controlPreprocessor", "output", "diffusersImageControl", "control_image"),
+            sdxl_adapter["edges"],
+        )
+        self.assertIn(
+            ("diffusersImageControl", "conditioning_scale", "conditioningScale"),
+            sdxl_adapter["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_adapter["executionProfileId"]].live_proof)
         lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
         self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
         self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")

@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 73)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 74)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -141,6 +141,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionXLTurboPipeline",
             "StableDiffusionXLInstructPix2PixPipeline",
             "StableDiffusionXLControlNetPipeline",
+            "StableDiffusionXLAdapterPipeline",
             "LatentConsistencyModelPipeline",
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
@@ -236,6 +237,25 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sdxl_controlnet["autoEligible"])
         self.assertFalse(sdxl_controlnet["galleryEligible"])
         self.assertNotIn("StableDiffusionXLControlNetPipeline", experimental)
+        sdxl_adapter = by_model["StableDiffusionXLAdapterPipeline"]
+        self.assertEqual(
+            sdxl_adapter["revisionCandidates"],
+            ["462165984030d82259a11f4367a4eed129e94a7b"],
+        )
+        self.assertEqual(sdxl_adapter["recommendedSteps"], 30)
+        self.assertEqual(sdxl_adapter["recommendedGuidance"], 7.5)
+        self.assertEqual(sdxl_adapter["conditioningScale"], 0.8)
+        self.assertEqual(
+            sdxl_adapter["modeRequirements"]["control_image"]["modelRequirements"][0]["revision"],
+            "2d7244ba45ded9129cfbf8e96a4befb7f6094210",
+        )
+        self.assertEqual(
+            sdxl_adapter["modeRequirements"]["control_image"]["requiredImages"],
+            ["controlImage"],
+        )
+        self.assertFalse(sdxl_adapter["autoEligible"])
+        self.assertFalse(sdxl_adapter["galleryEligible"])
+        self.assertNotIn("StableDiffusionXLAdapterPipeline", experimental)
         sdxl_inpaint = next(
             item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
         )

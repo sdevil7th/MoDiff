@@ -16,6 +16,7 @@
     "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
   },
   "repositoryPins": [
+    {"repo": "TencentARC/t2i-adapter-canny-sdxl-1.0", "revision": "2d7244ba45ded9129cfbf8e96a4befb7f6094210", "license": "apache-2.0", "purpose": "sdxl-t2i-adapter-canny-component", "variant": "fp16", "weightName": "diffusion_pytorch_model.fp16.safetensors", "sha256": "e3db0d9cb3dd54c116a429a1de067d952780047944dd7dba8be032dd2e737f81", "byteSize": 158060440, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "diffusers/controlnet-canny-sdxl-1.0", "revision": "eb115a19a10d14909256db740ed109532ab1483c", "license": "openrail++", "purpose": "sdxl-controlnet-canny-component", "variant": "fp16", "weightName": "diffusion_pytorch_model.fp16.safetensors", "sha256": "b2e7d3921058a442cc80430d1ec8847f42599c705e2451c95e77cf4dcf8d6c25", "byteSize": 2502139136, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "diffusers/sdxl-instructpix2pix-768", "revision": "06653d47f8d22f2c2205a5884d6a24c5e76d2ca7", "license": "openrail++", "purpose": "sdxl-instruct-pix2pix", "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "stabilityai/sdxl-turbo", "revision": "71153311d3dbb46851df1931d3ca6e939de83304", "license": "sai-nc-community", "purpose": "sdxl-turbo", "verifiedAt": "2026-08-13T00:00:00+05:30"},

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T02:59:37.974Z",
+  "generatedAt": "2026-08-13T03:15:02.000Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 73,
-  "supportedPairCount": 85,
+  "supportedCanonicalPairCount": 74,
+  "supportedPairCount": 86,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1849,6 +1849,51 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-pipeline/text-to-image.json",
       "graphHash": "50366d1593997562e7b916c5e419097f6c2a6e04be9851f16dcd5e07653ce022"
+    },
+    {
+      "id": "StableDiffusionXLAdapterPipeline:control_image",
+      "modelType": "StableDiffusionXLAdapterPipeline",
+      "modelFamily": "Stable Diffusion XL",
+      "mode": "control_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "TencentARC/t2i-adapter-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "id": "sdxl-t2i-adapter-canny",
+            "label": "Stable Diffusion XL Canny T2I Adapter",
+            "repo": "TencentARC/t2i-adapter-canny-sdxl-1.0",
+            "revision": "2d7244ba45ded9129cfbf8e96a4befb7f6094210",
+            "kind": "t2i_adapter",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "description": "Required by the generic SDXL Canny T2I-Adapter workflow."
+          }
+        ],
+        "requiredImages": [
+          "controlImage"
+        ],
+        "note": "Requires one control image and the immutable SDXL Canny T2I-Adapter component."
+      },
+      "pipelineClasses": [
+        "StableDiffusionXLAdapterPipeline"
+      ],
+      "sourceTemplateId": "task-template:sdxl-t2i-adapter-canny:control-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-xladapter-pipeline/control-image.json",
+      "graphHash": "72e5373c48b4472816ae62ee37049ed1ff748ac6240628ba89c86023154b0097"
     },
     {
       "id": "StableDiffusionXLControlNetPipeline:control_image",

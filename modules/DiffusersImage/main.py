@@ -54,6 +54,7 @@ SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
 SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
+SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -269,6 +270,21 @@ IMAGE_PIPELINE_ADAPTERS = {
         conditioning_weight_variant="fp16",
         control_image_parameter="image",
         conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
+    "StableDiffusionXLAdapterPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLAdapterPipeline",
+        frozenset({"control_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        conditioning_kind="t2i_adapter",
+        default_conditioning_repo=SDXL_T2I_ADAPTER_CANNY_REPO,
+        conditioning_component_class="T2IAdapter",
+        conditioning_component_parameter="adapter",
+        conditioning_weight_variant="fp16",
+        control_image_parameter="image",
+        conditioning_scale_parameter="adapter_conditioning_scale",
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -578,6 +594,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         ),
     },
     "StableDiffusionXLControlNetPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
+        ),
+    },
+    "StableDiffusionXLAdapterPipeline": {
         "control_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
         ),
