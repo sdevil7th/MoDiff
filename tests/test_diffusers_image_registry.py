@@ -43,6 +43,8 @@ from modules.DiffusersImage.main import (
     FLUX_KONTEXT_REPO,
     FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO,
+    HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
+    HUNYUAN_DIT_DISTILLED_REPO,
     IMAGE_MODE_FIELD_CONTRACTS,
     IMAGE_PIPELINE_CLASSES,
     QWEN_IMAGE_2512_REPO,
@@ -829,6 +831,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 SDXL_BASE_REPO,
                 {"prompt", "image"},
             ),
+            "HunyuanDiTControlNetPipeline": (
+                {"control_image"},
+                HUNYUAN_DIT_DISTILLED_REPO,
+                {"prompt", "control_image"},
+            ),
             "StableDiffusionXLAdapterPipeline": (
                 {"control_image"},
                 SDXL_BASE_REPO,
@@ -967,6 +974,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
             ("DreamLiteMobilePipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image", Edit, {"image": image}),
+            (
+                "HunyuanDiTControlNetPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": image},
+            ),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("QwenImageImg2ImgPipeline", "edit_image", Edit, {"image": image}),
@@ -1047,6 +1060,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 }
                 if adapter.guidance_parameter is not None:
                     expected_keys.add(adapter.guidance_parameter)
+                if adapter.conditioning_scale_parameter is not None:
+                    expected_keys.add(adapter.conditioning_scale_parameter)
 
                 with patch("modules.DiffusersImage.main.add_progress_callback"):
                     action_class(f"signature-{pipeline_name}").execute(**values)
@@ -2944,6 +2959,115 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             result["pipeline"]._modiff_conditioning_revision,
             catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
         )
+
+    def test_hunyuan_dit_controlnet_uses_exact_safe_assembly_and_bounded_canny_action(self):
+        calls = {}
+
+        class FakeControlNet:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class HunyuanDiTControlNetPipeline:
+            _execution_device = "cpu"
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                control_image=None,
+                controlnet_conditioning_scale=1.0,
+                width=None,
+                height=None,
+                **kwargs,
+            ):
+                calls["generation"] = {
+                    "prompt": prompt,
+                    "control_image": control_image,
+                    "controlnet_conditioning_scale": controlnet_conditioning_scale,
+                    "width": width,
+                    "height": height,
+                    "kwargs": kwargs,
+                }
+                return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
+
+        loader = LoadPipeline("hunyuan-dit-controlnet-assembly")
+        loader.progress = lambda *args, **kwargs: None
+        loader.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "HunyuanDiT2DControlNetModel": FakeControlNet,
+                    "HunyuanDiTControlNetPipeline": HunyuanDiTControlNetPipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = loader.execute(
+                model_id={"source": "hub", "value": HUNYUAN_DIT_DISTILLED_REPO},
+                revision=catalog_revision(HUNYUAN_DIT_DISTILLED_REPO),
+                pipeline_class="HunyuanDiTControlNetPipeline",
+                mode="control_image",
+                conditioning_kind="controlnet",
+                conditioning_model_id={"source": "hub", "value": HUNYUAN_DIT_CONTROLNET_CANNY_REPO},
+                conditioning_revision=catalog_revision(HUNYUAN_DIT_CONTROLNET_CANNY_REPO),
+                dtype="float16",
+                device="cpu",
+                auto_offload=True,
+                offload_mode="model_cpu",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, HUNYUAN_DIT_CONTROLNET_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(HUNYUAN_DIT_CONTROLNET_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        base_repo, base_kwargs = calls["pipeline"]
+        self.assertEqual(base_repo, HUNYUAN_DIT_DISTILLED_REPO)
+        self.assertEqual(base_kwargs["revision"], catalog_revision(HUNYUAN_DIT_DISTILLED_REPO))
+        self.assertTrue(base_kwargs["use_safetensors"])
+        self.assertIsInstance(base_kwargs["controlnet"], FakeControlNet)
+
+        control_image = Image.new("RGB", (1024, 1024), "black")
+        action = ControlGenerate("hunyuan-dit-controlnet-generate")
+        generated = action.execute(
+            pipeline=result["pipeline"],
+            prompt="a bilingual controlled image",
+            negative_prompt="artifact",
+            control_image=control_image,
+            width=1024,
+            height=1024,
+            num_inference_steps=50,
+            guidance_scale=6,
+            conditioning_scale=1,
+            seed=42,
+            output_type="pil",
+        )
+        self.assertEqual(generated["width_out"], 1024)
+        self.assertEqual(generated["height_out"], 1024)
+        self.assertIs(calls["generation"]["control_image"], control_image)
+        self.assertEqual(calls["generation"]["controlnet_conditioning_scale"], 1)
+        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+            action.execute(
+                pipeline=result["pipeline"],
+                prompt="reject an unreviewed size",
+                control_image=control_image,
+                width=768,
+                height=1024,
+                num_inference_steps=50,
+                guidance_scale=6,
+                output_type="pil",
+            )
 
     def test_sdxl_t2i_adapter_loader_and_action_use_pinned_generic_contract(self):
         calls = {}

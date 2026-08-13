@@ -18,6 +18,9 @@
   "repositoryPins": [
     {"repo": "TencentARC/t2i-adapter-canny-sdxl-1.0", "revision": "2d7244ba45ded9129cfbf8e96a4befb7f6094210", "license": "apache-2.0", "purpose": "sdxl-t2i-adapter-canny-component", "variant": "fp16", "weightName": "diffusion_pytorch_model.fp16.safetensors", "sha256": "e3db0d9cb3dd54c116a429a1de067d952780047944dd7dba8be032dd2e737f81", "byteSize": 158060440, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "diffusers/controlnet-canny-sdxl-1.0", "revision": "eb115a19a10d14909256db740ed109532ab1483c", "license": "openrail++", "purpose": "sdxl-controlnet-canny-component", "variant": "fp16", "weightName": "diffusion_pytorch_model.fp16.safetensors", "sha256": "b2e7d3921058a442cc80430d1ec8847f42599c705e2451c95e77cf4dcf8d6c25", "byteSize": 2502139136, "verifiedAt": "2026-08-13T00:00:00+05:30"},
+    {"repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny", "revision": "b2d21391ebcf78939344cfec84891932f9d53aa0", "license": "tencent-hunyuan-community", "purpose": "hunyuan-dit-v1.2-controlnet-canny-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "b12c2f44e6787beca8301023e25455ec0ee564c0365b6edb3fef575256bb587e", "byteSize": 2976967704, "verifiedAt": "2026-08-13T00:00:00+05:30"},
+    {"repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Depth", "revision": "c09e53a3f84294f1c64bbd6fbc1a13b889bf9f37", "license": "tencent-hunyuan-community", "purpose": "hunyuan-dit-v1.2-controlnet-depth-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "14f688b71d9f311943ecb2ef395dea77be76a2f7b19a5db33c062cd2c8d9021e", "byteSize": 2976967704, "verifiedAt": "2026-08-13T00:00:00+05:30"},
+    {"repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Pose", "revision": "62a1747f7f0c999c10b0eb1da2d0d50e6fa80e50", "license": "tencent-hunyuan-community", "purpose": "hunyuan-dit-v1.2-controlnet-pose-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "84dca4d3e8076fe10ef314be112a8916944bcecad48611ec08840670c23eafc7", "byteSize": 2976967704, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "diffusers/sdxl-instructpix2pix-768", "revision": "06653d47f8d22f2c2205a5884d6a24c5e76d2ca7", "license": "openrail++", "purpose": "sdxl-instruct-pix2pix", "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "stabilityai/sdxl-turbo", "revision": "71153311d3dbb46851df1931d3ca6e939de83304", "license": "sai-nc-community", "purpose": "sdxl-turbo", "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "lllyasviel/control_v11p_sd15_canny", "revision": "115a470d547982438f70198e353a921996e2e819", "license": "openrail", "purpose": "sd15-controlnet-canny-component", "verifiedAt": "2026-08-13T00:00:00+05:30"},
@@ -318,6 +321,13 @@
       "baseRepo": "stable-diffusion-v1-5/stable-diffusion-v1-5",
       "baseRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
       "baseLicense": "creativeml-openrail-m",
+      "artifacts": []
+    },
+    {
+      "modelType": "HunyuanDiTControlNetPipeline",
+      "baseRepo": "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
+      "baseRevision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+      "baseLicense": "tencent-hunyuan-community",
       "artifacts": []
     },
     {

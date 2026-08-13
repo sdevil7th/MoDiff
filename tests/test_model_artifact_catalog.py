@@ -129,6 +129,14 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("Efficient-Large-Model/SANA-Video_2B_480p_diffusers"),
             "db5f398b13ca086d09a50ce156c20527773841b1",
         )
+        self.assertEqual(
+            catalog_revision("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"),
+            "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+        )
+        self.assertEqual(
+            catalog_revision("Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"),
+            "b2d21391ebcf78939344cfec84891932f9d53aa0",
+        )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(

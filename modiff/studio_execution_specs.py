@@ -34,6 +34,8 @@ SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
 SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
+HUNYUAN_DIT_DISTILLED_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
+HUNYUAN_DIT_CONTROLNET_CANNY_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
@@ -121,6 +123,17 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "kind": "controlnet",
             "requiredForModes": ["control_image"],
             "description": "Required by the generic SDXL Canny ControlNet workflow.",
+        },
+    ),
+    ("HunyuanDiTControlNetPipeline", "control_image"): (
+        {
+            "id": "hunyuan-dit-v1-2-controlnet-canny",
+            "label": "Hunyuan-DiT v1.2 Canny ControlNet",
+            "repo": HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
+            "revision": require_catalog_revision(HUNYUAN_DIT_CONTROLNET_CANNY_REPO),
+            "kind": "controlnet",
+            "requiredForModes": ["control_image"],
+            "description": "Exact safetensors Canny component for the reviewed Hunyuan-DiT v1.2 distilled recipe.",
         },
     ),
     ("StableDiffusionPipeline", "control_image"): (
@@ -5275,6 +5288,99 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-image:v1"] = {
     "mode": "control_image",
     "profile": _SDXL_CONTROLNET_PROFILE,
     "capability": _SDXL_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+
+
+_HUNYUAN_DIT_CONTROLNET_CAPABILITY = {
+    "modelType": "HunyuanDiTControlNetPipeline",
+    "label": "Hunyuan-DiT v1.2 ControlNet",
+    "displayName": "Hunyuan-DiT v1.2 Canny ControlNet",
+    "family": "Hunyuan-DiT",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": HUNYUAN_DIT_DISTILLED_REPO,
+    "artifactLabel": "Official Tencent community-license safetensors assembly",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 6.0,
+    "recommendedMaxSequenceLength": 256,
+    "guidanceLabel": "Guidance",
+    "conditioningScale": 1.0,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": True,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["control_image"],
+    "modeRequirements": {
+        "control_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "HunyuanDiTControlNetPipeline", "control_image"
+            ),
+            "requiredImages": ["controlImage"],
+            "note": "Requires one source image for the canonical Canny preprocessor and exact v1.2 ControlNet.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(HUNYUAN_DIT_DISTILLED_REPO, model_type="HunyuanDiTControlNetPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The source graph is fixed to the publisher's 1024px, 50-step, guidance-6, scale-1 Canny recipe.",
+        "The base and ControlNet are loaded in float16 from exact safetensors snapshots with model CPU offload.",
+        "The Tencent community license and acceptable-use obligations require explicit acknowledgement before graph creation or installation.",
+        "The immutable base declares a required safety checker but ships none; Auto and Gallery remain disabled until live safety and quality review.",
+        "The separately reviewed Depth and Pose components remain optional expert substitutions without canonical workflows.",
+    ],
+}
+_HUNYUAN_DIT_CONTROLNET_PROFILE = {
+    "id": "hunyuan-dit-v1-2-controlnet-canny:direct",
+    "model_type": "HunyuanDiTControlNetPipeline",
+    "modes": ("control_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "HunyuanDiTControlNetPipeline",
+    "default_repo": HUNYUAN_DIT_DISTILLED_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["hunyuan-dit-v1-2-controlnet-canny:control-image:v1"] = {
+    "modelType": "HunyuanDiTControlNetPipeline",
+    "mode": "control_image",
+    "profile": _HUNYUAN_DIT_CONTROLNET_PROFILE,
+    "capability": _HUNYUAN_DIT_CONTROLNET_CAPABILITY,
     "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
     "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
     "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,

@@ -200,6 +200,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLTurboPipeline", "text_to_image"),
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
+                ("HunyuanDiTControlNetPipeline", "control_image"),
                 ("StableDiffusionXLAdapterPipeline", "control_image"),
                 ("StableDiffusionXLPAGPipeline", "text_to_image"),
                 ("StableDiffusionXLPAGPipeline", "edit_image"),
@@ -328,6 +329,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
             sdxl_controlnet["bindings"],
         )
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_controlnet["executionProfileId"]].live_proof)
+        hunyuan_controlnet = by_id["hunyuan-dit-v1-2-controlnet-canny:control-image:v1"]
+        self.assertEqual(hunyuan_controlnet["modelType"], "HunyuanDiTControlNetPipeline")
+        self.assertEqual(hunyuan_controlnet["pipelineClass"], "HunyuanDiTControlNetPipeline")
+        self.assertEqual(
+            hunyuan_controlnet["defaultRepo"],
+            "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
+        )
+        self.assertIn(
+            ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+            hunyuan_controlnet["bindings"],
+        )
+        self.assertIn(
+            ("controlPreprocessor", "output", "diffusersImageControl", "control_image"),
+            hunyuan_controlnet["edges"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[hunyuan_controlnet["executionProfileId"]].live_proof)
         sdxl_adapter = by_id["sdxl-t2i-adapter-canny:control-image:v1"]
         self.assertEqual(sdxl_adapter["modelType"], "StableDiffusionXLAdapterPipeline")
         self.assertEqual(sdxl_adapter["pipelineClass"], "StableDiffusionXLAdapterPipeline")

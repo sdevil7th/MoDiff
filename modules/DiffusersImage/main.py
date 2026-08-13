@@ -55,6 +55,8 @@ SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
 SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
+HUNYUAN_DIT_DISTILLED_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
+HUNYUAN_DIT_CONTROLNET_CANNY_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
@@ -311,6 +313,24 @@ IMAGE_PIPELINE_ADAPTERS = {
         conditioning_component_parameter="controlnet",
         conditioning_weight_variant="fp16",
         control_image_parameter="image",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
+    "HunyuanDiTControlNetPipeline": ImagePipelineAdapter(
+        "HunyuanDiTControlNetPipeline",
+        frozenset({"control_image"}),
+        HUNYUAN_DIT_DISTILLED_REPO,
+        artifact_pipeline_classes=("HunyuanDiTPipeline",),
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=1024,
+        max_output_side=1024,
+        output_side_step=32,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=256,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="HunyuanDiT2DControlNetModel",
+        conditioning_component_parameter="controlnet",
         conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
     "StableDiffusionXLAdapterPipeline": ImagePipelineAdapter(
@@ -756,6 +776,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         ),
     },
     "StableDiffusionXLControlNetPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
+        ),
+    },
+    "HunyuanDiTControlNetPipeline": {
         "control_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
         ),
