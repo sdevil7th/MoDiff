@@ -387,6 +387,13 @@
       "artifacts": []
     },
     {
+      "modelType": "GlmImagePipeline",
+      "baseRepo": "zai-org/GLM-Image",
+      "baseRevision": "2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4",
+      "baseLicense": "mit",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",

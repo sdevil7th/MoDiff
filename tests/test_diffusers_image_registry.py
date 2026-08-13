@@ -36,6 +36,7 @@ from modules.DiffusersImage.main import (
     DREAMLITE_BASE_REPO,
     DREAMLITE_MOBILE_REPO,
     ERNIE_IMAGE_TURBO_REPO,
+    GLM_IMAGE_REPO,
     FLUX2_KLEIN_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
@@ -766,6 +767,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertTrue(ernie["fieldParams"]["negative_prompt"]["hidden"])
         self.assertTrue(ernie["fieldParams"]["guidance_scale"]["hidden"])
         self.assertTrue(ernie["fieldParams"]["max_sequence_length"]["hidden"])
+        glm_image = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["GlmImagePipeline"], "text_to_image")
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: glm_image["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 1024, "max": 1024, "step": 32},
+            )
+        self.assertEqual(glm_image["maxOutputPixels"], 1024 * 1024)
+        self.assertTrue(glm_image["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertFalse(glm_image["fieldParams"]["guidance_scale"]["hidden"])
+        self.assertFalse(glm_image["fieldParams"]["max_sequence_length"]["hidden"])
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -876,6 +887,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
             "CogView4Pipeline": ({"text_to_image"}, COGVIEW4_6B_REPO, {"prompt"}),
             "ErnieImagePipeline": ({"text_to_image"}, ERNIE_IMAGE_TURBO_REPO, {"prompt"}),
+            "GlmImagePipeline": ({"text_to_image"}, GLM_IMAGE_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -982,6 +994,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("CogView3PlusPipeline", "text_to_image", Generate, {}),
             ("CogView4Pipeline", "text_to_image", Generate, {}),
             ("ErnieImagePipeline", "text_to_image", Generate, {}),
+            ("GlmImagePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -2518,6 +2531,112 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             values[field] = value
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
                 Generate(f"ernie-image-{field}-contract").execute(**values)
+
+    def test_glm_image_loads_safe_bfloat16_with_fp32_t5_and_enforces_the_exact_recipe(self):
+        loaded = {}
+        called = {}
+        placements = []
+
+        class TextEncoder:
+            def to(self, dtype):
+                placements.append(dtype)
+                return self
+
+        class GlmImagePipeline:
+            def __init__(self):
+                self.text_encoder = TextEncoder()
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                height=1024,
+                width=1024,
+                num_inference_steps=50,
+                guidance_scale=1.5,
+                max_sequence_length=2048,
+                negative_prompt_embeds=None,
+                generator=None,
+                output_type="pil",
+                return_dict=True,
+                callback_on_step_end=None,
+                callback_on_step_end_tensor_inputs=None,
+            ):
+                called.update(locals())
+                return SimpleNamespace(images=[Image.new("RGB", (width, height))])
+
+        node = LoadPipeline("glm-image-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=GlmImagePipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=GLM_IMAGE_REPO,
+                pipeline_class="GlmImagePipeline",
+                mode="text_to_image",
+                revision=catalog_revision(GLM_IMAGE_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], GLM_IMAGE_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(GLM_IMAGE_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        self.assertEqual(placements, ["float32"])
+
+        generate = Generate("glm-image-generate-probe")
+        generate.progress = lambda *args, **kwargs: None
+        generated = generate.execute(
+            pipeline=result["pipeline"],
+            prompt="reviewed fixture",
+            negative_prompt="must not reach the package API",
+            width=1024,
+            height=1024,
+            num_inference_steps=50,
+            guidance_scale=1.5,
+            max_sequence_length=2048,
+            seed=7,
+            output_type="pil",
+        )
+        self.assertEqual(generated["width_out"], 1024)
+        self.assertEqual(generated["height_out"], 1024)
+        self.assertEqual(called["num_inference_steps"], 50)
+        self.assertEqual(called["guidance_scale"], 1.5)
+        self.assertEqual(called["max_sequence_length"], 2048)
+        self.assertIsNone(called["negative_prompt_embeds"])
+
+        for field, value, message in (
+            ("width", 992, "between 1024 and 1024"),
+            ("height", 1056, "between 1024 and 1024"),
+            ("num_inference_steps", 51, "between 1 and 50"),
+            ("max_sequence_length", 2049, "between 1 and 2048"),
+        ):
+            values = {
+                "pipeline": result["pipeline"],
+                "prompt": "reviewed fixture",
+                "width": 1024,
+                "height": 1024,
+                "num_inference_steps": 50,
+                "guidance_scale": 1.5,
+                "max_sequence_length": 2048,
+            }
+            values[field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
+                Generate(f"glm-image-{field}-contract").execute(**values)
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
         loaded = {}

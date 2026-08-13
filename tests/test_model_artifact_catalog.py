@@ -45,6 +45,7 @@ STUDIO_MODEL_TYPES = {
     "CogView3PlusPipeline",
     "CogView4Pipeline",
     "ErnieImagePipeline",
+    "GlmImagePipeline",
 }
 
 
@@ -117,6 +118,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("baidu/ERNIE-Image-Turbo"),
             "bc68c81e2a1730a394d5fc9fae70713dee940140",
+        )
+        self.assertEqual(
+            catalog_revision("zai-org/GLM-Image"),
+            "2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4",
         )
         self.assertEqual(
             catalog_revision("rhymes-ai/Allegro"),

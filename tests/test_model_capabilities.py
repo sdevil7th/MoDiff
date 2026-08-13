@@ -145,7 +145,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 103)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 104)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -196,6 +196,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "CogView3PlusPipeline",
             "CogView4Pipeline",
             "ErnieImagePipeline",
+            "GlmImagePipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
@@ -455,6 +456,22 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(ernie["autoEligible"])
         self.assertFalse(ernie["galleryEligible"])
         self.assertNotIn("ErnieImagePipeline", experimental)
+        glm_image = by_model["GlmImagePipeline"]
+        self.assertEqual(
+            glm_image["revisionCandidates"],
+            ["2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4"],
+        )
+        self.assertEqual(glm_image["defaultSize"], {"width": 1024, "height": 1024, "aspectRatio": "1:1"})
+        self.assertEqual(glm_image["recommendedSteps"], 50)
+        self.assertEqual(glm_image["recommendedGuidance"], 1.5)
+        self.assertEqual(glm_image["recommendedMaxSequenceLength"], 2048)
+        self.assertEqual(glm_image["modes"], ["text_to_image"])
+        self.assertEqual(glm_image["pipelineClasses"], ["GlmImagePipeline"])
+        self.assertFalse(glm_image["supportsNegativePrompt"])
+        self.assertFalse(glm_image["supportsLora"])
+        self.assertFalse(glm_image["autoEligible"])
+        self.assertFalse(glm_image["galleryEligible"])
+        self.assertNotIn("GlmImagePipeline", experimental)
         dreamlite = by_model["DreamLitePipeline"]
         self.assertEqual(
             dreamlite["revisionCandidates"],

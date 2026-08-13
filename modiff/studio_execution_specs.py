@@ -46,6 +46,7 @@ CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 ERNIE_IMAGE_TURBO_REPO = "baidu/ERNIE-Image-Turbo"
+GLM_IMAGE_REPO = "zai-org/GLM-Image"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -6276,6 +6277,87 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["ernie-image-turbo:text-to-image:v1"] = {
     "mode": "text_to_image",
     "profile": _ERNIE_IMAGE_TURBO_PROFILE,
     "capability": _ERNIE_IMAGE_TURBO_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_GLM_IMAGE_PROFILE = {
+    "id": "glm-image:direct",
+    "model_type": "GlmImagePipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "GlmImagePipeline",
+    "default_repo": GLM_IMAGE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_GLM_IMAGE_CAPABILITY = {
+    "modelType": "GlmImagePipeline",
+    "label": "GLM-Image",
+    "displayName": "GLM-Image 16B 1024px",
+    "family": "GLM-Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": GLM_IMAGE_REPO,
+    "artifactLabel": "MIT bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 1.5,
+    "recommendedMaxSequenceLength": 2048,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(GLM_IMAGE_REPO, model_type="GlmImagePipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public MIT snapshot uses only package-owned Diffusers and Transformers classes and nine safetensors weight files; incorporated X-Omni tokenizer weights retain Apache-2.0 terms.",
+        "The reviewed text-to-image route is fixed to 1024x1024, 50 steps, guidance 1.5, and at most 2048 prompt tokens; image-to-image remains outside this first admission.",
+        "The approximately 35.77 GB weight surface is remote-only; the missing safety checker keeps Auto and Gallery disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["glm-image:text-to-image:v1"] = {
+    "modelType": "GlmImagePipeline",
+    "mode": "text_to_image",
+    "profile": _GLM_IMAGE_PROFILE,
+    "capability": _GLM_IMAGE_CAPABILITY,
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,

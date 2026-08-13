@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "family": "GLM-Image",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "admittedWorkflows": [
+    "GlmImagePipeline:text_to_image"
+  ],
+  "repository": {
+    "repository": "zai-org/GLM-Image",
+    "revision": "2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4",
+    "private": false,
+    "gated": false,
+    "declaredLicense": "mit",
+    "licenseFilePresent": false,
+    "repositoryFileCount": 27,
+    "repositoryBytes": 35789282228,
+    "weightFileCount": 9,
+    "weightBytes": 35765307854,
+    "format": "safetensors",
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "GlmImagePipeline",
+    "safetensorsDtypeParameterCounts": {
+      "BF16": 17447229155,
+      "F32": 217657472
+    },
+    "weightInventorySha256": "f710f8ac88dad3bf237bb6363d50dedccd40e48e889a589f631399f0d85c15a8"
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "weightFiles": [
+    {
+      "path": "text_encoder/model.safetensors",
+      "sha256": "aa1ce00ffb0fe8912dfe32c11ba235b87511604298b605ef95314668a02f2bbf",
+      "byteSize": 870643240,
+      "remoteHeaderBytesFetched": 13352,
+      "tensorCount": 111,
+      "dtypeParameterCounts": {
+        "F32": 217657472
+      }
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+      "sha256": "f58e49fd4f181d80aa4ea22de425e7f49a9e1d0f35415fe53634e722670eec55",
+      "byteSize": 4966398856,
+      "remoteHeaderBytesFetched": 19336,
+      "tensorCount": 169,
+      "dtypeParameterCounts": {
+        "BF16": 2483189760
+      }
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+      "sha256": "828d8aa45a4ded6d32e5018d36af9f234929966df3066cbc2b77afe22e4fa59a",
+      "byteSize": 4984743304,
+      "remoteHeaderBytesFetched": 17800,
+      "tensorCount": 154,
+      "dtypeParameterCounts": {
+        "BF16": 2492362752
+      }
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+      "sha256": "209b6fa82bd9632e44e9a2daea8727bd3f8206331dd20d784f5cdc39a65a035f",
+      "byteSize": 3902674480,
+      "remoteHeaderBytesFetched": 13744,
+      "tensorCount": 120,
+      "dtypeParameterCounts": {
+        "BF16": 1951330368
+      }
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "a80a129b649cdb6d74d9c2b5bb060f3b882b7826b63a732306a7d3393deedbc0",
+      "byteSize": 812234342,
+      "remoteHeaderBytesFetched": 33056,
+      "tensorCount": 288,
+      "dtypeParameterCounts": {
+        "BF16": 406100643
+      }
+    },
+    {
+      "path": "vision_language_encoder/model-00001-of-00004.safetensors",
+      "sha256": "8575ed7148893c4fb390ad84c51d9c3800b0f960af6f977c6f6fd6d1708c8c4d",
+      "byteSize": 5295710600,
+      "remoteHeaderBytesFetched": 15752,
+      "tensorCount": 121,
+      "dtypeParameterCounts": {
+        "BF16": 2647847424
+      }
+    },
+    {
+      "path": "vision_language_encoder/model-00002-of-00004.safetensors",
+      "sha256": "d074e03e7bf01b4a3150adec5afb968303a0310ce701c3eae47f3e78e58b0fc5",
+      "byteSize": 5303216664,
+      "remoteHeaderBytesFetched": 22040,
+      "tensorCount": 169,
+      "dtypeParameterCounts": {
+        "BF16": 2651597312
+      }
+    },
+    {
+      "path": "vision_language_encoder/model-00003-of-00004.safetensors",
+      "sha256": "c0b8360e705e473233b2f176bfee7ced2f1654e38d24215ae8f5515891312300",
+      "byteSize": 5303216648,
+      "remoteHeaderBytesFetched": 22024,
+      "tensorCount": 169,
+      "dtypeParameterCounts": {
+        "BF16": 2651597312
+      }
+    },
+    {
+      "path": "vision_language_encoder/model-00004-of-00004.safetensors",
+      "sha256": "24ba0474ffbb11163465a2961c45f2a12d88e91840214f93f355851d7d303d0a",
+      "byteSize": 4326469720,
+      "remoteHeaderBytesFetched": 62552,
+      "tensorCount": 552,
+      "dtypeParameterCounts": {
+        "BF16": 2163203584
+      }
+    }
+  ],
+  "metadataSha256": {
+    "modelCard": "fc5861c29cda8b542b0f258a55d9bb8b44d56e9592a021c74f4eeebf7a159ce0",
+    "modelIndex": "67b2c0934a43c6821c7862b1999fc10f7d7a1b9b89ccb3a01bd908a46e8035f2",
+    "processorChatTemplate": "fc5ffeb5867c85630da91cca05db7c46167189d7f6066a615d435e4ec3154a57",
+    "processorPreprocessorConfig": "bc8b8af6f487435d02a32e8ea4996493457a5ac94f85c16f546ec45ba95f20a5",
+    "processorTokenizerConfig": "5b212b0fa405480adc080ba1af5b9c5365e54b65d20d65277a93c8178fca5aeb",
+    "schedulerConfig": "ed2f73067894ed3d8d9341036ceb7607ad9df1753bd4a0b15ed7cf1c528f758e",
+    "textEncoderConfig": "f63c1c853b48d04e6b4ed28911a320ab8cdd8333399a08571053303eec567411",
+    "tokenizerConfig": "3be33c710b17ac8686cd2b82ec044b0cd1122ff92c651d7170bfe1af8256ebfb",
+    "transformerConfig": "ed79f81e11e9e485580c8ede7b7a09c8fb6811f5ac0ae4ce748acf6804aa97a0",
+    "transformerIndex": "d957778edf4b6757a2df2a464cae988ebdc35788fe146588a52ec221fa39698d",
+    "vaeConfig": "3dd3fd1e352eb444a5bdaa657946e17af8c2ab2790969b0a63296e383ab81da7",
+    "visionLanguageEncoderConfig": "816382abb020842b3ba8f54bd64a54f39455ac80223bdfe732d3c78d831beb6b",
+    "visionLanguageEncoderGenerationConfig": "34a0bb3aae9ef1313ffc06c54b7710273f2c7db1fa90999f4f4438162b84a03a",
+    "visionLanguageEncoderIndex": "539e0dc83c362e45b15b2be4f4dc0cdb75631176bf329f95e183e38a32586c4f"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "transformersVersion": "5.14.1",
+    "optionalRuntimeProfile": "huggingface-transformers-peft-5.14.1-0.20.0",
+    "pipelineClass": "GlmImagePipeline",
+    "pipelineSha256": "8128c9d0b32d91aaabec94f851db3e37311f89c7f08c5cff299117db2a2a15e4",
+    "pipelineOutputClass": "GlmImagePipelineOutput",
+    "pipelineOutputSha256": "e62d6d8453c4cdaa26e97ccf421b6693351d4e362026f180990b5e9526ae1aa4",
+    "transformerClass": "GlmImageTransformer2DModel",
+    "transformerSha256": "b609c74e5fefbc88fad9493439b0e3aae557e2901d5750db6537a000a2cfe5fc",
+    "autoencoderClass": "AutoencoderKL",
+    "autoencoderSha256": "091d72ea9ae2f45f465e70f05142e04850d1153052dca520291ceb707bda8c98",
+    "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+    "schedulerSha256": "1af27be5b2f92b7d139d3c50239be5ce3eafc4a7eddf59c2d30689f8ec31e93d",
+    "visionLanguageEncoderClass": "GlmImageForConditionalGeneration",
+    "visionLanguageEncoderSha256": "a02008252d7ca7dc9233d165567d55d9cbde36aaafb5801f16c82cb01bc97db8",
+    "processorClass": "GlmImageProcessor",
+    "processorSha256": "4260ef144028fda13a082ac8885ba693e6dba4075b15dd00897ab7f73d8b9807",
+    "tokenizerClass": "ByT5Tokenizer",
+    "tokenizerSha256": "8af86847729bc65a31c72486dcd6f9b64952ca063b5c4a25089ef87bb6891dfc",
+    "textEncoderClass": "T5EncoderModel",
+    "textEncoderDtype": "float32",
+    "modelCpuOffloadSequence": "vision_language_encoder->text_encoder->transformer->vae",
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds"
+    ],
+    "safetyCheckerAvailable": false,
+    "outputType": "GlmImagePipelineOutput"
+  },
+  "pipelineContract": {
+    "modes": [
+      "text_to_image"
+    ],
+    "upstreamDefaultInferenceSteps": 50,
+    "upstreamDefaultGuidanceScale": 1.5,
+    "upstreamExampleWidth": 1152,
+    "upstreamExampleHeight": 1024,
+    "dimensionsDivisibleBy": 32,
+    "moDiffWidth": 1024,
+    "moDiffHeight": 1024,
+    "moDiffMaximumInferenceSteps": 50,
+    "moDiffDefaultGuidanceScale": 1.5,
+    "moDiffMaximumSequenceLength": 2048,
+    "negativePromptParameterAvailable": false,
+    "numImagesPerPrompt": 1,
+    "vaeSlicing": true,
+    "vaeTiling": true,
+    "outputType": "pil"
+  },
+  "license": {
+    "id": "mit",
+    "acceptanceRequired": false,
+    "licenseFilePresent": false,
+    "commercialUsePermitted": true,
+    "cardDeclaresOverallModelMit": true,
+    "incorporatedXOmniWeightsLicense": "apache-2.0",
+    "clarificationPending": "the immutable repository has no bundled LICENSE or NOTICE file; redistribution must preserve the MIT declaration and the incorporated Apache-2.0 attribution"
+  },
+  "remoteResourceEnvelope": {
+    "status": "upstream_claimed_modiff_qualification_pending",
+    "minimumAcceleratorMemoryBytesEstimateWithModelCpuOffload": 25769803776,
+    "minimumSelectiveDiskBytes": 85899345920,
+    "minimumSystemRamBytes": 120259084288,
+    "upstreamModelCpuOffloadGpuVramClaimGiB": 23,
+    "notes": [
+      "The model card's approximately 23 GiB model-CPU-offload statement is an upstream claim, not a MoDiff qualification run or a complete component-placement trace.",
+      "The selected snapshot contains approximately 35.77 GB of mixed bfloat16 and float32 weights, so MoDiff defaults to model CPU offload and keeps sequential and disk-backed retries finite.",
+      "No local or remote real-weight execution occurred during source admission."
+    ]
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 1,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteSafetensorsHeaderBytesFetched": 219656,
+    "unresolvedGates": [
+      "remote_real_weight_memory_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution",
+      "bundled_license_file_clarification"
+    ]
+  }
+}

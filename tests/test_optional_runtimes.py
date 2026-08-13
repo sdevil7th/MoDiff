@@ -136,7 +136,10 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             all(package["status"] == "present_unqualified" for package in profile["packages"])
         )
         self.assertIn("StableAudioPipeline", profile["requiredDiffusersSymbols"])
+        self.assertIn("ErnieImagePipeline", profile["requiredDiffusersSymbols"])
+        self.assertIn("GlmImagePipeline", profile["requiredDiffusersSymbols"])
         self.assertNotIn("StableAudioPipeline", profile["pipelineAdapterSymbols"])
+        self.assertNotIn("GlmImagePipeline", profile["pipelineAdapterSymbols"])
 
         different_host = public_optional_runtime_profiles(
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],

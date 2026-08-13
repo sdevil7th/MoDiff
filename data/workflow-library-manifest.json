@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T17:45:25.906Z",
+  "generatedAt": "2026-08-13T18:11:56.161Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 103,
-  "supportedPairCount": 115,
+  "supportedCanonicalPairCount": 104,
+  "supportedPairCount": 116,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1339,6 +1339,32 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "GlmImagePipeline:text_to_image",
+      "modelType": "GlmImagePipeline",
+      "modelFamily": "GLM-Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "zai-org/GLM-Image"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "GlmImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:glm-image:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/glm-image-pipeline/text-to-image.json",
+      "graphHash": "11e84722bb9144b5f82c499314d656ee6e9075709bf83a65c0e2d5e713716030"
     },
     {
       "id": "HuggingFaceSpeechRecognitionModel:speech_to_text",

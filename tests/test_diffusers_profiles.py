@@ -108,6 +108,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "CogView3PlusPipeline",
             "CogView4Pipeline",
             "ErnieImagePipeline",
+            "GlmImagePipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "DummyCustomPipeline",

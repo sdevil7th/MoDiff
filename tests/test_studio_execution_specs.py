@@ -214,6 +214,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("CogView3PlusPipeline", "text_to_image"),
                 ("CogView4Pipeline", "text_to_image"),
                 ("ErnieImagePipeline", "text_to_image"),
+                ("GlmImagePipeline", "text_to_image"),
                 ("DreamLitePipeline", "text_to_image"),
                 ("DreamLitePipeline", "edit_image"),
                 ("DreamLiteMobilePipeline", "text_to_image"),
@@ -464,6 +465,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(ernie_profile.max_low_memory_side, 1024)
         self.assertEqual(ernie_profile.max_low_memory_steps, 8)
         self.assertFalse(ernie_profile.live_proof)
+        glm_image = by_id["glm-image:text-to-image:v1"]
+        self.assertEqual(glm_image["modelType"], "GlmImagePipeline")
+        self.assertEqual(glm_image["pipelineClass"], "GlmImagePipeline")
+        self.assertEqual(glm_image["defaultRepo"], "zai-org/GLM-Image")
+        glm_image_profile = DIFFUSERS_EXECUTION_PROFILES[glm_image["executionProfileId"]]
+        self.assertEqual(glm_image_profile.max_low_memory_side, 1024)
+        self.assertEqual(glm_image_profile.max_low_memory_steps, 50)
+        self.assertFalse(glm_image_profile.live_proof)
         dreamlite = by_id["dreamlite-base:text-to-image:v1"]
         self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
         self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")
