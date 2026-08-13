@@ -4650,6 +4650,47 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   license clarification, remote output review, and physical macOS evidence
   remain pending. No runtime, download, graph, capability, client, or media
   surface was added.
+- [x] Admit Kandinsky 3 as a bounded single-stage Expert workflow. Backend
+  `b85b073` and client `3007bf3` expose the exact public snapshot
+  `kandinsky-community/kandinsky-3@bf79e6c219da8a94abb50235fdc4567eb8fb4632`
+  for text-to-image and single-image editing through the generic Diffusers
+  image facade. The repository is ungated, contains no Python, requires no
+  remote code, and exposes seven fp16 safetensors files totaling
+  28,390,829,958 bytes. Its canonical weight inventory, immutable metadata,
+  pinned package pipeline/image-to-image/UNet source hashes, and upstream
+  Apache-2.0 license receipt are sealed in
+  `data/kandinsky-3-artifact-review.json`. The model snapshot declares
+  Apache-2.0 in its card but contains no license file, so that clarification
+  remains explicit.
+
+  The backend-owned contract fixes both routes to the package's 1024px path,
+  25 recommended steps, guidance 3, fp16 weights, at most 128 prompt tokens,
+  and model or sequential CPU offload. Image editing accepts exactly one
+  1,048,576-pixel source and uses the documented example strength 0.75. The
+  package hardcodes its 128-token encoder path, so the generic sequence control
+  is hidden while the backend still applies that adapter-specific default and
+  bound. Both package routes expose the modern step callback used by MoDiff's
+  cancellation contract. The package has no safety checker, and the resource
+  envelope remains estimate-only, so Auto and Gallery are disabled and live
+  execution remains unqualified.
+
+  The expanded Transformers/Diffusers symbol surface passed locked clean-base
+  install validation, fresh-process activation, the finite CLIP+PEFT workload,
+  rollback, and a second clean-base process on Linux x86-64 at profile digest
+  `sha256:b490f3012dbf1b01e400dc5284af1630b0fea738ce92643a7c8fe3dca0e4caca`.
+  The bounded 1,554-byte evidence has SHA-256
+  `d05812d8c95bd1f0f0ef770d117ff7da89c10e0c1e9a15946901ca8f2e36bb61`
+  and retained no managed state. Two canonical graphs bring the deterministic
+  catalog to 123 supported workflows. The complete backend overlay passes
+  1,577 tests, 3,443 subtests, and three platform skips; Ruff E9/F,
+  deterministic workflow verification, and the complete client gate also
+  pass. The intentional client surface measures 530,549 compressed JavaScript
+  bytes under the 531,456-byte ceiling. The exact app-managed snapshot download
+  was accepted only after live free-space and aggregate queue-reservation
+  preflight and remains queued/in progress; no older cache snapshot was
+  removed. Remote real-weight memory/output safety/quality review,
+  model-snapshot license-file clarification, and physical macOS execution
+  remain pending independently, and no media has been generated.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5815,4 +5856,5 @@ Add references only after the corresponding evidence exists.
 | P6.39 JoyAI Image Edit and Edit Plus source admission | `6d507eb` | `b1cbde7` | Remote real-weight memory/output safety/quality, model-card license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared basic and Plus revisions, two twelve-file / approximately 50.32 GB BF16 safetensors partitions, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded 1024-base bucket recipes, one- and five-reference generic edit contracts, and four Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 121-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.40 Kandinsky 2.1 source and admission-gate review | `c04f151` | Not required | Static artifact/source review only; exact connected-prior binding, full-job cancellation, backend-owned composite bounds, output guardrails, model-snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Three exact public decoder/prior/inpaint revisions, their 13.23 GB composite safetensors-only surfaces, immutable metadata and package source hashes, upstream Apache receipt, three combined-mode contracts, and bounded header evidence are sealed. The package reuses the decoder revision on the distinct prior repository or downloads its moving branch, while the prior stage has no callback; the family remains outside every runtime/download and user-facing surface, and no full weights or media were downloaded. |
 | P6.41 Kandinsky 2.2 source and admission-gate review | `75bb0ac` | Not required | Static artifact/source review only; exact connected-prior binding, backend-owned two-stage assembly/bounds, safe ControlNet/refiner artifacts, output guardrails, snapshot license clarification, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Five exact official repositories, safe 15.86 GB decoder/prior composite surfaces, immutable metadata and package source hashes, two-stage callback contracts, and upstream Apache receipt are sealed. The connected loader remains revision-inexact; official depth-ControlNet and refiner snapshots are legacy `.bin`-only, and the refiner names the 2.1 pipeline without card/license metadata. No runtime/download or user-facing surface was added, and no full weights or media were downloaded. |
+| P6.42 Kandinsky 3 text-to-image and image-edit source admission | `b85b073` | `3007bf3` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, seven-file / 28,390,829,958-byte fp16 safetensors partition, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded single-stage 1024px/25-step/guidance-3 routes, and two Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 123-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
