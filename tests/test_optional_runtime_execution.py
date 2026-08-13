@@ -363,6 +363,13 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         cases = (
             ("modules.ModularDiffusers", "ModelsLoader", "refresh_pipeline_identity"),
             ("modules.ModularDiffusers", "DynamicBlockNode", "update_node"),
+            ("modules.DiffusersImage", "LoadPipeline", "update_pipeline_contract"),
+            ("modules.DiffusersImage", "Generate", "update_image_contract"),
+            ("modules.DiffusersImage", "Edit", "update_image_contract"),
+            ("modules.DiffusersImage", "Inpaint", "update_image_contract"),
+            ("modules.DiffusersImage", "ControlGenerate", "update_image_contract"),
+            ("modules.DiffusersImage", "UnconditionalGenerate", "update_image_contract"),
+            ("modules.DiffusersImage", "PredictMap", "update_image_contract"),
             ("modules.DiffusersAudio", "LoadPipeline", "update_audio_contract"),
             ("modules.DiffusersAudio", "Generate", "update_audio_contract"),
             ("modules.DiffusersThreeD", "LoadPipeline", "update_three_d_contract"),

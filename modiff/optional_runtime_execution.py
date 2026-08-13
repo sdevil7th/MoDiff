@@ -301,6 +301,41 @@ _DECLARATIVE_FIELD_ACTIONS = frozenset(
             "update_node",
         ),
         (
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            "update_pipeline_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "Generate",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "Edit",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "Inpaint",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "ControlGenerate",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "UnconditionalGenerate",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "PredictMap",
+            "update_image_contract",
+        ),
+        (
             "modules.DiffusersAudio",
             "LoadPipeline",
             "update_audio_contract",
