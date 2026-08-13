@@ -4104,9 +4104,21 @@ default. Assets: remote Dataset only.
     and port availability remain healthy; no runtime was mutated. Auto,
     Gallery, live output, remote quality, and physical macOS qualification
     remain pending. No weights or output media were downloaded or retained.
-- [ ] **P4.5 Diffusers text-to-speech:** AudioLDM2 TTS with a generic speech
-  synthesis task contract. Require a reviewed safetensors artifact or an
-  explicit documented unsafe-deserialization exception before execution.
+- [ ] **P4.5 Diffusers text-to-speech:** deferred independently. The pinned
+  Diffusers `AudioLDM2Pipeline` exposes the required generic `prompt` plus
+  `transcription` speech-synthesis call contract, and upstream documentation
+  identifies `anhnct/audioldm2_gigaspeech` as the GigaSpeech TTS checkpoint.
+  The reviewed ungated snapshot at immutable commit
+  `c812a7861f38a69441a8e0428438e782d9864614` is approximately 5.83 GB and
+  contains legacy `.bin` weights for the language model, projection model,
+  both text encoders, UNet, VAE, and vocoder with no safetensors alternative.
+  The related `anhnct/audioldm2_ljspeech` snapshot at
+  `32ab10ffc92907e6a6741319675a1175fd925a66` has the same unsafe-only
+  serialization envelope. No credible immutable safetensors conversion was
+  found, and no unsafe-deserialization exception is approved, so MoDiff does
+  not expose or execute either TTS repository. Revisit this segment only when
+  a reviewed safetensors artifact exists or the owner approves a narrowly
+  documented exception with isolated conversion and provenance review.
 - [ ] **P4.6 Generic 3D artifacts:** Shap-E rendered output first; mesh/PLY/OBJ/GLB
   only after a safe artifact/export contract exists.
 
@@ -4392,7 +4404,7 @@ Add references only after the corresponding evidence exists.
 | P4.2f SDXL PAG image-to-image and inpaint | `63f9075` | `c0f2e2b` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, exact upstream PAG edit/inpaint classes, reviewed 1024px/50-step/guidance-5/strength-0.8/PAG-3/adaptive-0 contracts, 89-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
 | P4.3 Sana/Sana Sprint and DreamLite admission | `7117c80` | `c41d1c6` | Remote and physical macOS pending | Pending | Complete source slice for Sana and Sana Sprint: exact safe immutable artifacts, upstream classes, bounded recipes, three canonical graphs, and complete gates passed. DreamLite is independently deferred because its required classes are absent from the qualified Diffusers pin. Auto and Gallery remain disabled. |
 | P4.4 generic audio generation | `4d6a4d3` | `f0958e6` | Remote and physical macOS pending | Pending | Complete source slice: Stable Audio safe loading was revalidated and exact LongCat AudioDiT plus AudioLDM2 families now use immutable reviewed artifacts, bounded native-rate recipes, backend-owned declarative task contracts, two new canonical graphs, and complete gates. Auto and Gallery remain disabled. |
-| P4.5 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.5 AudioLDM2 text-to-speech | Deferred: reviewed TTS snapshots are legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently: the exact generic speech API is present at the pin, but both reviewed AudioLDM2 speech repositories require unsafe deserialization and no exception was approved. |
 | P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
