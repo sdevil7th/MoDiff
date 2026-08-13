@@ -4014,8 +4014,46 @@ default. Assets: remote Dataset only.
     reports only the pre-existing source-digest drift while imports, package
     compatibility, and port availability remain healthy; no runtime was
     mutated. No weights or output media were downloaded or retained.
-- [ ] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
+- [x] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
   candidates admitted by the per-model checklist.
+  - [x] **Sana 0.6B text-to-image:** the generic Diffusers image loader exposes
+    upstream `SanaPipeline` against immutable
+    `Efficient-Large-Model/Sana_600M_1024px_diffusers` commit
+    `28f3af7689de15f3883d5863059a2fca0aa9b829`. The reviewed approximately
+    7.70 GB snapshot is safetensors-only, requires no repository Python, and
+    uses its fp16 variant with the text encoder and VAE placed in bfloat16 as
+    documented upstream. The backend-owned recipe is 1024px, 20 steps,
+    guidance 4.5, and maximum sequence length 300. Apache-2.0 applies alongside
+    the bundled Gemma terms and prohibited-use policy. Its canonical graph hash
+    is `3184feed07ae57e6f0cdcc3cca8e07f36d3b205e564c6c8fdea2a83ebc94dc6d`.
+  - [x] **Sana Sprint 0.6B generation and editing:** the loader exposes exact
+    upstream `SanaSprintPipeline` and `SanaSprintImg2ImgPipeline` classes against
+    immutable `Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers` commit
+    `aa76e7f4f4928f378716b6716a2130fba3caf5b1`. The reviewed approximately
+    7.70 GB snapshot is native bfloat16 safetensors, requires no repository
+    Python, and is bounded to one through four steps. The canonical recipe uses
+    1024px, two steps, guidance 4.5, maximum sequence length 300, and edit
+    strength 0.5. Its text and edit graph hashes are
+    `1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe`
+    and `9a9ef604ec5da99da3616dd38b118162e75657c322b80e2c57f53b745b1d9bda`.
+    The same Apache/Gemma rights surface remains visible for later review.
+  - [ ] **DreamLite:** deferred independently. The reviewed base and mobile
+    snapshots are immutable, safetensors-only, ungated, and CC-BY-NC-4.0, but
+    exact Diffusers commit `13a7bee4878d62fccc8d25f97e480e68de96fa03`
+    does not export the required DreamLite pipeline classes. Updating the shared
+    runtime pin would reopen platform and optional-runtime qualification, so no
+    speculative loader or pin change was admitted in this slice.
+  - P4.3 source commits are backend `7117c80` and client `c41d1c6`. The complete
+    backend gate passed (`1288 passed, 3 skipped, 2837 subtests`) with Ruff
+    `E9,F`, compile, package, build, and diff checks. All 92 workflows verify
+    deterministically. `npm run check` passed, including 83 template/profile
+    cases; the production bundle remains within budget at `529358 / 529408`
+    total gzip bytes and `280364 / 448512` for the entry chunk. The local
+    managed CPU runtime reports only the pre-existing source-digest drift while
+    required imports, device validation, package compatibility, and port
+    availability remain healthy. Auto, Gallery, live output, remote quality,
+    and physical macOS qualification remain pending. No weights or output media
+    were downloaded or retained.
 - [ ] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
   and AudioLDM2 general audio.
 - [ ] **P4.5 Diffusers text-to-speech:** AudioLDM2 TTS with a generic speech
@@ -4304,6 +4342,9 @@ Add references only after the corresponding evidence exists.
 | P4.2d SDXL T2I-Adapter Canny | `2d14051` | `b13d65d` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors base/component assembly, exact Canny preprocessor and 1024px/30-step/guidance-7.5/scale-0.8 contract, 86-workflow catalog, complete backend/client gates, and shared-control regression coverage passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2e SDXL PAG text-to-image | `2a9c29b` | `379936e` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, upstream PAG pipeline, exact 1024px/50-step/guidance-5/PAG-3/adaptive-0 contract, 87-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2f SDXL PAG image-to-image and inpaint | `63f9075` | `c0f2e2b` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, exact upstream PAG edit/inpaint classes, reviewed 1024px/50-step/guidance-5/strength-0.8/PAG-3/adaptive-0 contracts, 89-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
-| P4.3-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.3 Sana/Sana Sprint and DreamLite admission | `7117c80` | `c41d1c6` | Remote and physical macOS pending | Pending | Complete source slice for Sana and Sana Sprint: exact safe immutable artifacts, upstream classes, bounded recipes, three canonical graphs, and complete gates passed. DreamLite is independently deferred because its required classes are absent from the qualified Diffusers pin. Auto and Gallery remain disabled. |
+| P4.4 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.5 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
