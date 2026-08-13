@@ -47,6 +47,30 @@ LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
 LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
 OMNIGEN_REPO = "Shitao/OmniGen-v1-diffusers"
+OVIS_IMAGE_REPO = "ATH-MaaS/Ovis-Image-7B"
+OVIS_IMAGE_DIFFUSERS_FILES = [
+    "LICENSE",
+    "NOTICE",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 LUMINA2_DIFFUSERS_FILES = [
     "model_index.json",
     "scheduler/scheduler_config.json",
@@ -6446,6 +6470,89 @@ for _spec_id, _mode in (
         "edges": _EDIT_GRAPH_EDGES,
         "bindings": _OMNIGEN_EDIT_GRAPH_BINDINGS,
     }
+
+
+_OVIS_IMAGE_PROFILE = {
+    "id": "ovis-image-7b:direct",
+    "model_type": "OvisImagePipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "OvisImagePipeline",
+    "default_repo": OVIS_IMAGE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_OVIS_IMAGE_CAPABILITY = {
+    "modelType": "OvisImagePipeline",
+    "label": "Ovis Image",
+    "displayName": "Ovis Image 7B",
+    "family": "Ovis Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": OVIS_IMAGE_REPO,
+    "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors-only selection",
+    "downloadFiles": OVIS_IMAGE_DIFFUSERS_FILES,
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 5.0,
+    "recommendedMaxSequenceLength": 256,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(OVIS_IMAGE_REPO, model_type="OvisImagePipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot executes the package-owned Ovis Image pipeline from a 21-file Diffusers-only allowlist containing five exact safetensors weight files.",
+        "The allowlist excludes duplicate root-native checkpoints and the bundled Ovis2.5 repository, including both Python source files, so remote code is never selected or trusted.",
+        "MoDiff bounds generation to 512-2048px sides, at most 1,048,576 output pixels, 50 steps, guidance 5, and 256 prompt tokens.",
+        "The approximately 21.79 GB selected weight surface has no safety checker and remains remote-only; Auto and Gallery are disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["ovis-image-7b:text-to-image:v1"] = {
+    "modelType": "OvisImagePipeline",
+    "mode": "text_to_image",
+    "profile": _OVIS_IMAGE_PROFILE,
+    "capability": _OVIS_IMAGE_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
 
 
 _AURAFLOW_V03_PROFILE = {

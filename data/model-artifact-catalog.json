@@ -408,6 +408,13 @@
       "artifacts": []
     },
     {
+      "modelType": "OvisImagePipeline",
+      "baseRepo": "ATH-MaaS/Ovis-Image-7B",
+      "baseRevision": "41be1c5821a92c970d63d7eb595a2fd3fe32b22e",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "ChromaPipeline",
       "baseRepo": "lodestones/Chroma1-HD",
       "baseRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",

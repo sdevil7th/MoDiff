@@ -68,6 +68,7 @@ LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
 LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
 OMNIGEN_REPO = "Shitao/OmniGen-v1-diffusers"
+OVIS_IMAGE_REPO = "ATH-MaaS/Ovis-Image-7B"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -592,6 +593,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_reference_images=3,
         max_reference_pixels=3 * 1024 * 1024,
     ),
+    "OvisImagePipeline": ImagePipelineAdapter(
+        "OvisImagePipeline",
+        frozenset({"text_to_image"}),
+        OVIS_IMAGE_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=16,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=256,
+    ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
         frozenset({"text_to_image"}),
@@ -1096,6 +1109,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             mode: _image_field_contract("width", "height", "guidance_scale", "image_guidance_scale")
             for mode in ("edit_image", "multi_image_reference_edit")
         },
+    },
+    "OvisImagePipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
+        ),
     },
     "AuraFlowPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),

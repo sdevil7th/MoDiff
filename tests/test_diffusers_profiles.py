@@ -110,6 +110,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "LuminaPipeline",
             "Lumina2Pipeline",
             "OmniGenPipeline",
+            "OvisImagePipeline",
             "AuraFlowPipeline",
             "ChromaPipeline",
             "CogView3PlusPipeline",

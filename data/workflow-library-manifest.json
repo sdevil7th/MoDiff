@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T21:43:38.929Z",
+  "generatedAt": "2026-08-13T22:06:44.420Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 118,
-  "supportedPairCount": 130,
+  "supportedCanonicalPairCount": 119,
+  "supportedPairCount": 131,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2306,6 +2306,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/omni-gen-pipeline/text-to-image.json",
       "graphHash": "0fbcf3c69ec7329f8fb65bd370b3b0298ede2fcd6fecf4027f84d128542d69ed"
+    },
+    {
+      "id": "OvisImagePipeline:text_to_image",
+      "modelType": "OvisImagePipeline",
+      "modelFamily": "Ovis Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "ATH-MaaS/Ovis-Image-7B"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "OvisImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:ovis-image-7b:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/ovis-image-pipeline/text-to-image.json",
+      "graphHash": "2ba10c09773f90b00a4eb76414924e15aade0dce5a6d8113ed981b9d6efd377c"
     },
     {
       "id": "PixArtSigmaPipeline:text_to_image",
