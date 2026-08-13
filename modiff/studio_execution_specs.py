@@ -42,6 +42,8 @@ SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
+LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
+LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -6047,6 +6049,131 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["kandinsky3:edit-image:v1"] = {
     "mode": "edit_image",
     "profile": _KANDINSKY3_IMG2IMG_PROFILE,
     "capability": _KANDINSKY3_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+}
+
+
+_LONGCAT_IMAGE_PROFILE = {
+    "id": "longcat-image:direct",
+    "model_type": "LongCatImagePipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "LongCatImagePipeline",
+    "default_repo": LONGCAT_IMAGE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_LONGCAT_IMAGE_CAPABILITY = {
+    "modelType": "LongCatImagePipeline",
+    "label": "LongCat Image",
+    "displayName": "LongCat Image 6B",
+    "family": "LongCat Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": LONGCAT_IMAGE_REPO,
+    "artifactLabel": "Apache-2.0-declared bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 4.0,
+    "recommendedMaxSequenceLength": 512,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(LONGCAT_IMAGE_REPO, model_type="LongCatImagePipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains seven exact safetensors files and executes only package-owned Diffusers and Transformers classes.",
+        "MoDiff bounds generation to 512-2048px sides, at most 1,048,576 output pixels, 50 steps, guidance 4, and disables the package's autoregressive prompt rewrite.",
+        "The approximately 29.29 GB selected weight surface has no safety checker and remains remote-only; Auto and Gallery are disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["longcat-image:text-to-image:v1"] = {
+    "modelType": "LongCatImagePipeline",
+    "mode": "text_to_image",
+    "profile": _LONGCAT_IMAGE_PROFILE,
+    "capability": _LONGCAT_IMAGE_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+_LONGCAT_IMAGE_EDIT_PROFILE = {
+    **_LONGCAT_IMAGE_PROFILE,
+    "id": "longcat-image-edit:direct",
+    "model_type": "LongCatImageEditPipeline",
+    "modes": ("edit_image",),
+    "pipeline_class": "LongCatImageEditPipeline",
+    "default_repo": LONGCAT_IMAGE_EDIT_REPO,
+}
+_LONGCAT_IMAGE_EDIT_CAPABILITY = {
+    **_LONGCAT_IMAGE_CAPABILITY,
+    "modelType": "LongCatImageEditPipeline",
+    "label": "LongCat Image Edit",
+    "displayName": "LongCat Image Edit 6B",
+    "defaultRepo": LONGCAT_IMAGE_EDIT_REPO,
+    "recommendedGuidance": 4.5,
+    "supportsImageInput": True,
+    "modes": ["edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image between 1:4 and 4:1 aspect ratio; output is normalized to an approximately one-megapixel bucket.",
+        }
+    },
+    "revisionCandidates": [
+        require_catalog_revision(LONGCAT_IMAGE_EDIT_REPO, model_type="LongCatImageEditPipeline")
+    ],
+    "notes": [
+        "The immutable public edit snapshot shares the exact text encoder and VAE identities with the generation model and replaces only the safetensors transformer.",
+        "MoDiff accepts exactly one at-most-1,048,576-pixel source between 1:4 and 4:1 aspect ratio; the package derives an approximately one-megapixel output and runs at most 50 steps.",
+        "The approximately 29.29 GB selected weight surface has no safety checker and remains remote-only; Auto and Gallery are disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["longcat-image-edit:edit-image:v1"] = {
+    "modelType": "LongCatImageEditPipeline",
+    "mode": "edit_image",
+    "profile": _LONGCAT_IMAGE_EDIT_PROFILE,
+    "capability": _LONGCAT_IMAGE_EDIT_CAPABILITY,
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _SDXL_EDIT_GRAPH_BINDINGS,

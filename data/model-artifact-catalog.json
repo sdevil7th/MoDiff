@@ -373,6 +373,20 @@
       "artifacts": []
     },
     {
+      "modelType": "LongCatImagePipeline",
+      "baseRepo": "meituan-longcat/LongCat-Image",
+      "baseRevision": "d2ea50b79a930074c37b9b97ce45e3b2ea8cf4d8",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "LongCatImageEditPipeline",
+      "baseRepo": "meituan-longcat/LongCat-Image-Edit",
+      "baseRevision": "7b54ef423aa7854be7861600024be5c56ab7875a",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "ChromaPipeline",
       "baseRepo": "lodestones/Chroma1-HD",
       "baseRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",

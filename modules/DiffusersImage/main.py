@@ -63,6 +63,8 @@ SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
+LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
+LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -125,6 +127,9 @@ class ImagePipelineAdapter:
     max_sequence_length: int = 512
     max_reference_images: int = 1
     max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
+    min_reference_aspect_ratio: float | None = None
+    max_reference_aspect_ratio: float | None = None
+    enable_prompt_rewrite: bool | None = None
     unconditional_optional_fields: tuple[str, ...] = ()
     conditioning_kind: str | None = None
     default_conditioning_repo: str | None = None
@@ -167,6 +172,14 @@ class ImagePipelineAdapter:
             raise ValueError("Image component dtype overrides must name unique non-empty components.")
         if any(dtype not in {"float32", "float16", "bfloat16"} for _name, dtype in self.component_dtype_overrides):
             raise ValueError("Image component dtype overrides must use a supported torch dtype.")
+        if (self.min_reference_aspect_ratio is None) != (self.max_reference_aspect_ratio is None):
+            raise ValueError("Image reference aspect-ratio bounds must be declared together.")
+        if self.min_reference_aspect_ratio is not None and not (
+            0 < self.min_reference_aspect_ratio <= self.max_reference_aspect_ratio
+        ):
+            raise ValueError("Image reference aspect-ratio bounds must be positive and ordered.")
+        if self.enable_prompt_rewrite is not None and type(self.enable_prompt_rewrite) is not bool:
+            raise ValueError("Image prompt rewriting must be an exact boolean when configured.")
         conditioning_fields = (
             self.conditioning_kind,
             self.default_conditioning_repo,
@@ -244,6 +257,8 @@ class ImagePipelineAdapter:
             and values.get("conditioning_scale") is not None
         ):
             target[self.conditioning_scale_parameter] = values["conditioning_scale"]
+        if self.enable_prompt_rewrite is not None and supports_arg(pipeline, "enable_prompt_rewrite"):
+            target["enable_prompt_rewrite"] = self.enable_prompt_rewrite
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -453,6 +468,34 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_output_pixels=1024 * 1024,
         max_sequence_length=128,
         max_reference_pixels=1024 * 1024,
+    ),
+    "LongCatImagePipeline": ImagePipelineAdapter(
+        "LongCatImagePipeline",
+        frozenset({"text_to_image"}),
+        LONGCAT_IMAGE_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=16,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=512,
+        enable_prompt_rewrite=False,
+    ),
+    "LongCatImageEditPipeline": ImagePipelineAdapter(
+        "LongCatImageEditPipeline",
+        frozenset({"edit_image"}),
+        LONGCAT_IMAGE_EDIT_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=16,
+        max_output_pixels=1088000,
+        max_sequence_length=512,
+        max_reference_pixels=1024 * 1024,
+        min_reference_aspect_ratio=0.25,
+        max_reference_aspect_ratio=4.0,
     ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
@@ -935,6 +978,12 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "Kandinsky3Img2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
+    },
+    "LongCatImagePipeline": {
+        "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
+    },
+    "LongCatImageEditPipeline": {
+        "edit_image": _image_field_contract("negative_prompt", "guidance_scale"),
     },
     "AuraFlowPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
@@ -1624,7 +1673,7 @@ def _normalized_image_prompt(value: Any, *, field: str) -> str | list[str]:
     raise ValueError(f"Diffusers image {field} must be a string or a list of 1 to 64 strings.")
 
 
-def _image_media_extent(value: Any, *, field: str, require_pil: bool) -> tuple[int, int]:
+def _image_media_extent(value: Any, *, field: str, require_pil: bool) -> tuple[int, int, int, int]:
     if isinstance(value, Image.Image):
         width, height = value.size
         sample_count = 1
@@ -1658,7 +1707,7 @@ def _image_media_extent(value: Any, *, field: str, require_pil: bool) -> tuple[i
         raise ValueError(
             f"Diffusers image {field} dimensions cannot exceed {_MAX_IMAGE_INPUT_DIMENSION} pixels per edge."
         )
-    return sample_count, sample_count * width * height
+    return sample_count, sample_count * width * height, width, height
 
 
 def _validate_image_media(
@@ -1669,6 +1718,8 @@ def _validate_image_media(
     max_pixels: int,
     require_pil: bool = False,
     require_single_value: bool = False,
+    min_aspect_ratio: float | None = None,
+    max_aspect_ratio: float | None = None,
 ) -> None:
     if value is None:
         raise ValueError(f"Diffusers image {field} is required.")
@@ -1684,11 +1735,22 @@ def _validate_image_media(
     total_items = 0
     total_pixels = 0
     for index, item in enumerate(items):
-        sample_count, pixels = _image_media_extent(
+        sample_count, pixels, width, height = _image_media_extent(
             item,
             field=f"{field}[{index}]" if len(items) > 1 else field,
             require_pil=require_pil,
         )
+        aspect_ratio = width / height
+        if min_aspect_ratio is not None and aspect_ratio < min_aspect_ratio:
+            raise ValueError(
+                f"Diffusers image {field} aspect ratio must be at least {min_aspect_ratio:g}; "
+                f"received {width}x{height}."
+            )
+        if max_aspect_ratio is not None and aspect_ratio > max_aspect_ratio:
+            raise ValueError(
+                f"Diffusers image {field} aspect ratio must be at most {max_aspect_ratio:g}; "
+                f"received {width}x{height}."
+            )
         total_items += sample_count
         total_pixels += pixels
     if total_items > max_items:
@@ -1818,6 +1880,8 @@ def preflight_image_action(
             field="Edit image",
             max_items=max_references,
             max_pixels=adapter.max_reference_pixels,
+            min_aspect_ratio=adapter.min_reference_aspect_ratio,
+            max_aspect_ratio=adapter.max_reference_aspect_ratio,
         )
     elif action == "Inpaint":
         _validate_image_media(

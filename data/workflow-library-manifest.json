@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T20:19:12.072Z",
+  "generatedAt": "2026-08-13T21:01:37.285Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 111,
-  "supportedPairCount": 123,
+  "supportedCanonicalPairCount": 113,
+  "supportedPairCount": 125,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1785,6 +1785,63 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
       "graphHash": "3e3010a5b93d458da8a0d6ff6a340914d117a3db67fe0543bc02313dfec596c9"
+    },
+    {
+      "id": "LongCatImageEditPipeline:edit_image",
+      "modelType": "LongCatImageEditPipeline",
+      "modelFamily": "LongCat Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "meituan-longcat/LongCat-Image-Edit"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image between 1:4 and 4:1 aspect ratio; output is normalized to an approximately one-megapixel bucket."
+      },
+      "pipelineClasses": [
+        "LongCatImageEditPipeline"
+      ],
+      "sourceTemplateId": "task-template:longcat-image-edit:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/long-cat-image-edit-pipeline/edit-image.json",
+      "graphHash": "5057f7679c35ab6818051a993db8c3430d11b2a6a2a3ea9f052238d0696fd33e"
+    },
+    {
+      "id": "LongCatImagePipeline:text_to_image",
+      "modelType": "LongCatImagePipeline",
+      "modelFamily": "LongCat Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "meituan-longcat/LongCat-Image"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LongCatImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:longcat-image:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/long-cat-image-pipeline/text-to-image.json",
+      "graphHash": "fd188e3e4087ee90dd9c891c21550bd51e49e8c49a0d57ba39b48ac63540b6e2"
     },
     {
       "id": "LTX2ConditionPipeline:image_to_video",

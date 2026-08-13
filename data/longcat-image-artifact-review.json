@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "family": "LongCat Image",
+  "repositories": {
+    "textToImage": {
+      "repository": "meituan-longcat/LongCat-Image",
+      "revision": "d2ea50b79a930074c37b9b97ce45e3b2ea8cf4d8",
+      "private": false,
+      "gated": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "LongCatImagePipeline",
+      "reportedUsedStorageBytes": 29307202280,
+      "snapshotDownloadBytes": 29327729635,
+      "weightFileCount": 7,
+      "weightBytes": 29293491646,
+      "weightInventorySha256": "7443c9cf5519b012acad1f716d59fcaf76f00bad9b231612d6a7a2f1d440d01a",
+      "modelCardLicenseTag": "apache-2.0",
+      "licenseFilePresent": false
+    },
+    "imageEdit": {
+      "repository": "meituan-longcat/LongCat-Image-Edit",
+      "revision": "7b54ef423aa7854be7861600024be5c56ab7875a",
+      "private": false,
+      "gated": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "LongCatImageEditPipeline",
+      "reportedUsedStorageBytes": 29299377333,
+      "snapshotDownloadBytes": 29322429940,
+      "weightFileCount": 7,
+      "weightBytes": 29293491614,
+      "weightInventorySha256": "9a506b38c4b5ae933280780d371b955af522fc7f47c636eea783ceaa9e905054",
+      "modelCardLicenseTag": "apache-2.0",
+      "licenseFilePresent": false
+    }
+  },
+  "weightFiles": {
+    "textToImage": [
+      {"path": "text_encoder/model-00001-of-00005.safetensors", "byteSize": 3900233256, "sha256": "e97b877e47fde53a6c6e77aafb36e58e91ee9d95c4a3eeac6f1b5c0e6a1c986e"},
+      {"path": "text_encoder/model-00002-of-00005.safetensors", "byteSize": 3864726320, "sha256": "a9a300a43b4724eee2abe7c18ceb26768d0ab011eb0cad19d9bfd2476a24d024"},
+      {"path": "text_encoder/model-00003-of-00005.safetensors", "byteSize": 3864726424, "sha256": "111223d173e00bbee81cba1216fad28668df3476706b7fd26f4d5b50f8b3a507"},
+      {"path": "text_encoder/model-00004-of-00005.safetensors", "byteSize": 3864733680, "sha256": "ef47f634fa57d46ee134edcc09f34085a47da1e16c12a2abe0d67118be6d72ed"},
+      {"path": "text_encoder/model-00005-of-00005.safetensors", "byteSize": 1089994880, "sha256": "0c859795ad3a627a9b95bcb762e059d5b768a4a36fdd4affeff269d93fdecc67"},
+      {"path": "transformer/diffusion_pytorch_model.safetensors", "byteSize": 12541410184, "sha256": "df81cbd7da1371c3d0c04af91efbb3c358fd18a4229ea0f3680d62d892b4e4ee"},
+      {"path": "vae/diffusion_pytorch_model.safetensors", "byteSize": 167666902, "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3"}
+    ],
+    "imageEdit": [
+      {"path": "text_encoder/model-00001-of-00005.safetensors", "byteSize": 3900233256, "sha256": "e97b877e47fde53a6c6e77aafb36e58e91ee9d95c4a3eeac6f1b5c0e6a1c986e"},
+      {"path": "text_encoder/model-00002-of-00005.safetensors", "byteSize": 3864726320, "sha256": "a9a300a43b4724eee2abe7c18ceb26768d0ab011eb0cad19d9bfd2476a24d024"},
+      {"path": "text_encoder/model-00003-of-00005.safetensors", "byteSize": 3864726424, "sha256": "111223d173e00bbee81cba1216fad28668df3476706b7fd26f4d5b50f8b3a507"},
+      {"path": "text_encoder/model-00004-of-00005.safetensors", "byteSize": 3864733680, "sha256": "ef47f634fa57d46ee134edcc09f34085a47da1e16c12a2abe0d67118be6d72ed"},
+      {"path": "text_encoder/model-00005-of-00005.safetensors", "byteSize": 1089994880, "sha256": "0c859795ad3a627a9b95bcb762e059d5b768a4a36fdd4affeff269d93fdecc67"},
+      {"path": "transformer/diffusion_pytorch_model.safetensors", "byteSize": 12541410152, "sha256": "7ad9bfe2ca5f32ec85a01c8860d1bc4f472682bc30c9f63c45fd2a61c0804fcd"},
+      {"path": "vae/diffusion_pytorch_model.safetensors", "byteSize": 167666902, "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3"}
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "textToImage": {
+      "modelIndexGitBlob": "8be7100d48d394f291d10b4d70d2c38406558319",
+      "textEncoderIndexGitBlob": "f0c9e9b8e043f5de0ac99fd8b2ea75515d811e7b",
+      "transformerConfigGitBlob": "83f33ef901b7e5d5a9d91943da714eb546641126",
+      "vaeConfigGitBlob": "4f7c628fc8e59fc842c9846ed74414249052ba0b"
+    },
+    "imageEdit": {
+      "modelIndexGitBlob": "c26f4075c3c42819bb7c0029cf468c4ef9193c7b",
+      "textEncoderIndexGitBlob": "f0c9e9b8e043f5de0ac99fd8b2ea75515d811e7b",
+      "transformerConfigGitBlob": "83f33ef901b7e5d5a9d91943da714eb546641126",
+      "vaeConfigGitBlob": "4f7c628fc8e59fc842c9846ed74414249052ba0b"
+    }
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "textToImagePipelineSha256": "526c57992c393f8dc8e978fce02f2f9a97d1bdabbaa1128dce5dfeda055cef1a",
+    "imageEditPipelineSha256": "541176d7099a952cea8bfbf0f140a437cd7ae8caad29d11a7cb844cf01c16407",
+    "transformerSha256": "6700899fbd906182677a8f0dc7819d706924679171e74fc70b06319592e84ba7",
+    "outputSha256": "417333e9f0c0c804b6f5c7ace463ffe67625eb1a74c99008c63611b9903b2971",
+    "systemMessagesSha256": "ac30078c01b7b0b061a593997ec83f0e1e0347aca6ab158ff90768273c836707",
+    "requiredDiffusersSymbols": [
+      "LongCatImagePipeline",
+      "LongCatImageEditPipeline",
+      "LongCatImageTransformer2DModel"
+    ],
+    "requiredTransformersSymbols": [
+      "Qwen2_5_VLForConditionalGeneration",
+      "Qwen2Tokenizer",
+      "Qwen2VLProcessor"
+    ]
+  },
+  "pipelineContracts": {
+    "textToImage": {
+      "pipelineClass": "LongCatImagePipeline",
+      "defaultWidth": 1024,
+      "defaultHeight": 1024,
+      "moDiffMinimumSide": 512,
+      "moDiffMaximumSide": 2048,
+      "dimensionMultiple": 16,
+      "moDiffMaximumOutputPixels": 1048576,
+      "defaultNumInferenceSteps": 50,
+      "moDiffMaximumInferenceSteps": 50,
+      "modelCardGuidanceScale": 4.0,
+      "packageDefaultGuidanceScale": 4.5,
+      "tokenizerMaximumLength": 512,
+      "packagePromptRewriteDefault": true,
+      "moDiffPromptRewriteEnabled": false,
+      "negativePromptAvailable": true,
+      "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+    },
+    "imageEdit": {
+      "pipelineClass": "LongCatImageEditPipeline",
+      "requiredInputs": ["prompt", "image"],
+      "acceptedInputImages": 1,
+      "moDiffMaximumInputPixels": 1048576,
+      "moDiffMinimumInputAspectRatio": 0.25,
+      "moDiffMaximumInputAspectRatio": 4.0,
+      "packageTargetOutputPixels": 1048576,
+      "moDiffMaximumRoundedOutputPixels": 1088000,
+      "defaultNumInferenceSteps": 50,
+      "moDiffMaximumInferenceSteps": 50,
+      "defaultGuidanceScale": 4.5,
+      "tokenizerMaximumLength": 512,
+      "negativePromptAvailable": true,
+      "modelCpuOffloadSequence": "text_encoder->image_encoder->transformer->vae"
+    }
+  },
+  "cancellationAndSafety": {
+    "callbackOnStepEndAvailable": false,
+    "interruptFlagAvailable": true,
+    "serverStopPropagatesToActivePipelineInterrupt": true,
+    "packageSafetyCheckerPresent": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "notes": [
+      "Both package loops check the interrupt flag before each denoising step; MoDiff's stop endpoint writes that flag on the active pipeline.",
+      "No live output is accepted until remote safety and quality review is complete."
+    ]
+  },
+  "license": {
+    "id": "apache-2.0",
+    "modelSnapshotLicenseFilePresent": false,
+    "upstreamRepository": "meituan-longcat/LongCat-Image",
+    "upstreamRevision": "f0e4c43c5ef74b011ff71570fbfc2bdffbc9ab06",
+    "upstreamLicenseGitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+    "upstreamLicenseSha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "modelSnapshotLicenseClarificationPending": true
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "minimumSelectiveDiskBytesPerSnapshot": 38654705664,
+    "minimumSystemRamBytes": 51539607552,
+    "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 19327352832,
+    "notes": [
+      "The upstream edit recipe reports approximately 18 GB accelerator memory with model CPU offload.",
+      "No local real-weight inference or generated output has qualified this estimate."
+    ]
+  },
+  "appDownloadQueue": {
+    "submittedThroughAppOnly": true,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 643626504192,
+    "preflightExistingQueuedReservationBytes": 438331905395,
+    "textToImageReservationBytes": 29327729635,
+    "imageEditReservationBytes": 29322429940,
+    "reserveBytes": 68719476736,
+    "aggregateFits": true,
+    "aggregateHeadroomAfterReserveBytes": 77924962486,
+    "statusAtReview": "queued"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 2,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "model_snapshot_license_file_clarification",
+      "physical_macos_execution"
+    ]
+  }
+}
