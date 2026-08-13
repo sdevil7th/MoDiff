@@ -39,6 +39,8 @@ from modules.DiffusersVideo.main import (
     FRAMEPACK_VISION_REPO,
     LATTE_REPO,
     LATTE_REVISION,
+    MOCHI_REPO,
+    MOCHI_REVISION,
     LTX_DISTILLED_TIMESTEPS,
     STABLE_VIDEO_DIFFUSION_REPO,
     STABLE_VIDEO_DIFFUSION_REVISION,
@@ -3119,6 +3121,140 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                             pipeline=pipeline,
                             mode="text_to_video",
                             prompt="A coffee cup steams beside a rain-streaked window.",
+                            **update,
+                        )
+
+    def test_mochi_loader_pins_indexed_t5_and_bfloat16_variant(self):
+        pipeline = SimpleNamespace(enable_vae_tiling=MagicMock())
+        text_encoder = object()
+        node = LoadPipeline("mochi-loader")
+        with (
+            patch("transformers.T5EncoderModel.from_pretrained", return_value=text_encoder) as load_text_encoder,
+            patch("diffusers.MochiPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="MochiPipeline",
+                model_id={"source": "hub", "value": MOCHI_REPO},
+                revision=MOCHI_REVISION,
+                dtype="bfloat16",
+                device="cpu",
+                offload_mode="sequential_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], MOCHI_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "MochiPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, MOCHI_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, MOCHI_REVISION)
+        self.assertEqual(load_text_encoder.call_args.args, (MOCHI_REPO,))
+        self.assertEqual(load_text_encoder.call_args.kwargs["subfolder"], "text_encoder")
+        self.assertEqual(str(load_text_encoder.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+        self.assertIs(load_text_encoder.call_args.kwargs["use_safetensors"], True)
+        self.assertEqual(load_pipeline.call_args.args, (MOCHI_REPO,))
+        self.assertIs(load_pipeline.call_args.kwargs["text_encoder"], text_encoder)
+        self.assertEqual(load_pipeline.call_args.kwargs["variant"], "bf16")
+        self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], MOCHI_REVISION)
+        self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+        self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+        self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        apply_recipe.assert_called_once_with(pipeline, {})
+        pipeline.enable_vae_tiling.assert_called_once_with()
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="mochi-loader",
+            scope="mochi",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_mochi_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-mochi-loader")
+        with patch("diffusers.MochiPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="MochiPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-mochi"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="bfloat16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_mochi_generate_seals_native_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(31)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "MochiPipeline"
+            _modiff_video_repo = MOCHI_REPO
+            _modiff_video_revision = MOCHI_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A paper lantern drifts over a moonlit lake.",
+            negative_prompt="flicker",
+            width=848,
+            height=480,
+            num_frames=31,
+            num_inference_steps=64,
+            guidance_scale=4.5,
+            max_sequence_length=256,
+            seed=41,
+            output_type="pil",
+        )
+
+        self.assertEqual(
+            result,
+            {"video_out": Output.frames[0], "width_out": 848, "height_out": 480, "frames_out": 31},
+        )
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["num_frames"], 31)
+        self.assertEqual(call_kwargs["num_inference_steps"], 64)
+        self.assertEqual(call_kwargs["guidance_scale"], 4.5)
+        self.assertEqual(call_kwargs["num_videos_per_prompt"], 1)
+        self.assertEqual(call_kwargs["max_sequence_length"], 256)
+        self.assertNotIn("image", call_kwargs)
+        self.assertNotIn("video", call_kwargs)
+
+    def test_mochi_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="MochiPipeline",
+            _modiff_video_repo=MOCHI_REPO,
+            _modiff_video_revision=MOCHI_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 30}, "integer from 31 through 31"),
+            ({"width": 840}, "integer from 848 through 848"),
+            ({"height": 488}, "integer from 480 through 480"),
+            ({"num_inference_steps": 65}, "integer from 1 through 64"),
+            ({"reference_images": [Image.new("RGB", (848, 480))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 257}, "integer from 1 through 256"),
+            ({"guidance_scale": 12.1}, "finite and from 1 through 12"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A paper lantern drifts over a moonlit lake.",
                             **update,
                         )
 

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T15:33:35.756Z",
+  "generatedAt": "2026-08-13T16:09:22.114Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 98,
-  "supportedPairCount": 110,
+  "supportedCanonicalPairCount": 99,
+  "supportedPairCount": 111,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1781,6 +1781,34 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
       "graphHash": "d9bef3a6a9c605444c0ff07981fd7a98203574102b253d7dc42a5cf63bb4db40"
+    },
+    {
+      "id": "MochiPipeline:text_to_video",
+      "modelType": "MochiPipeline",
+      "modelFamily": "Mochi",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "genmo/mochi-1-preview"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Mochi BF16 variant, indexed T5 encoder, native 31-frame recipe, and mandatory VAE tiling."
+      },
+      "pipelineClasses": [
+        "MochiPipeline"
+      ],
+      "sourceTemplateId": "task-template:mochi:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/mochi-pipeline/text-to-video.json",
+      "graphHash": "d98143499548db41d476a027c1958667efbe3734a2671332f7d7dba4237a2880"
     },
     {
       "id": "PixArtSigmaPipeline:text_to_image",

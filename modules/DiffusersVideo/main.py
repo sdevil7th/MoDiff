@@ -63,6 +63,8 @@ ALLEGRO_REPO = "rhymes-ai/Allegro"
 ALLEGRO_REVISION = "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6"
 LATTE_REPO = "maxin-cn/Latte-1"
 LATTE_REVISION = "0653024365272f061fc44d1078134df22842b687"
+MOCHI_REPO = "genmo/mochi-1-preview"
+MOCHI_REVISION = "14be5fcea23095ed330cb214647916a451e38b6e"
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -330,6 +332,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("text_to_video",),
         max_prompt_tokens=120,
     ),
+    "MochiPipeline": VideoPipelineAdapter(
+        id="mochi",
+        pipeline_class="MochiPipeline",
+        diffusers_class="MochiPipeline",
+        default_repo=MOCHI_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=256,
+    ),
 }
 
 
@@ -477,6 +487,7 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "CogVideoXPipeline": {"text_to_video": _video_field_contract()},
     "AllegroPipeline": {"text_to_video": _video_field_contract()},
     "LattePipeline": {"text_to_video": _video_field_contract()},
+    "MochiPipeline": {"text_to_video": _video_field_contract()},
 }
 
 
@@ -508,6 +519,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "CogVideoXPipeline": "_load_cogvideox",
     "AllegroPipeline": "_load_allegro",
     "LattePipeline": "_load_latte",
+    "MochiPipeline": "_load_mochi",
 }
 
 
@@ -529,6 +541,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "CogVideoXPipeline": "_execute_cogvideox",
     "AllegroPipeline": "_execute_allegro",
     "LattePipeline": "_execute_latte",
+    "MochiPipeline": "_execute_mochi",
 }
 
 
@@ -729,6 +742,16 @@ def _require_latte_artifact(model_selection: Any, model_id: str, revision: Any) 
     reviewed_revision = require_catalog_revision(LATTE_REPO, model_type="LattePipeline")
     if revision != reviewed_revision or revision != LATTE_REVISION:
         raise ValueError(f"Latte is pinned to {LATTE_REVISION}.")
+    return reviewed_revision
+
+
+def _require_mochi_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != MOCHI_REPO:
+        raise ValueError(f"Mochi currently requires the exact reviewed Hub artifact {MOCHI_REPO}.")
+    reviewed_revision = require_catalog_revision(MOCHI_REPO, model_type="MochiPipeline")
+    if revision != reviewed_revision or revision != MOCHI_REVISION:
+        raise ValueError(f"Mochi is pinned to {MOCHI_REVISION}.")
     return reviewed_revision
 
 
@@ -1866,6 +1889,69 @@ class LoadPipeline(WanVACELoadPipeline):
         self.mm_add(pipeline, priority=2)
         return pipeline
 
+    def _load_mochi(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        import torch
+        from diffusers import MochiPipeline
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+        from transformers import T5EncoderModel
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _require_mochi_artifact(
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+        )
+        if str(kwargs.get("dtype") or "bfloat16") != "bfloat16":
+            raise ValueError("Mochi source qualification requires dtype=bfloat16.")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode="sequential_cpu",
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError("Mochi source qualification does not admit on-load quantization or a device map.")
+        common_kwargs = {
+            "use_safetensors": True,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "revision": revision,
+            "local_files_only": local_files_only(model_id),
+        }
+        if CONFIG.hf.get("cache_dir"):
+            common_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
+
+        logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
+        # The repository also contains an unindexed two-shard T5 duplicate.
+        # Loading the indexed component explicitly prevents Diffusers' broad
+        # variant snapshot filter from downloading both encoder partitions.
+        self.progress(-1, phase="loading", message="Loading Mochi indexed T5 encoder")
+        text_encoder = T5EncoderModel.from_pretrained(
+            model_id,
+            subfolder="text_encoder",
+            torch_dtype=torch.bfloat16,
+            **common_kwargs,
+        )
+        self.progress(-1, phase="loading", message="Loading Mochi BF16 pipeline")
+        pipeline = MochiPipeline.from_pretrained(
+            model_id,
+            text_encoder=text_encoder,
+            variant="bf16",
+            torch_dtype=torch.bfloat16,
+            **common_kwargs,
+            **recipe_load_kwargs,
+        )
+        enable_vae_tiling = getattr(pipeline, "enable_vae_tiling", None)
+        if not callable(enable_vae_tiling):
+            raise RuntimeError("Mochi did not expose the documented VAE tiling hook.")
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        # The specialized graph keeps its generic VAE-tiling switch off so the
+        # reviewed pipeline requirement cannot be disabled by users.
+        enable_vae_tiling()
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
     def _load_wan_video_to_video(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
         import torch
         from diffusers import AutoencoderKLWan, WanVideoToVideoPipeline
@@ -2951,6 +3037,128 @@ class Generate(WanVACEGenerate):
         if not isinstance(frames, list) or len(frames) != num_frames:
             received = len(frames) if isinstance(frames, list) else "an unknown number of"
             raise RuntimeError(f"Latte returned {received} frames; expected {num_frames}.")
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames),
+        }
+
+    def _execute_mochi(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "text_to_video":
+            raise ValueError("Mochi supports text_to_video generation only.")
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != MOCHI_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != MOCHI_REVISION
+        ):
+            raise ValueError("The connected Mochi pipeline does not match the reviewed artifact.")
+        for field, label in (
+            ("video", "source video"),
+            ("mask", "mask"),
+            ("pose_video", "pose video"),
+            ("face_video", "face video"),
+            ("background_video", "background video"),
+        ):
+            if ensure_video_list(kwargs.get(field), label) is not None:
+                raise ValueError(f"Mochi text_to_video does not accept {label} input.")
+        if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
+            raise ValueError("Mochi text_to_video does not accept image conditioning.")
+
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        if not isinstance(prompt, str):
+            raise ValueError("Mochi requires one nonempty prompt string.")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        if negative_prompt is None:
+            negative_prompt = ""
+        if not isinstance(negative_prompt, str):
+            raise ValueError("Mochi negative prompt must be one string.")
+        _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens, family="Mochi")
+        _validate_prompt_token_limit(
+            pipeline,
+            negative_prompt,
+            "negative prompt",
+            adapter.max_prompt_tokens,
+            family="Mochi",
+        )
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError("Mochi source qualification supports one video per prompt.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError("Mochi source qualification requires output_type=pil.")
+
+        width = _bounded_short_video_int(
+            kwargs.get("width"), family="Mochi", default=848, label="width", minimum=848, maximum=848
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"), family="Mochi", default=480, label="height", minimum=480, maximum=480
+        )
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"), family="Mochi", default=31, label="frame count", minimum=31, maximum=31
+        )
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family="Mochi",
+            default=64,
+            label="step count",
+            minimum=1,
+            maximum=64,
+        )
+        guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="Mochi",
+            default=4.5,
+            label="guidance",
+            minimum=1.0,
+            maximum=12.0,
+        )
+        max_sequence_length = _bounded_short_video_int(
+            kwargs.get("max_sequence_length"),
+            family="Mochi",
+            default=256,
+            label="maximum prompt sequence length",
+            minimum=1,
+            maximum=256,
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                num_inference_steps=steps,
+                guidance_scale=guidance,
+                num_videos_per_prompt=1,
+                generator=generator,
+                output_type=output_type,
+                return_dict=True,
+                attention_kwargs=parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+                max_sequence_length=max_sequence_length,
+            )
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        if not isinstance(frames, list) or len(frames) != num_frames:
+            received = len(frames) if isinstance(frames, list) else "an unknown number of"
+            raise RuntimeError(f"Mochi returned {received} frames; expected {num_frames}.")
         return {
             "video_out": frames,
             "width_out": width,

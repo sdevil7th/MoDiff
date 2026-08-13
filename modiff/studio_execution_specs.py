@@ -70,6 +70,7 @@ ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 ALLEGRO_REPO = "rhymes-ai/Allegro"
 LATTE_REPO = "maxin-cn/Latte-1"
+MOCHI_REPO = "genmo/mochi-1-preview"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -4220,6 +4221,68 @@ def _latte_capability() -> dict[str, Any]:
     }
 
 
+def _mochi_capability() -> dict[str, Any]:
+    return {
+        "modelType": "MochiPipeline",
+        "label": "Mochi 1 Preview",
+        "displayName": "Mochi 1 Preview",
+        "family": "Mochi",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": MOCHI_REPO,
+        "artifactLabel": "Official Apache-2.0 BF16 safetensors Diffusers repo",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 848, "height": 480, "aspectRatio": "16:9"},
+        "recommendedSteps": 64,
+        "recommendedGuidance": 4.5,
+        "recommendedMaxSequenceLength": 256,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": False,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": False,
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 31,
+        "recommendedFps": 30,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "steps": 64,
+            "width": 848,
+            "height": 480,
+            "numFrames": 31,
+        },
+        "modes": ["text_to_video"],
+        "modeRequirements": {
+            "text_to_video": {
+                "note": "Uses the exact Mochi BF16 variant, indexed T5 encoder, native 31-frame recipe, and mandatory VAE tiling."
+            }
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(MOCHI_REPO)],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "The admitted source graph is fixed to the publisher's 31-frame 848x480 recipe at 30 FPS.",
+            "Duplicate flat-format, FP32, and unindexed text-encoder artifacts are excluded from execution.",
+            "Auto and Gallery publication remain disabled until exact remote runtime, safety, and quality proof is reviewed.",
+        ],
+    }
+
+
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
@@ -4287,6 +4350,13 @@ _P2_VIDEO_PROFILES = {
         ("text_to_video",),
         "LattePipeline",
         LATTE_REPO,
+    ),
+    "mochi": _planning_video_profile(
+        "mochi:direct",
+        "MochiPipeline",
+        ("text_to_video",),
+        "MochiPipeline",
+        MOCHI_REPO,
     ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
@@ -4488,6 +4558,15 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "text_to_video",
             "profile": _P2_VIDEO_PROFILES["latte"],
             "capability": _latte_capability(),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+        },
+        "mochi:text-to-video:v1": {
+            "modelType": "MochiPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["mochi"],
+            "capability": _mochi_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _COGVIDEOX_GRAPH_BINDINGS,

@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 98)
+        self.assertEqual(len(self.contracts), 99)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -169,6 +169,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("CogVideoXPipeline", "text_to_video"): [],
             ("AllegroPipeline", "text_to_video"): [],
             ("LattePipeline", "text_to_video"): [],
+            ("MochiPipeline", "text_to_video"): [],
             ("AceStepAudioPipeline", "audio_continuation"): [("audio", "sourceAudio")],
             ("MarigoldDepthPipeline", "depth_estimation"): [("image", "referenceImages")],
             ("HuggingFaceSpeechRecognitionModel", "speech_to_text"): [("audio", "sourceAudio")],

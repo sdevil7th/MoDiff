@@ -76,6 +76,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "CogVideoXPipeline",
             "AllegroPipeline",
             "LattePipeline",
+            "MochiPipeline",
             "AceStepAudioPipeline",
             "StableAudioPipeline",
             "LongCatAudioDiTPipeline",

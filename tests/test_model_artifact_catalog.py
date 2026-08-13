@@ -121,6 +121,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("maxin-cn/Latte-1"),
             "0653024365272f061fc44d1078134df22842b687",
         )
+        self.assertEqual(
+            catalog_revision("genmo/mochi-1-preview"),
+            "14be5fcea23095ed330cb214647916a451e38b6e",
+        )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(

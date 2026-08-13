@@ -1,0 +1,276 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "MochiPipeline:text_to_video"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "license_file_clarification",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "excludedArtifactPartitions": [
+    {
+      "byteSize": 41949836948,
+      "fileCount": 3,
+      "files": [
+        {
+          "byteSize": 1450122828,
+          "path": "decoder.safetensors",
+          "sha256": "641920faaf20e5404ddb5553ce3e295c21ed9b4bc5f6fe7c930811b84099cb14"
+        },
+        {
+          "byteSize": 40110801256,
+          "path": "dit.safetensors",
+          "sha256": "5c273a0d4fbb0de835e31b7cb5228089ba0ee54d4c3a087e81d354cef3d8bbf1"
+        },
+        {
+          "byteSize": 388912864,
+          "path": "encoder.safetensors",
+          "sha256": "d3a8827a66b58a479d97420a9bf77e59078d88f538298469d8db28c37bd556ae"
+        }
+      ],
+      "id": "original-flat-format",
+      "reason": "safe-serialized original Genmo-format duplicates are not referenced by the immutable Diffusers model index"
+    },
+    {
+      "byteSize": 9524648584,
+      "fileCount": 2,
+      "files": [
+        {
+          "byteSize": 4994582224,
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "sha256": "ec87bffd1923e8b2774a6d240c922a41f6143081d52cf83b8fe39e9d838c893e"
+        },
+        {
+          "byteSize": 4530066360,
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "sha256": "a5640855b301fcdbceddfa90ae8066cd9414aff020552a201a255ecf2059da00"
+        }
+      ],
+      "id": "unindexed-two-shard-text-encoder",
+      "reason": "the immutable text-encoder safetensors index references only the selected four-shard partition"
+    },
+    {
+      "byteSize": 40110838152,
+      "fileCount": 5,
+      "files": [
+        {
+          "byteSize": 9907773000,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00005.safetensors",
+          "sha256": "9b5db44998e2ce04a55b2688b881567b81577a38f4b63ce89d1ce0f81840de17"
+        },
+        {
+          "byteSize": 9966828288,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00005.safetensors",
+          "sha256": "8d8a5a5dab5132531b0dd8bbb6148db875f9f8ca32e759095329623f6e7de2d4"
+        },
+        {
+          "byteSize": 9966828288,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00005.safetensors",
+          "sha256": "a2a4516c2f821b161b37005ef796f35252a5c7045f6046139ca4d206bb627564"
+        },
+        {
+          "byteSize": 9891306008,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00005.safetensors",
+          "sha256": "57a1e86cd5b566aab4c910767fccedbd2a9b29172c820b2a37d8ae706108f0df"
+        },
+        {
+          "byteSize": 378102568,
+          "path": "transformer/diffusion_pytorch_model-00005-of-00005.safetensors",
+          "sha256": "69296ea436e319c26eab46197365b5f95cb0a20c8f982876d016513a77bdcd3c"
+        }
+      ],
+      "id": "default-float32-transformer",
+      "reason": "the admitted loader selects the official lower-precision BF16 transformer variant"
+    },
+    {
+      "byteSize": 1839047460,
+      "fileCount": 1,
+      "files": [
+        {
+          "byteSize": 1839047460,
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "sha256": "0d74f617ddcaa1b4a53884581d8d21b6836761f6175b20e3df177d4a12ed77df"
+        }
+      ],
+      "id": "default-float32-vae",
+      "reason": "the admitted loader selects the official lower-precision BF16 VAE variant"
+    }
+  ],
+  "family": "Mochi 1 Preview",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Apache-2.0 identifier and permissive-license statement in the immutable model card; the model repository contains no LICENSE file",
+    "id": "apache-2.0",
+    "licenseFilePresent": false
+  },
+  "loaderPartitionContract": {
+    "pipelineVariant": "bf16",
+    "preloadIndexedTextEncoder": true,
+    "reason": "Diffusers' generic BF16 variant snapshot filter otherwise selects both the indexed four-shard text encoder and an unindexed two-shard duplicate.",
+    "textEncoderIndexFileCount": 4,
+    "textEncoderTorchDtype": "bfloat16",
+    "useSafetensors": true
+  },
+  "metadataSha256": {
+    "modelCard": "1f98f31b65b34445be9383b805ec61707a062067f77e21c2cdbdf91a744ecce4",
+    "modelIndex": "db470a8c28b77125d74cb955f277c20b9f629e01b177dd352d7ec396ccad3d85",
+    "schedulerConfig": "e76276322d53cda452afe406d3c1e6a1a8bdc9de3fae3a32c831f4b8e41890f4",
+    "textEncoderConfig": "e2502471a5c7b13c12e62dd2f068d714a284b259a11ffbdefeb58af37cba1a60",
+    "textEncoderSafetensorsIndex": "a545bb25dc0f423d84be7b577311bba8bb7c6931f1eefcea65fc8b0a61a60a76",
+    "tokenizerConfig": "a821b0b127e1deb7bcdad0a493fb817d4efd90e6a46a2c3cdc21228d5492b2a9",
+    "transformerBfloat16SafetensorsIndex": "710411b966b38d2f213e700da6db573df45dae85bf93e173fdde8db1577beed4",
+    "transformerConfig": "592148b13b5b7ab182c266f73a8d35ef6a427775e45e573bc7359b01d8824d1a",
+    "vaeConfig": "ef3433936ef0e152607387858b1a0e833cd7b8cd7253d31baa0f9d3f5975835c"
+  },
+  "pinnedDiffusers": {
+    "autoencoderClass": "AutoencoderKLMochi",
+    "autoencoderSha256": "bcf7b0b9f8cd08fd3898ee899047a7dcd809f5e5158302a2c63c5524bc4be279",
+    "callbackOnStepEndAvailable": true,
+    "mpsLatentDtypeCorrectionPresent": true,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "pipelineClass": "MochiPipeline",
+    "pipelineOutputClass": "MochiPipelineOutput",
+    "pipelineOutputSha256": "39b3516e995a74ccba666f0607a273c23a52abdd3ada365bd9306bd24211ff21",
+    "pipelineSha256": "d1b7956a47f69010868ac300596fc62f29e9e3551799e08633f751a69909f6e7",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "MochiTransformer3DModel",
+    "transformerSha256": "f31083a662fed6132db0d5a4d58a4b2115cc74edd082ce8d7ba739a2f0b34205",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "admittedGuidanceScale": 4.5,
+    "admittedHeight": 480,
+    "admittedNumFrames": 31,
+    "admittedNumInferenceSteps": 64,
+    "admittedWidth": 848,
+    "defaultGuidanceScale": 4.5,
+    "defaultHeight": 480,
+    "defaultNumFrames": 19,
+    "defaultNumInferenceSteps": 64,
+    "defaultNumVideosPerPrompt": 1,
+    "defaultWidth": 848,
+    "documentedFramesPerSecond": 30,
+    "heightWidthDivisibility": 8,
+    "linearQuadraticScheduleThresholdNoise": 0.025,
+    "maxGuidanceScale": 12.0,
+    "maxSequenceLength": 256,
+    "maximumMoDiffNumFrames": 31,
+    "maximumMoDiffNumInferenceSteps": 64,
+    "minimumMoDiffNumFrames": 31,
+    "modelCardDiffusersNumFrames": 84,
+    "modelCardNativeNumFrames": 31,
+    "modes": [
+      "text_to_video"
+    ],
+    "numFramesCongruence": "num_frames = 6n + 1",
+    "outputType": "pil",
+    "safetyCheckerPresent": false,
+    "signatureDocstringAndExampleDiscrepancies": {
+      "guidanceScale": {
+        "docstringExample": 3.5,
+        "signature": 4.5
+      },
+      "numInferenceSteps": {
+        "docstringArgumentText": 50,
+        "docstringExample": 28,
+        "signature": 64
+      }
+    },
+    "torchDtype": "bfloat16",
+    "vaeTilingRequired": true
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytes": 25769803776,
+    "minimumSelectiveDiskBytes": 51539607552,
+    "minimumSystemRamBytes": 68719476736,
+    "notes": [
+      "The immutable model card reports 22 GB VRAM for its lower-precision Diffusers variant and 42 GB for the full-precision Diffusers recipe.",
+      "The original Genmo inference harness reports approximately 60 GB VRAM for single-GPU execution.",
+      "MoDiff selects the lower-precision partition, mandatory VAE tiling, and sequential CPU offload; exact execution remains unqualified."
+    ],
+    "status": "upstream_reported_modiff_qualification_pending",
+    "upstreamReportedVramGB": {
+      "diffusersBfloat16Variant": 22,
+      "diffusersFullPrecision": 42,
+      "originalSingleGpuApproximate": 60
+    }
+  },
+  "repository": {
+    "gated": false,
+    "licenseFilePresent": false,
+    "modelIndexClass": "MochiPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "genmo/mochi-1-preview",
+    "repositoryBytesIncludingExcludedArtifacts": 133509491072,
+    "repositoryFileCount": 34,
+    "revision": "14be5fcea23095ed330cb214647916a451e38b6e",
+    "safetensorsDtypeParameterCounts": {
+      "F32": 10027677744
+    },
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 40024303350,
+    "weightFileCount": 8,
+    "weightInventorySha256": "dd472536f7a550adb957ecb32df100118f6b0be50b2f36d43532b009069a524c"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4989319680,
+      "path": "text_encoder/model-00001-of-00004.safetensors",
+      "sha256": "7a68b2c8c080696a10109612a649bc69330991ecfea65930ccfdfbdb011f2686"
+    },
+    {
+      "byteSize": 4999830656,
+      "path": "text_encoder/model-00002-of-00004.safetensors",
+      "sha256": "b8ed6556d7507e38af5b428c605fb2a6f2bdb7e80bd481308b865f7a40c551ca"
+    },
+    {
+      "byteSize": 4865612720,
+      "path": "text_encoder/model-00003-of-00004.safetensors",
+      "sha256": "c831635f83041f83faf0024b39c6ecb21b45d70dd38a63ea5bac6c7c6e5e558c"
+    },
+    {
+      "byteSize": 4194506688,
+      "path": "text_encoder/model-00004-of-00004.safetensors",
+      "sha256": "02a5f2d69205be92ad48fe5d712d38c2ff55627969116aeffc58bd75a28da468"
+    },
+    {
+      "byteSize": 9937333040,
+      "path": "transformer/diffusion_pytorch_model.bf16-00001-of-00003.safetensors",
+      "sha256": "29f767d34af7bfba3a216def2d1a45c23f0a71ce69ead170af92328e0605eb1a"
+    },
+    {
+      "byteSize": 9929099008,
+      "path": "transformer/diffusion_pytorch_model.bf16-00002-of-00003.safetensors",
+      "sha256": "fd0c821a4ed49847f30f4baed76136b5f0e3077d95538469e196ecca50259713"
+    },
+    {
+      "byteSize": 189051592,
+      "path": "transformer/diffusion_pytorch_model.bf16-00003-of-00003.safetensors",
+      "sha256": "e94bb39dec286bafcd626252a2e26f00ea36a900bd813bf8b0e3cc17493a49db"
+    },
+    {
+      "byteSize": 919549966,
+      "path": "vae/diffusion_pytorch_model.bf16.safetensors",
+      "sha256": "fecceadc048487f07cad99f6f5fbbf691f7385573d53cea2f06e461b3a9721ea"
+    }
+  ]
+}
