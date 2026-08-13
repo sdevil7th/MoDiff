@@ -4414,8 +4414,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   selected partitions still require remote heavy-hardware execution. Physical
   macOS evidence remains pending independently; no weights or media were
   downloaded.
-- [ ] Evaluate Wan 14B/22 Modular, full LTX/LTX2, EasyAnimate, SkyReels,
-  Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
+- [x] Evaluate Wan 2.2 A14B Modular without changing the separately registered
+  standard adapters. Backend `011a70b` seals the existing official T2V A14B
+  snapshot at `5be7df9619b54f4e2667b2755bc6a756675b5cd7` and I2V A14B
+  snapshot at `596658fd9ca6b7b71d5057529bbf319ecbc61d74`. Their exact
+  safetensors surfaces are 28 files / 126,177,598,620 bytes and 28 files /
+  126,180,875,420 bytes respectively: one shared T5 encoder, one Wan VAE, and
+  separate twelve-shard high- and low-noise 14B experts. No weights were
+  downloaded.
+
+  Neither repository publishes `modular_model_index.json`. At the pinned
+  Diffusers revision the immutable standard indexes instead map
+  `WanPipeline` plus `boundary_ratio=0.875` to `Wan22ModularPipeline`, and
+  `WanImageToVideoPipeline` plus `boundary_ratio=0.9` to
+  `Wan22Image2VideoModularPipeline`. The receipt binds that fallback without
+  remote code, the exact contract-only no-required-input T2V and required-image
+  I2V workflows, and the distinct source recipes: 720x1280 / 81 frames / 40
+  steps / guidance 4+3 for T2V, and input-aspect 480x832-area / 81 frames / 40
+  steps / inherited guidance 3.5 for I2V, both exported at 16 fps. The
+  publisher's 80 GB native GPU statement is not treated as live evidence.
+  Modular runtime admission remains pending remote fallback-assembly and
+  heavy-hardware qualification; physical macOS evidence remains independently
+  pending. The existing standard graph-only adapters and artifact pins are
+  unchanged.
+- [ ] Evaluate remaining Wan 2.1 14B Modular live variants, full LTX/LTX2,
+  EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video
+  families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4651,4 +4675,5 @@ Add references only after the corresponding evidence exists.
 | P6.4 LTX2/LTX2.5 contracts and source recipe review | `7e4f99b`, `b887aef` | `9dfcf62` | Contract-only; gated artifact indexes, license acceptance, remote heavy-hardware execution, and physical macOS qualification pending | Not required | All eight generic joint video/audio workflows and the distinct convolutional/diffusion decode contracts are sealed. The three official LTX-2.5 source recipes, exact sigma schedules, latent upsampler, duration head, explicit Gemma-4 enhancement, explicit NATTEN setup, and audio/video handoffs are recorded without exposing any runnable mode. Public immutable metadata covers 31 weight files / 163,896,920,128 bytes, but denied gated file access prevents exact partition selection; no weights or media were downloaded. |
 | P6.5 HunyuanVideo 1.5 evaluation | `31cafc4` | Not required | Contract-only; territory/legal review and remote heavy-hardware execution pending | Not required | The existing two-workflow Modular contract, full official family, and immutable 480p T2V plus step-distilled I2V candidates are sealed with exact hashes, sizes, recipes, and estimate-only resource bounds. Conflicting territory language and additional commercial/distribution obligations keep all artifacts outside runtime and download catalogs. No weights or media were downloaded. |
 | P6.6 Helios/Pyramid evaluation | `873f0ce` | Not required | Contract-only; immutable component-descriptor normalization and remote heavy-hardware execution pending | Not required | Base, Mid, and Distilled preserve their nine existing generic workflows. Exact full-repository and selected-partition receipts, distinct scheduler/guider recipes, chunk rounding, and estimate-only resource bounds are sealed. Upstream Modular indexes leave every component revision null, so no runtime or download entry was admitted. No weights or media were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, Wan 14B/22 Modular, full LTX/LTX2, EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflows remain open as independent segments. |
+| P6.7 Wan 2.2 A14B Modular evaluation | `011a70b` | Not required | Contract-only Modular path; remote fallback-assembly and heavy-hardware execution pending. Existing standard adapters remain graph-qualified/execution-pending. | Not required | Exact dual-expert T2V/I2V receipts, boundary-ratio fallback selection, workflow contracts, source recipes, and estimate-only resource bounds are sealed. No Modular index, new runtime/download catalog entry, weights, or media were added. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, remaining Wan 2.1 14B Modular live variants, full LTX/LTX2, EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, other heavy families, and long-form workflows remain open as independent segments. |
