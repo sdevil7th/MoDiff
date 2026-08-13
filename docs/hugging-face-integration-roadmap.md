@@ -4981,6 +4981,51 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   with 8,996,903,300 bytes of headroom. No older model was deleted and no media
   has been generated. Remote real-weight memory/output safety/quality review
   and physical macOS execution remain pending independently.
+- [x] Admit Nucleus Image 17B MoE text-to-image without claiming live
+  execution. Backend `86cc756` and client `8b4f002` expose the exact public
+  snapshot
+  `NucleusAI/Nucleus-Image@5e963db4fd0a65c7e4faf53ca2d4eca567c4dcfa`.
+  Its complete 38-file / 51,656,728,957-byte Python-free snapshot contains 12
+  safetensors files / 51,633,577,862 weight bytes. Exact weight identities,
+  immutable repository/config hashes, pinned package pipeline/transformer
+  hashes, Qwen3-VL runtime symbols, and an estimate-only resource envelope are
+  sealed in `data/nucleus-image-artifact-review.json`; remote-code trust is
+  never enabled. The model card declares Apache-2.0, but the exact immutable
+  snapshot contains no LICENSE or NOTICE file, so owner clarification remains
+  a separate gate.
+
+  The Expert-only route uses the native 1024px, 50-step, guidance-4 recipe and
+  admits all seven official aspect buckets through 768-1344px sides in 32px
+  increments, at most 1,060,864 output pixels, and 1024 prompt tokens. It
+  retains the package's per-step callback, denoising-loop interrupt check,
+  negative prompt, and text-encoder/transformer/VAE CPU-offload sequence. This
+  is a base checkpoint without post-training or a safety checker, so Auto and
+  Gallery remain disabled pending remote output and policy review.
+
+  The expanded Nucleus/Qwen3-VL optional-runtime surface passed clean-base
+  locked installation, validation, fresh-process activation, a finite
+  CLIP+PEFT workload, rollback, and clean restoration on Linux x86-64 at
+  profile digest
+  `sha256:1cf278aa4e690212b0a50b6b1e30ad77e86fb9af6fc13dbb89b37139a35c1c45`.
+  The bounded 1,554-byte evidence has SHA-256
+  `5213c07a29232ed6eef753a6114ed5667f03d38b7a1eabb1443d89204ee1a349`
+  and retained no managed state. One canonical graph brings the deterministic
+  catalog to 133 supported workflows. The complete backend overlay passes
+  1,626 tests, 3,576 subtests, and three platform skips; Ruff E9/F, package
+  compatibility, portable preflight, shell syntax, deterministic workflow
+  verification, and the complete client check also pass. The intentional
+  client surface measures 530,833 compressed JavaScript bytes under the
+  531,456-byte ceiling.
+
+  The exact snapshot was not submitted after the required app-only aggregate
+  reservation preflight. At the latest check, 535,900,401,664 free bytes minus
+  the existing 451,832,786,377-byte queue reservation and the
+  68,719,476,736-byte safety reserve left 15,348,138,551 bytes before this
+  snapshot, making the new reservation short by 36,308,590,406 bytes. No
+  direct weight download was performed and no older model was deleted. Owner
+  license clarification, app storage capacity, remote real-weight
+  memory/output safety/quality review, and physical macOS execution remain
+  pending independently.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -6021,7 +6066,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `longcat_image`
 - [x] `lumina`
 - [x] `lumina2`
-- [ ] `nucleusmoe_image`
+- [x] `nucleusmoe_image`
 - [x] `omnigen`
 - [x] `ovis_image`
 - [x] `pag`
@@ -6155,4 +6200,5 @@ Add references only after the corresponding evidence exists.
 | P6.48 OmniGen v1 generation and reference-edit source admission | `11d5c16` | `86500ec` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Exact public MIT-declared revision, two-file / 8.09 GB safetensors partition, immutable upstream MIT receipt, metadata and package/Transformers source hashes, backend-generated ordered reference placeholders, bounded one- and three-reference recipes, and three Expert-only remote workflows are sealed. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 130-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.49 Ovis Image 7B text-to-image source admission | `df2fa98` | `ab47b67` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, a 21-file / 21.81 GB Diffusers-only selection, five immutable safetensors weights, bundled LICENSE/NOTICE receipts, and explicit exclusion of duplicate native checkpoints plus the Python-bearing Ovis2.5 subtree are sealed. The bounded 1024px/50-step/guidance-5 Expert workflow retains package cancellation and offload hooks. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 131-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact safe selection is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.50 PRX 512 SFT text-to-image source admission | `012b101` | `9c320a4` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision plus incorporated T5-Gemma terms, a complete 19-file / 15.51 GB Python-free snapshot, five immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded native 512px/28-step/guidance-5 Expert workflow maps the generic token limit to PRX's exact argument and retains step-boundary cancellation. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 132-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
+| P6.51 Nucleus Image 17B MoE text-to-image source admission | `86cc756` | `8b4f002` | Model-snapshot license-file clarification, app storage capacity, remote real-weight memory/output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, complete 38-file / 51.66 GB Python-free snapshot, 12 immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded seven-bucket 1024px/50-step/guidance-4 Expert workflow retains package cancellation and offload hooks. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 133-workflow catalog is graph-qualified/runtime-unqualified; the missing license file, post-training, and safety checker keep Auto and Gallery disabled. The required app-only aggregate preflight was 36.31 GB short, so the snapshot was not submitted and no older model was deleted; no media has been generated. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
