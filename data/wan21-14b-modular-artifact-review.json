@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "family": "Wan 2.1 14B Modular variants",
+  "format": "safetensors",
+  "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+  "admission": {
+    "status": "graph_qualified_execution_pending",
+    "repositoryScopedLoaderAdmission": true,
+    "newlyAdmittedRepositories": [
+      "Wan-AI/Wan2.1-T2V-14B-Diffusers",
+      "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"
+    ],
+    "existingRepositoriesRevalidated": [
+      "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
+      "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
+    ],
+    "newHighLevelModeAdded": false,
+    "newModelNamedClientBranchAdded": false,
+    "liveQualified": false,
+    "remoteCodeAllowed": false,
+    "unresolvedGates": [
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution",
+      "generated_video_asset_review"
+    ]
+  },
+  "license": {
+    "id": "apache-2.0",
+    "evidence": "Immutable repository metadata for all four official snapshots",
+    "embeddedLicenseFilePresent": false,
+    "metadataOnly": true
+  },
+  "commonWeights": {
+    "textEncoderAndVaeFileCount": 6,
+    "textEncoderAndVaeBytes": 23231263636,
+    "imageEncoder": {
+      "path": "image_encoder/model.safetensors",
+      "byteSize": 1264217760,
+      "sha256": "f5c0bbf4f43f319a80335387d371742333807589c5bb4130a1a2a5d4abf6bf72"
+    },
+    "textEncoderSha256": [
+      "c0ef3a140898e228a3520c9adec60743d2e8e5b3d229651bb37f1a3921919f99",
+      "481c7b2b39771c44df6dd8d13ee12ed072d731b4a650bd092885d4d52db229ad",
+      "f93148bcc04052a169e1e49bfcf6125df6cf9bf243cb9c627da75266cf8e35c3",
+      "a451792c739c05bca4606190cc2dd16731411bac03b4cf6aacc5767321f857c9",
+      "7e76e18d224531b8197a46231cb53daf7f2f6ca707130252becf933026ac4eea"
+    ],
+    "vae": {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "byteSize": 507591892,
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  },
+  "repositories": [
+    {
+      "role": "textToVideo14B",
+      "repository": "Wan-AI/Wan2.1-T2V-14B-Diffusers",
+      "revision": "38ec498cb3208fb688890f8cc7e94ede2cbd7f68",
+      "gated": false,
+      "private": false,
+      "weightFileCount": 18,
+      "weightBytes": 80385341396,
+      "canonicalInventorySha256": "b58e32856db57720869cd5bf95a9423103cbc949688712d809ab1eed2ee5a9af",
+      "modelIndex": {
+        "className": "WanPipeline",
+        "sha256": "3291f6f7a89359034aa421c29532e556c6bb8ce62c8077778b4f4b16e5549535"
+      },
+      "transformer": {
+        "fileCount": 12,
+        "weightBytes": 57154077760,
+        "configSha256": "bb02a8542389fb9499bde3a3aed0a7b2c8bd1b7e05dd73cf3e237f2eef77f133",
+        "inChannels": 16,
+        "outChannels": 16,
+        "numLayers": 40,
+        "numAttentionHeads": 40,
+        "attentionHeadDim": 128,
+        "patchSize": [1, 2, 2],
+        "weightSha256": [
+          "63eb07f03808d8ec9b6bfc1b4f4968d7d1253f2569fec18fae114b4530554181",
+          "8d24b40a5ea6bb21cdc0115128241ffeb44184b2419f4b1585af1573ed5c7839",
+          "7f550f93b3c36c13015dd551109ff63528251864c9513acc2e0a502807b8a91c",
+          "6a701d601e2cbe3da3515b24d59f56deb5ca2c973c778ff7911f579ec5b8ec11",
+          "7eb65433e529b975f84897f6572af1ae148d82e7fd0ee7c5f4191158736b104f",
+          "aae199dea0aeb96347e9af9e3cb90679c1c8c2f42c76ee3cead2ea240c909d07",
+          "53c24e663dece6ff0737b03e5cc670118998231877ba7bad29824ff0500589d4",
+          "333eaca9dce56bf3083bbab4630aa081b7c403a27ba94894a7756d631529fd9a",
+          "8af811e7ed2ab64a3f6d07827d1b975a9804b78d63c2b3989024bc1b67ac6e5d",
+          "e8b631e38f0ad21a63c631069658d4be4b55e0cb15e8f5848567482b5862ba63",
+          "21032fe150df6f3ac26780fb8ca38d05c4a9585a1b774ceadb5d42bc96ff1b27",
+          "7b36878bf76c01410c3be92e5239a10106dfdc932567553228879979e0ac903d"
+        ]
+      },
+      "sourceRecipe": {
+        "height": 480,
+        "width": 832,
+        "numFrames": 81,
+        "numInferenceSteps": 50,
+        "guidanceScale": 5.0,
+        "fps": 15,
+        "readmeSha256": "a8371c257da24b53abca003c12ef4421fbd81eb9dfe7d3e49960016080beb51b"
+      }
+    },
+    {
+      "role": "imageToVideo480P",
+      "repository": "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
+      "revision": "b184e23a8a16b20f108f727c902e769e873ffc73",
+      "gated": false,
+      "private": false,
+      "weightFileCount": 21,
+      "weightBytes": 90075953948,
+      "canonicalInventorySha256": "2c20389da7d8d38a4b550a50a54844b68e3f6d621d32acfcb534c86e384a8f5f",
+      "modelIndex": {
+        "className": "WanImageToVideoPipeline",
+        "sha256": "da85f51fe5db98b5b25fb0e55641a24ce380376518fe0d4e4f2386cf42649165"
+      },
+      "transformer": {
+        "fileCount": 14,
+        "weightBytes": 65580472552,
+        "configSha256": "14e657465c3790689302ab4cb9906a8d82bde5be27c3b1f17de48f83b49cdbb2",
+        "inChannels": 36,
+        "outChannels": 16,
+        "imageDim": 1280,
+        "numLayers": 40,
+        "weightSha256": [
+          "b4602c35fa0519750a42c03e3f296c02d542291e344c4d702522cddbd1711f13",
+          "1cb4cbb7f3437995d73dd430a3072199ff246f8858b517a2e9c79dea7851302a",
+          "a3883790719aceb84739eaf31d3ca2b1888f9b99d325c59bce65197100e2080c",
+          "670827570d41b40e9898eeaf29b787074fd4315fe143017593b43e88e5736fdf",
+          "c0b79116cec6a4715814177bcff74ac8d58960623b892cdd03850516a9b9eb09",
+          "f4e9d59722d8ca75f6f5a04ad9f46af9c9afc24544f8fd02406d8304512ce579",
+          "75615923dbaaf21e606fceead6e264e601f5ff520e7469e9e72b456199d18597",
+          "fb89b408716cae8a59750f99c79a49afe781f01a0bc735b95431418c5fdad4dd",
+          "8278860d50fdc7f742ce60341b6c2fad12a719e420957c8164fc7358d4504889",
+          "86f4c9bf482b87b9b6c931c734b283c0f7327ab2ba15afc5a3c924decc5b5293",
+          "9107b2123676231e456c90d6a19d77aad814b13939c9201ea8669c7a5669e7d3",
+          "668374699d704a57a21905276f74627b3a2d79f674a64dc09196774f5b287d1f",
+          "b9abef6af4f824d4dcdc06c55c3fa3ecbba6fe8f834136ccfc4922a8656d14ae",
+          "b2cf8333afb3155fe35fbb31dc3fa5a0be80d6bbed021e40ee8dd0ecc478952d"
+        ]
+      },
+      "sourceRecipe": {
+        "maxArea": 399360,
+        "numFrames": 81,
+        "numInferenceSteps": 50,
+        "guidanceScale": 5.0,
+        "fps": 16,
+        "readmeSha256": "34d15b87bfc4447bf4d1f3c99dedc9b0c453760fc7d12604972ebbc50587646b"
+      }
+    },
+    {
+      "role": "imageToVideo720P",
+      "repository": "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers",
+      "revision": "eb849f76dfa246545b65774a9e25943ee69b3fa3",
+      "gated": false,
+      "private": false,
+      "weightFileCount": 21,
+      "weightBytes": 90075953948,
+      "canonicalInventorySha256": "c0a1c06d1afdf42056e6c4c8aa4d5fc4e4db47a8fbd4ceacabbd992b7cf524dc",
+      "modelIndex": {
+        "className": "WanImageToVideoPipeline",
+        "sha256": "da85f51fe5db98b5b25fb0e55641a24ce380376518fe0d4e4f2386cf42649165"
+      },
+      "transformer": {
+        "fileCount": 14,
+        "weightBytes": 65580472552,
+        "configSha256": "14e657465c3790689302ab4cb9906a8d82bde5be27c3b1f17de48f83b49cdbb2",
+        "inChannels": 36,
+        "outChannels": 16,
+        "imageDim": 1280,
+        "numLayers": 40,
+        "weightSha256": [
+          "578fb4865a81befa52e7cc6bbf4e38bf889b060da48469d6afc33293cd320aee",
+          "c6de6b7274a0a5df23781946380090186b118db8ebc2b399fb3b0c184e34ec51",
+          "40cd68d9cbcedeeecc8c0d7097d8d3661abd94a561d845a83467f51dc2c5d510",
+          "8ac9bda9384b13089db4c7e8aa0d6717f25cc8b359e7c22de972928affbde53f",
+          "15c496abbeca6af95c75b081f1b3c79c89c955377272ce9301c57df202a56682",
+          "7183288b1dfd63cc5b3df83dc7143baa3d7d7e2af28dd9483bfb11302e3485b6",
+          "6f29d03e9c754a1fb3cd55b36e90eec4e766ae8bf6f12914590cf86730cf9cd4",
+          "8664bbf773bc62d6b1e91fbba7e65a67b46049b78e6cee3e1d88ed119ede144a",
+          "af18a5aff3479457318060670067874482fa048e7a644e00b37262bde2c0085a",
+          "2c0bff9b932684a39823b1fc3d3d83a2fe7b33ff679ee0a7b98c60e102b6fa45",
+          "6ae788cff8de05f565042ccec34550e6f4e2629435718aac5eb993603effa37e",
+          "a55a84afcc67fe716ac1e302eb690e28b0b96896cbee2c7533c6fc5add63efeb",
+          "6eaea61781808c98dac0b9b98f7e8e5ee8d1d84180b206961594760b910c4c43",
+          "76c360055f102fe88c0132ef325e4dbb193955a7cfbc92a15a2c0c337ef5d85c"
+        ]
+      },
+      "sourceRecipe": {
+        "maxArea": 921600,
+        "numFrames": 81,
+        "numInferenceSteps": 50,
+        "guidanceScale": 5.0,
+        "fps": 16,
+        "readmeSha256": "bde6e2d006bd0fa6135af74793ea2319b0cc4a124a3c9e645767fb17d9e38ec4"
+      }
+    },
+    {
+      "role": "firstLastFrame720P",
+      "repository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+      "revision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+      "gated": false,
+      "private": false,
+      "weightFileCount": 21,
+      "weightBytes": 90077762204,
+      "canonicalInventorySha256": "a561a4c19fc3cdbf2f816b85a98edcabdc8a22d3e1739c4dd4b708d207ea71d6",
+      "modelIndex": {
+        "className": "WanImageToVideoPipeline",
+        "sha256": "0a405b6890c1298a36fa2ea7603c53522767686b57036972e1c7d2f047856150"
+      },
+      "transformer": {
+        "fileCount": 14,
+        "weightBytes": 65582280808,
+        "configSha256": "978b9e71c7f2076ff33721e255a77aa3588fcabae318f7bbdf64fec0fe658c34",
+        "inChannels": 36,
+        "outChannels": 16,
+        "imageDim": 1280,
+        "numLayers": 40,
+        "posEmbedSeqLen": 514,
+        "weightSha256": [
+          "6bfe9811d1f0fcddea310e68ab0e37ba2a59d7db63182fdfc996658e402635df",
+          "a4548d19b8723a76e421096912f067a4c13f5bdf9bef4da734c262a8d708f557",
+          "b9004f07b874aa52e8705d7f04dc897ab698393ca428bc6480ceb6c1aa46db4e",
+          "5439e95e5443546e280b8edd8830b11f1f944e60644b645d36e20a8f1eea316f",
+          "3ef80e425724d24085dda3dccea76b4c129cb8274b0234a14660c111404c56ed",
+          "3c4cf3fcec64c0af0535cd441d34aacab6ca9245b9d38c3b6c58d67090445923",
+          "5a645ce6efdc91eb95c3ab4692260d549469aba0bbae18fd01673e18fc9f4d2d",
+          "7da71b5b00e2ef3da9be96b59bec6b1ba53a4c704ee324c7037344610d9ed01c",
+          "2d0521429f02d5d765a286bdb7f7de5e5881731aa25190b3a4eb1ff6d8b5984b",
+          "cff55b12239fb72ff599c326d4acb6d8c1f688a0e34035d6bc694c2cf40d7c6d",
+          "6438dd33fb8a166fb14406e81a6828bde190c51db1f071f49cacb7783896933e",
+          "d1286eacdf92429cdcc851023b987eaca05dc27a78ba6ae954b9f6c9692ac4e6",
+          "30d6af2c7d57fa58c2200fabade2c41383d4ce578286bb7cc6426be0b47100d3",
+          "0c79bcf3cace0a9f85d0464d47b4e2b0a923ba1e9e7c2c6fced27a993d1bd258"
+        ]
+      },
+      "sourceRecipe": {
+        "maxArea": 921600,
+        "numFrames": 81,
+        "numInferenceSteps": 50,
+        "guidanceScale": 5.5,
+        "fps": 16,
+        "requiresLastImage": true,
+        "readmeSha256": "b8f3d08ccecbdad75e993f260d35e835ce2dfd8389e5bd8d8741700657b817ff"
+      }
+    }
+  ],
+  "componentConfigEvidence": {
+    "standardWanVaeConfigSha256": "47e97cfd3ad06ff19da37844824aabeefa1784c2594136d6aed6759d98f303ff",
+    "flfWanVaeConfigSha256": "7c9213ef990a61dc3371b6f09048b378898ba60794b4c8de0c68033e2cd5056c",
+    "i2vImageEncoderConfigSha256": "86dc56d4ce15bbb0724cd302d5f77195a2cb3a8a41daf15b4e9a41ea45aa65e8",
+    "flfImageEncoderConfigSha256": "348f910ce597a2eaf17ee4212da77f3e7d97840bca89c712f5d42516c456057b",
+    "i2vImageProcessorConfigSha256": "28dcbc54c53dbd1f5128ad5d3020f282ae063704e5fe59426420eaafea477804",
+    "flfImageProcessorConfigSha256": "da724a089cf447467097f9a027eb315ca202651db15551a4917b8a1c08b4d927"
+  },
+  "pinnedSourceEvidence": {
+    "wanModularPipelineSha256": "24efd9987da6e19839178e704fe98503d58e317c5508b860e3cacc78e4fbcd6a",
+    "wanBlocksSha256": "a92a1d36d19c3c1f094d7446549b2baa532dfaf8de99ab2b86e63bf2d6f88971",
+    "wanImage2VideoBlocksSha256": "4bdf74fa7ce898882ead552cf7f6bc4301e1dfc644962f90325e0ad934820bfc",
+    "wanStandardPipelineSha256": "2a5fcd905ad0fbcbd76240e02007e73ab3583f927da8b9fe0fbe5a4a54d792aa",
+    "wanImageToVideoPipelineSha256": "3cde196f05883ddf8a29fe68811ef683563a67e06c9603ad62a4bb14ae8770d3"
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "minimumSelectiveDiskBytes": 137438953472,
+    "minimumSystemRamBytes": 103079215104,
+    "minimumAcceleratorMemoryBytesWithOffloadEstimate": 34359738368,
+    "basis": "Exact 80.39-90.08 GB BF16 artifact totals plus conservative loading, compilation, and output headroom; no live proof."
+  }
+}

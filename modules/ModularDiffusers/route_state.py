@@ -1804,9 +1804,18 @@ def require_cataloged_wan_action_source(*, image, last_image, binding):
     workflow = _validate_wan_source_pair(image, last_image)
     if not _is_issued_binding(binding) or binding._model_type != "WanImage2VideoModularPipeline":
         raise ValueError("Wan image execution requires the current Models Loader publication.")
-    expected_repository = dict(WAN_WORKFLOW_REPOSITORIES).get(workflow)
-    if expected_repository is None:
+    expected_repositories = tuple(
+        repository
+        for reviewed_workflow, repository in WAN_WORKFLOW_REPOSITORIES
+        if reviewed_workflow == workflow
+    )
+    if not expected_repositories:
         raise ValueError("Wan image execution selected an unknown workflow contract.")
+    expected_repository = binding._repo_id
+    if expected_repository not in expected_repositories:
+        raise ValueError(
+            "Wan image execution does not match the reviewed immutable artifact for the selected workflow."
+        )
     expected_revision = require_catalog_revision(
         expected_repository,
         model_type="WanImage2VideoModularPipeline",

@@ -147,6 +147,15 @@ The distinct FLF processor and transformer contracts are then revalidated by
 the existing route-state boundary; changing only `last_image`, repository, or
 revision fails closed.
 
+The same repository-scoped boundary admits the official Wan 2.1 T2V-14B and
+I2V-14B-720P snapshots as variants of the existing generic T2V and I2V Modular
+pipelines. It does not make arbitrary Wan repositories compatible: their exact
+catalog revisions, standard pipeline indexes, concrete component aliases, and
+16-channel T2V versus 36-channel I2V transformer contracts must match. I2V-480P
+and I2V-720P can satisfy only the image-to-video route; the FLF artifact can
+satisfy only the first/last-frame route. These 80-90 GB variants remain remote
+execution- and physical-macOS-qualification pending.
+
 ## Reusing a loaded model
 
 Compatible tasks can share components from one `Load Models` node. For example, an image-edit path can add image encoding/conditioning nodes while reusing the model components already loaded for text-to-image.

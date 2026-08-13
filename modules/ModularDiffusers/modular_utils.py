@@ -15,7 +15,7 @@ from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
 )
-from modiff.modular_workflow_contracts import WAN_I2V_REPOSITORY
+from modiff.modular_workflow_contracts import WAN_I2V_REPOSITORY, WAN_T2V_REPOSITORY
 from .pipeline_schema import MoDiffParam as PipelineParam
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 from .custom_pipeline import (
@@ -1280,7 +1280,7 @@ WAN_T2V_NODE_SPECS = {
 WAN_T2V_PIPELINE_CONFIG = PipelineConfig(
     node_specs=WAN_T2V_NODE_SPECS,
     label="WAN2 T2V",
-    default_repo="Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+    default_repo=WAN_T2V_REPOSITORY,
     default_dtype="bfloat16",
     guider_options=NON_LAYER_GUIDER_OPTIONS,
     scheduler_options=COMPATIBLE_SCHEDULER_OPTIONS,

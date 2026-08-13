@@ -7,7 +7,11 @@ import torch
 from PIL import Image
 
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
-from modiff.modular_workflow_contracts import WAN_FLF_REPOSITORY, WAN_I2V_REPOSITORY
+from modiff.modular_workflow_contracts import (
+    WAN_FLF_REPOSITORY,
+    WAN_I2V_720P_REPOSITORY,
+    WAN_I2V_REPOSITORY,
+)
 from modules.ModularDiffusers.denoise import Denoise
 from modules.ModularDiffusers.embeddings import ImageEmbeddings
 from modules.ModularDiffusers.latents import DecodeLatents, ImageEncode
@@ -178,6 +182,7 @@ class _FlfTransformer(_Transformer):
 
 
 WAN_I2V_REVISION = "b184e23a8a16b20f108f727c902e769e873ffc73"
+WAN_I2V_720P_REVISION = "eb849f76dfa246545b65774a9e25943ee69b3fa3"
 WAN_FLF_REVISION = "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7"
 
 
@@ -352,6 +357,10 @@ class WanRouteStateTests(unittest.TestCase):
         image = Image.new("RGB", (64, 64))
         last_image = Image.new("RGB", (64, 64))
         i2v_token, _outputs = _bound_outputs()
+        i2v_720p_token, _outputs = _bound_outputs(
+            repository=WAN_I2V_720P_REPOSITORY,
+            revision=WAN_I2V_720P_REVISION,
+        )
         flf_token, _outputs = _bound_outputs(
             repository=WAN_FLF_REPOSITORY,
             revision=WAN_FLF_REVISION,
@@ -361,10 +370,32 @@ class WanRouteStateTests(unittest.TestCase):
             "image2video",
         )
         self.assertEqual(
+            require_cataloged_wan_action_source(
+                image=image,
+                last_image=None,
+                binding=i2v_720p_token,
+            ),
+            "image2video",
+        )
+        self.assertEqual(
             require_cataloged_wan_action_source(image=image, last_image=last_image, binding=flf_token),
             "flf2v",
         )
-        for binding, ending in ((i2v_token, last_image), (flf_token, None)):
+        wrong_revision_token, _outputs = _bound_outputs(
+            repository=WAN_I2V_720P_REPOSITORY,
+            revision=WAN_I2V_REVISION,
+        )
+        with self.assertRaisesRegex(ValueError, "reviewed immutable"):
+            require_cataloged_wan_action_source(
+                image=image,
+                last_image=None,
+                binding=wrong_revision_token,
+            )
+        for binding, ending in (
+            (i2v_token, last_image),
+            (i2v_720p_token, last_image),
+            (flf_token, None),
+        ):
             with self.subTest(repository=binding._repo_id), self.assertRaisesRegex(ValueError, "reviewed immutable"):
                 require_cataloged_wan_action_source(image=image, last_image=ending, binding=binding)
 

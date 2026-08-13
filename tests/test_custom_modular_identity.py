@@ -1695,18 +1695,30 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                     ("hub", config.default_repo, expected_revision),
                 )
 
-        wan_revision = require_catalog_revision(
-            "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
-            model_type="WanImage2VideoModularPipeline",
+        variants = (
+            ("WanModularPipeline", "Wan-AI/Wan2.1-T2V-14B-Diffusers"),
+            ("WanImage2VideoModularPipeline", "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
+            ("WanImage2VideoModularPipeline", "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"),
         )
-        self.assertEqual(
-            ModelsLoader._reviewed_builtin_selection(
-                model_type="WanImage2VideoModularPipeline",
-                repo_id={"source": "hub", "value": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"},
-                revision=wan_revision,
-            ),
-            ("hub", "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers", wan_revision),
-        )
+        for model_type, repository in variants:
+            revision = require_catalog_revision(repository, model_type=model_type)
+            with self.subTest(model_type=model_type, repository=repository):
+                self.assertEqual(
+                    ModelsLoader._reviewed_builtin_selection(
+                        model_type=model_type,
+                        repo_id={"source": "hub", "value": repository},
+                        revision=revision,
+                    ),
+                    ("hub", repository, revision),
+                )
+                self.assertEqual(
+                    ModelsLoader._reviewed_builtin_selection(
+                        model_type=model_type,
+                        repo_id={"source": "hub", "value": repository},
+                        revision=None,
+                    ),
+                    ("hub", repository, revision),
+                )
 
     def test_builtin_pipeline_rejects_alternate_artifacts_before_node_cache_reuse(self):
         node = ModelsLoader("reviewed-builtin-cache-guard")
@@ -1761,6 +1773,11 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 ["transformers", "CLIPImageProcessor"],
             ),
             (
+                "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers",
+                "eb849f76dfa246545b65774a9e25943ee69b3fa3",
+                ["transformers", "CLIPImageProcessor"],
+            ),
+            (
                 "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
                 ["transformers", "CLIPProcessor"],
@@ -1779,6 +1796,26 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 )
                 self.assertEqual(filename, "model_index.json")
                 self.assertEqual(validated, document)
+
+        t2v_document = {
+            "_class_name": "WanPipeline",
+            "_diffusers_version": "0.33.0.dev0",
+            "scheduler": ["diffusers", "UniPCMultistepScheduler"],
+            "text_encoder": ["transformers", "UMT5EncoderModel"],
+            "tokenizer": ["transformers", "T5TokenizerFast"],
+            "transformer": ["diffusers", "WanTransformer3DModel"],
+            "vae": ["diffusers", "AutoencoderKLWan"],
+        }
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+            return_value=("model_index.json", t2v_document),
+        ):
+            filename, validated = _validate_reviewed_pipeline_index(
+                "WanModularPipeline",
+                "Wan-AI/Wan2.1-T2V-14B-Diffusers",
+                "38ec498cb3208fb688890f8cc7e94ede2cbd7f68",
+            )
+        self.assertEqual((filename, validated), ("model_index.json", t2v_document))
 
         tampered = {**base_document, "image_processor": ["transformers", "AutoProcessor"]}
         with patch(

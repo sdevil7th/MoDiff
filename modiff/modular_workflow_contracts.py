@@ -16,7 +16,10 @@ from dataclasses import dataclass
 
 
 PINNED_DIFFUSERS_REVISION = "bb56997d4b7e87f0743f26a612f49ec4e7ce7213"
+WAN_T2V_REPOSITORY = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
+WAN_T2V_14B_REPOSITORY = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 WAN_I2V_REPOSITORY = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
+WAN_I2V_720P_REPOSITORY = "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"
 WAN_FLF_REPOSITORY = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 
 # One installed Modular pipeline class can have multiple official weight/config
@@ -24,13 +27,25 @@ WAN_FLF_REPOSITORY = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 # the loader still requires an immutable catalog revision for the selected
 # repository, and the downstream action validates the workflow/repository pair.
 PINNED_MODULAR_REPOSITORY_VARIANTS = {
-    "WanImage2VideoModularPipeline": (WAN_I2V_REPOSITORY, WAN_FLF_REPOSITORY),
+    "WanModularPipeline": (WAN_T2V_REPOSITORY, WAN_T2V_14B_REPOSITORY),
+    "WanImage2VideoModularPipeline": (
+        WAN_I2V_REPOSITORY,
+        WAN_I2V_720P_REPOSITORY,
+        WAN_FLF_REPOSITORY,
+    ),
 }
 # Standard Hub indexes name the concrete classes serialized by each checkpoint,
 # while the installed Modular blocks declare their reviewed base/factory types.
 # These are exact repository-scoped aliases, not general subclass admission.
 PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
+    WAN_T2V_14B_REPOSITORY: {
+        "tokenizer": ("transformers", "T5TokenizerFast"),
+    },
     WAN_I2V_REPOSITORY: {
+        "tokenizer": ("transformers", "T5TokenizerFast"),
+        "image_encoder": ("transformers", "CLIPVisionModelWithProjection"),
+    },
+    WAN_I2V_720P_REPOSITORY: {
         "tokenizer": ("transformers", "T5TokenizerFast"),
         "image_encoder": ("transformers", "CLIPVisionModelWithProjection"),
     },
@@ -51,6 +66,7 @@ PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES = {
 }
 WAN_WORKFLOW_REPOSITORIES = (
     ("image2video", WAN_I2V_REPOSITORY),
+    ("image2video", WAN_I2V_720P_REPOSITORY),
     ("flf2v", WAN_FLF_REPOSITORY),
 )
 
