@@ -3890,15 +3890,35 @@ default. Assets: remote Dataset only.
     Auto, Gallery, live output, license-surface approval, and physical macOS
     qualification remain pending; no result is inferred from Linux static or
     mocked evidence.
+  - [x] **P4.2b SDXL InstructPix2Pix image editing:** the generic Diffusers
+    image loader exposes the upstream
+    `StableDiffusionXLInstructPix2PixPipeline` against immutable
+    `diffusers/sdxl-instructpix2pix-768` commit
+    `06653d47f8d22f2c2205a5884d6a24c5e76d2ca7`. Loading requires the reviewed
+    safetensors-only snapshot without remote code. The exact experimental
+    recipe accepts one source image at 768px, 30 steps, text guidance 3, and
+    image guidance 1.5; the new backend-owned generic image-guidance field is
+    bounded to the upstream-supported range and forwarded without a
+    model-specific client branch. Its canonical graph is the 84th
+    deterministic catalog entry. Auto, Gallery, live output, and physical
+    macOS qualification remain pending; no output quality claim is inferred
+    from contract or mocked evidence.
   - Existing SDXL base text-to-image, image-to-image, and inpaint source slices
-    remain recorded under P2.2a through P2.2c. Further instruct, ControlNet,
-    adapter, PAG, and related combinations require independent admission.
+    remain recorded under P2.2a through P2.2c. Further ControlNet, adapter,
+    PAG, and related combinations require independent admission.
   - P4.2a source commits are backend `fb49ed8` and client `f893514`. The final
     backend gate passed (`1282 passed, 3 skipped, 2680 subtests`) with Ruff
     `E9,F`, package, shell, compile, and diff checks. All 83 workflows verify;
     `npm run check` passed and the complete mocked Studio sweep passed
     (`106 passed`). The production bundle remains within budget at
     `529013 / 529408` total gzip bytes and `280348 / 448512` for the entry
+    chunk. No weights or output media were downloaded or retained.
+  - P4.2b source commits are backend `eb2a28e` and client `b7ed626`. The
+    complete backend gate passed (`1283 passed, 3 skipped, 2696 subtests`) with
+    Ruff `E9,F`, package, shell, compile, and diff checks. All 84 workflows
+    verify; `npm run check` passed and the complete mocked Studio sweep passed
+    (`106 passed`). The production bundle remains within budget at
+    `529098 / 529408` total gzip bytes and `280348 / 448512` for the entry
     chunk. No weights or output media were downloaded or retained.
 - [ ] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
   candidates admitted by the per-model checklist.
@@ -4185,6 +4205,7 @@ Add references only after the corresponding evidence exists.
 | P4.1a SD1.5 ControlNet Canny | `539650a` | `785b43e` | Remote pending | Pending | Complete source slice: the immutable safetensors-only SD1.5/ControlNet assembly, exact generic Canny preprocessor, controlled artifact receipt, 82-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review. |
 | P4.1b SD1.5 T2I Adapter | Deferred: reviewed official snapshot is legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently under the safetensors-only auxiliary policy; no unsafe exception or community conversion was admitted. |
 | P4.2a SDXL Turbo text-to-image | `fb49ed8` | `f893514` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors loading, exact one-to-four-step guidance-zero contract, 83-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending license-surface and live output review. |
-| P4.2b-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.2b SDXL InstructPix2Pix image editing | `eb2a28e` | `b7ed626` | Remote and physical macOS pending | Pending | Complete source slice: immutable safetensors-only SDXL instruction editing, exact 768px/30-step/text-guidance-3/image-guidance-1.5 contract, 84-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending live output review. |
+| P4.2c-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
