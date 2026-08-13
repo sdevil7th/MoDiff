@@ -6013,6 +6013,21 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     deterministic retained-asset stitching, audio mux/cancellation recovery,
     the actual 30-minute graph, remote execution, and physical macOS evidence
     remain independent gates.
+  - [x] **In-process checkpoint, stitching, mux, and cancellation recovery:**
+    backend `53e22f2` revalidates the generic implementation originally landed
+    in `76bbafe` with stronger synthetic integration evidence. A collection
+    loop is interrupted after committing segment 1, clears its node cache, and
+    resumes at segment 2 without regenerating the completed result. Two real
+    temporary eight-frame MP4 segments are retained, joined through the
+    bounded-memory FFmpeg path with an exact two-frame transition into a
+    14-frame/1.75-second result, then muxed with generated silent audio while
+    preserving the video duration and frame count. The focused component gate
+    passes 135 tests and 216 subtests; the complete backend overlay passes
+    1,642 tests, 3,580 subtests, and three platform skips, with Ruff E9/F and
+    package compatibility green. Test media existed only in the temporary test
+    directory. Process-restart persistence, the actual 30-minute graph, remote
+    six-hour execution, asset publication, and physical macOS evidence remain
+    pending.
 
 ### Phase 6 test and asset gate
 
@@ -6289,4 +6304,5 @@ Add references only after the corresponding evidence exists.
 | P6.52 Krea 2 Raw/Turbo standard source and admission-gate review | `e176f14` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial eligibility/legal approval, downstream terms/content-filter implementation, immutable AUP receipt, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | Two exact gated official revisions, two Python-free 17-file / 35.68 GB Diffusers candidate partitions, five immutable safetensors weights per recipe, duplicate native-checkpoint exclusions, pinned package source receipts, distinct Raw/Turbo recipes, and estimate-only envelopes are sealed. Custom terms, mandatory content filtering, missing package safety checker/bounds, and two queue-aware app preflight deficits of about 53.2 GB keep the standard family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no weight bytes or media were fetched. |
 | P6.53 Stable Diffusion 3 standard source and admission-gate review | `e6061d9` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial license/legal approval, authenticated component review, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact gated official revision, Python-free 31.01 GB snapshot, six-file / 15.50 GB fp16 base inventory shared with the prior SD3 ControlNet review, three package-owned routes, source receipts, recipes, and estimate-only envelope are sealed. Noncommercial-only terms, inaccessible gated configs, missing safety checker/bounds, and a 21.41 GB queue-aware app preflight deficit keep the family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no base weight bytes were fetched. |
 | P6.54 Long-video continuation boundary handoff | `67010c7` | Not required | Synthetic graph/loop proof only; durable restart checkpoints, retained-asset stitching, mux/cancellation recovery, final 30-minute graph, remote execution, and physical macOS pending | Not required | The generic planner now binds the first opening anchor and the generic shot executor consumes the preceding loop segment only for explicitly marked continuation jobs. Missing carry and unknown strategies fail before inference; a two-iteration synthetic graph proves exact last-frame handoff. No model, media, or live inference was used. |
+| P6.55 Long-video component recovery gate | `53e22f2` (revalidates `76bbafe`) | Not required | Synthetic loop interruption/resume and temporary real-file FFmpeg proof only; process-restart persistence, final 30-minute graph, remote execution, and physical macOS pending | Not required | A completed loop segment survives node-cache clearing and cancellation recovery without regeneration. Two temporary retained MP4s stitch deterministically to 14 frames / 1.75 seconds and retain those values after audio mux. No model or live inference was used, and all test media was temporary. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
