@@ -4638,6 +4638,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 - [ ] Evaluate other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
+  - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
+    seals official ungated
+    `google/diffusiongemma-26B-A4B-it@f7f5b7f5fa82ffc52addd066915886d497f5517b`.
+    The repository contains no Python and requires no remote code. Its exact
+    bfloat16 surface is 11 safetensors shards / 51,647,701,024 weight bytes;
+    22 files occupy 51,680,024,015 bytes in total. The Apache-2.0 model index
+    selects package-owned `DiffusionGemmaForBlockDiffusion`, `Gemma4Processor`,
+    `BlockRefinementScheduler`, and `DiffusionGemmaPipeline` classes. Exact
+    metadata, weight, pinned Diffusers source, and locked Transformers 5.14.1
+    source hashes are recorded in
+    `data/diffusiongemma-artifact-review.json`; a no-weight API probe passed.
+
+    The reviewed recipe keeps the 256-token canvas/output, 48 denoising steps
+    per canvas, entropy-bound 0.1, temperature decay 0.8 to 0.4, stability 1,
+    confidence threshold 0.005, static cache, and compiled decoder. The pinned
+    Diffusers pipeline exposes per-step callbacks, but validates only positive
+    generation length and step counts; it has no upper bounds for prompt,
+    generation, image, or video-frame resources. MoDiff has no generic
+    diffusion-text node yet. Accordingly the candidate remains remote-only and
+    absent from runtime/download catalogs and every user-facing capability.
+    Backend-owned bounds, multimodal input/output safety policy, exact remote
+    heavy-hardware measurements, and physical macOS evidence remain pending.
+  - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
   `inclusionAI/LLaDA2.1-mini` snapshot at
@@ -4737,7 +4760,7 @@ This is a family inventory, not a requirement to create one node per family.
 
 ### Text diffusion
 
-- [ ] `diffusion_gemma`
+- [x] `diffusion_gemma`
 - [ ] `llada2`
 
 ### 3D and perception
@@ -4896,4 +4919,5 @@ Add references only after the corresponding evidence exists.
 | P6.8 classic LTX/LTX2 artifact evaluation | `0f96a92`, `474b83d` | Not required | Existing graph surfaces remain execution-pending; Modular paths, legal acceptance, and remote heavy-hardware execution remain pending | Not required | Exact full/selected inventories and source-contract receipts are sealed. The 2B family index can no longer silently replace the 13B Distilled profile. LTX-2's selected two-stage partition and license obligations are explicit. No weights or media were downloaded. |
 | P6.9 Wan 2.1 14B Modular variants | `e4c2385` | Not required | Exact repository-scoped loader admission; remote heavy-hardware and physical macOS execution pending | Not required | T2V-14B and I2V-14B-720P join the already reviewed I2V-480P and FLF-720P variants under exact immutable catalog/index/component contracts. The focused clean-overlay matrix passes 100 tests plus 175 subtests. No new high-level mode, client branch, Auto/template/Gallery surface, weights, or media were added. |
 | P6.10 LLaDA2 immutable-code security review | `444152a` | Not required | Static review only; explicit task-scoped authorization, bounded adapter controls, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact remote-code blobs and eight-shard safetensors inventory are sealed. Static review found no prohibited primitive but did identify a process-global Transformers registry mutation and cannot prove runtime safety. `trust_remote_code` remains fail-closed; no runtime/download catalog or user-facing surface was admitted. |
+| P6.11 DiffusionGemma artifact/source review | `42b609e` | Not required | No-weight API probe only; bounded generic diffusion-text contract, remote heavy-hardware execution, multimodal safety review, and physical macOS evidence pending | Not required | Exact official 11-shard / 51,647,701,024-byte safetensors inventory, Apache-2.0 rights, package-owned class/source hashes, 256-token/48-step entropy-bound recipe, callback support, and estimate-only resource envelope are sealed. The model remains remote-only and absent from runtime/download catalogs and user-facing capabilities. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
