@@ -5408,6 +5408,38 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     unchanged 530,432-byte gzip ceiling pass. Remote real-weight
     memory/output safety/quality review and physical macOS execution remain
     pending independently; no weights or media were downloaded or retained.
+  - [x] **Ideogram 4 source, terms, and admission-gate review:** backend
+    `f09b06c` resolves the three official gated snapshots at immutable heads:
+    `ideogram-ai/ideogram-4-nf4-diffusers@1874bc70267ba2c823a7239e1d70dd308c8d64dc`,
+    `ideogram-ai/ideogram-4-nf4@f664347839e0a87bc495f5c9483cc0014b8e344e`,
+    and `ideogram-ai/ideogram-4-fp8@ee79a7237b519f1402ceacf952f30c8a31ec5073`.
+    Their anonymous metadata exposes four safetensors files and approximately
+    16.10 GB, 16.10 GB, and 27.53 GB of visible weight bytes respectively,
+    with no repository Python. These are deliberately recorded as visible
+    sizes rather than exact artifact inventories: before gate acceptance the
+    LFS identities are masked and the immutable model index and component
+    configurations return HTTP 401. The package-owned pipeline, transformer,
+    prompt-enhancer, scheduler, VAE, modular, and output source hashes, its
+    2048-square / 48-step defaults, guidance schedule constraints,
+    multiple-of-16 documented resolution range, callback/interrupt/offload
+    surfaces, absent negative-prompt and safety-checker surfaces, and the
+    optional prompt-enhancer boundary are sealed in
+    `data/ideogram4-source-review.json`. No terms gate was accepted and no
+    weight bytes or media were downloaded.
+
+    Admission remains blocked. The exact June 3, 2026 Ideogram
+    Non-Commercial Model Agreement was reviewed without acceptance: commercial
+    use requires a separate agreement, hosted services and APIs count as
+    distribution, downstream terms and notices attach, and the incorporated
+    use policy makes suitable safety filters, human oversight, and disclosures
+    product responsibilities while the package has no safety checker. MoDiff
+    also lacks an authenticated exact-artifact receipt, a qualified
+    NF4/BitsAndBytes CUDA loading recipe, and backend-owned guidance, resource,
+    and safety bounds. Accordingly no runtime/download catalog, adapter,
+    capability, graph, client, Auto, template, or Gallery surface is added.
+    Task-scoped terms acceptance and legal/product approval, authenticated
+    artifact review, remote heavy-hardware safety/quality qualification, and
+    physical macOS execution remain independent gates.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5560,7 +5592,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `hidream_image`
 - [x] `hunyuan_image`
 - [x] `hunyuandit`
-- [ ] `ideogram4`
+- [x] `ideogram4`
 - [ ] `joyimage`
 - [ ] `kandinsky`
 - [ ] `kandinsky2_2`
