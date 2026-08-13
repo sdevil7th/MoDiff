@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T21:24:02.938Z",
+  "generatedAt": "2026-08-13T21:43:38.929Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 115,
-  "supportedPairCount": 127,
+  "supportedCanonicalPairCount": 118,
+  "supportedPairCount": 130,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2218,6 +2218,94 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "graphHash": "d98143499548db41d476a027c1958667efbe3734a2671332f7d7dba4237a2880"
+    },
+    {
+      "id": "OmniGenPipeline:edit_image",
+      "modelType": "OmniGenPipeline",
+      "modelFamily": "OmniGen",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Shitao/OmniGen-v1-diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image; MoDiff inserts the package's reserved positional image tag."
+      },
+      "pipelineClasses": [
+        "OmniGenPipeline"
+      ],
+      "sourceTemplateId": "task-template:omnigen-v1:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/omni-gen-pipeline/edit-image.json",
+      "graphHash": "5f86a1ca82cc83415ea1dd7bd93277f3c06cf520176abcd72901cdd6652d235a"
+    },
+    {
+      "id": "OmniGenPipeline:multi_image_reference_edit",
+      "modelType": "OmniGenPipeline",
+      "modelFamily": "OmniGen",
+      "mode": "multi_image_reference_edit",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Shitao/OmniGen-v1-diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires 1 to 3 source images; MoDiff inserts one ordered positional tag per reference."
+      },
+      "pipelineClasses": [
+        "OmniGenPipeline"
+      ],
+      "sourceTemplateId": "task-template:omnigen-v1:multi-image-reference-edit:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/omni-gen-pipeline/multi-image-reference-edit.json",
+      "graphHash": "be3f035288b57cf8528546eed2bf6eb5a81bc4d7f4852a3c8c90c128cae9143b"
+    },
+    {
+      "id": "OmniGenPipeline:text_to_image",
+      "modelType": "OmniGenPipeline",
+      "modelFamily": "OmniGen",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Shitao/OmniGen-v1-diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "OmniGenPipeline"
+      ],
+      "sourceTemplateId": "task-template:omnigen-v1:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/omni-gen-pipeline/text-to-image.json",
+      "graphHash": "0fbcf3c69ec7329f8fb65bd370b3b0298ede2fcd6fecf4027f84d128542d69ed"
     },
     {
       "id": "PixArtSigmaPipeline:text_to_image",

@@ -67,6 +67,7 @@ LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
 LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
 LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
+OMNIGEN_REPO = "Shitao/OmniGen-v1-diffusers"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -122,10 +123,14 @@ class ImagePipelineAdapter:
     max_output_pixels: int = _MAX_IMAGE_OUTPUT_PIXELS
     fixed_guidance_scale: float | None = None
     minimum_image_guidance_scale: float = 0.0
+    default_image_guidance_scale: float = 1.5
     guidance_parameter: str | None = "guidance_scale"
+    image_guidance_parameter: str | None = "image_guidance_scale"
     ignored_generation_parameters: frozenset[str] = frozenset()
     multi_image_strategy: str = "list"
     image_parameter: str = "image"
+    reference_prompt_placeholders: bool = False
+    max_input_image_size: int | None = None
     max_sequence_length: int = 512
     max_reference_images: int = 1
     max_reference_pixels: int = _MAX_IMAGE_INPUT_PIXELS
@@ -163,10 +168,28 @@ class ImagePipelineAdapter:
             raise ValueError("An exact text guidance scale must be between 0 and 20.")
         if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
             raise ValueError("The minimum image guidance scale must be between 0 and 20.")
+        if not self.minimum_image_guidance_scale <= self.default_image_guidance_scale <= 20.0:
+            raise ValueError("The default image guidance scale must satisfy the reviewed adapter bounds.")
         if self.guidance_parameter is not None and not self.guidance_parameter:
+            raise ValueError("A text guidance parameter cannot be blank.")
+        if self.image_guidance_parameter is not None and not self.image_guidance_parameter:
             raise ValueError("An image guidance parameter cannot be blank.")
+        if self.multi_image_strategy not in {
+            "list",
+            "always_list",
+            "stitch_horizontal",
+            "upstream_weighted_sum",
+        }:
+            raise ValueError("An image adapter must use a reviewed multi-image strategy.")
         if not self.image_parameter:
             raise ValueError("An image adapter input-image parameter cannot be blank.")
+        if type(self.reference_prompt_placeholders) is not bool:
+            raise ValueError("Image reference prompt placeholders must be an exact boolean.")
+        if self.max_input_image_size is not None and (
+            not 16 <= self.max_input_image_size <= _MAX_IMAGE_INPUT_DIMENSION
+            or self.max_input_image_size % 16
+        ):
+            raise ValueError("An image adapter maximum input side must be a 16-pixel multiple between 16 and 8192.")
         unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale"}
         if unsupported_ignored:
             raise ValueError("Image adapters can ignore only reviewed no-op generation parameters.")
@@ -242,7 +265,6 @@ class ImagePipelineAdapter:
             "reference_strength": "reference_strength",
             "pag_scale": "pag_scale",
             "pag_adaptive_scale": "pag_adaptive_scale",
-            "image_guidance_scale": "image_guidance_scale",
         }
         for source, destination in aliases.items():
             if source in self.ignored_generation_parameters:
@@ -263,6 +285,13 @@ class ImagePipelineAdapter:
         ):
             target[self.guidance_parameter] = values.get("guidance_scale")
         if (
+            self.image_guidance_parameter
+            and "image_guidance_scale" not in self.ignored_generation_parameters
+            and supports_arg(pipeline, self.image_guidance_parameter)
+            and values.get("image_guidance_scale") is not None
+        ):
+            target[self.image_guidance_parameter] = values["image_guidance_scale"]
+        if (
             self.conditioning_scale_parameter
             and supports_arg(pipeline, self.conditioning_scale_parameter)
             and values.get("conditioning_scale") is not None
@@ -276,6 +305,8 @@ class ImagePipelineAdapter:
             target["cfg_trunc_ratio"] = self.cfg_trunc_ratio
         if self.cfg_normalization is not None and supports_arg(pipeline, "cfg_normalization"):
             target["cfg_normalization"] = self.cfg_normalization
+        if self.max_input_image_size is not None and supports_arg(pipeline, "max_input_image_size"):
+            target["max_input_image_size"] = self.max_input_image_size
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -541,6 +572,25 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_sequence_length=256,
         cfg_trunc_ratio=0.25,
         cfg_normalization=True,
+    ),
+    "OmniGenPipeline": ImagePipelineAdapter(
+        "OmniGenPipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        OMNIGEN_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=16,
+        max_output_pixels=1024 * 1024,
+        default_image_guidance_scale=1.6,
+        image_guidance_parameter="img_guidance_scale",
+        multi_image_strategy="always_list",
+        image_parameter="input_images",
+        reference_prompt_placeholders=True,
+        max_input_image_size=1024,
+        max_reference_images=3,
+        max_reference_pixels=3 * 1024 * 1024,
     ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
@@ -1039,6 +1089,13 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
         ),
+    },
+    "OmniGenPipeline": {
+        "text_to_image": _image_field_contract("width", "height", "guidance_scale"),
+        **{
+            mode: _image_field_contract("width", "height", "guidance_scale", "image_guidance_scale")
+            for mode in ("edit_image", "multi_image_reference_edit")
+        },
     },
     "AuraFlowPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
@@ -1871,7 +1928,7 @@ def preflight_image_action(
     values["image_guidance_scale"] = _bounded_image_float(
         values.get("image_guidance_scale"),
         field="image_guidance_scale",
-        default=1.5,
+        default=adapter.default_image_guidance_scale,
         minimum=adapter.minimum_image_guidance_scale,
         maximum=20.0,
     )
@@ -2510,6 +2567,8 @@ def add_progress_callback(node: NodeBase, pipeline: Any, call_kwargs: dict[str, 
 
 def prepare_reference_images(image: Any, adapter: ImagePipelineAdapter) -> Any:
     """Translate the generic multi-reference contract for a pipeline adapter."""
+    if adapter.multi_image_strategy == "always_list":
+        return list(image) if isinstance(image, (list, tuple)) else [image]
     if not isinstance(image, (list, tuple)) or len(image) <= 1:
         return image[0] if isinstance(image, (list, tuple)) and image else image
     if adapter.multi_image_strategy != "stitch_horizontal":
@@ -2535,6 +2594,23 @@ def prepare_reference_images(image: Any, adapter: ImagePipelineAdapter) -> Any:
         canvas.paste(item, (left, 0))
         left += item.width
     return canvas
+
+
+def prepare_reference_prompt(prompt: Any, image: Any, adapter: ImagePipelineAdapter) -> Any:
+    """Add package-owned positional image tags without exposing reserved syntax in Studio."""
+    if not adapter.reference_prompt_placeholders:
+        return prompt
+    if not isinstance(prompt, str):
+        raise ValueError(f"{adapter.pipeline_class} requires one string prompt for reference-image generation.")
+    reserved_tokens = ("<img>", "</img>", "<|image_")
+    if any(token in prompt for token in reserved_tokens):
+        raise ValueError(
+            f"{adapter.pipeline_class} prompt contains reserved image-placeholder syntax; "
+            "attach references through the image input instead."
+        )
+    references = image if isinstance(image, (list, tuple)) else [image]
+    placeholders = " ".join(f"<img><|image_{index}|></img>" for index in range(1, len(references) + 1))
+    return f"{placeholders} {prompt}".rstrip()
 
 
 class FluxReduxPipelineBundle:
@@ -3504,6 +3580,7 @@ class Edit(Generate):
         pipeline = kwargs.get("pipeline")
         adapter, values = preflight_image_action(pipeline, "Edit", kwargs)
         image = prepare_reference_images(values.get("image"), adapter)
+        values["prompt"] = prepare_reference_prompt(values.get("prompt") or "", image, adapter)
         return self._execute_conditioned(values, {adapter.image_parameter: image}, adapter=adapter)
 
     def _execute_conditioned(self, values, extra_kwargs, *, adapter):

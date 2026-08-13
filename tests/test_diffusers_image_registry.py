@@ -57,6 +57,7 @@ from modules.DiffusersImage.main import (
     QWEN_IMAGE_EDIT_REPO,
     LCM_DREAMSHAPER_REPO,
     MARIGOLD_DEPTH_LCM_REPO,
+    OMNIGEN_REPO,
     PIXART_SIGMA_REPO,
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
@@ -900,6 +901,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 KANDINSKY3_REPO,
                 {"prompt", "image"},
             ),
+            "OmniGenPipeline": (
+                {"text_to_image", "edit_image", "multi_image_reference_edit"},
+                OMNIGEN_REPO,
+                {"prompt", "input_images", "img_guidance_scale"},
+            ),
             "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
             "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
             "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
@@ -1020,6 +1026,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
             ("Kandinsky3Pipeline", "text_to_image", Generate, {}),
             ("Kandinsky3Img2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("OmniGenPipeline", "text_to_image", Generate, {}),
+            ("OmniGenPipeline", "edit_image", Edit, {"image": image}),
             ("AuraFlowPipeline", "text_to_image", Generate, {}),
             ("ChromaPipeline", "text_to_image", Generate, {}),
             ("CogView3PlusPipeline", "text_to_image", Generate, {}),
@@ -1123,6 +1131,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 }
                 if adapter.guidance_parameter is not None:
                     expected_keys.add(adapter.guidance_parameter)
+                if (
+                    adapter.image_guidance_parameter is not None
+                    and "image_guidance_scale" not in adapter.ignored_generation_parameters
+                    and adapter.image_guidance_parameter in upstream_parameters
+                ):
+                    expected_keys.add(adapter.image_guidance_parameter)
+                if adapter.max_input_image_size is not None and "max_input_image_size" in upstream_parameters:
+                    expected_keys.add("max_input_image_size")
                 if adapter.conditioning_scale_parameter is not None:
                     expected_keys.add(adapter.conditioning_scale_parameter)
 
