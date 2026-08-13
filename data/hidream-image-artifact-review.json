@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 1,
+  "family": "HiDream-I1",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "officialSource": {
+    "repository": "HiDream-ai/HiDream-I1",
+    "revision": "5f92bab45f1dfb1e794ee357286a5b837eaf4400",
+    "inferenceSha256": "b116a983a6464de1f301320d540ebecf0c334dc7e06e1ff2c68488e9002d95b5",
+    "licenseSha256": "1075d774eb507fe55883c5ccade430d7012e8dae36ccbc62aeb480d947379a03"
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path after combining shared and variant weight files",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "sharedWeightFiles": [
+    {
+      "path": "text_encoder/model.safetensors",
+      "sha256": "b70c11ad5d7e9abf6109348908f599ea382f8019e1f36910bbc8ebecde936633",
+      "byteSize": 495149872
+    },
+    {
+      "path": "text_encoder_2/model.safetensors",
+      "sha256": "4d6effa7a5e600cabf7528ed7234146a13ead1b2c151211d706b293a060b112a",
+      "byteSize": 2779424184
+    },
+    {
+      "path": "text_encoder_3/model-00001-of-00002.safetensors",
+      "sha256": "ec87bffd1923e8b2774a6d240c922a41f6143081d52cf83b8fe39e9d838c893e",
+      "byteSize": 4994582224
+    },
+    {
+      "path": "text_encoder_3/model-00002-of-00002.safetensors",
+      "sha256": "a5640855b301fcdbceddfa90ae8066cd9414aff020552a201a255ecf2059da00",
+      "byteSize": 4530066360
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3",
+      "byteSize": 167666902
+    }
+  ],
+  "sharedWeightBytes": 12966889542,
+  "sharedWeightInventorySha256": "7ad351a7020f0289ef85854d6775b25b3a2a7b71822e2332812a084bae17bd76",
+  "repositories": [
+    {
+      "variant": "full",
+      "repository": "HiDream-ai/HiDream-I1-Full",
+      "revision": "8ccbbfb270ccdae26d6bb0081df67dc81e4033bf",
+      "private": false,
+      "gated": false,
+      "declaredTransformerLicense": "mit",
+      "licenseFilePresent": false,
+      "repositoryFileCount": 36,
+      "repositoryBytesFromRecursiveTree": 47188208033,
+      "weightFileCount": 12,
+      "weightBytes": 47178560726,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "F16": 17105733184
+      },
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "HiDreamImagePipeline",
+      "missingRequiredSubfolders": [
+        "text_encoder_4",
+        "tokenizer_4"
+      ],
+      "modelCardSha256": "02e2e1b845f6fa3b61fe0a2e9b8f8d89559877e943e1a74a5c49217958116665",
+      "modelIndexSha256": "17cc70f9342a20adb25c4a48db64ec0cd5991ca4c92ba71200a294b39ae04748",
+      "schedulerConfigSha256": "8508d023ce65787971c928e400b37ed70144aaf88fe07cb2771e7cce49bdaa9c",
+      "transformerConfigSha256": "7daa489bf0eaa4b0123ded64c2068544fc622f8c67603d1511815e2c1ffc1d61",
+      "weightInventorySha256": "69f6aa6123181a3c9b5268677dfa02be361630dce8a5a518a7384d49ffc2087f",
+      "transformerWeightFiles": [
+        {
+          "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+          "sha256": "3cb3f6d77a3fce19b90fa7f66da0cbe997b0785a38a788b559290d3062f6fd26",
+          "byteSize": 4985892648
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+          "sha256": "6f192e75dc90dd92b4784a6e54cdd4ee46ed6db83afcbabd2b54e0214311c7fc",
+          "byteSize": 4982937568
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+          "sha256": "474e02b3119876680dec43975b050c956e11f094e96c729877f9604021c50e4e",
+          "byteSize": 4993382144
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+          "sha256": "1ff9be19f7474cbc52ed3c7b2cb50efea111924cc590b79f3136629ec4405e3a",
+          "byteSize": 4977488288
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+          "sha256": "0c896b23d2ca6b98144c504df9c9ff3a353868a3f55a3f14264578a749c832d7",
+          "byteSize": 4993217032
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+          "sha256": "a313e3be734749a6d425096a9aa2d5368aaf359784f9ea44d012eec263df8941",
+          "byteSize": 4993217016
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+          "sha256": "bcc365028564be0e53537c6cd98cbbf85c2d1164bc5f4c19dfe1bc5bcc000118",
+          "byteSize": 4285536488
+        }
+      ]
+    },
+    {
+      "variant": "dev",
+      "repository": "HiDream-ai/HiDream-I1-Dev",
+      "revision": "0fad2ea0ccf9a80ddf019ea777eedb27c1ccb232",
+      "private": false,
+      "gated": false,
+      "declaredTransformerLicense": "mit",
+      "licenseFilePresent": false,
+      "repositoryFileCount": 36,
+      "repositoryBytesFromRecursiveTree": 47188209250,
+      "weightFileCount": 12,
+      "weightBytes": 47178562342,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 17105733184
+      },
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "HiDreamImagePipeline",
+      "missingRequiredSubfolders": [
+        "text_encoder_4",
+        "tokenizer_4"
+      ],
+      "modelCardSha256": "a764801203857d583031e0bea8aa10f148bd85e66609535cfd5b2ec02e89f5d6",
+      "modelIndexSha256": "6dcf42120d2aeb2b2219dca2ed7ced3e11e8e7d06b2a316075140df3d0d03067",
+      "schedulerConfigSha256": "78f07e7ee89d542bdbc4ef7dea5a7acee7ca5138a7256895e0ad1b251cb995ac",
+      "transformerConfigSha256": "7daa489bf0eaa4b0123ded64c2068544fc622f8c67603d1511815e2c1ffc1d61",
+      "weightInventorySha256": "df6f3cd645fa8538fef0b18be7a312edf4f37b6d93c859ddb0fc30ef809f01b7",
+      "transformerWeightFiles": [
+        {
+          "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+          "sha256": "87cf273f458d31969431fc27f451720685d27bd9d29d0be24df170c2bc852dba",
+          "byteSize": 4985892896
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+          "sha256": "5b6b9a40b24d6762bcd9db1bfbe6beeb87ae37ad4bacc3c3616d45066e30928d",
+          "byteSize": 4982937816
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+          "sha256": "a4ea8ea9b6e5ebad27309094ffbcdd88cd61a01311f844e8b359f2f3851e44b2",
+          "byteSize": 4993382384
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+          "sha256": "5b3c353351d0188ade06504f0ab06d5a387acdb9bee6a3d15402b947173523a7",
+          "byteSize": 4977488520
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+          "sha256": "af460aaa1157ce9f3cbbea2ae4feb77d6addfb40a9792b0d062eb95a353c3d53",
+          "byteSize": 4993217256
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+          "sha256": "1b72c766eea605d73e07697b960ca08e59a20a6df20b8a53f4273296cd41845c",
+          "byteSize": 4993217240
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+          "sha256": "a10ebe9d7920079a91c761eb77531a0a07d18d5fb91d64793c3bed68d31343a2",
+          "byteSize": 4285536688
+        }
+      ]
+    },
+    {
+      "variant": "fast",
+      "repository": "HiDream-ai/HiDream-I1-Fast",
+      "revision": "4856a5d8cd6fbd194780ed9f289bdf696d3afc10",
+      "private": false,
+      "gated": false,
+      "declaredTransformerLicense": "mit",
+      "licenseFilePresent": false,
+      "repositoryFileCount": 36,
+      "repositoryBytesFromRecursiveTree": 47188209249,
+      "weightFileCount": 12,
+      "weightBytes": 47178562342,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 17105733184
+      },
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "HiDreamImagePipeline",
+      "missingRequiredSubfolders": [
+        "text_encoder_4",
+        "tokenizer_4"
+      ],
+      "modelCardSha256": "932bb20b16ae7c11001fed2858fb46bfd0a5a017338896b964d315c1f3677873",
+      "modelIndexSha256": "6dcf42120d2aeb2b2219dca2ed7ced3e11e8e7d06b2a316075140df3d0d03067",
+      "schedulerConfigSha256": "40850c7d2ddbe87a0afe1007b6b7f9107022c34b401d2bf86b999c6e9dc3f812",
+      "transformerConfigSha256": "7daa489bf0eaa4b0123ded64c2068544fc622f8c67603d1511815e2c1ffc1d61",
+      "weightInventorySha256": "e2efd458d8a6ea8505e99d5eb8ff6fba9a4d3f3ea7fa2356c80d2159bcea3c1e",
+      "transformerWeightFiles": [
+        {
+          "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+          "sha256": "7a2bd00486df24742f5e6a9c1fe2729f1decb9fccb95efc421836ec963e1b37d",
+          "byteSize": 4985892896
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+          "sha256": "833d842fd1f0bb4aaf0c77d3a482b1a033638e3cfdea5a0720708dc431146dad",
+          "byteSize": 4982937816
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+          "sha256": "ccddaf0d33ad01b203ea93f457e7a948470d7f44bad1455d156564e80e0fba82",
+          "byteSize": 4993382384
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+          "sha256": "d8ffd12e207e8f6e628c67dc7ac6989584681e07541d22d4ddb3950d28b3b057",
+          "byteSize": 4977488520
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+          "sha256": "6c81d99d1db6f4b648c3eb437f855d3d17c7416153660112b43fa6a10545ac72",
+          "byteSize": 4993217256
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+          "sha256": "b4caec33feaeeb4333c7907b2d34bd5f2729aa1bf8242392bd563e7e182cdf45",
+          "byteSize": 4993217240
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+          "sha256": "65e10d42f22067920891ea004d733c5de61a6a1d5bc99a6fa2bc2c233e9029b3",
+          "byteSize": 4285536688
+        }
+      ]
+    }
+  ],
+  "requiredExternalComponent": {
+    "repository": "meta-llama/Llama-3.1-8B-Instruct",
+    "revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+    "gating": "manual",
+    "license": "llama3.1",
+    "requiredClasses": [
+      "LlamaForCausalLM",
+      "PreTrainedTokenizerFast"
+    ],
+    "repositoryFileCountVisibleBeforeAcceptance": 17,
+    "repositoryBytesVisibleBeforeAcceptance": 32132582323,
+    "safetensorsFileCount": 4,
+    "safetensorsBytes": 16060556376,
+    "hubSafetensorsDtypeParameterMetadata": {
+      "BF16": 8030261248
+    },
+    "weightOidsVisibleBeforeAcceptance": false,
+    "configAccessibleBeforeAcceptance": false,
+    "configHttpStatusBeforeAcceptance": 401,
+    "licenseFileListed": true,
+    "exactArtifactReviewComplete": false
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineClass": "HiDreamImagePipeline",
+    "pipelineSha256": "3a3de5fba061727ad038fcccd09d1317183f1edad634aa5281398df09aa31b16",
+    "pipelineOutputClass": "HiDreamImagePipelineOutput",
+    "pipelineOutputSha256": "ace28d4efa97bbf39efef06166927a45140bdc2b8728ef5f5fbd6377a3271295",
+    "transformerClass": "HiDreamImageTransformer2DModel",
+    "transformerSha256": "6bc5b4f71518cfc1fae8d291481d096f45fbf76b49b0633d6a0c477d69bb296f",
+    "flowMatchLcmSchedulerClass": "FlowMatchLCMScheduler",
+    "flowMatchLcmSchedulerSha256": "cecdb45fc95382138d430dcd51ff5bfac9589dc5d0d218b791c30be62843bfb5",
+    "uniPcSchedulerClass": "UniPCMultistepScheduler",
+    "uniPcSchedulerSha256": "5bfe1dcf55ebea6dbbf624d3af676b2529b81fbcaf493150d562ec9e1aba3872",
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->text_encoder_3->text_encoder_4->transformer->vae",
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds_t5",
+      "prompt_embeds_llama3",
+      "pooled_prompt_embeds"
+    ],
+    "interruptFlagAvailable": true,
+    "safetyCheckerAvailable": false
+  },
+  "pipelineContract": {
+    "modes": [
+      "text_to_image"
+    ],
+    "maxSequenceLengthDefault": 128,
+    "negativePromptAvailable": true,
+    "numImagesPerPromptDefault": 1,
+    "officialResolutions": [
+      [
+        1024,
+        1024
+      ],
+      [
+        768,
+        1360
+      ],
+      [
+        1360,
+        768
+      ],
+      [
+        880,
+        1168
+      ],
+      [
+        1168,
+        880
+      ],
+      [
+        1248,
+        832
+      ],
+      [
+        832,
+        1248
+      ]
+    ],
+    "recipes": {
+      "full": {
+        "steps": 50,
+        "guidanceScale": 5.0,
+        "shift": 3.0,
+        "scheduler": "UniPCMultistepScheduler"
+      },
+      "dev": {
+        "steps": 28,
+        "guidanceScale": 0.0,
+        "shift": 6.0,
+        "scheduler": "FlowMatchLCMScheduler"
+      },
+      "fast": {
+        "steps": 16,
+        "guidanceScale": 0.0,
+        "shift": 3.0,
+        "scheduler": "FlowMatchLCMScheduler"
+      }
+    }
+  },
+  "license": {
+    "transformerWeights": "mit declared in model-card metadata",
+    "vae": "apache-2.0 inherited from FLUX.1-schnell",
+    "t5TextEncoder": "apache-2.0",
+    "llamaTextEncoder": "Llama 3.1 Community License Agreement",
+    "modelSnapshotLicenseFilesPresent": false,
+    "gatedLlamaAcceptanceRequired": true,
+    "acceptancePerformedByThisReview": false
+  },
+  "remoteResourceEnvelope": {
+    "status": "modiff_estimate_only_qualification_pending",
+    "publicSnapshotWeightBytes": 47178562342,
+    "requiredExternalLlamaWeightBytes": 16060556376,
+    "combinedSelectiveWeightBytes": 63239118718,
+    "minimumSelectiveDiskBytes": 107374182400,
+    "minimumSystemRamBytes": 137438953472,
+    "notes": [
+      "The combined runnable surface exceeds 63.23 GB of selected safetensors before cache overhead and excludes any duplicate formats.",
+      "The official source recommends Flash Attention and CUDA 12.4, but those recommendations are not MoDiff runtime qualification evidence.",
+      "No local or remote real-weight execution occurred during this source review."
+    ]
+  },
+  "admission": {
+    "status": "review_complete_blocked_incomplete_gated_composite",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "blockingReasons": [
+      "all three public model snapshots omit the text_encoder_4 and tokenizer_4 subfolders required by their own model indexes",
+      "the official loader depends on a manually gated Llama 3.1 repository whose weight identities and config are unavailable before authenticated license acceptance",
+      "none of the three exact model snapshots bundles a license or notice file for its composite MIT, Apache-2.0, and Llama 3.1 terms",
+      "the generic image loader cannot yet assemble and receipt a separately pinned external tokenizer and causal language model",
+      "the package pipeline exposes no safety checker or equivalent output guardrail"
+    ],
+    "unresolvedGates": [
+      "task_scoped_llama_3_1_license_acceptance_and_authenticated_artifact_review",
+      "complete_exact_composite_artifact_receipt",
+      "bundled_or_product_owned_composite_license_receipt",
+      "backend_owned_external_text_encoder_loader_and_bounds",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}
