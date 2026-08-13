@@ -4713,6 +4713,26 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     Gallery, or generated-media surface was added. License acceptance,
     authenticated configuration review, backend-owned bounds, remote
     heavy-hardware execution, and physical macOS evidence remain pending.
+  - [x] **PixArt Sigma 1024px source admission:** backend `4fd1a66` and
+    client `235c9d3` admit the exact public snapshot
+    `PixArt-alpha/PixArt-Sigma-XL-2-1024-MS@e102b3591cc82e97071b8b4cb90d834d0c487207`
+    through the generic Diffusers image facade. The OpenRAIL++ repository has
+    no Python, requires no remote code, and selects four safetensors files /
+    21,827,405,446 bytes. Exact file hashes, canonical inventory digest,
+    metadata and pinned package-source hashes, the 1024px/20-step/guidance-4.5
+    recipe, 300-token bound, and estimate-only resource envelope are sealed in
+    `data/pixart-sigma-artifact-review.json` without downloading weights.
+
+    The workflow is Expert-only and remote-only, with Auto and Gallery
+    disabled. Its 104-workflow manifest entry is graph-qualified but explicitly
+    runtime-unqualified and requires only the immutable PixArt repository.
+    Backend `8bca634` and client `60b0269` also keep declarative image contract
+    refreshes on the non-installing base path, clear unused auxiliary model
+    identities, and finalize the exact loader-issued image contract. The full
+    1,373-test backend overlay gate, complete client check, focused base-runtime
+    matrix, deterministic workflow verification, and the three affected mocked
+    Studio cases pass. Remote real-weight execution, output safety and quality
+    review, and physical macOS execution remain pending independently.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4882,7 +4902,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `omnigen`
 - [ ] `ovis_image`
 - [ ] `pag`
-- [ ] `pixart_alpha`
+- [x] `pixart_alpha`
 - [ ] `prx`
 - [ ] `sana`
 - [x] `stable_cascade`
@@ -4975,4 +4995,5 @@ Add references only after the corresponding evidence exists.
 | P6.11 DiffusionGemma artifact/source review | `42b609e` | Not required | No-weight API probe only; bounded generic diffusion-text contract, remote heavy-hardware execution, multimodal safety review, and physical macOS evidence pending | Not required | Exact official 11-shard / 51,647,701,024-byte safetensors inventory, Apache-2.0 rights, package-owned class/source hashes, 256-token/48-step entropy-bound recipe, callback support, and estimate-only resource envelope are sealed. The model remains remote-only and absent from runtime/download catalogs and user-facing capabilities. |
 | P6.12 Stable Cascade artifact/source review | `b55983b` | Not required | Static artifact/source review only; license resolution, maintained package-owned pipeline support, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact prior/decoder revisions, six-file / 13,728,020,596-byte selected bf16 partition, full inventories, source hashes, two-stage recipe, and estimate-only resource envelope are sealed. The noncommercial license, upstream deprecation, and unpinned connected-repository metadata keep the family outside runtime/download catalogs and user-facing capabilities. |
 | P6.13 DeepFloyd IF artifact/source review | `8d45c9f` | Not required | Static artifact/source review and no-weight API probe only; authenticated gated-config review, backend-owned bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Three immutable stage revisions, 11-file / 27,326,661,461-byte repository-scoped selected surface, deduplicated weight size, source hashes, 64px-to-256px-to-1024px recipe, safety/watermark handoff, and estimate-only resource envelope are sealed. The gated noncommercial-research license keeps the family outside runtime/download catalogs and user-facing capabilities. |
+| P6.14 PixArt Sigma 1024px source admission | `4fd1a66` (`8bca634` declarative-field fix) | `235c9d3` (`60b0269` exact-contract fix) | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public OpenRAIL++ revision, four-file / 21,827,405,446-byte safetensors inventory, package-owned pipeline/source hashes, bounded 1024px recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 104-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
