@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T12:47:34.675Z",
+  "generatedAt": "2026-08-13T13:06:55.280Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 92,
-  "supportedPairCount": 104,
+  "supportedCanonicalPairCount": 93,
+  "supportedPairCount": 105,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -289,6 +289,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
       "graphHash": "3d12073437be488529f71034602c94b8952eb580bb21d9d2c8e56abd4e763f84"
+    },
+    {
+      "id": "AuraFlowPipeline:text_to_image",
+      "modelType": "AuraFlowPipeline",
+      "modelFamily": "AuraFlow",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "fal/AuraFlow-v0.3"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "AuraFlowPipeline"
+      ],
+      "sourceTemplateId": "task-template:auraflow-v0.3:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
+      "graphHash": "3b948485feee8adac387ece1a22c6519f8d09fe86871be2e056d5bd3cffe996c"
     },
     {
       "id": "CogVideoXPipeline:text_to_video",

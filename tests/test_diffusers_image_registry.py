@@ -27,6 +27,7 @@ from modules.DiffusersImage import (
     UnconditionalGenerate,
 )
 from modules.DiffusersImage.main import (
+    AURAFLOW_V03_REPO,
     CONSISTENCY_IMAGENET64_REPO,
     DDPM_CIFAR10_REPO,
     DREAMLITE_BASE_REPO,
@@ -727,6 +728,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         sana = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["SanaPipeline"], "text_to_image")
         self.assertFalse(sana["fieldParams"]["negative_prompt"]["hidden"])
         self.assertFalse(sana["fieldParams"]["max_sequence_length"]["hidden"])
+        auraflow = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["AuraFlowPipeline"], "text_to_image")
+        self.assertEqual(auraflow["fieldParams"]["width"]["max"], 1536)
+        self.assertEqual(auraflow["fieldParams"]["height"]["max"], 1536)
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -827,6 +831,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image"},
             ),
             "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
+            "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
             "DreamLitePipeline": (
                 {"text_to_image", "edit_image"},
                 DREAMLITE_BASE_REPO,
@@ -928,6 +933,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("SanaSprintPipeline", "text_to_image", Generate, {}),
             ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
+            ("AuraFlowPipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -2057,6 +2063,77 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 num_inference_steps=20,
                 guidance_scale=4.5,
                 max_sequence_length=301,
+            )
+
+    def test_auraflow_loads_only_the_pinned_fp16_partition_and_bounds_native_recipe(self):
+        loaded = {}
+
+        class AuraFlowPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid AuraFlow settings must fail before inference")
+
+        node = LoadPipeline("auraflow-v0.3-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=AuraFlowPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=AURAFLOW_V03_REPO,
+                pipeline_class="AuraFlowPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(AURAFLOW_V03_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], AURAFLOW_V03_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(AURAFLOW_V03_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value in (("width", 1552), ("height", 1552)):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "between 16 and 1536"):
+                Generate(f"auraflow-{field}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1536,
+                    height=value if field == "height" else 768,
+                    num_inference_steps=50,
+                    guidance_scale=3.5,
+                    max_sequence_length=256,
+                )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("auraflow-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1536,
+                height=768,
+                num_inference_steps=51,
+                guidance_scale=3.5,
+                max_sequence_length=256,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 256"):
+            Generate("auraflow-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1536,
+                height=768,
+                num_inference_steps=50,
+                guidance_scale=3.5,
+                max_sequence_length=257,
             )
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):

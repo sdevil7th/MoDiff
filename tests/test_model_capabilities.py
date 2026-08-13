@@ -125,7 +125,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 92)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 93)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -165,6 +165,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "SanaPipeline",
             "SanaSprintPipeline",
             "PixArtSigmaPipeline",
+            "AuraFlowPipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "LatentConsistencyModelPipeline",
@@ -353,6 +354,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(pixart["autoEligible"])
         self.assertFalse(pixart["galleryEligible"])
         self.assertNotIn("PixArtSigmaPipeline", experimental)
+        auraflow = by_model["AuraFlowPipeline"]
+        self.assertEqual(
+            auraflow["revisionCandidates"],
+            ["2cd8588f04c886002be4571697d84654a50e3af3"],
+        )
+        self.assertEqual(auraflow["defaultSize"], {"width": 1536, "height": 768, "aspectRatio": "custom"})
+        self.assertEqual(auraflow["recommendedSteps"], 50)
+        self.assertEqual(auraflow["recommendedGuidance"], 3.5)
+        self.assertEqual(auraflow["recommendedMaxSequenceLength"], 256)
+        self.assertEqual(auraflow["modes"], ["text_to_image"])
+        self.assertEqual(auraflow["pipelineClasses"], ["AuraFlowPipeline"])
+        self.assertFalse(auraflow["autoEligible"])
+        self.assertFalse(auraflow["galleryEligible"])
+        self.assertNotIn("AuraFlowPipeline", experimental)
         dreamlite = by_model["DreamLitePipeline"]
         self.assertEqual(
             dreamlite["revisionCandidates"],

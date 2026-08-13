@@ -40,6 +40,7 @@ STUDIO_MODEL_TYPES = {
     "LatentConsistencyModelPipeline",
     "StableDiffusionPAGPipeline",
     "PixArtSigmaPipeline",
+    "AuraFlowPipeline",
 }
 
 
@@ -92,6 +93,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         self.assertEqual(
             catalog_revision("PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"),
             "e102b3591cc82e97071b8b4cb90d834d0c487207",
+        )
+        self.assertEqual(
+            catalog_revision("fal/AuraFlow-v0.3"),
+            "2cd8588f04c886002be4571697d84654a50e3af3",
         )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):

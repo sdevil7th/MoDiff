@@ -60,6 +60,7 @@ SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -100,6 +101,7 @@ class ImagePipelineAdapter:
     weight_variant: str | None = None
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     max_inference_steps: int = 100
+    max_output_side: int = 2048
     fixed_guidance_scale: float | None = None
     minimum_image_guidance_scale: float = 0.0
     guidance_parameter: str | None = "guidance_scale"
@@ -122,6 +124,8 @@ class ImagePipelineAdapter:
             raise ValueError("An upstream image pipeline class cannot be blank.")
         if not 1 <= self.max_inference_steps <= 100:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
+        if not 16 <= self.max_output_side <= 2048 or self.max_output_side % 16:
+            raise ValueError("Image adapters must bound output sides to a multiple of 16 between 16 and 2048.")
         if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= 20.0:
             raise ValueError("An exact text guidance scale must be between 0 and 20.")
         if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
@@ -366,6 +370,16 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         max_inference_steps=50,
         max_sequence_length=300,
+    ),
+    "AuraFlowPipeline": ImagePipelineAdapter(
+        "AuraFlowPipeline",
+        frozenset({"text_to_image"}),
+        AURAFLOW_V03_REPO,
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        max_inference_steps=50,
+        max_output_side=1536,
+        max_sequence_length=256,
     ),
     "DreamLitePipeline": ImagePipelineAdapter(
         "DreamLitePipeline",
@@ -738,6 +752,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "PixArtSigmaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
+    "AuraFlowPipeline": {
+        "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
     "DreamLitePipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
@@ -1091,6 +1108,10 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
 
 def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[str, Any]:
     field_contract = get_image_mode_field_contract(adapter, mode)
+    field_params = field_contract.field_param_overlay()
+    if adapter.max_output_side != 2048:
+        for field in ("width", "height"):
+            field_params[field] = {**field_params[field], "max": adapter.max_output_side}
     actions = {
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
@@ -1103,7 +1124,7 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         "mode": mode,
         "modes": list(adapter.mode_options),
         "actions": {action: modes for action, modes in actions.items() if modes},
-        "fieldParams": field_contract.field_param_overlay(),
+        "fieldParams": field_params,
     }
     if mode == "unconditional_image":
         optional_fields = set(adapter.unconditional_optional_fields)
@@ -1470,10 +1491,20 @@ def preflight_image_action(
         field="negative_prompt",
     )
     values["width"] = _bounded_image_int(
-        values.get("width"), field="width", default=1024, minimum=16, maximum=2048, step=16
+        values.get("width"),
+        field="width",
+        default=1024,
+        minimum=16,
+        maximum=adapter.max_output_side,
+        step=16,
     )
     values["height"] = _bounded_image_int(
-        values.get("height"), field="height", default=1024, minimum=16, maximum=2048, step=16
+        values.get("height"),
+        field="height",
+        default=1024,
+        minimum=16,
+        maximum=adapter.max_output_side,
+        step=16,
     )
     values["seed"] = _bounded_image_int(values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295)
     values["num_inference_steps"] = _bounded_image_int(

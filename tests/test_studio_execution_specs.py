@@ -203,6 +203,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("SanaSprintPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "edit_image"),
                 ("PixArtSigmaPipeline", "text_to_image"),
+                ("AuraFlowPipeline", "text_to_image"),
                 ("DreamLitePipeline", "text_to_image"),
                 ("DreamLitePipeline", "edit_image"),
                 ("DreamLiteMobilePipeline", "text_to_image"),
@@ -397,6 +398,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertFalse(
             DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].live_proof
         )
+        auraflow = by_id["auraflow-v0.3:text-to-image:v1"]
+        self.assertEqual(auraflow["modelType"], "AuraFlowPipeline")
+        self.assertEqual(auraflow["pipelineClass"], "AuraFlowPipeline")
+        self.assertEqual(auraflow["defaultRepo"], "fal/AuraFlow-v0.3")
+        auraflow_profile = DIFFUSERS_EXECUTION_PROFILES[auraflow["executionProfileId"]]
+        self.assertEqual(auraflow_profile.max_low_memory_side, 1536)
+        self.assertEqual(auraflow_profile.max_low_memory_steps, 50)
+        self.assertFalse(auraflow_profile.live_proof)
         dreamlite = by_id["dreamlite-base:text-to-image:v1"]
         self.assertEqual(dreamlite["defaultRepo"], "carlofkl/DreamLite-base")
         self.assertEqual(dreamlite["pipelineClass"], "DreamLitePipeline")

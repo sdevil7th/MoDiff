@@ -97,6 +97,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "SanaPipeline",
             "SanaSprintPipeline",
             "PixArtSigmaPipeline",
+            "AuraFlowPipeline",
             "DreamLitePipeline",
             "DreamLiteMobilePipeline",
             "DummyCustomPipeline",

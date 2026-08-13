@@ -39,6 +39,7 @@ SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -5387,6 +5388,89 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["pixart-sigma-1024:text-to-image:v1"] = {
     "mode": "text_to_image",
     "profile": _PIXART_SIGMA_PROFILE,
     "capability": _PIXART_SIGMA_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_AURAFLOW_V03_PROFILE = {
+    "id": "auraflow-v0.3:direct",
+    "model_type": "AuraFlowPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "AuraFlowPipeline",
+    "default_repo": AURAFLOW_V03_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1536,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_AURAFLOW_V03_CAPABILITY = {
+    "modelType": "AuraFlowPipeline",
+    "label": "AuraFlow",
+    "displayName": "AuraFlow v0.3 1536px",
+    "family": "AuraFlow",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": AURAFLOW_V03_REPO,
+    "artifactLabel": "Apache-2.0 fp16 Diffusers safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1536, "height": 768, "aspectRatio": "custom"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 3.5,
+    "recommendedMaxSequenceLength": 256,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1536,
+        "height": 768,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(AURAFLOW_V03_REPO, model_type="AuraFlowPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains only package-owned Diffusers and Transformers code and a four-file fp16 safetensors partition.",
+        "The reviewed native recipe uses a 1536x768 canvas, 50 steps, guidance 3.5, at most 256 prompt tokens, and explicit model or sequential CPU offload.",
+        "The approximately 16.84 GB selected weight surface is remote-only; Auto and Gallery remain disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["auraflow-v0.3:text-to-image:v1"] = {
+    "modelType": "AuraFlowPipeline",
+    "mode": "text_to_image",
+    "profile": _AURAFLOW_V03_PROFILE,
+    "capability": _AURAFLOW_V03_CAPABILITY,
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,

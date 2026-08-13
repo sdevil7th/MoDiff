@@ -338,6 +338,13 @@
       "artifacts": []
     },
     {
+      "modelType": "AuraFlowPipeline",
+      "baseRepo": "fal/AuraFlow-v0.3",
+      "baseRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "DreamLitePipeline",
       "baseRepo": "carlofkl/DreamLite-base",
       "baseRevision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",
