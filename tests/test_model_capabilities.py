@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 80)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 82)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -638,6 +638,16 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stable_audio["studioExecutionSpecModes"], ["text_to_audio"])
         self.assertEqual(stable_audio["studioExecutionSpecs"][0]["pipelineClass"], "StableAudioPipeline")
         self.assertEqual(stable_audio["revisionCandidates"], ["f21265c1e2710b3bd2386596943f0007f55f802e"])
+        longcat = by_model["LongCatAudioDiTPipeline"]
+        self.assertEqual(longcat["runnableModes"], ["text_to_audio"])
+        self.assertEqual(longcat["recommendedSampleRate"], 24000)
+        self.assertEqual(longcat["recommendedDuration"], 5)
+        self.assertEqual(longcat["revisionCandidates"], ["f4c063ea37f262ba5e6129ebd80095a6d6a9de4d"])
+        audioldm2 = by_model["AudioLDM2Pipeline"]
+        self.assertEqual(audioldm2["runnableModes"], ["text_to_audio"])
+        self.assertEqual(audioldm2["recommendedSampleRate"], 16000)
+        self.assertEqual(audioldm2["recommendedDuration"], 10)
+        self.assertEqual(audioldm2["revisionCandidates"], ["c8e7e189d324425c05c4c2f81214041ef4107983"])
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],

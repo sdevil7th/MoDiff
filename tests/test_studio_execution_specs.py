@@ -163,6 +163,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageLayeredModularPipeline", "layer_decomposition"),
                 ("QwenImageModularPipeline", "control_image"),
                 ("StableAudioPipeline", "text_to_audio"),
+                ("LongCatAudioDiTPipeline", "text_to_audio"),
+                ("AudioLDM2Pipeline", "text_to_audio"),
                 ("FluxDevPipeline", "edit_image"),
                 ("FluxDevPipeline", "inpaint"),
                 ("StableDiffusionXLPipeline", "text_to_image"),
@@ -945,6 +947,41 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("audioGenerate", "stable_audio_guidance", "guidanceScale"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_longcat_and_audioldm2_seal_exact_pinned_generic_audio_routes(self):
+        cases = (
+            (
+                "LongCatAudioDiTPipeline",
+                "longcat-audio-dit-1b:direct",
+                "ruixiangma/LongCat-AudioDiT-1B-Diffusers",
+                "sampleRate24000",
+                None,
+            ),
+            (
+                "AudioLDM2Pipeline",
+                "audioldm2-base:direct",
+                "cvssp/audioldm2",
+                "sampleRate16000",
+                "numWaveforms3",
+            ),
+        )
+        for model_type, profile_id, repo, sample_rate, waveforms in cases:
+            with self.subTest(model_type=model_type):
+                spec = studio_execution_spec_for_pair(model_type, "text_to_audio")
+                self.assertIsNotNone(spec)
+                self.assertEqual(spec["executionProfileId"], profile_id)
+                self.assertEqual(spec["pipelineClass"], model_type)
+                self.assertEqual(spec["defaultRepo"], repo)
+                self.assertIn(("audioPipeline", "revision", "defaultRevision"), spec["bindings"])
+                self.assertIn(("audioGenerate", "task_type", "text2audio"), spec["bindings"])
+                self.assertIn(("audioGenerate", "sample_rate", sample_rate), spec["bindings"])
+                self.assertIn(("audioExport", "sample_rate", sample_rate), spec["bindings"])
+                if waveforms is None:
+                    self.assertFalse(any(param == "num_waveforms" for _role, param, _source in spec["bindings"]))
+                else:
+                    self.assertIn(("audioGenerate", "num_waveforms", waveforms), spec["bindings"])
+                graph, hints = executable_graph_for_spec(spec)
+                assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_inpaint_seals_the_exact_direct_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "inpaint")

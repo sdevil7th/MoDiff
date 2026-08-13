@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T04:20:46.590Z",
+  "generatedAt": "2026-08-13T04:50:55.726Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 80,
-  "supportedPairCount": 92,
+  "supportedCanonicalPairCount": 82,
+  "supportedPairCount": 94,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -179,6 +179,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
       "graphHash": "e02a08b1ac4e6182716dca08064c2557bebd92743aab23143dd918769dcd9296"
+    },
+    {
+      "id": "AudioLDM2Pipeline:text_to_audio",
+      "modelType": "AudioLDM2Pipeline",
+      "modelFamily": "AudioLDM2",
+      "mode": "text_to_audio",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "cvssp/audioldm2"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "AudioLDM2Pipeline"
+      ],
+      "sourceTemplateId": "task-template:audioldm2-base:text-to-audio:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
+      "graphHash": "3d12073437be488529f71034602c94b8952eb580bb21d9d2c8e56abd4e763f84"
     },
     {
       "id": "ConsistencyModelPipeline:unconditional_image",
@@ -1043,6 +1069,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
       "graphHash": "16c33fbfe1882c0726e2f90a8bb2357d761e997d0cddf741b12af809ca694610"
+    },
+    {
+      "id": "LongCatAudioDiTPipeline:text_to_audio",
+      "modelType": "LongCatAudioDiTPipeline",
+      "modelFamily": "LongCat AudioDiT",
+      "mode": "text_to_audio",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LongCatAudioDiTPipeline"
+      ],
+      "sourceTemplateId": "task-template:longcat-audio-dit-1b:text-to-audio:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
+      "graphHash": "3e3010a5b93d458da8a0d6ff6a340914d117a3db67fe0543bc02313dfec596c9"
     },
     {
       "id": "LTX2ConditionPipeline:image_to_video",

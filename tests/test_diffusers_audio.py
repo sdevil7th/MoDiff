@@ -17,8 +17,10 @@ from modules.DiffusersAudio.main import (  # noqa: E402
     ACE_CONTINUATION_MAX_EXTENSION_SECONDS,
     ACE_MAX_DURATION_SECONDS,
     ACE_STEP_DEFAULT_REPO,
+    AUDIO_LDM2_DEFAULT_REPO,
     AUDIO_PIPELINE_ADAPTERS,
     AUDIO_SAMPLE_RATE_OPTIONS,
+    LONGCAT_AUDIO_DIT_DEFAULT_REPO,
     STABLE_AUDIO_DEFAULT_REPO,
     FuseAdapters,
     Generate,
@@ -96,6 +98,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
     def test_audio_adapters_declare_ordered_mode_task_and_input_contracts(self):
         ace = AUDIO_PIPELINE_ADAPTERS["AceStepPipeline"]
         stable = AUDIO_PIPELINE_ADAPTERS["StableAudioPipeline"]
+        longcat = AUDIO_PIPELINE_ADAPTERS["LongCatAudioDiTPipeline"]
+        audioldm2 = AUDIO_PIPELINE_ADAPTERS["AudioLDM2Pipeline"]
 
         self.assertEqual(
             ace.modes,
@@ -127,6 +131,15 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertIsNone(stable.source_audio_channels)
         self.assertEqual(stable.mode_contracts[0].task_type, "text2audio")
         self.assertEqual(stable.mode_contracts[0].max_duration_seconds, 47)
+        self.assertEqual(longcat.generation_kind, "longcat_audio_dit")
+        self.assertEqual(longcat.default_inference_steps, 16)
+        self.assertEqual(longcat.mode_contracts[0].max_duration_seconds, 30)
+        self.assertFalse(longcat.supports_multiple_waveforms)
+        self.assertEqual(audioldm2.generation_kind, "audioldm2")
+        self.assertEqual(audioldm2.default_inference_steps, 200)
+        self.assertEqual(audioldm2.mode_contracts[0].max_duration_seconds, 10)
+        self.assertTrue(audioldm2.supports_multiple_waveforms)
+        self.assertTrue(all(item.safe_serialization_required for item in (stable, longcat, audioldm2)))
         self.assertNotIn("extract", Generate.params["task_type"]["options"])
         self.assertNotIn("lego", Generate.params["task_type"]["options"])
         self.assertNotIn("complete", Generate.params["task_type"]["options"])
@@ -1804,6 +1817,56 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertTrue(all(item["samples"].shape == (2, 48000) for item in result["audio_variations"]))
         self.assertIs(result["audio"], result["audio_variations"][0])
 
+    def test_longcat_and_audioldm2_use_exact_generic_generation_signatures(self):
+        class FakeLongCat:
+            _modiff_audio_pipeline_class = "LongCatAudioDiTPipeline"
+            device = "cpu"
+            sample_rate = 24000
+
+            def __call__(self, **kwargs):
+                self.call_kwargs = kwargs
+                return SimpleNamespace(audios=np.zeros((1, 1, 24000), dtype=np.float32))
+
+        longcat = FakeLongCat()
+        longcat_result = Generate().execute(
+            pipeline=longcat,
+            prompt="Calm ocean waves",
+            audio_duration=1,
+            stable_audio_steps=16,
+            stable_audio_guidance=4,
+            sample_rate=24000,
+        )
+        self.assertEqual(longcat.call_kwargs["audio_duration_s"], 1)
+        self.assertEqual(longcat.call_kwargs["num_inference_steps"], 16)
+        self.assertNotIn("num_waveforms_per_prompt", longcat.call_kwargs)
+        self.assertEqual(longcat_result["audio"]["samples"].shape, (1, 24000))
+
+        class FakeAudioLDM2:
+            _modiff_audio_pipeline_class = "AudioLDM2Pipeline"
+            device = "cpu"
+            vocoder = SimpleNamespace(config={"sampling_rate": 16000})
+
+            def __call__(self, **kwargs):
+                self.call_kwargs = kwargs
+                return SimpleNamespace(audios=np.zeros((3, 16000), dtype=np.float32))
+
+        audioldm2 = FakeAudioLDM2()
+        audioldm2_result = Generate().execute(
+            pipeline=audioldm2,
+            prompt="A wooden hammer strike",
+            audio_duration=1,
+            stable_audio_steps=200,
+            stable_audio_guidance=3.5,
+            num_waveforms=3,
+            sample_rate=16000,
+        )
+        self.assertEqual(audioldm2.call_kwargs["audio_length_in_s"], 1)
+        self.assertEqual(audioldm2.call_kwargs["num_waveforms_per_prompt"], 3)
+        self.assertEqual(len(audioldm2_result["audio_variations"]), 3)
+        self.assertTrue(
+            all(item["samples"].shape == (1, 16000) for item in audioldm2_result["audio_variations"])
+        )
+
     def test_explicit_zero_audio_controls_are_preserved_only_where_upstream_allows_them(self):
         pipeline = FakeSourceConditionedAceStepPipeline()
         node = Generate("ace-zero-values-test")
@@ -2025,6 +2088,30 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                     "200ba991ae448051e14b0183157e35c2d27c9fb0",
                 )
 
+        for pipeline_class, repo, revision in (
+            (
+                "LongCatAudioDiTPipeline",
+                LONGCAT_AUDIO_DIT_DEFAULT_REPO,
+                "f4c063ea37f262ba5e6129ebd80095a6d6a9de4d",
+            ),
+            ("AudioLDM2Pipeline", AUDIO_LDM2_DEFAULT_REPO, "c8e7e189d324425c05c4c2f81214041ef4107983"),
+        ):
+            with self.subTest(pipeline_class=pipeline_class):
+                with (
+                    patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipeline),
+                    patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
+                ):
+                    node.execute(
+                        model_id={"source": "hub", "value": repo},
+                        pipeline_class=pipeline_class,
+                        mode="text_to_audio",
+                        device="cpu",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+                    self.assertEqual(loaded["kwargs"]["revision"], revision)
+                    self.assertTrue(loaded["kwargs"]["use_safetensors"])
+
     def test_xl_turbo_schema_uses_distilled_defaults(self):
         steps = Generate.params["num_inference_steps"]
         guidance = Generate.params["guidance_scale"]
@@ -2035,7 +2122,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertIn("guidance-distilled", guidance["description"])
         self.assertIn("above 1", guidance["description"])
 
-    def test_generate_sample_rate_is_a_four_option_delivery_selector(self):
+    def test_generate_sample_rate_is_a_reviewed_delivery_selector(self):
         self.assertEqual(
             Generate.params["sample_rate"]["options"],
             AUDIO_SAMPLE_RATE_OPTIONS,

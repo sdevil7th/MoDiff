@@ -49,6 +49,8 @@ LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 STABLE_AUDIO_REPO = "stabilityai/stable-audio-open-1.0"
+LONGCAT_AUDIO_DIT_REPO = "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
+AUDIO_LDM2_REPO = "cvssp/audioldm2"
 WAN_22_T2V_A14B_REPO = "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
 WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
 WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
@@ -955,6 +957,23 @@ _STABLE_AUDIO_GRAPH_BINDINGS = (
     ("audioGenerate", "sample_rate", "sampleRate48000"),
     ("audioExport", "sample_rate", "sampleRate48000"),
 )
+_LONGCAT_AUDIO_DIT_GRAPH_BINDINGS = tuple(
+    (role, param, "sampleRate24000") if param == "sample_rate" else (role, param, source)
+    for role, param, source in _STABLE_AUDIO_GRAPH_BINDINGS
+    if param != "num_waveforms"
+)
+_AUDIO_LDM2_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "sampleRate16000"
+        if param == "sample_rate"
+        else "numWaveforms3"
+        if param == "num_waveforms"
+        else source,
+    )
+    for role, param, source in _STABLE_AUDIO_GRAPH_BINDINGS
+)
 _AUDIO_VARIATION_GRAPH_ROLES = (
     ("loadAudio", "modules.Audio.Load", -520, 300),
     *_AUDIO_GRAPH_ROLES,
@@ -1114,6 +1133,8 @@ _BINDING_SOURCES = frozenset(
         *_FRAMEPACK_GRAPH_BINDINGS,
         *_WAN_FLF_GRAPH_BINDINGS,
         *_STABLE_AUDIO_GRAPH_BINDINGS,
+        *_LONGCAT_AUDIO_DIT_GRAPH_BINDINGS,
+        *_AUDIO_LDM2_GRAPH_BINDINGS,
         *_AUDIO_GRAPH_BINDINGS,
         *_AUDIO_VARIATION_GRAPH_BINDINGS,
         *_AUDIO_CONTINUATION_GRAPH_BINDINGS,
@@ -3222,6 +3243,164 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _AUDIO_GRAPH_ROLES,
         "edges": _AUDIO_GRAPH_EDGES,
         "bindings": _STABLE_AUDIO_GRAPH_BINDINGS,
+    },
+    "longcat-audio-dit-1b:text-to-audio:v1": {
+        "modelType": "LongCatAudioDiTPipeline",
+        "mode": "text_to_audio",
+        "profile": {
+            "id": "longcat-audio-dit-1b:direct",
+            "model_type": "LongCatAudioDiTPipeline",
+            "modes": ("text_to_audio",),
+            "loader_module": "modules.DiffusersAudio",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-audio",
+            "pipeline_class": "LongCatAudioDiTPipeline",
+            "default_repo": LONGCAT_AUDIO_DIT_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": None,
+            "max_low_memory_steps": 16,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "LongCatAudioDiTPipeline",
+            "label": "LongCat AudioDiT 1B",
+            "displayName": "LongCat-AudioDiT-1B-Diffusers",
+            "family": "LongCat AudioDiT",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": LONGCAT_AUDIO_DIT_REPO,
+            "artifactLabel": "Reviewed Diffusers-format safetensors conversion",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
+            "recommendedSteps": 16,
+            "recommendedGuidance": 4.0,
+            "guidanceLabel": "Guidance",
+            "supportsImageInput": False,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": False,
+            "supportsAudioInput": False,
+            "outputKind": "audio",
+            "recommendedSampleRate": 24000,
+            "recommendedDuration": 5,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "steps": 16,
+            },
+            "modes": ["text_to_audio"],
+            "executionStatus": "expert_only",
+            "revisionCandidates": [require_catalog_revision(LONGCAT_AUDIO_DIT_REPO)],
+            "autoEligible": False,
+            "templateEligible": True,
+            "galleryEligible": False,
+            "notes": [
+                "The immutable reviewed Diffusers-format conversion contains only safetensors weights and no repository Python.",
+                "The approximately 5.70 GB snapshot follows the upstream MIT license and runs a five-second, 16-step, guidance-4 recipe at 24 kHz.",
+                "Auto and Gallery remain disabled pending remote runtime, output-quality, provenance, and rights review.",
+            ],
+        },
+        "roles": _AUDIO_GRAPH_ROLES,
+        "edges": _AUDIO_GRAPH_EDGES,
+        "bindings": _LONGCAT_AUDIO_DIT_GRAPH_BINDINGS,
+    },
+    "audioldm2-base:text-to-audio:v1": {
+        "modelType": "AudioLDM2Pipeline",
+        "mode": "text_to_audio",
+        "profile": {
+            "id": "audioldm2-base:direct",
+            "model_type": "AudioLDM2Pipeline",
+            "modes": ("text_to_audio",),
+            "loader_module": "modules.DiffusersAudio",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-audio",
+            "pipeline_class": "AudioLDM2Pipeline",
+            "default_repo": AUDIO_LDM2_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": None,
+            "max_low_memory_steps": 200,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "AudioLDM2Pipeline",
+            "label": "AudioLDM2 Base",
+            "displayName": "audioldm2",
+            "family": "AudioLDM2",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": AUDIO_LDM2_REPO,
+            "artifactLabel": "Diffusers safetensors repo",
+            "defaultDtype": "float16",
+            "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
+            "recommendedSteps": 200,
+            "recommendedGuidance": 3.5,
+            "guidanceLabel": "Guidance",
+            "supportsImageInput": False,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": False,
+            "supportsAudioInput": False,
+            "outputKind": "audio",
+            "recommendedSampleRate": 16000,
+            "recommendedDuration": 10,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "float16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "steps": 200,
+            },
+            "modes": ["text_to_audio"],
+            "executionStatus": "expert_only",
+            "revisionCandidates": [require_catalog_revision(AUDIO_LDM2_REPO)],
+            "autoEligible": False,
+            "templateEligible": True,
+            "galleryEligible": False,
+            "notes": [
+                "The immutable official base snapshot has safetensors equivalents for every weighted component; loading rejects all co-published legacy pickle files.",
+                "The selected safe envelope is approximately 4.48 GB before cache overhead and follows the reviewed ten-second, 200-step, guidance-3.5, three-waveform quality recipe at 16 kHz.",
+                "CC-BY-NC-SA-4.0 applies; Auto and Gallery remain disabled pending remote runtime and output-quality review.",
+            ],
+        },
+        "roles": _AUDIO_GRAPH_ROLES,
+        "edges": _AUDIO_GRAPH_EDGES,
+        "bindings": _AUDIO_LDM2_GRAPH_BINDINGS,
     },
     "flux-dev:edit-image:v1": {
         "modelType": "FluxDevPipeline",

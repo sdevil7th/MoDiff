@@ -14,6 +14,8 @@ from utils.paths import parse_filename
 
 logger = logging.getLogger("modiff")
 AUDIO_SAMPLE_RATE_OPTIONS = {
+    "16000": "16 kHz",
+    "24000": "24 kHz",
     "44100": "44.1 kHz",
     "48000": "48 kHz",
     "88200": "88.2 kHz",

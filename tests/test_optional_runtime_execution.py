@@ -363,11 +363,14 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         cases = (
             ("ModelsLoader", "refresh_pipeline_identity"),
             ("DynamicBlockNode", "update_node"),
+            ("LoadPipeline", "update_audio_contract"),
+            ("Generate", "update_audio_contract"),
         )
         for action, method_name in cases:
-            with self.subTest(action=action):
+            module = "modules.ModularDiffusers" if action in {"ModelsLoader", "DynamicBlockNode"} else "modules.DiffusersAudio"
+            with self.subTest(module=module, action=action):
                 requirement = field_action_optional_runtime_requirement(
-                    "modules.ModularDiffusers",
+                    module,
                     action,
                     method_name,
                     {

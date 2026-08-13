@@ -70,6 +70,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "HunyuanVideoFramepackPipeline",
             "AceStepAudioPipeline",
             "StableAudioPipeline",
+            "LongCatAudioDiTPipeline",
+            "AudioLDM2Pipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
             "FluxKreaPipeline",

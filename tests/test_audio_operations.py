@@ -159,7 +159,7 @@ class AudioExportTests(unittest.TestCase):
     def test_sample_rate_options_include_music_delivery_rates(self):
         options = Export.params["sample_rate"]["options"]
 
-        self.assertEqual(set(options), {"44100", "48000", "88200", "96000"})
+        self.assertEqual(set(options), {"16000", "24000", "44100", "48000", "88200", "96000"})
         self.assertEqual(options["44100"], "44.1 kHz")
         self.assertEqual(options["48000"], "48 kHz")
         self.assertEqual(options["88200"], "88.2 kHz")

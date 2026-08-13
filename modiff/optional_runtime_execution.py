@@ -300,6 +300,16 @@ _DECLARATIVE_FIELD_ACTIONS = frozenset(
             "DynamicBlockNode",
             "update_node",
         ),
+        (
+            "modules.DiffusersAudio",
+            "LoadPipeline",
+            "update_audio_contract",
+        ),
+        (
+            "modules.DiffusersAudio",
+            "Generate",
+            "update_audio_contract",
+        ),
     }
 )
 
