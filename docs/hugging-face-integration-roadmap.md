@@ -4317,6 +4317,39 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   contracts and 80 upstream workflows; 1,313 backend tests plus 2,965 subtests,
   the complete client check, and all 106 mocked Studio cases pass. No weights
   were downloaded.
+- [x] Complete the standard Krea 2 Raw/Turbo artifact, package, license, and
+  admission-gate review without accepting repository terms. Backend `e176f14`
+  seals exact official revisions
+  `krea/Krea-2-Raw@6b0ece7fffb640c5e3bcbe0a7f10f66b8e60a603` and
+  `krea/Krea-2-Turbo@98e0fe118d17c9e3547fbb2e25acdbae2cadf7c7`.
+  Each 55-file repository has a Python-free 17-file Diffusers candidate
+  partition with five safetensors files / 35,666,644,396 weight bytes; exact
+  weight identities, metadata blob receipts, duplicate root-native checkpoint
+  exclusions, pinned standard and Modular package source hashes, distinct
+  28-step/guidance-4.5 Raw and 8-step/guidance-free Turbo recipes, and
+  estimate-only resource envelopes are sealed in
+  `data/krea2-artifact-review.json` without fetching model-weight bytes.
+
+  Admission remains blocked rather than silently accepting rights on the
+  user's behalf. Both Hugging Face repositories require affirmative acceptance
+  of the Krea 2 Community License and its moving Acceptable Use Policy. The
+  pinned license limits commercial use to entities below USD 1 million in
+  trailing company-wide annual revenue unless an enterprise license is
+  obtained, carries recipient-acceptance/model-naming/license-copy/notice
+  distribution duties, and mandates reasonable deployment content filtering.
+  The package has no safety checker and no step, sequence-length, or output
+  pixel ceiling. The app-only plans were inspected but not submitted: with
+  528,238,714,880 free bytes, a 450,696,547,273-byte existing queue, and the
+  68,719,476,736-byte reserve, Raw and Turbo were respectively short by
+  53,182,524,488 and 53,172,350,108 bytes. No older model was deleted.
+
+  The complete backend overlay passes 1,631 tests, 3,580 subtests, and three
+  platform skips; the focused gate passes 21 tests and 104 subtests, Ruff E9/F
+  and package compatibility pass, and no client change is required. Legal and
+  product approval, task-scoped terms acceptance, downstream terms/filter
+  implementation, immutable AUP evidence, bounded runtime admission, app
+  capacity, remote real-weight review, and physical macOS execution remain
+  independent gates.
 - [x] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
   specifications for its distinct `t2va`, `fl2va`, and `ref2va` workflows.
   Validate the `transformer/` versus `transformer_ref/` partition receipt,
@@ -6059,7 +6092,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `kandinsky2_2`
 - [x] `kandinsky3`
 - [x] `kolors`
-- [ ] `krea2`
+- [x] `krea2`
 - [x] `latent_consistency_models`
 - [x] `latent_diffusion`
 - [x] `ledits_pp`
@@ -6201,4 +6234,5 @@ Add references only after the corresponding evidence exists.
 | P6.49 Ovis Image 7B text-to-image source admission | `df2fa98` | `ab47b67` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, a 21-file / 21.81 GB Diffusers-only selection, five immutable safetensors weights, bundled LICENSE/NOTICE receipts, and explicit exclusion of duplicate native checkpoints plus the Python-bearing Ovis2.5 subtree are sealed. The bounded 1024px/50-step/guidance-5 Expert workflow retains package cancellation and offload hooks. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 131-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact safe selection is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.50 PRX 512 SFT text-to-image source admission | `012b101` | `9c320a4` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision plus incorporated T5-Gemma terms, a complete 19-file / 15.51 GB Python-free snapshot, five immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded native 512px/28-step/guidance-5 Expert workflow maps the generic token limit to PRX's exact argument and retains step-boundary cancellation. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 132-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.51 Nucleus Image 17B MoE text-to-image source admission | `86cc756` | `8b4f002` | Model-snapshot license-file clarification, app storage capacity, remote real-weight memory/output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, complete 38-file / 51.66 GB Python-free snapshot, 12 immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded seven-bucket 1024px/50-step/guidance-4 Expert workflow retains package cancellation and offload hooks. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 133-workflow catalog is graph-qualified/runtime-unqualified; the missing license file, post-training, and safety checker keep Auto and Gallery disabled. The required app-only aggregate preflight was 36.31 GB short, so the snapshot was not submitted and no older model was deleted; no media has been generated. |
+| P6.52 Krea 2 Raw/Turbo standard source and admission-gate review | `e176f14` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial eligibility/legal approval, downstream terms/content-filter implementation, immutable AUP receipt, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | Two exact gated official revisions, two Python-free 17-file / 35.68 GB Diffusers candidate partitions, five immutable safetensors weights per recipe, duplicate native-checkpoint exclusions, pinned package source receipts, distinct Raw/Turbo recipes, and estimate-only envelopes are sealed. Custom terms, mandatory content filtering, missing package safety checker/bounds, and two queue-aware app preflight deficits of about 53.2 GB keep the standard family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no weight bytes or media were fetched. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
