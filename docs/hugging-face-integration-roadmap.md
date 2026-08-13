@@ -4733,6 +4733,28 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     matrix, deterministic workflow verification, and the three affected mocked
     Studio cases pass. Remote real-weight execution, output safety and quality
     review, and physical macOS execution remain pending independently.
+  - [x] **AuraFlow v0.3 source admission:** backend `8117b39` and client
+    `7d52469` admit the exact public snapshot
+    `fal/AuraFlow-v0.3@2cd8588f04c886002be4571697d84654a50e3af3`
+    through the generic Diffusers image facade. The Apache-2.0 repository has
+    no Python, requires no remote code, and selects the four-file fp16
+    safetensors partition / 16,835,036,374 bytes. Exact file hashes, canonical
+    inventory digest, immutable metadata and pinned package-source hashes, the
+    native 1536x768/50-step/guidance-3.5 recipe, 256-token bound, and
+    estimate-only resource envelope are sealed in
+    `data/auraflow-v0.3-artifact-review.json` without downloading weights.
+
+    The workflow is Expert-only and remote-only, with Auto and Gallery
+    disabled. Its 105-workflow manifest entry is graph-qualified but explicitly
+    runtime-unqualified and requires only the immutable AuraFlow repository.
+    Backend-owned field contracts and preflight now enforce AuraFlow's 1536px
+    maximum side, while client `c5e02ea` updates the restored-queue test fixture
+    to model the current loader-issued image-contract signal. The 1,399-test
+    exact pinned backend overlay, complete client check, deterministic workflow
+    verification, and corrected focused mocked Studio case pass. Remote
+    real-weight execution, output safety and quality review, and physical macOS
+    execution remain pending independently; no weights or media were
+    downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4865,7 +4887,7 @@ This is a family inventory, not a requirement to create one node per family.
 
 ### Image, unconditional, and generic
 
-- [ ] `aura_flow`
+- [x] `aura_flow`
 - [ ] `bria`
 - [ ] `bria_fibo`
 - [ ] `chroma`
@@ -4996,4 +5018,5 @@ Add references only after the corresponding evidence exists.
 | P6.12 Stable Cascade artifact/source review | `b55983b` | Not required | Static artifact/source review only; license resolution, maintained package-owned pipeline support, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact prior/decoder revisions, six-file / 13,728,020,596-byte selected bf16 partition, full inventories, source hashes, two-stage recipe, and estimate-only resource envelope are sealed. The noncommercial license, upstream deprecation, and unpinned connected-repository metadata keep the family outside runtime/download catalogs and user-facing capabilities. |
 | P6.13 DeepFloyd IF artifact/source review | `8d45c9f` | Not required | Static artifact/source review and no-weight API probe only; authenticated gated-config review, backend-owned bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Three immutable stage revisions, 11-file / 27,326,661,461-byte repository-scoped selected surface, deduplicated weight size, source hashes, 64px-to-256px-to-1024px recipe, safety/watermark handoff, and estimate-only resource envelope are sealed. The gated noncommercial-research license keeps the family outside runtime/download catalogs and user-facing capabilities. |
 | P6.14 PixArt Sigma 1024px source admission | `4fd1a66` (`8bca634` declarative-field fix) | `235c9d3` (`60b0269` exact-contract fix) | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public OpenRAIL++ revision, four-file / 21,827,405,446-byte safetensors inventory, package-owned pipeline/source hashes, bounded 1024px recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 104-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.15 AuraFlow v0.3 source admission | `8117b39` | `7d52469` (`c5e02ea` exact-contract fixture) | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, four-file / 16,835,036,374-byte fp16 safetensors partition, package-owned pipeline/source hashes, bounded native 1536x768 recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 105-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
