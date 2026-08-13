@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from PIL import Image
@@ -147,6 +149,135 @@ class WorkflowLoopTests(unittest.TestCase):
         self.assertEqual(result["collection"], [0, 1, 2])
         self.assertEqual(completed_result_indexes, [0, 1, 2])
         self.assertTrue(any("Resuming after 1" in item.get("message", "") for item in self.messages))
+
+    def test_durable_loop_resumes_retained_segments_after_process_replacement(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            retained_root = root / "retained"
+            retained_root.mkdir()
+            assets = []
+            for index in range(2):
+                path = retained_root / f"segment-{index}.mp4"
+                path.write_bytes(b"retained-video-fixture")
+                assets.append(
+                    {
+                        "schema_version": 1,
+                        "asset_id": f"segment-{index}",
+                        "storage": "file",
+                        "path": str(path),
+                        "media_type": "video",
+                        "width": 8,
+                        "height": 6,
+                        "fps": 8.0,
+                        "frame_count": 8,
+                        "duration_seconds": 1.0,
+                        "task_id": "first-worker",
+                        "temporary": True,
+                        "pinned": True,
+                    }
+                )
+
+            graph = {
+                "sid": "test",
+                "nodes": {
+                    "items": {
+                        "module": "modules.WorkflowControl",
+                        "action": "LoopItems",
+                        "params": {"collection": _param(assets), "item_index": _param(0)},
+                    },
+                    "result": {
+                        "module": "modules.WorkflowControl",
+                        "action": "LoopResult",
+                        "params": {
+                            "value_input": _param(source_id="items", source_key="item"),
+                            "stop_input": _param(False),
+                        },
+                    },
+                },
+                "paths": [["items", "result"]],
+                "loops": [
+                    {
+                        "id": "durable-video-loop",
+                        "bodyNodeIds": ["items", "result"],
+                        "iterations": 2,
+                        "maxIterations": 2,
+                        "itemNodeId": "items",
+                        "resultNodeId": "result",
+                        "iterationMode": "collection",
+                        "carry": False,
+                        "collect": True,
+                        "durable": True,
+                    }
+                ],
+            }
+            identity = {"workflowTabId": "long-video", "runInputHash": "exact-input-hash"}
+            self.server.data_dir = str(root / "data")
+            self.server.current_task.update({"task_id": "first-worker", "runtimeHints": identity})
+            prepared = self.server._prepare_graph_loops(graph)
+            original_execute = self.server.execute_node
+
+            def interrupt_after_first_result(node_id, node, sid, **kwargs):
+                output = original_execute(node_id, node, sid, **kwargs)
+                if node_id == "result" and self.server.node_cache["items"].output["index"] == 0:
+                    self.server.interrupt_flag = True
+                return output
+
+            self.server.execute_node = interrupt_after_first_result
+            with patch("modiff.media_assets.asset_root", return_value=retained_root):
+                with self.assertRaisesRegex(InterruptedError, "interrupted before iteration 2"):
+                    self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
+
+            replacement = WebServer.__new__(WebServer)
+            replacement.modules = MODULE_MAP
+            replacement.node_cache = {}
+            replacement.data_dir = str(root / "data")
+            replacement.current_task = {
+                "task_id": "replacement-worker",
+                "attempt_index": 0,
+                "runtimeHints": identity,
+            }
+            replacement.interrupt_flag = False
+            replacement_messages = []
+            replacement.queue_message = lambda message, _sid=None: replacement_messages.append(message)
+            replacement_prepared = replacement._prepare_graph_loops(graph)
+            result_indexes = []
+            replacement_execute = replacement.execute_node
+
+            def record_result(node_id, node, sid, **kwargs):
+                output = replacement_execute(node_id, node, sid, **kwargs)
+                if node_id == "result":
+                    result_indexes.append(replacement.node_cache["items"].output["index"])
+                return output
+
+            replacement.execute_node = record_result
+            with patch("modiff.media_assets.asset_root", return_value=retained_root):
+                result = replacement._execute_graph_loop(
+                    replacement_prepared["loops"][0], graph["nodes"], graph["sid"]
+                )
+
+            self.assertEqual(result["collection"], assets)
+            self.assertEqual(result_indexes, [1])
+            self.assertTrue(any("Resuming after 1" in item.get("message", "") for item in replacement_messages))
+            checkpoint_files = list((root / "data" / "runtime" / "loop-checkpoints").glob("*.json"))
+            self.assertEqual(len(checkpoint_files), 1)
+            replacement._clear_loop_checkpoints("replacement-worker")
+            self.assertFalse(checkpoint_files[0].exists())
+
+    def test_durable_loop_rejects_non_retained_values_and_missing_run_identity(self):
+        graph = self._graph()
+        graph["loops"][0]["durable"] = True
+        prepared = self.server._prepare_graph_loops(graph)
+        with self.assertRaisesRegex(ValueError, "needs workflowTabId and runInputHash"):
+            self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
+
+        self.server.current_task["runtimeHints"] = {
+            "workflowTabId": "long-video",
+            "runInputHash": "exact-input-hash",
+        }
+        with TemporaryDirectory() as temporary:
+            self.server.data_dir = temporary
+            with self.assertRaisesRegex(ValueError, "retained file-backed video assets"):
+                self.server._execute_graph_loop(prepared["loops"][0], graph["nodes"], graph["sid"])
 
     def test_loop_rejects_unbounded_or_overlapping_body_contracts(self):
         graph = self._graph()

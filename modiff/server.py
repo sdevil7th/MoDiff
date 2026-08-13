@@ -8414,6 +8414,7 @@ class WebServer:
                 "iteration_mode": iteration_mode,
                 "carry": bool(item.get("carry", True)),
                 "collect": bool(item.get("collect", True)),
+                "durable": bool(item.get("durable", False)),
                 "max_retries": max(0, min(10, int(item.get("maxRetries") or 0))),
             }
             prepared.append(prepared_loop)
@@ -8451,8 +8452,134 @@ class WebServer:
                 root_by_node[node_id] = root
         return {"loops": prepared, "by_node": root_by_node, "loops_by_id": loops_by_id}
 
+    def _durable_loop_checkpoint_path(self, loop, checkpoint_key):
+        """Resolve one input-scoped checkpoint without exposing identity in its filename."""
+
+        if not loop.get("durable"):
+            return None
+        runtime_hints = (self.current_task or {}).get("runtimeHints") or {}
+        workflow_id = str(runtime_hints.get("workflowTabId") or "").strip()
+        run_input_hash = str(runtime_hints.get("runInputHash") or "").strip()
+        if not workflow_id or not run_input_hash:
+            raise ValueError(
+                f"Durable loop {loop['id']} needs workflowTabId and runInputHash runtime identity."
+            )
+        identity = json.dumps(
+            [workflow_id, run_input_hash, checkpoint_key],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+        data_dir = Path(getattr(self, "data_dir", "data")).resolve()
+        return data_dir / "runtime" / "loop-checkpoints" / f"{digest}.json"
+
+    @staticmethod
+    def _durable_loop_asset(value):
+        """Validate and normalize the retained-video value a durable loop may save."""
+
+        if not isinstance(value, dict) or value.get("storage") != "file" or value.get("media_type") != "video":
+            raise ValueError("Durable loops may checkpoint only retained file-backed video assets.")
+        from modiff.media_assets import asset_root, coerce_video_asset
+
+        asset = coerce_video_asset(value)
+        path = Path(asset["path"]).resolve()
+        try:
+            path.relative_to(asset_root())
+        except ValueError as exc:
+            raise ValueError("Durable loop assets must be inside MoDiff's retained-media directory.") from exc
+        projected = {
+            key: asset[key]
+            for key in (
+                "schema_version",
+                "asset_id",
+                "storage",
+                "path",
+                "media_type",
+                "width",
+                "height",
+                "fps",
+                "frame_count",
+                "duration_seconds",
+                "task_id",
+                "temporary",
+                "pinned",
+                "created_at",
+                "updated_at",
+                "source_asset_ids",
+                "operation",
+            )
+            if key in asset
+        }
+        encoded = json.dumps(projected, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > 65536:
+            raise ValueError("Durable loop asset metadata exceeds the 64 KiB checkpoint limit.")
+        return projected
+
+    def _load_durable_loop_checkpoint(self, path, signature):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return None
+        except (OSError, TypeError, ValueError) as exc:
+            raise ValueError(f"Durable loop checkpoint {path.name} is unreadable.") from exc
+        if not isinstance(value, dict) or value.get("schema_version") != 1 or value.get("signature") != signature:
+            raise ValueError(f"Durable loop checkpoint {path.name} does not match this loop contract.")
+        try:
+            next_index = int(value["next_index"])
+            collection = [self._durable_loop_asset(item) for item in value.get("collection") or []]
+            carry_value = value.get("carry_value")
+            carry_value = self._durable_loop_asset(carry_value) if carry_value is not None else None
+            stopped = bool(value.get("stopped"))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Durable loop checkpoint {path.name} contains unusable retained media.") from exc
+        if next_index < 0 or next_index != len(collection):
+            raise ValueError(f"Durable loop checkpoint {path.name} has inconsistent iteration metadata.")
+        return {
+            "signature": signature,
+            "next_index": next_index,
+            "collection": collection,
+            "carry_value": carry_value,
+            "stopped": stopped,
+            "durable_path": path,
+        }
+
+    def _persist_durable_loop_checkpoint(self, checkpoint):
+        path = checkpoint.get("durable_path")
+        if path is None:
+            return
+        collection = [self._durable_loop_asset(item) for item in checkpoint["collection"]]
+        carry_value = checkpoint.get("carry_value")
+        carry_value = self._durable_loop_asset(carry_value) if carry_value is not None else None
+        payload = {
+            "schema_version": 1,
+            "signature": checkpoint["signature"],
+            "next_index": int(checkpoint["next_index"]),
+            "collection": collection,
+            "carry_value": carry_value,
+            "stopped": bool(checkpoint["stopped"]),
+            "updated_at": time.time(),
+        }
+        encoded = json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > 8 * 1024 * 1024:
+            raise ValueError("Durable loop checkpoint exceeds the 8 MiB metadata limit.")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        try:
+            temporary.write_text(encoded, encoding="utf-8")
+            os.replace(temporary, path)
+        except Exception:
+            temporary.unlink(missing_ok=True)
+            raise
+
+    def _clear_loop_checkpoints(self, task_id):
+        checkpoints = self.__dict__.setdefault("_loop_checkpoints", {}).pop(str(task_id), {})
+        for checkpoint in checkpoints.values():
+            path = checkpoint.get("durable_path") if isinstance(checkpoint, dict) else None
+            if isinstance(path, Path):
+                path.unlink(missing_ok=True)
+
     def _loop_checkpoint(self, loop, *, iterations, scope=""):
-        """Return a compatible in-process checkpoint for graph-level retries."""
+        """Return a compatible in-process or retained-media checkpoint."""
         task_id = str((self.current_task or {}).get("task_id") or "session")
         checkpoints = self.__dict__.setdefault("_loop_checkpoints", {})
         if len(checkpoints) > 20:
@@ -8462,15 +8589,25 @@ class WebServer:
         task_checkpoints = checkpoints.setdefault(task_id, {})
         checkpoint_key = f"{scope}/{loop['id']}" if scope else loop["id"]
         checkpoint = task_checkpoints.get(checkpoint_key)
-        signature = (loop["iteration_mode"], int(iterations), bool(loop["carry"]), bool(loop["collect"]))
+        signature = {
+            "iteration_mode": loop["iteration_mode"],
+            "iterations": int(iterations),
+            "carry": bool(loop["carry"]),
+            "collect": bool(loop["collect"]),
+            "durable": bool(loop.get("durable")),
+        }
         if not isinstance(checkpoint, dict) or checkpoint.get("signature") != signature:
-            checkpoint = {
-                "signature": signature,
-                "next_index": 0,
-                "collection": [],
-                "carry_value": None,
-                "stopped": False,
-            }
+            path = self._durable_loop_checkpoint_path(loop, checkpoint_key)
+            checkpoint = self._load_durable_loop_checkpoint(path, signature) if path is not None else None
+            if checkpoint is None:
+                checkpoint = {
+                    "signature": signature,
+                    "next_index": 0,
+                    "collection": [],
+                    "carry_value": None,
+                    "stopped": False,
+                    "durable_path": path,
+                }
             task_checkpoints[checkpoint_key] = checkpoint
         return checkpoint
 
@@ -8609,6 +8746,7 @@ class WebServer:
                     "stopped": stopped,
                 }
             )
+            self._persist_durable_loop_checkpoint(checkpoint)
             if stopped:
                 break
 
@@ -9082,7 +9220,7 @@ class WebServer:
                     }
                 )
             task_id = str((self.current_task or {}).get("task_id") or "session")
-            self.__dict__.setdefault("_loop_checkpoints", {}).pop(task_id, None)
+            self._clear_loop_checkpoints(task_id)
             self.queue_message(
                 {
                     "type": "graph_completed",
