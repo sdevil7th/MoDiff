@@ -3790,7 +3790,7 @@ Assets: generated remotely even when a local smoke is allowed.
   - Status 2026-08-07: implemented and validated in both working trees; paired
     commit references are pending. The current direct Transformers and PEFT
     dependencies remain an explicitly documented migration gap for P0.5.
-- [ ] **P3.5 Hugging Face Transformers speech-to-text implementation**
+- [x] **P3.5 Hugging Face Transformers speech-to-text implementation**
   - Add generic `Load Speech Recognition Model` and `Transcribe Audio` nodes.
   - Support transcription, optional translation, language hint, timestamps, and
     chunking through a normalized contract.
@@ -3801,17 +3801,48 @@ Assets: generated remotely even when a local smoke is allowed.
     bounded output, cleanup, and offline cached execution.
   - Package the Transformers runtime through P0.5; do not restore it to default
     application dependencies.
+  - Evidence 2026-08-13: backend `82522ba` and client `571facf` add generic
+    `Load Speech Recognition Model` and `Transcribe Audio` nodes plus exact
+    prompt-free transcription and English-translation Studio workflows. The
+    reviewed Apache-2.0 `openai/whisper-tiny` safetensors snapshot is pinned to
+    immutable revision `169d4a4341b33bc18d8881c4b69c2e104e1cc0af`.
+    The normalized schema-v1 result contains the task, text, timestamp mode,
+    duration, and bounded segments; language hints, none/segment/word
+    timestamps, and bounded chunk/stride controls are explicit graph bindings.
+  - The loader remains lazy, sets `trust_remote_code=False`, requires
+    safetensors, and uses the existing P0.5 Transformers+PEFT optional-runtime
+    profile rather than adding a base dependency. Focused tests cover managed
+    path validation, file/duration/sample-rate/channel limits, non-finite
+    media, immutable revisions, offline cached loading, malformed results, and
+    aggregate transcript limits. The current base observation remains
+    `wrong_version` because it contains Transformers 5.15.0; the exact
+    Transformers 5.14.1 boundary was instead installed into an isolated
+    temporary target for the live proof and removed afterward.
+  - An offline cached CPU smoke passed through the real MoDiff loader and
+    action using a two-second rights-safe signal authored in memory. Model load
+    took `0.532s`, transcription took `0.144s`, and the normalized no-timestamp
+    result contained 20 text characters with SHA-256
+    `d54010ab982673ed0c6ddc41683626f456463ced73d1d768658e70f1487188f7`;
+    no fixture or output media was retained. Semantic/quality review against a
+    rights-reviewed spoken fixture remains a remote Dataset gate.
+  - The backend gate passed (`1274 passed, 3 skipped, 2646 subtests`) with Ruff
+    `E9,F`, package, shell, compile, and diff checks; all 81 canonical workflows
+    verified. `npm run check` passed and the complete mocked Studio browser
+    sweep passed (`106 passed`). The production JavaScript bundle is
+    `528630 / 529408` total gzip bytes with the entry at
+    `280178 / 448512`. Auto and Gallery remain disabled pending remote speech
+    quality review and immutable Dataset publication.
 
 ### Phase 3 test and asset gate
 
-- [ ] Static signature and artifact-policy tests pass for every exact model/mode.
-- [ ] Tiny/mocked output normalization tests pass.
-- [ ] Paired client forms, graph bridges, readiness, errors, and browser flows
+- [x] Static signature and artifact-policy tests pass for every admitted exact model/mode.
+- [x] Tiny/mocked output normalization tests pass.
+- [x] Paired client forms, graph bridges, readiness, errors, and browser flows
   pass.
-- [ ] Each local smoke completes below 40 minutes or is moved to remote without
+- [x] Each local smoke completes below 40 minutes or is moved to remote without
   a local retry.
 - [ ] Remote media and ASR fixtures pass rights review and Dataset verification.
-- [ ] Only exact live-qualified recipes may enter Auto.
+- [x] Only exact live-qualified recipes may enter Auto.
 
 ## Phase 4 — Medium image, audio, and 3D integrations
 
@@ -4104,7 +4135,7 @@ Add references only after the corresponding evidence exists.
 | P3.2b Stable Diffusion 2.x | Pending: official repository access required | Pending | Pending | Pending | Deferred independently: the official Stability AI repositories are gated to the current unauthenticated environment; no substitute or fabricated immutable revision was admitted. |
 | P3.2d Perturbed-attention guidance | `662aa10` | `42c4dd6` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the exact PAG pair reuses the immutable SD1.5 safetensors base through generic image nodes, both PAG controls bind through the backend specification, the 78-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.3 Generic perception / Marigold depth | `957ab31` | `1802291` | Local cached CPU node smoke passed at one step; remote quality review pending | Pending | Complete source/live-smoke slice: the immutable Marigold Depth LCM pair uses a generic schema-versioned prediction-map boundary, the 79-workflow deterministic catalog and complete gates passed, and no generated media was retained. Normals, intrinsics, uncertainty, Auto, and Gallery remain disabled pending their separate qualification gates. |
-| P3.5 Transformers speech-to-text | Pending | Pending | Pending | Pending | In progress |
+| P3.5 Transformers speech-to-text | `82522ba` | `571facf` | Local cached CPU loader/action smoke passed with Transformers 5.14.1; remote spoken-fixture quality review pending | Pending | Complete source/live-smoke slice: two exact generic speech pairs use the immutable Whisper Tiny safetensors snapshot through the P0.5 optional runtime; the 81-workflow catalog and complete gates passed, and no fixture or output media was retained. Auto and Gallery remain disabled pending remote rights and quality review. |
 | P4.1-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
