@@ -53,6 +53,7 @@ Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
+MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
@@ -63,6 +64,7 @@ CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 DEVICE_OPTIONS = list(DEVICE_LIST.keys())
 _IMAGE_MODE_ORDER = (
     "unconditional_image",
+    "depth_estimation",
     "text_to_image",
     "edit_image",
     "multi_image_reference_edit",
@@ -219,6 +221,11 @@ IMAGE_PIPELINE_ADAPTERS = {
         SD15_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionPAGPipeline"),
     ),
+    "MarigoldDepthPipeline": ImagePipelineAdapter(
+        "MarigoldDepthPipeline",
+        frozenset({"depth_estimation"}),
+        MARIGOLD_DEPTH_LCM_REPO,
+    ),
     "FluxPipeline": ImagePipelineAdapter(
         "FluxPipeline",
         frozenset({"text_to_image"}),
@@ -335,6 +342,7 @@ IMAGE_PIPELINE_CLASSES = list(IMAGE_PIPELINE_ADAPTERS)
 IMAGE_PIPELINE_MODES = {name: set(adapter.modes) for name, adapter in IMAGE_PIPELINE_ADAPTERS.items()}
 IMAGE_PIPELINE_MODE_OPTIONS = [
     "unconditional_image",
+    "depth_estimation",
     "text_to_image",
     "edit_image",
     "multi_image_reference_edit",
@@ -353,6 +361,7 @@ QUANT_COMPONENTS = ["transformer", "transformer_2", "text_encoder", "text_encode
 
 IMAGE_ACTION_MODES = {
     "UnconditionalGenerate": ("unconditional_image",),
+    "PredictMap": ("depth_estimation",),
     "Generate": ("text_to_image",),
     "Edit": ("edit_image", "multi_image_reference_edit"),
     "Inpaint": ("inpaint", "outpaint"),
@@ -485,6 +494,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "pag_scale", "pag_adaptive_scale"
         ),
+    },
+    "MarigoldDepthPipeline": {
+        "depth_estimation": _image_field_contract(),
     },
     "FluxPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
@@ -739,6 +751,17 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
             "eta": {"hidden": "eta" not in optional_fields},
             "class_label": {"hidden": "class_label" not in optional_fields},
         }
+    if mode == "depth_estimation":
+        contract["predictionMap"] = {
+            "schemaVersion": 1,
+            "kinds": ["depth"],
+            "semantics": "relative_depth",
+            "layout": "NHWC",
+            "dtype": "float32",
+            "valueRange": [0.0, 1.0],
+            "nearValue": 0.0,
+            "farValue": 1.0,
+        }
     return contract
 
 
@@ -749,6 +772,10 @@ DEFAULT_IMAGE_PIPELINE_CONTRACT = image_pipeline_contract(
 DEFAULT_UNCONDITIONAL_IMAGE_PIPELINE_CONTRACT = image_pipeline_contract(
     IMAGE_PIPELINE_ADAPTERS["DDPMPipeline"],
     "unconditional_image",
+)
+DEFAULT_PREDICTION_MAP_PIPELINE_CONTRACT = image_pipeline_contract(
+    IMAGE_PIPELINE_ADAPTERS["MarigoldDepthPipeline"],
+    "depth_estimation",
 )
 
 
@@ -1180,6 +1207,116 @@ def preflight_unconditional_action(
         raise ValueError("Diffusers image UnconditionalGenerate output_type must be exactly one of: np, pil.")
     values["output_type"] = output_type
     return adapter, values
+
+
+def preflight_prediction_map_action(
+    pipeline: Any,
+    kwargs: dict[str, Any],
+) -> tuple[ImagePipelineAdapter, dict[str, Any]]:
+    """Validate one generic perception request before importing Torch or calling Diffusers."""
+
+    if pipeline is None:
+        raise ValueError("Diffusers image pipeline is required.")
+    adapter = validate_image_action(pipeline, "PredictMap")
+    values = dict(kwargs)
+    values["pipeline"] = pipeline
+    _validate_image_media(
+        values.get("image"),
+        field="prediction source",
+        max_items=1,
+        max_pixels=adapter.max_reference_pixels,
+    )
+    image = values.get("image")
+    if isinstance(image, (list, tuple)):
+        if len(image) != 1:
+            raise ValueError("Diffusers image prediction source requires exactly one image.")
+        image = image[0]
+    values["image"] = image
+    values["seed"] = _bounded_image_int(
+        values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295
+    )
+    values["num_inference_steps"] = _bounded_image_int(
+        values.get("num_inference_steps"),
+        field="num_inference_steps",
+        default=1,
+        minimum=1,
+        maximum=50,
+    )
+    values["processing_resolution"] = _bounded_image_int(
+        values.get("processing_resolution"),
+        field="processing_resolution",
+        default=768,
+        minimum=64,
+        maximum=2048,
+        step=8,
+    )
+    match_input_resolution = values.get("match_input_resolution", True)
+    if type(match_input_resolution) is not bool:
+        raise ValueError("Diffusers image match_input_resolution must be a boolean.")
+    values["match_input_resolution"] = match_input_resolution
+    prediction_kind = values.get("prediction_kind", "depth")
+    if prediction_kind != "depth":
+        raise ValueError("Diffusers image prediction_kind must be exactly depth for this pipeline mode.")
+    values["prediction_kind"] = prediction_kind
+    return adapter, values
+
+
+def normalize_prediction_map(prediction: Any, *, kind: str) -> tuple[dict[str, Any], list[Image.Image]]:
+    """Normalize one perception result into the versioned MoDiff prediction-map contract."""
+
+    if hasattr(prediction, "detach"):
+        prediction = prediction.detach()
+    if hasattr(prediction, "float"):
+        prediction = prediction.float()
+    if hasattr(prediction, "cpu"):
+        prediction = prediction.cpu()
+    if hasattr(prediction, "numpy"):
+        prediction = prediction.numpy()
+    try:
+        array = np.asarray(prediction, dtype=np.float32)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Diffusers prediction output must be a numeric array.") from error
+
+    if array.ndim == 2:
+        array = array[np.newaxis, ..., np.newaxis]
+    elif array.ndim == 3:
+        array = array[np.newaxis, ...] if array.shape[-1] == 1 else array[..., np.newaxis]
+    elif array.ndim == 4 and array.shape[-1] != 1 and array.shape[1] == 1:
+        array = np.transpose(array, (0, 2, 3, 1))
+    if array.ndim != 4 or array.shape[0] != 1 or array.shape[-1] != 1:
+        raise ValueError("Diffusers prediction output must contain exactly one single-channel map.")
+
+    _batch, height, width, _channels = array.shape
+    if height <= 0 or width <= 0:
+        raise ValueError("Diffusers prediction output dimensions must be positive and nonempty.")
+    if width > _MAX_IMAGE_INPUT_DIMENSION or height > _MAX_IMAGE_INPUT_DIMENSION:
+        raise ValueError(
+            f"Diffusers prediction output dimensions cannot exceed {_MAX_IMAGE_INPUT_DIMENSION} pixels per edge."
+        )
+    if width * height > _MAX_IMAGE_INPUT_PIXELS:
+        raise ValueError(f"Diffusers prediction output exceeds the {_MAX_IMAGE_INPUT_PIXELS}-pixel limit.")
+    if not np.isfinite(array).all():
+        raise ValueError("Diffusers prediction output must contain only finite values.")
+    tolerance = 1e-5
+    if float(array.min()) < -tolerance or float(array.max()) > 1.0 + tolerance:
+        raise ValueError("Diffusers prediction output must stay inside the normalized [0, 1] value range.")
+    array = np.ascontiguousarray(np.clip(array, 0.0, 1.0), dtype=np.float32)
+    preview = Image.fromarray(np.rint(array[0, ..., 0] * 255.0).astype(np.uint8), mode="L").convert("RGB")
+    prediction_map = {
+        "schemaVersion": 1,
+        "kind": kind,
+        "semantics": "relative_depth",
+        "layout": "NHWC",
+        "dtype": "float32",
+        "shape": [1, height, width, 1],
+        "valueRange": [0.0, 1.0],
+        "nearValue": 0.0,
+        "farValue": 1.0,
+        "width": width,
+        "height": height,
+        "prediction": array,
+    }
+    return prediction_map, [preview]
 
 
 def output_image_dimensions(images: Any, output_type: str = "pil") -> tuple[int | None, int | None]:
@@ -2154,6 +2291,132 @@ class UnconditionalGenerate(NodeBase):
         images = getattr(result, "images", result)
         width, height = output_image_dimensions(images, values["output_type"])
         return {"images": images, "width_out": width, "height_out": height}
+
+
+class PredictMap(NodeBase):
+    """Predict a normalized semantic map with a compatible Diffusers perception pipeline."""
+
+    label = "Diffusers Predict Map"
+    category = "Diffusers Image"
+    resizable = True
+    params = {
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "image_diffusion_pipeline",
+            "required": True,
+            "onSignal": [
+                {"action": "value", "target": "image_contract"},
+                {"action": "exec", "data": "update_image_contract"},
+            ],
+        },
+        "image_contract": {
+            "label": "Image Contract",
+            "type": "object",
+            "default": DEFAULT_PREDICTION_MAP_PIPELINE_CONTRACT,
+            "hidden": True,
+        },
+        "image": {"label": "Source image", "display": "input", "type": "image", "required": True},
+        "prediction_kind": {
+            "label": "Map kind",
+            "type": "string",
+            "options": ["depth"],
+            "default": "depth",
+        },
+        "seed": {
+            "label": "Seed",
+            "type": "int",
+            "display": "random",
+            "default": 0,
+            "min": 0,
+            "max": 4294967295,
+        },
+        "num_inference_steps": {
+            "label": "Steps",
+            "display": "slider",
+            "type": "int",
+            "default": 1,
+            "min": 1,
+            "max": 50,
+        },
+        "processing_resolution": {
+            "label": "Processing resolution",
+            "type": "int",
+            "default": 768,
+            "min": 64,
+            "max": 2048,
+            "step": 8,
+            "description": "Longest edge used internally by the perception model.",
+        },
+        "match_input_resolution": {
+            "label": "Match input resolution",
+            "type": "bool",
+            "default": True,
+        },
+        "prediction_map": {"label": "Prediction map", "display": "output", "type": "prediction_map"},
+        "preview_images": {"label": "Preview", "display": "output", "type": "image"},
+        "width_out": {"label": "Width", "display": "output", "type": "int"},
+        "height_out": {"label": "Height", "display": "output", "type": "int"},
+    }
+
+    def __call__(self, **kwargs):
+        _adapter, values = preflight_prediction_map_action(kwargs.get("pipeline"), kwargs)
+        return super().__call__(**values)
+
+    def update_image_contract(self, values, ref):
+        values = values if isinstance(values, dict) else {}
+        signal_value = values.get("image_contract")
+        if not isinstance(signal_value, dict):
+            raise ValueError("The connected image pipeline did not publish a valid task contract.")
+        adapter = get_image_pipeline_adapter(signal_value.get("pipelineClass"))
+        mode = str(signal_value.get("mode") or "")
+        expected_signal = image_pipeline_contract(adapter, mode)
+        if signal_value != expected_signal:
+            raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
+        if mode not in expected_signal["actions"].get(self.class_name, ()):
+            raise ValueError("The connected image pipeline does not support generic prediction maps.")
+
+    def execute(self, **kwargs):
+        pipeline = kwargs.get("pipeline")
+        _adapter, values = preflight_prediction_map_action(pipeline, kwargs)
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or getattr(pipeline, "device", None) or "cpu"
+        try:
+            generator = torch.Generator(device=device).manual_seed(values["seed"])
+        except Exception:
+            generator = torch.Generator(device="cpu").manual_seed(values["seed"])
+        call_kwargs = {
+            "image": values["image"],
+            "num_inference_steps": values["num_inference_steps"],
+            "ensemble_size": 1,
+            "processing_resolution": values["processing_resolution"],
+            "match_input_resolution": values["match_input_resolution"],
+            "generator": generator,
+            "output_type": "np",
+            "output_uncertainty": False,
+            "output_latent": False,
+            "return_dict": True,
+        }
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(**call_kwargs)
+        finally:
+            self._active_pipeline = None
+        prediction = result.get("prediction") if isinstance(result, dict) else getattr(result, "prediction", None)
+        if prediction is None:
+            raise ValueError("Diffusers perception pipeline did not return a prediction map.")
+        prediction_map, preview_images = normalize_prediction_map(
+            prediction,
+            kind=values["prediction_kind"],
+        )
+        return {
+            "prediction_map": prediction_map,
+            "preview_images": preview_images,
+            "width_out": prediction_map["width"],
+            "height_out": prediction_map["height"],
+        }
 
 
 class Generate(NodeBase):

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-12T23:32:53.779Z",
+  "generatedAt": "2026-08-13T00:19:25.092Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 66,
-  "supportedPairCount": 78,
+  "supportedCanonicalPairCount": 67,
+  "supportedPairCount": 79,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1246,6 +1246,37 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "MarigoldDepthPipeline:depth_estimation",
+      "modelType": "MarigoldDepthPipeline",
+      "modelFamily": "Marigold",
+      "mode": "depth_estimation",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "prs-eth/marigold-depth-lcm-v1-0"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires exactly one source image; output is a normalized relative-depth map."
+      },
+      "pipelineClasses": [
+        "MarigoldDepthPipeline"
+      ],
+      "sourceTemplateId": "task-template:marigold-depth-lcm-v1-0:depth-estimation:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
+      "graphHash": "d9bef3a6a9c605444c0ff07981fd7a98203574102b253d7dc42a5cf63bb4db40"
     },
     {
       "id": "QwenImageEditModularPipeline:edit_image",

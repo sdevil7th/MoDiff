@@ -23,6 +23,7 @@ from modules.DiffusersImage import (
     LoadAdapter,
     LoadPipeline,
     MODULE_MAP,
+    PredictMap,
     UnconditionalGenerate,
 )
 from modules.DiffusersImage.main import (
@@ -42,6 +43,7 @@ from modules.DiffusersImage.main import (
     QWEN_IMAGE_EDIT_PLUS_REPO,
     QWEN_IMAGE_EDIT_REPO,
     LCM_DREAMSHAPER_REPO,
+    MARIGOLD_DEPTH_LCM_REPO,
     SD15_BASE_REPO,
     SDXL_BASE_REPO,
     Z_IMAGE_REPO,
@@ -165,6 +167,160 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertEqual(set(received), expected_keys)
                 self.assertEqual((result["width_out"], result["height_out"]), (32, 24))
                 self.assertEqual(len(result["images"]), 1)
+
+    def test_marigold_depth_uses_the_generic_versioned_prediction_map_contract(self):
+        adapter = IMAGE_PIPELINE_ADAPTERS["MarigoldDepthPipeline"]
+        self.assertEqual(adapter.default_repo, MARIGOLD_DEPTH_LCM_REPO)
+        self.assertEqual(adapter.mode_options, ("depth_estimation",))
+        contract = image_pipeline_contract(adapter, "depth_estimation")
+        self.assertEqual(contract["actions"], {"PredictMap": ["depth_estimation"]})
+        self.assertEqual(
+            contract["predictionMap"],
+            {
+                "schemaVersion": 1,
+                "kinds": ["depth"],
+                "semantics": "relative_depth",
+                "layout": "NHWC",
+                "dtype": "float32",
+                "valueRange": [0.0, 1.0],
+                "nearValue": 0.0,
+                "farValue": 1.0,
+            },
+        )
+        parameters = set(inspect.signature(pipeline_class_from_name("MarigoldDepthPipeline").__call__).parameters)
+        self.assertTrue(
+            {
+                "image",
+                "num_inference_steps",
+                "ensemble_size",
+                "processing_resolution",
+                "match_input_resolution",
+                "generator",
+                "output_type",
+                "output_uncertainty",
+                "output_latent",
+                "return_dict",
+            }.issubset(parameters)
+        )
+
+    def test_predict_map_normalizes_depth_and_passes_only_the_reviewed_upstream_request(self):
+        received = {}
+
+        def call(
+            self,
+            *,
+            image,
+            num_inference_steps,
+            ensemble_size,
+            processing_resolution,
+            match_input_resolution,
+            generator,
+            output_type,
+            output_uncertainty,
+            output_latent,
+            return_dict,
+        ):
+            received.update(locals())
+            return SimpleNamespace(
+                prediction=np.array(
+                    [[[[0.0], [0.25]], [[0.75], [1.0]]]],
+                    dtype=np.float64,
+                )
+            )
+
+        fake_type = type("MarigoldDepthPipeline", (), {"_execution_device": "cpu", "__call__": call})
+        pipeline = tag_test_image_pipeline(fake_type(), "MarigoldDepthPipeline", "depth_estimation")
+        source = Image.new("RGB", (16, 12), "white")
+        result = PredictMap("depth-probe").execute(
+            pipeline=pipeline,
+            image=[source],
+            prediction_kind="depth",
+            seed=7,
+            num_inference_steps=1,
+            processing_resolution=768,
+            match_input_resolution=True,
+        )
+
+        self.assertEqual(
+            set(received) - {"self", "received"},
+            {
+                "image",
+                "num_inference_steps",
+                "ensemble_size",
+                "processing_resolution",
+                "match_input_resolution",
+                "generator",
+                "output_type",
+                "output_uncertainty",
+                "output_latent",
+                "return_dict",
+            },
+        )
+        self.assertIs(received["image"], source)
+        self.assertEqual(received["ensemble_size"], 1)
+        self.assertEqual(received["output_type"], "np")
+        self.assertFalse(received["output_uncertainty"])
+        prediction_map = result["prediction_map"]
+        self.assertEqual(
+            {key: value for key, value in prediction_map.items() if key != "prediction"},
+            {
+                "schemaVersion": 1,
+                "kind": "depth",
+                "semantics": "relative_depth",
+                "layout": "NHWC",
+                "dtype": "float32",
+                "shape": [1, 2, 2, 1],
+                "valueRange": [0.0, 1.0],
+                "nearValue": 0.0,
+                "farValue": 1.0,
+                "width": 2,
+                "height": 2,
+            },
+        )
+        self.assertEqual(prediction_map["prediction"].dtype, np.float32)
+        self.assertEqual(result["preview_images"][0].size, (2, 2))
+        self.assertEqual(result["preview_images"][0].mode, "RGB")
+        self.assertEqual((result["width_out"], result["height_out"]), (2, 2))
+
+    def test_predict_map_rejects_malformed_inputs_and_outputs(self):
+        class MarigoldDepthPipeline:
+            _execution_device = "cpu"
+
+            def __init__(self, prediction):
+                self.prediction = prediction
+
+            def __call__(self, **_kwargs):
+                return SimpleNamespace(prediction=self.prediction)
+
+        source = Image.new("RGB", (16, 16), "white")
+        for label, prediction, message in (
+            ("batch", np.zeros((2, 4, 4, 1)), "exactly one single-channel"),
+            ("channels", np.zeros((1, 4, 4, 3)), "exactly one single-channel"),
+            ("nonfinite", np.full((1, 4, 4, 1), np.nan), "only finite"),
+            ("range", np.full((1, 4, 4, 1), 1.1), "normalized"),
+        ):
+            with self.subTest(label=label):
+                pipeline = tag_test_image_pipeline(
+                    MarigoldDepthPipeline(prediction),
+                    "MarigoldDepthPipeline",
+                    "depth_estimation",
+                )
+                with self.assertRaisesRegex(ValueError, message):
+                    PredictMap(f"invalid-{label}").execute(pipeline=pipeline, image=source)
+
+        valid_pipeline = tag_test_image_pipeline(
+            MarigoldDepthPipeline(np.zeros((1, 4, 4, 1))),
+            "MarigoldDepthPipeline",
+            "depth_estimation",
+        )
+        for values, message in (
+            ({"image": [source, source]}, "at most 1"),
+            ({"image": source, "prediction_kind": "normal"}, "exactly depth"),
+            ({"image": source, "match_input_resolution": 1}, "must be a boolean"),
+            ({"image": source, "processing_resolution": 65}, "increments of 8"),
+        ):
+            with self.subTest(values=values), self.assertRaisesRegex(ValueError, message):
+                PredictMap("invalid-input").execute(pipeline=valid_pipeline, **values)
 
     def test_torchao_int8_weight_only_passes_an_aobase_config_instance(self):
         int8_config = object()

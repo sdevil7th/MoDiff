@@ -32,6 +32,7 @@ FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
+MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -157,6 +158,31 @@ _SDXL_GRAPH_BINDINGS = _GRAPH_BINDINGS + (
 _PAG_GRAPH_BINDINGS = _SDXL_GRAPH_BINDINGS + (
     ("diffusersImageGenerate", "pag_scale", "pagScale"),
     ("diffusersImageGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
+_PERCEPTION_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("diffusersPredictMap", "modules.DiffusersImage.PredictMap", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_PERCEPTION_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersPredictMap", "pipeline"),
+    ("loadImage", "image", "diffusersPredictMap", "image"),
+    ("diffusersPredictMap", "preview_images", "preview", "image"),
+)
+_PERCEPTION_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("diffusersPredictMap", "prediction_kind", "depth"),
+    ("diffusersPredictMap", "seed", "seed"),
+    ("diffusersPredictMap", "num_inference_steps", "steps"),
+    ("diffusersPredictMap", "processing_resolution", "processingResolution"),
+    ("diffusersPredictMap", "match_input_resolution", "matchInputResolution"),
 )
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
@@ -940,6 +966,7 @@ _BINDING_SOURCES = frozenset(
         *_GRAPH_BINDINGS,
         *_SDXL_GRAPH_BINDINGS,
         *_PAG_GRAPH_BINDINGS,
+        *_PERCEPTION_GRAPH_BINDINGS,
         *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
@@ -3947,6 +3974,91 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _PAG_GRAPH_BINDINGS,
+}
+
+_MARIGOLD_DEPTH_PROFILE = {
+    "id": "marigold-depth-lcm-v1-0:direct",
+    "model_type": "MarigoldDepthPipeline",
+    "modes": ("depth_estimation",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "MarigoldDepthPipeline",
+    "default_repo": MARIGOLD_DEPTH_LCM_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 1,
+    "live_proof": True,
+    "compatible_repos": (),
+}
+_MARIGOLD_DEPTH_CAPABILITY = {
+    "modelType": "MarigoldDepthPipeline",
+    "label": "Marigold Depth LCM v1.0",
+    "displayName": "Marigold Depth LCM v1.0",
+    "family": "Marigold",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": MARIGOLD_DEPTH_LCM_REPO,
+    "artifactLabel": "Diffusers safetensors repo",
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 768, "height": 768, "aspectRatio": "1:1"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": ["depth_estimation"],
+    "modeRequirements": {
+        "depth_estimation": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one source image; output is a normalized relative-depth map.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(MARIGOLD_DEPTH_LCM_REPO, model_type="MarigoldDepthPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The generic Predict Map node returns a versioned float32 NHWC relative-depth map plus a grayscale preview.",
+        "Normals, intrinsics, uncertainty, Auto, and Gallery remain disabled pending separate qualification.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["marigold-depth-lcm-v1-0:depth-estimation:v1"] = {
+    "modelType": "MarigoldDepthPipeline",
+    "mode": "depth_estimation",
+    "profile": _MARIGOLD_DEPTH_PROFILE,
+    "capability": _MARIGOLD_DEPTH_CAPABILITY,
+    "roles": _PERCEPTION_GRAPH_ROLES,
+    "edges": _PERCEPTION_GRAPH_EDGES,
+    "bindings": _PERCEPTION_GRAPH_BINDINGS,
 }
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {

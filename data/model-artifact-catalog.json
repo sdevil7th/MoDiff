@@ -277,6 +277,13 @@
       "baseRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
       "baseLicense": "creativeml-openrail-m",
       "artifacts": []
+    },
+    {
+      "modelType": "MarigoldDepthPipeline",
+      "baseRepo": "prs-eth/marigold-depth-lcm-v1-0",
+      "baseRevision": "04a73502f7fd8fc5e59947b9df3b2266d71d6849",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
     }
   ]
 }

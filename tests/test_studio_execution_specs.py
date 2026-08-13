@@ -156,6 +156,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPipeline", "inpaint"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
+                ("MarigoldDepthPipeline", "depth_estimation"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -182,6 +183,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 )
                 self.assertTrue(DIFFUSERS_EXECUTION_PROFILES[specification["executionProfileId"]].live_proof)
                 self.assertNotIn("modules.DiffusersImage.Generate", [role[1] for role in specification["roles"]])
+        marigold = by_id["marigold-depth-lcm-v1-0:depth-estimation:v1"]
+        self.assertEqual(marigold["pipelineClass"], "MarigoldDepthPipeline")
+        self.assertIn(
+            ("diffusersImagePipeline", "pipeline", "diffusersPredictMap", "pipeline"),
+            marigold["edges"],
+        )
+        self.assertIn(("loadImage", "image", "diffusersPredictMap", "image"), marigold["edges"])
+        self.assertIn(("diffusersPredictMap", "preview_images", "preview", "image"), marigold["edges"])
+        self.assertIn(("diffusersPredictMap", "processing_resolution", "processingResolution"), marigold["bindings"])
+        self.assertIn(("diffusersPredictMap", "match_input_resolution", "matchInputResolution"), marigold["bindings"])
         for spec_id, mode, pipeline_class in (
             ("sd15-base:text-to-image:v1", "text_to_image", "StableDiffusionPipeline"),
             ("sd15-base:edit-image:v1", "edit_image", "StableDiffusionImg2ImgPipeline"),
