@@ -286,6 +286,14 @@ IMAGE_PIPELINE_ADAPTERS = {
         control_image_parameter="image",
         conditioning_scale_parameter="adapter_conditioning_scale",
     ),
+    "StableDiffusionXLPAGPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLPAGPipeline",
+        frozenset({"text_to_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+    ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
         frozenset({"edit_image"}),
@@ -601,6 +609,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "StableDiffusionXLAdapterPipeline": {
         "control_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
+        ),
+    },
+    "StableDiffusionXLPAGPipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "pag_scale", "pag_adaptive_scale"
         ),
     },
     "StableDiffusionXLImg2ImgPipeline": {

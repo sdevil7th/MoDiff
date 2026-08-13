@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T03:15:02.000Z",
+  "generatedAt": "2026-08-13T03:38:06.000Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 74,
-  "supportedPairCount": 86,
+  "supportedCanonicalPairCount": 75,
+  "supportedPairCount": 87,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1971,6 +1971,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-xlinstruct-pix2-pix-pipeline/edit-image.json",
       "graphHash": "46bcc862706ffe2feb22005d563a4218f26ec2e627c7749fa859f7b99c324c8c"
+    },
+    {
+      "id": "StableDiffusionXLPAGPipeline:text_to_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "modelFamily": "Stable Diffusion XL",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "sourceTemplateId": "task-template:sdxl-pag:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/text-to-image.json",
+      "graphHash": "d8751bcf22fa3f092f456ce7dfb9c9c3e294aa5af4d10b4dd3a5452c71893870"
     },
     {
       "id": "StableDiffusionXLPipeline:edit_image",

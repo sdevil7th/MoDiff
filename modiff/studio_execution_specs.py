@@ -4321,6 +4321,89 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-t2i-adapter-canny:control-image:v1"] = {
 }
 
 
+_SDXL_PAG_PROFILE = {
+    "id": "sdxl-pag:direct",
+    "model_type": "StableDiffusionXLPAGPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "StableDiffusionXLPAGPipeline",
+    "default_repo": SDXL_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 50,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SDXL_PAG_CAPABILITY = {
+    "modelType": "StableDiffusionXLPAGPipeline",
+    "label": "Stable Diffusion XL PAG",
+    "displayName": "SDXL Perturbed-Attention Guidance",
+    "family": "Stable Diffusion XL",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SDXL_BASE_REPO,
+    "artifactLabel": "Diffusers fp16 safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 5.0,
+    "recommendedPagScale": 3.0,
+    "recommendedPagAdaptiveScale": 0.0,
+    "guidanceLabel": "Guidance",
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": True,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLPAGPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "Perturbed-attention guidance reuses the immutable SDXL base without an auxiliary model artifact.",
+        "The generic graph exposes PAG scale 3 and adaptive scale 0 over the upstream 1024px, 50-step, guidance-5 recipe.",
+        "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag:text-to-image:v1"] = {
+    "modelType": "StableDiffusionXLPAGPipeline",
+    "mode": "text_to_image",
+    "profile": _SDXL_PAG_PROFILE,
+    "capability": _SDXL_PAG_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _PAG_GRAPH_BINDINGS,
+}
+
+
 _LCM_PROFILE = {
     "id": "lcm-dreamshaper-v7:direct",
     "model_type": "LatentConsistencyModelPipeline",

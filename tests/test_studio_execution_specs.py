@@ -189,6 +189,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
                 ("StableDiffusionXLAdapterPipeline", "control_image"),
+                ("StableDiffusionXLPAGPipeline", "text_to_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -318,6 +319,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
             sdxl_adapter["bindings"],
         )
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_adapter["executionProfileId"]].live_proof)
+        sdxl_pag = by_id["sdxl-pag:text-to-image:v1"]
+        self.assertEqual(sdxl_pag["modelType"], "StableDiffusionXLPAGPipeline")
+        self.assertEqual(sdxl_pag["pipelineClass"], "StableDiffusionXLPAGPipeline")
+        self.assertEqual(sdxl_pag["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertIn(("diffusersImageGenerate", "pag_scale", "pagScale"), sdxl_pag["bindings"])
+        self.assertIn(
+            ("diffusersImageGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
+            sdxl_pag["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sdxl_pag["executionProfileId"]].live_proof)
         lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
         self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
         self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")
