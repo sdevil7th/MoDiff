@@ -4809,6 +4809,30 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     pinning and bounds, remote heavy-hardware execution, and physical macOS
     evidence remain pending independently. The focused review matrix and static
     checks pass; no weights or media were downloaded.
+  - [x] **Chroma1-HD text-to-image source admission:** backend `5d3bc8f` and
+    client `86cbd92` admit the exact public snapshot
+    `lodestones/Chroma1-HD@0e0c60ece1e82b17cb7f77342d765ba5024c40c0`
+    through the generic Diffusers image facade. The model-card metadata declares
+    Apache-2.0, the repository has no Python and requires no remote code, and the
+    selected Diffusers partition contains five safetensors files /
+    27,492,403,238 bytes. The duplicate 17,800,038,288-byte original single-file
+    distribution is excluded. Exact selected and excluded file hashes, canonical
+    inventory digest, immutable metadata and shard-index identities, and pinned
+    package-owned text-to-image, image-to-image, output, and transformer source
+    hashes are sealed in `data/chroma1-hd-artifact-review.json` without
+    downloading weights.
+
+    The admitted workflow is Expert-only and remote-only. Backend-owned
+    contracts bound it to the reviewed bfloat16 1024x1024/40-step/guidance-3
+    recipe and at most 512 prompt tokens. Its 106-workflow manifest entry is
+    graph-qualified but explicitly runtime-unqualified, while Chroma
+    image-to-image, Auto, and Gallery remain disabled. The upstream model card
+    explicitly states that the model has no safety alignment, so live output
+    safety and quality review remains a hard gate. The complete 1,413-test
+    backend overlay with 3,110 subtests, project static checks, complete client
+    check, and deterministic workflow verification pass. Remote real-weight
+    execution and physical macOS execution remain pending independently; no
+    weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -4944,7 +4968,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `aura_flow`
 - [x] `bria`
 - [x] `bria_fibo`
-- [ ] `chroma`
+- [x] `chroma`
 - [ ] `cogview3`
 - [ ] `cogview4`
 - [ ] `consistency_models`
@@ -5075,4 +5099,5 @@ Add references only after the corresponding evidence exists.
 | P6.15 AuraFlow v0.3 source admission | `8117b39` | `7d52469` (`c5e02ea` exact-contract fixture) | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, four-file / 16,835,036,374-byte fp16 safetensors partition, package-owned pipeline/source hashes, bounded native 1536x768 recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 105-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.16 Bria 3.2 source and admission-gate review | `30a4667` | Not required | Static package/API and public gated-tree review only; authenticated exact artifact/license review, backend-owned precision and bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Package-owned classes, source hashes, call contract, public rounded safetensors observations, gated non-commercial terms, and HTTP-401 metadata limits are sealed without inventing an immutable artifact identity. The family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.17 Bria FIBO generation/edit source and admission-gate review | `a826a5e` | Not required | Static package/API/custom-code review only; license acceptance, authenticated config/license review, explicit remote-code authorization, backend-owned structured-JSON/device/model pinning and bounds, remote heavy-hardware execution, and physical macOS evidence pending | Not required | Exact generation/edit heads, current and archived safetensors partitions, package source hashes, structured generation/edit/inpaint contracts, promptifier code revisions, and nested VLM inventories are sealed. Gated non-commercial weights plus revision-unbound CUDA-only custom promptifiers keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
+| P6.18 Chroma1-HD text-to-image source admission | `5d3bc8f` | `86cbd92` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 27,492,403,238-byte selected bfloat16 Diffusers partition, excluded duplicate single-file artifact, immutable metadata and package source hashes, bounded 1024px recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 106-workflow catalog is graph-qualified/runtime-unqualified; image-to-image, Auto, and Gallery remain disabled, upstream declares no safety alignment, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
