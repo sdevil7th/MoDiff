@@ -16462,6 +16462,679 @@
       ]
     },
     {
+      "blocksClass": "Krea2AutoBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "text_encoder",
+          "reuseKey": [
+            "text_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "guider",
+          "reuseKey": [
+            "guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_krea2.Krea2Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vae",
+          "reuseKey": [
+            "vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "image_processor",
+          "reuseKey": [
+            "image_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.image_processor.VaeImageProcessor"
+        }
+      ],
+      "description": "Auto Modular pipeline for text-to-image generation using Krea 2: encode text -> core denoise (symmetric CFG) -> decode.",
+      "kind": "auto",
+      "pipelineClass": "Krea2ModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "Krea2ModularPipeline",
+          "id": "text2image",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The negative prompt(s) for CFG.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 512,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_images_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": 1024,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1024,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 28,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Custom sigma schedule (defaults to a linear ramp).",
+              "name": "sigmas",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Text To Image",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-prompt boolean text mask (B, text_seq_len).",
+              "name": "prompt_embeds_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-prompt negative text features (only when guidance is enabled).",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-prompt negative text mask (only when guidance is enabled).",
+              "name": "negative_prompt_embeds_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Effective batch size (num prompts * num_images_per_prompt).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the text features.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "The initial packed image latents (B, image_seq_len, in_channels).",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of image tokens (grid_h * grid_w).",
+              "name": "image_seq_len",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The denoising timesteps.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Shared rotary coordinates (text_seq_len + grid_h * grid_w, 3).",
+              "name": "position_ids",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Generated images.",
+              "name": "images",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            }
+          ],
+          "requiredInputs": [
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "max_sequence_length",
+            "num_images_per_prompt",
+            "latents",
+            "height",
+            "width",
+            "generator",
+            "num_inference_steps",
+            "sigmas",
+            "attention_kwargs",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "Krea2TextEncoderStep",
+              "description": "Text encoder step that tokenizes the prompt(s) with the Krea 2 chat template, runs the Qwen3-VL text encoder, and stacks a fixed set of decoder-layer hidden states per token as the transformer's text conditioning. The negative prompt is encoded the same way when the guider enables CFG.",
+              "kind": "block",
+              "path": "text_encoder"
+            },
+            {
+              "className": "Krea2TextInputsStep",
+              "description": "Input step that determines `batch_size`/`dtype` from the per-prompt `prompt_embeds` and replicates the text conditioning (and the optional negative branch) to `batch_size * num_images_per_prompt`. Place after the text encoder.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "Krea2PrepareLatentsStep",
+              "description": "Step that samples the spatial image latents and patch-packs them into (B, image_seq_len, in_channels) for the denoising loop.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "Krea2SetTimestepsStep",
+              "description": "Step that sets the Krea 2 flow-matching schedule on the scheduler: a linear sigma schedule with a resolution-aware dynamic time shift `mu`.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "Krea2PreparePositionIdsStep",
+              "description": "Step that builds the shared rotary position ids for the combined [text | image] sequence: text at the origin, image tokens at their (0, h, w) latent-grid coordinates. Place after prepare_latents.",
+              "kind": "block",
+              "path": "denoise.prepare_position_ids"
+            },
+            {
+              "className": "Krea2DenoiseStep",
+              "description": "Denoising loop that iteratively denoises the packed image latents over `timesteps`, running the transformer on the conditional (and, when the guider enables CFG, the negative) text features and combining them through the `guider`.",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "Krea2LoopBeforeDenoiser",
+              "description": "Within the denoising loop: normalize the scheduler timestep into the model's flow time and broadcast it across the batch. Compose into the `sub_blocks` of a `Krea2DenoiseLoopWrapper`-based step.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "Krea2LoopDenoiser",
+              "description": "Within the denoising loop: run the `transformer` on the conditional (and, when the guider enables CFG, the negative) text features and combine them through the `guider`. Compose into `Krea2DenoiseStep`.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "Krea2LoopAfterDenoiser",
+              "description": "Within the denoising loop: scheduler step. Compose into a `Krea2DenoiseLoopWrapper`-based step.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "Krea2DecodeStep",
+              "description": "Step that unpacks the denoised packed latents back to the spatial grid, de-normalizes them with the VAE's per-channel statistics, and decodes them through the Qwen-Image VAE into images.",
+              "kind": "block",
+              "path": "decode"
+            }
+          ],
+          "taskId": "text_to_image"
+        }
+      ]
+    },
+    {
+      "blocksClass": "Krea2TurboAutoBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "text_encoder",
+          "reuseKey": [
+            "text_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_krea2.Krea2Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vae",
+          "reuseKey": [
+            "vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "image_processor",
+          "reuseKey": [
+            "image_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.image_processor.VaeImageProcessor"
+        }
+      ],
+      "description": "Auto Modular pipeline for text-to-image generation using the distilled Krea 2 turbo checkpoint: encode text -> core denoise (guidance-free) -> decode.",
+      "kind": "auto",
+      "pipelineClass": "Krea2TurboModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "Krea2ModularPipeline",
+          "id": "text2image",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": 512,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1,
+              "description": "The number of images to generate per prompt.",
+              "name": "num_images_per_prompt",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Pre-generated noisy latents for image generation.",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": 1024,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1024,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 8,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Custom sigma schedule (defaults to a linear ramp).",
+              "name": "sigmas",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "Additional kwargs for attention processors.",
+              "name": "attention_kwargs",
+              "required": false,
+              "type": "dict[builtins.str,typing.Any]"
+            },
+            {
+              "default": "pil",
+              "description": "Output format: 'pil', 'np', 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Text To Image",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-prompt boolean text mask (B, text_seq_len).",
+              "name": "prompt_embeds_mask",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Effective batch size (num prompts * num_images_per_prompt).",
+              "name": "batch_size",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The dtype of the text features.",
+              "name": "dtype",
+              "required": false,
+              "type": "torch.dtype"
+            },
+            {
+              "default": null,
+              "description": "The initial packed image latents (B, image_seq_len, in_channels).",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of image tokens (grid_h * grid_w).",
+              "name": "image_seq_len",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The denoising timesteps.",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Shared rotary coordinates (text_seq_len + grid_h * grid_w, 3).",
+              "name": "position_ids",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Generated images.",
+              "name": "images",
+              "required": false,
+              "type": "list[PIL.Image.Image]"
+            }
+          ],
+          "requiredInputs": [
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "max_sequence_length",
+            "num_images_per_prompt",
+            "latents",
+            "height",
+            "width",
+            "generator",
+            "num_inference_steps",
+            "sigmas",
+            "attention_kwargs",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "Krea2TurboTextEncoderStep",
+              "description": "Text encoder step for the distilled Krea 2 turbo checkpoint that tokenizes the prompt(s) with the Krea 2 chat template, runs the Qwen3-VL text encoder, and stacks a fixed set of decoder-layer hidden states per token as the transformer's text conditioning. The distilled checkpoint runs without classifier-free guidance, so it takes no negative prompt and has no guider.",
+              "kind": "block",
+              "path": "text_encoder"
+            },
+            {
+              "className": "Krea2TurboTextInputsStep",
+              "description": "Input step for the distilled Krea 2 turbo checkpoint that determines `batch_size`/`dtype` from the per-prompt `prompt_embeds` and replicates the text conditioning to `batch_size * num_images_per_prompt`. The distilled checkpoint runs without classifier-free guidance, so there is no negative branch. Place after the text encoder.",
+              "kind": "block",
+              "path": "denoise.input"
+            },
+            {
+              "className": "Krea2PrepareLatentsStep",
+              "description": "Step that samples the spatial image latents and patch-packs them into (B, image_seq_len, in_channels) for the denoising loop.",
+              "kind": "block",
+              "path": "denoise.prepare_latents"
+            },
+            {
+              "className": "Krea2TurboSetTimestepsStep",
+              "description": "Step that sets the flow-matching schedule for the distilled Krea 2 turbo checkpoint on the scheduler: a linear sigma schedule with the fixed time shift `mu=1.15` the checkpoint was distilled with.",
+              "kind": "block",
+              "path": "denoise.set_timesteps"
+            },
+            {
+              "className": "Krea2PreparePositionIdsStep",
+              "description": "Step that builds the shared rotary position ids for the combined [text | image] sequence: text at the origin, image tokens at their (0, h, w) latent-grid coordinates. Place after prepare_latents.",
+              "kind": "block",
+              "path": "denoise.prepare_position_ids"
+            },
+            {
+              "className": "Krea2TurboDenoiseStep",
+              "description": "Denoising loop for the distilled Krea 2 turbo checkpoint that iteratively denoises the packed image latents over `timesteps`, running the transformer on the conditional text features. The distilled checkpoint runs without classifier-free guidance.",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "Krea2LoopBeforeDenoiser",
+              "description": "Within the denoising loop: normalize the scheduler timestep into the model's flow time and broadcast it across the batch. Compose into the `sub_blocks` of a `Krea2DenoiseLoopWrapper`-based step.",
+              "kind": "block",
+              "path": "denoise.denoise.before_denoiser"
+            },
+            {
+              "className": "Krea2TurboLoopDenoiser",
+              "description": "Within the denoising loop: run the `transformer` on the conditional text features. The distilled Krea 2 turbo checkpoint runs without classifier-free guidance, so there is no negative branch or guider. Compose into the `sub_blocks` of `Krea2TurboDenoiseStep`.",
+              "kind": "block",
+              "path": "denoise.denoise.denoiser"
+            },
+            {
+              "className": "Krea2LoopAfterDenoiser",
+              "description": "Within the denoising loop: scheduler step. Compose into a `Krea2DenoiseLoopWrapper`-based step.",
+              "kind": "block",
+              "path": "denoise.denoise.after_denoiser"
+            },
+            {
+              "className": "Krea2DecodeStep",
+              "description": "Step that unpacks the denoised packed latents back to the spatial grid, de-normalizes them with the VAE's per-channel statistics, and decodes them through the Qwen-Image VAE into images.",
+              "kind": "block",
+              "path": "decode"
+            }
+          ],
+          "taskId": "text_to_image"
+        }
+      ]
+    },
+    {
       "blocksClass": "LTXAutoBlocks",
       "components": [
         {

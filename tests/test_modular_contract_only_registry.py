@@ -43,7 +43,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 6)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 7)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 2)
         self.assertTrue(
@@ -58,7 +58,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 15)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 17)
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
             with self.subTest(pipeline=specification.class_name):
@@ -86,6 +86,25 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             self.assertEqual(metadata["contract_batch"], CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME[name].batch)
             self.assertFalse(metadata["auto_eligible"])
             self.assertEqual(pipeline_class_to_modiff_node_config(getattr(diffusers, name), "denoise"), (None, None))
+
+    def test_krea2_base_and_turbo_publish_distinct_exact_upstream_contracts(self):
+        base = reviewed_modular_workflow_contract("Krea2ModularPipeline")
+        turbo = reviewed_modular_workflow_contract("Krea2TurboModularPipeline")
+
+        self.assertEqual(base["blocksClass"], "Krea2AutoBlocks")
+        self.assertEqual(turbo["blocksClass"], "Krea2TurboAutoBlocks")
+        for contract in (base, turbo):
+            self.assertEqual([workflow["taskId"] for workflow in contract["workflows"]], ["text_to_image"])
+            self.assertEqual(contract["workflows"][0]["requiredInputs"], ["prompt"])
+
+        base_inputs = {item["name"]: item for item in base["workflows"][0]["inputs"]}
+        turbo_inputs = {item["name"]: item for item in turbo["workflows"][0]["inputs"]}
+        self.assertEqual(base_inputs["num_inference_steps"]["default"], 28)
+        self.assertIn("negative_prompt", base_inputs)
+        self.assertIn("guider", {item["name"] for item in base["components"]})
+        self.assertEqual(turbo_inputs["num_inference_steps"]["default"], 8)
+        self.assertNotIn("negative_prompt", turbo_inputs)
+        self.assertNotIn("guider", {item["name"] for item in turbo["components"]})
 
     def test_models_loader_rejects_contract_only_class_before_artifact_or_index_resolution(self):
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:

@@ -23,6 +23,12 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES = (
         "image",
     ),
     ContractOnlyModularPipeline("Ideogram4ModularPipeline", "Ideogram 4 (Contract only)", "image"),
+    ContractOnlyModularPipeline("Krea2ModularPipeline", "Krea 2 (Contract only)", "image"),
+    ContractOnlyModularPipeline(
+        "Krea2TurboModularPipeline",
+        "Krea 2 Turbo (Contract only)",
+        "image",
+    ),
     ContractOnlyModularPipeline(
         "StableDiffusion3ModularPipeline",
         "Stable Diffusion 3 (Contract only)",
