@@ -4368,9 +4368,31 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   requires a paid commercial agreement at USD 10 million aggregate annual
   entity revenue and places obligations on derivative transfers. Remote heavy
   execution and physical macOS evidence remain pending independently.
-- [ ] Evaluate HunyuanVideo 1.5, Helios/Pyramid, Wan 14B/22 Modular, full LTX/LTX2,
-  EasyAnimate, SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video
-  families.
+- [x] Evaluate HunyuanVideo 1.5 without widening its existing contract-only
+  surface. Backend `31cafc4` seals the official
+  `tencent/HunyuanVideo-1.5` snapshot at
+  `9b49404b3f5df2a8f0b31df27a0c7ab872e7b038` and two immutable Diffusers
+  candidates: 480p text-to-video at
+  `286be7ce72277246578a3e3cc2487e95ddae5bcf` and 480p step-distilled
+  image-to-video at `854c04a4c8a53d990b418c7478f0802c0fc8c726`.
+  Their exact safetensors receipts are respectively 371,759,988,572 bytes for
+  the full upstream family, 53,367,753,676 bytes for the selective T2V
+  repository, and 34,620,593,582 bytes for the selective I2V repository. The
+  source recipes bind 121 frames at 24 fps, 50 steps / guidance 6 / scheduler
+  shift 5 for T2V, and the recommended 8-or-12-step mean-flow path with
+  guidance 1 / shift 7 for I2V. CPU model offload, VAE tiling, and optional
+  attention kernels are recorded; prompt rewriting and kernel downloads remain
+  forbidden during discovery.
+
+  No runtime or download entry was admitted. The Tencent Hunyuan Community
+  License preamble excludes the EU, UK, and South Korea, while the formal
+  `Territory` definition names only the EU; it also adds a 100-million-MAU
+  commercial threshold, distribution notice, generated-content disclosure,
+  and output-territory obligations. That inconsistency requires legal review.
+  Remote execution and physical macOS evidence remain pending, and the resource
+  envelope in `data/hunyuanvideo-1.5-artifact-review.json` is estimate-only.
+- [ ] Evaluate Helios/Pyramid, Wan 14B/22 Modular, full LTX/LTX2, EasyAnimate,
+  SkyReels, Cosmos/Cosmos3, Kandinsky5 Video, and other heavy video families.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
 - [ ] Keep LLaDA2 blocked unless its remote-code requirement receives an explicit
@@ -4604,4 +4626,5 @@ Add references only after the corresponding evidence exists.
 | P6.2 Krea2 Modular contracts | `1753384` | `ec2a349` | Contract-only; remote execution qualification pending | Not required | Both pinned classes are Expert-visible with exact, distinct base/Turbo contracts and fail closed before artifact resolution. The 28-contract snapshot, 1,313-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights were downloaded. |
 | P6.3 MiniMax H3 contracts and artifact review | `baf7271` | `947a2ef` | Contract-only; legal and remote heavy-hardware qualification pending | Not required | Three generic joint video/audio contracts, disjunctive FL2VA requirements, exact immutable partition/hash receipt, conditioner/scheduler/reference bounds, and an estimate-only resource envelope are sealed. The territory-restricted repository remains outside the runtime/download catalog with zero runnable modes. The 1,318-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights or media were downloaded. |
 | P6.4 LTX2/LTX2.5 contracts and source recipe review | `7e4f99b`, `b887aef` | `9dfcf62` | Contract-only; gated artifact indexes, license acceptance, remote heavy-hardware execution, and physical macOS qualification pending | Not required | All eight generic joint video/audio workflows and the distinct convolutional/diffusion decode contracts are sealed. The three official LTX-2.5 source recipes, exact sigma schedules, latent upsampler, duration head, explicit Gemma-4 enhancement, explicit NATTEN setup, and audio/video handoffs are recorded without exposing any runnable mode. Public immutable metadata covers 31 weight files / 163,896,920,128 bytes, but denied gated file access prevents exact partition selection; no weights or media were downloaded. |
+| P6.5 HunyuanVideo 1.5 evaluation | `31cafc4` | Not required | Contract-only; territory/legal review and remote heavy-hardware execution pending | Not required | The existing two-workflow Modular contract, full official family, and immutable 480p T2V plus step-distilled I2V candidates are sealed with exact hashes, sizes, recipes, and estimate-only resource bounds. Conflicting territory language and additional commercial/distribution obligations keep all artifacts outside runtime and download catalogs. No weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflows remain open as independent segments. |
