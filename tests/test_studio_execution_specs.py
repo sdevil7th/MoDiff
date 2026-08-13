@@ -214,6 +214,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("Kandinsky3Pipeline", "edit_image"),
                 ("LongCatImagePipeline", "text_to_image"),
                 ("LongCatImageEditPipeline", "edit_image"),
+                ("LuminaPipeline", "text_to_image"),
+                ("Lumina2Pipeline", "text_to_image"),
                 ("AuraFlowPipeline", "text_to_image"),
                 ("ChromaPipeline", "text_to_image"),
                 ("CogView3PlusPipeline", "text_to_image"),

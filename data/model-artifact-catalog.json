@@ -387,6 +387,20 @@
       "artifacts": []
     },
     {
+      "modelType": "LuminaPipeline",
+      "baseRepo": "Alpha-VLLM/Lumina-Next-SFT-diffusers",
+      "baseRevision": "0ee5ec90043acf5cb41fe96274af36eb7fad8d95",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "Lumina2Pipeline",
+      "baseRepo": "Alpha-VLLM/Lumina-Image-2.0",
+      "baseRevision": "53504abd8178b30685b6c4c7a4cd181ff78b73e9",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "ChromaPipeline",
       "baseRepo": "lodestones/Chroma1-HD",
       "baseRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",

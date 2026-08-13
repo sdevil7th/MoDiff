@@ -107,6 +107,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "Kandinsky3Pipeline",
             "LongCatImagePipeline",
             "LongCatImageEditPipeline",
+            "LuminaPipeline",
+            "Lumina2Pipeline",
             "AuraFlowPipeline",
             "ChromaPipeline",
             "CogView3PlusPipeline",

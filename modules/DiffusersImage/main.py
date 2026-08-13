@@ -65,6 +65,8 @@ PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
 LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
 LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
+LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
+LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -130,6 +132,9 @@ class ImagePipelineAdapter:
     min_reference_aspect_ratio: float | None = None
     max_reference_aspect_ratio: float | None = None
     enable_prompt_rewrite: bool | None = None
+    clean_caption: bool | None = None
+    cfg_trunc_ratio: float | None = None
+    cfg_normalization: bool | None = None
     unconditional_optional_fields: tuple[str, ...] = ()
     conditioning_kind: str | None = None
     default_conditioning_repo: str | None = None
@@ -180,6 +185,12 @@ class ImagePipelineAdapter:
             raise ValueError("Image reference aspect-ratio bounds must be positive and ordered.")
         if self.enable_prompt_rewrite is not None and type(self.enable_prompt_rewrite) is not bool:
             raise ValueError("Image prompt rewriting must be an exact boolean when configured.")
+        if self.clean_caption is not None and type(self.clean_caption) is not bool:
+            raise ValueError("Image caption cleaning must be an exact boolean when configured.")
+        if self.cfg_trunc_ratio is not None and not 0.0 <= self.cfg_trunc_ratio <= 1.0:
+            raise ValueError("Image CFG truncation ratio must be between zero and one.")
+        if self.cfg_normalization is not None and type(self.cfg_normalization) is not bool:
+            raise ValueError("Image CFG normalization must be an exact boolean when configured.")
         conditioning_fields = (
             self.conditioning_kind,
             self.default_conditioning_repo,
@@ -259,6 +270,12 @@ class ImagePipelineAdapter:
             target[self.conditioning_scale_parameter] = values["conditioning_scale"]
         if self.enable_prompt_rewrite is not None and supports_arg(pipeline, "enable_prompt_rewrite"):
             target["enable_prompt_rewrite"] = self.enable_prompt_rewrite
+        if self.clean_caption is not None and supports_arg(pipeline, "clean_caption"):
+            target["clean_caption"] = self.clean_caption
+        if self.cfg_trunc_ratio is not None and supports_arg(pipeline, "cfg_trunc_ratio"):
+            target["cfg_trunc_ratio"] = self.cfg_trunc_ratio
+        if self.cfg_normalization is not None and supports_arg(pipeline, "cfg_normalization"):
+            target["cfg_normalization"] = self.cfg_normalization
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -496,6 +513,34 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_reference_pixels=1024 * 1024,
         min_reference_aspect_ratio=0.25,
         max_reference_aspect_ratio=4.0,
+    ),
+    "LuminaPipeline": ImagePipelineAdapter(
+        "LuminaPipeline",
+        frozenset({"text_to_image"}),
+        LUMINA_REPO,
+        artifact_pipeline_classes=("LuminaText2ImgPipeline",),
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=16,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=256,
+        clean_caption=False,
+    ),
+    "Lumina2Pipeline": ImagePipelineAdapter(
+        "Lumina2Pipeline",
+        frozenset({"text_to_image"}),
+        LUMINA2_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_output_side=512,
+        max_output_side=2048,
+        output_side_step=16,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=256,
+        cfg_trunc_ratio=0.25,
+        cfg_normalization=True,
     ),
     "AuraFlowPipeline": ImagePipelineAdapter(
         "AuraFlowPipeline",
@@ -984,6 +1029,16 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "LongCatImageEditPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale"),
+    },
+    "LuminaPipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
+        ),
+    },
+    "Lumina2Pipeline": {
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
+        ),
     },
     "AuraFlowPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),

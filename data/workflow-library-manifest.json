@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T21:01:37.285Z",
+  "generatedAt": "2026-08-13T21:24:02.938Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 113,
-  "supportedPairCount": 125,
+  "supportedCanonicalPairCount": 115,
+  "supportedPairCount": 127,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2107,6 +2107,58 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "Lumina2Pipeline:text_to_image",
+      "modelType": "Lumina2Pipeline",
+      "modelFamily": "Lumina 2.0",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Alpha-VLLM/Lumina-Image-2.0"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Lumina2Pipeline"
+      ],
+      "sourceTemplateId": "task-template:lumina2:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/lumina2-pipeline/text-to-image.json",
+      "graphHash": "7e49a5b118a3fe40ac9726330700684eca0a28bd5a928f7ef2c53cac1f4fb416"
+    },
+    {
+      "id": "LuminaPipeline:text_to_image",
+      "modelType": "LuminaPipeline",
+      "modelFamily": "Lumina",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Alpha-VLLM/Lumina-Next-SFT-diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LuminaPipeline"
+      ],
+      "sourceTemplateId": "task-template:lumina-next:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/lumina-pipeline/text-to-image.json",
+      "graphHash": "b9d3ee1de161d469c74f731c1d3d0ee65147a92ffd49009551ce21bbc952598e"
     },
     {
       "id": "MarigoldDepthPipeline:depth_estimation",

@@ -44,6 +44,27 @@ PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
 LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
 LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
+LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
+LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
+LUMINA2_DIFFUSERS_FILES = [
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00003.safetensors",
+    "text_encoder/model-00002-of-00003.safetensors",
+    "text_encoder/model-00003-of-00003.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
@@ -6177,6 +6198,126 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["longcat-image-edit:edit-image:v1"] = {
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _SDXL_EDIT_GRAPH_BINDINGS,
+}
+
+
+_LUMINA_PROFILE = {
+    "id": "lumina-next:direct",
+    "model_type": "LuminaPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "LuminaPipeline",
+    "default_repo": LUMINA_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 30,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_LUMINA_CAPABILITY = {
+    "modelType": "LuminaPipeline",
+    "label": "Lumina Next",
+    "displayName": "Lumina Next SFT 2B",
+    "family": "Lumina",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": LUMINA_REPO,
+    "artifactLabel": "Apache-2.0-declared bfloat16 Diffusers safetensors repo",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 30,
+    "recommendedGuidance": 4.0,
+    "recommendedMaxSequenceLength": 256,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": True,
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 30,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(LUMINA_REPO, model_type="LuminaPipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The immutable public snapshot contains four exact safetensors weight files and executes only package-owned Diffusers and Transformers classes.",
+        "MoDiff bounds generation to 512-2048px sides, at most 1,048,576 output pixels, 30 steps, guidance 4, 256 prompt tokens, and disables optional caption cleaning.",
+        "The approximately 8.86 GB weight surface has no safety checker and remains remote-only; Auto and Gallery are disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["lumina-next:text-to-image:v1"] = {
+    "modelType": "LuminaPipeline",
+    "mode": "text_to_image",
+    "profile": _LUMINA_PROFILE,
+    "capability": _LUMINA_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+_LUMINA2_PROFILE = {
+    **_LUMINA_PROFILE,
+    "id": "lumina2:direct",
+    "model_type": "Lumina2Pipeline",
+    "pipeline_class": "Lumina2Pipeline",
+    "default_repo": LUMINA2_REPO,
+    "max_low_memory_steps": 50,
+}
+_LUMINA2_CAPABILITY = {
+    **_LUMINA_CAPABILITY,
+    "modelType": "Lumina2Pipeline",
+    "label": "Lumina Image 2.0",
+    "displayName": "Lumina Image 2.0 2.6B",
+    "family": "Lumina 2.0",
+    "defaultRepo": LUMINA2_REPO,
+    "artifactLabel": "Apache-2.0-declared Diffusers safetensors-only selection",
+    "downloadFiles": LUMINA2_DIFFUSERS_FILES,
+    "recommendedSteps": 50,
+    "revisionCandidates": [require_catalog_revision(LUMINA2_REPO, model_type="Lumina2Pipeline")],
+    "lowVram": {
+        **_LUMINA_CAPABILITY["lowVram"],
+        "steps": 50,
+    },
+    "notes": [
+        "The immutable public snapshot contains six exact safetensors weight files; MoDiff's 17-file download allowlist excludes the legacy pickle checkpoints and demo asset.",
+        "MoDiff bounds generation to 512-2048px sides, at most 1,048,576 output pixels, 50 steps, guidance 4, 256 prompt tokens, and fixes the official CFG truncation ratio to 0.25 with normalization enabled.",
+        "The approximately 21.23 GB safetensors surface has no safety checker and remains remote-only; Auto and Gallery are disabled pending live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["lumina2:text-to-image:v1"] = {
+    "modelType": "Lumina2Pipeline",
+    "mode": "text_to_image",
+    "profile": _LUMINA2_PROFILE,
+    "capability": _LUMINA2_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
 }
 
 
