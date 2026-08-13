@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T01:56:30.664Z",
+  "generatedAt": "2026-08-13T02:19:44.760Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 70,
-  "supportedPairCount": 82,
+  "supportedCanonicalPairCount": 71,
+  "supportedPairCount": 83,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1942,6 +1942,33 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-xlpipeline/text-to-image.json",
       "graphHash": "ed9f21370940ccad676c13a480464b5fcdee1b3cb90792e0d4c9cbb504c1be5e"
+    },
+    {
+      "id": "StableDiffusionXLTurboPipeline:text_to_image",
+      "modelType": "StableDiffusionXLTurboPipeline",
+      "modelFamily": "Stable Diffusion XL",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/sdxl-turbo"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "StableDiffusionXLTurboPipeline"
+      ],
+      "sourceTemplateId": "task-template:sdxl-turbo:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/stable-diffusion-xlturbo-pipeline/text-to-image.json",
+      "graphHash": "49f93b98bbebbf573017052d366437f513160774bef66406adc1b6141be7cfb1"
     },
     {
       "id": "Wan22Pipeline:text_to_video",

@@ -80,6 +80,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxReduxPipeline",
             "Flux2KleinPipeline",
             "StableDiffusionXLPipeline",
+            "StableDiffusionXLTurboPipeline",
             "DummyCustomPipeline",
             "DDPMPipeline",
             "DDIMPipeline",

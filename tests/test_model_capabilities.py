@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 70)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 71)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -138,6 +138,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "DDIMPipeline",
             "ConsistencyModelPipeline",
             "StableDiffusionPipeline",
+            "StableDiffusionXLTurboPipeline",
             "LatentConsistencyModelPipeline",
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
@@ -198,6 +199,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             sdxl["modeRequirements"]["edit_image"]["requiredImages"],
             ["referenceImages"],
         )
+        turbo = by_model["StableDiffusionXLTurboPipeline"]
+        self.assertEqual(turbo["revisionCandidates"], ["71153311d3dbb46851df1931d3ca6e939de83304"])
+        self.assertEqual(turbo["recommendedSteps"], 1)
+        self.assertEqual(turbo["recommendedGuidance"], 0.0)
+        self.assertFalse(turbo["autoEligible"])
+        self.assertFalse(turbo["galleryEligible"])
+        self.assertNotIn("StableDiffusionXLTurboPipeline", experimental)
         sdxl_inpaint = next(
             item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
         )

@@ -47,6 +47,7 @@ from modules.DiffusersImage.main import (
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
     SDXL_BASE_REPO,
+    SDXL_TURBO_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
     ImageModeFieldContract,
@@ -713,6 +714,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"], "control_image"
         )
         self.assertFalse(controlnet["fieldParams"]["conditioning_scale"]["hidden"])
+        turbo = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLTurboPipeline"], "text_to_image"
+        )
+        self.assertTrue(turbo["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertTrue(turbo["fieldParams"]["guidance_scale"]["hidden"])
 
     def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
         for fields in (("unknown",), ("strength", "strength")):
@@ -736,6 +742,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image", "mask_image"},
             ),
             "StableDiffusionXLPipeline": ({"text_to_image"}, SDXL_BASE_REPO, {"prompt"}),
+            "StableDiffusionXLTurboPipeline": ({"text_to_image"}, SDXL_TURBO_REPO, {"prompt"}),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -774,7 +781,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for pipeline_name, (modes, repository, required_inputs) in expected.items():
             with self.subTest(pipeline=pipeline_name):
                 adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
-                parameters = set(inspect.signature(pipeline_class_from_name(pipeline_name).__call__).parameters)
+                parameters = set(
+                    inspect.signature(pipeline_class_from_name(adapter.load_pipeline_class).__call__).parameters
+                )
                 self.assertEqual(adapter.modes, frozenset(modes))
                 self.assertEqual(adapter.default_repo, repository)
                 self.assertTrue(required_inputs.issubset(parameters))
@@ -812,6 +821,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("StableDiffusionImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("QwenImageImg2ImgPipeline", "edit_image", Edit, {"image": image}),
@@ -836,7 +846,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         }
         for pipeline_name, mode, action_class, action_inputs in cases:
             with self.subTest(pipeline=pipeline_name):
-                upstream_signature = inspect.signature(pipeline_class_from_name(pipeline_name).__call__)
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                upstream_signature = inspect.signature(
+                    pipeline_class_from_name(adapter.load_pipeline_class).__call__
+                )
                 upstream_parameters = set(upstream_signature.parameters)
                 received = {}
 
@@ -846,7 +859,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
                 call.__signature__ = upstream_signature
                 fake_type = type(
-                    pipeline_name,
+                    adapter.load_pipeline_class,
                     (),
                     {"_execution_device": "cpu", "__call__": call},
                 )
@@ -858,7 +871,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "width": 32,
                     "height": 32,
                     "num_inference_steps": 2,
-                    "guidance_scale": 4.0,
+                    "guidance_scale": (
+                        adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0
+                    ),
                     "strength": 0.75,
                     "padding_mask_crop": 16,
                     "max_sequence_length": 128,
@@ -877,7 +892,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 }
                 if action_class is Generate:
                     initial.update({"width", "height"})
-                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
                 expected_keys = initial | {
                     destination
                     for source, destination in aliases.items()
@@ -889,7 +903,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
                 self.assertEqual(set(received), expected_keys)
-                self.assertEqual(received[adapter.guidance_parameter], 4.0)
+                self.assertEqual(
+                    received[adapter.guidance_parameter],
+                    adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0,
+                )
                 if "negative_prompt" in upstream_parameters:
                     self.assertEqual(received["negative_prompt"], "artifact")
 
@@ -1664,6 +1681,66 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertEqual(result["resolved_artifact"], repo)
 
         self.assertEqual(loaded, ["org/flux-compatible-a", "org/flux-compatible-b"])
+
+    def test_sdxl_turbo_loads_the_reviewed_upstream_fp16_safetensors_variant(self):
+        loaded = {}
+
+        class StableDiffusionXLPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+        node = LoadPipeline("sdxl-turbo-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=StableDiffusionXLPipeline,
+            ) as resolve_pipeline,
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SDXL_TURBO_REPO,
+                pipeline_class="StableDiffusionXLTurboPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(SDXL_TURBO_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        resolve_pipeline.assert_called_once_with("StableDiffusionXLPipeline")
+        self.assertEqual(loaded["repo"], SDXL_TURBO_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_TURBO_REPO))
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, "StableDiffusionXLTurboPipeline")
+
+    def test_sdxl_turbo_rejects_non_native_steps_and_guidance(self):
+        class StableDiffusionXLPipeline:
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Turbo settings must fail before inference")
+
+        pipeline = tag_test_image_pipeline(
+            StableDiffusionXLPipeline(),
+            "StableDiffusionXLTurboPipeline",
+            "text_to_image",
+        )
+        for kwargs, message in (
+            ({"num_inference_steps": 5, "guidance_scale": 0.0}, "between 1 and 4"),
+            ({"num_inference_steps": 1, "guidance_scale": 0.1}, "requires guidance_scale=0"),
+        ):
+            with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, message):
+                Generate("sdxl-turbo-native-contract").execute(
+                    pipeline=pipeline,
+                    prompt="reviewed fixture",
+                    width=32,
+                    height=32,
+                    **kwargs,
+                )
 
     def test_execution_recipe_controls_load_placement_attention_and_offload(self):
         loaded = {}

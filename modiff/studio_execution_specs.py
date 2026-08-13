@@ -30,6 +30,7 @@ FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
+SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -3940,6 +3941,86 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-controlnet-canny:control-image:v1"] = {
     "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
     "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
     "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+
+
+_SDXL_TURBO_PROFILE = {
+    "id": "sdxl-turbo:direct",
+    "model_type": "StableDiffusionXLTurboPipeline",
+    "modes": ("text_to_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "StableDiffusionXLTurboPipeline",
+    "default_repo": SDXL_TURBO_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 512,
+    "max_low_memory_steps": 4,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SDXL_TURBO_CAPABILITY = {
+    "modelType": "StableDiffusionXLTurboPipeline",
+    "label": "Stable Diffusion XL Turbo",
+    "displayName": "SDXL Turbo",
+    "family": "Stable Diffusion XL",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SDXL_TURBO_REPO,
+    "artifactLabel": "Diffusers safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Guidance disabled",
+    "supportsImageInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 1,
+        "width": 512,
+        "height": 512,
+    },
+    "modes": ["text_to_image"],
+    "modeRequirements": {},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(SDXL_TURBO_REPO, model_type="StableDiffusionXLTurboPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The reviewed fp16 safetensors variant runs at 512px in one to four steps with guidance fixed to zero.",
+        "Auto and Gallery remain disabled until exact live output and license-surface review are complete.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-turbo:text-to-image:v1"] = {
+    "modelType": "StableDiffusionXLTurboPipeline",
+    "mode": "text_to_image",
+    "profile": _SDXL_TURBO_PROFILE,
+    "capability": _SDXL_TURBO_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _SDXL_GRAPH_BINDINGS,
 }
 
 

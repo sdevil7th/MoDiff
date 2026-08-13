@@ -51,6 +51,7 @@ FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
+SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -86,6 +87,11 @@ class ImagePipelineAdapter:
     compatible_repos: frozenset[str] = frozenset()
     artifact_pipeline_classes: tuple[str, ...] = ()
     runtime_pipeline_classes: tuple[str, ...] = ()
+    upstream_pipeline_class: str | None = None
+    safe_serialization_required: bool = False
+    weight_variant: str | None = None
+    max_inference_steps: int = 100
+    fixed_guidance_scale: float | None = None
     guidance_parameter: str = "guidance_scale"
     multi_image_strategy: str = "list"
     max_sequence_length: int = 512
@@ -100,6 +106,14 @@ class ImagePipelineAdapter:
     conditioning_scale_parameter: str | None = None
 
     def __post_init__(self) -> None:
+        if self.upstream_pipeline_class is not None and not self.upstream_pipeline_class:
+            raise ValueError("An upstream image pipeline class cannot be blank.")
+        if not 1 <= self.max_inference_steps <= 100:
+            raise ValueError("Image adapters must bound inference steps between 1 and 100.")
+        if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= 20.0:
+            raise ValueError("An exact image guidance scale must be between 0 and 20.")
+        if self.weight_variant is not None and self.weight_variant != "fp16":
+            raise ValueError("Only the reviewed fp16 image weight variant is supported.")
         conditioning_fields = (
             self.conditioning_kind,
             self.default_conditioning_repo,
@@ -120,6 +134,10 @@ class ImagePipelineAdapter:
     @property
     def model_filter_classes(self) -> tuple[str, ...]:
         return self.artifact_pipeline_classes or (self.pipeline_class,)
+
+    @property
+    def load_pipeline_class(self) -> str:
+        return self.upstream_pipeline_class or self.pipeline_class
 
     @property
     def allowed_runtime_classes(self) -> tuple[str, ...]:
@@ -205,6 +223,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         "StableDiffusionXLPipeline",
         frozenset({"text_to_image"}),
         SDXL_BASE_REPO,
+    ),
+    "StableDiffusionXLTurboPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLTurboPipeline",
+        frozenset({"text_to_image"}),
+        SDXL_TURBO_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline",),
+        runtime_pipeline_classes=("StableDiffusionXLPipeline",),
+        upstream_pipeline_class="StableDiffusionXLPipeline",
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        max_inference_steps=4,
+        fixed_guidance_scale=0.0,
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -503,6 +533,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "StableDiffusionXLPipeline": {
         "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
+    },
+    "StableDiffusionXLTurboPipeline": {
+        "text_to_image": _image_field_contract("width", "height"),
     },
     "StableDiffusionXLImg2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
@@ -1235,11 +1268,15 @@ def preflight_image_action(
         field="num_inference_steps",
         default=4,
         minimum=1,
-        maximum=100,
+        maximum=adapter.max_inference_steps,
     )
     values["guidance_scale"] = _bounded_image_float(
         values.get("guidance_scale"), field="guidance_scale", default=0.0, minimum=0.0, maximum=20.0
     )
+    if adapter.fixed_guidance_scale is not None and values["guidance_scale"] != adapter.fixed_guidance_scale:
+        raise ValueError(
+            f"{adapter.pipeline_class} requires guidance_scale={adapter.fixed_guidance_scale:g}."
+        )
     values["pag_scale"] = _bounded_image_float(
         values.get("pag_scale"), field="pag_scale", default=3.0, minimum=0.0, maximum=20.0
     )
@@ -2288,6 +2325,10 @@ class LoadPipeline(NodeBase):
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "local_files_only": local_files_only(model_id),
         }
+        if adapter.safe_serialization_required:
+            load_kwargs["use_safetensors"] = True
+        if adapter.weight_variant is not None:
+            load_kwargs["variant"] = adapter.weight_variant
         if quant_config is not None:
             load_kwargs["quantization_config"] = quant_config
         recipe_device_map = execution_recipe.get("device_map")
@@ -2343,7 +2384,7 @@ class LoadPipeline(NodeBase):
         elif adapter.conditioning_kind is not None:
             conditioning_model_id = repo_value(conditioning_selection)
             component_class = pipeline_class_from_name(str(adapter.conditioning_component_class))
-            pipeline_class = pipeline_class_from_name(pipeline_class_name)
+            pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             component_kwargs = {
                 "torch_dtype": dtype,
                 "revision": conditioning_revision,
@@ -2364,7 +2405,7 @@ class LoadPipeline(NodeBase):
                 base_load_kwargs[str(adapter.conditioning_component_parameter)] = conditioning_component
                 pipeline = pipeline_class.from_pretrained(model_id, **base_load_kwargs)
         else:
-            pipeline_class = pipeline_class_from_name(pipeline_class_name)
+            pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
                 pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
         _tag_image_pipeline(
