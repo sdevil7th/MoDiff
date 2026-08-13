@@ -1,0 +1,223 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "runtimeCatalogExposed": false,
+    "status": "review_complete_not_admitted",
+    "unresolvedGates": [
+      "generic_visual_context_matrix_contract",
+      "backend_owned_matrix_and_pixel_bounds",
+      "backend_owned_upsampling_bounds",
+      "license_file_clarification",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "VisualCloze",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Apache-2.0 identifiers in immutable model-card metadata; neither full Diffusers snapshot contains a LICENSE file",
+    "id": "apache-2.0",
+    "licenseFilePresent": false
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "combinedPipelineClass": "VisualClozePipeline",
+    "combinedPipelineSha256": "52af1d1b1a3a4feca0808211715b12e8c0758aa87c6760c7c4cfb652160f6328",
+    "generationPipelineClass": "VisualClozeGenerationPipeline",
+    "generationPipelineSha256": "49de102c4b9c8b2560a6954bb21c6c936050e03e87b32ee0323ac1994b8932fc",
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->transformer->vae",
+    "outputClass": "FluxPipelineOutput",
+    "processorSha256": "cf43cfef0feddc0ed7f6340c6cebe3186430e9b98fa338abf3dcca91e43c6a78",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "upsamplingPipelineClass": "FluxFillPipeline",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "defaultGuidanceScale": 30.0,
+    "defaultNumInferenceSteps": 50,
+    "defaultNumImagesPerPrompt": 1,
+    "defaultUpsamplingStrength": 1.0,
+    "documentedGuidanceScale": 30.0,
+    "documentedNumInferenceSteps": 30,
+    "inputShape": "batch -> rows -> equal-width image-or-target-null cells",
+    "maxSequenceLength": 512,
+    "requiredInputs": [
+      "task_prompt",
+      "image_matrix_with_query_target_null"
+    ],
+    "optionalInputs": [
+      "content_prompt",
+      "upsampling_height",
+      "upsampling_width",
+      "upsampling_strength"
+    ],
+    "outputShape": "batch -> one-or-more generated target images",
+    "packageValidationGaps": [
+      "no maximum batch, row, or column count",
+      "no cumulative input-pixel ceiling",
+      "upsampling dimensions are rounded with warnings instead of bounded",
+      "no maximum denoising-step bound"
+    ],
+    "reviewedResolutions": [
+      384,
+      512
+    ]
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 51539607552,
+    "minimumSelectiveDiskBytes": 51539607552,
+    "minimumSystemRamBytes": 103079215104,
+    "notes": [
+      "The publisher gives no measured accelerator-memory figure for either full snapshot.",
+      "Both full repositories contain approximately 33.74 GB of weights and the combined route can execute generation plus SDEdit upsampling.",
+      "All resource values are conservative MoDiff estimates pending a bounded remote run."
+    ],
+    "status": "estimate_only_remote_qualification_pending"
+  },
+  "repositories": [
+    {
+      "gated": false,
+      "licenseFilePresent": false,
+      "modelCardSha256": "3b3ee11d1419eec67492514052e94f0be30cda5c15499f029b8ccd61e2d70941",
+      "modelIndexClass": "VisualClozePipeline",
+      "modelIndexSha256": "5a86736ff8e2c8039455c2af729f1877ff7c24f839cecb27e920f86694327b9e",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "VisualCloze/VisualClozePipeline-384",
+      "repositoryBytes": 33748601515,
+      "resolution": 384,
+      "revision": "59c469d2772d927ffe55f3543c4d3bd556fd46a4",
+      "safetensorsDtypeParameterCounts": {
+        "BF16": 11902391360
+      },
+      "trustRemoteCodeRequired": false,
+      "weightBytes": 33743379958,
+      "weightFileCount": 7,
+      "weightInventorySha256": "0c2d8bf3fe7d19d59e7832fc77301f3042d016fd777525d22fe4e16447082a10",
+      "weightFiles": [
+        {
+          "byteSize": 246144352,
+          "path": "text_encoder/model.safetensors",
+          "sha256": "893d67a23f4693ed42cdab4cbad7fe3e727cf59609c40da28a46b5470f9ed082"
+        },
+        {
+          "byteSize": 4994582224,
+          "path": "text_encoder_2/model-00001-of-00002.safetensors",
+          "sha256": "ec87bffd1923e8b2774a6d240c922a41f6143081d52cf83b8fe39e9d838c893e"
+        },
+        {
+          "byteSize": 4530066360,
+          "path": "text_encoder_2/model-00002-of-00002.safetensors",
+          "sha256": "a5640855b301fcdbceddfa90ae8066cd9414aff020552a201a255ecf2059da00"
+        },
+        {
+          "byteSize": 9985006384,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+          "sha256": "e8c76e3b2046d09f69b1a0fae89420a6b2f38907dd238c8604bbbbe63b7b8a43"
+        },
+        {
+          "byteSize": 9949328904,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+          "sha256": "256d0533f090cbc42d1f36c1856ace548e242a7368ada52962ac8249862e622a"
+        },
+        {
+          "byteSize": 3870584832,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+          "sha256": "bfee1486ddcc0b3d05698e7ff2390f3aef31f7c55d20ca6344044e3a34ae896d"
+        },
+        {
+          "byteSize": 167666902,
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3"
+        }
+      ]
+    },
+    {
+      "gated": false,
+      "licenseFilePresent": false,
+      "modelCardSha256": "52d71b5766152e43c4e8adc652d9dc74b26a30a04fdba9ec572998f0d42fa1c7",
+      "modelIndexClass": "VisualClozePipeline",
+      "modelIndexSha256": "03c39eb01b81f6f6ee2b87f4049cb516452d70fdda5e8a3e50ce8dfa428dbde2",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "VisualCloze/VisualClozePipeline-512",
+      "repositoryBytes": 33748601511,
+      "resolution": 512,
+      "revision": "feaad2dd83d3d42bad197b9d31fe2f6c5b4cb1bb",
+      "safetensorsDtypeParameterCounts": {
+        "BF16": 11902391360
+      },
+      "trustRemoteCodeRequired": false,
+      "weightBytes": 33743379958,
+      "weightFileCount": 7,
+      "weightInventorySha256": "df5605793200ed7e798b54a7d0a9311bfdcee7767cfc03fcd7a8821cb3a9a06c",
+      "weightFiles": [
+        {
+          "byteSize": 246144352,
+          "path": "text_encoder/model.safetensors",
+          "sha256": "893d67a23f4693ed42cdab4cbad7fe3e727cf59609c40da28a46b5470f9ed082"
+        },
+        {
+          "byteSize": 4994582224,
+          "path": "text_encoder_2/model-00001-of-00002.safetensors",
+          "sha256": "ec87bffd1923e8b2774a6d240c922a41f6143081d52cf83b8fe39e9d838c893e"
+        },
+        {
+          "byteSize": 4530066360,
+          "path": "text_encoder_2/model-00002-of-00002.safetensors",
+          "sha256": "a5640855b301fcdbceddfa90ae8066cd9414aff020552a201a255ecf2059da00"
+        },
+        {
+          "byteSize": 9985006384,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+          "sha256": "7a956036df7e64993a5a0f0444a1cf98929dfa6fc1076208bc8966e4dca97c9b"
+        },
+        {
+          "byteSize": 9949328904,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+          "sha256": "1e9664643330f27ccc0992628723f3767e3d41ab777f6212648ad11a08fabba2"
+        },
+        {
+          "byteSize": 3870584832,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+          "sha256": "600293fee22231388b50025b0854492494ecf16536f45244f3c6975d3173a890"
+        },
+        {
+          "byteSize": 167666902,
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "excludedLegacyArtifacts": {
+    "reason": "The training-code repository publishes PyTorch .pth LoRA checkpoints that are outside the safe-serialization policy; the full Diffusers candidates do not require them.",
+    "repository": "VisualCloze/VisualCloze",
+    "revision": "162329ec921ab1cf728ddc428653d8d1f234d629",
+    "files": [
+      {
+        "byteSize": 2482363148,
+        "path": "visualcloze-384-lora.pth",
+        "sha256": "88d0f23336d43c975f9611b5b84c51f54977c8d3679c02b57a3acd814ce8fe78"
+      },
+      {
+        "byteSize": 2482363148,
+        "path": "visualcloze-512-lora.pth",
+        "sha256": "02ec07e6302d5c429f39ccafaed28917373d4968f2b83740f8f444ecda90465d"
+      }
+    ]
+  }
+}
