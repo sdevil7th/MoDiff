@@ -12,6 +12,28 @@ class FakeRequest:
 
 
 class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
+    @staticmethod
+    def _space_plan(**overrides):
+        return {
+            "repoId": "unit/exact-model",
+            "revision": "a" * 40,
+            "snapshotCommit": "a" * 40,
+            "selectionLimited": False,
+            "requestedFiles": [],
+            "totalBytes": 100,
+            "completedBytes": 0,
+            "remainingBytes": 100,
+            "totalFileCount": 2,
+            "sizeKnown": True,
+            "planError": None,
+            "cacheRoot": "/app-cache",
+            "freeBytes": 1000,
+            "totalFilesystemBytes": 2000,
+            "reserveBytes": 200,
+            "fits": True,
+            **overrides,
+        }
+
     async def test_app_download_forwards_exact_commit_to_hub_snapshot(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
@@ -29,16 +51,88 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         async def run_callback(callback, **_kwargs):
             return callback()
 
+        observed_reservations = []
+
+        def fake_download(_repo_id, progress_cb, *_args):
+            progress_cb({"progress": 0.75, "remaining_bytes": 25})
+            observed_reservations.append(entry["reserved_bytes"])
+            return {"repo_id": "unit/exact-model", "complete": True}
+
         with (
             mock.patch.object(server, "_run_executor_callback", side_effect=run_callback),
             mock.patch(
+                "modiff.server.plan_hub_model_download",
+                return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+            ),
+            mock.patch(
                 "modiff.server.download_hub_model",
-                return_value={"repo_id": "unit/exact-model", "complete": True},
+                side_effect=fake_download,
             ) as download,
         ):
             await server._run_hf_download_task("unit/exact-model", entry)
 
         self.assertEqual(download.call_args.args[-1], revision)
+        self.assertEqual(observed_reservations, [25])
+        self.assertEqual(entry["reserved_bytes"], 0)
+
+    async def test_app_refuses_download_when_queue_and_reserve_do_not_fit(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        server.hf_download_tasks["unit/already-queued"] = {"reserved_bytes": 500}
+        revision = "a" * 40
+
+        with (
+            mock.patch(
+                "modiff.server.plan_hub_model_download",
+                return_value=self._space_plan(
+                    revision=revision,
+                    snapshotCommit=revision,
+                    remainingBytes=400,
+                    freeBytes=1000,
+                    reserveBytes=200,
+                ),
+            ),
+            mock.patch("modiff.server.download_hub_model") as download,
+        ):
+            response = await server.hf_download(
+                FakeRequest(repo_id="unit/exact-model", revision=revision)
+            )
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 507)
+        self.assertEqual(payload["code"], "insufficient_model_download_space")
+        self.assertFalse(payload["repair_required"])
+        self.assertEqual(payload["result"]["downloadPlan"]["queuedReservationBytes"], 500)
+        download.assert_not_called()
+
+    async def test_app_refuses_download_when_immutable_size_is_unknown(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        revision = "a" * 40
+
+        with (
+            mock.patch(
+                "modiff.server.plan_hub_model_download",
+                return_value=self._space_plan(
+                    revision=revision,
+                    snapshotCommit=revision,
+                    totalBytes=None,
+                    remainingBytes=None,
+                    sizeKnown=False,
+                    fits=False,
+                ),
+            ),
+            mock.patch("modiff.server.download_hub_model") as download,
+        ):
+            response = await server.hf_download(
+                FakeRequest(repo_id="unit/exact-model", revision=revision)
+            )
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 503)
+        self.assertEqual(payload["code"], "huggingface_download_size_unknown")
+        self.assertFalse(payload["repair_required"])
+        download.assert_not_called()
 
     async def test_shared_memory_runtime_serializes_graph_and_download_model_io(self):
         server = WebServer(modules={})

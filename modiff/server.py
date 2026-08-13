@@ -490,6 +490,7 @@ from utils.huggingface import (
     download_hub_model,
     get_cache_diagnostics,
     get_local_models,
+    plan_hub_model_download,
     search_hub,
     validate_hf_repo_id,
 )
@@ -1371,6 +1372,7 @@ class WebServer:
                 web.get("/workflows/share/{share_id}", self.workflow_share_get),
                 web.delete("/hf_cache/{hash}", self.hf_cache_delete),
                 web.get("/hf_hub", self.hf_hub),
+                web.get("/hf_download/plan", self.hf_download_plan),
                 web.post("/hf_download", self.hf_download),
                 web.get("/static/{module}/{file}", self.user_assets),
                 web.get("/stream", self.stream),
@@ -12806,6 +12808,90 @@ class WebServer:
             logger.error(f"Error in hf_hub endpoint: {e}")
             return web.json_response({"error": str(e)}, status=500)
 
+    async def hf_download_plan(self, request):
+        query = getattr(request, "query", {}) or {}
+        repo_id = query.get("repo_id")
+        if not repo_id:
+            return web.json_response({"error": "Incorrect request, `repo_id` is required."}, status=400)
+        try:
+            repo_id = validate_hf_repo_id(repo_id)
+        except (TypeError, ValueError) as error:
+            return web.json_response(
+                {"error": str(error), "code": "invalid_huggingface_repo_id", "retryable": False},
+                status=400,
+            )
+
+        raw_revision = query.get("revision")
+        if raw_revision is not None and (
+            not isinstance(raw_revision, str)
+            or raw_revision != raw_revision.strip()
+            or raw_revision != raw_revision.lower()
+            or not IMMUTABLE_HUB_REVISION.fullmatch(raw_revision)
+        ):
+            return web.json_response(
+                {
+                    "error": "Model download plans require an exact lowercase 40-character commit revision.",
+                    "code": "invalid_huggingface_revision",
+                    "retryable": False,
+                },
+                status=400,
+            )
+        revision = raw_revision or catalog_revision(repo_id)
+        requested_files = []
+        if hasattr(query, "getall"):
+            requested_files = query.getall("file", [])
+        elif query.get("file"):
+            requested_files = [query.get("file")]
+        requested_files = sorted(
+            {item.strip() for raw in requested_files for item in str(raw or "").split(",") if item.strip()}
+        )
+        if not requested_files:
+            matching_capability = next(
+                (
+                    capability
+                    for capability in STUDIO_MODEL_CAPABILITIES.values()
+                    if capability.get("defaultRepo") == repo_id and capability.get("downloadFiles")
+                ),
+                None,
+            )
+            if matching_capability:
+                requested_files = sorted(set(matching_capability["downloadFiles"]))
+
+        try:
+            plan = await asyncio.to_thread(
+                plan_hub_model_download,
+                repo_id,
+                requested_files,
+                revision,
+            )
+        except Exception as error:
+            return web.json_response(
+                {
+                    "error": str(error) or type(error).__name__,
+                    "code": "huggingface_download_plan_failed",
+                    "retryable": True,
+                },
+                status=503,
+            )
+        queued_reservation = sum(
+            int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values()
+        )
+        remaining_bytes = plan.get("remainingBytes")
+        fits_with_queue = bool(
+            plan.get("sizeKnown")
+            and isinstance(remaining_bytes, int)
+            and remaining_bytes + queued_reservation + int(plan.get("reserveBytes") or 0)
+            <= int(plan.get("freeBytes") or 0)
+        )
+        return web.json_response(
+            {
+                "error": False,
+                **plan,
+                "queuedReservationBytes": queued_reservation,
+                "fitsWithQueue": fits_with_queue,
+            }
+        )
+
     async def _run_hf_download_task(self, repo_id, entry):
         task_id = entry["task_id"]
 
@@ -12819,6 +12905,9 @@ class WebServer:
             if isinstance(progress, dict):
                 message.update(progress)
                 progress_value = message.get("progress")
+                remaining_bytes = message.get("remaining_bytes")
+                if isinstance(remaining_bytes, int) and remaining_bytes >= 0:
+                    entry["reserved_bytes"] = remaining_bytes
             else:
                 progress_value = float(progress or 0)
                 message["progress"] = progress_value
@@ -12845,6 +12934,61 @@ class WebServer:
                 download_sid,
             )
 
+        try:
+            plan = await asyncio.to_thread(
+                plan_hub_model_download,
+                repo_id,
+                entry.get("requested_files"),
+                entry.get("revision"),
+            )
+        except Exception as error:
+            return {
+                "complete": False,
+                "errorCode": "huggingface_download_plan_failed",
+                "httpStatus": 503,
+                "validation": {"reason": str(error) or type(error).__name__},
+            }
+
+        remaining_bytes = plan.get("remainingBytes")
+        if not plan.get("sizeKnown") or not isinstance(remaining_bytes, int):
+            return {
+                "complete": False,
+                "errorCode": "huggingface_download_size_unknown",
+                "httpStatus": 503,
+                "downloadPlan": plan,
+                "validation": {
+                    "reason": "The app could not prove the immutable model download size before writing files."
+                },
+            }
+        queued_reservation = sum(
+            int(task.get("reserved_bytes") or 0)
+            for task in self.hf_download_tasks.values()
+            if task is not entry
+        )
+        required_with_reserve = remaining_bytes + queued_reservation + int(plan.get("reserveBytes") or 0)
+        if required_with_reserve > int(plan.get("freeBytes") or 0):
+            return {
+                "complete": False,
+                "errorCode": "insufficient_model_download_space",
+                "httpStatus": 507,
+                "downloadPlan": {**plan, "queuedReservationBytes": queued_reservation},
+                "validation": {
+                    "reason": (
+                        "The app refused the model download because its conservative remaining-size reservation, "
+                        "the active download queue, and the 64 GiB safety reserve do not fit on the cache volume."
+                    )
+                },
+            }
+        entry["reserved_bytes"] = remaining_bytes
+        entry["download_plan"] = plan
+
+        try:
+            return await self._run_reserved_hf_download(repo_id, entry, progress_cb)
+        finally:
+            entry["reserved_bytes"] = 0
+
+    async def _run_reserved_hf_download(self, repo_id, entry, progress_cb):
+        task_id = entry["task_id"]
         async with self.hf_download_semaphore:
             for download_sid in list(entry.get("sids", [])):
                 self.queue_message(
@@ -13025,15 +13169,19 @@ class WebServer:
                     if isinstance(result, dict) and isinstance(result.get("validation"), dict)
                     else None
                 ) or "The downloaded snapshot is incomplete and requires repair."
+                response_status = (
+                    int(result.get("httpStatus") or 409) if isinstance(result, dict) else 409
+                )
                 return web.json_response(
                     {
                         "error": reason,
+                        "code": result.get("errorCode") if isinstance(result, dict) else None,
                         "result": result,
                         "task_id": entry["task_id"],
                         "repo_id": repo_id,
-                        "repair_required": True,
+                        "repair_required": response_status == 409,
                     },
-                    status=409,
+                    status=response_status,
                 )
             return web.json_response(
                 {"error": False, "result": result, "task_id": entry["task_id"], "repo_id": repo_id}

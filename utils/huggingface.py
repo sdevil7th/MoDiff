@@ -78,6 +78,7 @@ def _common_appdata_hf_cache_candidates():
 
 HF_CACHE_REPO_PREFIXES = ('models--', 'datasets--', 'spaces--')
 HF_DOWNLOAD_PLAN_FILE_PREVIEW_LIMIT = 200
+HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES = 64 * 1024**3
 _HF_XET_MODE_LOCK = threading.RLock()
 
 
@@ -691,6 +692,58 @@ def _repo_download_plan(
             'revision': revision,
             'snapshot_commit': None,
         }
+
+
+def plan_hub_model_download(
+    model_id: str,
+    allow_patterns: list[str] | tuple[str, ...] | None = None,
+    revision: str | None = None,
+):
+    """Return an app-owned immutable download and free-space preflight.
+
+    The estimate intentionally reserves the complete remaining snapshot even
+    when Hub blobs may later deduplicate. This lets the server account for
+    several queued downloads without deleting older cache entries or depending
+    on optimistic filesystem behavior.
+    """
+
+    requested_files = [str(name) for name in (allow_patterns or []) if str(name).strip()]
+    revision = resolve_model_revision(model_id, revision)
+    plan = _repo_download_plan(model_id, requested_files, revision)
+    cache_root = Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    cache_root.mkdir(parents=True, exist_ok=True)
+    disk = shutil.disk_usage(cache_root)
+    snapshot = _download_progress_snapshot(model_id, str(cache_root), plan)
+    total_bytes = plan.get('total_bytes')
+    completed_bytes = int(snapshot.get('completed_bytes') or 0)
+    remaining_bytes = (
+        max(int(total_bytes) - completed_bytes, 0)
+        if isinstance(total_bytes, int) and total_bytes >= 0
+        else None
+    )
+    size_known = bool(plan.get('size_known')) and remaining_bytes is not None
+    fits = bool(
+        size_known
+        and remaining_bytes + HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES <= disk.free
+    )
+    return {
+        'repoId': model_id,
+        'revision': revision,
+        'snapshotCommit': plan.get('snapshot_commit'),
+        'selectionLimited': bool(plan.get('selection_limited')),
+        'requestedFiles': requested_files,
+        'totalBytes': total_bytes,
+        'completedBytes': completed_bytes,
+        'remainingBytes': remaining_bytes,
+        'totalFileCount': plan.get('total_file_count'),
+        'sizeKnown': size_known,
+        'planError': plan.get('plan_error'),
+        'cacheRoot': str(cache_root),
+        'freeBytes': disk.free,
+        'totalFilesystemBytes': disk.total,
+        'reserveBytes': HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+        'fits': fits,
+    }
 
 
 def _plan_validation_files(plan: dict | None):

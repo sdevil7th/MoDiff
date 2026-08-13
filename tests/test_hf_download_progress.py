@@ -188,6 +188,54 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
         self.assertEqual(len(persisted["files"]), huggingface.HF_DOWNLOAD_PLAN_FILE_PREVIEW_LIMIT)
         self.assertNotIn("validation_files", persisted)
 
+    def test_app_download_preflight_reserves_remaining_bytes_and_64_gib(self):
+        revision = "a" * 40
+        with (
+            tempfile.TemporaryDirectory() as cache_dir,
+            patch.object(
+                huggingface.CONFIG,
+                "hf",
+                {**huggingface.CONFIG.hf, "cache_dir": cache_dir},
+            ),
+            patch.object(
+                huggingface,
+                "_repo_download_plan",
+                return_value={
+                    "total_bytes": 1000,
+                    "total_file_count": 2,
+                    "size_known": True,
+                    "selection_limited": True,
+                    "snapshot_commit": revision,
+                },
+            ) as upstream_plan,
+            patch.object(
+                huggingface,
+                "_download_progress_snapshot",
+                return_value={"completed_bytes": 200},
+            ),
+            patch.object(
+                huggingface.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(
+                    total=2000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+                    used=100,
+                    free=800 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+                ),
+            ),
+        ):
+            plan = huggingface.plan_hub_model_download(
+                "unit/exact",
+                ["model.safetensors"],
+                revision,
+            )
+
+        self.assertEqual(plan["revision"], revision)
+        self.assertEqual(plan["snapshotCommit"], revision)
+        self.assertEqual((plan["totalBytes"], plan["completedBytes"], plan["remainingBytes"]), (1000, 200, 800))
+        self.assertEqual(plan["reserveBytes"], 64 * 1024**3)
+        self.assertTrue(plan["fits"])
+        upstream_plan.assert_called_once_with("unit/exact", ["model.safetensors"], revision)
+
     def test_repo_cache_path_rejects_windows_backslash_traversal(self):
         with tempfile.TemporaryDirectory() as cache_dir:
             with self.assertRaises((TypeError, ValueError)):

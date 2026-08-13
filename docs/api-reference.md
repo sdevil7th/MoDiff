@@ -29,7 +29,7 @@ resolve to loopback.
 | Optimizations    | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`, `/jobs/{job_id}/cancel` | Inspect runtime features and legacy package contracts, manage recovery, and record bounded local qualification evidence. Hashless package install and activation are unavailable. |
 | Optional model runtimes | `GET /runtime/optional-runtimes`, `/jobs/{job_id}`; `POST /runtime/optional-runtimes/install`, `/activate`, `/rollback`, `/jobs/{job_id}/cancel` | Publish the reviewed optional-library contract and its fail-closed staged lifecycle. The current candidate exposes no executable install or activation action. |
 | Auto resource    | `POST /auto_resource/plan`, `POST /auto_resource/plans`, `GET /auto_resource/history`, `DELETE /auto_resource/history`                                                             | Plan hardware-aware model recipes and manage local planner history.                                                                         |
-| Models           | `GET /model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover, diagnose, download, authenticate, fingerprint, and delete model artifacts. |
+| Models           | `GET /model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover, diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts. |
 | Media lifecycle  | `GET /media_assets`, `DELETE /media_assets`                                                                                                                                        | Inspect temporary media records or remove exact unpinned, task-scoped, or age-scoped files while no generation is active.                   |
 | Custom modules   | `GET /custom_modules`; `POST /custom_modules/refresh`, `/install`, `/{name}/update`, `/{name}/disable`, `/{name}/enable`                                                           | Clone/copy and import trusted custom Python modules or change their enabled state.                                                          |
 | Studio outputs   | `GET/POST /studio_outputs`, `PATCH/DELETE /studio_outputs/{output_id}`                                                                                                             | Persist and manage local Studio output metadata and copied media.                                                                           |
@@ -556,7 +556,13 @@ Uploads are written under configured data subdirectories and share the configure
   match. When `revision` is omitted for a repository in the reviewed artifact
   catalog, the server selects that repository's immutable catalog revision;
   uncataloged user-selected repositories retain their existing Hub behavior. It
-  can consume substantial network, disk, RAM, and accelerator resources.
+  can consume substantial network, disk, RAM, and accelerator resources. Every
+  new app-owned task first resolves the same plan returned by
+  `GET /hf_download/plan?repo_id=...`, requires a known immutable byte count,
+  reserves that remaining size across the active queue, and preserves at least
+  64 GiB free on the cache volume. An unknown plan fails with HTTP 503 and a
+  plan that does not fit fails with HTTP 507; neither path deletes older models
+  or starts a snapshot download.
 - `DELETE /hf_cache/{hash}` deletes selected cached model revisions.
 - `POST /custom_modules/install` accepts a Git URL or local directory, places it under `custom/`, and refreshes the live registry. Imported custom code has the backend process's permissions.
 - Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but repository Python and standalone component loading with remote code are rejected before upstream construction. Custom Modular pipeline and Dynamic Block execution is limited to an exact cached 40-character Hub commit whose canonical `modular_model_index.json` resolves to MoDiff-reviewed installed Diffusers pipeline/block exports and pinned official Diffusers or Transformers components. MoDiff revalidates the repository identity immediately before copying the reviewed metadata into a private content-addressed snapshot. Local mutable repositories remain preview-only, and neither a preview nor a persisted checksum grants repository-code authorization.
