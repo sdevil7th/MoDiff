@@ -3903,9 +3903,21 @@ default. Assets: remote Dataset only.
     deterministic catalog entry. Auto, Gallery, live output, and physical
     macOS qualification remain pending; no output quality claim is inferred
     from contract or mocked evidence.
+  - [x] **P4.2c SDXL ControlNet Canny:** the generic conditioned Diffusers image
+    loader assembles the immutable SDXL base with
+    `diffusers/controlnet-canny-sdxl-1.0` commit
+    `eb115a19a10d14909256db740ed109532ab1483c`. Both loads require the reviewed
+    fp16 safetensors variants; the auxiliary artifact receipt additionally
+    records the exact 2,502,139,136-byte file and SHA-256. The upstream
+    `StableDiffusionXLControlNetPipeline` receives the existing generic Canny
+    preprocessor output at exact thresholds 0.1/0.2 and the reviewed 1024px,
+    50-step, guidance-5, conditioning-scale-0.5 recipe. Its canonical graph is
+    the 85th deterministic catalog entry. Auto, Gallery, live output, and
+    physical macOS qualification remain pending; no output quality claim is
+    inferred from contract or mocked evidence.
   - Existing SDXL base text-to-image, image-to-image, and inpaint source slices
-    remain recorded under P2.2a through P2.2c. Further ControlNet, adapter,
-    PAG, and related combinations require independent admission.
+    remain recorded under P2.2a through P2.2c. Further adapter, PAG, and related
+    combinations require independent admission.
   - P4.2a source commits are backend `fb49ed8` and client `f893514`. The final
     backend gate passed (`1282 passed, 3 skipped, 2680 subtests`) with Ruff
     `E9,F`, package, shell, compile, and diff checks. All 83 workflows verify;
@@ -3920,6 +3932,14 @@ default. Assets: remote Dataset only.
     (`106 passed`). The production bundle remains within budget at
     `529098 / 529408` total gzip bytes and `280348 / 448512` for the entry
     chunk. No weights or output media were downloaded or retained.
+  - P4.2c source commits are backend `a4ae9ca` and client `5440570`. The
+    complete backend gate passed (`1284 passed, 3 skipped, 2712 subtests`) with
+    Ruff `E9,F`, package, shell, compile, and diff checks. All 85 workflows
+    verify; `npm run check` passed, shared-control browser coverage passed
+    (`2 passed`), and the complete mocked Studio sweep passed (`106 passed`).
+    The production bundle remains within budget at `529223 / 529408` total
+    gzip bytes and `280348 / 448512` for the entry chunk. No weights or output
+    media were downloaded or retained.
 - [ ] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
   candidates admitted by the per-model checklist.
 - [ ] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
@@ -4206,6 +4226,7 @@ Add references only after the corresponding evidence exists.
 | P4.1b SD1.5 T2I Adapter | Deferred: reviewed official snapshot is legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently under the safetensors-only auxiliary policy; no unsafe exception or community conversion was admitted. |
 | P4.2a SDXL Turbo text-to-image | `fb49ed8` | `f893514` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors loading, exact one-to-four-step guidance-zero contract, 83-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending license-surface and live output review. |
 | P4.2b SDXL InstructPix2Pix image editing | `eb2a28e` | `b7ed626` | Remote and physical macOS pending | Pending | Complete source slice: immutable safetensors-only SDXL instruction editing, exact 768px/30-step/text-guidance-3/image-guidance-1.5 contract, 84-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending live output review. |
-| P4.2c-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.2c SDXL ControlNet Canny | `a4ae9ca` | `5440570` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors base/component assembly, exact Canny preprocessor and 1024px/50-step/guidance-5/scale-0.5 contract, 85-workflow catalog, complete backend/client gates, shared-control coverage, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending live output review. |
+| P4.2d-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
