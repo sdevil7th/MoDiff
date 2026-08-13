@@ -4289,7 +4289,17 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   one isolated change. The exact 73-commit delta and green compatibility
   evidence are recorded above; source commit is backend `5ee9e1d`, with the
   unchanged client contract revalidated.
-- [ ] Add the post-pin Krea2 and Krea2 Turbo Modular classes.
+- [x] Add the post-pin Krea2 and Krea2 Turbo Modular classes. Backend
+  `1753384` and client `ec2a349` register both as Expert-visible,
+  contract-only image surfaces. The pinned upstream contracts remain distinct:
+  base uses `Krea2AutoBlocks`, 28 steps, negative prompting, and a guider;
+  Turbo uses `Krea2TurboAutoBlocks`, 8 steps, and neither negative prompting
+  nor a guider. Both expose only required-prompt `text_to_image`, have no
+  runnable mode, artifact, template, Auto, or Gallery surface, and are rejected
+  before artifact resolution. The deterministic snapshot now contains 28
+  contracts and 80 upstream workflows; 1,313 backend tests plus 2,965 subtests,
+  the complete client check, and all 106 mocked Studio cases pass. No weights
+  were downloaded.
 - [ ] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
   specifications for its distinct `t2va`, `fl2va`, and `ref2va` workflows.
   Validate the `transformer/` versus `transformer_ref/` partition receipt,
@@ -4346,8 +4356,8 @@ Complete this research before implementing any pipeline or model entry:
 ## Appendix A — Missing Modular classes
 
 The current inventory contains 20 classes. All are now present at the MoDiff
-pin: 15 are registered contract-only and the five post-pin classes still
-require isolated MoDiff registration and workflow review.
+pin: 17 are registered contract-only and the three remaining post-pin classes
+still require isolated MoDiff registration and workflow review.
 
 Present in the current pin but not registered by MoDiff:
 
@@ -4369,8 +4379,8 @@ Present in the current pin but not registered by MoDiff:
 
 Present at the current pin and require MoDiff registration:
 
-- [ ] `Krea2ModularPipeline`
-- [ ] `Krea2TurboModularPipeline`
+- [x] `Krea2ModularPipeline`
+- [x] `Krea2TurboModularPipeline`
 - [ ] `MiniMaxH3ModularPipeline`
 - [ ] `LTX2ModularPipeline`
 - [ ] `LTX25ModularPipeline`
@@ -4536,4 +4546,5 @@ Add references only after the corresponding evidence exists.
 | P5.3b CogVideoX-2B | `6501e22` | `00a3802` | Remote and physical macOS pending | Pending | Complete Expert-only source slice: exact Apache-2.0 safetensors artifact inventory, bounded native short-video contract, mandatory VAE tiling and model CPU offload, one sealed graph in the 99-workflow catalog, complete backend/client gates, and the 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded. |
 | P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification and any additional smaller candidates remain open. |
 | P6.1 Diffusers pin update | `5ee9e1d` | Compatible client gate revalidated; no client change required | No live run required; remote model qualification remains pending | Not required | Complete isolated pin slice: the exact 73-commit delta was reviewed, existing no-weight Modular contracts remained structurally stable, required custom inputs were synchronized, the full backend suite passed at the proposed pin, and the repaired clean base is dependency-clean and preflight-ready. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | Krea2/Krea2 Turbo, MiniMax H3, LTX2/LTX2.5, other heavy families, and long-form workflows remain open as independent segments. |
+| P6.2 Krea2 Modular contracts | `1753384` | `ec2a349` | Contract-only; remote execution qualification pending | Not required | Both pinned classes are Expert-visible with exact, distinct base/Turbo contracts and fail closed before artifact resolution. The 28-contract snapshot, 1,313-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights were downloaded. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | MiniMax H3, LTX2/LTX2.5, other heavy families, and long-form workflows remain open as independent segments. |
