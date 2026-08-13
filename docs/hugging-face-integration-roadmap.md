@@ -4809,6 +4809,50 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   no older model was deleted and no media has been generated. Remote real-weight
   memory/output safety/quality review, model-snapshot license-file
   clarification, and physical macOS execution remain pending independently.
+- [x] Admit Lumina Next and Lumina Image 2.0 text-to-image without claiming
+  live execution. Backend `faad48b` and client `5b2f3db` expose the exact
+  public snapshots
+  `Alpha-VLLM/Lumina-Next-SFT-diffusers@0ee5ec90043acf5cb41fe96274af36eb7fad8d95`
+  and
+  `Alpha-VLLM/Lumina-Image-2.0@53504abd8178b30685b6c4c7a4cd181ff78b73e9`.
+  Their four-file / 8,856,869,956-byte and six-file / 21,231,830,092-byte
+  safetensors partitions, immutable repository/config identities, package
+  pipeline and transformer hashes, Gemma symbol contract, upstream MIT and
+  Apache-2.0 receipts, and estimate-only resource envelopes are sealed in
+  `data/lumina-image-artifact-review.json`. Both model cards declare
+  Apache-2.0 while their exact model snapshots omit a license file, so
+  snapshot-specific clarification remains explicit.
+
+  Both Expert-only routes are bounded to 512-2048px sides in 16px increments,
+  at most 1,048,576 output pixels, guidance 4, and 256 prompt tokens. Lumina
+  Next defaults to 30 steps, caps at 50, and disables optional caption
+  cleaning. Lumina 2.0 uses its official 50-step recipe with CFG truncation
+  fixed to 0.25 and normalization enabled. Its app/download contract contains
+  an exact 17-file allowlist that excludes the two root `.pth` pickle artifacts
+  and the demo asset. Both denoising loops retain the generic per-step callback,
+  but neither package has a safety checker; Auto and Gallery remain disabled.
+
+  The expanded optional-runtime surface passed clean-base locked installation,
+  validation, fresh-process activation, a finite CLIP+PEFT workload, rollback,
+  and clean restoration on Linux x86-64 at profile digest
+  `sha256:db3485f5c9293e1cb76aac5128dd87f0089f091a9075fdd09fe541ae4132dff0`.
+  The bounded 1,552-byte evidence has SHA-256
+  `049a0563a60756a06397699ec2531433aed18850e70613f3e7969222b67d6875`
+  and retained no managed state. Two canonical graphs bring the deterministic
+  catalog to 127 supported workflows. The complete backend overlay passes
+  1,604 tests, 3,495 subtests, and three platform skips; Ruff E9/F,
+  deterministic workflow verification, and the complete client gate also
+  pass. The intentional client surface measures 530,677 compressed JavaScript
+  bytes under the 531,456-byte ceiling.
+
+  Both exact downloads were submitted through the app only after aggregate
+  reservation preflight. At submission, 625,606,197,248 free bytes covered the
+  existing 487,559,232,373-byte queue reservation, the new 8,878,690,722-byte
+  and 21,253,711,141-byte reservations, and the 68,719,476,736-byte safety
+  reserve with 39,195,086,276 bytes of headroom. No older model was deleted and
+  no media has been generated. Remote real-weight memory/output safety/quality
+  review, model-snapshot license-file clarification, and physical macOS
+  execution remain pending independently.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5847,8 +5891,8 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `latent_diffusion`
 - [x] `ledits_pp`
 - [x] `longcat_image`
-- [ ] `lumina`
-- [ ] `lumina2`
+- [x] `lumina`
+- [x] `lumina2`
 - [ ] `nucleusmoe_image`
 - [ ] `omnigen`
 - [ ] `ovis_image`
@@ -5979,4 +6023,5 @@ Add references only after the corresponding evidence exists.
 | P6.44 Latent Diffusion source and admission-gate review | `79db3b8` | Not required | Static artifact/source review only; safe official artifacts, cooperative full-job cancellation, backend-owned resource/output bounds, immutable model-license receipt, remote output review, and physical macOS execution pending | Not required | The exact public three-file / 6,152,286,891-byte legacy weight partition, immutable metadata and package source hashes, and the package's 256px text-to-image contract are sealed without fetching weight bytes. The snapshot has only executable pickle `.bin` model components, while the package exposes no callback, interrupt flag, safety checker, or upper resource bounds. No runtime/download or user-facing surface was added. |
 | P6.45 LEDITS++ source and admission-gate review | `7bddd15` | Not required | Static package/source review over existing exact SD 1.5 and SDXL bases; full-job cancellation, request-state isolation, backend-owned resource/input bounds, generic multi-prompt editing, SDXL guardrails, remote output review, and physical macOS execution pending | Not required | The two package-owned source identities and stateful invert-then-edit contracts are sealed against MoDiff's existing exact base snapshots. The mandatory inversion phase has no callback or interrupt check and stores request state on the pipeline instance. LEDITS++ needs no distinct model snapshot, so no new weight bytes or family-specific app download were required, and no runtime or user-facing surface was added. |
 | P6.46 LongCat Image generation and edit source admission | `212997c` | `d1e5d7e` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Two exact public Apache-2.0-declared revisions, two seven-file / approximately 29.29 GB safetensors partitions, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded 1024-base generation and single-image edit recipes, and two Expert-only remote workflows are sealed. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 125-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Both exact snapshots are queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
+| P6.47 Lumina Next and Lumina Image 2.0 source admission | `faad48b` | `5b2f3db` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Two exact public Apache-2.0-declared revisions, four-file / 8.86 GB and six-file / 21.23 GB safetensors partitions, immutable upstream MIT/Apache receipts, metadata and package/Transformers source hashes, and two bounded Expert-only text-to-image workflows are sealed. Lumina 2.0's exact app allowlist excludes both legacy pickle artifacts. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 127-workflow catalog is graph-qualified/runtime-unqualified; missing safety checkers keep Auto and Gallery disabled. Both safe selections are queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
