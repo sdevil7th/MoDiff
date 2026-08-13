@@ -4222,8 +4222,34 @@ Priority: after image/audio contracts. Hardware and assets: remote only.
   smaller local candidate, so executable admission is deferred to a remote
   heavy-model review with measured peak accelerator/system memory. No weights
   or media were downloaded and no executable or client surface was added.
-- [ ] Evaluate CogVideoX-2B and similar smaller candidates one at a time after
-  artifact-size and RAM review.
+- [x] Evaluate CogVideoX-2B independently after artifact-size and RAM review.
+  The Expert-only source slice pins the official public Apache-2.0
+  `zai-org/CogVideoX-2b` repository at immutable commit
+  `1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01`. Its reviewed safetensors-only
+  weight surface is 13,774,687,212 bytes across the two T5 shards, transformer,
+  and VAE, with every file size and SHA-256 recorded in the artifact catalog.
+  The admitted graph is deliberately shorter than the publisher's
+  representative 49-frame/50-step recipe: exact native 720x480 output, 9-25
+  frames in `4k+1` form, 1-50 steps, guidance 1-12, and a maximum prompt length
+  of 226. Loading requires float16, the exact artifact, safetensors, mandatory
+  VAE tiling, and model CPU offload; it rejects media conditioning,
+  quantization, device maps, alternate artifacts, multiple outputs, and
+  non-PIL output. The canonical graph identity is
+  `6b9b9badc24068955b8beab40f3f8990292bd70d0c9dfd46dc5d295133245316`
+  and its checked-in file SHA-256 is
+  `ad2669a7c80d69dcda610d81cb894373c869ca199764edf3a877b83f690b39fc`.
+  Source commits are backend `6501e22` and client `00a3802`. The focused gate
+  passed (`139 passed, 823 subtests`) against the clean Linux base; the complete
+  backend gate passed in an isolated reviewed Transformers/PEFT test overlay
+  (`1311 passed, 3 skipped, 2957 subtests`) while the delivered base remained
+  free of both optional packages and preflight-ready. Ruff `E9,F`, package,
+  compile, JSON, workflow, and diff checks passed. All 99 workflows verify
+  deterministically; `npm run check` and all 106 mocked Studio cases passed.
+  The production bundle remains within its reviewed ceiling at
+  `529827 / 530432` total gzip bytes and `279775 / 448512` for the entry chunk.
+  No weights or output media were downloaded or retained. Remote runtime,
+  memory, output/quality, Auto, Gallery, Dataset, and physical macOS proof
+  remain pending.
 
 ### Phase 5 test and asset gate
 
@@ -4489,5 +4515,6 @@ Add references only after the corresponding evidence exists.
 | P5.1 Stable Video Diffusion image-to-video | `260637d` | `d6e0eed` | Remote and physical macOS pending | Pending | Complete source slice: the exact gated official revision, safetensors-only artifact surface, license gate, documented offload/chunking recipe, bounded prompt-free image-conditioning contract, 96-workflow deterministic catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded or retained. |
 | P5.2 AnimateDiff and AnimateLCM | `75dde3c` | `220fb40` | Remote and physical macOS pending | Pending | Complete Expert-only source slice: immutable SD1.5 and motion revisions, exact safetensors-only adapters/LoRA, documented scheduler recipes, bounded 512px short-video execution, two sealed graphs in the 98-workflow catalog, complete backend/client gates, and the 106-case mocked Studio sweep passed. The motion repositories declare no weight license, so rights remain undetermined and require an explicit notice; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P5.3a Motif Video evaluation | Deferred after immutable artifact/RAM review | Not required | Remote heavy-model review required | Pending | The official Apache-2.0 snapshot is safetensors-only, but its approximately 17.26 GB weight surface and native 121-frame 1280x736 recipe do not meet the smaller local-candidate premise. No executable or client surface was admitted and no weights or media were downloaded. |
-| P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification plus CogVideoX-2B and other smaller candidates remain open. |
+| P5.3b CogVideoX-2B | `6501e22` | `00a3802` | Remote and physical macOS pending | Pending | Complete Expert-only source slice: exact Apache-2.0 safetensors artifact inventory, bounded native short-video contract, mandatory VAE tiling and model CPU offload, one sealed graph in the 99-workflow catalog, complete backend/client gates, and the 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded. |
+| P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification and any additional smaller candidates remain open. |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
