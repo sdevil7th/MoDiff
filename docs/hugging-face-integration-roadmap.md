@@ -5,24 +5,40 @@ official Diffusers, Modular Diffusers, and approved Hugging Face speech-runtime
 gaps. It is a durable product roadmap rather than a claim that every upstream
 pipeline is already runnable.
 
-The reviewed Diffusers installation remains pinned to commit
-`13a7bee4878d62fccc8d25f97e480e68de96fa03`. The latest-upstream check on
-2026-08-12 found [Diffusers v0.39.0](https://github.com/huggingface/diffusers/releases/tag/v0.39.0)
+The reviewed Diffusers installation is pinned to commit
+`bb56997d4b7e87f0743f26a612f49ec4e7ce7213`. The latest-upstream check on
+2026-08-13 found [Diffusers v0.39.0](https://github.com/huggingface/diffusers/releases/tag/v0.39.0)
 as the latest tagged release (release commit
 `a3608b512ed7248499a44c61d954965ed9bdae4d`) and
-`175fe6b2419a01db9c2ceabd01ec37d2c0305fc2` as the latest `main` commit. The
-comparison inventory now uses the reviewed `main` snapshot
-`175fe6b2419a01db9c2ceabd01ec37d2c0305fc2`. Re-run the inventory before
-changing the Diffusers pin or marking a gap complete.
+`bb56997d4b7e87f0743f26a612f49ec4e7ce7213` as the latest `main` commit. The
+comparison inventory and executable dependency now use that reviewed immutable
+snapshot. Re-run the inventory before changing the Diffusers pin or marking a
+gap complete.
 
-### Upstream delta reviewed 2026-08-12
+### Pin delta admitted 2026-08-13
 
-The five commits after the 2026-08-09 snapshot contain one model/workflow
-change: upstream commit
-[`7564fb0`](https://github.com/huggingface/diffusers/commit/7564fb0) adds
-LTX-2.5. The other four commits are an import guard, device deduction, LoRA
-bookkeeping, and NVIDIA Spark installation documentation; they add no pipeline
-family. LTX-2.5 reuses the standard `LTX2Pipeline` family rather than adding a
+The admitted pin is 73 commits after the prior
+`13a7bee4878d62fccc8d25f97e480e68de96fa03` snapshot. Its product-relevant
+surface consists of Krea2 Modular support, MiniMax H3, LTX-2.5 plus its final
+`LTX25AutoBlocks` rename, Wan-Animate-2, SDNQ support, JAX/Flax removal, and
+core changes to component management, group/automatic offload, split-device
+deduction, dtype naming, LoRA scaling/bookkeeping, GGUF dequantization, and
+custom-block required-input propagation. The remaining commits are tests,
+documentation, training/examples, CLI work, or model-specific fixes outside
+the currently admitted execution surface.
+
+The update is isolated in backend commit `5ee9e1d`; no client change was
+required. Regenerating the existing 20-class no-weight Modular contract
+inventory produced no structural drift beyond the pin identity. MoDiff carries
+the upstream required-custom-input fix into its adapted schema helper and adds
+an exact regression test. The full backend suite passed at the proposed pin
+(`1312 passed, 3 skipped, 2957 subtests`) in an isolated reviewed
+Transformers/PEFT test environment. The repaired clean CPU base contains 61
+application packages, keeps Transformers and PEFT absent, reports the exact
+new VCS identity, passes package validation, and is preflight-ready with an
+exact requirements receipt. No weights or media were downloaded.
+
+LTX-2.5 reuses the standard `LTX2Pipeline` family rather than adding a
 model-named standard pipeline, but it adds execution behavior that must be
 reviewed explicitly:
 
@@ -4037,12 +4053,12 @@ default. Assets: remote Dataset only.
     `1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe`
     and `9a9ef604ec5da99da3616dd38b118162e75657c322b80e2c57f53b745b1d9bda`.
     The same Apache/Gemma rights surface remains visible for later review.
-  - [ ] **DreamLite:** deferred independently. The reviewed base and mobile
-    snapshots are immutable, safetensors-only, ungated, and CC-BY-NC-4.0, but
-    exact Diffusers commit `13a7bee4878d62fccc8d25f97e480e68de96fa03`
-    does not export the required DreamLite pipeline classes. Updating the shared
-    runtime pin would reopen platform and optional-runtime qualification, so no
-    speculative loader or pin change was admitted in this slice.
+  - [ ] **DreamLite:** the earlier class-availability blocker is removed by the
+    reviewed Phase 6 Diffusers pin, which now exports `DreamLitePipeline` and
+    `DreamLiteMobilePipeline`. The reviewed base and mobile snapshots remain
+    immutable, safetensors-only, ungated, and CC-BY-NC-4.0. Admission is still
+    open as its own post-pin model/recipe segment; no speculative loader was
+    folded into the pin update.
   - P4.3 source commits are backend `7117c80` and client `c41d1c6`. The complete
     backend gate passed (`1288 passed, 3 skipped, 2837 subtests`) with Ruff
     `E9,F`, compile, package, build, and diff checks. All 92 workflows verify
@@ -4268,9 +4284,11 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 
 ### Committable segments
 
-- [ ] Review all commits between the current and proposed Diffusers pins; update
+- [x] Review all commits between the current and proposed Diffusers pins; update
   the executable dependency, compatibility test, and upstream contract tests in
-  one isolated change.
+  one isolated change. The exact 73-commit delta and green compatibility
+  evidence are recorded above; source commit is backend `5ee9e1d`, with the
+  unchanged client contract revalidated.
 - [ ] Add the post-pin Krea2 and Krea2 Turbo Modular classes.
 - [ ] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
   specifications for its distinct `t2va`, `fl2va`, and `ref2va` workflows.
@@ -4327,9 +4345,9 @@ Complete this research before implementing any pipeline or model entry:
 
 ## Appendix A — Missing Modular classes
 
-The current inventory contains 20 classes: 15 present at the MoDiff pin and 5
-that require a pin update. The latter group includes the two LTX2 exports added
-after the previous roadmap snapshot.
+The current inventory contains 20 classes. All are now present at the MoDiff
+pin: 15 are registered contract-only and the five post-pin classes still
+require isolated MoDiff registration and workflow review.
 
 Present in the current pin but not registered by MoDiff:
 
@@ -4349,7 +4367,7 @@ Present in the current pin but not registered by MoDiff:
 - [x] `Wan22ModularPipeline`
 - [x] `Wan22Image2VideoModularPipeline`
 
-Require a pin update:
+Present at the current pin and require MoDiff registration:
 
 - [ ] `Krea2ModularPipeline`
 - [ ] `Krea2TurboModularPipeline`
@@ -4517,4 +4535,5 @@ Add references only after the corresponding evidence exists.
 | P5.3a Motif Video evaluation | Deferred after immutable artifact/RAM review | Not required | Remote heavy-model review required | Pending | The official Apache-2.0 snapshot is safetensors-only, but its approximately 17.26 GB weight surface and native 121-frame 1280x736 recipe do not meet the smaller local-candidate premise. No executable or client surface was admitted and no weights or media were downloaded. |
 | P5.3b CogVideoX-2B | `6501e22` | `00a3802` | Remote and physical macOS pending | Pending | Complete Expert-only source slice: exact Apache-2.0 safetensors artifact inventory, bounded native short-video contract, mandatory VAE tiling and model CPU offload, one sealed graph in the 99-workflow catalog, complete backend/client gates, and the 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded. |
 | P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification and any additional smaller candidates remain open. |
-| P6 | Pending | Pending | Remote pending | Pending | Not started |
+| P6.1 Diffusers pin update | `5ee9e1d` | Compatible client gate revalidated; no client change required | No live run required; remote model qualification remains pending | Not required | Complete isolated pin slice: the exact 73-commit delta was reviewed, existing no-weight Modular contracts remained structurally stable, required custom inputs were synchronized, the full backend suite passed at the proposed pin, and the repaired clean base is dependency-clean and preflight-ready. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | Krea2/Krea2 Turbo, MiniMax H3, LTX2/LTX2.5, other heavy families, and long-form workflows remain open as independent segments. |
