@@ -5252,6 +5252,40 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     license receipt, backend-owned loading/bounds and cancellation, remote
     heavy-hardware safety/quality review, and physical macOS execution remain
     independent gates.
+  - [x] **ERNIE Image Turbo text-to-image source admission:** backend
+    `a0b07c8` and client `0527a66` admit the exact public Apache-2.0 snapshot
+    `baidu/ERNIE-Image-Turbo@bc68c81e2a1730a394d5fc9fae70713dee940140`
+    through the generic Diffusers image facade. The immutable repository is
+    ungated, bundles its complete license, contains no Python, and requires no
+    remote code. Its exact five-file / 31,596,733,630-byte predominantly BF16
+    safetensors partition, canonical inventory digest, immutable metadata
+    identities, parameter counts from bounded remote headers, and pinned
+    package pipeline/output/transformer/VAE/scheduler and Transformers model
+    source hashes are sealed in
+    `data/ernie-image-turbo-artifact-review.json` without downloading weights.
+    The distinct 50-step `baidu/ERNIE-Image` sibling was reviewed but is not
+    conflated with or exposed by the Turbo contract.
+
+    The admitted workflow is Expert-only and remote-only. Its backend-owned
+    contract fixes the reviewed Turbo path to 1024x1024, 8 steps, guidance 1,
+    prompt enhancement enabled, the tokenizer's 2,048-token ceiling, BF16,
+    and model CPU offload, while retaining the package step callback for
+    cancellation. The package has no safety checker, so Auto and Gallery
+    remain disabled. Admission also extends the exact optional Transformers
+    profile with `Mistral3Model` and `Ministral3ForCausalLM`; the same audit
+    removed `StableAudioPipeline` from the LoRA adapter-method qualification
+    set because that class does not implement the declared methods. The
+    resulting clean-base Linux profile digest
+    `sha256:6ce66835ba72c609ce83b41ddfa3141e95b42118f86cf419f25e2dfb35409809`
+    passed locked install validation, activation, the finite CLIP+PEFT child,
+    rollback, and clean-base restoration without retaining managed state.
+    The deterministic 115-workflow catalog is graph-qualified but ERNIE model
+    execution remains unqualified. The complete 1,523-test backend overlay with
+    3,315 subtests and three platform skips, Ruff E9/F, complete client check,
+    unchanged 530,432-byte gzip ceiling, and deterministic workflow
+    verification pass. Remote real-weight memory/output safety/quality review
+    and physical macOS execution remain pending independently; no weights or
+    media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5399,7 +5433,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `deepfloyd_if`
 - [x] `dit`
 - [x] `dreamlite`
-- [ ] `ernie_image`
+- [x] `ernie_image`
 - [ ] `glm_image`
 - [ ] `hidream_image`
 - [ ] `hunyuan_image`
@@ -5533,4 +5567,5 @@ Add references only after the corresponding evidence exists.
 | P6.30 Hunyuan-DiT v1.2 ControlNet Canny source admission | `72185d0` | `f134f98` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public distilled-base and Canny revisions, six-file / 17,399,623,404-byte float32 safetensors inventory, optional exact Depth/Pose substitutions, immutable Tencent license receipt and acknowledgement, metadata and package source hashes, bounded native 1024px/50-step/guidance-6/scale-1 Canny recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 114-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.31 Stable Diffusion 3 ControlNet source and admission-gate review | `0f924dc` | Not required | Static artifact/source review only; authenticated base-config review, auxiliary-weight rights resolution, legal product approval, backend-owned optional-runtime/bounds, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Exact gated base plus public Canny, Tile, and inpainting revisions; three safetensors-only assembly receipts; immutable license/metadata and package source hashes; native 1024px recipes; and estimate-only resource envelopes are sealed. Base access/license restrictions, undeclared InstantX weight rights, ambiguous inpainting derivative terms, and absent safety guardrails keep the family outside all runtime/download and user-facing surfaces; no weights or media were downloaded. |
 | P6.32 DiT source and admission-gate review | `17ccba9` | Not required | Static artifact/source review only; safe official artifacts, commercial product rights, backend-owned loader/bounds/cancellation, remote heavy-hardware output review, and physical macOS evidence pending | Not required | The only two exact Facebook 256px/512px revisions, immutable metadata and package source hashes, four legacy weight identities, fixed ImageNet class-label contracts, and estimate-only resource envelopes are sealed. Legacy pickle-only serialization, CC BY-NC licensing without a bundled license file, absent safety guardrails, and absent cooperative cancellation keep the family outside all runtime/download and user-facing surfaces; no weights or media were downloaded. |
+| P6.33 ERNIE Image Turbo text-to-image source admission | `a0b07c8` | `0527a66` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 31,596,733,630-byte predominantly BF16 safetensors inventory, immutable metadata and package/Transformers source hashes, fixed 1024px/8-step/guidance-1/prompt-enhanced recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The revised optional-runtime symbol contract passed a clean-base locked install/activation/workload/rollback qualification. The deterministic 115-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
