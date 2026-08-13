@@ -4182,8 +4182,35 @@ Priority: after image/audio contracts. Hardware and assets: remote only.
   No model weights or output media were downloaded or retained. Remote output,
   quality, Dataset, Auto, Gallery, and physical macOS qualification remain
   pending.
-- [ ] Add AnimateDiff/AnimateLCM with separately pinned base model,
-  `MotionAdapter`, scheduler rules, and optional LoRA.
+- [x] Add AnimateDiff/AnimateLCM with separately pinned base model,
+  `MotionAdapter`, scheduler rules, and optional LoRA. The Expert-only source
+  slice reuses the reviewed safetensors SD1.5 base at
+  `451f4fe16113bff5a5d2269ed5ad43b0592e9a14`; pins AnimateDiff v1.5.2 at
+  `6167b88ffe39b4441fdf2113e77b99a6f56b7906` and AnimateLCM at
+  `3d4d00fc113225e1040f4d3bec504b6ec750c10c`; and loads only the exact fp16
+  `MotionAdapter` safetensors plus the named
+  `AnimateLCM_sd15_t2v_lora.safetensors` file. The loader seals the documented
+  linear-beta DDIM/LCM scheduler recipes, AnimateLCM adapter scale `0.8`, VAE
+  slicing, model CPU offload, fixed 512px output, 8-16 frames, and bounded
+  steps/guidance. It rejects mismatched base/motion revisions, unsafe artifact
+  substitution, media conditioning, quantization, device maps, and malformed
+  outputs before execution can be admitted. The two canonical graph identities
+  are `a39d33676afba9bcfd364c5f9a1d8c3afb146a537e82d8818babfe156528c4cf`
+  and `658dff27b265437ef3528b6cdb46d7a7bd865b69727329658603bda7804ae726`;
+  their checked-in file SHA-256 values are
+  `4b54e1ddb53c4f40f3c44d8bb272c0c5703aef2c3ecbd01fd3e55a29298bd39e`
+  and `f30938d1fc02c836f057cdeb838199d9d13161c12afc8c280edeb5b02e04d426`.
+  Source commits are backend `75dde3c` and client `220fb40`. The complete
+  backend gate passed (`1306 passed, 3 skipped, 2937 subtests`) with Ruff
+  `E9,F`, package, shell, JSON, and diff checks. All 98 workflows verify
+  deterministically; `npm run check` and all 106 mocked Studio cases passed.
+  The production bundle remains within its reviewed ceiling at
+  `529711 / 530432` total gzip bytes and `279775 / 448512` for the entry chunk.
+  Neither motion repository declares a weight license, so the client records an
+  explicit rights-undetermined acknowledgment and MoDiff grants no use rights.
+  Auto and Gallery remain disabled; no weights or output media were downloaded
+  or retained. Authorization review, remote execution/quality, Dataset, Auto,
+  Gallery, and physical macOS qualification remain pending.
 - [ ] Evaluate Motif Video, CogVideoX-2B, and similar smaller candidates one at a
   time after artifact-size and RAM review.
 
@@ -4449,5 +4476,6 @@ Add references only after the corresponding evidence exists.
 | P4.5 AudioLDM2 text-to-speech | Deferred: reviewed TTS snapshots are legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently: the exact generic speech API is present at the pin, but both reviewed AudioLDM2 speech repositories require unsafe deserialization and no exception was approved. |
 | P4.6 Shap-E rendered output | `21d819f` | `d684fc4` | Remote and physical macOS pending | Pending | Complete source slice: exact immutable official artifacts are assembled only from reviewed safe components, a bounded rendered-orbit boundary is sealed in the 95-workflow catalog, and complete backend/client gates passed. Unsafe renamed-renderer weights and mesh/export surfaces remain excluded. Auto and Gallery remain disabled. |
 | P5.1 Stable Video Diffusion image-to-video | `260637d` | `d6e0eed` | Remote and physical macOS pending | Pending | Complete source slice: the exact gated official revision, safetensors-only artifact surface, license gate, documented offload/chunking recipe, bounded prompt-free image-conditioning contract, 96-workflow deterministic catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded or retained. |
-| P5 remaining short video | Pending | Pending | Remote pending | Pending | AnimateDiff/AnimateLCM, smaller candidates, and live qualification remain open. |
+| P5.2 AnimateDiff and AnimateLCM | `75dde3c` | `220fb40` | Remote and physical macOS pending | Pending | Complete Expert-only source slice: immutable SD1.5 and motion revisions, exact safetensors-only adapters/LoRA, documented scheduler recipes, bounded 512px short-video execution, two sealed graphs in the 98-workflow catalog, complete backend/client gates, and the 106-case mocked Studio sweep passed. The motion repositories declare no weight license, so rights remain undetermined and require an explicit notice; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification plus Motif Video, CogVideoX-2B, and other smaller candidates remain open. |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
