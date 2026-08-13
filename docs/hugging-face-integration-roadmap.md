@@ -4853,6 +4853,51 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   no media has been generated. Remote real-weight memory/output safety/quality
   review, model-snapshot license-file clarification, and physical macOS
   execution remain pending independently.
+- [x] Admit OmniGen v1 text generation, single-image editing, and ordered
+  multi-reference editing without claiming live execution. Backend `11d5c16`
+  and client `86500ec` expose the exact public snapshot
+  `Shitao/OmniGen-v1-diffusers@016e2f61d12a98303f6bbdf122687694d7984268`.
+  Its two-file / 8,085,311,084-byte safetensors partition, complete
+  8,088,956,424-byte snapshot plan, immutable repository/config identities,
+  pinned package pipeline/processor/transformer hashes, Llama tokenizer symbol
+  contract, upstream MIT receipt, and estimate-only resource envelope are
+  sealed in `data/omnigen-artifact-review.json`. The model card declares MIT
+  while the exact model snapshot omits a license file, so snapshot-specific
+  clarification remains explicit.
+
+  All three Expert-only routes are bounded to 512-2048px sides in 16px
+  increments, at most 1,048,576 output pixels, 50 steps, and text guidance
+  2.5. Conditioned routes use image guidance 1.6 and accept at most three
+  references totaling 3,145,728 pixels; the package independently preprocesses
+  each input to a maximum 1024px side. MoDiff retains references as an ordered
+  list, generates the package's continuous one-based
+  `<img><|image_N|></img>` placeholders, rejects user-supplied reserved
+  placeholder syntax, and maps the generic image-guidance field to the
+  package's `img_guidance_scale` argument. The denoising loop retains the
+  generic per-step callback but does not read its declared interrupt flag, and
+  the package has no safety checker; Auto and Gallery remain disabled.
+
+  The expanded optional-runtime surface passed clean-base locked installation,
+  validation, fresh-process activation, a finite CLIP+PEFT workload, rollback,
+  and clean restoration on Linux x86-64 at profile digest
+  `sha256:7717741eb6fed3c8fbb9645fe13fd867d0e58ad06b06fe9009187c38ae840d42`.
+  The bounded 1,553-byte evidence has SHA-256
+  `39f6fab8538aec4e6a1aadd07edb2485d69f2e876490e44111e1f786475dfce2`
+  and retained no managed state. Three canonical graphs bring the deterministic
+  catalog to 130 supported workflows. The complete backend overlay passes
+  1,610 tests, 3,525 subtests, and three platform skips; Ruff E9/F,
+  deterministic workflow verification, and the complete client gate also
+  pass. The intentional client surface measures 530,729 compressed JavaScript
+  bytes under the 531,456-byte ceiling.
+
+  The exact snapshot was submitted through the app only after aggregate
+  reservation preflight. At submission, 612,865,241,088 free bytes covered the
+  existing 495,504,680,091-byte queue reservation, the new
+  8,088,956,424-byte reservation, and the 68,719,476,736-byte safety reserve
+  with 40,552,127,837 bytes of headroom. No older model was deleted and no
+  media has been generated. Remote real-weight memory/output safety/quality
+  review, model-snapshot license-file clarification, and physical macOS
+  execution remain pending independently.
 - [x] Admit the remaining official Wan 2.1 14B Modular-compatible repository
   variants without claiming live execution. Backend `e4c2385` adds exact
   repository-scoped Models Loader aliases for T2V-14B at
@@ -5894,7 +5939,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `lumina`
 - [x] `lumina2`
 - [ ] `nucleusmoe_image`
-- [ ] `omnigen`
+- [x] `omnigen`
 - [ ] `ovis_image`
 - [x] `pag`
 - [x] `pixart_alpha`
@@ -6024,4 +6069,5 @@ Add references only after the corresponding evidence exists.
 | P6.45 LEDITS++ source and admission-gate review | `7bddd15` | Not required | Static package/source review over existing exact SD 1.5 and SDXL bases; full-job cancellation, request-state isolation, backend-owned resource/input bounds, generic multi-prompt editing, SDXL guardrails, remote output review, and physical macOS execution pending | Not required | The two package-owned source identities and stateful invert-then-edit contracts are sealed against MoDiff's existing exact base snapshots. The mandatory inversion phase has no callback or interrupt check and stores request state on the pipeline instance. LEDITS++ needs no distinct model snapshot, so no new weight bytes or family-specific app download were required, and no runtime or user-facing surface was added. |
 | P6.46 LongCat Image generation and edit source admission | `212997c` | `d1e5d7e` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Two exact public Apache-2.0-declared revisions, two seven-file / approximately 29.29 GB safetensors partitions, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded 1024-base generation and single-image edit recipes, and two Expert-only remote workflows are sealed. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 125-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Both exact snapshots are queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.47 Lumina Next and Lumina Image 2.0 source admission | `faad48b` | `5b2f3db` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Two exact public Apache-2.0-declared revisions, four-file / 8.86 GB and six-file / 21.23 GB safetensors partitions, immutable upstream MIT/Apache receipts, metadata and package/Transformers source hashes, and two bounded Expert-only text-to-image workflows are sealed. Lumina 2.0's exact app allowlist excludes both legacy pickle artifacts. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 127-workflow catalog is graph-qualified/runtime-unqualified; missing safety checkers keep Auto and Gallery disabled. Both safe selections are queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
+| P6.48 OmniGen v1 generation and reference-edit source admission | `11d5c16` | `86500ec` | Remote real-weight memory/output safety/quality, model-snapshot license-file clarification, and physical macOS execution pending | Not required | Exact public MIT-declared revision, two-file / 8.09 GB safetensors partition, immutable upstream MIT receipt, metadata and package/Transformers source hashes, backend-generated ordered reference placeholders, bounded one- and three-reference recipes, and three Expert-only remote workflows are sealed. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 130-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
