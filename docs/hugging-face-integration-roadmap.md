@@ -4350,6 +4350,38 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   implementation, immutable AUP evidence, bounded runtime admission, app
   capacity, remote real-weight review, and physical macOS execution remain
   independent gates.
+- [x] Complete the standard Stable Diffusion 3 artifact, package, license, and
+  admission-gate review without accepting repository terms. Backend `e6061d9`
+  seals exact official revision
+  `stabilityai/stable-diffusion-3-medium-diffusers@ea42f8cef0f178587cf766dc8129abd379c90671`.
+  Its Python-free 38-file snapshot occupies 31,012,147,557 bytes. The exact
+  six-file fp16 partition contains 15,499,002,486 weight bytes and reuses the
+  immutable base inventory already sealed by the SD3 ControlNet review; no
+  base weight or safetensors-header bytes were fetched for this slice. Exact
+  artifact identities, pinned text-to-image, image-to-image, and inpaint
+  pipeline source hashes, native 1024px recipes, callbacks, interrupt checks,
+  CPU-offload contract, and estimate-only resource bounds are sealed in
+  `data/stable-diffusion-3-artifact-review.json`.
+
+  Admission remains fail-closed. The repository requires affirmative
+  acceptance of the Stability AI Non-Commercial Research Community License,
+  and production, hosted-service, and API use require a separate license. The
+  authenticated model index and component configs remain HTTP 401 without
+  acceptance; MoDiff did not accept those terms. The package pipelines have no
+  safety checker and do not bound steps, input pixels, or output pixels. The
+  app-only plan was inspected but not submitted: 524,908,945,408 free bytes
+  minus the 446,582,359,749-byte existing queue and 68,719,476,736-byte reserve
+  left 9,607,108,923 bytes, making the 31,012,147,557-byte snapshot short by
+  21,405,038,634 bytes. No direct weight download occurred and no older model
+  was deleted.
+
+  The focused boundary matrix passes 165 tests and 516 subtests. The complete
+  backend overlay passes 1,636 tests, 3,580 subtests, and three platform skips;
+  Ruff E9/F and package compatibility pass, and no client change is required.
+  Task-scoped terms acceptance, commercial-license and legal/product approval,
+  authenticated component review, backend-owned limits and runtime admission,
+  app capacity, remote real-weight output review, and physical macOS execution
+  remain independent gates.
 - [x] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
   specifications for its distinct `t2va`, `fl2va`, and `ref2va` workflows.
   Validate the `transformer/` versus `transformer_ref/` partition receipt,
@@ -6108,7 +6140,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `sana`
 - [x] `stable_cascade`
 - [x] `stable_diffusion`
-- [ ] `stable_diffusion_3`
+- [x] `stable_diffusion_3`
 - [x] `t2i_adapter`
 
 ## Completion ledger
@@ -6235,4 +6267,5 @@ Add references only after the corresponding evidence exists.
 | P6.50 PRX 512 SFT text-to-image source admission | `012b101` | `9c320a4` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision plus incorporated T5-Gemma terms, a complete 19-file / 15.51 GB Python-free snapshot, five immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded native 512px/28-step/guidance-5 Expert workflow maps the generic token limit to PRX's exact argument and retains step-boundary cancellation. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 132-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled. Its exact snapshot is queued through the app after aggregate free-space reservation preflight, without deleting older models; no media has been generated. |
 | P6.51 Nucleus Image 17B MoE text-to-image source admission | `86cc756` | `8b4f002` | Model-snapshot license-file clarification, app storage capacity, remote real-weight memory/output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, complete 38-file / 51.66 GB Python-free snapshot, 12 immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded seven-bucket 1024px/50-step/guidance-4 Expert workflow retains package cancellation and offload hooks. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 133-workflow catalog is graph-qualified/runtime-unqualified; the missing license file, post-training, and safety checker keep Auto and Gallery disabled. The required app-only aggregate preflight was 36.31 GB short, so the snapshot was not submitted and no older model was deleted; no media has been generated. |
 | P6.52 Krea 2 Raw/Turbo standard source and admission-gate review | `e176f14` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial eligibility/legal approval, downstream terms/content-filter implementation, immutable AUP receipt, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | Two exact gated official revisions, two Python-free 17-file / 35.68 GB Diffusers candidate partitions, five immutable safetensors weights per recipe, duplicate native-checkpoint exclusions, pinned package source receipts, distinct Raw/Turbo recipes, and estimate-only envelopes are sealed. Custom terms, mandatory content filtering, missing package safety checker/bounds, and two queue-aware app preflight deficits of about 53.2 GB keep the standard family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no weight bytes or media were fetched. |
+| P6.53 Stable Diffusion 3 standard source and admission-gate review | `e6061d9` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial license/legal approval, authenticated component review, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact gated official revision, Python-free 31.01 GB snapshot, six-file / 15.50 GB fp16 base inventory shared with the prior SD3 ControlNet review, three package-owned routes, source receipts, recipes, and estimate-only envelope are sealed. Noncommercial-only terms, inaccessible gated configs, missing safety checker/bounds, and a 21.41 GB queue-aware app preflight deficit keep the family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no base weight bytes were fetched. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
