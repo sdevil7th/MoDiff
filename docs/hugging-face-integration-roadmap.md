@@ -5096,6 +5096,39 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     immutable governing terms, bounded execution, remote qualification, live
     output review, and physical macOS evidence remain independent gates; no
     weights or media were downloaded or retained.
+  - [x] **Mochi 1 Preview text-to-video source admission:** backend `fb3e39f`
+    and client `c0afea5` admit the exact public snapshot
+    `genmo/mochi-1-preview@14be5fcea23095ed330cb214647916a451e38b6e`
+    through the generic Diffusers video facade. The immutable repository
+    contains no Python and requires no remote code. Eight selected safetensors
+    files / 40,024,303,350 bytes, their exact hashes and canonical inventory
+    digest, immutable model-card/component/index identities, 10,027,677,744-
+    parameter Hub metadata, and pinned package pipeline/output/transformer/VAE
+    source hashes are sealed in `data/mochi-artifact-review.json` without
+    downloading weights. Duplicate original-format weights, an unindexed
+    two-shard T5 copy, and the default float32 transformer and VAE partitions
+    are explicitly excluded. The immutable card declares Apache-2.0, but the
+    repository contains no license file.
+
+    The admitted text-to-video workflow is Expert-only and remote-only. Its
+    backend-owned contract preserves the official native 848x480, 31-frame,
+    64-step, guidance-4.5, 256-token, 30-FPS recipe; requires the BF16 variant,
+    explicitly preloads the indexed T5 encoder, mandates VAE tiling, uses one
+    output with callbacks and sequential CPU offload, and rejects every image,
+    video, and mask input. The repository card's conflicting 84-frame example,
+    the package signature's 19-frame default, and its internally inconsistent
+    step documentation are recorded explicitly; exact 31-frame temporal-VAE
+    congruence is retained. Conservative estimate-only planning preserves the
+    publisher's 22-60 GiB accelerator-memory range. The deterministic
+    111-workflow catalog is graph-qualified but explicitly runtime-unqualified;
+    Auto and Gallery remain disabled. The complete 1,486-test backend overlay
+    with 3,269 subtests and three platform skips, Ruff E9/F, compile,
+    66-package compatibility, preflight, complete client check, and
+    deterministic workflow verification pass. The unchanged client bundle
+    ceiling passes at 530,428 / 530,432 gzip bytes. Remote real-weight output
+    safety/quality review, license-file clarification, and physical macOS
+    execution remain pending independently; no weights or media were downloaded
+    or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5220,7 +5253,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `kandinsky5`
 - [x] `latte`
 - [x] `lucy`
-- [ ] `mochi`
+- [x] `mochi`
 - [x] `motif_video`
 - [ ] `sana_video`
 - [x] `skyreels_v2`
@@ -5372,4 +5405,5 @@ Add references only after the corresponding evidence exists.
 | P6.25 ConsisID source and admission-gate review | `a52c7ec` | Not required | Static artifact/source review only; safe cross-platform face stack, biometric privacy/consent controls, generic identity-video contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live identity/safety review, and physical macOS evidence pending | Not required | The exact public five-file / 22,821,396,692-byte safetensors generator and eight-artifact / 1,446,798,634-byte required identity stack, immutable metadata and package source hashes, native 720x480/49-frame recipe, and measured upstream memory figures are sealed. Required unsafe face weights, CUDA-only ONNX providers, weak identity-input validation, and the unavailable second documented checkpoint keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.26 Latte text-to-video source admission | `180917e` | `847ed6c` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 23,614,979,636-byte safetensors partition, excluded unsafe legacy `.pt` checkpoint and unreferenced optional temporal VAE, immutable metadata and package source hashes, bounded native 512x512/16-frame recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 110-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.27 Lucy Edit source and admission-gate review | `6ab1033` | Not required | Static artifact/source review only; commercial-license and legal product approval, immutable governing terms, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public five-file / 34,182,223,896-byte float32 safetensors inventory, immutable metadata, external license-document receipt, package source hashes, and native 832x480/81-frame edit recipe are sealed. The non-commercial/non-production license defines hosted remote access as distribution, and the package does not bind `num_frames` to input-video length, so the family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
+| P6.28 Mochi 1 Preview text-to-video source admission | `fb3e39f` | `c0afea5` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, eight-file / 40,024,303,350-byte selected safetensors partition, excluded duplicate original-format, unindexed T5, and float32 partitions, immutable metadata and package source hashes, bounded native 848x480/31-frame recipe, explicit indexed T5 preload, mandatory VAE tiling, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 111-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
