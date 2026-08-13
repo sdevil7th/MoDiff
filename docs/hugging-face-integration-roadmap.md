@@ -5440,6 +5440,51 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     Task-scoped terms acceptance and legal/product approval, authenticated
     artifact review, remote heavy-hardware safety/quality qualification, and
     physical macOS execution remain independent gates.
+  - [x] **JoyAI Image Edit and Edit Plus source admission:** backend
+    `6d507eb` and client `b1cbde7` admit the exact public snapshots
+    `jdopensource/JoyAI-Image-Edit-Diffusers@4b41fb25d961f37668750178ccbb380da326201c`
+    and
+    `jdopensource/JoyAI-Image-Edit-Plus-Diffusers@c2686460c7b64d8aa11bc4d0da423fb316b33f9e`
+    through the generic Diffusers image facade. Both selected partitions are
+    ungated, use twelve BF16 safetensors files, contain 16,263,675,968
+    parameters, and require no repository Python or remote code. Their exact
+    50,315,602,078-byte and 50,315,602,038-byte weight inventories, immutable
+    repository metadata, component identities, and pinned package pipeline,
+    image-processor, transformer, VAE, scheduler, and output source hashes are
+    sealed in `data/joyimage-artifact-review.json` without downloading weight
+    bytes. Both cards declare Apache-2.0 but link to an absent repository
+    license file; the immutable upstream project's complete Apache-2.0 receipt
+    is recorded while exact weight-snapshot license clarification remains
+    explicit.
+
+    The basic Expert-only route supports text-to-image and exactly one source
+    image; Edit Plus supports one to five references and maps the generic input
+    to the package's plural `images` argument. Both routes preserve the
+    package's 1024-base aspect buckets, cap each output at 1,048,576 pixels and
+    each side to 512-2048 in 32-pixel increments, cap text at the encoder's
+    effective 2,048-token ceiling, and use guidance 4 with 40 or 30 steps.
+    Generic generation now reports the actual decoded bucket dimensions rather
+    than merely echoing the requested aspect hint. The package callbacks,
+    interrupt surface, and sequential CPU offload are retained. The missing
+    safety checker and unmeasured approximately 50.32 GB runtime keep Auto and
+    Gallery disabled.
+
+    The expanded Transformers/Diffusers symbol contract passed clean-base
+    locked installation, validation, activation, a finite fresh-process
+    CLIP+PEFT workload, rollback, and clean restoration on Linux x86-64 at
+    profile digest
+    `sha256:7fc2a03926b2a0d5fdee79c3178fe240707375d6b1ab2549bac4b2339220838c`.
+    The 1,553-byte evidence has SHA-256
+    `12af06fe33d3e36315783bb21f60fd5c1ea12c457622d743e94d05b935670604`
+    and retained no managed state. Four canonical graphs bring the deterministic
+    catalog to 121 supported workflows; runtime execution remains unqualified.
+    The complete 1,555-test backend overlay with 3,398 subtests and three
+    platform skips, Ruff E9/F, deterministic workflow verification, and the
+    complete client check pass. The intentional profile surface measures
+    530,495 compressed JavaScript bytes under a still-sub-KiB 531,456-byte
+    ceiling. Remote real-weight memory/output safety/quality review, model-card
+    license-file clarification, and physical macOS execution remain pending
+    independently; no weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5593,7 +5638,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `hunyuan_image`
 - [x] `hunyuandit`
 - [x] `ideogram4`
-- [ ] `joyimage`
+- [x] `joyimage`
 - [ ] `kandinsky`
 - [ ] `kandinsky2_2`
 - [ ] `kandinsky3`
@@ -5726,4 +5771,6 @@ Add references only after the corresponding evidence exists.
 | P6.35 HiDream-I1 source and admission-gate review | `0685ee5` | Not required | Authenticated Llama 3.1 terms/artifact review, composite license receipt, backend-owned external encoder assembly/bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public Full/Dev/Fast revisions, three 12-file / approximately 47.18 GB safetensors partitions, shared and variant-specific immutable weight identities, package source hashes, official 50/28/16-step recipes, callbacks, and estimate-only 63.24 GB composite runtime surface are sealed. Every public snapshot omits the required Llama tokenizer/encoder; its manual gate masks artifact identities before acceptance. No runtime/download or user-facing surface is added, and no weights or media were downloaded. |
 | P6.36 HunyuanImage 2.1 source and territory-gate review | `4987495` | Not required | Legal territory/distribution approval, product territory enforcement, immutable composite terms receipt, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public package-owned conversion and governing upstream revisions, ten-file / 53,124,614,990-byte BF16 safetensors inventory, immutable license/notice/config and package source hashes, 2K/50-step/APG-3.5 first-stage recipe, callbacks, and estimate-only resource envelope are sealed. Express EU/UK/South-Korea exclusions keep the family contract-only and outside every runtime/download and user-facing surface; no weights or media were downloaded. |
 | P6.37 Hunyuan-DiT v1.2 Distilled standalone source admission | `1e97362` | `e6e306f` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | The existing exact public distilled base is now a standalone five-file / 14,422,655,700-byte float32 safetensors source with an independently bounded 1024px/25-step/guidance-5 Expert workflow and immutable Tencent terms acknowledgement. The expanded HunyuanDiT optional-runtime symbol surface passed clean-base locked installation, activation, finite workload, rollback, and clean restoration. The deterministic 117-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
+| P6.38 Ideogram 4 source, terms, and admission-gate review | `f09b06c` | Not required | Static gated source/terms review only; task-scoped terms acceptance, authenticated artifact review, commercial agreement/legal approval, remote heavy-hardware output review, and physical macOS evidence pending | Not required | Three exact gated official heads, anonymous visible weight sizes, immutable June 3, 2026 noncommercial terms, and pinned package pipeline/transformer/prompt-enhancer/scheduler/VAE/modular source hashes are sealed without accepting the gate or downloading weights. Masked LFS identities, HTTP-401 configs, commercial/hosted-distribution restrictions, and absent package safety guardrails keep the family outside every runtime/download and user-facing surface. |
+| P6.39 JoyAI Image Edit and Edit Plus source admission | `6d507eb` | `b1cbde7` | Remote real-weight memory/output safety/quality, model-card license-file clarification, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared basic and Plus revisions, two twelve-file / approximately 50.32 GB BF16 safetensors partitions, immutable upstream Apache receipt, metadata and package/Transformers source hashes, bounded 1024-base bucket recipes, one- and five-reference generic edit contracts, and four Expert-only remote workflows are sealed. The revised optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 121-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
