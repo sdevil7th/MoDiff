@@ -5067,6 +5067,35 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     bytes. Remote real-weight output safety/quality review, license-file
     clarification, and physical macOS execution remain pending independently;
     no weights or media were downloaded or retained.
+  - [x] **Lucy Edit source and admission-gate review:** backend `6ab1033`
+    seals the exact public snapshot
+    `decart-ai/Lucy-Edit-Dev@cb201fdec1bca6e7c362e127392c1632c92d2576`.
+    Its package-owned Diffusers core contains five float32 safetensors files /
+    34,182,223,896 bytes, no Python, and no remote-code requirement. Exact file
+    hashes, canonical inventory digest, immutable model-card/component/index
+    identities, 5,000,377,536-parameter Hub metadata, the externally linked
+    license PDF hash retrieved on 2026-08-13, and pinned package
+    pipeline/output/Wan-transformer/Wan-VAE source hashes are recorded in
+    `data/lucy-artifact-review.json`. The model repository is public and
+    ungated, but contains no license file; its governing license and incorporated
+    acceptable-use policy are mutable external documents.
+
+    This family is deliberately review-only. The Lucy Edit 5B Model Community
+    License permits only non-commercial, non-production use, excludes commercial
+    use of outputs, and defines hosted remote access as distribution. That is
+    incompatible with admission to MoDiff's product runtime without a separate
+    commercial license and explicit legal approval. The native 832x480,
+    81-frame, 50-step, guidance-5, 512-token, 24-FPS edit recipe, callback and
+    sequential-offload surfaces, BF16-pipeline/FP32-VAE load recommendation, and
+    missing backend resource bounds are sealed. The package also normalizes
+    `num_frames` but never uses it to select or validate the input video's frame
+    count. No runtime/download catalog, capability, workflow, client, Auto,
+    template, or Gallery surface was added. The complete 1,476-test backend
+    overlay with 3,204 subtests and three platform skips plus
+    static/dependency/preflight checks pass. Legal product-admission approval,
+    immutable governing terms, bounded execution, remote qualification, live
+    output review, and physical macOS evidence remain independent gates; no
+    weights or media were downloaded or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5190,7 +5219,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `hunyuan_video1_5`
 - [x] `kandinsky5`
 - [x] `latte`
-- [ ] `lucy`
+- [x] `lucy`
 - [ ] `mochi`
 - [x] `motif_video`
 - [ ] `sana_video`
@@ -5342,4 +5371,5 @@ Add references only after the corresponding evidence exists.
 | P6.24 ChronoEdit source and admission-gate review | `70640ae` | Not required | Static artifact/source review only; governing-license approval, complete safe guardrail integration, generic edit/reasoning contract, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public 21-file / 90,075,130,404-byte safetensors core, three optional LoRA artifacts, immutable metadata and package source hashes, native image-edit/temporal-reasoning recipes, stale model-index identities, and measured upstream offload figures are sealed. The external governing terms' guardrail condition, package pipeline's missing safety checker, and bundled unsafe `.pth`/`.pt` guardrail artifacts keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.25 ConsisID source and admission-gate review | `a52c7ec` | Not required | Static artifact/source review only; safe cross-platform face stack, biometric privacy/consent controls, generic identity-video contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live identity/safety review, and physical macOS evidence pending | Not required | The exact public five-file / 22,821,396,692-byte safetensors generator and eight-artifact / 1,446,798,634-byte required identity stack, immutable metadata and package source hashes, native 720x480/49-frame recipe, and measured upstream memory figures are sealed. Required unsafe face weights, CUDA-only ONNX providers, weak identity-input validation, and the unavailable second documented checkpoint keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6.26 Latte text-to-video source admission | `180917e` | `847ed6c` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 23,614,979,636-byte safetensors partition, excluded unsafe legacy `.pt` checkpoint and unreferenced optional temporal VAE, immutable metadata and package source hashes, bounded native 512x512/16-frame recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The deterministic 110-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
+| P6.27 Lucy Edit source and admission-gate review | `6ab1033` | Not required | Static artifact/source review only; commercial-license and legal product approval, immutable governing terms, backend-owned bounds, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | The exact public five-file / 34,182,223,896-byte float32 safetensors inventory, immutable metadata, external license-document receipt, package source hashes, and native 832x480/81-frame edit recipe are sealed. The non-commercial/non-production license defines hosted remote access as distribution, and the package does not bind `num_frames` to input-video length, so the family remains outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
