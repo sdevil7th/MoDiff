@@ -3878,7 +3878,7 @@ default. Assets: remote Dataset only.
     remains within budget at `528981 / 529408` total gzip bytes and
     `280348 / 448512` for the entry chunk. No weights or output media were
     downloaded or retained.
-- [ ] **P4.2 SDXL expansion:** Turbo first, then the reviewed text, image,
+- [x] **P4.2 SDXL expansion:** Turbo first, then the reviewed text, image,
   inpaint, instruct, ControlNet, adapter, PAG, and related combinations.
   - [x] **P4.2a SDXL Turbo text-to-image:** the generic Diffusers image loader
     exposes a logical `StableDiffusionXLTurboPipeline` backed by the upstream
@@ -3940,9 +3940,23 @@ default. Assets: remote Dataset only.
     deterministic catalog entry. Auto, Gallery, live output, and physical
     macOS qualification remain pending; no output quality claim is inferred
     from contract or mocked evidence.
+  - [x] **P4.2f SDXL PAG image-to-image and inpaint:** the same immutable SDXL
+    base now loads the upstream `StableDiffusionXLPAGImg2ImgPipeline` and
+    `StableDiffusionXLPAGInpaintPipeline` classes through exact generic image
+    adapters. Both modes retain fp16 safetensors-only loading, no remote code,
+    and no auxiliary artifact. The reviewed MoDiff recipe uses 1024px, 50
+    steps, guidance 5, strength 0.8, PAG scale 3, and adaptive scale 0; edit
+    requires one source image and inpaint requires one source plus one mask.
+    Their canonical graph hashes are
+    `2a74886a72cdf5c66b90a58fc4b31797d2e94073e44c61833da350979a21065f`
+    and `6903adcae1149856449ba860706b887214f7493b365cb2264afc0ce4ebc1f762`,
+    bringing the deterministic catalog to 89 workflows. Auto, Gallery, live
+    output, and physical macOS qualification remain pending; no output quality
+    claim is inferred from static, unit, or mocked evidence.
   - Existing SDXL base text-to-image, image-to-image, and inpaint source slices
-    remain recorded under P2.2a through P2.2c. PAG image-to-image, PAG inpaint,
-    and other related combinations require independent admission.
+    remain recorded under P2.2a through P2.2c. Other related combinations
+    require independent admission and do not reopen the completed reviewed
+    P4.2 set.
   - P4.2a source commits are backend `fb49ed8` and client `f893514`. The final
     backend gate passed (`1282 passed, 3 skipped, 2680 subtests`) with Ruff
     `E9,F`, package, shell, compile, and diff checks. All 83 workflows verify;
@@ -3989,6 +4003,17 @@ default. Assets: remote Dataset only.
     reports the same pre-existing source-digest drift while package
     compatibility remains healthy; no runtime was mutated for this source
     slice. No weights or output media were downloaded or retained.
+  - P4.2f source commits are backend `63f9075` and client `c0f2e2b`. The
+    complete backend gate passed (`1286 passed, 3 skipped, 2784 subtests`) with
+    Ruff `E9,F`, compile, package, build, and diff checks. All 89 workflows
+    verify with deterministic canonical layouts. `npm run check` passed; after
+    the final prose-only bundle reduction, the focused 82-test profile suite,
+    formatting, production build, and budget check also passed. The production
+    bundle remains within budget at `529387 / 529408` total gzip bytes and
+    `280364 / 448512` for the entry chunk. The local managed CPU runtime still
+    reports only the pre-existing source-digest drift while imports, package
+    compatibility, and port availability remain healthy; no runtime was
+    mutated. No weights or output media were downloaded or retained.
 - [ ] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
   candidates admitted by the per-model checklist.
 - [ ] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
@@ -4278,6 +4303,7 @@ Add references only after the corresponding evidence exists.
 | P4.2c SDXL ControlNet Canny | `a4ae9ca` | `5440570` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors base/component assembly, exact Canny preprocessor and 1024px/50-step/guidance-5/scale-0.5 contract, 85-workflow catalog, complete backend/client gates, shared-control coverage, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2d SDXL T2I-Adapter Canny | `2d14051` | `b13d65d` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors base/component assembly, exact Canny preprocessor and 1024px/30-step/guidance-7.5/scale-0.8 contract, 86-workflow catalog, complete backend/client gates, and shared-control regression coverage passed. Auto and Gallery remain disabled pending live output review. |
 | P4.2e SDXL PAG text-to-image | `2a9c29b` | `379936e` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, upstream PAG pipeline, exact 1024px/50-step/guidance-5/PAG-3/adaptive-0 contract, 87-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
-| P4.2f-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.2f SDXL PAG image-to-image and inpaint | `63f9075` | `c0f2e2b` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors SDXL base, exact upstream PAG edit/inpaint classes, reviewed 1024px/50-step/guidance-5/strength-0.8/PAG-3/adaptive-0 contracts, 89-workflow catalog, and complete backend/client gates passed. Auto and Gallery remain disabled pending live output review. |
+| P4.3-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
