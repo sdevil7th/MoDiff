@@ -122,6 +122,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 ["text_to_video"],
                 "14be5fcea23095ed330cb214647916a451e38b6e",
             ),
+            "SanaVideoPipeline": (
+                ["text_to_video"],
+                "db5f398b13ca086d09a50ce156c20527773841b1",
+            ),
+            "SanaImageToVideoPipeline": (
+                ["image_to_video"],
+                "db5f398b13ca086d09a50ce156c20527773841b1",
+            ),
             "WanImage2VideoModularPipeline": (
                 ["image_to_video"],
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
@@ -137,7 +145,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 99)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 101)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -164,6 +172,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "AllegroPipeline",
             "LattePipeline",
             "MochiPipeline",
+            "SanaVideoPipeline",
+            "SanaImageToVideoPipeline",
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",

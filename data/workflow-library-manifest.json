@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T16:09:22.114Z",
+  "generatedAt": "2026-08-13T16:29:23.553Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 99,
-  "supportedPairCount": 111,
+  "supportedCanonicalPairCount": 101,
+  "supportedPairCount": 113,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2152,6 +2152,37 @@
       "qualificationScope": "exact-model-recipe-runtime-hardware"
     },
     {
+      "id": "SanaImageToVideoPipeline:image_to_video",
+      "modelType": "SanaImageToVideoPipeline",
+      "modelFamily": "SANA Video",
+      "mode": "image_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires exactly one opening image and preserves it as the first latent frame."
+      },
+      "pipelineClasses": [
+        "SanaImageToVideoPipeline"
+      ],
+      "sourceTemplateId": "task-template:sana-video-480p:image-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
+      "graphHash": "e6af29b78ffa4346b0a1d25739d0599313fef6642ce313454e2f4585911dedd7"
+    },
+    {
       "id": "SanaPipeline:text_to_image",
       "modelType": "SanaPipeline",
       "modelFamily": "Sana",
@@ -2238,6 +2269,34 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/sana-sprint-pipeline/text-to-image.json",
       "graphHash": "1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe"
+    },
+    {
+      "id": "SanaVideoPipeline:text_to_video",
+      "modelType": "SanaVideoPipeline",
+      "modelFamily": "SANA Video",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Uses the native text-only recipe with a backend-owned motion-score suffix of 30."
+      },
+      "pipelineClasses": [
+        "SanaVideoPipeline"
+      ],
+      "sourceTemplateId": "task-template:sana-video-480p:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/sana-video-pipeline/text-to-video.json",
+      "graphHash": "329fbf6657f9fa74b3203c5480717b431261fbeda2056beb4d10ac14fda0a6eb"
     },
     {
       "id": "ShapEPipeline:text_to_3d",

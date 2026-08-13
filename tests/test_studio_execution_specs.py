@@ -187,6 +187,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("AllegroPipeline", "text_to_video"),
                 ("LattePipeline", "text_to_video"),
                 ("MochiPipeline", "text_to_video"),
+                ("SanaVideoPipeline", "text_to_video"),
+                ("SanaImageToVideoPipeline", "image_to_video"),
                 ("WanImage2VideoModularPipeline", "image_to_video"),
                 ("DDPMPipeline", "unconditional_image"),
                 ("DDIMPipeline", "unconditional_image"),
@@ -1165,6 +1167,24 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_sana_video_seals_exact_safe_native_text_and_image_routes(self):
+        expected = {
+            ("SanaVideoPipeline", "text_to_video"): "sana-video-480p:direct",
+            ("SanaImageToVideoPipeline", "image_to_video"): "sana-video-480p-i2v:direct",
+        }
+        for pair, profile_id in expected.items():
+            with self.subTest(pair=pair):
+                spec = studio_execution_spec_for_pair(*pair)
+                self.assertIsNotNone(spec)
+                self.assertEqual(spec["executionProfileId"], profile_id)
+                self.assertEqual(spec["defaultRepo"], "Efficient-Large-Model/SANA-Video_2B_480p_diffusers")
+                self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
+                self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+                self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
+                self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
+                graph, hints = executable_graph_for_spec(spec)
+                assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_inpaint_seals_the_exact_direct_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "inpaint")

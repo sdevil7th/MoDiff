@@ -71,6 +71,7 @@ COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 ALLEGRO_REPO = "rhymes-ai/Allegro"
 LATTE_REPO = "maxin-cn/Latte-1"
 MOCHI_REPO = "genmo/mochi-1-preview"
+SANA_VIDEO_REPO = "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -872,6 +873,32 @@ _COGVIDEOX_GRAPH_BINDINGS = tuple(
         else source,
     )
     for role, param, source in _VIDEO_REVISION_GRAPH_BINDINGS
+    if not (role == "wanGenerate" and param == "scheduler_flow_shift")
+)
+_SANA_VIDEO_I2V_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "empty"
+        if (role, param)
+        in {
+            ("diffusersQuantization", "components"),
+            ("diffusersRecipe", "attention_components"),
+        }
+        else "nativeMath"
+        if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "false"
+        if (role, param)
+        in {
+            ("diffusersRecipe", "vae_tiling"),
+            ("diffusersRecipe", "regional_compile"),
+            ("diffusersRecipe", "denoiser_cache"),
+            ("diffusersRecipe", "layerwise_casting"),
+            ("diffusersRecipe", "channels_last"),
+        }
+        else source,
+    )
+    for role, param, source in _I2V_REVISION_GRAPH_BINDINGS
     if not (role == "wanGenerate" and param == "scheduler_flow_shift")
 )
 _WAN_ANIMATE_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
@@ -4283,6 +4310,73 @@ def _mochi_capability() -> dict[str, Any]:
     }
 
 
+def _sana_video_capability(*, image_conditioned: bool) -> dict[str, Any]:
+    model_type = "SanaImageToVideoPipeline" if image_conditioned else "SanaVideoPipeline"
+    mode = "image_to_video" if image_conditioned else "text_to_video"
+    label = "SANA-Video 2B 480p I2V" if image_conditioned else "SANA-Video 2B 480p"
+    requirements = {
+        "requiredImages": ["referenceImages"],
+        "note": "Requires exactly one opening image and preserves it as the first latent frame.",
+    } if image_conditioned else {
+        "note": "Uses the native text-only recipe with a backend-owned motion-score suffix of 30."
+    }
+    return {
+        "modelType": model_type,
+        "label": label,
+        "displayName": label,
+        "family": "SANA Video",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": SANA_VIDEO_REPO,
+        "artifactLabel": "Official Apache-2.0 mixed-precision safetensors Diffusers repo",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 832, "height": 480, "aspectRatio": "16:9"},
+        "recommendedSteps": 50,
+        "recommendedGuidance": 6.0,
+        "recommendedMaxSequenceLength": 300,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": image_conditioned,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": False,
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 81,
+        "recommendedFps": 16,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "steps": 50,
+            "width": 832,
+            "height": 480,
+            "numFrames": 81,
+        },
+        "modes": [mode],
+        "modeRequirements": {mode: requirements},
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(SANA_VIDEO_REPO)],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "The admitted source graph is fixed to the publisher's 832x480, 81-frame, 50-step recipe at 16 FPS.",
+            "The transformer and text encoder run in BF16 while the Wan VAE remains FP32 with mandatory tiling.",
+            "Auto and Gallery remain disabled until exact remote runtime, safety, and quality proof is reviewed.",
+        ],
+    }
+
+
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
@@ -4357,6 +4451,20 @@ _P2_VIDEO_PROFILES = {
         ("text_to_video",),
         "MochiPipeline",
         MOCHI_REPO,
+    ),
+    "sana-video-480p": _planning_video_profile(
+        "sana-video-480p:direct",
+        "SanaVideoPipeline",
+        ("text_to_video",),
+        "SanaVideoPipeline",
+        SANA_VIDEO_REPO,
+    ),
+    "sana-video-480p-i2v": _planning_video_profile(
+        "sana-video-480p-i2v:direct",
+        "SanaImageToVideoPipeline",
+        ("image_to_video",),
+        "SanaImageToVideoPipeline",
+        SANA_VIDEO_REPO,
     ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
@@ -4570,6 +4678,24 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+        },
+        "sana-video-480p:text-to-video:v1": {
+            "modelType": "SanaVideoPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["sana-video-480p"],
+            "capability": _sana_video_capability(image_conditioned=False),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+        },
+        "sana-video-480p:image-to-video:v1": {
+            "modelType": "SanaImageToVideoPipeline",
+            "mode": "image_to_video",
+            "profile": _P2_VIDEO_PROFILES["sana-video-480p-i2v"],
+            "capability": _sana_video_capability(image_conditioned=True),
+            "roles": _I2V_GRAPH_ROLES,
+            "edges": _I2V_GRAPH_EDGES,
+            "bindings": _SANA_VIDEO_I2V_GRAPH_BINDINGS,
         },
         "wan-flf:image-to-video:v1": {
             "modelType": "WanImage2VideoModularPipeline",

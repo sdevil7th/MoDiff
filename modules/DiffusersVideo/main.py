@@ -65,6 +65,8 @@ LATTE_REPO = "maxin-cn/Latte-1"
 LATTE_REVISION = "0653024365272f061fc44d1078134df22842b687"
 MOCHI_REPO = "genmo/mochi-1-preview"
 MOCHI_REVISION = "14be5fcea23095ed330cb214647916a451e38b6e"
+SANA_VIDEO_REPO = "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
+SANA_VIDEO_REVISION = "db5f398b13ca086d09a50ce156c20527773841b1"
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -340,6 +342,22 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("text_to_video",),
         max_prompt_tokens=256,
     ),
+    "SanaVideoPipeline": VideoPipelineAdapter(
+        id="sana-video-480p",
+        pipeline_class="SanaVideoPipeline",
+        diffusers_class="SanaVideoPipeline",
+        default_repo=SANA_VIDEO_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=300,
+    ),
+    "SanaImageToVideoPipeline": VideoPipelineAdapter(
+        id="sana-video-480p-i2v",
+        pipeline_class="SanaImageToVideoPipeline",
+        diffusers_class="SanaImageToVideoPipeline",
+        default_repo=SANA_VIDEO_REPO,
+        modes=("image_to_video",),
+        max_prompt_tokens=300,
+    ),
 }
 
 
@@ -488,6 +506,10 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "AllegroPipeline": {"text_to_video": _video_field_contract()},
     "LattePipeline": {"text_to_video": _video_field_contract()},
     "MochiPipeline": {"text_to_video": _video_field_contract()},
+    "SanaVideoPipeline": {"text_to_video": _video_field_contract()},
+    "SanaImageToVideoPipeline": {
+        "image_to_video": _video_field_contract("reference_images", required_fields=("reference_images",))
+    },
 }
 
 
@@ -520,6 +542,8 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "AllegroPipeline": "_load_allegro",
     "LattePipeline": "_load_latte",
     "MochiPipeline": "_load_mochi",
+    "SanaVideoPipeline": "_load_sana_video",
+    "SanaImageToVideoPipeline": "_load_sana_video",
 }
 
 
@@ -542,6 +566,8 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "AllegroPipeline": "_execute_allegro",
     "LattePipeline": "_execute_latte",
     "MochiPipeline": "_execute_mochi",
+    "SanaVideoPipeline": "_execute_sana_video",
+    "SanaImageToVideoPipeline": "_execute_sana_video",
 }
 
 
@@ -752,6 +778,16 @@ def _require_mochi_artifact(model_selection: Any, model_id: str, revision: Any) 
     reviewed_revision = require_catalog_revision(MOCHI_REPO, model_type="MochiPipeline")
     if revision != reviewed_revision or revision != MOCHI_REVISION:
         raise ValueError(f"Mochi is pinned to {MOCHI_REVISION}.")
+    return reviewed_revision
+
+
+def _require_sana_video_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != SANA_VIDEO_REPO:
+        raise ValueError(f"SANA-Video currently requires the exact reviewed Hub artifact {SANA_VIDEO_REPO}.")
+    reviewed_revision = require_catalog_revision(SANA_VIDEO_REPO)
+    if revision != reviewed_revision or revision != SANA_VIDEO_REVISION:
+        raise ValueError(f"SANA-Video is pinned to {SANA_VIDEO_REVISION}.")
     return reviewed_revision
 
 
@@ -1947,6 +1983,73 @@ class LoadPipeline(WanVACELoadPipeline):
         # The specialized graph keeps its generic VAE-tiling switch off so the
         # reviewed pipeline requirement cannot be disabled by users.
         enable_vae_tiling()
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
+    def _load_sana_video(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        import torch
+        from diffusers import AutoencoderKLWan, SanaImageToVideoPipeline, SanaVideoPipeline
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _require_sana_video_artifact(
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+        )
+        if str(kwargs.get("dtype") or "bfloat16") != "bfloat16":
+            raise ValueError("SANA-Video source qualification requires dtype=bfloat16.")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode="sequential_cpu",
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError("SANA-Video source qualification does not admit on-load quantization or a device map.")
+        common_kwargs = {
+            "use_safetensors": True,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "revision": revision,
+            "local_files_only": local_files_only(model_id),
+        }
+        if CONFIG.hf.get("cache_dir"):
+            common_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
+
+        pipeline_classes = {
+            "SanaVideoPipeline": SanaVideoPipeline,
+            "SanaImageToVideoPipeline": SanaImageToVideoPipeline,
+        }
+        pipeline_class = pipeline_classes.get(adapter.pipeline_class)
+        if pipeline_class is None:
+            raise RuntimeError(f"Unsupported SANA-Video pipeline class {adapter.pipeline_class}.")
+
+        logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
+        self.progress(-1, phase="loading", message="Loading SANA-Video FP32 Wan VAE")
+        vae = AutoencoderKLWan.from_pretrained(
+            model_id,
+            subfolder="vae",
+            torch_dtype=torch.float32,
+            **common_kwargs,
+        )
+        self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class}")
+        pipeline = pipeline_class.from_pretrained(
+            model_id,
+            vae=vae,
+            torch_dtype=torch.bfloat16,
+            **common_kwargs,
+            **recipe_load_kwargs,
+        )
+        enable_tiling = getattr(pipeline.vae, "enable_tiling", None)
+        if not callable(enable_tiling):
+            raise RuntimeError("SANA-Video did not expose the documented Wan VAE tiling hook.")
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        # The pipeline's OOM warning does not return a decoded result. Keep the
+        # documented tiling path mandatory even though the generic graph switch
+        # remains off and cannot weaken this reviewed family requirement.
+        enable_tiling(tile_sample_min_width=512, tile_sample_min_height=512)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
         self.mm_add(pipeline, priority=2)
@@ -3159,6 +3262,156 @@ class Generate(WanVACEGenerate):
         if not isinstance(frames, list) or len(frames) != num_frames:
             received = len(frames) if isinstance(frames, list) else "an unknown number of"
             raise RuntimeError(f"Mochi returned {received} frames; expected {num_frames}.")
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames),
+        }
+
+    def _execute_sana_video(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        expected_mode = "image_to_video" if adapter.pipeline_class == "SanaImageToVideoPipeline" else "text_to_video"
+        if mode != expected_mode:
+            raise ValueError(f"{adapter.pipeline_class} supports {expected_mode} generation only.")
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != SANA_VIDEO_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != SANA_VIDEO_REVISION
+        ):
+            raise ValueError("The connected SANA-Video pipeline does not match the reviewed artifact.")
+        for field, label in (
+            ("video", "source video"),
+            ("mask", "mask"),
+            ("pose_video", "pose video"),
+            ("face_video", "face video"),
+            ("background_video", "background video"),
+        ):
+            if ensure_video_list(kwargs.get(field), label) is not None:
+                raise ValueError(f"SANA-Video does not accept {label} input.")
+        if kwargs.get("last_image") is not None:
+            raise ValueError("SANA-Video does not admit last-image conditioning.")
+
+        references = ensure_reference_images(kwargs.get("reference_images"))
+        if mode == "text_to_video" and references is not None:
+            raise ValueError("SANA-Video text_to_video does not accept image conditioning.")
+        if mode == "image_to_video":
+            if not references or len(references) != 1 or not isinstance(references[0], Image.Image):
+                raise ValueError("SANA-Video image_to_video requires exactly one PIL opening image.")
+
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        if not isinstance(prompt, str):
+            raise ValueError("SANA-Video requires one nonempty prompt string.")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        if negative_prompt is None:
+            negative_prompt = ""
+        if not isinstance(negative_prompt, str):
+            raise ValueError("SANA-Video negative prompt must be one string.")
+        # The native checkpoint is conditioned on an explicit motion-score
+        # suffix. Keep the reviewed score stable instead of exposing a free-form
+        # family-specific field through the generic node.
+        native_prompt = f"{prompt.rstrip()} motion score: 30."
+        _validate_prompt_token_limit(
+            pipeline,
+            native_prompt,
+            "prompt",
+            adapter.max_prompt_tokens,
+            family="SANA-Video",
+        )
+        _validate_prompt_token_limit(
+            pipeline,
+            negative_prompt,
+            "negative prompt",
+            adapter.max_prompt_tokens,
+            family="SANA-Video",
+        )
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError("SANA-Video source qualification supports one video per prompt.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError("SANA-Video source qualification requires output_type=pil.")
+
+        width = _bounded_short_video_int(
+            kwargs.get("width"), family="SANA-Video", default=832, label="width", minimum=832, maximum=832
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"), family="SANA-Video", default=480, label="height", minimum=480, maximum=480
+        )
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"),
+            family="SANA-Video",
+            default=81,
+            label="frame count",
+            minimum=81,
+            maximum=81,
+        )
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family="SANA-Video",
+            default=50,
+            label="step count",
+            minimum=1,
+            maximum=50,
+        )
+        guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="SANA-Video",
+            default=6.0,
+            label="guidance",
+            minimum=1.0,
+            maximum=12.0,
+        )
+        max_sequence_length = _bounded_short_video_int(
+            kwargs.get("max_sequence_length"),
+            family="SANA-Video",
+            default=300,
+            label="maximum prompt sequence length",
+            minimum=1,
+            maximum=300,
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        call_kwargs = {
+            "prompt": native_prompt,
+            "negative_prompt": negative_prompt,
+            "height": height,
+            "width": width,
+            "frames": num_frames,
+            "num_inference_steps": steps,
+            "guidance_scale": guidance,
+            "num_videos_per_prompt": 1,
+            "generator": generator,
+            "output_type": output_type,
+            "return_dict": True,
+            "clean_caption": False,
+            "use_resolution_binning": False,
+            "attention_kwargs": parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
+            "callback_on_step_end": self.pipe_callback,
+            "callback_on_step_end_tensor_inputs": callback_tensor_inputs(
+                kwargs.get("callback_on_step_end_tensor_inputs")
+            ),
+            "max_sequence_length": max_sequence_length,
+        }
+        if references:
+            call_kwargs["image"] = references[0]
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(**call_kwargs)
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        if not isinstance(frames, list) or len(frames) != num_frames:
+            received = len(frames) if isinstance(frames, list) else "an unknown number of"
+            raise RuntimeError(f"SANA-Video returned {received} frames; expected {num_frames}.")
         return {
             "video_out": frames,
             "width_out": width,

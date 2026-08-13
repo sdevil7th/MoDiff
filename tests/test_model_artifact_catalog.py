@@ -125,6 +125,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("genmo/mochi-1-preview"),
             "14be5fcea23095ed330cb214647916a451e38b6e",
         )
+        self.assertEqual(
+            catalog_revision("Efficient-Large-Model/SANA-Video_2B_480p_diffusers"),
+            "db5f398b13ca086d09a50ce156c20527773841b1",
+        )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(

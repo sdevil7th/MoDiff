@@ -41,6 +41,8 @@ from modules.DiffusersVideo.main import (
     LATTE_REVISION,
     MOCHI_REPO,
     MOCHI_REVISION,
+    SANA_VIDEO_REPO,
+    SANA_VIDEO_REVISION,
     LTX_DISTILLED_TIMESTEPS,
     STABLE_VIDEO_DIFFUSION_REPO,
     STABLE_VIDEO_DIFFUSION_REVISION,
@@ -3255,6 +3257,154 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                             pipeline=pipeline,
                             mode="text_to_video",
                             prompt="A paper lantern drifts over a moonlit lake.",
+                            **update,
+                        )
+
+    def test_sana_video_loaders_pin_mixed_precision_and_mandatory_vae_tiling(self):
+        for pipeline_class, class_path, scope in (
+            ("SanaVideoPipeline", "diffusers.SanaVideoPipeline.from_pretrained", "sana-video-480p"),
+            (
+                "SanaImageToVideoPipeline",
+                "diffusers.SanaImageToVideoPipeline.from_pretrained",
+                "sana-video-480p-i2v",
+            ),
+        ):
+            with self.subTest(pipeline_class=pipeline_class):
+                vae = SimpleNamespace(enable_tiling=MagicMock())
+                pipeline = SimpleNamespace(vae=vae)
+                node = LoadPipeline(f"{scope}-loader")
+                with (
+                    patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+                    patch(class_path, return_value=pipeline) as load_pipeline,
+                    patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+                    patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+                    patch.object(node, "mm_add") as mm_add,
+                ):
+                    result = node.execute(
+                        pipeline_class=pipeline_class,
+                        model_id={"source": "hub", "value": SANA_VIDEO_REPO},
+                        revision=SANA_VIDEO_REVISION,
+                        dtype="bfloat16",
+                        device="cpu",
+                        offload_mode="sequential_cpu",
+                    )
+
+                self.assertIs(result["pipeline"], pipeline)
+                self.assertEqual(result["resolved_artifact"], SANA_VIDEO_REPO)
+                self.assertEqual(pipeline._modiff_video_pipeline_class, pipeline_class)
+                self.assertEqual(pipeline._modiff_video_repo, SANA_VIDEO_REPO)
+                self.assertEqual(pipeline._modiff_video_revision, SANA_VIDEO_REVISION)
+                self.assertEqual(load_vae.call_args.args, (SANA_VIDEO_REPO,))
+                self.assertEqual(load_vae.call_args.kwargs["subfolder"], "vae")
+                self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
+                self.assertEqual(load_pipeline.call_args.args, (SANA_VIDEO_REPO,))
+                self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
+                self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+                self.assertEqual(load_pipeline.call_args.kwargs["revision"], SANA_VIDEO_REVISION)
+                self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+                self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+                self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+                self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+                apply_recipe.assert_called_once_with(pipeline, {})
+                vae.enable_tiling.assert_called_once_with(tile_sample_min_width=512, tile_sample_min_height=512)
+                apply_offload.assert_called_once_with(
+                    pipeline,
+                    mode="none",
+                    device="cpu",
+                    node_id=f"{scope}-loader",
+                    scope=scope,
+                )
+                mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_sana_video_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-sana-video-loader")
+        with patch("diffusers.SanaVideoPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="SanaVideoPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-sana-video"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="bfloat16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_sana_video_generation_seals_native_text_and_image_contracts(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(81)]]
+
+        class FakePipeline:
+            _modiff_video_repo = SANA_VIDEO_REPO
+            _modiff_video_revision = SANA_VIDEO_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self, pipeline_class):
+                self._modiff_video_pipeline_class = pipeline_class
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        reference = Image.new("RGB", (832, 480))
+        for pipeline_class, mode, media in (
+            ("SanaVideoPipeline", "text_to_video", {}),
+            ("SanaImageToVideoPipeline", "image_to_video", {"reference_images": [reference]}),
+        ):
+            with self.subTest(mode=mode):
+                pipeline = FakePipeline(pipeline_class)
+                result = Generate().execute(
+                    pipeline=pipeline,
+                    mode=mode,
+                    prompt="A red kite crosses a windswept coastal bluff.",
+                    negative_prompt="flicker",
+                    width=832,
+                    height=480,
+                    num_frames=81,
+                    num_inference_steps=50,
+                    guidance_scale=6,
+                    max_sequence_length=300,
+                    seed=43,
+                    output_type="pil",
+                    **media,
+                )
+                self.assertEqual(
+                    result,
+                    {"video_out": Output.frames[0], "width_out": 832, "height_out": 480, "frames_out": 81},
+                )
+                call_kwargs = pipeline.calls[0]
+                self.assertEqual(call_kwargs["prompt"], "A red kite crosses a windswept coastal bluff. motion score: 30.")
+                self.assertEqual(call_kwargs["frames"], 81)
+                self.assertEqual(call_kwargs["num_inference_steps"], 50)
+                self.assertEqual(call_kwargs["guidance_scale"], 6)
+                self.assertEqual(call_kwargs["max_sequence_length"], 300)
+                self.assertIs(call_kwargs["clean_caption"], False)
+                self.assertIs(call_kwargs["use_resolution_binning"], False)
+                self.assertIs(call_kwargs.get("image"), reference if media else None)
+
+    def test_sana_video_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="SanaVideoPipeline",
+            _modiff_video_repo=SANA_VIDEO_REPO,
+            _modiff_video_revision=SANA_VIDEO_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 77}, "integer from 81 through 81"),
+            ({"width": 800}, "integer from 832 through 832"),
+            ({"height": 512}, "integer from 480 through 480"),
+            ({"num_inference_steps": 51}, "integer from 1 through 50"),
+            ({"reference_images": [Image.new("RGB", (832, 480))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 301}, "integer from 1 through 300"),
+            ({"guidance_scale": 12.1}, "finite and from 1 through 12"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A red kite crosses a windswept coastal bluff.",
                             **update,
                         )
 
