@@ -5352,6 +5352,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     a product-owned composite license receipt, backend-owned external encoder
     assembly and bounds, remote heavy-hardware safety/quality review, and
     physical macOS execution remain independent gates.
+  - [x] **HunyuanImage 2.1 source and territory-gate review:** backend `4987495`
+    commit seals the exact public package-owned conversion
+    `hunyuanvideo-community/HunyuanImage-2.1-Diffusers@7e7b7a177de58591aeaffca0929f4765003d7ced`
+    and the governing upstream receipt
+    `tencent/HunyuanImage-2.1@e435da11d9e8795a25e224c5ba27b099ed45c55b`.
+    The conversion contains an exact ten-file / 53,124,614,990-byte BF16
+    safetensors partition, no Python, and no remote-code requirement. Its
+    immutable weight identities, repository/config hashes, package pipeline,
+    refiner, transformer, VAE, and guider source hashes, 2K/50-step/APG-3.5
+    first-stage recipe, prompt limits, cancellation surface, and estimate-only
+    resource envelope are sealed in
+    `data/hunyuan-image-artifact-review.json`. No weight bytes or media were
+    downloaded.
+
+    The family remains contract-only. The immutable Tencent license expressly
+    excludes the European Union, United Kingdom, and South Korea and prohibits
+    using the works or outputs outside that Territory. MoDiff has no
+    legal/product-approved territory enforcement spanning download, local and
+    hosted execution, output handling, or redistribution. The safe community
+    conversion also omits the governing LICENSE and NOTICE and links mutable
+    terms, while the package exposes no safety checker. Accordingly no
+    runtime/download catalog, capability, graph, client, Auto, template, or
+    Gallery surface is added. Legal territory/distribution approval, product
+    territory enforcement, an immutable composite terms receipt, remote
+    heavy-hardware safety/quality/cancellation qualification, and physical
+    macOS execution remain independent gates.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5502,7 +5528,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `ernie_image`
 - [x] `glm_image`
 - [x] `hidream_image`
-- [ ] `hunyuan_image`
+- [x] `hunyuan_image`
 - [ ] `hunyuandit`
 - [ ] `ideogram4`
 - [ ] `joyimage`
@@ -5636,4 +5662,5 @@ Add references only after the corresponding evidence exists.
 | P6.33 ERNIE Image Turbo text-to-image source admission | `a0b07c8` | `0527a66` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 31,596,733,630-byte predominantly BF16 safetensors inventory, immutable metadata and package/Transformers source hashes, fixed 1024px/8-step/guidance-1/prompt-enhanced recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The revised optional-runtime symbol contract passed a clean-base locked install/activation/workload/rollback qualification. The deterministic 115-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.34 GLM-Image text-to-image source admission | `c338824` | `d42a15c` | Remote real-weight memory/output safety/quality, bundled-license clarification, and physical macOS execution pending | Not required | Exact public MIT-declared revision, incorporated Apache-2.0 tokenizer terms, nine-file / 35,765,307,854-byte mixed BF16/FP32 safetensors inventory, immutable metadata and package/Transformers source hashes, fixed 1024px/50-step/guidance-1.5 recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The revised optional-runtime symbol contract passed a clean-base locked install/activation/workload/rollback qualification. The deterministic 116-workflow catalog is graph-qualified/runtime-unqualified; the missing negative-prompt API and safety checker keep Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.35 HiDream-I1 source and admission-gate review | `0685ee5` | Not required | Authenticated Llama 3.1 terms/artifact review, composite license receipt, backend-owned external encoder assembly/bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public Full/Dev/Fast revisions, three 12-file / approximately 47.18 GB safetensors partitions, shared and variant-specific immutable weight identities, package source hashes, official 50/28/16-step recipes, callbacks, and estimate-only 63.24 GB composite runtime surface are sealed. Every public snapshot omits the required Llama tokenizer/encoder; its manual gate masks artifact identities before acceptance. No runtime/download or user-facing surface is added, and no weights or media were downloaded. |
+| P6.36 HunyuanImage 2.1 source and territory-gate review | `4987495` | Not required | Legal territory/distribution approval, product territory enforcement, immutable composite terms receipt, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public package-owned conversion and governing upstream revisions, ten-file / 53,124,614,990-byte BF16 safetensors inventory, immutable license/notice/config and package source hashes, 2K/50-step/APG-3.5 first-stage recipe, callbacks, and estimate-only resource envelope are sealed. Express EU/UK/South-Korea exclusions keep the family contract-only and outside every runtime/download and user-facing surface; no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
