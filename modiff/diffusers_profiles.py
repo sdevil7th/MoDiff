@@ -225,6 +225,7 @@ class DiffusersExecutionProfile:
             "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-diffusers-audio": ("modules.DiffusersAudio", "LoadPipeline"),
+            "direct-diffusers-three-d": ("modules.DiffusersThreeD", "LoadPipeline"),
             "direct-huggingface-speech": (
                 "modules.HuggingFaceSpeech",
                 "LoadSpeechRecognitionModel",

@@ -361,13 +361,14 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
     def test_reviewed_custom_preview_actions_do_not_probe_or_install_the_runtime(self):
         catalog = mock.Mock(side_effect=AssertionError("preview must not inspect the runtime catalog"))
         cases = (
-            ("ModelsLoader", "refresh_pipeline_identity"),
-            ("DynamicBlockNode", "update_node"),
-            ("LoadPipeline", "update_audio_contract"),
-            ("Generate", "update_audio_contract"),
+            ("modules.ModularDiffusers", "ModelsLoader", "refresh_pipeline_identity"),
+            ("modules.ModularDiffusers", "DynamicBlockNode", "update_node"),
+            ("modules.DiffusersAudio", "LoadPipeline", "update_audio_contract"),
+            ("modules.DiffusersAudio", "Generate", "update_audio_contract"),
+            ("modules.DiffusersThreeD", "LoadPipeline", "update_three_d_contract"),
+            ("modules.DiffusersThreeD", "GenerateRenderedArtifact", "update_three_d_contract"),
         )
-        for action, method_name in cases:
-            module = "modules.ModularDiffusers" if action in {"ModelsLoader", "DynamicBlockNode"} else "modules.DiffusersAudio"
+        for module, action, method_name in cases:
             with self.subTest(module=module, action=action):
                 requirement = field_action_optional_runtime_requirement(
                     module,

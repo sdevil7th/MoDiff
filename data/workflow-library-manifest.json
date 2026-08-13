@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T04:50:55.726Z",
+  "generatedAt": "2026-08-13T05:44:10.279Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 82,
-  "supportedPairCount": 94,
+  "supportedCanonicalPairCount": 83,
+  "supportedPairCount": 95,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1794,6 +1794,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/sana-sprint-pipeline/text-to-image.json",
       "graphHash": "1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe"
+    },
+    {
+      "id": "ShapEPipeline:text_to_3d",
+      "modelType": "ShapEPipeline",
+      "modelFamily": "Shap-E",
+      "mode": "text_to_3d",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "openai/shap-e"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "ShapEPipeline"
+      ],
+      "sourceTemplateId": "task-template:shap-e:text-to-3d:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
+      "graphHash": "da3650ce1a40f12e29760ee1ea58baaab3edb4f57b89683339be76ed4400d7c0"
     },
     {
       "id": "StableAudioPipeline:text_to_audio",

@@ -310,6 +310,16 @@ _DECLARATIVE_FIELD_ACTIONS = frozenset(
             "Generate",
             "update_audio_contract",
         ),
+        (
+            "modules.DiffusersThreeD",
+            "LoadPipeline",
+            "update_three_d_contract",
+        ),
+        (
+            "modules.DiffusersThreeD",
+            "GenerateRenderedArtifact",
+            "update_three_d_contract",
+        ),
     }
 )
 

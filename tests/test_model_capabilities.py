@@ -109,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 82)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 83)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -648,6 +648,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(audioldm2["recommendedSampleRate"], 16000)
         self.assertEqual(audioldm2["recommendedDuration"], 10)
         self.assertEqual(audioldm2["revisionCandidates"], ["c8e7e189d324425c05c4c2f81214041ef4107983"])
+        shap_e = by_model["ShapEPipeline"]
+        self.assertEqual(shap_e["runnableModes"], ["text_to_3d"])
+        self.assertEqual(shap_e["outputKind"], "video")
+        self.assertEqual(shap_e["recommendedFrames"], 20)
+        self.assertEqual(shap_e["revisionCandidates"], ["7bd337afdea1c17842e1c3cc45c4e268356dba40"])
+        self.assertEqual(shap_e["studioExecutionSpecs"][0]["executionPath"], "direct-diffusers-three-d")
         self.assertEqual(
             by_model["FluxKontextPipeline"]["studioExecutionSpecModes"],
             ["edit_image", "multi_image_reference_edit"],

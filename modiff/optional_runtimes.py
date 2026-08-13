@@ -578,6 +578,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
         "StableAudioPipeline",
         "LongCatAudioDiTPipeline",
         "AudioLDM2Pipeline",
+        "ShapEPipeline",
         "StableDiffusionXLModularPipeline",
         "StableDiffusionXLPipeline",
         "StableDiffusionXLImg2ImgPipeline",

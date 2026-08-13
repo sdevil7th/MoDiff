@@ -165,6 +165,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableAudioPipeline", "text_to_audio"),
                 ("LongCatAudioDiTPipeline", "text_to_audio"),
                 ("AudioLDM2Pipeline", "text_to_audio"),
+                ("ShapEPipeline", "text_to_3d"),
                 ("FluxDevPipeline", "edit_image"),
                 ("FluxDevPipeline", "inpaint"),
                 ("StableDiffusionXLPipeline", "text_to_image"),
@@ -982,6 +983,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                     self.assertIn(("audioGenerate", "num_waveforms", waveforms), spec["bindings"])
                 graph, hints = executable_graph_for_spec(spec)
                 assert_studio_execution_graph(graph, hints)
+
+    def test_shap_e_seals_exact_safe_rendered_orbit_route(self):
+        spec = studio_execution_spec_for_pair("ShapEPipeline", "text_to_3d")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "shap-e:direct")
+        self.assertEqual(spec["executionPath"], "direct-diffusers-three-d")
+        self.assertEqual(spec["defaultRepo"], "openai/shap-e")
+        self.assertIn(("diffusersThreeDPipeline", "revision", "defaultRevision"), spec["bindings"])
+        self.assertIn(("diffusersThreeDGenerate", "frame_size", "width"), spec["bindings"])
+        self.assertIn(("diffusersThreeDGenerate", "video", "videoExport", "video"), spec["edges"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_inpaint_seals_the_exact_direct_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "inpaint")
