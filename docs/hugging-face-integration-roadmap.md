@@ -4211,8 +4211,19 @@ Priority: after image/audio contracts. Hardware and assets: remote only.
   Auto and Gallery remain disabled; no weights or output media were downloaded
   or retained. Authorization review, remote execution/quality, Dataset, Auto,
   Gallery, and physical macOS qualification remain pending.
-- [ ] Evaluate Motif Video, CogVideoX-2B, and similar smaller candidates one at a
-  time after artifact-size and RAM review.
+- [x] Evaluate Motif Video independently before source admission. The official
+  public Apache-2.0 `Motif-Technologies/Motif-Video-2B` snapshot was reviewed at
+  immutable commit `6748a1f5861a859aca13b30a0c65dd6f9942ca35`. Although the
+  denoiser is described as 2B, its safetensors weight surface is approximately
+  17.26 GB: an 8,599,946,488-byte text encoder, 8,151,344,960-byte transformer,
+  and 507,591,892-byte VAE. The official native recipe is 121 frames at
+  1280x736 and 50 steps, and the documented constrained-memory path requires
+  model CPU offload. That total artifact and native decode envelope is not a
+  smaller local candidate, so executable admission is deferred to a remote
+  heavy-model review with measured peak accelerator/system memory. No weights
+  or media were downloaded and no executable or client surface was added.
+- [ ] Evaluate CogVideoX-2B and similar smaller candidates one at a time after
+  artifact-size and RAM review.
 
 ### Phase 5 test and asset gate
 
@@ -4477,5 +4488,6 @@ Add references only after the corresponding evidence exists.
 | P4.6 Shap-E rendered output | `21d819f` | `d684fc4` | Remote and physical macOS pending | Pending | Complete source slice: exact immutable official artifacts are assembled only from reviewed safe components, a bounded rendered-orbit boundary is sealed in the 95-workflow catalog, and complete backend/client gates passed. Unsafe renamed-renderer weights and mesh/export surfaces remain excluded. Auto and Gallery remain disabled. |
 | P5.1 Stable Video Diffusion image-to-video | `260637d` | `d6e0eed` | Remote and physical macOS pending | Pending | Complete source slice: the exact gated official revision, safetensors-only artifact surface, license gate, documented offload/chunking recipe, bounded prompt-free image-conditioning contract, 96-workflow deterministic catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded or retained. |
 | P5.2 AnimateDiff and AnimateLCM | `75dde3c` | `220fb40` | Remote and physical macOS pending | Pending | Complete Expert-only source slice: immutable SD1.5 and motion revisions, exact safetensors-only adapters/LoRA, documented scheduler recipes, bounded 512px short-video execution, two sealed graphs in the 98-workflow catalog, complete backend/client gates, and the 106-case mocked Studio sweep passed. The motion repositories declare no weight license, so rights remain undetermined and require an explicit notice; Auto and Gallery remain disabled and no weights or media were downloaded. |
-| P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification plus Motif Video, CogVideoX-2B, and other smaller candidates remain open. |
+| P5.3a Motif Video evaluation | Deferred after immutable artifact/RAM review | Not required | Remote heavy-model review required | Pending | The official Apache-2.0 snapshot is safetensors-only, but its approximately 17.26 GB weight surface and native 121-frame 1280x736 recipe do not meet the smaller local-candidate premise. No executable or client surface was admitted and no weights or media were downloaded. |
+| P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification plus CogVideoX-2B and other smaller candidates remain open. |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
