@@ -4917,6 +4917,33 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     3,154 subtests and three platform skips, project static/dependency/preflight
     checks, and the focused immutable review matrix pass; no weights or media
     were downloaded or retained.
+  - [x] **Allegro text-to-video source admission:** backend `6488462` and
+    client `05a2e15` admit the exact public snapshot
+    `rhymes-ai/Allegro@c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6`
+    through the generic Diffusers video facade. The immutable repository
+    contains no Python and requires no remote code. Six selected bfloat16
+    safetensors files / 25,293,069,108 bytes, their exact hashes and canonical
+    inventory digest, immutable metadata identities, 2,771,907,856-parameter
+    safetensors metadata, and pinned package pipeline/output/transformer/VAE
+    source hashes are sealed in `data/allegro-artifact-review.json` without
+    downloading weights. The duplicate 19,049,317,384-byte unsafe PyTorch `.bin`
+    text-encoder partition is explicitly excluded. The model card declares
+    Apache-2.0, but the immutable repository contains no license file.
+
+    The admitted text-to-video workflow is Expert-only and remote-only. Its
+    backend-owned contract preserves the reviewed native 1280x720, 88-frame,
+    100-step, guidance-7.5, 512-token, 15-FPS recipe; requires bfloat16 for the
+    text encoder and transformer; keeps the VAE in float32 with mandatory
+    tiling; and defaults to sequential CPU offload. Conservative planning
+    reserves 10 GiB accelerator memory, 30 GiB disk, and 48 GiB system RAM.
+    The deterministic 109-workflow catalog is graph-qualified but explicitly
+    runtime-unqualified; Auto and Gallery remain disabled. The complete
+    1,441-test backend overlay with 3,175 subtests and three platform skips,
+    dependency/preflight/static checks, complete client check, deterministic
+    workflow verification, and the nine-byte remaining client bundle margin
+    pass. Remote real-weight output safety/quality review and physical macOS
+    execution remain pending independently; no weights or media were downloaded
+    or retained.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5028,7 +5055,7 @@ This is a family inventory, not a requirement to create one node per family.
 
 ### Video
 
-- [ ] `allegro`
+- [x] `allegro`
 - [x] `animatediff`
 - [ ] `anyflow`
 - [ ] `chronoedit`
@@ -5187,4 +5214,5 @@ Add references only after the corresponding evidence exists.
 | P6.19 CogView3 Plus 3B text-to-image source admission | `f74c806` | `a4d0b99` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, seven-file / 25,559,227,422-byte bfloat16 Diffusers partition, immutable metadata and package source hashes, bounded 512-2048px recipe, Expert-only remote workflow, and estimate-only A100 resource envelope are sealed. Model-card metadata declares Apache-2.0, but its linked `LICENSE.md` is absent from the immutable tree. The deterministic 107-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.20 CogView4 6B text-to-image source admission | `495d07d` | `9822baa` | Remote real-weight, output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, eight-file / 31,108,954,670-byte bfloat16 Diffusers partition, immutable metadata and package source hashes, bounded 512-2048px/2^21-pixel recipe, Expert-only remote workflow, and estimate-only A100 batch-four resource envelope are sealed. The signature/docstring token discrepancy and contradictory 1920x1280 memory row are explicit. The deterministic 108-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6.21 VisualCloze source and admission-gate review | `0f4d3c4` | Not required | Static artifact/source review only; generic visual-context-matrix contract, backend-owned bounds, license-file clarification, remote heavy-hardware execution, live output review, and physical macOS evidence pending | Not required | Exact public 384px and 512px revisions, two seven-file / 33,743,379,958-byte bfloat16 safetensors inventories, immutable metadata and package source hashes, nested matrix/generation/SDEdit contracts, and estimate-only resource envelopes are sealed. The legacy `.pth` LoRA artifacts are explicitly excluded. Contract mismatch and package validation gaps keep the family outside runtime/download catalogs and all user-facing surfaces; no weights or media were downloaded. |
+| P6.22 Allegro text-to-video source admission | `6488462` | `05a2e15` | Remote real-weight, output safety/quality, license-file clarification, and physical macOS execution pending | Not required | Exact public revision, six-file / 25,293,069,108-byte bfloat16 Diffusers partition, excluded duplicate unsafe `.bin` partition, immutable metadata and package source hashes, bounded native 1280x720/88-frame recipe, float32 tiled VAE, Expert-only remote workflow, and conservative resource envelope are sealed. The deterministic 109-workflow catalog is graph-qualified/runtime-unqualified; Auto and Gallery remain disabled and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
