@@ -5322,6 +5322,36 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     verification pass. Remote real-weight memory/output safety/quality review,
     bundled-license clarification, and physical macOS execution remain pending
     independently; no weights or media were downloaded or retained.
+  - [x] **HiDream-I1 source and admission-gate review:** backend `0685ee5`
+    seals the exact public Full, Dev, and Fast snapshots at
+    `8ccbbfb270ccdae26d6bb0081df67dc81e4033bf`,
+    `0fad2ea0ccf9a80ddf019ea777eedb27c1ccb232`, and
+    `4856a5d8cd6fbd194780ed9f289bdf696d3afc10`. Each snapshot contains
+    an exact 12-file, approximately 47.18 GB safetensors partition with five
+    shared CLIP/T5/VAE files and seven variant-specific transformer shards.
+    Their immutable weight identities, repository metadata and package source
+    hashes, official 50/28/16-step recipes, seven finite resolution presets,
+    128-token prompt default, negative-prompt support, model-offload sequence,
+    callback/interrupt surface, and estimate-only composite resource envelope
+    are sealed in `data/hidream-image-artifact-review.json`. No weight bytes
+    or media were downloaded.
+
+    Admission is deliberately blocked rather than treating those safe public
+    partitions as runnable by themselves. Every model index requires
+    `text_encoder_4` and `tokenizer_4`, but all three immutable trees omit
+    those subfolders. The official loader supplies them from
+    `meta-llama/Llama-3.1-8B-Instruct@0e9e39f249a16976918f6564b8830bc894c89659`,
+    whose manual gate masks all four safetensors identities and returns HTTP
+    401 for configuration before authenticated Llama 3.1 license acceptance.
+    None of the three model snapshots bundles a composite license/notice file,
+    the generic loader cannot yet assemble and receipt that separately pinned
+    external tokenizer/causal language model, and the package has no safety
+    checker. Accordingly no runtime/download catalog, capability, canonical
+    graph, client, Auto, template, or Gallery surface is added. Fresh
+    task-scoped Llama terms acceptance, authenticated exact artifact review,
+    a product-owned composite license receipt, backend-owned external encoder
+    assembly and bounds, remote heavy-hardware safety/quality review, and
+    physical macOS execution remain independent gates.
   - [ ] Evaluate the remaining large image and cascaded families independently.
 - [x] Complete an explicit immutable-code security review and keep LLaDA2
   blocked. Backend `444152a` seals the public
@@ -5471,7 +5501,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [x] `dreamlite`
 - [x] `ernie_image`
 - [x] `glm_image`
-- [ ] `hidream_image`
+- [x] `hidream_image`
 - [ ] `hunyuan_image`
 - [ ] `hunyuandit`
 - [ ] `ideogram4`
@@ -5605,4 +5635,5 @@ Add references only after the corresponding evidence exists.
 | P6.32 DiT source and admission-gate review | `17ccba9` | Not required | Static artifact/source review only; safe official artifacts, commercial product rights, backend-owned loader/bounds/cancellation, remote heavy-hardware output review, and physical macOS evidence pending | Not required | The only two exact Facebook 256px/512px revisions, immutable metadata and package source hashes, four legacy weight identities, fixed ImageNet class-label contracts, and estimate-only resource envelopes are sealed. Legacy pickle-only serialization, CC BY-NC licensing without a bundled license file, absent safety guardrails, and absent cooperative cancellation keep the family outside all runtime/download and user-facing surfaces; no weights or media were downloaded. |
 | P6.33 ERNIE Image Turbo text-to-image source admission | `a0b07c8` | `0527a66` | Remote real-weight memory/output safety/quality and physical macOS execution pending | Not required | Exact public Apache-2.0 revision, five-file / 31,596,733,630-byte predominantly BF16 safetensors inventory, immutable metadata and package/Transformers source hashes, fixed 1024px/8-step/guidance-1/prompt-enhanced recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The revised optional-runtime symbol contract passed a clean-base locked install/activation/workload/rollback qualification. The deterministic 115-workflow catalog is graph-qualified/runtime-unqualified; the missing safety checker keeps Auto and Gallery disabled, and no weights or media were downloaded. |
 | P6.34 GLM-Image text-to-image source admission | `c338824` | `d42a15c` | Remote real-weight memory/output safety/quality, bundled-license clarification, and physical macOS execution pending | Not required | Exact public MIT-declared revision, incorporated Apache-2.0 tokenizer terms, nine-file / 35,765,307,854-byte mixed BF16/FP32 safetensors inventory, immutable metadata and package/Transformers source hashes, fixed 1024px/50-step/guidance-1.5 recipe, Expert-only remote workflow, and estimate-only resource envelope are sealed. The revised optional-runtime symbol contract passed a clean-base locked install/activation/workload/rollback qualification. The deterministic 116-workflow catalog is graph-qualified/runtime-unqualified; the missing negative-prompt API and safety checker keep Auto and Gallery disabled, and no weights or media were downloaded. |
+| P6.35 HiDream-I1 source and admission-gate review | `0685ee5` | Not required | Authenticated Llama 3.1 terms/artifact review, composite license receipt, backend-owned external encoder assembly/bounds, remote heavy-hardware output review, and physical macOS execution pending | Not required | Exact public Full/Dev/Fast revisions, three 12-file / approximately 47.18 GB safetensors partitions, shared and variant-specific immutable weight identities, package source hashes, official 50/28/16-step recipes, callbacks, and estimate-only 63.24 GB composite runtime surface are sealed. Every public snapshot omits the required Llama tokenizer/encoder; its manual gate masks artifact identities before acceptance. No runtime/download or user-facing surface is added, and no weights or media were downloaded. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
