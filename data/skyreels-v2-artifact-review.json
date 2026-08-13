@@ -1,0 +1,517 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The official family spans eight 28.97-91.34 GB immutable partitions, the linked community license defines the licensed model as Skywork-13B rather than SkyReels-V2, and the pinned long-form Diffusers recipes contain an unavailable repository identifier and an incomplete V2V example.",
+    "runtimeCatalogExposed": false,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "license_scope_legal_review",
+      "corrected_immutable_long_form_recipe",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "SkyReels V2",
+  "format": "safetensors",
+  "license": {
+    "embeddedRepositoryNotice": {
+      "byteSize": 3179,
+      "id": "other",
+      "path": "LICENSE",
+      "sha256": "62fd7840fe6fa183a9dfce39a427233e8b90b849f96b724e949a09c1c30ca643",
+      "sharedAcrossReviewedRepositories": true
+    },
+    "linkedCommunityLicense": {
+      "byteSize": 105080,
+      "commercialUseAllowedByText": true,
+      "definitionNamesModel": "Skywork-13B",
+      "distributionIncludesHostedServices": true,
+      "governingLaw": "People's Republic of China mainland",
+      "immutableSourceCommit": "f45e61a55d4fd25e39494fc3c37014d0391f0e36",
+      "licenseAndSourceNoticeRequiredOnDistribution": true,
+      "militaryUseProhibited": true,
+      "path": "Skywork Community License.pdf",
+      "repositoryNoticePinsLinkedCommit": false,
+      "revocable": true,
+      "sha256": "3b81e9d526827a175f780508a3a61a7a615ef7272dfd01d6652c4519d0c09e9e",
+      "unlawfulUseProhibited": true
+    },
+    "scopeAppliesUnambiguouslyToSkyReelsV2": false,
+    "scopeRequiresLegalReview": true
+  },
+  "pipelineContracts": [
+    {
+      "defaultGuidanceScale": 6.0,
+      "defaultHeight": 544,
+      "defaultNumFrames": 97,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 960,
+      "pipelineClass": "SkyReelsV2Pipeline",
+      "requiredInputs": [
+        "prompt"
+      ],
+      "taskId": "text_to_video"
+    },
+    {
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 544,
+      "defaultNumFrames": 97,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 960,
+      "optionalInputs": [
+        "last_image"
+      ],
+      "pipelineClass": "SkyReelsV2ImageToVideoPipeline",
+      "requiredInputs": [
+        "image"
+      ],
+      "taskId": "image_to_video"
+    },
+    {
+      "defaultBaseNumFrames": 97,
+      "defaultFps": 24,
+      "defaultGuidanceScale": 6.0,
+      "defaultHeight": 544,
+      "defaultNumFrames": 97,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 960,
+      "pipelineClass": "SkyReelsV2DiffusionForcingPipeline",
+      "requiredInputs": [
+        "prompt"
+      ],
+      "taskId": "text_to_video"
+    },
+    {
+      "defaultBaseNumFrames": 97,
+      "defaultFps": 24,
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 544,
+      "defaultNumFrames": 97,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 960,
+      "optionalInputs": [
+        "last_image"
+      ],
+      "pipelineClass": "SkyReelsV2DiffusionForcingImageToVideoPipeline",
+      "requiredInputs": [
+        "image"
+      ],
+      "taskId": "image_to_video"
+    },
+    {
+      "defaultBaseNumFrames": 97,
+      "defaultFps": 24,
+      "defaultGuidanceScale": 6.0,
+      "defaultHeight": 544,
+      "defaultNumFrames": 120,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 960,
+      "pipelineClass": "SkyReelsV2DiffusionForcingVideoToVideoPipeline",
+      "requiredInputs": [
+        "video"
+      ],
+      "taskId": "video_to_video"
+    }
+  ],
+  "remoteResourceEnvelopes": {
+    "onePointThreeB": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 17179869184,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 68719476736,
+      "status": "estimate_only_qualification_pending"
+    },
+    "fourteenBImageToVideo": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 34359738368,
+      "minimumSelectiveDiskBytes": 171798691840,
+      "minimumSystemRamBytes": 171798691840,
+      "status": "estimate_only_qualification_pending"
+    },
+    "fourteenBTextOrDiffusionForcing": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 137438953472,
+      "minimumSystemRamBytes": 137438953472,
+      "status": "estimate_only_qualification_pending"
+    }
+  },
+  "repositories": [
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 414,
+        "className": "SkyReelsV2Pipeline",
+        "sha256": "1009d4fa23494a00b91fd4c9ddbbc0ea4f626c3b283e2e13c3b641ddd5610968"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-T2V-14B-540P-Diffusers",
+      "revision": "8479c72a1a6ffe1821215aa413e3f6072c8ee10c",
+      "role": "textToVideo14B540p",
+      "transformerConfigSha256": "f34c729c2b06e85bdb05d6d186ad9d36ee0936eed00689e304a995e3743d6dc2",
+      "transformerInputChannels": 16,
+      "weightBytes": 80385341396,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 57154077760,
+          "fileCount": 12
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 18,
+      "weightInventorySha256": "226bdb3c81355eac365242ec92ea9b8bba713cd552789e296c0a89c2b4ea736c"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 414,
+        "className": "SkyReelsV2Pipeline",
+        "sha256": "1009d4fa23494a00b91fd4c9ddbbc0ea4f626c3b283e2e13c3b641ddd5610968"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-T2V-14B-720P-Diffusers",
+      "revision": "b07940972bf0efad02694755022931e469430e96",
+      "role": "textToVideo14B720p",
+      "transformerConfigSha256": "f34c729c2b06e85bdb05d6d186ad9d36ee0936eed00689e304a995e3743d6dc2",
+      "transformerInputChannels": 16,
+      "weightBytes": 80385341396,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 57154077760,
+          "fileCount": 12
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 18,
+      "weightInventorySha256": "3d29ed2a9dca6d5886f0efdf82aba28adbc41391a59bb3ce850352edcb4980bb"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 580,
+        "className": "SkyReelsV2ImageToVideoPipeline",
+        "sha256": "def525e2957e28089e354977b82195bf2b429c1bb35f4b67fd1bbd6c91dd473b"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-I2V-1.3B-540P-Diffusers",
+      "revision": "fd853c3d47f7746c8ca1f5226c323e55e53c7bf2",
+      "role": "imageToVideo1.3B540p",
+      "transformerConfigSha256": "f97e0871defa88238b89d393f4fa22ed21c8b59ebd0c15337f936169ba7ef23e",
+      "transformerInputChannels": 36,
+      "weightBytes": 32017449724,
+      "weightComponents": {
+        "image_encoder": {
+          "byteSize": 2528371296,
+          "fileCount": 1
+        },
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 6257814792,
+          "fileCount": 2
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 9,
+      "weightInventorySha256": "9a9bee9cec48eb500bd22b2c1bfbaf3dacdd53681d85dde5a8e2f39761f614a0"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 580,
+        "className": "SkyReelsV2ImageToVideoPipeline",
+        "sha256": "def525e2957e28089e354977b82195bf2b429c1bb35f4b67fd1bbd6c91dd473b"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-I2V-14B-540P-Diffusers",
+      "revision": "356ff72527c7cd9eeb60702ba47db4316b18d630",
+      "role": "imageToVideo14B540p",
+      "transformerConfigSha256": "2c2e7ef4ab0c703425eb48ef1466d4760e95545f10eac162810e97bb1d16961f",
+      "transformerInputChannels": 36,
+      "weightBytes": 91339283940,
+      "weightComponents": {
+        "image_encoder": {
+          "byteSize": 2528371296,
+          "fileCount": 1
+        },
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 65579649008,
+          "fileCount": 14
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 21,
+      "weightInventorySha256": "c0cc4b7a2b933706d885a6d61dfca258643a836c80e8716a76f1d50bec69bdaf"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 580,
+        "className": "SkyReelsV2ImageToVideoPipeline",
+        "sha256": "def525e2957e28089e354977b82195bf2b429c1bb35f4b67fd1bbd6c91dd473b"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-I2V-14B-720P-Diffusers",
+      "revision": "375e297a4952bacfdb01af224f495514738381c5",
+      "role": "imageToVideo14B720p",
+      "transformerConfigSha256": "2c2e7ef4ab0c703425eb48ef1466d4760e95545f10eac162810e97bb1d16961f",
+      "transformerInputChannels": 36,
+      "weightBytes": 91339283940,
+      "weightComponents": {
+        "image_encoder": {
+          "byteSize": 2528371296,
+          "fileCount": 1
+        },
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 65579649008,
+          "fileCount": 14
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 21,
+      "weightInventorySha256": "cdbd5a025477a6436fb46cc784729ff8b0d87ba3b66836d1eec4be6c37c14b73"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 429,
+        "className": "SkyReelsV2DiffusionForcingPipeline",
+        "sha256": "8afd4298a9e52b7d3a868f342e00b1ad2936e7e3916aec91b7ad8abc2b20c012"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-DF-1.3B-540P-Diffusers",
+      "revision": "958acd63685c7e632e4b194549f2a703e34bd98b",
+      "role": "diffusionForcing1.3B540p",
+      "transformerConfigSha256": "99bc18aa606c3349a79386e13f8a8b6af87dd82853c9a3f0ce7e93010685255a",
+      "transformerInputChannels": 16,
+      "weightBytes": 28973450372,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 5742186736,
+          "fileCount": 2
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 8,
+      "weightInventorySha256": "7715bf86f9c1a01af32e23ab12a3633f1bfb487ab2aa4c2f8a0235ddc2ad5670"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 430,
+        "className": "SkyReelsV2DiffusionForcingPipeline",
+        "sha256": "70e3a0ecc9980755dc8661a810a43a0952135a8e2b1fb8156c6ecec1f25225ef"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-DF-14B-540P-Diffusers",
+      "revision": "34d48e4314e985069934d2f43d397f48aa566fd3",
+      "role": "diffusionForcing14B540p",
+      "transformerConfigSha256": "f34c729c2b06e85bdb05d6d186ad9d36ee0936eed00689e304a995e3743d6dc2",
+      "transformerInputChannels": 16,
+      "weightBytes": 80385341396,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 57154077760,
+          "fileCount": 12
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 18,
+      "weightInventorySha256": "4581b2acb4d9a50021b99d5aad11c0b4e8a111cc3e66648ff9cbde9f0d976758"
+    },
+    {
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 430,
+        "className": "SkyReelsV2DiffusionForcingPipeline",
+        "sha256": "70e3a0ecc9980755dc8661a810a43a0952135a8e2b1fb8156c6ecec1f25225ef"
+      },
+      "private": false,
+      "repository": "Skywork/SkyReels-V2-DF-14B-720P-Diffusers",
+      "revision": "3d2ebd783060183743ef1d0ff884049aca4fe4f0",
+      "role": "diffusionForcing14B720p",
+      "transformerConfigSha256": "f34c729c2b06e85bdb05d6d186ad9d36ee0936eed00689e304a995e3743d6dc2",
+      "transformerInputChannels": 16,
+      "weightBytes": 80385341396,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 22723671744,
+          "fileCount": 5
+        },
+        "transformer": {
+          "byteSize": 57154077760,
+          "fileCount": 12
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 18,
+      "weightInventorySha256": "c32aa360309d40c1418ff02db1aa76b246165dd857e97e8209f493bed58532cc"
+    }
+  ],
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "reviewedRecipes": {
+    "baseImageToVideo": {
+      "dtype": "bfloat16",
+      "flowShift": 5.0,
+      "fps": 24,
+      "guidanceScale": 5.0,
+      "height": 544,
+      "numFrames": 97,
+      "numInferenceSteps": 50,
+      "pipelineClass": "SkyReelsV2ImageToVideoPipeline",
+      "repositoryRole": "imageToVideo14B720p",
+      "schedulerClass": "UniPCMultistepScheduler",
+      "vaeDtype": "float32",
+      "width": 960
+    },
+    "baseTextToVideo": {
+      "dtype": "bfloat16",
+      "flowShift": 8.0,
+      "fps": 24,
+      "guidanceScale": 6.0,
+      "height": 544,
+      "numFrames": 97,
+      "numInferenceSteps": 50,
+      "pipelineClass": "SkyReelsV2Pipeline",
+      "repositoryRole": "textToVideo14B720p",
+      "schedulerClass": "UniPCMultistepScheduler",
+      "vaeDtype": "float32",
+      "width": 960
+    },
+    "diffusionForcingTextToVideo": {
+      "addnoiseCondition": 20,
+      "arStep": 5,
+      "baseNumFrames": 97,
+      "causalBlockSize": 5,
+      "dtype": "bfloat16",
+      "flowShift": 8.0,
+      "fps": 24,
+      "height": 544,
+      "numFrames": 97,
+      "numInferenceStepsPerBlock": 30,
+      "overlapHistory": null,
+      "pipelineClass": "SkyReelsV2DiffusionForcingPipeline",
+      "repositoryRole": "diffusionForcing1.3B540p",
+      "totalAsynchronousSchedulerRows": 50,
+      "width": 960
+    },
+    "longFormWindowContract": {
+      "baseNumFrames": 97,
+      "generatedNumFrames": 257,
+      "generatedWindows": [
+        [
+          1,
+          97
+        ],
+        [
+          81,
+          177
+        ],
+        [
+          161,
+          257
+        ]
+      ],
+      "overlapHistory": 17,
+      "qualificationStatus": "source_only"
+    },
+    "unacceptedLongFormExamples": {
+      "diffusersDocumentationRepository": "Skywork/SkyReels-V2-DF-1.3B-720P-Diffusers",
+      "firstLastFrameRepositoryResolvable": false,
+      "reason": "The pinned documentation's first/last-frame and V2V examples target a repository that is not in the supported model list and is not publicly resolvable. The separate V2V pipeline source example also omits the required video argument.",
+      "videoToVideoPipelineSourceExamplePassesRequiredVideo": false,
+      "videoToVideoRepositoryResolvable": false
+    }
+  },
+  "schemaVersion": 1,
+  "sourceContract": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "documentation": {
+      "byteSize": 17314,
+      "sha256": "3642cd75fd96a5a70c55d6dacf52dc239d466cc0cf477746344ba434f5be6469"
+    },
+    "pipelineSources": {
+      "SkyReelsV2DiffusionForcingImageToVideoPipeline": {
+        "byteSize": 52542,
+        "sha256": "0b13e43ed47688729da09056e29a1e8c86e9f38bcf6b2464b166d40d9395ed73"
+      },
+      "SkyReelsV2DiffusionForcingPipeline": {
+        "byteSize": 48231,
+        "sha256": "2145c7913ef72a1a1d0e79263ab1aa3ff08e292f7a6348b7968735de9409a7ec"
+      },
+      "SkyReelsV2DiffusionForcingVideoToVideoPipeline": {
+        "byteSize": 52000,
+        "sha256": "0eb791197d524fc1c4767e4d2f3e4be76c2839d3bb6531876fa6f674c3cceb53"
+      },
+      "SkyReelsV2ImageToVideoPipeline": {
+        "byteSize": 34603,
+        "sha256": "fa66855d58835496379750f1e3120dc288bf372f893e52340a1616fb8648678f"
+      },
+      "SkyReelsV2Pipeline": {
+        "byteSize": 27734,
+        "sha256": "42e2ca586f628732bd59cce86ef9d93c462942fb60e3ec23754a5ce9632a36cc"
+      }
+    },
+    "remoteCodeRequired": false
+  }
+}
