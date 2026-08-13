@@ -4300,12 +4300,37 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   contracts and 80 upstream workflows; 1,313 backend tests plus 2,965 subtests,
   the complete client check, and all 106 mocked Studio cases pass. No weights
   were downloaded.
-- [ ] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
+- [x] Add `MiniMaxH3ModularPipeline` only through generic joint video+audio
   specifications for its distinct `t2va`, `fl2va`, and `ref2va` workflows.
   Validate the `transformer/` versus `transformer_ref/` partition receipt,
   Qwen3-VL conditioning, separate video/audio scheduler state, reference-media
   bounds, immutable artifact revision, and remote-only resource envelope before
-  exposing any mode.
+  exposing any mode. Backend `baf7271` and client `947a2ef` complete the
+  contract-only slice without exposing a runnable mode or default repository.
+  The three upstream workflows map to generic `text_to_video_with_audio`,
+  `first_last_frame_to_video_with_audio`, and
+  `reference_to_video_with_audio`; the generic contract schema now preserves
+  `fl2va`'s `prompt + image` or `prompt + last_image` alternatives instead of
+  collapsing them into an invalid conjunction. The immutable official snapshot
+  is `MiniMaxAI/MiniMax-H3` at
+  `42ed227ee7df40d41602854ae760620d6eb651fe`. Its root Modular surface is 46
+  safetensors files and 210,296,909,532 weight bytes with both transformer
+  partitions; one workflow selects 77,735,901,100 shared bytes plus exactly one
+  66,280,504,216-byte transformer, for 144,016,405,316 weight bytes. Every file
+  size and SHA-256 is sealed in `data/minimax-h3-artifact-review.json`, while
+  duplicated legacy `FL2VA/`, `Ref2VA/`, and publisher media are excluded.
+  The receipt also seals Qwen3-VL layer 50, video/audio scheduler shifts 12/3,
+  24 fps and `17*n+5` frame alignment, 5-15-second output bounds, and the
+  9-image/3-video/3-audio/12-total reference limits with audio-only reference
+  requests forbidden. Its MiniMax H3 Community License excludes the US, EU,
+  UK, and Republic of Korea and adds commercial/redistribution obligations, so
+  the repository is deliberately absent from MoDiff's runtime/download catalog
+  pending legal and remote hardware qualification. The remote resource envelope
+  is estimate-only, with at least 160 GiB selective-workflow disk, 256 GiB
+  system RAM, 192 GiB aggregate accelerator memory, and four accelerators; no
+  live claim is made. The complete backend suite passes at 1,318 tests plus
+  2,969 subtests, the complete client check and bundle gate pass, and all 106
+  mocked Studio cases pass. No weights or media were downloaded.
 - [ ] Add the post-pin `LTX2ModularPipeline` and `LTX25ModularPipeline`, then
   separately qualify LTX-2.5 distilled single-stage, full/SFT plus stage-2 LoRA,
   and distilled two-stage recipes. Bind the exact sigma schedules, latent
@@ -4356,7 +4381,7 @@ Complete this research before implementing any pipeline or model entry:
 ## Appendix A — Missing Modular classes
 
 The current inventory contains 20 classes. All are now present at the MoDiff
-pin: 17 are registered contract-only and the three remaining post-pin classes
+pin: 18 are registered contract-only and the two remaining post-pin classes
 still require isolated MoDiff registration and workflow review.
 
 Present in the current pin but not registered by MoDiff:
@@ -4381,7 +4406,7 @@ Present at the current pin and require MoDiff registration:
 
 - [x] `Krea2ModularPipeline`
 - [x] `Krea2TurboModularPipeline`
-- [ ] `MiniMaxH3ModularPipeline`
+- [x] `MiniMaxH3ModularPipeline`
 - [ ] `LTX2ModularPipeline`
 - [ ] `LTX25ModularPipeline`
 
@@ -4547,4 +4572,5 @@ Add references only after the corresponding evidence exists.
 | P5 remaining short video | Pending | Pending | Remote pending | Pending | Existing Wan/LTX/LTX2/FramePack live qualification and any additional smaller candidates remain open. |
 | P6.1 Diffusers pin update | `5ee9e1d` | Compatible client gate revalidated; no client change required | No live run required; remote model qualification remains pending | Not required | Complete isolated pin slice: the exact 73-commit delta was reviewed, existing no-weight Modular contracts remained structurally stable, required custom inputs were synchronized, the full backend suite passed at the proposed pin, and the repaired clean base is dependency-clean and preflight-ready. |
 | P6.2 Krea2 Modular contracts | `1753384` | `ec2a349` | Contract-only; remote execution qualification pending | Not required | Both pinned classes are Expert-visible with exact, distinct base/Turbo contracts and fail closed before artifact resolution. The 28-contract snapshot, 1,313-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights were downloaded. |
-| P6 remaining | Pending | Pending | Remote pending | Pending | MiniMax H3, LTX2/LTX2.5, other heavy families, and long-form workflows remain open as independent segments. |
+| P6.3 MiniMax H3 contracts and artifact review | `baf7271` | `947a2ef` | Contract-only; legal and remote heavy-hardware qualification pending | Not required | Three generic joint video/audio contracts, disjunctive FL2VA requirements, exact immutable partition/hash receipt, conditioner/scheduler/reference bounds, and an estimate-only resource envelope are sealed. The territory-restricted repository remains outside the runtime/download catalog with zero runnable modes. The 1,318-test backend suite, complete client check, and 106-case mocked Studio sweep pass; no weights or media were downloaded. |
+| P6 remaining | Pending | Pending | Remote pending | Pending | LTX2/LTX2.5, other heavy families, and long-form workflows remain open as independent segments. |
