@@ -3880,6 +3880,26 @@ default. Assets: remote Dataset only.
     downloaded or retained.
 - [ ] **P4.2 SDXL expansion:** Turbo first, then the reviewed text, image,
   inpaint, instruct, ControlNet, adapter, PAG, and related combinations.
+  - [x] **P4.2a SDXL Turbo text-to-image:** the generic Diffusers image loader
+    exposes a logical `StableDiffusionXLTurboPipeline` backed by the upstream
+    `StableDiffusionXLPipeline` and immutable `stabilityai/sdxl-turbo` commit
+    `71153311d3dbb46851df1931d3ca6e939de83304`. Loading is restricted to the
+    reviewed fp16 safetensors variant, inference is bounded to one through four
+    steps, guidance is fixed to zero, and negative prompting is hidden. The
+    canonical 512px one-step graph is the 83rd deterministic catalog entry.
+    Auto, Gallery, live output, license-surface approval, and physical macOS
+    qualification remain pending; no result is inferred from Linux static or
+    mocked evidence.
+  - Existing SDXL base text-to-image, image-to-image, and inpaint source slices
+    remain recorded under P2.2a through P2.2c. Further instruct, ControlNet,
+    adapter, PAG, and related combinations require independent admission.
+  - P4.2a source commits are backend `fb49ed8` and client `f893514`. The final
+    backend gate passed (`1282 passed, 3 skipped, 2680 subtests`) with Ruff
+    `E9,F`, package, shell, compile, and diff checks. All 83 workflows verify;
+    `npm run check` passed and the complete mocked Studio sweep passed
+    (`106 passed`). The production bundle remains within budget at
+    `529013 / 529408` total gzip bytes and `280348 / 448512` for the entry
+    chunk. No weights or output media were downloaded or retained.
 - [ ] **P4.3 Moderate image families:** DreamLite, Sana/Sana Sprint, and other
   candidates admitted by the per-model checklist.
 - [ ] **P4.4 Audio generation:** LongCat AudioDiT, Stable Audio quality recipes,
@@ -4164,6 +4184,7 @@ Add references only after the corresponding evidence exists.
 | P3.5 Transformers speech-to-text | `82522ba` | `571facf` | Local cached CPU loader/action smoke passed with Transformers 5.14.1; remote spoken-fixture quality review pending | Pending | Complete source/live-smoke slice: two exact generic speech pairs use the immutable Whisper Tiny safetensors snapshot through the P0.5 optional runtime; the 81-workflow catalog and complete gates passed, and no fixture or output media was retained. Auto and Gallery remain disabled pending remote rights and quality review. |
 | P4.1a SD1.5 ControlNet Canny | `539650a` | `785b43e` | Remote pending | Pending | Complete source slice: the immutable safetensors-only SD1.5/ControlNet assembly, exact generic Canny preprocessor, controlled artifact receipt, 82-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review. |
 | P4.1b SD1.5 T2I Adapter | Deferred: reviewed official snapshot is legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently under the safetensors-only auxiliary policy; no unsafe exception or community conversion was admitted. |
-| P4.2-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
+| P4.2a SDXL Turbo text-to-image | `fb49ed8` | `f893514` | Remote and physical macOS pending | Pending | Complete source slice: immutable fp16 safetensors loading, exact one-to-four-step guidance-zero contract, 83-workflow catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled pending license-surface and live output review. |
+| P4.2b-P4.6 | Pending | Pending | Remote pending | Pending | Not started |
 | P5 | Pending | Pending | Remote pending | Pending | Not started |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
