@@ -59,6 +59,8 @@ ANIMATELCM_LORA_ADAPTER_NAME = "animatelcm-lora"
 ANIMATELCM_LORA_SCALE = 0.8
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 COGVIDEOX_2B_REVISION = "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01"
+ALLEGRO_REPO = "rhymes-ai/Allegro"
+ALLEGRO_REVISION = "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6"
 WAN_VACE_MAX_SEQUENCE_LENGTH = 512
 WAN_VACE_MAX_SEED = 4294967295
 WAN_VACE_MAX_REFERENCE_IMAGES = 8
@@ -310,6 +312,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("text_to_video",),
         max_prompt_tokens=226,
     ),
+    "AllegroPipeline": VideoPipelineAdapter(
+        id="allegro",
+        pipeline_class="AllegroPipeline",
+        diffusers_class="AllegroPipeline",
+        default_repo=ALLEGRO_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=512,
+    ),
 }
 
 
@@ -455,6 +465,7 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "AnimateDiffPipeline": {"text_to_video": _video_field_contract()},
     "AnimateLCMPipeline": {"text_to_video": _video_field_contract()},
     "CogVideoXPipeline": {"text_to_video": _video_field_contract()},
+    "AllegroPipeline": {"text_to_video": _video_field_contract()},
 }
 
 
@@ -484,6 +495,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "AnimateDiffPipeline": "_load_animatediff",
     "AnimateLCMPipeline": "_load_animatediff",
     "CogVideoXPipeline": "_load_cogvideox",
+    "AllegroPipeline": "_load_allegro",
 }
 
 
@@ -503,6 +515,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "AnimateDiffPipeline": "_execute_animatediff",
     "AnimateLCMPipeline": "_execute_animatediff",
     "CogVideoXPipeline": "_execute_cogvideox",
+    "AllegroPipeline": "_execute_allegro",
 }
 
 
@@ -683,6 +696,16 @@ def _require_cogvideox_artifact(model_selection: Any, model_id: str, revision: A
     reviewed_revision = require_catalog_revision(COGVIDEOX_2B_REPO, model_type="CogVideoXPipeline")
     if revision != reviewed_revision or revision != COGVIDEOX_2B_REVISION:
         raise ValueError(f"CogVideoX-2B is pinned to {COGVIDEOX_2B_REVISION}.")
+    return reviewed_revision
+
+
+def _require_allegro_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
+    source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
+    if source != "hub" or model_id != ALLEGRO_REPO:
+        raise ValueError(f"Allegro currently requires the exact reviewed Hub artifact {ALLEGRO_REPO}.")
+    reviewed_revision = require_catalog_revision(ALLEGRO_REPO, model_type="AllegroPipeline")
+    if revision != reviewed_revision or revision != ALLEGRO_REVISION:
+        raise ValueError(f"Allegro is pinned to {ALLEGRO_REVISION}.")
     return reviewed_revision
 
 
@@ -1713,6 +1736,62 @@ class LoadPipeline(WanVACELoadPipeline):
         self.mm_add(pipeline, priority=2)
         return pipeline
 
+    def _load_allegro(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        import torch
+        from diffusers import AllegroPipeline, AutoencoderKLAllegro
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _require_allegro_artifact(
+            model_selection,
+            model_id,
+            _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+        )
+        if str(kwargs.get("dtype") or "bfloat16") != "bfloat16":
+            raise ValueError("Allegro source qualification requires dtype=bfloat16.")
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode="sequential_cpu",
+        )
+        if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
+            raise ValueError("Allegro source qualification does not admit on-load quantization or a device map.")
+        common_kwargs = {
+            "use_safetensors": True,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "revision": revision,
+            "local_files_only": local_files_only(model_id),
+        }
+        if CONFIG.hf.get("cache_dir"):
+            common_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
+
+        logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
+        self.progress(-1, phase="loading", message="Loading Allegro FP32 VAE")
+        vae = AutoencoderKLAllegro.from_pretrained(
+            model_id,
+            subfolder="vae",
+            torch_dtype=torch.float32,
+            **common_kwargs,
+        )
+        self.progress(-1, phase="loading", message="Loading Allegro pipeline")
+        pipeline = AllegroPipeline.from_pretrained(
+            model_id,
+            vae=vae,
+            torch_dtype=torch.bfloat16,
+            **common_kwargs,
+            **recipe_load_kwargs,
+        )
+        enable_tiling = getattr(pipeline.vae, "enable_tiling", None)
+        if not callable(enable_tiling):
+            raise RuntimeError("Allegro did not expose the documented VAE tiling hook.")
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        enable_tiling()
+        self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
     def _load_wan_video_to_video(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
         import torch
         from diffusers import AutoencoderKLWan, WanVideoToVideoPipeline
@@ -2553,6 +2632,135 @@ class Generate(WanVACEGenerate):
         if not isinstance(frames, list) or len(frames) != num_frames:
             received = len(frames) if isinstance(frames, list) else "an unknown number of"
             raise RuntimeError(f"CogVideoX-2B returned {received} frames; expected {num_frames}.")
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames),
+        }
+
+    def _execute_allegro(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "text_to_video":
+            raise ValueError("Allegro supports text_to_video generation only.")
+        if (
+            getattr(pipeline, "_modiff_video_repo", None) != ALLEGRO_REPO
+            or getattr(pipeline, "_modiff_video_revision", None) != ALLEGRO_REVISION
+        ):
+            raise ValueError("The connected Allegro pipeline does not match the reviewed artifact.")
+        for field, label in (
+            ("video", "source video"),
+            ("mask", "mask"),
+            ("pose_video", "pose video"),
+            ("face_video", "face video"),
+            ("background_video", "background video"),
+        ):
+            if ensure_video_list(kwargs.get(field), label) is not None:
+                raise ValueError(f"Allegro text_to_video does not accept {label} input.")
+        if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
+            raise ValueError("Allegro text_to_video does not accept image conditioning.")
+
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        if not isinstance(prompt, str):
+            raise ValueError("Allegro requires one nonempty prompt string.")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        if negative_prompt is None:
+            negative_prompt = ""
+        if not isinstance(negative_prompt, str):
+            raise ValueError("Allegro negative prompt must be one string.")
+        if int(kwargs.get("num_videos_per_prompt") or 1) != 1:
+            raise ValueError("Allegro source qualification supports one video per prompt.")
+        output_type = str(kwargs.get("output_type") or "pil")
+        if output_type != "pil":
+            raise ValueError("Allegro source qualification requires output_type=pil.")
+
+        width = _bounded_short_video_int(
+            kwargs.get("width"),
+            family="Allegro",
+            default=1280,
+            label="width",
+            minimum=1280,
+            maximum=1280,
+        )
+        height = _bounded_short_video_int(
+            kwargs.get("height"),
+            family="Allegro",
+            default=720,
+            label="height",
+            minimum=720,
+            maximum=720,
+        )
+        num_frames = _bounded_short_video_int(
+            kwargs.get("num_frames"),
+            family="Allegro",
+            default=88,
+            label="frame count",
+            minimum=88,
+            maximum=88,
+        )
+        steps = _bounded_short_video_int(
+            kwargs.get("num_inference_steps"),
+            family="Allegro",
+            default=100,
+            label="step count",
+            minimum=1,
+            maximum=100,
+        )
+        guidance = _bounded_short_video_float(
+            kwargs.get("guidance_scale"),
+            family="Allegro",
+            default=7.5,
+            label="guidance",
+            minimum=1.0,
+            maximum=12.0,
+        )
+        max_sequence_length = _bounded_short_video_int(
+            kwargs.get("max_sequence_length"),
+            family="Allegro",
+            default=512,
+            label="maximum prompt sequence length",
+            minimum=1,
+            maximum=512,
+        )
+
+        import torch
+
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                num_inference_steps=steps,
+                guidance_scale=guidance,
+                num_videos_per_prompt=1,
+                generator=generator,
+                output_type=output_type,
+                return_dict=True,
+                clean_caption=False,
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+                max_sequence_length=max_sequence_length,
+            )
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
+        if not isinstance(frames, list) or len(frames) != num_frames:
+            received = len(frames) if isinstance(frames, list) else "an unknown number of"
+            raise RuntimeError(f"Allegro returned {received} frames; expected {num_frames}.")
         return {
             "video_out": frames,
             "width_out": width,

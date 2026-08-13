@@ -1,0 +1,160 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "AllegroPipeline:text_to_video"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "license_file_clarification",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "excludedUnsafeWeightFiles": [
+    {
+      "byteSize": 9452285635,
+      "path": "text_encoder/pytorch_model-00001-of-00002.bin",
+      "reason": "duplicate unsafe PyTorch serialization; the selected safetensors index is complete",
+      "sha256": "2f71ad0624095dae788b1023081dda1b4040bd24f7244a5b5b46eebc09825839"
+    },
+    {
+      "byteSize": 9597031749,
+      "path": "text_encoder/pytorch_model-00002-of-00002.bin",
+      "reason": "duplicate unsafe PyTorch serialization; the selected safetensors index is complete",
+      "sha256": "4f68f80678299ac59f69b3550ebd47b966571920d8f9e71f42ab61fabaaed868"
+    }
+  ],
+  "family": "Allegro",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Apache-2.0 identifier and license statement in the immutable model card; the model repository contains no LICENSE file",
+    "id": "apache-2.0",
+    "licenseFilePresent": false
+  },
+  "metadataSha256": {
+    "modelCard": "b480bf5e524d72c8aefac97986e49171cb4f391dc24ff3a25ce04e0328c52f45",
+    "modelIndex": "36c56a25fdc09ebfbff06589d5b4c4586bcd71e5efb39b4469ee212ab12bd060",
+    "schedulerConfig": "2db5e162aa3b140f9a38a1d2a72fcf440fa6ea6dcd9e70ed618e31aeccf8ab35",
+    "textEncoderConfig": "c31eecb974912cb24329a2840153db8e4a8cead9a81101c69f7ccd34bfff3e9c",
+    "textEncoderSafetensorsIndex": "a545bb25dc0f423d84be7b577311bba8bb7c6931f1eefcea65fc8b0a61a60a76",
+    "tokenizerConfig": "83b3e7737eef754efca607d9f580798cc35457daa96052cc60179f095a375c14",
+    "transformerConfig": "6699cbd716687e0f18690c05697a8e9ecda681a54cb6506bd2b46010475918e6",
+    "vaeConfig": "032bf14c52d750184e15233e3f10c6638f9513c09e13016b25b5486a4203e1dc"
+  },
+  "pinnedDiffusers": {
+    "autoencoderClass": "AutoencoderKLAllegro",
+    "autoencoderSha256": "d06e2865a9a08ec7310bce76149bf7695d415880cdd630056bc141d6134efcc3",
+    "callbackOnStepEndAvailable": true,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "pipelineClass": "AllegroPipeline",
+    "pipelineOutputClass": "AllegroPipelineOutput",
+    "pipelineOutputSha256": "d39d76292284158accac4f319d0b1d8cb125548cb2abc1022c5395d424a2c8a1",
+    "pipelineSha256": "ecfaf5ade8fb2acb30d84a624e821dfd638d0b820b81d7c50417b67ad7a73080",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "AllegroTransformer3DModel",
+    "transformerSha256": "b62cfde9d6d4b625d504c28c9667196eaf4795b15de0e71d39c81807f66b312c",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "cleanCaption": false,
+    "defaultGuidanceScale": 7.5,
+    "defaultHeight": 720,
+    "defaultNumFrames": 88,
+    "defaultNumInferenceSteps": 100,
+    "defaultNumVideosPerPrompt": 1,
+    "defaultWidth": 1280,
+    "documentedFramesPerSecond": 15,
+    "maxGuidanceScale": 12.0,
+    "maxSequenceLength": 512,
+    "maximumMoDiffNumFrames": 88,
+    "maximumMoDiffNumInferenceSteps": 100,
+    "minimumMoDiffNumFrames": 88,
+    "modes": [
+      "text_to_video"
+    ],
+    "outputType": "pil",
+    "safetyCheckerPresent": false,
+    "textAndTransformerDtype": "bfloat16",
+    "vaeDtype": "float32",
+    "vaeTiling": true
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytes": 10737418240,
+    "minimumSelectiveDiskBytes": 32212254720,
+    "minimumSystemRamBytes": 51539607552,
+    "notes": [
+      "The publisher reports 9.3 GB GPU memory with CPU offload and 27.5 GB without offload for the native recipe.",
+      "MoDiff requires sequential CPU offload and keeps the VAE in float32 as documented.",
+      "The system-RAM and disk values are conservative MoDiff bounds pending an exact remote run."
+    ],
+    "status": "upstream_measured_modiff_qualification_pending",
+    "upstreamReportedGpuMemoryGB": {
+      "sequentialCpuOffload": 9.3,
+      "withoutCpuOffload": 27.5
+    }
+  },
+  "repository": {
+    "gated": false,
+    "licenseFilePresent": false,
+    "modelIndexClass": "AllegroPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "rhymes-ai/Allegro",
+    "repositoryBytesIncludingExcludedArtifacts": 44370333435,
+    "revision": "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+    "safetensorsDtypeParameterCounts": {
+      "BF16": 2771907856
+    },
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 25293069108,
+    "weightFileCount": 6,
+    "weightInventorySha256": "3a3dbb0f88455a87d4f1a92a3f97f87e2a167d67ed69f93eadde232d46970dce"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4989319680,
+      "path": "text_encoder/model-00001-of-00004.safetensors",
+      "sha256": "7a68b2c8c080696a10109612a649bc69330991ecfea65930ccfdfbdb011f2686"
+    },
+    {
+      "byteSize": 4999830656,
+      "path": "text_encoder/model-00002-of-00004.safetensors",
+      "sha256": "b8ed6556d7507e38af5b428c605fb2a6f2bdb7e80bd481308b865f7a40c551ca"
+    },
+    {
+      "byteSize": 4865612720,
+      "path": "text_encoder/model-00003-of-00004.safetensors",
+      "sha256": "c831635f83041f83faf0024b39c6ecb21b45d70dd38a63ea5bac6c7c6e5e558c"
+    },
+    {
+      "byteSize": 4194506688,
+      "path": "text_encoder/model-00004-of-00004.safetensors",
+      "sha256": "02a5f2d69205be92ad48fe5d712d38c2ff55627969116aeffc58bd75a28da468"
+    },
+    {
+      "byteSize": 5543894392,
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "sha256": "6927dcc812841c1da549bf11c97ddf30532aee0e708a6642fa64cf8e0dfcdef7"
+    },
+    {
+      "byteSize": 699904972,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "47871a698b18f92f15019d361a81cbc8af4676f8eef9a47fd2b95354a39f831a"
+    }
+  ]
+}

@@ -22,6 +22,8 @@ from modules.DiffusersVideo import (
     PlanLongVideo,
 )
 from modules.DiffusersVideo.main import (
+    ALLEGRO_REPO,
+    ALLEGRO_REVISION,
     ANIMATEDIFF_BASE_REPO,
     ANIMATEDIFF_BASE_REVISION,
     ANIMATEDIFF_MOTION_REPO,
@@ -2852,6 +2854,144 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                             pipeline=pipeline,
                             mode="text_to_video",
                             prompt="A red kite crosses a quiet winter sky.",
+                            **update,
+                        )
+
+    def test_allegro_loader_pins_safe_weights_fp32_vae_and_documented_tiling(self):
+        vae = SimpleNamespace(enable_tiling=MagicMock())
+        pipeline = SimpleNamespace(vae=vae)
+        node = LoadPipeline("allegro-loader")
+        ordered_calls = MagicMock()
+        with (
+            patch("diffusers.AutoencoderKLAllegro.from_pretrained", return_value=vae) as load_vae,
+            patch("diffusers.AllegroPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            ordered_calls.attach_mock(apply_recipe, "apply_recipe")
+            ordered_calls.attach_mock(vae.enable_tiling, "enable_tiling")
+            result = node.execute(
+                pipeline_class="AllegroPipeline",
+                model_id={"source": "hub", "value": ALLEGRO_REPO},
+                revision=ALLEGRO_REVISION,
+                dtype="bfloat16",
+                device="cpu",
+                offload_mode="sequential_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], ALLEGRO_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "AllegroPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, ALLEGRO_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, ALLEGRO_REVISION)
+        self.assertEqual(load_vae.call_args.args, (ALLEGRO_REPO,))
+        self.assertEqual(load_vae.call_args.kwargs["subfolder"], "vae")
+        self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
+        self.assertIs(load_vae.call_args.kwargs["use_safetensors"], True)
+        self.assertEqual(load_pipeline.call_args.args, (ALLEGRO_REPO,))
+        self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
+        self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], ALLEGRO_REVISION)
+        self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+        self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+        self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        self.assertEqual(
+            ordered_calls.method_calls[:2],
+            [call.apply_recipe(pipeline, {}), call.enable_tiling()],
+        )
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="allegro-loader",
+            scope="allegro",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_allegro_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-allegro-loader")
+        with patch("diffusers.AllegroPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="AllegroPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-allegro"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="bfloat16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_allegro_generate_seals_native_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(88)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "AllegroPipeline"
+            _modiff_video_repo = ALLEGRO_REPO
+            _modiff_video_revision = ALLEGRO_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A sailboat crosses a sunlit bay.",
+            negative_prompt="flicker",
+            width=1280,
+            height=720,
+            num_frames=88,
+            num_inference_steps=100,
+            guidance_scale=7.5,
+            seed=31,
+            output_type="pil",
+            max_sequence_length=512,
+        )
+
+        self.assertEqual(
+            result,
+            {"video_out": Output.frames[0], "width_out": 1280, "height_out": 720, "frames_out": 88},
+        )
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["num_frames"], 88)
+        self.assertEqual(call_kwargs["num_inference_steps"], 100)
+        self.assertEqual(call_kwargs["guidance_scale"], 7.5)
+        self.assertEqual(call_kwargs["num_videos_per_prompt"], 1)
+        self.assertEqual(call_kwargs["max_sequence_length"], 512)
+        self.assertIs(call_kwargs["clean_caption"], False)
+        self.assertNotIn("image", call_kwargs)
+        self.assertNotIn("attention_kwargs", call_kwargs)
+
+    def test_allegro_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="AllegroPipeline",
+            _modiff_video_repo=ALLEGRO_REPO,
+            _modiff_video_revision=ALLEGRO_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 87}, "integer from 88 through 88"),
+            ({"width": 1272}, "integer from 1280 through 1280"),
+            ({"height": 712}, "integer from 720 through 720"),
+            ({"num_inference_steps": 101}, "integer from 1 through 100"),
+            ({"reference_images": [Image.new("RGB", (1280, 720))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 513}, "integer from 1 through 512"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A sailboat crosses a sunlit bay.",
                             **update,
                         )
 

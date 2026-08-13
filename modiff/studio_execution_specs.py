@@ -68,6 +68,7 @@ STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
+ALLEGRO_REPO = "rhymes-ai/Allegro"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
@@ -4094,6 +4095,68 @@ def _cogvideox_capability() -> dict[str, Any]:
     }
 
 
+def _allegro_capability() -> dict[str, Any]:
+    return {
+        "modelType": "AllegroPipeline",
+        "label": "Allegro",
+        "displayName": "Allegro",
+        "family": "Allegro",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": ALLEGRO_REPO,
+        "artifactLabel": "Official Apache-2.0 safetensors Diffusers repo",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 1280, "height": 720, "aspectRatio": "16:9"},
+        "recommendedSteps": 100,
+        "recommendedGuidance": 7.5,
+        "recommendedMaxSequenceLength": 512,
+        "guidanceLabel": "Guidance",
+        "supportsImageInput": False,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": False,
+        "supportsVideoInput": False,
+        "supportsVideoMask": False,
+        "outputKind": "video",
+        "recommendedFrames": 88,
+        "recommendedFps": 15,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(_DIRECT_OFFLOAD_MODES),
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+            "steps": 100,
+            "width": 1280,
+            "height": 720,
+            "numFrames": 88,
+        },
+        "modes": ["text_to_video"],
+        "modeRequirements": {
+            "text_to_video": {
+                "note": "Uses the exact Allegro safetensors snapshot with an FP32 tiled VAE and sequential CPU offload."
+            }
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(ALLEGRO_REPO)],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "notes": [
+            "The admitted source graph preserves the native 88-frame 1280x720 recipe at 15 FPS.",
+            "The duplicate PyTorch .bin text-encoder shards are excluded in favor of the complete safetensors index.",
+            "Auto and Gallery publication remain disabled until exact remote runtime, safety, and quality proof is reviewed.",
+        ],
+    }
+
+
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
@@ -4147,6 +4210,13 @@ _P2_VIDEO_PROFILES = {
         ("text_to_video",),
         "CogVideoXPipeline",
         COGVIDEOX_2B_REPO,
+    ),
+    "allegro": _planning_video_profile(
+        "allegro:direct",
+        "AllegroPipeline",
+        ("text_to_video",),
+        "AllegroPipeline",
+        ALLEGRO_REPO,
     ),
     "wan-flf": _planning_video_profile(
         "wan-flf:modular",
@@ -4330,6 +4400,15 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "text_to_video",
             "profile": _P2_VIDEO_PROFILES["cogvideox-2b"],
             "capability": _cogvideox_capability(),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+        },
+        "allegro:text-to-video:v1": {
+            "modelType": "AllegroPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["allegro"],
+            "capability": _allegro_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _COGVIDEOX_GRAPH_BINDINGS,

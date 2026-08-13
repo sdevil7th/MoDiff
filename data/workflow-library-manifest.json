@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T14:21:13.458Z",
+  "generatedAt": "2026-08-13T14:50:12.284Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 96,
-  "supportedPairCount": 108,
+  "supportedCanonicalPairCount": 97,
+  "supportedPairCount": 109,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -179,6 +179,34 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
       "graphHash": "e02a08b1ac4e6182716dca08064c2557bebd92743aab23143dd918769dcd9296"
+    },
+    {
+      "id": "AllegroPipeline:text_to_video",
+      "modelType": "AllegroPipeline",
+      "modelFamily": "Allegro",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "rhymes-ai/Allegro"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Allegro safetensors snapshot with an FP32 tiled VAE and sequential CPU offload."
+      },
+      "pipelineClasses": [
+        "AllegroPipeline"
+      ],
+      "sourceTemplateId": "task-template:allegro:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/allegro-pipeline/text-to-video.json",
+      "graphHash": "d263f9ff686f8a0eb4741f63021a181bc62b5daff64e20dd0411eeac707c7b97"
     },
     {
       "id": "AnimateDiffPipeline:text_to_video",

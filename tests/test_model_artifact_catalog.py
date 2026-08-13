@@ -113,6 +113,10 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("zai-org/CogView4-6B"),
             "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
         )
+        self.assertEqual(
+            catalog_revision("rhymes-ai/Allegro"),
+            "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+        )
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(
