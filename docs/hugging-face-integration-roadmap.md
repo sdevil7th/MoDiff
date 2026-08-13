@@ -4161,7 +4161,27 @@ Priority: after image/audio contracts. Hardware and assets: remote only.
 
 - [ ] Qualify the existing Wan, LTX/LTX2, and Hunyuan FramePack graph paths from
   Phase 2 using minimal short outputs.
-- [ ] Add Stable Video Diffusion using documented offload and decode chunking.
+- [x] Add Stable Video Diffusion using documented offload and decode chunking.
+  The source-qualified image-to-video slice pins the official gated
+  `stabilityai/stable-video-diffusion-img2vid-xt-1-1` repository at commit
+  `043843887ccd51926e3efed36270444a838e7861`, admits only its reviewed
+  safetensors artifact surface, and exposes the Stability AI Community License
+  gate before download. The adapter follows the documented CPU-offload,
+  UNet-forward-chunking, and two-frame decode-chunk recipe; rejects prompt,
+  source-video, mask, unsafe identity, quantization, and device-map overrides;
+  and seals bounded image conditioning through exact execution contract
+  `stable-video-diffusion:image-to-video:v1`. The canonical graph hash is
+  `2bfcddd0ae5a6214c891f1859180abfc04a3ce0d51f47d73d7aa503910df8ef0`.
+  Source commits are backend `260637d` and client `d6e0eed`. The complete
+  backend gate passed (`1302 passed, 3 skipped, 2911 subtests`) with Ruff
+  `E9,F`, package, shell, JSON, workflow-generation, and diff checks. All 96
+  workflows verify deterministically; `npm run check` passed with 43
+  graph-visual cases, five consecutive exact-contract regression runs, and all
+  106 mocked Studio cases. The production bundle remains within budget at
+  `529077 / 529408` total gzip bytes and `279720 / 448512` for the entry chunk.
+  No model weights or output media were downloaded or retained. Remote output,
+  quality, Dataset, Auto, Gallery, and physical macOS qualification remain
+  pending.
 - [ ] Add AnimateDiff/AnimateLCM with separately pinned base model,
   `MotionAdapter`, scheduler rules, and optional LoRA.
 - [ ] Evaluate Motif Video, CogVideoX-2B, and similar smaller candidates one at a
@@ -4169,8 +4189,9 @@ Priority: after image/audio contracts. Hardware and assets: remote only.
 
 ### Phase 5 test and asset gate
 
-- [ ] Static and mocked tests cover frame count, dimensions, conditioning,
-  scheduler/adapter compatibility, output normalization, and cleanup.
+- [x] Static and mocked tests cover frame count, dimensions, conditioning,
+  scheduler/adapter compatibility, output normalization, and cleanup for each
+  completed Phase 5 source slice.
 - [ ] Remote smoke uses the minimum supported 8-25 frames and bounded steps.
 - [ ] Representative quality proof is limited to approximately 2-4 seconds.
 - [ ] Non-black frames, finite tensors, duration/frame rate, and decode/mux
@@ -4311,7 +4332,7 @@ This is a family inventory, not a requirement to create one node per family.
 - [ ] `motif_video`
 - [ ] `sana_video`
 - [ ] `skyreels_v2`
-- [ ] `stable_video_diffusion`
+- [x] `stable_video_diffusion`
 
 ### Image, unconditional, and generic
 
@@ -4427,5 +4448,6 @@ Add references only after the corresponding evidence exists.
 | P4.4 generic audio generation | `4d6a4d3` | `f0958e6` | Remote and physical macOS pending | Pending | Complete source slice: Stable Audio safe loading was revalidated and exact LongCat AudioDiT plus AudioLDM2 families now use immutable reviewed artifacts, bounded native-rate recipes, backend-owned declarative task contracts, two new canonical graphs, and complete gates. Auto and Gallery remain disabled. |
 | P4.5 AudioLDM2 text-to-speech | Deferred: reviewed TTS snapshots are legacy `.bin` only | Pending | Not attempted | Pending | Deferred independently: the exact generic speech API is present at the pin, but both reviewed AudioLDM2 speech repositories require unsafe deserialization and no exception was approved. |
 | P4.6 Shap-E rendered output | `21d819f` | `d684fc4` | Remote and physical macOS pending | Pending | Complete source slice: exact immutable official artifacts are assembled only from reviewed safe components, a bounded rendered-orbit boundary is sealed in the 95-workflow catalog, and complete backend/client gates passed. Unsafe renamed-renderer weights and mesh/export surfaces remain excluded. Auto and Gallery remain disabled. |
-| P5 | Pending | Pending | Remote pending | Pending | Not started |
+| P5.1 Stable Video Diffusion image-to-video | `260637d` | `d6e0eed` | Remote and physical macOS pending | Pending | Complete source slice: the exact gated official revision, safetensors-only artifact surface, license gate, documented offload/chunking recipe, bounded prompt-free image-conditioning contract, 96-workflow deterministic catalog, complete backend/client gates, and 106-case mocked Studio sweep passed. Auto and Gallery remain disabled; no weights or media were downloaded or retained. |
+| P5 remaining short video | Pending | Pending | Remote pending | Pending | AnimateDiff/AnimateLCM, smaller candidates, and live qualification remain open. |
 | P6 | Pending | Pending | Remote pending | Pending | Not started |
