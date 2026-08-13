@@ -5998,6 +5998,21 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 - [ ] Build the 30-minute video workflow only after chunk generation, checkpoint
   resume, deterministic stitching, audio mux, cancellation, and recovery pass
   independently.
+  - [x] **Continuation boundary handoff:** backend `67010c7` makes the existing
+    generic long-video planner require and bind an opening image for continuous
+    LTX/Wan/FramePack plans, rejects unknown strategies, and gives the generic
+    shot executor an optional previous-segment input. Only jobs carrying the
+    explicit `uses_previous_last_frame` marker extract that segment's final
+    frame as the next opening anchor; a missing prior segment fails before
+    inference. A synthetic graph-level collection loop proves that iteration 2
+    receives iteration 1's exact boundary through the normal carry contract.
+    The focused video/loop matrix passes 129 tests and 216 subtests; the
+    complete backend overlay passes 1,640 tests, 3,580 subtests, and three
+    platform skips, with Ruff E9/F and package compatibility green. No model,
+    media, or live inference was used. Durable process-restart checkpoints,
+    deterministic retained-asset stitching, audio mux/cancellation recovery,
+    the actual 30-minute graph, remote execution, and physical macOS evidence
+    remain independent gates.
 
 ### Phase 6 test and asset gate
 
@@ -6273,4 +6288,5 @@ Add references only after the corresponding evidence exists.
 | P6.51 Nucleus Image 17B MoE text-to-image source admission | `86cc756` | `8b4f002` | Model-snapshot license-file clarification, app storage capacity, remote real-weight memory/output safety/quality, and physical macOS execution pending | Not required | Exact public Apache-2.0-declared revision, complete 38-file / 51.66 GB Python-free snapshot, 12 immutable safetensors weights, and pinned package/runtime receipts are sealed. The bounded seven-bucket 1024px/50-step/guidance-4 Expert workflow retains package cancellation and offload hooks. The expanded optional-runtime symbol contract passed clean-base locked install/activation/workload/rollback qualification. The deterministic 133-workflow catalog is graph-qualified/runtime-unqualified; the missing license file, post-training, and safety checker keep Auto and Gallery disabled. The required app-only aggregate preflight was 36.31 GB short, so the snapshot was not submitted and no older model was deleted; no media has been generated. |
 | P6.52 Krea 2 Raw/Turbo standard source and admission-gate review | `e176f14` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial eligibility/legal approval, downstream terms/content-filter implementation, immutable AUP receipt, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | Two exact gated official revisions, two Python-free 17-file / 35.68 GB Diffusers candidate partitions, five immutable safetensors weights per recipe, duplicate native-checkpoint exclusions, pinned package source receipts, distinct Raw/Turbo recipes, and estimate-only envelopes are sealed. Custom terms, mandatory content filtering, missing package safety checker/bounds, and two queue-aware app preflight deficits of about 53.2 GB keep the standard family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no weight bytes or media were fetched. |
 | P6.53 Stable Diffusion 3 standard source and admission-gate review | `e6061d9` | Not required | Static gated source/license review only; task-scoped terms acceptance, commercial license/legal approval, authenticated component review, backend-owned bounds/runtime admission, app capacity, remote heavy-hardware output review, and physical macOS execution pending | Not required | The exact gated official revision, Python-free 31.01 GB snapshot, six-file / 15.50 GB fp16 base inventory shared with the prior SD3 ControlNet review, three package-owned routes, source receipts, recipes, and estimate-only envelope are sealed. Noncommercial-only terms, inaccessible gated configs, missing safety checker/bounds, and a 21.41 GB queue-aware app preflight deficit keep the family outside every runtime/download/user-facing surface. Terms were not accepted, no app POST occurred, no older model was deleted, and no base weight bytes were fetched. |
+| P6.54 Long-video continuation boundary handoff | `67010c7` | Not required | Synthetic graph/loop proof only; durable restart checkpoints, retained-asset stitching, mux/cancellation recovery, final 30-minute graph, remote execution, and physical macOS pending | Not required | The generic planner now binds the first opening anchor and the generic shot executor consumes the preceding loop segment only for explicitly marked continuation jobs. Missing carry and unknown strategies fail before inference; a two-iteration synthetic graph proves exact last-frame handoff. No model, media, or live inference was used. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
