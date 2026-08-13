@@ -52,6 +52,7 @@ FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
+SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -92,6 +93,7 @@ class ImagePipelineAdapter:
     weight_variant: str | None = None
     max_inference_steps: int = 100
     fixed_guidance_scale: float | None = None
+    minimum_image_guidance_scale: float = 0.0
     guidance_parameter: str = "guidance_scale"
     multi_image_strategy: str = "list"
     max_sequence_length: int = 512
@@ -111,7 +113,9 @@ class ImagePipelineAdapter:
         if not 1 <= self.max_inference_steps <= 100:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
         if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= 20.0:
-            raise ValueError("An exact image guidance scale must be between 0 and 20.")
+            raise ValueError("An exact text guidance scale must be between 0 and 20.")
+        if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
+            raise ValueError("The minimum image guidance scale must be between 0 and 20.")
         if self.weight_variant is not None and self.weight_variant != "fp16":
             raise ValueError("Only the reviewed fp16 image weight variant is supported.")
         conditioning_fields = (
@@ -160,6 +164,7 @@ class ImagePipelineAdapter:
             "reference_strength": "reference_strength",
             "pag_scale": "pag_scale",
             "pag_adaptive_scale": "pag_adaptive_scale",
+            "image_guidance_scale": "image_guidance_scale",
         }
         for source, destination in aliases.items():
             value = values.get(source)
@@ -235,6 +240,13 @@ IMAGE_PIPELINE_ADAPTERS = {
         weight_variant="fp16",
         max_inference_steps=4,
         fixed_guidance_scale=0.0,
+    ),
+    "StableDiffusionXLInstructPix2PixPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLInstructPix2PixPipeline",
+        frozenset({"edit_image"}),
+        SDXL_INSTRUCT_PIX2PIX_REPO,
+        safe_serialization_required=True,
+        minimum_image_guidance_scale=1.0,
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -444,6 +456,7 @@ _IMAGE_CONTRACT_VISIBILITY_FIELDS = (
     "padding_mask_crop",
     "max_sequence_length",
     "reference_strength",
+    "image_guidance_scale",
     "pag_scale",
     "pag_adaptive_scale",
     "conditioning_scale",
@@ -536,6 +549,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "StableDiffusionXLTurboPipeline": {
         "text_to_image": _image_field_contract("width", "height"),
+    },
+    "StableDiffusionXLInstructPix2PixPipeline": {
+        "edit_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "image_guidance_scale"
+        ),
     },
     "StableDiffusionXLImg2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
@@ -1277,6 +1295,13 @@ def preflight_image_action(
         raise ValueError(
             f"{adapter.pipeline_class} requires guidance_scale={adapter.fixed_guidance_scale:g}."
         )
+    values["image_guidance_scale"] = _bounded_image_float(
+        values.get("image_guidance_scale"),
+        field="image_guidance_scale",
+        default=1.5,
+        minimum=adapter.minimum_image_guidance_scale,
+        maximum=20.0,
+    )
     values["pag_scale"] = _bounded_image_float(
         values.get("pag_scale"), field="pag_scale", default=3.0, minimum=0.0, maximum=20.0
     )
@@ -2741,6 +2766,16 @@ class Generate(NodeBase):
             "min": 0,
             "max": 20,
             "step": 0.1,
+        },
+        "image_guidance_scale": {
+            "label": "Image Guidance",
+            "display": "slider",
+            "type": "float",
+            "default": 1.5,
+            "min": 1,
+            "max": 20,
+            "step": 0.1,
+            "hidden": True,
         },
         "pag_scale": {
             "label": "PAG Scale",

@@ -31,6 +31,7 @@ FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
+SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
@@ -446,6 +447,9 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
 )
 _SDXL_EDIT_GRAPH_BINDINGS = _EDIT_GRAPH_BINDINGS + (
     ("diffusersImagePipeline", "revision", "defaultRevision"),
+)
+_SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
+    ("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),
 )
 _INPAINT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -4021,6 +4025,95 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-turbo:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
+}
+
+
+_SDXL_INSTRUCT_PROFILE = {
+    "id": "sdxl-instruct-pix2pix:direct",
+    "model_type": "StableDiffusionXLInstructPix2PixPipeline",
+    "modes": ("edit_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "StableDiffusionXLInstructPix2PixPipeline",
+    "default_repo": SDXL_INSTRUCT_PIX2PIX_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 30,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SDXL_INSTRUCT_CAPABILITY = {
+    "modelType": "StableDiffusionXLInstructPix2PixPipeline",
+    "label": "Stable Diffusion XL InstructPix2Pix",
+    "displayName": "SDXL InstructPix2Pix 768",
+    "family": "Stable Diffusion XL",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SDXL_INSTRUCT_PIX2PIX_REPO,
+    "artifactLabel": "Diffusers safetensors repo",
+    "defaultDtype": "float16",
+    "defaultSize": {"width": 768, "height": 768, "aspectRatio": "1:1"},
+    "recommendedSteps": 30,
+    "recommendedGuidance": 3.0,
+    "guidanceLabel": "Text guidance",
+    "conditioningScale": 1.5,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "emergency": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "modes": list(_DIRECT_OFFLOAD_MODES),
+    },
+    "lowVram": {
+        "dtype": "float16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+        "steps": 30,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": ["edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image and a text edit instruction.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            SDXL_INSTRUCT_PIX2PIX_REPO,
+            model_type="StableDiffusionXLInstructPix2PixPipeline",
+        )
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The reviewed experimental checkpoint uses a 768px, 30-step recipe with text guidance 3 and image guidance 1.5.",
+        "Auto and Gallery remain disabled until exact live output review is complete.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-instruct-pix2pix:edit-image:v1"] = {
+    "modelType": "StableDiffusionXLInstructPix2PixPipeline",
+    "mode": "edit_image",
+    "profile": _SDXL_INSTRUCT_PROFILE,
+    "capability": _SDXL_INSTRUCT_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS,
 }
 
 

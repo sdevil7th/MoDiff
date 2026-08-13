@@ -16,6 +16,7 @@
     "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
   },
   "repositoryPins": [
+    {"repo": "diffusers/sdxl-instructpix2pix-768", "revision": "06653d47f8d22f2c2205a5884d6a24c5e76d2ca7", "license": "openrail++", "purpose": "sdxl-instruct-pix2pix", "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "stabilityai/sdxl-turbo", "revision": "71153311d3dbb46851df1931d3ca6e939de83304", "license": "sai-nc-community", "purpose": "sdxl-turbo", "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "lllyasviel/control_v11p_sd15_canny", "revision": "115a470d547982438f70198e353a921996e2e819", "license": "openrail", "purpose": "sd15-controlnet-canny-component", "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "h94/IP-Adapter", "revision": "018e402774aeeddd60609b4ecdb7e298259dc729", "license": "apache-2.0", "purpose": "sdxl-ip-adapter", "weightName": "sdxl_models/ip-adapter_sdxl.safetensors", "sha256": "ba1002529e783604c5f326d49f0122025392d1d20ac8d573b3eeb3e6dea4ebb6", "byteSize": 702585376, "imageEncoderSubfolder": "models/image_encoder", "imageEncoderClass": "CLIPVisionModelWithProjection", "verifiedAt": "2026-08-12T00:00:00+05:30"},

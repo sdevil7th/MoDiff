@@ -156,6 +156,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPipeline", "inpaint"),
                 ("StableDiffusionPipeline", "control_image"),
                 ("StableDiffusionXLTurboPipeline", "text_to_image"),
+                ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
@@ -245,6 +246,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(turbo["defaultRepo"], "stabilityai/sdxl-turbo")
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), turbo["bindings"])
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[turbo["executionProfileId"]].live_proof)
+        instruct = by_id["sdxl-instruct-pix2pix:edit-image:v1"]
+        self.assertEqual(instruct["modelType"], "StableDiffusionXLInstructPix2PixPipeline")
+        self.assertEqual(instruct["pipelineClass"], "StableDiffusionXLInstructPix2PixPipeline")
+        self.assertEqual(instruct["defaultRepo"], "diffusers/sdxl-instructpix2pix-768")
+        self.assertIn(("diffusersImageEdit", "image_guidance_scale", "conditioningScale"), instruct["bindings"])
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[instruct["executionProfileId"]].live_proof)
         lcm = by_id["lcm-dreamshaper-v7:text-to-image:v1"]
         self.assertEqual(lcm["modelType"], "LatentConsistencyModelPipeline")
         self.assertEqual(lcm["pipelineClass"], "LatentConsistencyModelPipeline")

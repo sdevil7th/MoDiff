@@ -47,6 +47,7 @@ from modules.DiffusersImage.main import (
     SD15_BASE_REPO,
     SD15_CONTROLNET_CANNY_REPO,
     SDXL_BASE_REPO,
+    SDXL_INSTRUCT_PIX2PIX_REPO,
     SDXL_TURBO_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
@@ -682,6 +683,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "pag_scale",
             "pag_adaptive_scale",
             "conditioning_scale",
+            "image_guidance_scale",
         }
         for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
             with self.subTest(pipeline_class=pipeline_class):
@@ -719,6 +721,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertTrue(turbo["fieldParams"]["negative_prompt"]["hidden"])
         self.assertTrue(turbo["fieldParams"]["guidance_scale"]["hidden"])
+        instruct = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLInstructPix2PixPipeline"], "edit_image"
+        )
+        self.assertFalse(instruct["fieldParams"]["image_guidance_scale"]["hidden"])
+        self.assertTrue(instruct["fieldParams"]["strength"]["hidden"])
 
     def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
         for fields in (("unknown",), ("strength", "strength")):
@@ -743,6 +750,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ),
             "StableDiffusionXLPipeline": ({"text_to_image"}, SDXL_BASE_REPO, {"prompt"}),
             "StableDiffusionXLTurboPipeline": ({"text_to_image"}, SDXL_TURBO_REPO, {"prompt"}),
+            "StableDiffusionXLInstructPix2PixPipeline": (
+                {"edit_image"},
+                SDXL_INSTRUCT_PIX2PIX_REPO,
+                {"prompt", "image", "image_guidance_scale"},
+            ),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -806,7 +818,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "ZImageControlNetPipeline",
             "ZImageControlNetInpaintPipeline",
             "ZImageOmniPipeline",
-            "StableDiffusionXLInstructPix2PixPipeline",
         ):
             with self.subTest(deferred=deferred):
                 self.assertNotIn(deferred, IMAGE_PIPELINE_ADAPTERS)
@@ -822,6 +833,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionXLInstructPix2PixPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("QwenImageImg2ImgPipeline", "edit_image", Edit, {"image": image}),
@@ -843,6 +855,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "reference_strength": "reference_strength",
             "pag_scale": "pag_scale",
             "pag_adaptive_scale": "pag_adaptive_scale",
+            "image_guidance_scale": "image_guidance_scale",
         }
         for pipeline_name, mode, action_class, action_inputs in cases:
             with self.subTest(pipeline=pipeline_name):
@@ -879,6 +892,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "max_sequence_length": 128,
                     "pag_scale": 3.0,
                     "pag_adaptive_scale": 0.5,
+                    "image_guidance_scale": 1.5,
                     "output_type": "pil",
                     **action_inputs,
                 }
@@ -1741,6 +1755,55 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     height=32,
                     **kwargs,
                 )
+
+    def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):
+        loaded = {}
+
+        class StableDiffusionXLInstructPix2PixPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid image guidance must fail before inference")
+
+        node = LoadPipeline("sdxl-instruct-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=StableDiffusionXLInstructPix2PixPipeline,
+            ) as resolve_pipeline,
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SDXL_INSTRUCT_PIX2PIX_REPO,
+                pipeline_class="StableDiffusionXLInstructPix2PixPipeline",
+                mode="edit_image",
+                revision=catalog_revision(SDXL_INSTRUCT_PIX2PIX_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        resolve_pipeline.assert_called_once_with("StableDiffusionXLInstructPix2PixPipeline")
+        self.assertEqual(loaded["repo"], SDXL_INSTRUCT_PIX2PIX_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_INSTRUCT_PIX2PIX_REPO))
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+
+        with self.assertRaisesRegex(ValueError, "image_guidance_scale must be finite and between 1.0 and 20.0"):
+            Edit("sdxl-instruct-guidance-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="turn the sky cloudy",
+                image=Image.new("RGB", (16, 16), "blue"),
+                num_inference_steps=30,
+                guidance_scale=3.0,
+                image_guidance_scale=0.9,
+            )
 
     def test_execution_recipe_controls_load_placement_attention_and_offload(self):
         loaded = {}
