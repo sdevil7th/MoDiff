@@ -17,7 +17,9 @@ import modules as module_registry
 from modiff.model_artifact_catalog import catalog_revision
 from modiff.server import WebServer
 from modules.DiffusersImage import (
+    ControlEdit,
     ControlGenerate,
+    ControlInpaint,
     Edit,
     Generate,
     Inpaint,
@@ -457,7 +459,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_inherited_nodes_are_registered_with_their_live_contracts(self):
         expected_inputs = {
             "Edit": {"pipeline", "image"},
+            "ControlEdit": {"pipeline", "image", "control_image"},
             "Inpaint": {"pipeline", "image", "mask_image"},
+            "ControlInpaint": {"pipeline", "image", "mask_image", "control_image"},
             "ControlGenerate": {"pipeline", "control_image"},
         }
 
@@ -473,16 +477,224 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_graph_contract_marks_mode_independent_image_inputs_as_required(self):
         self.assertTrue(Edit.params["pipeline"]["required"])
         self.assertTrue(Edit.params["image"]["required"])
+        self.assertTrue(ControlEdit.params["control_image"]["required"])
         self.assertTrue(Inpaint.params["mask_image"]["required"])
+        self.assertTrue(ControlInpaint.params["control_image"]["required"])
         self.assertTrue(ControlGenerate.params["control_image"]["required"])
         self.assertTrue(LoadAdapter.params["pipeline"]["required"])
 
     def test_registered_classes_can_be_constructed(self):
-        for node_class in (Edit, Inpaint, ControlGenerate):
+        for node_class in (Edit, ControlEdit, Inpaint, ControlInpaint, ControlGenerate):
             with self.subTest(node=node_class.__name__):
                 node = node_class("registry-probe")
                 self.assertEqual(node.node_id, "registry-probe")
                 self.assertTrue(node.resizable)
+
+    def test_reviewed_combined_control_adapters_reuse_only_immutable_existing_artifacts(self):
+        expected = {
+            "StableDiffusionControlNetPAGPipeline": (
+                "control_image", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionXLControlNetPAGPipeline": (
+                "control_image", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "StableDiffusionControlNetImg2ImgPipeline": (
+                "control_edit_image", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionXLControlNetImg2ImgPipeline": (
+                "control_edit_image", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "StableDiffusionXLControlNetPAGImg2ImgPipeline": (
+                "control_edit_image", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "FluxControlImg2ImgPipeline": (
+                "control_edit_image", FLUX_DEPTH_REPO, "FluxControlPipeline", None, None
+            ),
+            "StableDiffusionControlNetInpaintPipeline": (
+                "control_inpaint", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionControlNetPAGInpaintPipeline": (
+                "control_inpaint", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionXLControlNetInpaintPipeline": (
+                "control_inpaint", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "FluxControlInpaintPipeline": (
+                "control_inpaint", FLUX_DEPTH_REPO, "FluxControlPipeline", None, None
+            ),
+        }
+        action_for_mode = {
+            "control_image": "ControlGenerate",
+            "control_edit_image": "ControlEdit",
+            "control_inpaint": "ControlInpaint",
+        }
+        for pipeline_class, (mode, repo, artifact_class, conditioning_kind, variant) in expected.items():
+            with self.subTest(pipeline=pipeline_class):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+                self.assertEqual(adapter.mode_options, (mode,))
+                self.assertEqual(adapter.default_repo, repo)
+                self.assertIn(artifact_class, adapter.artifact_pipeline_classes)
+                self.assertTrue(adapter.safe_serialization_required)
+                self.assertEqual(adapter.conditioning_kind, conditioning_kind)
+                self.assertEqual(adapter.weight_variant, variant)
+                if conditioning_kind is None:
+                    self.assertIsNone(adapter.default_conditioning_repo)
+                    self.assertEqual(
+                        adapter.compatible_repos,
+                        frozenset({FLUX_CANNY_REPO, "fuliucansheng/FLUX.1-Canny-dev-diffusers"}),
+                    )
+                else:
+                    expected_conditioning_repo = (
+                        SDXL_CONTROLNET_CANNY_REPO if repo == SDXL_BASE_REPO else SD15_CONTROLNET_CANNY_REPO
+                    )
+                    self.assertEqual(adapter.default_conditioning_repo, expected_conditioning_repo)
+                contract = image_pipeline_contract(adapter, mode)
+                self.assertEqual(contract["actions"], {action_for_mode[mode]: [mode]})
+
+    def test_reviewed_combined_control_actions_execute_exact_model_neutral_inputs_without_downloads(self):
+        source = Image.new("RGB", (16, 16), "red")
+        control = Image.new("RGB", (16, 16), "blue")
+        mask = Image.new("L", (16, 16), "white")
+        cases = (
+            ("StableDiffusionControlNetPAGPipeline", "control_image", ControlGenerate, {"control_image": control}),
+            (
+                "StableDiffusionXLControlNetPAGPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": control},
+            ),
+            (
+                "StableDiffusionControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "FluxControlImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "StableDiffusionControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+            (
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+            (
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+            (
+                "FluxControlInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+        )
+        for pipeline_class, mode, action_class, media in cases:
+            with self.subTest(pipeline=pipeline_class):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+                received = {}
+
+                def call(_self, **kwargs):
+                    received.update(kwargs)
+                    return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+                parameters = {
+                    name: inspect.Parameter(name, inspect.Parameter.KEYWORD_ONLY)
+                    for name in (
+                        "prompt",
+                        "image",
+                        "control_image",
+                        "mask_image",
+                        "negative_prompt",
+                        "width",
+                        "height",
+                        "strength",
+                        "num_inference_steps",
+                        "guidance_scale",
+                        "generator",
+                        "output_type",
+                        "return_dict",
+                        "max_sequence_length",
+                        "padding_mask_crop",
+                        "pag_scale",
+                        "pag_adaptive_scale",
+                        "controlnet_conditioning_scale",
+                    )
+                }
+                if pipeline_class.startswith("Flux"):
+                    for name in (
+                        "negative_prompt",
+                        "pag_scale",
+                        "pag_adaptive_scale",
+                        "controlnet_conditioning_scale",
+                    ):
+                        parameters.pop(name)
+                elif "PAG" not in pipeline_class:
+                    parameters.pop("pag_scale")
+                    parameters.pop("pag_adaptive_scale")
+                call.__signature__ = inspect.Signature(
+                    [inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD), *parameters.values()]
+                )
+                fake_type = type(pipeline_class, (), {"_execution_device": "cpu", "__call__": call})
+                pipeline = tag_test_image_pipeline(fake_type(), pipeline_class, mode)
+                with patch("modules.DiffusersImage.main.add_progress_callback"):
+                    result = action_class(f"no-download-{pipeline_class}").execute(
+                        pipeline=pipeline,
+                        prompt="reviewed control fixture",
+                        negative_prompt="artifact",
+                        width=16,
+                        height=16,
+                        num_inference_steps=1,
+                        guidance_scale=4.0,
+                        strength=0.75,
+                        conditioning_scale=0.65,
+                        pag_scale=3.0,
+                        pag_adaptive_scale=0.25,
+                        output_type="pil",
+                        **media,
+                    )
+
+                expected_control_parameter = adapter.control_image_parameter
+                self.assertIs(received[expected_control_parameter], control)
+                if action_class is not ControlGenerate:
+                    self.assertIs(received[adapter.image_parameter], source)
+                if action_class is ControlInpaint:
+                    self.assertIs(received["mask_image"], mask)
+                if adapter.conditioning_scale_parameter:
+                    self.assertEqual(received[adapter.conditioning_scale_parameter], 0.65)
+                else:
+                    self.assertNotIn("controlnet_conditioning_scale", received)
+                if "PAG" in pipeline_class:
+                    self.assertEqual(received["pag_scale"], 3.0)
+                    self.assertEqual(received["pag_adaptive_scale"], 0.25)
+                else:
+                    self.assertNotIn("pag_scale", received)
+                if pipeline_class.startswith("Flux"):
+                    self.assertNotIn("negative_prompt", received)
+                self.assertEqual((result["width_out"], result["height_out"]), (16, 16))
 
     def test_loader_rejects_missing_null_malformed_and_noncanonical_class_or_mode_before_nodebase(self):
         invalid_values = (
@@ -1172,6 +1384,26 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 SD15_BASE_REPO,
                 {"prompt", "image"},
             ),
+            "StableDiffusionControlNetImg2ImgPipeline": (
+                {"control_edit_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "control_image", "strength"},
+            ),
+            "StableDiffusionControlNetInpaintPipeline": (
+                {"control_inpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image", "control_image", "strength"},
+            ),
+            "StableDiffusionControlNetPAGPipeline": (
+                {"control_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "StableDiffusionControlNetPAGInpaintPipeline": (
+                {"control_inpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image", "control_image", "pag_scale", "pag_adaptive_scale"},
+            ),
             "StableDiffusionImg2ImgPipeline": ({"edit_image"}, SD15_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -1189,6 +1421,26 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"control_image"},
                 SDXL_BASE_REPO,
                 {"prompt", "image"},
+            ),
+            "StableDiffusionXLControlNetImg2ImgPipeline": (
+                {"control_edit_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "control_image", "strength"},
+            ),
+            "StableDiffusionXLControlNetInpaintPipeline": (
+                {"control_inpaint"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "mask_image", "control_image", "strength"},
+            ),
+            "StableDiffusionXLControlNetPAGPipeline": (
+                {"control_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "StableDiffusionXLControlNetPAGImg2ImgPipeline": (
+                {"control_edit_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "control_image", "pag_scale", "pag_adaptive_scale"},
             ),
             "HunyuanDiTPipeline": ({"text_to_image"}, HUNYUAN_DIT_DISTILLED_REPO, {"prompt"}),
             "HunyuanDiTPAGPipeline": (
@@ -1313,6 +1565,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 FLUX2_KLEIN_REPO,
                 {"prompt", "image", "mask_image"},
             ),
+            "FluxControlImg2ImgPipeline": (
+                {"control_edit_image"},
+                FLUX_DEPTH_REPO,
+                {"prompt", "image", "control_image", "strength"},
+            ),
+            "FluxControlInpaintPipeline": (
+                {"control_inpaint"},
+                FLUX_DEPTH_REPO,
+                {"prompt", "image", "mask_image", "control_image", "strength"},
+            ),
         }
         for pipeline_name, (modes, repository, required_inputs) in expected.items():
             with self.subTest(pipeline=pipeline_name):
@@ -1332,8 +1594,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for deferred in (
             "Flux2Pipeline",
             "Flux2KleinKVPipeline",
-            "FluxControlImg2ImgPipeline",
-            "FluxControlInpaintPipeline",
             "FluxControlNetPipeline",
             "FluxControlNetImg2ImgPipeline",
             "FluxControlNetInpaintPipeline",
@@ -1368,9 +1628,57 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"image": image},
             ),
             ("StableDiffusionPipeline", "text_to_image", Generate, {}),
+            (
+                "StableDiffusionControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            (
+                "StableDiffusionControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
+            (
+                "StableDiffusionControlNetPAGPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": image},
+            ),
+            (
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
             ("StableDiffusionImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
+            (
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            (
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
+            (
+                "StableDiffusionXLControlNetPAGPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": image},
+            ),
+            (
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
             ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
             ("HunyuanDiTPipeline", "text_to_image", Generate, {}),
             ("HunyuanDiTPAGPipeline", "text_to_image", Generate, {}),
@@ -1425,6 +1733,18 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("ZImageInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("FluxKontextInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("Flux2KleinInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+            (
+                "FluxControlImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            (
+                "FluxControlInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
         )
         aliases = {
             "negative_prompt": "negative_prompt",
@@ -1487,6 +1807,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 if action_class is Edit and "image" in initial:
                     initial.remove("image")
                     initial.add(adapter.image_parameter)
+                if action_class is ControlGenerate and "control_image" in initial:
+                    initial.remove("control_image")
+                    initial.add(adapter.control_image_parameter)
                 if action_class is Generate:
                     initial.update({"width", "height"})
                 expected_keys = initial | {
@@ -2068,6 +2391,18 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 pipeline("FluxControlPipeline"),
                 {"control_image": image, "guidance_scale": float("nan")},
                 "guidance_scale",
+            ),
+            (
+                ControlEdit(),
+                pipeline("FluxControlImg2ImgPipeline"),
+                {"image": image, "control_image": "not-an-image"},
+                "PIL image, NumPy array, or Torch tensor",
+            ),
+            (
+                ControlInpaint(),
+                pipeline("FluxControlInpaintPipeline"),
+                {"image": image, "mask_image": mask, "control_image": []},
+                "empty image list",
             ),
             (Edit(), pipeline("FluxImg2ImgPipeline"), {"image": []}, "empty image list"),
             (
@@ -4841,7 +5176,7 @@ class DiffusersImageNodeRouteTests(unittest.IsolatedAsyncioTestCase):
         response = await server.nodes(FakeRequest())
         nodes = json.loads(response.text)["nodes"]
 
-        for action in ("Edit", "Inpaint", "ControlGenerate"):
+        for action in ("Edit", "ControlEdit", "Inpaint", "ControlInpaint", "ControlGenerate"):
             with self.subTest(node=action):
                 key = f"modules.DiffusersImage.{action}"
                 self.assertIn(key, nodes)

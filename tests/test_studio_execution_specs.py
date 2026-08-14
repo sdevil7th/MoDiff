@@ -61,6 +61,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "StableDiffusionXLControlNetPipeline",
             "control_image",
         )
+        sd15_controlnet = studio_model_dependencies_for_pair(
+            "StableDiffusionPipeline",
+            "control_image",
+        )
         sdxl_adapter = studio_model_dependencies_for_pair(
             "StableDiffusionXLAdapterPipeline",
             "control_image",
@@ -111,6 +115,23 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 }
             ],
         )
+        for model_type, mode, expected_dependency in (
+            ("StableDiffusionPipeline", "control_edit_image", sd15_controlnet),
+            ("StableDiffusionPipeline", "control_inpaint", sd15_controlnet),
+            ("StableDiffusionPAGPipeline", "control_image", sd15_controlnet),
+            ("StableDiffusionPAGPipeline", "control_inpaint", sd15_controlnet),
+            ("StableDiffusionXLControlNetPipeline", "control_edit_image", sdxl_controlnet),
+            ("StableDiffusionXLControlNetPipeline", "control_inpaint", sdxl_controlnet),
+            ("StableDiffusionXLPAGPipeline", "control_image", sdxl_controlnet),
+            ("StableDiffusionXLPAGPipeline", "control_edit_image", sdxl_controlnet),
+        ):
+            with self.subTest(model_type=model_type, mode=mode):
+                self.assertEqual(
+                    studio_model_dependencies_for_pair(model_type, mode),
+                    expected_dependency,
+                )
+                requirements = studio_model_requirements_for_pair(model_type, mode)
+                self.assertEqual(requirements[0]["requiredForModes"], [mode])
         self.assertEqual(
             studio_model_requirements_for_pair("FluxReduxPipeline", "edit_image")[0]["requiredForModes"],
             ["edit_image", "multi_image_reference_edit"],
@@ -199,9 +220,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPipeline", "edit_image"),
                 ("StableDiffusionPipeline", "inpaint"),
                 ("StableDiffusionPipeline", "control_image"),
+                ("StableDiffusionPipeline", "control_edit_image"),
+                ("StableDiffusionPipeline", "control_inpaint"),
                 ("StableDiffusionXLTurboPipeline", "text_to_image"),
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
+                ("StableDiffusionXLControlNetPipeline", "control_edit_image"),
+                ("StableDiffusionXLControlNetPipeline", "control_inpaint"),
                 ("HunyuanDiTPipeline", "text_to_image"),
                 ("HunyuanDiTPAGPipeline", "text_to_image"),
                 ("HunyuanDiTControlNetPipeline", "control_image"),
@@ -209,6 +234,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLPAGPipeline", "text_to_image"),
                 ("StableDiffusionXLPAGPipeline", "edit_image"),
                 ("StableDiffusionXLPAGPipeline", "inpaint"),
+                ("StableDiffusionXLPAGPipeline", "control_image"),
+                ("StableDiffusionXLPAGPipeline", "control_edit_image"),
                 ("SanaPipeline", "text_to_image"),
                 ("SanaPAGPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "text_to_image"),
@@ -246,12 +273,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "edit_image"),
                 ("StableDiffusionPAGPipeline", "inpaint"),
+                ("StableDiffusionPAGPipeline", "control_image"),
+                ("StableDiffusionPAGPipeline", "control_inpaint"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
                 ("HuggingFaceTextGenerationModel", "text_generation"),
                 ("HuggingFaceImageTextToTextModel", "image_to_text"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_to_text"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_translation"),
                 ("FluxReduxPipeline", "multi_image_reference_edit"),
+                ("FluxDepthPipeline", "control_edit_image"),
+                ("FluxDepthPipeline", "control_inpaint"),
+                ("FluxCannyPipeline", "control_edit_image"),
+                ("FluxCannyPipeline", "control_inpaint"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -974,6 +1007,182 @@ class StudioExecutionSpecTests(unittest.TestCase):
             if "autoRequirements" in definition:
                 requirements_key = definition.get("autoRequirementKey", spec["modelType"])
                 self.assertEqual(AUTO_MODEL_REQUIREMENTS[requirements_key], definition["autoRequirements"])
+
+    def test_combined_control_specs_are_exact_generic_graphs_with_immutable_profiles(self):
+        specs = {
+            item["id"]: item
+            for item in validate_studio_execution_specs(module_registry.MODULE_MAP)
+        }
+        expected = {
+            "sd15-pag-controlnet-canny:control-image:v1": (
+                "StableDiffusionPAGPipeline",
+                "control_image",
+                "StableDiffusionControlNetPAGPipeline",
+                "sd15-pag-controlnet-canny:direct",
+                True,
+            ),
+            "sdxl-pag-controlnet-canny:control-image:v1": (
+                "StableDiffusionXLPAGPipeline",
+                "control_image",
+                "StableDiffusionXLControlNetPAGPipeline",
+                "sdxl-pag-controlnet-canny:direct",
+                True,
+            ),
+            "sd15-controlnet-canny:control-edit-image:v1": (
+                "StableDiffusionPipeline",
+                "control_edit_image",
+                "StableDiffusionControlNetImg2ImgPipeline",
+                "sd15-controlnet-canny:img2img-direct",
+                True,
+            ),
+            "sdxl-controlnet-canny:control-edit-image:v1": (
+                "StableDiffusionXLControlNetPipeline",
+                "control_edit_image",
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "sdxl-controlnet-canny:img2img-direct",
+                True,
+            ),
+            "sdxl-pag-controlnet-canny:control-edit-image:v1": (
+                "StableDiffusionXLPAGPipeline",
+                "control_edit_image",
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "sdxl-pag-controlnet-canny:img2img-direct",
+                True,
+            ),
+            "sd15-controlnet-canny:control-inpaint:v1": (
+                "StableDiffusionPipeline",
+                "control_inpaint",
+                "StableDiffusionControlNetInpaintPipeline",
+                "sd15-controlnet-canny:inpaint-direct",
+                True,
+            ),
+            "sd15-pag-controlnet-canny:control-inpaint:v1": (
+                "StableDiffusionPAGPipeline",
+                "control_inpaint",
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "sd15-pag-controlnet-canny:inpaint-direct",
+                True,
+            ),
+            "sdxl-controlnet-canny:control-inpaint:v1": (
+                "StableDiffusionXLControlNetPipeline",
+                "control_inpaint",
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "sdxl-controlnet-canny:inpaint-direct",
+                True,
+            ),
+            "flux-depth:control-edit-image:v1": (
+                "FluxDepthPipeline",
+                "control_edit_image",
+                "FluxControlImg2ImgPipeline",
+                "flux-depth:img2img-direct",
+                False,
+            ),
+            "flux-depth:control-inpaint:v1": (
+                "FluxDepthPipeline",
+                "control_inpaint",
+                "FluxControlInpaintPipeline",
+                "flux-depth:inpaint-direct",
+                False,
+            ),
+            "flux-canny:control-edit-image:v1": (
+                "FluxCannyPipeline",
+                "control_edit_image",
+                "FluxControlImg2ImgPipeline",
+                "flux-canny:img2img-direct",
+                False,
+            ),
+            "flux-canny:control-inpaint:v1": (
+                "FluxCannyPipeline",
+                "control_inpaint",
+                "FluxControlInpaintPipeline",
+                "flux-canny:inpaint-direct",
+                False,
+            ),
+        }
+        action_contracts = {
+            "control_image": (
+                "diffusersImageControl",
+                "modules.DiffusersImage.ControlGenerate",
+                {"controlImage"},
+            ),
+            "control_edit_image": (
+                "diffusersImageControlEdit",
+                "modules.DiffusersImage.ControlEdit",
+                {"referenceImages", "controlImage"},
+            ),
+            "control_inpaint": (
+                "diffusersImageControlInpaint",
+                "modules.DiffusersImage.ControlInpaint",
+                {"referenceImages", "maskImage", "controlImage"},
+            ),
+        }
+        for spec_id, (model_type, mode, pipeline_class, profile_id, auxiliary) in expected.items():
+            with self.subTest(spec=spec_id):
+                specification = specs[spec_id]
+                self.assertEqual(
+                    (
+                        specification["modelType"],
+                        specification["mode"],
+                        specification["pipelineClass"],
+                        specification["executionProfileId"],
+                    ),
+                    (model_type, mode, pipeline_class, profile_id),
+                )
+                role, node_key, required_media = action_contracts[mode]
+                roles = {item[0]: item[1] for item in specification["roles"]}
+                self.assertEqual(roles[role], node_key)
+                binding_sources = {item[2] for item in specification["bindings"]}
+                self.assertTrue(required_media.issubset(binding_sources))
+                self.assertEqual(
+                    studio_execution_spec_for_pair(model_type, mode)["id"],
+                    spec_id,
+                )
+                self.assertFalse(
+                    DIFFUSERS_EXECUTION_PROFILES[profile_id].live_proof
+                )
+                if auxiliary:
+                    self.assertIn("controlPreprocessor", roles)
+                    self.assertIn(
+                        ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+                        specification["bindings"],
+                    )
+                    self.assertIn(
+                        ("controlPreprocessor", "output", role, "control_image"),
+                        specification["edges"],
+                    )
+                else:
+                    self.assertNotIn("controlPreprocessor", roles)
+                    self.assertNotIn(
+                        ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+                        specification["bindings"],
+                    )
+                if "pag-controlnet" in spec_id:
+                    self.assertIn((role, "pag_scale", "pagScale"), specification["bindings"])
+                    self.assertIn(
+                        (role, "pag_adaptive_scale", "pagAdaptiveScale"),
+                        specification["bindings"],
+                    )
+
+        for model_type, modes in (
+            ("StableDiffusionPipeline", {"control_edit_image", "control_inpaint"}),
+            ("StableDiffusionPAGPipeline", {"control_image", "control_inpaint"}),
+            ("StableDiffusionXLControlNetPipeline", {"control_edit_image", "control_inpaint"}),
+            ("StableDiffusionXLPAGPipeline", {"control_image", "control_edit_image"}),
+            ("FluxDepthPipeline", {"control_edit_image", "control_inpaint"}),
+            ("FluxCannyPipeline", {"control_edit_image", "control_inpaint"}),
+        ):
+            capability = STUDIO_MODEL_CAPABILITIES[model_type]
+            self.assertTrue(modes.issubset(capability["modes"]))
+            self.assertTrue(capability["supportsImageInput"])
+            self.assertTrue(capability["supportsControlImage"])
+            if "control_inpaint" in modes:
+                self.assertTrue(capability["supportsMask"])
+
+        for model_type in ("FluxDepthPipeline", "FluxCannyPipeline"):
+            self.assertEqual(
+                AUTO_MODEL_REQUIREMENTS[model_type]["supportedTasks"],
+                ["control_image", "control_edit_image", "control_inpaint"],
+            )
 
     def test_registry_validation_rejects_unknown_nodes_params_handles_and_dangling_edges(self):
         broken_modules = deepcopy(module_registry.MODULE_MAP)

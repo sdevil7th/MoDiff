@@ -150,7 +150,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 130)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 142)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -306,6 +306,18 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             sdxl_controlnet["modeRequirements"]["control_image"]["requiredImages"],
             ["controlImage"],
         )
+        self.assertEqual(
+            sdxl_controlnet["modes"],
+            ["control_image", "control_edit_image", "control_inpaint"],
+        )
+        self.assertEqual(
+            sdxl_controlnet["pipelineClasses"],
+            [
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "StableDiffusionXLControlNetPipeline",
+            ],
+        )
         self.assertFalse(sdxl_controlnet["autoEligible"])
         self.assertFalse(sdxl_controlnet["galleryEligible"])
         self.assertNotIn("StableDiffusionXLControlNetPipeline", experimental)
@@ -337,10 +349,15 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sdxl_pag["recommendedGuidance"], 5.0)
         self.assertEqual(sdxl_pag["recommendedPagScale"], 3.0)
         self.assertEqual(sdxl_pag["recommendedPagAdaptiveScale"], 0.0)
-        self.assertEqual(sdxl_pag["modes"], ["text_to_image", "edit_image", "inpaint"])
+        self.assertEqual(
+            sdxl_pag["modes"],
+            ["text_to_image", "edit_image", "inpaint", "control_image", "control_edit_image"],
+        )
         self.assertEqual(
             sdxl_pag["pipelineClasses"],
             [
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "StableDiffusionXLControlNetPAGPipeline",
                 "StableDiffusionXLPAGImg2ImgPipeline",
                 "StableDiffusionXLPAGInpaintPipeline",
                 "StableDiffusionXLPAGPipeline",
@@ -605,7 +622,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         sd15 = by_model["StableDiffusionPipeline"]
         self.assertEqual(
             sd15["studioExecutionSpecModes"],
-            ["control_image", "edit_image", "inpaint", "text_to_image"],
+            [
+                "control_edit_image",
+                "control_image",
+                "control_inpaint",
+                "edit_image",
+                "inpaint",
+                "text_to_image",
+            ],
         )
         self.assertTrue(sd15["supportsControlImage"])
         self.assertFalse(sd15["autoEligible"])
@@ -628,14 +652,19 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(lcm["supportsImageInput"])
         self.assertNotIn("LatentConsistencyModelImg2ImgPipeline", experimental)
         sd15_pag = by_model["StableDiffusionPAGPipeline"]
-        self.assertEqual(sd15_pag["modes"], ["text_to_image", "edit_image", "inpaint"])
+        self.assertEqual(
+            sd15_pag["modes"],
+            ["text_to_image", "edit_image", "inpaint", "control_image", "control_inpaint"],
+        )
         self.assertEqual(
             sd15_pag["studioExecutionSpecModes"],
-            ["edit_image", "inpaint", "text_to_image"],
+            ["control_image", "control_inpaint", "edit_image", "inpaint", "text_to_image"],
         )
         self.assertEqual(
             sd15_pag["pipelineClasses"],
             [
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "StableDiffusionControlNetPAGPipeline",
                 "StableDiffusionPAGImg2ImgPipeline",
                 "StableDiffusionPAGInpaintPipeline",
                 "StableDiffusionPAGPipeline",
@@ -676,13 +705,19 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["referenceImages", "maskImage"],
         )
         depth_spec = by_model["FluxDepthPipeline"]["studioExecutionSpecs"][0]
-        self.assertEqual(by_model["FluxDepthPipeline"]["modes"], ["control_image"])
+        self.assertEqual(
+            by_model["FluxDepthPipeline"]["modes"],
+            ["control_image", "control_edit_image", "control_inpaint"],
+        )
         self.assertEqual(depth_spec["mode"], "control_image")
         self.assertIn("diffusersImageControl", [item[0] for item in depth_spec["roles"]])
         self.assertIn("loadImage", [item[0] for item in depth_spec["roles"]])
 
         canny_spec = by_model["FluxCannyPipeline"]["studioExecutionSpecs"][0]
-        self.assertEqual(by_model["FluxCannyPipeline"]["modes"], ["control_image"])
+        self.assertEqual(
+            by_model["FluxCannyPipeline"]["modes"],
+            ["control_image", "control_edit_image", "control_inpaint"],
+        )
         self.assertEqual(canny_spec["mode"], "control_image")
         self.assertEqual(canny_spec["roles"], depth_spec["roles"])
         self.assertEqual(canny_spec["edges"], depth_spec["edges"])

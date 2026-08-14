@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 130)
+        self.assertEqual(len(self.contracts), 142)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -90,6 +90,15 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionXLControlNetPipeline", "control_image"): [
                 ("image", "controlImage"),
             ],
+            ("StableDiffusionXLControlNetPipeline", "control_edit_image"): [
+                ("image", "referenceImages"),
+                ("image", "controlImage"),
+            ],
+            ("StableDiffusionXLControlNetPipeline", "control_inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+                ("image", "controlImage"),
+            ],
             ("HunyuanDiTPipeline", "text_to_image"): [],
             ("HunyuanDiTPAGPipeline", "text_to_image"): [],
             ("HunyuanDiTControlNetPipeline", "control_image"): [
@@ -105,6 +114,13 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionXLPAGPipeline", "inpaint"): [
                 ("image", "referenceImages"),
                 ("image", "maskImage"),
+            ],
+            ("StableDiffusionXLPAGPipeline", "control_image"): [
+                ("image", "controlImage"),
+            ],
+            ("StableDiffusionXLPAGPipeline", "control_edit_image"): [
+                ("image", "referenceImages"),
+                ("image", "controlImage"),
             ],
             ("SanaPipeline", "text_to_image"): [],
             ("SanaPAGPipeline", "text_to_image"): [],
@@ -139,6 +155,15 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("image", "maskImage"),
             ],
             ("StableDiffusionPipeline", "control_image"): [("image", "controlImage")],
+            ("StableDiffusionPipeline", "control_edit_image"): [
+                ("image", "referenceImages"),
+                ("image", "controlImage"),
+            ],
+            ("StableDiffusionPipeline", "control_inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+                ("image", "controlImage"),
+            ],
             ("LatentConsistencyModelPipeline", "edit_image"): [
                 ("image", "referenceImages"),
             ],
@@ -148,6 +173,14 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionPAGPipeline", "inpaint"): [
                 ("image", "referenceImages"),
                 ("image", "maskImage"),
+            ],
+            ("StableDiffusionPAGPipeline", "control_image"): [
+                ("image", "controlImage"),
+            ],
+            ("StableDiffusionPAGPipeline", "control_inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+                ("image", "controlImage"),
             ],
             ("FluxDevPipeline", "edit_image"): [("image", "referenceImages")],
             ("FluxDevPipeline", "inpaint"): [
@@ -165,6 +198,24 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("image", "maskImage"),
             ],
             ("FluxDepthPipeline", "control_image"): [("image", "controlImage")],
+            ("FluxDepthPipeline", "control_edit_image"): [
+                ("image", "referenceImages"),
+                ("image", "controlImage"),
+            ],
+            ("FluxDepthPipeline", "control_inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+                ("image", "controlImage"),
+            ],
+            ("FluxCannyPipeline", "control_edit_image"): [
+                ("image", "referenceImages"),
+                ("image", "controlImage"),
+            ],
+            ("FluxCannyPipeline", "control_inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+                ("image", "controlImage"),
+            ],
             ("FluxFillPipeline", "inpaint"): [
                 ("image", "referenceImages"),
                 ("image", "maskImage"),

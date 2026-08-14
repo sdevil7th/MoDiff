@@ -96,8 +96,10 @@ _IMAGE_MODE_ORDER = (
     "depth_estimation",
     "text_to_image",
     "edit_image",
+    "control_edit_image",
     "multi_image_reference_edit",
     "inpaint",
+    "control_inpaint",
     "outpaint",
     "control_image",
 )
@@ -405,6 +407,34 @@ IMAGE_PIPELINE_ADAPTERS = {
         control_image_parameter="image",
         conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
+    "StableDiffusionXLControlNetImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLControlNetImg2ImgPipeline",
+        frozenset({"control_edit_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLControlNetImg2ImgPipeline"),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SDXL_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_weight_variant="fp16",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
+    "StableDiffusionXLControlNetInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLControlNetInpaintPipeline",
+        frozenset({"control_inpaint"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLControlNetInpaintPipeline"),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SDXL_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_weight_variant="fp16",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
     "HunyuanDiTPipeline": ImagePipelineAdapter(
         "HunyuanDiTPipeline",
         frozenset({"text_to_image"}),
@@ -486,6 +516,35 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("StableDiffusionXLPipeline",),
         safe_serialization_required=True,
         weight_variant="fp16",
+    ),
+    "StableDiffusionXLControlNetPAGPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLControlNetPAGPipeline",
+        frozenset({"control_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLControlNetPAGPipeline"),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SDXL_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_weight_variant="fp16",
+        control_image_parameter="image",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
+    "StableDiffusionXLControlNetPAGImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        frozenset({"control_edit_image"}),
+        SDXL_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLControlNetPAGImg2ImgPipeline"),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SDXL_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_weight_variant="fp16",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
     "SanaPipeline": ImagePipelineAdapter(
         "SanaPipeline",
@@ -830,6 +889,30 @@ IMAGE_PIPELINE_ADAPTERS = {
         control_image_parameter="image",
         conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
+    "StableDiffusionControlNetImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionControlNetImg2ImgPipeline",
+        frozenset({"control_edit_image"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionControlNetImg2ImgPipeline"),
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SD15_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
+    "StableDiffusionControlNetInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionControlNetInpaintPipeline",
+        frozenset({"control_inpaint"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionControlNetInpaintPipeline"),
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SD15_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
     "StableDiffusionImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionImg2ImgPipeline",
         frozenset({"edit_image"}),
@@ -889,6 +972,31 @@ IMAGE_PIPELINE_ADAPTERS = {
         ),
         safe_serialization_required=True,
     ),
+    "StableDiffusionControlNetPAGPipeline": ImagePipelineAdapter(
+        "StableDiffusionControlNetPAGPipeline",
+        frozenset({"control_image"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionControlNetPAGPipeline"),
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SD15_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        control_image_parameter="image",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
+    "StableDiffusionControlNetPAGInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        frozenset({"control_inpaint"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionControlNetPAGInpaintPipeline"),
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=SD15_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+    ),
     "MarigoldDepthPipeline": ImagePipelineAdapter(
         "MarigoldDepthPipeline",
         frozenset({"depth_estimation"}),
@@ -946,6 +1054,22 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"control_image"}),
         FLUX_DEPTH_REPO,
         compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
+        safe_serialization_required=True,
+    ),
+    "FluxControlImg2ImgPipeline": ImagePipelineAdapter(
+        "FluxControlImg2ImgPipeline",
+        frozenset({"control_edit_image"}),
+        FLUX_DEPTH_REPO,
+        compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
+        artifact_pipeline_classes=("FluxControlPipeline", "FluxControlImg2ImgPipeline"),
+        safe_serialization_required=True,
+    ),
+    "FluxControlInpaintPipeline": ImagePipelineAdapter(
+        "FluxControlInpaintPipeline",
+        frozenset({"control_inpaint"}),
+        FLUX_DEPTH_REPO,
+        compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
+        artifact_pipeline_classes=("FluxControlPipeline", "FluxControlInpaintPipeline"),
         safe_serialization_required=True,
     ),
     "FluxKontextPipeline": ImagePipelineAdapter(
@@ -1033,8 +1157,10 @@ IMAGE_PIPELINE_MODE_OPTIONS = [
     "depth_estimation",
     "text_to_image",
     "edit_image",
+    "control_edit_image",
     "multi_image_reference_edit",
     "inpaint",
+    "control_inpaint",
     "outpaint",
     "control_image",
 ]
@@ -1052,7 +1178,9 @@ IMAGE_ACTION_MODES = {
     "PredictMap": ("depth_estimation",),
     "Generate": ("text_to_image",),
     "Edit": ("edit_image", "multi_image_reference_edit"),
+    "ControlEdit": ("control_edit_image",),
     "Inpaint": ("inpaint", "outpaint"),
+    "ControlInpaint": ("control_inpaint",),
     "ControlGenerate": ("control_image",),
 }
 
@@ -1169,6 +1297,22 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
         ),
     },
+    "StableDiffusionXLControlNetImg2ImgPipeline": {
+        "control_edit_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "strength", "conditioning_scale"
+        ),
+    },
+    "StableDiffusionXLControlNetInpaintPipeline": {
+        "control_inpaint": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "conditioning_scale",
+        ),
+    },
     "HunyuanDiTPipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
@@ -1209,6 +1353,29 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "guidance_scale",
             "strength",
             "padding_mask_crop",
+            "pag_scale",
+            "pag_adaptive_scale",
+        ),
+    },
+    "StableDiffusionXLControlNetPAGPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "conditioning_scale",
+            "pag_scale",
+            "pag_adaptive_scale",
+        ),
+    },
+    "StableDiffusionXLControlNetPAGImg2ImgPipeline": {
+        "control_edit_image": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "conditioning_scale",
             "pag_scale",
             "pag_adaptive_scale",
         ),
@@ -1334,6 +1501,22 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
         ),
     },
+    "StableDiffusionControlNetImg2ImgPipeline": {
+        "control_edit_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "strength", "conditioning_scale"
+        ),
+    },
+    "StableDiffusionControlNetInpaintPipeline": {
+        "control_inpaint": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "conditioning_scale",
+        ),
+    },
     "StableDiffusionImg2ImgPipeline": {
         "edit_image": _image_field_contract("negative_prompt", "guidance_scale", "strength"),
     },
@@ -1371,6 +1554,30 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "pag_adaptive_scale",
         ),
     },
+    "StableDiffusionControlNetPAGPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "conditioning_scale",
+            "pag_scale",
+            "pag_adaptive_scale",
+        ),
+    },
+    "StableDiffusionControlNetPAGInpaintPipeline": {
+        "control_inpaint": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "conditioning_scale",
+            "pag_scale",
+            "pag_adaptive_scale",
+        ),
+    },
     "MarigoldDepthPipeline": {
         "depth_estimation": _image_field_contract(),
     },
@@ -1395,6 +1602,21 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "FluxControlPipeline": {
         "control_image": _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "FluxControlImg2ImgPipeline": {
+        "control_edit_image": _image_field_contract(
+            "width", "height", "guidance_scale", "strength", "max_sequence_length"
+        ),
+    },
+    "FluxControlInpaintPipeline": {
+        "control_inpaint": _image_field_contract(
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "max_sequence_length",
+        ),
     },
     "FluxKontextPipeline": {
         mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE)
@@ -2180,7 +2402,7 @@ def preflight_image_action(
     output_type = (
         "pil" if "output_type" not in values or values.get("output_type") is None else values.get("output_type")
     )
-    allowed_output_types = {"pil"} if action == "Inpaint" else {"pil", "np", "pt"}
+    allowed_output_types = {"pil"} if action in {"Inpaint", "ControlInpaint"} else {"pil", "np", "pt"}
     if not isinstance(output_type, str) or output_type not in allowed_output_types:
         allowed = ", ".join(sorted(allowed_output_types))
         raise ValueError(f"Diffusers image {action} output_type must be exactly one of: {allowed}.")
@@ -2197,10 +2419,23 @@ def preflight_image_action(
             min_aspect_ratio=adapter.min_reference_aspect_ratio,
             max_aspect_ratio=adapter.max_reference_aspect_ratio,
         )
-    elif action == "Inpaint":
+    elif action == "ControlEdit":
         _validate_image_media(
             values.get("image"),
-            field="Inpaint source",
+            field="Control edit source",
+            max_items=1,
+            max_pixels=adapter.max_reference_pixels,
+        )
+        _validate_image_media(
+            values.get("control_image"),
+            field="Control edit control image",
+            max_items=1,
+            max_pixels=adapter.max_reference_pixels,
+        )
+    elif action in {"Inpaint", "ControlInpaint"}:
+        _validate_image_media(
+            values.get("image"),
+            field="Control inpaint source" if action == "ControlInpaint" else "Inpaint source",
             max_items=1,
             max_pixels=adapter.max_reference_pixels,
             require_pil=True,
@@ -2208,12 +2443,19 @@ def preflight_image_action(
         )
         _validate_image_media(
             values.get("mask_image"),
-            field="Inpaint mask",
+            field="Control inpaint mask" if action == "ControlInpaint" else "Inpaint mask",
             max_items=1,
             max_pixels=adapter.max_reference_pixels,
             require_pil=True,
             require_single_value=True,
         )
+        if action == "ControlInpaint":
+            _validate_image_media(
+                values.get("control_image"),
+                field="Control inpaint control image",
+                max_items=1,
+                max_pixels=adapter.max_reference_pixels,
+            )
     elif action == "ControlGenerate":
         _validate_image_media(
             values.get("control_image"),
@@ -3689,9 +3931,9 @@ class Generate(NodeBase):
         # Validate the raw graph payload before NodeBase can coerce booleans,
         # blank strings, or container values into apparently valid numbers.
         # The concrete registered class owns the action/mode check, so this
-        # remains one generic facade for Generate/Edit/Inpaint/ControlGenerate.
+        # remains one generic facade for all prompt-conditioned image actions.
         action = self.class_name
-        if action not in {"Generate", "Edit", "Inpaint", "ControlGenerate"}:
+        if action not in {"Generate", "Edit", "ControlEdit", "Inpaint", "ControlInpaint", "ControlGenerate"}:
             raise ValueError(f"Unsupported Diffusers image action {action!r}.")
         _adapter, values = preflight_image_action(kwargs.get("pipeline"), action, kwargs)
         return super().__call__(**values)
@@ -3875,6 +4117,80 @@ class ControlGenerate(Edit):
             {adapter.control_image_parameter: values["control_image"]},
             adapter=adapter,
         )
+
+
+class ControlEdit(Edit):
+    """Edit one source image under a second control image."""
+
+    label = "Diffusers Control Edit"
+    category = "Diffusers Image"
+    params = {
+        **Edit.params,
+        "control_image": {"label": "Control Image", "display": "input", "type": "image", "required": True},
+        "conditioning_scale": {
+            "label": "Conditioning Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.0,
+            "max": 2.0,
+            "step": 0.05,
+            "hidden": True,
+        },
+    }
+
+    def execute(self, **kwargs):
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_image_action(pipeline, "ControlEdit", kwargs)
+        image = prepare_reference_images(values.get("image"), adapter)
+        return self._execute_conditioned(
+            values,
+            {
+                adapter.image_parameter: image,
+                adapter.control_image_parameter: values["control_image"],
+            },
+            adapter=adapter,
+        )
+
+
+class ControlInpaint(Inpaint):
+    """Inpaint one source image under a separate control image."""
+
+    label = "Diffusers Control Inpaint"
+    category = "Diffusers Image"
+    params = {
+        **Inpaint.params,
+        "control_image": {"label": "Control Image", "display": "input", "type": "image", "required": True},
+        "conditioning_scale": {
+            "label": "Conditioning Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.0,
+            "max": 2.0,
+            "step": 0.05,
+            "hidden": True,
+        },
+    }
+
+    def execute(self, **kwargs):
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_image_action(pipeline, "ControlInpaint", kwargs)
+        result = self._execute_conditioned(
+            values,
+            {
+                adapter.image_parameter: values["image"],
+                "mask_image": values["mask_image"],
+                adapter.control_image_parameter: values["control_image"],
+            },
+            adapter=adapter,
+        )
+        result["images"] = composite_masked_pil_outputs(
+            result.get("images"),
+            values["image"],
+            values["mask_image"],
+        )
+        return result
 
 
 class LoadAdapter(NodeBase):

@@ -139,6 +139,20 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         self.assertIn("StableAudioPipeline", profile["requiredDiffusersSymbols"])
         self.assertIn("ErnieImagePipeline", profile["requiredDiffusersSymbols"])
         self.assertIn("GlmImagePipeline", profile["requiredDiffusersSymbols"])
+        self.assertTrue(
+            {
+                "StableDiffusionControlNetPAGPipeline",
+                "StableDiffusionXLControlNetPAGPipeline",
+                "StableDiffusionControlNetImg2ImgPipeline",
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "FluxControlImg2ImgPipeline",
+                "StableDiffusionControlNetInpaintPipeline",
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "FluxControlInpaintPipeline",
+            }.issubset(profile["requiredDiffusersSymbols"])
+        )
         self.assertNotIn("StableAudioPipeline", profile["pipelineAdapterSymbols"])
         self.assertNotIn("GlmImagePipeline", profile["pipelineAdapterSymbols"])
 

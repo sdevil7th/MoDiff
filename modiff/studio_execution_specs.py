@@ -1694,6 +1694,43 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
     ),
 }
 
+for _control_model_type, _source_model_type, _control_modes in (
+    (
+        "StableDiffusionPipeline",
+        "StableDiffusionPipeline",
+        ("control_edit_image", "control_inpaint"),
+    ),
+    (
+        "StableDiffusionPAGPipeline",
+        "StableDiffusionPipeline",
+        ("control_image", "control_inpaint"),
+    ),
+    (
+        "StableDiffusionXLControlNetPipeline",
+        "StableDiffusionXLControlNetPipeline",
+        ("control_edit_image", "control_inpaint"),
+    ),
+    (
+        "StableDiffusionXLPAGPipeline",
+        "StableDiffusionXLControlNetPipeline",
+        ("control_image", "control_edit_image"),
+    ),
+):
+    for _control_mode in _control_modes:
+        _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[(_control_model_type, _control_mode)] = tuple(
+            {
+                **deepcopy(_requirement),
+                "requiredForModes": [_control_mode],
+                "description": (
+                    f"Required by the generic {_control_model_type} "
+                    f"{_control_mode.replace('_', ' ')} workflow."
+                ),
+            }
+            for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+                (_source_model_type, "control_image")
+            ]
+        )
+
 
 def studio_model_requirements_for_pair(model_type: str, mode: str) -> list[dict[str, Any]]:
     return deepcopy(list(_STUDIO_MODEL_DEPENDENCY_REQUIREMENTS.get((model_type, mode), ())))
@@ -2077,6 +2114,148 @@ _CONDITIONED_CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageControl", "conditioning_scale", "conditioningScale"),
     ("diffusersImageControl", "output_type", "outputType"),
     ("diffusersImageControl", "max_sequence_length", "maxSequenceLength"),
+)
+_PAG_CONDITIONED_CONTROL_GRAPH_BINDINGS = _CONDITIONED_CONTROL_GRAPH_BINDINGS + (
+    ("diffusersImageControl", "pag_scale", "pagScale"),
+    ("diffusersImageControl", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
+_CONTROL_EDIT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -900, 300),
+    ("loadControlImage", "modules.Image.Load", -900, 560),
+    ("diffusersImageControlEdit", "modules.DiffusersImage.ControlEdit", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_CONTROL_EDIT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageControlEdit", "pipeline"),
+    ("loadImage", "image", "diffusersImageControlEdit", "image"),
+    ("loadControlImage", "image", "diffusersImageControlEdit", "control_image"),
+    ("diffusersImageControlEdit", "images", "preview", "image"),
+)
+_CONDITIONED_CONTROL_EDIT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -900, 300),
+    ("loadControlImage", "modules.Image.Load", -900, 560),
+    ("controlPreprocessor", "modules.ImageFilters.Canny", -520, 560),
+    ("diffusersImageControlEdit", "modules.DiffusersImage.ControlEdit", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_CONDITIONED_CONTROL_EDIT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageControlEdit", "pipeline"),
+    ("loadImage", "image", "diffusersImageControlEdit", "image"),
+    ("loadControlImage", "image", "controlPreprocessor", "image"),
+    ("controlPreprocessor", "output", "diffusersImageControlEdit", "control_image"),
+    ("diffusersImageControlEdit", "images", "preview", "image"),
+)
+_CONTROL_EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadControlImage", "file", "controlImage"),
+    ("loadControlImage", "alpha_channel", "alphaMode"),
+    ("diffusersImageControlEdit", "prompt", "prompt"),
+    ("diffusersImageControlEdit", "width", "width"),
+    ("diffusersImageControlEdit", "height", "height"),
+    ("diffusersImageControlEdit", "seed", "seed"),
+    ("diffusersImageControlEdit", "num_inference_steps", "steps"),
+    ("diffusersImageControlEdit", "guidance_scale", "guidanceScale"),
+    ("diffusersImageControlEdit", "strength", "strength"),
+    ("diffusersImageControlEdit", "output_type", "outputType"),
+    ("diffusersImageControlEdit", "max_sequence_length", "maxSequenceLength"),
+)
+_CONDITIONED_CONTROL_EDIT_GRAPH_BINDINGS = _CONTROL_EDIT_GRAPH_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("diffusersImagePipeline", "conditioning_kind", "kind"),
+    ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+    ("diffusersImagePipeline", "conditioning_revision", "revision"),
+    ("controlPreprocessor", "low_threshold", "cannyLowThreshold"),
+    ("controlPreprocessor", "high_threshold", "cannyHighThreshold"),
+    ("controlPreprocessor", "device", "device"),
+    ("diffusersImageControlEdit", "negative_prompt", "negativePrompt"),
+    ("diffusersImageControlEdit", "conditioning_scale", "conditioningScale"),
+)
+_PAG_CONDITIONED_CONTROL_EDIT_GRAPH_BINDINGS = _CONDITIONED_CONTROL_EDIT_GRAPH_BINDINGS + (
+    ("diffusersImageControlEdit", "pag_scale", "pagScale"),
+    ("diffusersImageControlEdit", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
+_CONTROL_INPAINT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -900, 300),
+    ("loadMask", "modules.Image.Load", -900, 560),
+    ("loadControlImage", "modules.Image.Load", -900, 820),
+    ("diffusersImageControlInpaint", "modules.DiffusersImage.ControlInpaint", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_CONTROL_INPAINT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageControlInpaint", "pipeline"),
+    ("loadImage", "image", "diffusersImageControlInpaint", "image"),
+    ("loadMask", "image", "diffusersImageControlInpaint", "mask_image"),
+    ("loadControlImage", "image", "diffusersImageControlInpaint", "control_image"),
+    ("diffusersImageControlInpaint", "images", "preview", "image"),
+)
+_CONDITIONED_CONTROL_INPAINT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -900, 300),
+    ("loadMask", "modules.Image.Load", -900, 560),
+    ("loadControlImage", "modules.Image.Load", -900, 820),
+    ("controlPreprocessor", "modules.ImageFilters.Canny", -520, 820),
+    ("diffusersImageControlInpaint", "modules.DiffusersImage.ControlInpaint", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_CONDITIONED_CONTROL_INPAINT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageControlInpaint", "pipeline"),
+    ("loadImage", "image", "diffusersImageControlInpaint", "image"),
+    ("loadMask", "image", "diffusersImageControlInpaint", "mask_image"),
+    ("loadControlImage", "image", "controlPreprocessor", "image"),
+    ("controlPreprocessor", "output", "diffusersImageControlInpaint", "control_image"),
+    ("diffusersImageControlInpaint", "images", "preview", "image"),
+)
+_CONTROL_INPAINT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadMask", "file", "maskImage"),
+    ("loadMask", "alpha_channel", "removeAlpha"),
+    ("loadControlImage", "file", "controlImage"),
+    ("loadControlImage", "alpha_channel", "alphaMode"),
+    ("diffusersImageControlInpaint", "prompt", "prompt"),
+    ("diffusersImageControlInpaint", "width", "width"),
+    ("diffusersImageControlInpaint", "height", "height"),
+    ("diffusersImageControlInpaint", "seed", "seed"),
+    ("diffusersImageControlInpaint", "num_inference_steps", "steps"),
+    ("diffusersImageControlInpaint", "guidance_scale", "guidanceScale"),
+    ("diffusersImageControlInpaint", "strength", "strength"),
+    ("diffusersImageControlInpaint", "output_type", "outputType"),
+    ("diffusersImageControlInpaint", "max_sequence_length", "maxSequenceLength"),
+)
+_CONDITIONED_CONTROL_INPAINT_GRAPH_BINDINGS = _CONTROL_INPAINT_GRAPH_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("diffusersImagePipeline", "conditioning_kind", "kind"),
+    ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+    ("diffusersImagePipeline", "conditioning_revision", "revision"),
+    ("controlPreprocessor", "low_threshold", "cannyLowThreshold"),
+    ("controlPreprocessor", "high_threshold", "cannyHighThreshold"),
+    ("controlPreprocessor", "device", "device"),
+    ("diffusersImageControlInpaint", "negative_prompt", "negativePrompt"),
+    ("diffusersImageControlInpaint", "conditioning_scale", "conditioningScale"),
+)
+_PAG_CONDITIONED_CONTROL_INPAINT_GRAPH_BINDINGS = _CONDITIONED_CONTROL_INPAINT_GRAPH_BINDINGS + (
+    ("diffusersImageControlInpaint", "pag_scale", "pagScale"),
+    ("diffusersImageControlInpaint", "pag_adaptive_scale", "pagAdaptiveScale"),
 )
 _EDIT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -3502,11 +3681,26 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             ),
             "downloadFiles": FLUX_CONTROL_DIFFUSERS_FILES,
             "supportsImageInput": True,
+            "supportsMask": True,
             "supportsControlImage": True,
-            "modes": ["control_image"],
+            "modes": ["control_image", "control_edit_image", "control_inpaint"],
+            "modeRequirements": {
+                "control_image": {
+                    "requiredImages": ["controlImage"],
+                    "note": "Requires one prepared depth control image.",
+                },
+                "control_edit_image": {
+                    "requiredImages": ["referenceImages", "controlImage"],
+                    "note": "Requires one source image and one prepared depth control image.",
+                },
+                "control_inpaint": {
+                    "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+                    "note": "Requires one source image, one mask, and one prepared depth control image.",
+                },
+            },
         },
         "autoRequirements": {
-            "supportedTasks": ["control_image"],
+            "supportedTasks": ["control_image", "control_edit_image", "control_inpaint"],
             "defaultRepo": FLUX_DEPTH_REPO,
             "qualityDefaults": {
                 "width": 768,
@@ -3602,11 +3796,26 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 }
             ],
             "supportsImageInput": True,
+            "supportsMask": True,
             "supportsControlImage": True,
-            "modes": ["control_image"],
+            "modes": ["control_image", "control_edit_image", "control_inpaint"],
+            "modeRequirements": {
+                "control_image": {
+                    "requiredImages": ["controlImage"],
+                    "note": "Requires one prepared Canny control image.",
+                },
+                "control_edit_image": {
+                    "requiredImages": ["referenceImages", "controlImage"],
+                    "note": "Requires one source image and one prepared Canny control image.",
+                },
+                "control_inpaint": {
+                    "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+                    "note": "Requires one source image, one mask, and one prepared Canny control image.",
+                },
+            },
         },
         "autoRequirements": {
-            "supportedTasks": ["control_image"],
+            "supportedTasks": ["control_image", "control_edit_image", "control_inpaint"],
             "defaultRepo": FLUX_CANNY_REPO,
             "qualityDefaults": {
                 "width": 768,
@@ -3654,6 +3863,104 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _CONTROL_GRAPH_ROLES,
         "edges": _CONTROL_GRAPH_EDGES,
         "bindings": _CONTROL_GRAPH_BINDINGS,
+    },
+    "flux-depth:control-edit-image:v1": {
+        "modelType": "FluxDepthPipeline",
+        "mode": "control_edit_image",
+        "profile": _profile(
+            "flux-depth:img2img-direct",
+            "FluxDepthPipeline",
+            FLUX_DEPTH_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            mode="control_edit_image",
+            pipeline_class="FluxControlImg2ImgPipeline",
+        ),
+        "roles": _CONTROL_EDIT_GRAPH_ROLES,
+        "edges": _CONTROL_EDIT_GRAPH_EDGES,
+        "bindings": _CONTROL_EDIT_GRAPH_BINDINGS,
+    },
+    "flux-depth:control-inpaint:v1": {
+        "modelType": "FluxDepthPipeline",
+        "mode": "control_inpaint",
+        "profile": _profile(
+            "flux-depth:inpaint-direct",
+            "FluxDepthPipeline",
+            FLUX_DEPTH_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            mode="control_inpaint",
+            pipeline_class="FluxControlInpaintPipeline",
+        ),
+        "roles": _CONTROL_INPAINT_GRAPH_ROLES,
+        "edges": _CONTROL_INPAINT_GRAPH_EDGES,
+        "bindings": _CONTROL_INPAINT_GRAPH_BINDINGS,
+    },
+    "flux-canny:control-edit-image:v1": {
+        "modelType": "FluxCannyPipeline",
+        "mode": "control_edit_image",
+        "profile": _profile(
+            "flux-canny:img2img-direct",
+            "FluxCannyPipeline",
+            FLUX_CANNY_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            compatible_repos=(FLUX_CANNY_VERIFIED_REPAIR_REPO,),
+            mode="control_edit_image",
+            pipeline_class="FluxControlImg2ImgPipeline",
+        ),
+        "roles": _CONTROL_EDIT_GRAPH_ROLES,
+        "edges": _CONTROL_EDIT_GRAPH_EDGES,
+        "bindings": _CONTROL_EDIT_GRAPH_BINDINGS,
+    },
+    "flux-canny:control-inpaint:v1": {
+        "modelType": "FluxCannyPipeline",
+        "mode": "control_inpaint",
+        "profile": _profile(
+            "flux-canny:inpaint-direct",
+            "FluxCannyPipeline",
+            FLUX_CANNY_REPO,
+            default_quantized_components=("transformer",),
+            supported_offload_modes=(
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+            max_low_memory_side=768,
+            max_low_memory_steps=24,
+            compatible_repos=(FLUX_CANNY_VERIFIED_REPAIR_REPO,),
+            mode="control_inpaint",
+            pipeline_class="FluxControlInpaintPipeline",
+        ),
+        "roles": _CONTROL_INPAINT_GRAPH_ROLES,
+        "edges": _CONTROL_INPAINT_GRAPH_EDGES,
+        "bindings": _CONTROL_INPAINT_GRAPH_BINDINGS,
     },
     "flux-redux:edit-image:v1": {
         "modelType": "FluxReduxPipeline",
@@ -5600,6 +5907,16 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     },
 }
 
+_FLUX_COMBINED_CONTROL_DEFINITIONS = {
+    _spec_id: STUDIO_EXECUTION_SPEC_DEFINITIONS.pop(_spec_id)
+    for _spec_id in (
+        "flux-depth:control-edit-image:v1",
+        "flux-depth:control-inpaint:v1",
+        "flux-canny:control-edit-image:v1",
+        "flux-canny:control-inpaint:v1",
+    )
+}
+
 
 def _planning_video_profile(
     profile_id: str,
@@ -6731,7 +7048,14 @@ _SD15_CONTROLNET_CAPABILITY = deepcopy(_SD15_CAPABILITY)
 _SD15_CONTROLNET_CAPABILITY.update(
     {
         "supportsControlImage": True,
-        "modes": ["text_to_image", "edit_image", "inpaint", "control_image"],
+        "modes": [
+            "text_to_image",
+            "edit_image",
+            "inpaint",
+            "control_image",
+            "control_edit_image",
+            "control_inpaint",
+        ],
         "modeRequirements": {
             **_SD15_CONTROLNET_CAPABILITY["modeRequirements"],
             "control_image": {
@@ -6740,6 +7064,23 @@ _SD15_CONTROLNET_CAPABILITY.update(
                 ),
                 "requiredImages": ["controlImage"],
                 "note": "Requires one control image and the immutable Canny ControlNet component.",
+            },
+            "control_edit_image": {
+                "modelRequirements": studio_model_requirements_for_pair(
+                    "StableDiffusionPipeline", "control_edit_image"
+                ),
+                "requiredImages": ["referenceImages", "controlImage"],
+                "note": "Requires one source image, one control image, and the immutable Canny ControlNet component.",
+            },
+            "control_inpaint": {
+                "modelRequirements": studio_model_requirements_for_pair(
+                    "StableDiffusionPipeline", "control_inpaint"
+                ),
+                "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+                "note": (
+                    "Requires one source image, one mask, one control image, "
+                    "and the immutable Canny ControlNet component."
+                ),
             },
         },
         "notes": [
@@ -6767,6 +7108,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-controlnet-canny:control-image:v1"] = {
     "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
     "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
     "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+_SD15_CONTROLNET_IMG2IMG_PROFILE = _sd15_profile(
+    "sd15-controlnet-canny:img2img-direct",
+    "control_edit_image",
+    "StableDiffusionControlNetImg2ImgPipeline",
+)
+_SD15_CONTROLNET_IMG2IMG_PROFILE["live_proof"] = False
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-controlnet-canny:control-edit-image:v1"] = {
+    "modelType": "StableDiffusionPipeline",
+    "mode": "control_edit_image",
+    "profile": _SD15_CONTROLNET_IMG2IMG_PROFILE,
+    "capability": _SD15_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_EDIT_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_EDIT_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_EDIT_GRAPH_BINDINGS,
+}
+_SD15_CONTROLNET_INPAINT_PROFILE = _sd15_profile(
+    "sd15-controlnet-canny:inpaint-direct",
+    "control_inpaint",
+    "StableDiffusionControlNetInpaintPipeline",
+)
+_SD15_CONTROLNET_INPAINT_PROFILE["live_proof"] = False
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-controlnet-canny:control-inpaint:v1"] = {
+    "modelType": "StableDiffusionPipeline",
+    "mode": "control_inpaint",
+    "profile": _SD15_CONTROLNET_INPAINT_PROFILE,
+    "capability": _SD15_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_INPAINT_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_INPAINT_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_INPAINT_GRAPH_BINDINGS,
 }
 
 
@@ -6958,8 +7329,8 @@ _SDXL_CONTROLNET_CAPABILITY = {
     "recommendedGuidance": 5.0,
     "guidanceLabel": "Guidance",
     "conditioningScale": 0.5,
-    "supportsImageInput": False,
-    "supportsMask": False,
+    "supportsImageInput": True,
+    "supportsMask": True,
     "supportsMultiImage": False,
     "supportsControlImage": True,
     "supportsLayers": False,
@@ -6979,7 +7350,7 @@ _SDXL_CONTROLNET_CAPABILITY = {
         "width": 1024,
         "height": 1024,
     },
-    "modes": ["control_image"],
+    "modes": ["control_image", "control_edit_image", "control_inpaint"],
     "modeRequirements": {
         "control_image": {
             "modelRequirements": studio_model_requirements_for_pair(
@@ -6987,6 +7358,23 @@ _SDXL_CONTROLNET_CAPABILITY = {
             ),
             "requiredImages": ["controlImage"],
             "note": "Requires one control image and the immutable SDXL Canny ControlNet component.",
+        },
+        "control_edit_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionXLControlNetPipeline", "control_edit_image"
+            ),
+            "requiredImages": ["referenceImages", "controlImage"],
+            "note": "Requires one source image, one control image, and the immutable SDXL Canny ControlNet component.",
+        },
+        "control_inpaint": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionXLControlNetPipeline", "control_inpaint"
+            ),
+            "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+            "note": (
+                "Requires one source image, one mask, one control image, "
+                "and the immutable SDXL Canny ControlNet component."
+            ),
         },
     },
     "executionStatus": "expert_only",
@@ -7029,6 +7417,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-image:v1"] = {
     "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
     "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
     "bindings": _CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+_SDXL_CONTROLNET_IMG2IMG_PROFILE = {
+    **_SDXL_CONTROLNET_PROFILE,
+    "id": "sdxl-controlnet-canny:img2img-direct",
+    "modes": ("control_edit_image",),
+    "pipeline_class": "StableDiffusionXLControlNetImg2ImgPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-edit-image:v1"] = {
+    "modelType": "StableDiffusionXLControlNetPipeline",
+    "mode": "control_edit_image",
+    "profile": _SDXL_CONTROLNET_IMG2IMG_PROFILE,
+    "capability": _SDXL_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_EDIT_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_EDIT_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_EDIT_GRAPH_BINDINGS,
+}
+_SDXL_CONTROLNET_INPAINT_PROFILE = {
+    **_SDXL_CONTROLNET_PROFILE,
+    "id": "sdxl-controlnet-canny:inpaint-direct",
+    "modes": ("control_inpaint",),
+    "pipeline_class": "StableDiffusionXLControlNetInpaintPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-controlnet-canny:control-inpaint:v1"] = {
+    "modelType": "StableDiffusionXLControlNetPipeline",
+    "mode": "control_inpaint",
+    "profile": _SDXL_CONTROLNET_INPAINT_PROFILE,
+    "capability": _SDXL_CONTROLNET_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_INPAINT_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_INPAINT_GRAPH_EDGES,
+    "bindings": _CONDITIONED_CONTROL_INPAINT_GRAPH_BINDINGS,
 }
 
 
@@ -7374,7 +7792,7 @@ _SDXL_PAG_CAPABILITY = {
     "supportsImageInput": True,
     "supportsMask": True,
     "supportsMultiImage": False,
-    "supportsControlImage": False,
+    "supportsControlImage": True,
     "supportsLayers": False,
     "supportsLora": True,
     "outputKind": "image",
@@ -7392,7 +7810,7 @@ _SDXL_PAG_CAPABILITY = {
         "width": 1024,
         "height": 1024,
     },
-    "modes": ["text_to_image", "edit_image", "inpaint"],
+    "modes": ["text_to_image", "edit_image", "inpaint", "control_image", "control_edit_image"],
     "modeRequirements": {
         "edit_image": {
             "requiredImages": ["referenceImages"],
@@ -7401,6 +7819,20 @@ _SDXL_PAG_CAPABILITY = {
         "inpaint": {
             "requiredImages": ["referenceImages", "maskImage"],
             "note": "Requires one source image and one mask image for PAG inpainting.",
+        },
+        "control_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionXLPAGPipeline", "control_image"
+            ),
+            "requiredImages": ["controlImage"],
+            "note": "Requires one control image and the immutable SDXL Canny ControlNet component.",
+        },
+        "control_edit_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionXLPAGPipeline", "control_edit_image"
+            ),
+            "requiredImages": ["referenceImages", "controlImage"],
+            "note": "Requires one source image, one control image, and the immutable SDXL Canny ControlNet component.",
         },
     },
     "executionStatus": "expert_only",
@@ -7454,6 +7886,36 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag:inpaint:v1"] = {
     "roles": _INPAINT_GRAPH_ROLES,
     "edges": _INPAINT_GRAPH_EDGES,
     "bindings": _PAG_INPAINT_GRAPH_BINDINGS,
+}
+_SDXL_PAG_CONTROLNET_PROFILE = {
+    **_SDXL_PAG_PROFILE,
+    "id": "sdxl-pag-controlnet-canny:direct",
+    "modes": ("control_image",),
+    "pipeline_class": "StableDiffusionXLControlNetPAGPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag-controlnet-canny:control-image:v1"] = {
+    "modelType": "StableDiffusionXLPAGPipeline",
+    "mode": "control_image",
+    "profile": _SDXL_PAG_CONTROLNET_PROFILE,
+    "capability": _SDXL_PAG_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
+    "bindings": _PAG_CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+_SDXL_PAG_CONTROLNET_IMG2IMG_PROFILE = {
+    **_SDXL_PAG_PROFILE,
+    "id": "sdxl-pag-controlnet-canny:img2img-direct",
+    "modes": ("control_edit_image",),
+    "pipeline_class": "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-pag-controlnet-canny:control-edit-image:v1"] = {
+    "modelType": "StableDiffusionXLPAGPipeline",
+    "mode": "control_edit_image",
+    "profile": _SDXL_PAG_CONTROLNET_IMG2IMG_PROFILE,
+    "capability": _SDXL_PAG_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_EDIT_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_EDIT_GRAPH_EDGES,
+    "bindings": _PAG_CONDITIONED_CONTROL_EDIT_GRAPH_BINDINGS,
 }
 
 
@@ -9542,7 +10004,7 @@ _PAG_CAPABILITY = {
     "supportsImageInput": True,
     "supportsMask": True,
     "supportsMultiImage": False,
-    "supportsControlImage": False,
+    "supportsControlImage": True,
     "supportsLayers": False,
     "supportsLora": True,
     "outputKind": "image",
@@ -9560,7 +10022,7 @@ _PAG_CAPABILITY = {
         "width": 512,
         "height": 512,
     },
-    "modes": ["text_to_image", "edit_image", "inpaint"],
+    "modes": ["text_to_image", "edit_image", "inpaint", "control_image", "control_inpaint"],
     "modeRequirements": {
         "edit_image": {
             "requiredImages": ["referenceImages"],
@@ -9569,6 +10031,23 @@ _PAG_CAPABILITY = {
         "inpaint": {
             "requiredImages": ["referenceImages", "maskImage"],
             "note": "Requires one source image and one mask image for PAG inpainting.",
+        },
+        "control_image": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionPAGPipeline", "control_image"
+            ),
+            "requiredImages": ["controlImage"],
+            "note": "Requires one control image and the immutable Canny ControlNet component.",
+        },
+        "control_inpaint": {
+            "modelRequirements": studio_model_requirements_for_pair(
+                "StableDiffusionPAGPipeline", "control_inpaint"
+            ),
+            "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+            "note": (
+                "Requires one source image, one mask, one control image, "
+                "and the immutable Canny ControlNet component."
+            ),
         },
     },
     "executionStatus": "expert_only",
@@ -9621,6 +10100,38 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag:inpaint:v1"] = {
     "roles": _INPAINT_GRAPH_ROLES,
     "edges": _INPAINT_GRAPH_EDGES,
     "bindings": _SD15_PAG_INPAINT_GRAPH_BINDINGS,
+}
+_PAG_CONTROLNET_PROFILE = {
+    **_PAG_PROFILE,
+    "id": "sd15-pag-controlnet-canny:direct",
+    "modes": ("control_image",),
+    "pipeline_class": "StableDiffusionControlNetPAGPipeline",
+    "live_proof": False,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag-controlnet-canny:control-image:v1"] = {
+    "modelType": "StableDiffusionPAGPipeline",
+    "mode": "control_image",
+    "profile": _PAG_CONTROLNET_PROFILE,
+    "capability": _PAG_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_GRAPH_EDGES,
+    "bindings": _PAG_CONDITIONED_CONTROL_GRAPH_BINDINGS,
+}
+_PAG_CONTROLNET_INPAINT_PROFILE = {
+    **_PAG_PROFILE,
+    "id": "sd15-pag-controlnet-canny:inpaint-direct",
+    "modes": ("control_inpaint",),
+    "pipeline_class": "StableDiffusionControlNetPAGInpaintPipeline",
+    "live_proof": False,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag-controlnet-canny:control-inpaint:v1"] = {
+    "modelType": "StableDiffusionPAGPipeline",
+    "mode": "control_inpaint",
+    "profile": _PAG_CONTROLNET_INPAINT_PROFILE,
+    "capability": _PAG_CAPABILITY,
+    "roles": _CONDITIONED_CONTROL_INPAINT_GRAPH_ROLES,
+    "edges": _CONDITIONED_CONTROL_INPAINT_GRAPH_EDGES,
+    "bindings": _PAG_CONDITIONED_CONTROL_INPAINT_GRAPH_BINDINGS,
 }
 
 _MARIGOLD_DEPTH_PROFILE = {
@@ -9990,10 +10501,22 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = 
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _EDIT_GRAPH_BINDINGS,
 }
+for _flux_combined_spec_id, _flux_combined_definition in _FLUX_COMBINED_CONTROL_DEFINITIONS.items():
+    _flux_control_family = _flux_combined_spec_id.split(":", 1)[0]
+    _flux_control_base = STUDIO_EXECUTION_SPEC_DEFINITIONS[
+        f"{_flux_control_family}:control-image:v1"
+    ]
+    _flux_combined_definition["capability"] = _flux_control_base["capability"]
+    _flux_combined_definition["autoRequirements"] = _flux_control_base["autoRequirements"]
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[_flux_combined_spec_id] = _flux_combined_definition
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",
+    "flux-canny:img2img-direct",
+    "flux-canny:inpaint-direct",
     "flux-depth:direct",
+    "flux-depth:img2img-direct",
+    "flux-depth:inpaint-direct",
     "flux-dev:direct",
     "flux-dev:img2img-direct",
     "flux-dev:inpaint-direct",
