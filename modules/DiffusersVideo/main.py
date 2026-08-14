@@ -7,6 +7,7 @@ Wan node keys remain registered separately for persisted workflows.
 
 from dataclasses import dataclass
 from functools import wraps
+import inspect
 import json
 import logging
 from math import isfinite
@@ -78,6 +79,20 @@ WAN_VACE_MAX_REFERENCE_PIXELS = 16 * 1024 * 1024
 def _value_or_default(mapping: dict[str, Any], key: str, default: Any):
     value = mapping.get(key)
     return default if value is None else value
+
+
+def _pipeline_accepts_keyword(pipeline: Any, keyword: str) -> bool:
+    """Inspect one exact pipeline call surface without guessing by model name."""
+
+    try:
+        parameters = inspect.signature(pipeline.__call__).parameters.values()
+    except (TypeError, ValueError) as error:
+        raise RuntimeError(
+            "The selected Diffusers video pipeline does not expose an inspectable call contract."
+        ) from error
+    return any(
+        parameter.name == keyword or parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters
+    )
 
 
 @dataclass(frozen=True)
@@ -295,6 +310,16 @@ VIDEO_PIPELINE_ADAPTERS = {
         diffusers_class="LTX2ConditionPipeline",
         default_repo="Lightricks/LTX-2",
         modes=("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
+        output_media=("video", "audio"),
+        max_prompt_tokens=1024,
+        default_audio_sample_rate=24000,
+    ),
+    "LTX2Pipeline": VideoPipelineAdapter(
+        id="ltx-2-text-to-video",
+        pipeline_class="LTX2Pipeline",
+        diffusers_class="LTX2Pipeline",
+        default_repo="Lightricks/LTX-2",
+        modes=("text_to_video",),
         output_media=("video", "audio"),
         max_prompt_tokens=1024,
         default_audio_sample_rate=24000,
@@ -549,6 +574,7 @@ VIDEO_MODE_FIELD_CONTRACTS = {
             "reference_images", "strength", "frame_rate", required_fields=("reference_images",)
         ),
     },
+    "LTX2Pipeline": {"text_to_video": _video_field_contract("frame_rate")},
     "HunyuanVideoFramepackPipeline": {
         "image_to_video": _video_field_contract(
             "reference_images",
@@ -624,6 +650,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "LTXConditionPipeline": "_load_ltx",
     "LTXI2VLongMultiPromptPipeline": "_load_ltx_long",
     "LTX2ConditionPipeline": "_load_ltx2",
+    "LTX2Pipeline": "_load_ltx2",
     "HunyuanVideoFramepackPipeline": "_load_framepack",
     "StableVideoDiffusionPipeline": "_load_stable_video_diffusion",
     "AnimateDiffPipeline": "_load_animatediff",
@@ -653,6 +680,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "LTXConditionPipeline": "_execute_ltx",
     "LTXI2VLongMultiPromptPipeline": "_execute_ltx_long",
     "LTX2ConditionPipeline": "_execute_ltx2",
+    "LTX2Pipeline": "_execute_ltx2",
     "HunyuanVideoFramepackPipeline": "_execute_framepack",
     "StableVideoDiffusionPipeline": "_execute_stable_video_diffusion",
     "AnimateDiffPipeline": "_execute_animatediff",
@@ -1669,8 +1697,12 @@ class LoadPipeline(WanVACELoadPipeline):
         return pipeline
 
     def _load_ltx2(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
-        from diffusers import LTX2ConditionPipeline
+        import diffusers
         from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        pipeline_class = getattr(diffusers, adapter.diffusers_class, None)
+        if pipeline_class is None or not callable(getattr(pipeline_class, "from_pretrained", None)):
+            raise RuntimeError(f"Diffusers does not expose the reviewed {adapter.diffusers_class} runtime class.")
 
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
@@ -1686,12 +1718,13 @@ class LoadPipeline(WanVACELoadPipeline):
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "revision": _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
             "local_files_only": local_files_only(model_id),
+            "use_safetensors": True,
             **recipe_load_kwargs,
         }
         if CONFIG.hf.get("cache_dir"):
             load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
-        self.progress(-1, phase="loading", message="Loading LTX-2 video and audio pipeline")
-        pipeline = LTX2ConditionPipeline.from_pretrained(model_id, **load_kwargs)
+        self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class} video and audio pipeline")
+        pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
         self.mm_add(pipeline, priority=2)
@@ -4198,13 +4231,24 @@ class Generate(WanVACEGenerate):
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         video = ensure_video_list(kwargs.get("video"), "video")
+        mask = ensure_video_list(kwargs.get("mask"), "mask")
         references = ensure_reference_images(kwargs.get("reference_images"))
+        if mask is not None:
+            raise ValueError("LTX-2 does not support the generic mask input.")
         if mode == "text_to_video" and (video is not None or references is not None):
             raise ValueError("LTX-2 text_to_video does not accept image or video conditions.")
         if mode in {"image_to_video", "reference_to_video"} and not references:
             raise ValueError(f"LTX-2 {mode} requires at least one reference image.")
         if mode == "video_to_video" and not video:
             raise ValueError("LTX-2 video_to_video requires a source video.")
+        _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens, family="LTX-2")
+        _validate_prompt_token_limit(
+            pipeline,
+            negative_prompt,
+            "negative prompt",
+            adapter.max_prompt_tokens,
+            family="LTX-2",
+        )
         width = int(kwargs.get("width") or 768)
         height = int(kwargs.get("height") or 512)
         _validate_ltx_dimensions(width, height)
@@ -4230,39 +4274,50 @@ class Generate(WanVACEGenerate):
             conditions = [LTX2VideoCondition(frames=video, index=0, strength=strength)]
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        call_kwargs = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "height": height,
+            "width": width,
+            "num_frames": num_frames,
+            "frame_rate": float(kwargs.get("frame_rate") or 24),
+            "num_inference_steps": int(kwargs.get("num_inference_steps") or 40),
+            "guidance_scale": float(_value_or_default(kwargs, "guidance_scale", 4)),
+            "generator": generator,
+            "output_type": kwargs.get("output_type") or "pil",
+            "return_dict": True,
+            "attention_kwargs": parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
+            "callback_on_step_end": self.pipe_callback,
+            "callback_on_step_end_tensor_inputs": callback_tensor_inputs(
+                kwargs.get("callback_on_step_end_tensor_inputs")
+            ),
+            "max_sequence_length": min(int(kwargs.get("max_sequence_length") or 1024), 1024),
+        }
+        accepts_conditions = _pipeline_accepts_keyword(pipeline, "conditions")
+        if conditions is not None and not accepts_conditions:
+            raise ValueError("The selected LTX-2 pipeline does not accept image or video conditions.")
+        if accepts_conditions:
+            call_kwargs["conditions"] = conditions
         self._active_pipeline = pipeline
         try:
-            result = pipeline(
-                conditions=conditions,
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                height=height,
-                width=width,
-                num_frames=num_frames,
-                frame_rate=float(kwargs.get("frame_rate") or 24),
-                num_inference_steps=int(kwargs.get("num_inference_steps") or 40),
-                guidance_scale=float(_value_or_default(kwargs, "guidance_scale", 4)),
-                generator=generator,
-                output_type=kwargs.get("output_type") or "pil",
-                return_dict=True,
-                attention_kwargs=parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
-                callback_on_step_end=self.pipe_callback,
-                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
-                    kwargs.get("callback_on_step_end_tensor_inputs")
-                ),
-                max_sequence_length=min(int(kwargs.get("max_sequence_length") or 1024), 1024),
-            )
+            result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
         frames = getattr(result, "frames", result)
         if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
             frames = frames[0]
+        # Exact 90b4 LTX2PipelineOutput owns the singular `audio` field. Keep
+        # the plural fallback only for already-resident older runtime objects;
+        # new exact profiles and tests exercise `audio`.
+        raw_audio = getattr(result, "audio", None)
+        if raw_audio is None:
+            raw_audio = getattr(result, "audios", None)
         return {
             "video_out": frames,
             "width_out": width,
             "height_out": height,
             "frames_out": len(frames) if isinstance(frames, list) else num_frames,
-            "_audio": getattr(result, "audios", None),
+            "_audio": raw_audio,
         }
 
 

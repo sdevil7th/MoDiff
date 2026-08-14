@@ -135,6 +135,7 @@ class ImagePipelineAdapter:
     guidance_parameter: str | None = "guidance_scale"
     image_guidance_parameter: str | None = "image_guidance_scale"
     ignored_generation_parameters: frozenset[str] = frozenset()
+    rejected_input_fields: tuple[str, ...] = ()
     multi_image_strategy: str = "list"
     image_parameter: str = "image"
     reference_prompt_placeholders: bool = False
@@ -208,6 +209,11 @@ class ImagePipelineAdapter:
         unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale"}
         if unsupported_ignored:
             raise ValueError("Image adapters can ignore only reviewed no-op generation parameters.")
+        if (
+            len(self.rejected_input_fields) != len(set(self.rejected_input_fields))
+            or any(not isinstance(field, str) or not field or field != field.strip() for field in self.rejected_input_fields)
+        ):
+            raise ValueError("Rejected image input fields must be unique nonblank strings.")
         if self.weight_variant is not None and self.weight_variant != "fp16":
             raise ValueError("Only the reviewed fp16 image weight variant is supported.")
         component_names = [name for name, _dtype in self.component_dtype_overrides]
@@ -822,6 +828,30 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_inference_steps=40,
         max_output_side=1024,
         max_sequence_length=512,
+    ),
+    "ChromaImg2ImgPipeline": ImagePipelineAdapter(
+        "ChromaImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        CHROMA1_HD_REPO,
+        artifact_pipeline_classes=("ChromaPipeline", "ChromaImg2ImgPipeline"),
+        safe_serialization_required=True,
+        max_inference_steps=40,
+        max_output_side=1024,
+        max_sequence_length=512,
+    ),
+    "ChromaInpaintPipeline": ImagePipelineAdapter(
+        "ChromaInpaintPipeline",
+        frozenset({"inpaint", "outpaint"}),
+        CHROMA1_HD_REPO,
+        artifact_pipeline_classes=("ChromaPipeline", "ChromaInpaintPipeline"),
+        safe_serialization_required=True,
+        max_inference_steps=40,
+        max_output_side=1024,
+        max_sequence_length=512,
+        # The exact 90b4 source declares true_cfg_scale but never reads it.
+        # Keep the generic, functioning guidance_scale contract and reject a
+        # stale graph that tries to target the inert upstream parameter.
+        rejected_input_fields=("true_cfg_scale",),
     ),
     "CogView3PlusPipeline": ImagePipelineAdapter(
         "CogView3PlusPipeline",
@@ -1547,6 +1577,13 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "ChromaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "ChromaImg2ImgPipeline": {
+        "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE),
+    },
+    "ChromaInpaintPipeline": {
+        mode: _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE)
+        for mode in ("inpaint", "outpaint")
     },
     "CogView3PlusPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
@@ -2420,6 +2457,13 @@ def preflight_image_action(
     if pipeline is None:
         raise ValueError("Diffusers image pipeline is required.")
     adapter = validate_image_action(pipeline, action)
+    rejected_fields = [field for field in adapter.rejected_input_fields if field in kwargs]
+    if rejected_fields:
+        names = ", ".join(rejected_fields)
+        raise ValueError(
+            f"{adapter.pipeline_class} rejects stale or inert upstream input field(s): {names}. "
+            "Use only the backend-owned generic image contract."
+        )
     values = dict(kwargs)
     values["pipeline"] = pipeline
     values["prompt"] = _normalized_image_prompt(values.get("prompt"), field="prompt")
