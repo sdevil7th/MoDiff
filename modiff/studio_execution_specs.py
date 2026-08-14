@@ -394,7 +394,23 @@ QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
+DDPM_CIFAR10_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.safetensors",
+    "model_index.json",
+    "scheduler_config.json",
+]
 CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
+CONSISTENCY_IMAGENET64_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.safetensors",
+]
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
     ("AnimateDiffPipeline", "text_to_video"): (
@@ -5104,6 +5120,7 @@ def _unconditional_capability(
     label: str,
     family: str,
     repo: str,
+    download_files: list[str],
     *,
     side: int,
     steps: int,
@@ -5118,6 +5135,7 @@ def _unconditional_capability(
         "qualifiedModes": [],
         "defaultRepo": repo,
         "artifactLabel": "Diffusers unconditional image repo",
+        "downloadFiles": download_files,
         "defaultDtype": "float32",
         "defaultSize": {"width": side, "height": side, "aspectRatio": "1:1"},
         "recommendedSteps": steps,
@@ -5165,6 +5183,7 @@ _P3_UNCONDITIONAL_DEFINITIONS = (
         "DDPM CIFAR-10 32x32",
         "DDPM",
         DDPM_CIFAR10_REPO,
+        DDPM_CIFAR10_DIFFUSERS_FILES,
         32,
         1000,
     ),
@@ -5175,6 +5194,7 @@ _P3_UNCONDITIONAL_DEFINITIONS = (
         "DDIM CIFAR-10 32x32",
         "DDIM",
         DDPM_CIFAR10_REPO,
+        DDPM_CIFAR10_DIFFUSERS_FILES,
         32,
         50,
     ),
@@ -5185,6 +5205,7 @@ _P3_UNCONDITIONAL_DEFINITIONS = (
         "Consistency Model ImageNet 64x64",
         "Consistency Models",
         CONSISTENCY_IMAGENET64_REPO,
+        CONSISTENCY_IMAGENET64_DIFFUSERS_FILES,
         64,
         1,
     ),
@@ -5200,6 +5221,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
                 label,
                 family,
                 repo,
+                download_files,
                 side=side,
                 steps=steps,
             ),
@@ -5207,7 +5229,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "edges": _UNCONDITIONAL_GRAPH_EDGES,
             "bindings": _UNCONDITIONAL_GRAPH_BINDINGS,
         }
-        for spec_id, profile_id, pipeline_class, label, family, repo, side, steps in _P3_UNCONDITIONAL_DEFINITIONS
+        for spec_id, profile_id, pipeline_class, label, family, repo, download_files, side, steps in _P3_UNCONDITIONAL_DEFINITIONS
     }
 )
 

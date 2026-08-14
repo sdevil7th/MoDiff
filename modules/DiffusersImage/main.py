@@ -320,18 +320,21 @@ IMAGE_PIPELINE_ADAPTERS = {
         "DDPMPipeline",
         frozenset({"unconditional_image"}),
         DDPM_CIFAR10_REPO,
+        safe_serialization_required=True,
     ),
     "DDIMPipeline": ImagePipelineAdapter(
         "DDIMPipeline",
         frozenset({"unconditional_image"}),
         DDPM_CIFAR10_REPO,
         unconditional_optional_fields=("eta",),
+        safe_serialization_required=True,
     ),
     "ConsistencyModelPipeline": ImagePipelineAdapter(
         "ConsistencyModelPipeline",
         frozenset({"unconditional_image"}),
         CONSISTENCY_IMAGENET64_REPO,
         unconditional_optional_fields=("class_label",),
+        safe_serialization_required=True,
     ),
     "QwenImagePipeline": ImagePipelineAdapter(
         "QwenImagePipeline",

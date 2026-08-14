@@ -386,6 +386,16 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "google/ddpm-cifar10-32": (
+                "267b167dc01f0e4e61923ea244e8b988f84deb80",
+                6,
+                "diffusion_pytorch_model.bin",
+            ),
+            "openai/diffusers-cd_imagenet64_l2": (
+                "5f462e4403fc37b72ec6004e806c71805db22387",
+                6,
+                "unet/diffusion_pytorch_model.bin",
+            ),
             "openai/whisper-tiny": (
                 "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
                 13,
