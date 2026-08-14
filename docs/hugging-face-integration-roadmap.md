@@ -5551,6 +5551,30 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   295,904,744,282 queued reservation bytes, and the 68,719,476,736-byte safety
   reserve intact, so no POST or deletion occurred. All excluded cached files
   remain available for preview regression testing.
+- [x] **P6.74 Bound the shared SD1.5 image/video download union and image-loader
+  serialization:** backend `896a723` binds the common immutable SD1.5 base to
+  the exact 21-file / 8,223,292,159-byte union required by both admitted loader
+  families. Generic image, edit, inpaint, ControlNet, and PAG routes use the
+  float32 safetensors components, while AnimateDiff and AnimateLCM explicitly
+  use the matching fp16 variants; both are retained alongside shared
+  tokenizer, scheduler, feature-extractor, configs, model index, card, and
+  attribute receipts. The allowlist excludes legacy pickle weights, the unused
+  non-EMA UNet, single-file checkpoints, and inference YAML: 39,036,647,490
+  bytes from the 47,259,939,649-byte repository tree. All five generic image
+  adapters now explicitly require safe serialization; the two video loaders
+  already did so.
+
+  App plan and POST regressions bind every SD1.5-backed capability to one
+  identical allowlist, while a focused shared-artifact regression requires
+  both precision variants and rejects all pickle, checkpoint, non-EMA, and
+  YAML surfaces. The capability, app, SD1.5, image-loader, and video-loader
+  matrix passes 325 tests, five optional-runtime skips, and 1,126 subtests;
+  pinned Ruff E9/F, 66-package compatibility, and diff checks pass. A fresh
+  exact app plan found the float32 files complete and 2,740,639,959 fp16 bytes
+  remaining; with 374,465,064,960 free bytes, 295,904,744,282 queued reservation
+  bytes, and the 68,719,476,736-byte safety reserve, the repair fit and was
+  submitted through the app. It remains governed by the existing transfer
+  queue; no older SD1.5 artifact was deleted.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6822,4 +6846,5 @@ Add references only after the corresponding evidence exists.
 | P6.71 Bounded FLUX.2 Klein component download and loader serialization | `80f7369` | Not required | Exact immutable app plan and prior local live smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 15,980,152,900-byte component selection excludes the 7,751,105,712-byte native duplicate and demo images while making both generic Klein loaders safetensors-only. The selected files are already complete in the preserved cache, so no POST or deletion occurred. |
 | P6.72 Bounded primary FLUX.1 component downloads and loader serialization | `274b158` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 25/26/26-file component selections for schnell, dev, and Krea total 101,218,748,600 bytes and exclude 72,409,924,695 logical bytes of native checkpoints, root autoencoders, and demos while making all three shared loaders safetensors-only. Every selected file is already complete in the preserved caches, so no POST or deletion occurred. |
 | P6.73 Bounded conditioned FLUX.1 component downloads and loader serialization | `d39bfe2` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28/28/26/26-file component selections for Depth, Canny, Fill, and Kontext total 155,032,793,063 bytes and exclude 96,561,961,318 logical bytes of native checkpoints, root autoencoders, and demo media while making all four loader paths safetensors-only. Every selected file is already complete in the preserved caches, so no POST or deletion occurred. |
+| P6.74 Bounded shared SD1.5 image/video download union and image-loader serialization | `896a723` | Not required | Exact immutable app plan plus prior local image/video smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 8,223,292,159-byte union covers the float32 image/PAG routes and fp16 AnimateDiff/AnimateLCM routes, excludes 39,036,647,490 bytes of pickle, non-EMA, single-file, and YAML surfaces, and makes all five image adapters safetensors-only. A fresh fitting plan preceded the app-only 2,740,639,959-byte fp16 completion request, with no deletion. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
