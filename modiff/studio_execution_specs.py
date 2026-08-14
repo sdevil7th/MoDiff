@@ -1718,6 +1718,47 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageControlNetPipeline", "control_i
     ]
 )
 
+for _animatediff_model_type, _animatediff_mode, _uses_controlnet in (
+    ("AnimateDiffPAGPipeline", "text_to_video", False),
+    ("AnimateDiffVideoToVideoPipeline", "video_to_video", False),
+    ("AnimateDiffControlNetPipeline", "control_to_video", True),
+    (
+        "AnimateDiffVideoToVideoControlNetPipeline",
+        "control_video_to_video",
+        True,
+    ),
+):
+    _animatediff_requirements = [
+        {
+            **deepcopy(_requirement),
+            "requiredForModes": [_animatediff_mode],
+            "description": (
+                f"Required by the generic {_animatediff_model_type} "
+                f"{_animatediff_mode.replace('_', ' ')} workflow."
+            ),
+        }
+        for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+            ("AnimateDiffPipeline", "text_to_video")
+        ]
+    ]
+    if _uses_controlnet:
+        _animatediff_requirements.extend(
+            {
+                **deepcopy(_requirement),
+                "requiredForModes": [_animatediff_mode],
+                "description": (
+                    f"Required by the generic {_animatediff_model_type} "
+                    f"{_animatediff_mode.replace('_', ' ')} workflow."
+                ),
+            }
+            for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+                ("StableDiffusionPipeline", "control_image")
+            ]
+        )
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+        (_animatediff_model_type, _animatediff_mode)
+    ] = tuple(_animatediff_requirements)
+
 for _control_model_type, _source_model_type, _control_modes in (
     (
         "StableDiffusionPipeline",
@@ -2758,6 +2799,56 @@ _VACE_CONTROL_GRAPH_BINDINGS = _WAN_VACE_GRAPH_BINDINGS + (
     ("normalizeVideo", "height", "height"),
     ("normalizeVideo", "num_frames", "numFrames"),
 )
+_ANIMATEDIFF_CONTROL_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
+    ("loadControlVideo", "modules.Video.Load", -520, 260),
+    (
+        "normalizeControlVideo",
+        "modules.VideoConditioning.Normalize",
+        -160,
+        260,
+    ),
+    (
+        "controlPreprocessor",
+        "modules.VideoConditioning.EdgePreprocessor",
+        220,
+        260,
+    ),
+)
+_ANIMATEDIFF_CONTROL_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (
+    ("loadControlVideo", "video", "normalizeControlVideo", "video"),
+    (
+        "normalizeControlVideo",
+        "output",
+        "controlPreprocessor",
+        "video",
+    ),
+    ("controlPreprocessor", "output", "wanGenerate", "control_video"),
+)
+_ANIMATEDIFF_CONTROL_V2V_GRAPH_ROLES = _V2V_GRAPH_ROLES + (
+    ("loadControlVideo", "modules.Video.Load", -520, 520),
+    (
+        "normalizeControlVideo",
+        "modules.VideoConditioning.Normalize",
+        -160,
+        520,
+    ),
+    (
+        "controlPreprocessor",
+        "modules.VideoConditioning.EdgePreprocessor",
+        220,
+        520,
+    ),
+)
+_ANIMATEDIFF_CONTROL_V2V_GRAPH_EDGES = _V2V_GRAPH_EDGES + (
+    ("loadControlVideo", "video", "normalizeControlVideo", "video"),
+    (
+        "normalizeControlVideo",
+        "output",
+        "controlPreprocessor",
+        "video",
+    ),
+    ("controlPreprocessor", "output", "wanGenerate", "control_video"),
+)
 _LTX_T2V_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -2849,6 +2940,50 @@ _ANIMATEDIFF_GRAPH_BINDINGS = tuple(
     ("wanPipeline", "motion_adapter_id", "repo"),
     ("wanPipeline", "motion_adapter_revision", "revision"),
 )
+_ANIMATEDIFF_DIRECT_GRAPH_BINDINGS = tuple(
+    (
+        role,
+        param,
+        "motionAdapterRepo"
+        if (role, param) == ("wanPipeline", "motion_adapter_id")
+        else "motionAdapterRevision"
+        if (role, param) == ("wanPipeline", "motion_adapter_revision")
+        else source,
+    )
+    for role, param, source in _ANIMATEDIFF_GRAPH_BINDINGS
+)
+_ANIMATEDIFF_PAG_GRAPH_BINDINGS = _ANIMATEDIFF_DIRECT_GRAPH_BINDINGS + (
+    ("wanGenerate", "pag_scale", "pagScale"),
+    ("wanGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
+_ANIMATEDIFF_V2V_GRAPH_BINDINGS = _ANIMATEDIFF_DIRECT_GRAPH_BINDINGS + (
+    ("loadVideo", "file", "sourceVideo"),
+    ("normalizeVideo", "width", "width"),
+    ("normalizeVideo", "height", "height"),
+    ("normalizeVideo", "num_frames", "numFrames"),
+)
+_ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS = (
+    ("loadControlVideo", "file", "controlVideo"),
+    ("normalizeControlVideo", "width", "width"),
+    ("normalizeControlVideo", "height", "height"),
+    ("normalizeControlVideo", "num_frames", "numFrames"),
+    (
+        "controlPreprocessor",
+        "low_threshold",
+        "videoCannyLowThreshold100",
+    ),
+    (
+        "controlPreprocessor",
+        "high_threshold",
+        "videoCannyHighThreshold200",
+    ),
+)
+_ANIMATEDIFF_CONTROL_GRAPH_BINDINGS = (
+    _ANIMATEDIFF_DIRECT_GRAPH_BINDINGS + _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS
+)
+_ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS = (
+    _ANIMATEDIFF_V2V_GRAPH_BINDINGS + _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS
+)
 _COGVIDEOX_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -2874,6 +3009,12 @@ _COGVIDEOX_GRAPH_BINDINGS = tuple(
     )
     for role, param, source in _VIDEO_REVISION_GRAPH_BINDINGS
     if not (role == "wanGenerate" and param == "scheduler_flow_shift")
+)
+_COGVIDEOX_V2V_GRAPH_BINDINGS = _COGVIDEOX_GRAPH_BINDINGS + (
+    ("loadVideo", "file", "sourceVideo"),
+    ("normalizeVideo", "width", "width"),
+    ("normalizeVideo", "height", "height"),
+    ("normalizeVideo", "num_frames", "numFrames"),
 )
 _SANA_VIDEO_I2V_GRAPH_BINDINGS = tuple(
     (
@@ -3348,6 +3489,11 @@ _BINDING_SOURCES = frozenset(
         *_VACE_INPAINT_GRAPH_BINDINGS,
         *_VACE_OUTPAINT_GRAPH_BINDINGS,
         *_VACE_CONTROL_GRAPH_BINDINGS,
+        *_ANIMATEDIFF_PAG_GRAPH_BINDINGS,
+        *_ANIMATEDIFF_V2V_GRAPH_BINDINGS,
+        *_ANIMATEDIFF_CONTROL_GRAPH_BINDINGS,
+        *_ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS,
+        *_COGVIDEOX_V2V_GRAPH_BINDINGS,
         *_LTX_T2V_GRAPH_BINDINGS,
         *_LTX_I2V_GRAPH_BINDINGS,
         *_LTX_V2V_GRAPH_BINDINGS,
@@ -6422,6 +6568,63 @@ def _animatediff_capability(model_type: str, *, lcm: bool) -> dict[str, Any]:
     }
 
 
+def _animatediff_extended_capability(
+    model_type: str,
+    mode: str,
+    *,
+    required_videos: tuple[str, ...] = (),
+    controlnet: bool = False,
+    pag: bool = False,
+) -> dict[str, Any]:
+    capability = deepcopy(_animatediff_capability("AnimateDiffPipeline", lcm=False))
+    suffix = {
+        "AnimateDiffPAGPipeline": " + PAG",
+        "AnimateDiffVideoToVideoPipeline": " video-to-video",
+        "AnimateDiffControlNetPipeline": " + ControlNet",
+        "AnimateDiffVideoToVideoControlNetPipeline": " video-to-video + ControlNet",
+    }[model_type]
+    requirements = studio_model_requirements_for_pair(model_type, mode)
+    mode_requirements: dict[str, Any] = {
+        "modelRequirements": requirements,
+        "note": (
+            "Uses the exact AnimateDiff SD1.5 v2 motion module"
+            + (" and pinned SD1.5 Canny ControlNet" if controlnet else "")
+            + "."
+        ),
+    }
+    if required_videos:
+        mode_requirements["requiredVideos"] = list(required_videos)
+    capability.update(
+        {
+            "modelType": model_type,
+            "label": f"AnimateDiff SD1.5 v2{suffix}",
+            "displayName": f"AnimateDiff motion adapter v1.5.2{suffix}",
+            "artifactLabel": (
+                "SD1.5 safetensors base plus pinned fp16 safetensors motion adapter"
+                + (" and pinned safetensors Canny ControlNet" if controlnet else "")
+            ),
+            "supportsVideoInput": bool(required_videos),
+            "modes": [mode],
+            "modeRequirements": {mode: mode_requirements},
+            "additionalRequirements": requirements,
+            "liveProof": False,
+        }
+    )
+    if mode in {"video_to_video", "control_video_to_video"}:
+        capability["recommendedStrength"] = 0.8
+    if controlnet:
+        capability["conditioningScale"] = 1.0
+    if pag:
+        capability["recommendedPagScale"] = 3.0
+        capability["recommendedPagAdaptiveScale"] = 0.0
+    capability["notes"] = [
+        "The SD1.5 base, motion adapter, and any ControlNet component are pinned independently and load only safetensors weights.",
+        "The motion repository does not declare a weight license; users must establish authorization before use.",
+        "Auto and Gallery publication remain disabled until exact remote runtime, quality, and rights proof is reviewed.",
+    ]
+    return capability
+
+
 def _cogvideox_capability() -> dict[str, Any]:
     return {
         "modelType": "CogVideoXPipeline",
@@ -6483,6 +6686,33 @@ def _cogvideox_capability() -> dict[str, Any]:
             "Auto and Gallery publication remain disabled until exact remote runtime and quality proof is reviewed.",
         ],
     }
+
+
+def _cogvideox_v2v_capability() -> dict[str, Any]:
+    capability = deepcopy(_cogvideox_capability())
+    capability.update(
+        {
+            "modelType": "CogVideoXVideoToVideoPipeline",
+            "label": "CogVideoX-2B Video-to-Video",
+            "displayName": "CogVideoX-2B Video-to-Video",
+            "supportsVideoInput": True,
+            "modes": ["video_to_video"],
+            "modeRequirements": {
+                "video_to_video": {
+                    "requiredVideos": ["sourceVideo"],
+                    "note": "Uses one normalized source video with the exact CogVideoX-2B safetensors snapshot.",
+                }
+            },
+            "recommendedStrength": 0.8,
+            "liveProof": False,
+        }
+    )
+    capability["notes"] = [
+        "The admitted source graph is bounded to 9-25 frames in 4k+1 form at the native 720x480 size.",
+        "The source video is normalized before the standard Diffusers video-to-video route.",
+        "Auto and Gallery publication remain disabled until exact remote runtime and quality proof is reviewed.",
+    ]
+    return capability
 
 
 def _allegro_capability() -> dict[str, Any]:
@@ -6782,6 +7012,34 @@ _P2_VIDEO_PROFILES = {
         "AnimateDiffPipeline",
         SD15_BASE_REPO,
     ),
+    "animatediff-pag": _planning_video_profile(
+        "animatediff-sd15-v2-pag:direct",
+        "AnimateDiffPAGPipeline",
+        ("text_to_video",),
+        "AnimateDiffPAGPipeline",
+        SD15_BASE_REPO,
+    ),
+    "animatediff-video-to-video": _planning_video_profile(
+        "animatediff-sd15-v2-video-to-video:direct",
+        "AnimateDiffVideoToVideoPipeline",
+        ("video_to_video",),
+        "AnimateDiffVideoToVideoPipeline",
+        SD15_BASE_REPO,
+    ),
+    "animatediff-controlnet": _planning_video_profile(
+        "animatediff-sd15-v2-controlnet:direct",
+        "AnimateDiffControlNetPipeline",
+        ("control_to_video",),
+        "AnimateDiffControlNetPipeline",
+        SD15_BASE_REPO,
+    ),
+    "animatediff-controlnet-video-to-video": _planning_video_profile(
+        "animatediff-sd15-v2-controlnet-video-to-video:direct",
+        "AnimateDiffVideoToVideoControlNetPipeline",
+        ("control_video_to_video",),
+        "AnimateDiffVideoToVideoControlNetPipeline",
+        SD15_BASE_REPO,
+    ),
     "animatelcm": _planning_video_profile(
         "animatelcm-sd15:direct",
         "AnimateLCMPipeline",
@@ -6794,6 +7052,13 @@ _P2_VIDEO_PROFILES = {
         "CogVideoXPipeline",
         ("text_to_video",),
         "CogVideoXPipeline",
+        COGVIDEOX_2B_REPO,
+    ),
+    "cogvideox-2b-video-to-video": _planning_video_profile(
+        "cogvideox-2b-video-to-video:direct",
+        "CogVideoXVideoToVideoPipeline",
+        ("video_to_video",),
+        "CogVideoXVideoToVideoPipeline",
         COGVIDEOX_2B_REPO,
     ),
     "allegro": _planning_video_profile(
@@ -7028,6 +7293,62 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _ANIMATEDIFF_GRAPH_BINDINGS,
         },
+        "animatediff-pag:text-to-video:v1": {
+            "modelType": "AnimateDiffPAGPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["animatediff-pag"],
+            "capability": _animatediff_extended_capability(
+                "AnimateDiffPAGPipeline",
+                "text_to_video",
+                pag=True,
+            ),
+            "roles": _VIDEO_GRAPH_ROLES,
+            "edges": _VIDEO_GRAPH_EDGES,
+            "bindings": _ANIMATEDIFF_PAG_GRAPH_BINDINGS,
+        },
+        "animatediff-video-to-video:video-to-video:v1": {
+            "modelType": "AnimateDiffVideoToVideoPipeline",
+            "mode": "video_to_video",
+            "profile": _P2_VIDEO_PROFILES["animatediff-video-to-video"],
+            "capability": _animatediff_extended_capability(
+                "AnimateDiffVideoToVideoPipeline",
+                "video_to_video",
+                required_videos=("sourceVideo",),
+            ),
+            "roles": _V2V_GRAPH_ROLES,
+            "edges": _V2V_GRAPH_EDGES,
+            "bindings": _ANIMATEDIFF_V2V_GRAPH_BINDINGS,
+        },
+        "animatediff-controlnet:control-to-video:v1": {
+            "modelType": "AnimateDiffControlNetPipeline",
+            "mode": "control_to_video",
+            "profile": _P2_VIDEO_PROFILES["animatediff-controlnet"],
+            "capability": _animatediff_extended_capability(
+                "AnimateDiffControlNetPipeline",
+                "control_to_video",
+                required_videos=("controlVideo",),
+                controlnet=True,
+            ),
+            "roles": _ANIMATEDIFF_CONTROL_GRAPH_ROLES,
+            "edges": _ANIMATEDIFF_CONTROL_GRAPH_EDGES,
+            "bindings": _ANIMATEDIFF_CONTROL_GRAPH_BINDINGS,
+        },
+        "animatediff-controlnet-video-to-video:control-video-to-video:v1": {
+            "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
+            "mode": "control_video_to_video",
+            "profile": _P2_VIDEO_PROFILES[
+                "animatediff-controlnet-video-to-video"
+            ],
+            "capability": _animatediff_extended_capability(
+                "AnimateDiffVideoToVideoControlNetPipeline",
+                "control_video_to_video",
+                required_videos=("sourceVideo", "controlVideo"),
+                controlnet=True,
+            ),
+            "roles": _ANIMATEDIFF_CONTROL_V2V_GRAPH_ROLES,
+            "edges": _ANIMATEDIFF_CONTROL_V2V_GRAPH_EDGES,
+            "bindings": _ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS,
+        },
         "animatelcm:text-to-video:v1": {
             "modelType": "AnimateLCMPipeline",
             "mode": "text_to_video",
@@ -7045,6 +7366,15 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+        },
+        "cogvideox-2b-video-to-video:video-to-video:v1": {
+            "modelType": "CogVideoXVideoToVideoPipeline",
+            "mode": "video_to_video",
+            "profile": _P2_VIDEO_PROFILES["cogvideox-2b-video-to-video"],
+            "capability": _cogvideox_v2v_capability(),
+            "roles": _V2V_GRAPH_ROLES,
+            "edges": _V2V_GRAPH_EDGES,
+            "bindings": _COGVIDEOX_V2V_GRAPH_BINDINGS,
         },
         "allegro:text-to-video:v1": {
             "modelType": "AllegroPipeline",

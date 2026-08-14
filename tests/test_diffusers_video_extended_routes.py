@@ -1,3 +1,6 @@
+import ast
+import hashlib
+from pathlib import Path
 import sys
 import unittest
 from types import SimpleNamespace
@@ -5,6 +8,7 @@ from unittest.mock import MagicMock, patch
 
 from PIL import Image
 
+from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 from modules.DiffusersVideo import Generate, LoadPipeline
 from modules.DiffusersVideo.main import (
     ANIMATEDIFF_BASE_REPO,
@@ -25,6 +29,50 @@ ANIMATEDIFF_EXTENDED_ROUTES = (
     ("AnimateDiffVideoToVideoPipeline", "video_to_video", False),
     ("AnimateDiffControlNetPipeline", "control_to_video", True),
     ("AnimateDiffVideoToVideoControlNetPipeline", "control_video_to_video", True),
+)
+UPSTREAM_PIPELINE_SOURCES = (
+    (
+        "pipelines/pag/pipeline_pag_sd_animatediff.py",
+        "AnimateDiffPAGPipeline",
+        "d9605b43ba0f33046289d08b679a085074152e87c06f8e49f7e2c8f0528462fe",
+        {"prompt", "num_frames", "pag_scale", "pag_adaptive_scale"},
+    ),
+    (
+        "pipelines/animatediff/pipeline_animatediff_video2video.py",
+        "AnimateDiffVideoToVideoPipeline",
+        "8863ad938101c7bc3b7cb282f38b624ce3335ca80eb7cc70e58763eb758fb462",
+        {"video", "prompt", "strength", "enforce_inference_steps"},
+    ),
+    (
+        "pipelines/animatediff/pipeline_animatediff_controlnet.py",
+        "AnimateDiffControlNetPipeline",
+        "1259f90db01892213c538af3774aca423981aeb0e531b8bf05fe776403f2641c",
+        {
+            "prompt",
+            "num_frames",
+            "conditioning_frames",
+            "controlnet_conditioning_scale",
+        },
+    ),
+    (
+        "pipelines/animatediff/pipeline_animatediff_video2video_controlnet.py",
+        "AnimateDiffVideoToVideoControlNetPipeline",
+        "7e02f650cf690561e3ddc4c0148837ece0dc793e0c1137c3cdf6ed941d131cbb",
+        {
+            "video",
+            "prompt",
+            "strength",
+            "enforce_inference_steps",
+            "conditioning_frames",
+            "controlnet_conditioning_scale",
+        },
+    ),
+    (
+        "pipelines/cogvideo/pipeline_cogvideox_video2video.py",
+        "CogVideoXVideoToVideoPipeline",
+        "7c211c34fe2816a92fffc99a6aa1ec8f5899c77524d9774f52a538e1285f87fe",
+        {"video", "prompt", "strength", "max_sequence_length"},
+    ),
 )
 
 
@@ -49,6 +97,46 @@ class RecordingVideoPipeline:
 
 
 class DiffusersVideoExtendedRouteTests(unittest.TestCase):
+    def test_exact_pinned_upstream_sources_and_call_signatures_are_preserved(self):
+        import diffusers
+
+        self.assertEqual(
+            PINNED_DIFFUSERS_REVISION,
+            "90b4e34e79a86ec5e7f2437634fe95ecd2108796",
+        )
+        diffusers_root = Path(diffusers.__file__).resolve().parent
+        for relative_path, class_name, expected_digest, required_parameters in (
+            UPSTREAM_PIPELINE_SOURCES
+        ):
+            with self.subTest(pipeline=class_name):
+                source_path = diffusers_root / relative_path
+                self.assertTrue(source_path.is_file())
+                self.assertEqual(
+                    hashlib.sha256(source_path.read_bytes()).hexdigest(),
+                    expected_digest,
+                )
+                tree = ast.parse(source_path.read_text(encoding="utf-8"))
+                pipeline_node = next(
+                    node
+                    for node in tree.body
+                    if isinstance(node, ast.ClassDef) and node.name == class_name
+                )
+                call_node = next(
+                    node
+                    for node in pipeline_node.body
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and node.name == "__call__"
+                )
+                parameters = {
+                    argument.arg
+                    for argument in (
+                        *call_node.args.posonlyargs,
+                        *call_node.args.args,
+                        *call_node.args.kwonlyargs,
+                    )
+                }
+                self.assertTrue(required_parameters.issubset(parameters))
+
     def test_extended_routes_are_additive_exact_class_adapters_with_generic_modes(self):
         expected = {
             "AnimateDiffPAGPipeline": ("animatediff-pag", ("text_to_video",)),

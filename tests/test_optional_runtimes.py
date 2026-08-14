@@ -154,6 +154,11 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                 "QwenImageControlNetModel",
                 "QwenImageControlNetPipeline",
                 "QwenImageLayeredPipeline",
+                "AnimateDiffPAGPipeline",
+                "AnimateDiffVideoToVideoPipeline",
+                "AnimateDiffControlNetPipeline",
+                "AnimateDiffVideoToVideoControlNetPipeline",
+                "CogVideoXVideoToVideoPipeline",
             }.issubset(profile["requiredDiffusersSymbols"])
         )
         self.assertTrue(

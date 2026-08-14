@@ -73,6 +73,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "StableDiffusionXLAdapterPipeline",
             "control_image",
         )
+        animatediff_motion = studio_model_dependencies_for_pair(
+            "AnimateDiffPipeline",
+            "text_to_video",
+        )
 
         self.assertEqual(
             qwen,
@@ -120,6 +124,49 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 }
             ],
         )
+        self.assertEqual(
+            animatediff_motion,
+            [
+                {
+                    "id": "animatediff-motion-adapter-v1-5-2",
+                    "kind": "adapter",
+                    "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+                    "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906",
+                }
+            ],
+        )
+        for model_type, mode, expected_dependencies in (
+            ("AnimateDiffPAGPipeline", "text_to_video", animatediff_motion),
+            (
+                "AnimateDiffVideoToVideoPipeline",
+                "video_to_video",
+                animatediff_motion,
+            ),
+            (
+                "AnimateDiffControlNetPipeline",
+                "control_to_video",
+                animatediff_motion + sd15_controlnet,
+            ),
+            (
+                "AnimateDiffVideoToVideoControlNetPipeline",
+                "control_video_to_video",
+                animatediff_motion + sd15_controlnet,
+            ),
+        ):
+            with self.subTest(animatediff_dependency=(model_type, mode)):
+                self.assertEqual(
+                    studio_model_dependencies_for_pair(model_type, mode),
+                    expected_dependencies,
+                )
+                self.assertTrue(
+                    all(
+                        requirement["requiredForModes"] == [mode]
+                        for requirement in studio_model_requirements_for_pair(
+                            model_type,
+                            mode,
+                        )
+                    )
+                )
         for model_type, mode, expected_dependency in (
             ("StableDiffusionPipeline", "control_edit_image", sd15_controlnet),
             ("StableDiffusionPipeline", "control_inpaint", sd15_controlnet),
@@ -212,8 +259,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("HunyuanVideoFramepackPipeline", "image_to_video"),
                 ("StableVideoDiffusionPipeline", "image_to_video"),
                 ("AnimateDiffPipeline", "text_to_video"),
+                ("AnimateDiffPAGPipeline", "text_to_video"),
+                ("AnimateDiffVideoToVideoPipeline", "video_to_video"),
+                ("AnimateDiffControlNetPipeline", "control_to_video"),
+                (
+                    "AnimateDiffVideoToVideoControlNetPipeline",
+                    "control_video_to_video",
+                ),
                 ("AnimateLCMPipeline", "text_to_video"),
                 ("CogVideoXPipeline", "text_to_video"),
+                ("CogVideoXVideoToVideoPipeline", "video_to_video"),
                 ("AllegroPipeline", "text_to_video"),
                 ("LattePipeline", "text_to_video"),
                 ("MochiPipeline", "text_to_video"),
@@ -1562,6 +1617,134 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_extended_animatediff_and_cogvideox_routes_are_separate_expert_graphs(self):
+        cases = (
+            (
+                "AnimateDiffPAGPipeline",
+                "text_to_video",
+                "animatediff-pag:text-to-video:v1",
+                "animatediff-sd15-v2-pag:direct",
+                (),
+            ),
+            (
+                "AnimateDiffVideoToVideoPipeline",
+                "video_to_video",
+                "animatediff-video-to-video:video-to-video:v1",
+                "animatediff-sd15-v2-video-to-video:direct",
+                ("sourceVideo",),
+            ),
+            (
+                "AnimateDiffControlNetPipeline",
+                "control_to_video",
+                "animatediff-controlnet:control-to-video:v1",
+                "animatediff-sd15-v2-controlnet:direct",
+                ("controlVideo",),
+            ),
+            (
+                "AnimateDiffVideoToVideoControlNetPipeline",
+                "control_video_to_video",
+                "animatediff-controlnet-video-to-video:control-video-to-video:v1",
+                "animatediff-sd15-v2-controlnet-video-to-video:direct",
+                ("sourceVideo", "controlVideo"),
+            ),
+            (
+                "CogVideoXVideoToVideoPipeline",
+                "video_to_video",
+                "cogvideox-2b-video-to-video:video-to-video:v1",
+                "cogvideox-2b-video-to-video:direct",
+                ("sourceVideo",),
+            ),
+        )
+        for model_type, mode, spec_id, profile_id, required_videos in cases:
+            with self.subTest(pair=(model_type, mode)):
+                spec = studio_execution_spec_for_pair(model_type, mode)
+                self.assertEqual(spec["id"], spec_id)
+                self.assertEqual(spec["pipelineClass"], model_type)
+                self.assertEqual(spec["executionProfileId"], profile_id)
+                capability = STUDIO_MODEL_CAPABILITIES[model_type]
+                self.assertEqual(
+                    capability["modeRequirements"][mode].get(
+                        "requiredVideos",
+                        [],
+                    ),
+                    list(required_videos),
+                )
+                self.assertEqual(capability["executionStatus"], "expert_only")
+                self.assertEqual(
+                    capability["qualificationStatus"],
+                    "graph-qualified-execution-pending",
+                )
+                self.assertEqual(capability["qualifiedModes"], [])
+                self.assertFalse(capability["autoEligible"])
+                self.assertFalse(capability["galleryEligible"])
+                self.assertFalse(capability["liveProof"])
+                graph, hints = executable_graph_for_spec(spec)
+                assert_studio_execution_graph(graph, hints)
+
+        pag = studio_execution_spec_for_pair(
+            "AnimateDiffPAGPipeline",
+            "text_to_video",
+        )
+        self.assertIn(("wanGenerate", "pag_scale", "pagScale"), pag["bindings"])
+        self.assertIn(
+            ("wanGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
+            pag["bindings"],
+        )
+        control = studio_execution_spec_for_pair(
+            "AnimateDiffControlNetPipeline",
+            "control_to_video",
+        )
+        combined = studio_execution_spec_for_pair(
+            "AnimateDiffVideoToVideoControlNetPipeline",
+            "control_video_to_video",
+        )
+        for spec in (control, combined):
+            self.assertIn(
+                (
+                    "controlPreprocessor",
+                    "output",
+                    "wanGenerate",
+                    "control_video",
+                ),
+                spec["edges"],
+            )
+            self.assertIn(
+                (
+                    "controlPreprocessor",
+                    "low_threshold",
+                    "videoCannyLowThreshold100",
+                ),
+                spec["bindings"],
+            )
+            self.assertIn(
+                (
+                    "controlPreprocessor",
+                    "high_threshold",
+                    "videoCannyHighThreshold200",
+                ),
+                spec["bindings"],
+            )
+            self.assertIn(
+                ("wanPipeline", "motion_adapter_id", "motionAdapterRepo"),
+                spec["bindings"],
+            )
+            self.assertIn(
+                (
+                    "wanPipeline",
+                    "motion_adapter_revision",
+                    "motionAdapterRevision",
+                ),
+                spec["bindings"],
+            )
+        self.assertNotIn(
+            ("normalizeVideo", "output", "wanGenerate", "video"),
+            control["edges"],
+        )
+        self.assertIn(
+            ("normalizeVideo", "output", "wanGenerate", "video"),
+            combined["edges"],
+        )
 
     def test_allegro_seals_exact_safe_native_text_to_video_route(self):
         spec = studio_execution_spec_for_pair("AllegroPipeline", "text_to_video")

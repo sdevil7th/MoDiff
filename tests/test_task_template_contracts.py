@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 147)
+        self.assertEqual(len(self.contracts), 152)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -254,7 +254,24 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("LTX2ConditionPipeline", "video_to_video"): [("video", "sourceVideo")],
             ("HunyuanVideoFramepackPipeline", "image_to_video"): [("image", "referenceImages")],
             ("StableVideoDiffusionPipeline", "image_to_video"): [("image", "referenceImages")],
+            ("AnimateDiffPAGPipeline", "text_to_video"): [],
+            ("AnimateDiffVideoToVideoPipeline", "video_to_video"): [
+                ("video", "sourceVideo"),
+            ],
+            ("AnimateDiffControlNetPipeline", "control_to_video"): [
+                ("video", "controlVideo"),
+            ],
+            (
+                "AnimateDiffVideoToVideoControlNetPipeline",
+                "control_video_to_video",
+            ): [
+                ("video", "sourceVideo"),
+                ("video", "controlVideo"),
+            ],
             ("CogVideoXPipeline", "text_to_video"): [],
+            ("CogVideoXVideoToVideoPipeline", "video_to_video"): [
+                ("video", "sourceVideo"),
+            ],
             ("AllegroPipeline", "text_to_video"): [],
             ("LattePipeline", "text_to_video"): [],
             ("MochiPipeline", "text_to_video"): [],

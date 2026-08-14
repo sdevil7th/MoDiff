@@ -107,12 +107,32 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 ["text_to_video"],
                 "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
             ),
+            "AnimateDiffPAGPipeline": (
+                ["text_to_video"],
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            ),
+            "AnimateDiffVideoToVideoPipeline": (
+                ["video_to_video"],
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            ),
+            "AnimateDiffControlNetPipeline": (
+                ["control_to_video"],
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            ),
+            "AnimateDiffVideoToVideoControlNetPipeline": (
+                ["control_video_to_video"],
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            ),
             "AnimateLCMPipeline": (
                 ["text_to_video"],
                 "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
             ),
             "CogVideoXPipeline": (
                 ["text_to_video"],
+                "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01",
+            ),
+            "CogVideoXVideoToVideoPipeline": (
+                ["video_to_video"],
                 "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01",
             ),
             "AllegroPipeline": (
@@ -150,7 +170,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 147)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 152)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -173,7 +193,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "HunyuanVideoFramepackPipeline",
             "StableVideoDiffusionPipeline",
             "AnimateDiffPipeline",
+            "AnimateDiffPAGPipeline",
+            "AnimateDiffVideoToVideoPipeline",
+            "AnimateDiffControlNetPipeline",
+            "AnimateDiffVideoToVideoControlNetPipeline",
             "AnimateLCMPipeline",
+            "CogVideoXVideoToVideoPipeline",
             "AllegroPipeline",
             "LattePipeline",
             "MochiPipeline",
