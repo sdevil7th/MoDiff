@@ -576,6 +576,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 19,
                 "model.ckpt",
             ),
+            "ruixiangma/LongCat-AudioDiT-1B-Diffusers": (
+                "f4c063ea37f262ba5e6129ebd80095a6d6a9de4d",
+                13,
+                "text_encoder/pytorch_model.bin",
+            ),
             "stabilityai/stable-video-diffusion-img2vid-xt-1-1": (
                 "043843887ccd51926e3efed36270444a838e7861",
                 12,

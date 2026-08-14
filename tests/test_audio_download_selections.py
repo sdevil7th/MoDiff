@@ -2,12 +2,29 @@ import unittest
 
 from modiff.studio_execution_specs import (
     AUDIO_LDM2_DIFFUSERS_FILES,
+    LONGCAT_AUDIO_DIT_DIFFUSERS_FILES,
     STABLE_AUDIO_DIFFUSERS_FILES,
     studio_capability_definitions,
 )
 
 
 class AudioDownloadSelectionTests(unittest.TestCase):
+    def test_longcat_audio_selection_is_complete_and_safe(self):
+        selected = set(LONGCAT_AUDIO_DIT_DIFFUSERS_FILES)
+        capability = studio_capability_definitions()["LongCatAudioDiTPipeline"]
+
+        self.assertEqual(
+            capability["downloadFiles"],
+            LONGCAT_AUDIO_DIT_DIFFUSERS_FILES,
+        )
+        self.assertEqual(len(selected), 13)
+        self.assertIn("text_encoder/model.safetensors", selected)
+        self.assertIn("transformer/diffusion_pytorch_model.safetensors", selected)
+        self.assertIn("vae/diffusion_pytorch_model.safetensors", selected)
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
+
     def test_audioldm2_selection_excludes_every_legacy_pickle_duplicate(self):
         selected = set(AUDIO_LDM2_DIFFUSERS_FILES)
         capability = studio_capability_definitions()["AudioLDM2Pipeline"]

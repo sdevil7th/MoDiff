@@ -828,6 +828,21 @@ STABLE_AUDIO_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 LONGCAT_AUDIO_DIT_REPO = "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
+LONGCAT_AUDIO_DIT_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 AUDIO_LDM2_REPO = "cvssp/audioldm2"
 AUDIO_LDM2_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -4650,6 +4665,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "qualificationStatus": "graph-qualified-execution-pending",
             "qualifiedModes": [],
             "defaultRepo": LONGCAT_AUDIO_DIT_REPO,
+            "downloadFiles": LONGCAT_AUDIO_DIT_DIFFUSERS_FILES,
             "artifactLabel": "Reviewed Diffusers-format safetensors conversion",
             "defaultDtype": "bfloat16",
             "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
