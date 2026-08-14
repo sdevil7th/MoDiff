@@ -7,6 +7,7 @@ from modiff.studio_execution_specs import (
     COGVIDEOX_2B_DIFFUSERS_FILES,
     LATTE_DIFFUSERS_FILES,
     MOCHI_DIFFUSERS_FILES,
+    SANA_VIDEO_DIFFUSERS_FILES,
     STABLE_VIDEO_DIFFUSION_FP16_FILES,
     studio_capability_definitions,
 )
@@ -48,6 +49,27 @@ class VideoDownloadSelectionTests(unittest.TestCase):
         self.assertNotIn("vae/diffusion_pytorch_model.safetensors", selected)
         self.assertNotIn("svd_xt_1_1.safetensors", selected)
         self.assertNotIn("svd11.webp", selected)
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
+
+    def test_sana_video_selection_covers_both_safe_routes(self):
+        selected = set(SANA_VIDEO_DIFFUSERS_FILES)
+        capabilities = studio_capability_definitions()
+
+        self.assertEqual(len(selected), 20)
+        for model_type in ("SanaVideoPipeline", "SanaImageToVideoPipeline"):
+            with self.subTest(model_type=model_type):
+                self.assertEqual(
+                    capabilities[model_type]["downloadFiles"],
+                    SANA_VIDEO_DIFFUSERS_FILES,
+                )
+        self.assertIn("text_encoder/model.safetensors.index.json", selected)
+        self.assertIn(
+            "transformer/diffusion_pytorch_model.safetensors.index.json",
+            selected,
+        )
+        self.assertIn("vae/diffusion_pytorch_model.safetensors", selected)
         self.assertFalse(
             any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
         )

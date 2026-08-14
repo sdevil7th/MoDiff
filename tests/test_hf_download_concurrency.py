@@ -586,6 +586,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 17,
                 "README_zh.md",
             ),
+            "Efficient-Large-Model/SANA-Video_2B_480p_diffusers": (
+                "db5f398b13ca086d09a50ce156c20527773841b1",
+                20,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
             "rhymes-ai/Allegro": (
                 "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
                 18,

@@ -970,6 +970,28 @@ MOCHI_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.bf16.safetensors",
 ]
 SANA_VIDEO_REPO = "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
+SANA_VIDEO_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_DIFFUSERS_FILES = [
@@ -5464,6 +5486,7 @@ def _sana_video_capability(*, image_conditioned: bool) -> dict[str, Any]:
         "qualificationStatus": "graph-qualified-execution-pending",
         "qualifiedModes": [],
         "defaultRepo": SANA_VIDEO_REPO,
+        "downloadFiles": SANA_VIDEO_DIFFUSERS_FILES,
         "artifactLabel": "Official Apache-2.0 mixed-precision safetensors Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 832, "height": 480, "aspectRatio": "16:9"},
