@@ -3278,14 +3278,20 @@ Diffusers `torch_dtype` deprecation warning. Those skips do not constitute
 macOS evidence: the physical macOS qualifier remains pending, and the skipped
 contracts still run on a base-delivered or activated qualified runtime.
 
-Hosted-runner maintenance (2026-08-14): backend `6e08028` moves the manual
-optional-runtime qualifier and the ordinary backend CI matrix from GitHub's
-scheduled-for-deprecation macOS 14 image to the explicit macOS 15 ARM64
-standard runner. The qualifier remains manual-only and preserves its ARM64
-assertion, prospective clean-base diff, ready-preflight requirement, consented
-execution, and bounded 14-day evidence upload. Both workflow files parse as
-YAML; the focused installer/runtime regression passed `50 tests, 126 subtests`
-with Ruff E9/F, shell syntax, and diff checks green. This is source/static
+Hosted-runner maintenance (2026-08-14): backend `6e08028`, corrected by
+`11d58a9`, moves the manual optional-runtime qualifier and the ordinary backend
+CI matrix from GitHub's scheduled-for-deprecation macOS 14 image to the
+explicit macOS 15 ARM64 standard runner. The correction found that the
+qualifier's duplicated inline prospective-base patch still named an older
+Diffusers pin and no longer applied. The workflow now creates one exact patch,
+checks and applies that same byte sequence, and has a regression that actually
+runs `git apply --check` against the current project. It remains manual-only
+and preserves its ARM64 assertion, ready-preflight requirement, consented
+execution, and bounded 14-day evidence upload. Both workflows parse as YAML;
+the focused installer/runtime regression passed `50 tests, 126 subtests`, the
+new executable patch regression passes, and the complete backend gate passes
+`1687 tests, 40 skips, 3417 subtests` with Ruff E9/F, package compatibility,
+portable preflight, shell syntax, and diff checks green. This is source/static
 evidence only: the workflow has not run, no production flag changed, and the
 physical macOS gate remains unchecked.
 

@@ -396,11 +396,13 @@ cap. A fresh backend returned HTTP 200 for `/`, `/assets/index.js`, and
 
 `.github/workflows/qualify-optional-runtime-macos.yml` is the smallest pending
 hosted macOS proposal: it is `workflow_dispatch` only, asserts the explicit
-`macos-15` runner is ARM64, applies and uploads the two-dependency
-prospective-base diff, requires `status: ready`, runs the same consented
-qualifier, and uploads bounded evidence plus target context for 14 days. The
-workflow has not run. Its presence is not macOS evidence or permission to
-enable any production flag.
+`macos-15` runner is ARM64, creates one exact two-dependency prospective-base
+patch, verifies and applies that same patch, requires `status: ready`, runs the
+same consented qualifier, and uploads the resulting bounded diff, evidence,
+and target context for 14 days. A regression executes the patch check against
+the current project rather than only inspecting workflow text. The workflow
+has not run. Its presence is not macOS evidence or permission to enable any
+production flag.
 
 ## Runtime features
 
