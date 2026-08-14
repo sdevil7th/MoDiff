@@ -196,6 +196,12 @@ class ComfyTemplateResearchError(ValueError):
     """The checked-in research ledger or its source metadata is invalid."""
 
 
+def comfy_task_modes_for_tags(tags: Iterable[str]) -> tuple[str, ...]:
+    """Return deterministic task-mode evidence from official catalog tags."""
+
+    return tuple(sorted({_TASK_TAG_TO_MODE[tag] for tag in tags if tag in _TASK_TAG_TO_MODE}))
+
+
 def _string(value: Any, *, label: str) -> str:
     if not isinstance(value, str) or not value:
         raise ComfyTemplateResearchError(f"{label} must be a non-empty string.")
