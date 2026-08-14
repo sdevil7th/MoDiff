@@ -5239,7 +5239,7 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   - [x] **Wan Animate 2 pinned Modular contract closure:** backend `d31d5b6`
     and client `fc67a7f` register the two package exports that were absent from
     the reviewed contract snapshot at Diffusers
-    `bb56997d354a708303c263769a49753d10587555`:
+    `bb56997d4b7e87f0743f26a612f49ec4e7ce7213`:
     `WanAnimate2ModularPipeline` and
     `WanAnimate2DistilledModularPipeline`. Both are Expert-visible,
     contract-only video records with one generic `character_animate` workflow,
@@ -5262,6 +5262,34 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     downloaded, deleted, or generated for this slice. Artifact admission,
     real-weight remote execution, output review, and physical macOS evidence
     remain pending independently.
+  - [x] **Wan Animate 2 immutable artifact/source review:** backend `2b86e63`
+    seals the public, Python-free base
+    `Wan-AI/Wan2.2-Animate-2-14B-Diffusers@7d48412d7b903ff3a89f4f5a960d99e1899605a1`
+    and distilled
+    `Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers@59e4141466bcb1bf9733eca1bc78be6891c9fbdf`
+    snapshots. Each has 31 files and nine BF16 safetensors weights totaling
+    45,920,934,868 bytes; five shared image/text/VAE files account for
+    13,131,039,324 bytes, while the four 32,789,895,544-byte transformer
+    shards have distinct exact hashes. Both cards declare Apache-2.0 only in
+    metadata, include no license file, and provide no detailed usage or safety
+    guidance.
+
+    Admission remains contract-only for exact source reasons. Both standard
+    indexes name `WanAnimate2Pipeline`, which the pinned package does not
+    export. The matching Modular indexes name the reviewed base/distilled
+    classes but leave four component revisions null and point both scheduler
+    and transformer at mutable `refs/pr/2` or `refs/pr/1` references. The
+    package generation path additionally requires compiled flex attention at
+    video resolution, carries decoded tail frames across 81-frame segments,
+    and retains the unresolved distilled ten-step prose versus 40-step composed
+    schema mismatch. No runtime/download catalog, repository default, runnable
+    mode, or client change was added. The focused gate passes 13 tests, one
+    optional-runtime skip, and 44 subtests; the complete clean-base backend gate
+    passes 1,636 tests, 40 skips, and 3,279 subtests with Ruff, 66-package
+    compatibility, shell/diff checks, and portable preflight green. No model
+    weights or media were downloaded, deleted, or generated. Immutable
+    component normalization, remote compiled execution/output review, and
+    physical macOS evidence remain pending.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6519,4 +6547,5 @@ Add references only after the corresponding evidence exists.
 | P6.57 Durable long-video loop restart recovery | `d648417` | `19620f9` | Synthetic process-replacement and temporary retained-file proof only; executable 30-minute graph, remote execution, and physical macOS pending | Not required | Opt-in durable loops persist bounded managed video-asset metadata after each completed iteration, bind recovery to the exact workflow/input identity, and remove the checkpoint on graph success. A replacement server with a different task ID resumes after segment 1 and runs only segment 2; generic and in-memory loops remain non-durable. |
 | P6.58 Executable 30-minute LTX qualification graph | `479d495` (`a9cf15c` schema-boundary fix) | Not required | Static graph/materializer and deterministic plan proof only; remote six-hour execution, output review/publication, and physical macOS pending | Not required | One reviewed API graph binds the exact LTX revision, 374-job continuation plan, durable retained-segment loop, and file-native join. The loopback-only helper binds the staged opening-image bytes to the recovery identity, verifies the exact app-cached model revision, and requires explicit consent before app submission. No graph was submitted and no inference or media generation occurred locally. |
 | P6.59 Wan Animate 2 Modular contract closure | `d31d5b6` | `fc67a7f` | Contract-only; artifact admission, real-weight remote execution, output review, and physical macOS pending | Not required | Both pinned package exports are Expert-visible with exact generic character-animation contracts and distinct base/distilled denoise steps. The 33-class / 93-workflow snapshot matches the complete pinned exported-class set; complete backend and client gates pass. No repository, runnable mode, Auto/template/Gallery surface, weights, models, or media were added or removed. |
+| P6.60 Wan Animate 2 artifact/source review | `2b86e63` | Not required | Static immutable metadata/package-source review only; immutable component descriptors, remote compiled flex-attention execution/output review, and physical macOS pending | Not required | Two public Python-free 31-file snapshots and their distinct 45,920,934,868-byte safetensors receipts are sealed. The standard class is absent at the pin and both Modular indexes retain null and mutable PR component revisions, so no runtime/download catalog or runnable mode was admitted and no weights or media were fetched. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
