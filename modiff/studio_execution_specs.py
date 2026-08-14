@@ -237,7 +237,53 @@ STABLE_AUDIO_DIFFUSERS_FILES = [
 ]
 LONGCAT_AUDIO_DIT_REPO = "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
 AUDIO_LDM2_REPO = "cvssp/audioldm2"
+AUDIO_LDM2_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "language_model/config.json",
+    "language_model/model.safetensors",
+    "model_index.json",
+    "projection_model/config.json",
+    "projection_model/diffusion_pytorch_model.safetensors",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "text_encoder_2/config.json",
+    "text_encoder_2/model.safetensors",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "tokenizer_2/special_tokens_map.json",
+    "tokenizer_2/spiece.model",
+    "tokenizer_2/tokenizer.json",
+    "tokenizer_2/tokenizer_config.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+    "vocoder/config.json",
+    "vocoder/model.safetensors",
+]
 SHAP_E_REPO = "openai/shap-e"
+SHAP_E_SAFE_COMPONENT_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "prior/config.json",
+    "prior/diffusion_pytorch_model.fp16.safetensors",
+    "renderer/config.json",
+    "renderer/diffusion_pytorch_model.fp16.safetensors",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.fp16.safetensors",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+]
 WAN_22_T2V_A14B_REPO = "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
 WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
 WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
@@ -3854,6 +3900,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "qualifiedModes": [],
             "defaultRepo": AUDIO_LDM2_REPO,
             "artifactLabel": "Diffusers safetensors repo",
+            "downloadFiles": AUDIO_LDM2_DIFFUSERS_FILES,
             "defaultDtype": "float16",
             "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
             "recommendedSteps": 200,
@@ -3933,6 +3980,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "qualifiedModes": [],
             "defaultRepo": SHAP_E_REPO,
             "artifactLabel": "Explicit safe-component Diffusers assembly",
+            "downloadFiles": SHAP_E_SAFE_COMPONENT_FILES,
             "defaultDtype": "float16",
             "defaultSize": {"width": 256, "height": 256, "aspectRatio": "1:1"},
             "recommendedSteps": 64,

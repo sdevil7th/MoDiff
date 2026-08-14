@@ -386,6 +386,16 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "cvssp/audioldm2": (
+                "c8e7e189d324425c05c4c2f81214041ef4107983",
+                28,
+                "language_model/pytorch_model.bin",
+            ),
+            "openai/shap-e": (
+                "7bd337afdea1c17842e1c3cc45c4e268356dba40",
+                14,
+                "shap_e_renderer/diffusion_pytorch_model.bin",
+            ),
             "stabilityai/stable-audio-open-1.0": (
                 "f21265c1e2710b3bd2386596943f0007f55f802e",
                 19,
