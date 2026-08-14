@@ -6,6 +6,7 @@ from modiff.studio_execution_specs import (
     ALLEGRO_DIFFUSERS_FILES,
     LATTE_DIFFUSERS_FILES,
     MOCHI_DIFFUSERS_FILES,
+    STABLE_VIDEO_DIFFUSION_FP16_FILES,
     studio_capability_definitions,
 )
 
@@ -14,6 +15,27 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class VideoDownloadSelectionTests(unittest.TestCase):
+    def test_stable_video_selection_matches_loader_variant_and_excludes_duplicates(self):
+        selected = set(STABLE_VIDEO_DIFFUSION_FP16_FILES)
+        capability = studio_capability_definitions()["StableVideoDiffusionPipeline"]
+
+        self.assertEqual(
+            capability["downloadFiles"],
+            STABLE_VIDEO_DIFFUSION_FP16_FILES,
+        )
+        self.assertEqual(len(selected), 12)
+        self.assertIn("image_encoder/model.fp16.safetensors", selected)
+        self.assertIn("unet/diffusion_pytorch_model.fp16.safetensors", selected)
+        self.assertIn("vae/diffusion_pytorch_model.fp16.safetensors", selected)
+        self.assertNotIn("image_encoder/model.safetensors", selected)
+        self.assertNotIn("unet/diffusion_pytorch_model.safetensors", selected)
+        self.assertNotIn("vae/diffusion_pytorch_model.safetensors", selected)
+        self.assertNotIn("svd_xt_1_1.safetensors", selected)
+        self.assertNotIn("svd11.webp", selected)
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
+
     def test_allegro_selection_excludes_unsafe_duplicate_encoder(self):
         review = json.loads((ROOT / "data" / "allegro-artifact-review.json").read_text())
         selected = set(ALLEGRO_DIFFUSERS_FILES)

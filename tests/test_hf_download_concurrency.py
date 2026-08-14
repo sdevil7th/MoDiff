@@ -384,8 +384,18 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("Chroma1-HD.safetensors", planned_files)
         self.assertNotIn("ComfyUI_Chroma1-HD_T2I-workflow.json", planned_files)
 
-    async def test_video_plan_and_download_share_each_reviewed_safe_selection(self):
+    async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "stabilityai/stable-audio-open-1.0": (
+                "f21265c1e2710b3bd2386596943f0007f55f802e",
+                19,
+                "model.ckpt",
+            ),
+            "stabilityai/stable-video-diffusion-img2vid-xt-1-1": (
+                "043843887ccd51926e3efed36270444a838e7861",
+                12,
+                "svd_xt_1_1.safetensors",
+            ),
             "rhymes-ai/Allegro": (
                 "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
                 18,

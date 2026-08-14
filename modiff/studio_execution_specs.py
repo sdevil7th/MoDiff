@@ -214,6 +214,27 @@ LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 STABLE_AUDIO_REPO = "stabilityai/stable-audio-open-1.0"
+STABLE_AUDIO_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE.md",
+    "README.md",
+    "fma_dataset_attribution2.csv",
+    "freesound_dataset_attribution2.csv",
+    "model_index.json",
+    "projection_model/config.json",
+    "projection_model/diffusion_pytorch_model.safetensors",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 LONGCAT_AUDIO_DIT_REPO = "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
 AUDIO_LDM2_REPO = "cvssp/audioldm2"
 SHAP_E_REPO = "openai/shap-e"
@@ -223,6 +244,20 @@ WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 LTX2_REPO = "Lightricks/LTX-2"
 FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
 STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
+STABLE_VIDEO_DIFFUSION_FP16_FILES = [
+    ".gitattributes",
+    "LICENSE.md",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "image_encoder/config.json",
+    "image_encoder/model.fp16.safetensors",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.fp16.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.fp16.safetensors",
+]
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
@@ -3664,6 +3699,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "family": "Stable Audio",
             "defaultRepo": STABLE_AUDIO_REPO,
             "artifactLabel": "Diffusers audio repo",
+            "downloadFiles": STABLE_AUDIO_DIFFUSERS_FILES,
             "defaultDtype": "bfloat16",
             "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
             "recommendedSteps": 100,
@@ -4845,6 +4881,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
                 "recommendedGuidance": 3.0,
                 "recommendedFrames": 25,
                 "recommendedFps": 7,
+                "downloadFiles": STABLE_VIDEO_DIFFUSION_FP16_FILES,
                 "autoEligible": False,
                 "galleryEligible": False,
                 "lowVram": {
