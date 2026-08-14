@@ -356,6 +356,34 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("text_encoder/model.fp16.safetensors", plan.call_args.args[1])
         self.assertNotIn("text_encoder/model.safetensors", plan.call_args.args[1])
 
+    async def test_chroma_plan_and_download_use_the_same_reviewed_diffusers_selection(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+        revision = "0e0c60ece1e82b17cb7f77342d765ba5024c40c0"
+
+        with mock.patch(
+            "modiff.server.plan_hub_model_download",
+            return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+        ) as plan:
+            response = await server.hf_download_plan(FakeRequest(repo_id="lodestones/Chroma1-HD"))
+        self.assertFalse(json.loads(response.text)["error"])
+        planned_files = plan.call_args.args[1]
+        self.assertEqual(plan.call_args.args[2], revision)
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(FakeRequest(repo_id="lodestones/Chroma1-HD"))
+        self.assertFalse(json.loads(response.text)["error"])
+        self.assertEqual(planned_files, captured["requested_files"])
+        self.assertEqual(len(planned_files), 18)
+        self.assertIn("transformer/diffusion_pytorch_model.safetensors.index.json", planned_files)
+        self.assertNotIn("Chroma1-HD.safetensors", planned_files)
+        self.assertNotIn("ComfyUI_Chroma1-HD_T2I-workflow.json", planned_files)
+
     async def test_custom_download_carries_exact_commit_into_app_owned_task(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()

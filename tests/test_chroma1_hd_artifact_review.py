@@ -5,6 +5,10 @@ import re
 import unittest
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.studio_execution_specs import (
+    CHROMA1_HD_DIFFUSERS_FILES,
+    studio_capability_definitions,
+)
 
 
 REVIEW_PATH = Path(__file__).resolve().parents[1] / "data" / "chroma1-hd-artifact-review.json"
@@ -67,6 +71,17 @@ class Chroma1HDArtifactReviewTests(unittest.TestCase):
             repository["fullWeightBytes"],
             repository["selectedWeightBytes"] + excluded[0]["byteSize"],
         )
+
+    def test_app_download_selection_excludes_single_file_and_demo_artifacts(self):
+        capability = studio_capability_definitions()["ChromaPipeline"]
+        self.assertEqual(capability["downloadFiles"], CHROMA1_HD_DIFFUSERS_FILES)
+        self.assertEqual(len(CHROMA1_HD_DIFFUSERS_FILES), 18)
+        selected = set(CHROMA1_HD_DIFFUSERS_FILES)
+        reviewed_weights = {item["path"] for item in self.review["weightFiles"]}
+        self.assertTrue(reviewed_weights.issubset(selected))
+        self.assertNotIn("Chroma1-HD.safetensors", selected)
+        self.assertNotIn("ComfyUI_Chroma1-HD_T2I-workflow.json", selected)
+        self.assertFalse(any(path.endswith(".png") for path in selected))
 
     def test_bounded_package_owned_text_to_image_recipe_is_explicit(self):
         contract = self.review["pipelineContract"]

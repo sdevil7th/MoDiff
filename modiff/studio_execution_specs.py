@@ -175,6 +175,26 @@ AURAFLOW_V03_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.fp16.safetensors",
 ]
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
+CHROMA1_HD_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 ERNIE_IMAGE_TURBO_REPO = "baidu/ERNIE-Image-Turbo"
@@ -6920,6 +6940,7 @@ _CHROMA1_HD_CAPABILITY = {
     "qualifiedModes": [],
     "defaultRepo": CHROMA1_HD_REPO,
     "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
+    "downloadFiles": CHROMA1_HD_DIFFUSERS_FILES,
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
     "recommendedSteps": 40,
