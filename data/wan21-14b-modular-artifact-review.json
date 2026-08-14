@@ -200,6 +200,8 @@
       "revision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
       "gated": false,
       "private": false,
+      "selectedDownloadFileCount": 41,
+      "selectedDownloadBytes": 90104408960,
       "weightFileCount": 21,
       "weightBytes": 90077762204,
       "canonicalInventorySha256": "a561a4c19fc3cdbf2f816b85a98edcabdc8a22d3e1739c4dd4b708d207ea71d6",
@@ -265,5 +267,18 @@
     "minimumSystemRamBytes": 103079215104,
     "minimumAcceleratorMemoryBytesWithOffloadEstimate": 34359738368,
     "basis": "Exact 80.39-90.08 GB BF16 artifact totals plus conservative loading, compilation, and output headroom; no live proof."
+  },
+  "boundedAppDownloadReview": {
+    "reviewedAt": "2026-08-14",
+    "repository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+    "submissionChannel": "app_only",
+    "submitted": false,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 303167782912,
+    "preflightExistingQueuedReservationBytes": 242328691508,
+    "reserveBytes": 68719476736,
+    "deficitBytes": 97984794292,
+    "status": "not_submitted_insufficient_queue_aware_space"
   }
 }

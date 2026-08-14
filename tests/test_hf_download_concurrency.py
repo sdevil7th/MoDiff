@@ -343,6 +343,37 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(planned_files), file_count)
                 self.assertNotIn(excluded_file, planned_files)
 
+    async def test_remaining_admitted_models_plan_and_download_only_reviewed_components(self):
+        cases = {
+            "meituan-longcat/LongCat-Image": (31, "assets/gallery.jpeg"),
+            "meituan-longcat/LongCat-Image-Edit": (32, "assets/test.png"),
+            "Wan-AI/Wan2.2-T2V-A14B-Diffusers": (43, "assets/logo.png"),
+            "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers": (41, "assets/video_dit_arch.jpg"),
+        }
+        for repo_id, (file_count, excluded_file) in cases.items():
+            with self.subTest(repo_id=repo_id):
+                server = WebServer(modules={})
+                server.loop = asyncio.get_running_loop()
+                captured = {}
+                with mock.patch(
+                    "modiff.server.plan_hub_model_download",
+                    return_value=self._space_plan(),
+                ) as plan:
+                    response = await server.hf_download_plan(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                planned_files = plan.call_args.args[1]
+
+                async def fake_download(download_repo_id, entry):
+                    captured.update(entry)
+                    return {"repo_id": download_repo_id, "complete": True, "repair_required": False}
+
+                server._run_hf_download_task = fake_download
+                response = await server.hf_download(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                self.assertEqual(planned_files, captured["requested_files"])
+                self.assertEqual(len(planned_files), file_count)
+                self.assertNotIn(excluded_file, planned_files)
+
     async def test_auraflow_app_download_automatically_selects_only_reviewed_fp16_files(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()

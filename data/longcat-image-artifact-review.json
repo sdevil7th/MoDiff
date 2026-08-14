@@ -12,6 +12,8 @@
       "modelIndexClass": "LongCatImagePipeline",
       "reportedUsedStorageBytes": 29307202280,
       "snapshotDownloadBytes": 29327729635,
+      "selectedDownloadFileCount": 31,
+      "selectedDownloadBytes": 29316541013,
       "weightFileCount": 7,
       "weightBytes": 29293491646,
       "weightInventorySha256": "7443c9cf5519b012acad1f716d59fcaf76f00bad9b231612d6a7a2f1d440d01a",
@@ -28,6 +30,8 @@
       "modelIndexClass": "LongCatImageEditPipeline",
       "reportedUsedStorageBytes": 29299377333,
       "snapshotDownloadBytes": 29322429940,
+      "selectedDownloadFileCount": 32,
+      "selectedDownloadBytes": 29316540813,
       "weightFileCount": 7,
       "weightBytes": 29293491614,
       "weightInventorySha256": "9a506b38c4b5ae933280780d371b955af522fc7f47c636eea783ceaa9e905054",
@@ -173,7 +177,14 @@
     "reserveBytes": 68719476736,
     "aggregateFits": true,
     "aggregateHeadroomAfterReserveBytes": 77924962486,
-    "statusAtReview": "queued"
+    "statusAtReview": "queued",
+    "boundedSelectionReview": {
+      "reviewedAt": "2026-08-14",
+      "textToImageDeficitBytes": 37227494743,
+      "imageEditDeficitBytes": 37196926265,
+      "status": "not_submitted_insufficient_queue_aware_space",
+      "note": "The pre-existing repository-wide app tasks remain untouched; a differently scoped request was not joined or submitted."
+    }
   },
   "admission": {
     "status": "source_complete_execution_pending",
