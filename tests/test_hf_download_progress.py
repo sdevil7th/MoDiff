@@ -1,6 +1,7 @@
 import sys
 import hashlib
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -55,6 +56,36 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             snapshot = huggingface._download_progress_snapshot(repo_id, cache_dir, {"files": []})
 
             self.assertEqual(snapshot["active_files"], [f"blobs/{partial_hash}.incomplete"])
+
+    def test_current_attempt_progress_excludes_redundant_partial_blob(self):
+        with tempfile.TemporaryDirectory() as cache_dir:
+            repo_id = "unit/resumed"
+            repo_path = Path(cache_dir) / "models--unit--resumed"
+            blobs = repo_path / "blobs"
+            blobs.mkdir(parents=True)
+            blob_hash = "b" * 64
+            stale = blobs / f"{blob_hash}.stale.incomplete"
+            current = blobs / f"{blob_hash}.current.incomplete"
+            stale.write_bytes(b"s" * 60)
+            current.write_bytes(b"c" * 20)
+            active_since = 1_700_000_000.0
+            os.utime(stale, (active_since - 10, active_since - 10))
+            os.utime(current, (active_since + 1, active_since + 1))
+            plan = {
+                "selection_limited": True,
+                "files": [{"name": "model.safetensors", "size": 100, "blob_hash": blob_hash}],
+            }
+
+            snapshot = huggingface._download_progress_snapshot(
+                repo_id,
+                cache_dir,
+                plan,
+                active_since=active_since,
+            )
+
+        self.assertEqual(snapshot["downloaded_bytes"], 20)
+        self.assertEqual(snapshot["active_files"], [f"blobs/{current.name}"])
+        self.assertEqual(snapshot["completed_bytes"], 0)
 
     def test_verified_public_repair_retries_a_configured_token_403_anonymously(self):
         from requests import Response

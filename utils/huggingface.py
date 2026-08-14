@@ -640,7 +640,12 @@ def _snapshot_file_status(path_obj: Path, expected_files: list[dict], *, snapsho
     }
 
 
-def _active_download_files(path_obj: Path, limit: int = 5, expected_blob_hashes: set[str] | None = None):
+def _active_download_files(
+    path_obj: Path,
+    limit: int = 5,
+    expected_blob_hashes: set[str] | None = None,
+    modified_since: float | None = None,
+):
     active_files = []
     if not path_obj.exists():
         return active_files
@@ -651,7 +656,17 @@ def _active_download_files(path_obj: Path, limit: int = 5, expected_blob_hashes:
                 continue
             name = entry.name.lower()
             if name.endswith('.incomplete') or name.endswith('.lock'):
-                blob_hash = name.rsplit('.', 1)[0]
+                try:
+                    modified_at = entry.stat().st_mtime
+                except OSError:
+                    continue
+                if modified_since is not None and modified_at < modified_since:
+                    continue
+                # Standard Hub HTTP downloads add a per-attempt suffix between
+                # the immutable LFS hash and ``.incomplete``. Match the stable
+                # hash prefix rather than treating that suffix as part of the
+                # blob identity.
+                blob_hash = name.split('.', 1)[0]
                 if expected_blob_hashes is not None and blob_hash not in expected_blob_hashes:
                     continue
                 candidates.append(entry)
@@ -663,7 +678,74 @@ def _active_download_files(path_obj: Path, limit: int = 5, expected_blob_hashes:
     return active_files
 
 
-def _download_progress_snapshot(repo_id: str, cache_dir: str | None, plan: dict | None = None):
+def _active_download_bytes(
+    path_obj: Path,
+    expected_files: list[dict],
+    *,
+    snapshot_dir: Path | None,
+    modified_since: float,
+):
+    """Count only current-attempt partial bytes for exact LFS blobs.
+
+    A repository may retain redundant ``<hash>.<attempt>.incomplete`` files
+    after a disconnected request. Summing the whole cache makes progress and
+    the server's shrinking reservation optimistic. Count only partials touched
+    after this task started; multiple retry files still consume distinct disk
+    bytes and therefore remain part of the conservative reservation receipt.
+    """
+
+    expected_by_hash = {}
+    completed_hashes = set()
+    for expected_file in expected_files:
+        if not isinstance(expected_file, dict):
+            continue
+        blob_hash = str(expected_file.get('blob_hash') or '').lower()
+        expected_size = expected_file.get('size')
+        name = expected_file.get('name')
+        if not re.fullmatch(r'[a-f0-9]{64}', blob_hash) or not isinstance(expected_size, int) or expected_size < 0:
+            continue
+        expected_by_hash[blob_hash] = max(expected_by_hash.get(blob_hash, 0), expected_size)
+        if snapshot_dir is None or not name:
+            continue
+        try:
+            if (snapshot_dir / str(name)).stat().st_size == expected_size:
+                completed_hashes.add(blob_hash)
+        except OSError:
+            pass
+
+    blobs_dir = path_obj / 'blobs'
+    if not expected_by_hash or not blobs_dir.is_dir():
+        return 0
+
+    current_attempt_bytes = 0
+    try:
+        for entry in blobs_dir.iterdir():
+            name = entry.name.lower()
+            if not name.endswith('.incomplete') or not entry.is_file():
+                continue
+            blob_hash = name.split('.', 1)[0]
+            if blob_hash not in expected_by_hash or blob_hash in completed_hashes:
+                continue
+            try:
+                stat = entry.stat()
+            except OSError:
+                continue
+            if stat.st_mtime < modified_since:
+                continue
+            current_attempt_bytes += min(stat.st_size, expected_by_hash[blob_hash])
+    except OSError:
+        return 0
+
+    return current_attempt_bytes
+
+
+def _download_progress_snapshot(
+    repo_id: str,
+    cache_dir: str | None,
+    plan: dict | None = None,
+    *,
+    active_since: float | None = None,
+):
     path_obj = _repo_cache_dir(repo_id, cache_dir)
     expected_files = _plan_validation_files(plan)
     if not path_obj.exists():
@@ -691,11 +773,23 @@ def _download_progress_snapshot(repo_id: str, cache_dir: str | None, plan: dict 
         # file that is still incomplete.
         if not expected_blob_hashes:
             expected_blob_hashes = None
-    active_files = _active_download_files(path_obj, expected_blob_hashes=expected_blob_hashes)
+    active_files = _active_download_files(
+        path_obj,
+        expected_blob_hashes=expected_blob_hashes,
+        modified_since=active_since,
+    )
+    downloaded_bytes = summary.get('total_file_bytes', 0)
+    if active_since is not None:
+        downloaded_bytes = snapshot_status.get('completed_bytes', 0) + _active_download_bytes(
+            path_obj,
+            expected_files,
+            snapshot_dir=snapshot_dir,
+            modified_since=active_since,
+        )
     return {
         'path': str(path_obj),
         'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
-        'downloaded_bytes': summary.get('total_file_bytes', 0),
+        'downloaded_bytes': downloaded_bytes,
         'file_count': summary.get('file_count', 0),
         'completed_file_count': snapshot_status.get('completed_file_count', 0),
         'completed_bytes': snapshot_status.get('completed_bytes', 0),
@@ -1597,7 +1691,7 @@ def download_hub_model(
 
     def build_payload(status: str, progress: float | None = None, error: str | None = None):
         now = time.time()
-        snapshot = _download_progress_snapshot(model_id, cache_dir, plan)
+        snapshot = _download_progress_snapshot(model_id, cache_dir, plan, active_since=started_at)
         total_bytes = plan.get('total_bytes')
         observed_bytes = snapshot.get('downloaded_bytes', 0) or 0
         completed_bytes = snapshot.get('completed_bytes', 0) or 0
@@ -1665,7 +1759,7 @@ def download_hub_model(
     def monitor_download():
         monitor_last_state = None
         while not stop_event.is_set():
-            snapshot = _download_progress_snapshot(model_id, cache_dir, plan)
+            snapshot = _download_progress_snapshot(model_id, cache_dir, plan, active_since=started_at)
             state = (snapshot.get('downloaded_bytes'), snapshot.get('file_count'), snapshot.get('completed_file_count'))
             if state != monitor_last_state and progress_cb:
                 progress_cb(build_payload('downloading'))
