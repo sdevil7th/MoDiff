@@ -11,16 +11,21 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import torch
+from PIL import Image
 
 from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES, TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
 from modules.HuggingFaceTransformers.main import (
+    ANY_TO_ANY_ADAPTER_CONTRACTS,
+    GenerateAnyToAny,
     GenerateImageVideoText,
     GenerateText,
+    LoadAnyToAnyModel,
     LoadImageTextToTextModel,
     LoadTextGenerationModel,
     SECURITY_CONTRACT,
     _batch_to_device,
     _generation_controls,
+    _janus_runtime_contract,
     _local_config_receipt,
     _model_revision,
     _model_selection,
@@ -34,13 +39,72 @@ REVISION = "0123456789abcdef0123456789abcdef01234567"
 REPOSITORY = "owner/model"
 
 
-def _transformers_runtime(*, tokenizer=None, processor=None, model=None):
+class JanusProcessor:
+    def __init__(self, *, image_tokens=4, input_ids=None, decoded="janus answer"):
+        self.num_image_tokens = image_tokens
+        self.image_token = "<image>"
+        self.input_ids = torch.tensor([[1, 2]]) if input_ids is None else input_ids
+        self.calls = Mock()
+        self.decode = Mock(return_value=decoded)
+
+    def __call__(self, **kwargs):
+        self.calls(**kwargs)
+        result = {"input_ids": self.input_ids, "attention_mask": torch.ones_like(self.input_ids)}
+        if kwargs.get("images"):
+            result["pixel_values"] = torch.zeros((1, 3, 8, 8))
+        return result
+
+
+class JanusForConditionalGeneration:
+    input_modalities = ("image", "text")
+    output_modalities = ("image", "text")
+
+    def __init__(self, *, image_size=8, patch_size=4, image_tokens=4):
+        vision_config = SimpleNamespace(
+            image_size=image_size,
+            patch_size=patch_size,
+            num_image_tokens=image_tokens,
+        )
+        self.config = SimpleNamespace(
+            model_type="janus",
+            architectures=["JanusForConditionalGeneration"],
+            vision_config=vision_config,
+        )
+        self.model = SimpleNamespace(
+            vision_model=SimpleNamespace(config=SimpleNamespace(num_image_tokens=image_tokens))
+        )
+        self.to = Mock()
+        self.eval = Mock()
+        self.generate = Mock()
+
+
+class AnyToAnyPipeline:
+    instances = []
+
+    def __init__(self, **kwargs):
+        self.init_kwargs = kwargs
+        self.calls = Mock()
+        self.text_tokens = torch.tensor([1, 2, 3])
+        self.image = Image.new("RGB", (8, 8), "white")
+        self.__class__.instances.append(self)
+
+    def __call__(self, invocation, **kwargs):
+        self.calls(invocation, **kwargs)
+        if kwargs.get("generation_mode") == "image":
+            return [{"input_text": invocation["text"], "generated_image": self.image}]
+        return [{"input_text": invocation["text"], "generated_token_ids": self.text_tokens}]
+
+
+def _transformers_runtime(*, tokenizer=None, processor=None, model=None, config=None, pipeline_class=None):
     return SimpleNamespace(
         __version__="5.14.1",
+        AutoConfig=SimpleNamespace(from_pretrained=Mock(return_value=config)),
         AutoTokenizer=SimpleNamespace(from_pretrained=Mock(return_value=tokenizer)),
         AutoProcessor=SimpleNamespace(from_pretrained=Mock(return_value=processor)),
         AutoModelForCausalLM=SimpleNamespace(from_pretrained=Mock(return_value=model)),
         AutoModelForImageTextToText=SimpleNamespace(from_pretrained=Mock(return_value=model)),
+        AutoModelForMultimodalLM=SimpleNamespace(from_pretrained=Mock(return_value=model)),
+        AnyToAnyPipeline=pipeline_class or AnyToAnyPipeline,
     )
 
 
@@ -85,6 +149,30 @@ def _load_multimodal_handle(*, input_ids=None, output_ids=None, decoded="caption
     return loaded, runtime, processor, model
 
 
+def _load_janus_handle(*, image_size=8, patch_size=4, image_tokens=4, processor_tokens=None):
+    AnyToAnyPipeline.instances.clear()
+    processor = JanusProcessor(image_tokens=image_tokens if processor_tokens is None else processor_tokens)
+    model = JanusForConditionalGeneration(
+        image_size=image_size,
+        patch_size=patch_size,
+        image_tokens=image_tokens,
+    )
+    runtime = _transformers_runtime(
+        processor=processor,
+        model=model,
+        config=SimpleNamespace(model_type="janus"),
+        pipeline_class=AnyToAnyPipeline,
+    )
+    with patch.dict("sys.modules", {"transformers": runtime}):
+        loaded = LoadAnyToAnyModel("load-any-to-any-test").execute(
+            model_id=REPOSITORY,
+            revision=REVISION,
+            dtype="float32",
+            device=DEFAULT_DEVICE,
+        )
+    return loaded, runtime, processor, model, AnyToAnyPipeline.instances[-1]
+
+
 class HuggingFaceTransformersRegistryTests(unittest.TestCase):
     def test_registry_discovers_exact_generic_actions_and_import_is_lazy(self):
         from modules import MODULE_MAP
@@ -96,6 +184,8 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
                 "GenerateText",
                 "LoadImageTextToTextModel",
                 "GenerateImageVideoText",
+                "LoadAnyToAnyModel",
+                "GenerateAnyToAny",
             },
         )
         source = inspect.getsource(__import__("modules.HuggingFaceTransformers.main", fromlist=["*"]))
@@ -113,7 +203,13 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
 
     def test_optional_runtime_qualifies_both_new_auto_model_symbols(self):
         transformers = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID].packages[0]
-        expected = {"AutoModelForCausalLM", "AutoModelForImageTextToText"}
+        expected = {
+            "AutoConfig",
+            "AutoModelForCausalLM",
+            "AutoModelForImageTextToText",
+            "AutoModelForMultimodalLM",
+            "AnyToAnyPipeline",
+        }
         self.assertTrue(expected.issubset(transformers.required_symbols))
         self.assertTrue(expected.issubset(transformers.required_class_symbols))
         self.assertEqual(transformers.version, "5.14.1")
@@ -433,6 +529,165 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
                     images=np.zeros((2, 2), dtype=np.uint8),
                     use_chat_template=False,
                 )
+
+    def test_any_to_any_registry_keeps_qwen_omni_contract_only_for_safetensors_boundary(self):
+        janus = ANY_TO_ANY_ADAPTER_CONTRACTS["janus"]
+        qwen = ANY_TO_ANY_ADAPTER_CONTRACTS["qwen2_5_omni"]
+        self.assertEqual((janus["status"], janus["adapterId"]), ("executable", "janus-v1"))
+        self.assertEqual(qwen["status"], "contract-only")
+        self.assertEqual(qwen["audioOutputSampleRate"], 24_000)
+        self.assertIn("spk_dict.pt", qwen["blocker"])
+        self.assertIn("safetensors-only", qwen["blocker"])
+
+        runtime = _transformers_runtime(
+            processor=Mock(),
+            model=Mock(),
+            config=SimpleNamespace(model_type="qwen2_5_omni"),
+        )
+        with (
+            patch.dict("sys.modules", {"transformers": runtime}),
+            self.assertRaisesRegex(ValueError, "contract-only.*spk_dict.pt"),
+        ):
+            LoadAnyToAnyModel("blocked-qwen-any-to-any").execute(
+                model_id=REPOSITORY,
+                revision=REVISION,
+                dtype="float32",
+                device=DEFAULT_DEVICE,
+            )
+        self.assertEqual(
+            runtime.AutoConfig.from_pretrained.call_args.kwargs,
+            {"local_files_only": True, "trust_remote_code": False, "revision": REVISION},
+        )
+        runtime.AutoProcessor.from_pretrained.assert_not_called()
+        runtime.AutoModelForMultimodalLM.from_pretrained.assert_not_called()
+
+    def test_any_to_any_janus_loader_enforces_adapter_geometry_and_exact_safe_flags(self):
+        loaded, runtime, processor, model, pipeline = _load_janus_handle()
+        self.assertEqual(
+            runtime.AutoConfig.from_pretrained.call_args.kwargs,
+            {"local_files_only": True, "trust_remote_code": False, "revision": REVISION},
+        )
+        self.assertEqual(
+            runtime.AutoProcessor.from_pretrained.call_args.kwargs,
+            {"local_files_only": True, "trust_remote_code": False, "revision": REVISION},
+        )
+        model_call = runtime.AutoModelForMultimodalLM.from_pretrained.call_args
+        self.assertTrue(model_call.kwargs["local_files_only"])
+        self.assertFalse(model_call.kwargs["trust_remote_code"])
+        self.assertTrue(model_call.kwargs["use_safetensors"])
+        self.assertTrue(model_call.kwargs["weights_only"])
+        self.assertTrue(model_call.kwargs["low_cpu_mem_usage"])
+        self.assertEqual(model_call.kwargs["revision"], REVISION)
+        model.to.assert_called_once_with(DEFAULT_DEVICE)
+        model.eval.assert_called_once_with()
+        self.assertIs(pipeline.init_kwargs["model"], model)
+        self.assertIs(pipeline.init_kwargs["processor"], processor)
+        self.assertEqual(pipeline.init_kwargs["device"], DEFAULT_DEVICE)
+        receipt = loaded["receipt"]
+        self.assertTrue(_receipt_digest_is_valid(receipt))
+        self.assertEqual(receipt["adapter"]["adapterId"], "janus-v1")
+        self.assertEqual(receipt["adapter"]["imageGeneration"]["tokenCount"], 4)
+        self.assertEqual(receipt["loader"]["modelAutoClass"], "AutoModelForMultimodalLM")
+        self.assertEqual(receipt["loader"]["pipelineClass"], "AnyToAnyPipeline")
+        self.assertEqual(receipt["security"], SECURITY_CONTRACT)
+
+    def test_any_to_any_janus_runtime_geometry_fails_closed(self):
+        processor = JanusProcessor(image_tokens=4)
+        model = JanusForConditionalGeneration(image_tokens=5)
+        with self.assertRaisesRegex(ValueError, "image-token geometry"):
+            _janus_runtime_contract(model, processor)
+        model = JanusForConditionalGeneration(image_size=9, patch_size=4, image_tokens=4)
+        with self.assertRaisesRegex(ValueError, "image geometry"):
+            _janus_runtime_contract(model, processor)
+        model = JanusForConditionalGeneration()
+        model.output_modalities = ("image", "text", "audio")
+        with self.assertRaisesRegex(ValueError, "output modalities"):
+            _janus_runtime_contract(model, processor)
+
+    def test_any_to_any_janus_text_generation_is_token_bounded_and_normalized(self):
+        loaded, _runtime, processor, _model, pipeline = _load_janus_handle()
+        result = GenerateAnyToAny("generate-any-text").execute(
+            model=loaded["model"],
+            prompt="  describe  ",
+            images=np.zeros((2, 2, 3), dtype=np.uint8),
+            generation_mode="text",
+            max_new_tokens=4,
+            num_beams=8,
+            do_sample=False,
+        )
+        preview = processor.calls.call_args.kwargs
+        self.assertEqual(preview["text"], "<image>describe")
+        self.assertEqual(preview["generation_mode"], "text")
+        self.assertEqual(preview["images"][0].mode, "RGB")
+        invocation = pipeline.calls.call_args.args[0]
+        call = pipeline.calls.call_args.kwargs
+        self.assertEqual(invocation["text"], "<image>describe")
+        self.assertTrue(call["return_tensors"])
+        self.assertEqual(call["processor_kwargs"], {"generation_mode": "text"})
+        self.assertEqual(call["generate_kwargs"]["max_new_tokens"], 4)
+        self.assertEqual(call["generate_kwargs"]["num_beams"], 1)
+        self.assertTrue(torch.equal(processor.decode.call_args.args[0], torch.tensor([3])))
+        self.assertEqual(result["text"], "janus answer")
+        self.assertIsNone(result["image"])
+        self.assertNotIn("audio", result)
+        self.assertEqual(result["result"]["inputTokens"], 2)
+        self.assertEqual(result["result"]["generatedTokens"], 1)
+        self.assertEqual(result["result"]["inputImageCount"], 1)
+        self.assertEqual(result["result"]["inputMediaPixels"], 4)
+
+    def test_any_to_any_janus_image_generation_is_fixed_token_and_geometry_bounded(self):
+        loaded, _runtime, processor, _model, pipeline = _load_janus_handle()
+        result = GenerateAnyToAny("generate-any-image").execute(
+            model=loaded["model"],
+            prompt="an owl",
+            generation_mode="image",
+            max_new_tokens=2,
+            do_sample=True,
+            temperature=0.7,
+        )
+        self.assertEqual(processor.calls.call_args.kwargs["generation_mode"], "image")
+        call = pipeline.calls.call_args.kwargs
+        self.assertNotIn("return_tensors", call)
+        self.assertEqual(call["processor_kwargs"], {"generation_mode": "image"})
+        self.assertEqual(call["generate_kwargs"]["num_beams"], 1)
+        self.assertEqual(call["generate_kwargs"]["temperature"], 0.7)
+        self.assertIsNone(result["text"])
+        self.assertEqual(result["image"].size, (8, 8))
+        self.assertEqual(result["result"]["generatedTokens"], 4)
+        self.assertEqual(result["result"]["finishReason"], "fixed-image-token-contract")
+        self.assertEqual(result["result"]["image"], {"width": 8, "height": 8, "pixels": 64})
+
+    def test_any_to_any_janus_action_rejects_unsupported_inputs_outputs_and_tampering(self):
+        loaded, _runtime, _processor, _model, pipeline = _load_janus_handle()
+        for values, message in (
+            ({"generation_mode": "audio"}, "exactly text or image"),
+            ({"generation_mode": "text", "video": [np.zeros((2, 2, 3), dtype=np.uint8)]}, "only text"),
+            ({"generation_mode": "text", "audio_input": np.zeros(10)}, "only text"),
+            (
+                {"generation_mode": "image", "images": np.zeros((2, 2, 3), dtype=np.uint8)},
+                "without source images",
+            ),
+        ):
+            with self.subTest(values=values), self.assertRaisesRegex(ValueError, message):
+                GenerateAnyToAny("invalid-any-input").execute(model=loaded["model"], prompt="prompt", **values)
+
+        tampered = copy.copy(loaded["model"])
+        tampered["receipt"] = copy.deepcopy(tampered["receipt"])
+        tampered["receipt"]["adapter"]["imageGeneration"]["tokenCount"] = 1
+        with self.assertRaisesRegex(ValueError, "has been modified"):
+            GenerateAnyToAny("tampered-any-handle").execute(model=tampered, prompt="prompt")
+
+        pipeline.text_tokens = torch.tensor([9, 9, 3])
+        with self.assertRaisesRegex(RuntimeError, "preserve the input token prefix"):
+            GenerateAnyToAny("invalid-any-prefix").execute(model=loaded["model"], prompt="prompt")
+        pipeline.text_tokens = torch.tensor([1, 2, 3, 4])
+        with self.assertRaisesRegex(RuntimeError, "exceeded max_new_tokens"):
+            GenerateAnyToAny("oversized-any-text").execute(model=loaded["model"], prompt="prompt", max_new_tokens=1)
+        pipeline.image = Image.new("RGB", (7, 8))
+        with self.assertRaisesRegex(RuntimeError, "reviewed output geometry"):
+            GenerateAnyToAny("invalid-any-image").execute(
+                model=loaded["model"], prompt="prompt", generation_mode="image"
+            )
 
 
 if __name__ == "__main__":

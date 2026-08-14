@@ -20,6 +20,9 @@ SCHEMA_VERSION = 1
 IMMUTABLE_REVISION = re.compile(r"^[0-9a-f]{40}$")
 MODEL_SELECTION_KEYS = frozenset({"source", "value"})
 MODEL_HANDLE_KEYS = frozenset({"schemaVersion", "kind", "model", "preprocessor", "receipt"})
+ANY_TO_ANY_HANDLE_KEYS = frozenset(
+    {"schemaVersion", "kind", "adapter", "model", "preprocessor", "pipeline", "receipt"}
+)
 SECURITY_CONTRACT = {
     "localFilesOnly": True,
     "trustRemoteCode": False,
@@ -43,6 +46,47 @@ MAX_PROCESSED_TENSOR_ELEMENTS = 268_435_456
 MAX_LOCAL_CONFIG_BYTES = 2 * 1024 * 1024
 MAX_LOCAL_CONFIG_NODES = 100_000
 MAX_RECEIPT_BYTES = 16_384
+MAX_ANY_TO_ANY_IMAGE_TOKENS = 4_096
+
+# This registry is intentionally finite. An adapter becomes executable only after
+# the pinned production source exposes enough family-specific information to
+# preflight its work and normalize every supported output truthfully.
+ANY_TO_ANY_ADAPTER_CONTRACTS = {
+    "janus": {
+        "schemaVersion": SCHEMA_VERSION,
+        "adapterId": "janus-v1",
+        "status": "executable",
+        "modelClass": "JanusForConditionalGeneration",
+        "processorClass": "JanusProcessor",
+        "inputModalities": ["image", "text"],
+        "outputModalities": ["image", "text"],
+        "evidence": [
+            "transformers@5.14.1:models/janus/configuration_janus.py:31-61",
+            "transformers@5.14.1:models/janus/modeling_janus.py:1180-1349",
+            "transformers@5.14.1:models/janus/processing_janus.py:122-151",
+        ],
+    },
+    "qwen2_5_omni": {
+        "schemaVersion": SCHEMA_VERSION,
+        "adapterId": "qwen2-5-omni-v1",
+        "status": "contract-only",
+        "modelClass": "Qwen2_5OmniForConditionalGeneration",
+        "processorClass": "Qwen2_5OmniProcessor",
+        "inputModalities": ["audio", "image", "text", "video"],
+        "outputModalities": ["audio", "text"],
+        "audioOutputSampleRate": 24_000,
+        "blocker": (
+            "The official 5.14.1 loader unconditionally reads spk_dict.pt with torch.load(weights_only=True); "
+            "that family cannot satisfy MoDiff's safetensors-only graph-loading contract."
+        ),
+        "evidence": [
+            "transformers@5.14.1:models/qwen2_5_omni/modeling_qwen2_5_omni.py:3760-3801",
+            "transformers@5.14.1:models/qwen2_5_omni/modeling_qwen2_5_omni.py:3806-3898",
+            "transformers@5.14.1:models/qwen2_5_omni/processing_qwen2_5_omni.py:323-352",
+            "transformers@5.14.1:docs/source/en/model_doc/qwen2_5_omni.md:90-98",
+        ],
+    },
+}
 
 
 def _model_selection(value: Any) -> dict[str, str]:
@@ -326,6 +370,219 @@ def _load_model(*, selection_value: Any, revision_value: Any, dtype_value: Any, 
         "receipt": receipt,
     }
     return handle, _json_copy(receipt)
+
+
+def _normalized_modalities(value: Any, *, field: str, expected: set[str]) -> list[str]:
+    if isinstance(value, str):
+        values = [value]
+    elif isinstance(value, (list, tuple)):
+        values = list(value)
+    else:
+        raise ValueError(f"Any-to-any {field} must be a finite modality sequence.")
+    if not values or len(values) > 4 or any(not isinstance(item, str) for item in values):
+        raise ValueError(f"Any-to-any {field} must contain one to four modality names.")
+    normalized = {item.strip().casefold() for item in values}
+    if normalized != expected:
+        raise ValueError(f"Any-to-any {field} does not match the reviewed adapter contract.")
+    return sorted(normalized)
+
+
+def _janus_runtime_contract(model: Any, processor: Any) -> dict[str, Any]:
+    contract = ANY_TO_ANY_ADAPTER_CONTRACTS["janus"]
+    if _class_name(model) != contract["modelClass"] or _class_name(processor) != contract["processorClass"]:
+        raise ValueError("The Janus adapter requires the reviewed native model and processor classes.")
+    config = getattr(model, "config", None)
+    if str(getattr(config, "model_type", "")).casefold() != "janus":
+        raise ValueError("The Janus adapter requires model_type=janus.")
+    input_modalities = _normalized_modalities(
+        getattr(model, "input_modalities", None), field="input modalities", expected={"image", "text"}
+    )
+    output_modalities = _normalized_modalities(
+        getattr(model, "output_modalities", None), field="output modalities", expected={"image", "text"}
+    )
+    vision_config = getattr(config, "vision_config", None)
+    runtime_vision_config = getattr(getattr(getattr(model, "model", None), "vision_model", None), "config", None)
+    image_size = getattr(vision_config, "image_size", None)
+    patch_size = getattr(vision_config, "patch_size", None)
+    image_tokens = getattr(vision_config, "num_image_tokens", None)
+    runtime_image_tokens = getattr(runtime_vision_config, "num_image_tokens", None)
+    processor_image_tokens = getattr(processor, "num_image_tokens", None)
+    for value, field in (
+        (image_size, "image_size"),
+        (patch_size, "patch_size"),
+        (image_tokens, "num_image_tokens"),
+        (runtime_image_tokens, "runtime num_image_tokens"),
+        (processor_image_tokens, "processor num_image_tokens"),
+    ):
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"The Janus adapter requires a positive integer {field}.")
+    if (
+        image_size > MAX_MEDIA_SIDE
+        or image_size * image_size > MAX_MEDIA_PIXELS
+        or patch_size > image_size
+        or image_size % patch_size
+    ):
+        raise ValueError("The Janus adapter image geometry exceeds the bounded image contract.")
+    derived_tokens = (image_size // patch_size) ** 2
+    if (
+        image_tokens != derived_tokens
+        or runtime_image_tokens != image_tokens
+        or processor_image_tokens != image_tokens
+        or image_tokens > MAX_ANY_TO_ANY_IMAGE_TOKENS
+    ):
+        raise ValueError("The Janus adapter image-token geometry is inconsistent or exceeds its bound.")
+    return {
+        "adapterId": contract["adapterId"],
+        "modelType": "janus",
+        "inputModalities": input_modalities,
+        "outputModalities": output_modalities,
+        "imageGeneration": {
+            "width": image_size,
+            "height": image_size,
+            "patchSize": patch_size,
+            "tokenCount": image_tokens,
+        },
+    }
+
+
+def _load_any_to_any_model(
+    *, selection_value: Any, revision_value: Any, dtype_value: Any, device_value: Any
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    import transformers
+
+    selection = _model_selection(selection_value)
+    revision = _model_revision(selection, revision_value)
+    dtype_name, dtype = _normalized_dtype(dtype_value)
+    device = _normalized_device(device_value)
+    source = selection["value"]
+    source_receipt = _model_source_receipt(selection, revision)
+    common = {"local_files_only": True, "trust_remote_code": False}
+    if revision is not None:
+        common["revision"] = revision
+    config = transformers.AutoConfig.from_pretrained(source, **common)
+    model_type = str(getattr(config, "model_type", "")).strip().casefold()
+    adapter_contract = ANY_TO_ANY_ADAPTER_CONTRACTS.get(model_type)
+    if adapter_contract is None:
+        raise ValueError("No reviewed Any-to-Any adapter exists for this model_type.")
+    if adapter_contract["status"] != "executable":
+        raise ValueError(
+            f"Any-to-Any adapter {adapter_contract['adapterId']} is contract-only: {adapter_contract['blocker']}"
+        )
+    processor = transformers.AutoProcessor.from_pretrained(source, **common)
+    model = transformers.AutoModelForMultimodalLM.from_pretrained(
+        source,
+        dtype=dtype,
+        use_safetensors=True,
+        weights_only=True,
+        low_cpu_mem_usage=True,
+        **common,
+    )
+    model.to(device)
+    model.eval()
+    if model_type != "janus":  # pragma: no cover - registry status is the internal guard
+        raise RuntimeError("The executable Any-to-Any adapter registry is inconsistent.")
+    adapter = _janus_runtime_contract(model, processor)
+    pipeline = transformers.AnyToAnyPipeline(model=model, processor=processor, device=device, dtype=dtype)
+    if _class_name(pipeline) != "AnyToAnyPipeline" or not callable(pipeline):
+        raise ValueError("The Any-to-Any loader requires the reviewed native pipeline class.")
+    model_type_value, architectures = _config_metadata(model)
+    receipt = _sealed_receipt(
+        {
+            "schemaVersion": SCHEMA_VERSION,
+            "library": "transformers",
+            "task": "any-to-any-generation",
+            "source": source_receipt,
+            "loader": {
+                "configAutoClass": "AutoConfig",
+                "preprocessorAutoClass": "AutoProcessor",
+                "modelAutoClass": "AutoModelForMultimodalLM",
+                "pipelineClass": "AnyToAnyPipeline",
+            },
+            "adapter": adapter,
+            "security": SECURITY_CONTRACT,
+            "runtime": {
+                "transformersVersion": str(getattr(transformers, "__version__", "unknown"))[:128],
+                "dtype": dtype_name,
+                "device": device,
+                "preprocessorClass": _class_name(processor),
+                "modelClass": _class_name(model),
+                "pipelineClass": _class_name(pipeline),
+                "modelType": model_type_value,
+                "architectures": architectures,
+            },
+        }
+    )
+    handle = {
+        "schemaVersion": SCHEMA_VERSION,
+        "kind": "transformers-any-to-any",
+        "adapter": adapter["adapterId"],
+        "model": model,
+        "preprocessor": processor,
+        "pipeline": pipeline,
+        "receipt": receipt,
+    }
+    return handle, _json_copy(receipt)
+
+
+def _validated_any_to_any_handle(value: Any) -> tuple[Any, Any, Any, dict[str, Any]]:
+    if not isinstance(value, dict) or set(value) != ANY_TO_ANY_HANDLE_KEYS:
+        raise ValueError("Any-to-Any generation requires an intact reviewed model handle.")
+    if (
+        value.get("schemaVersion") != SCHEMA_VERSION
+        or value.get("kind") != "transformers-any-to-any"
+        or value.get("adapter") != "janus-v1"
+    ):
+        raise ValueError("Any-to-Any generation received an unsupported model adapter handle.")
+    model = value.get("model")
+    processor = value.get("preprocessor")
+    pipeline = value.get("pipeline")
+    if model is None or processor is None or not callable(pipeline):
+        raise ValueError("Any-to-Any generation requires a loaded model, processor, and pipeline.")
+    receipt = value.get("receipt")
+    try:
+        valid_digest = _receipt_digest_is_valid(receipt)
+    except ValueError:
+        valid_digest = False
+    if not valid_digest:
+        raise ValueError("Any-to-Any model receipt is missing, oversized, or has been modified.")
+    adapter = receipt.get("adapter")
+    loader = receipt.get("loader")
+    runtime = receipt.get("runtime")
+    if (
+        receipt.get("schemaVersion") != SCHEMA_VERSION
+        or receipt.get("library") != "transformers"
+        or receipt.get("task") != "any-to-any-generation"
+        or receipt.get("security") != SECURITY_CONTRACT
+        or not isinstance(adapter, dict)
+        or adapter.get("adapterId") != value["adapter"]
+        or adapter.get("modelType") != "janus"
+        or not isinstance(loader, dict)
+        or loader
+        != {
+            "configAutoClass": "AutoConfig",
+            "preprocessorAutoClass": "AutoProcessor",
+            "modelAutoClass": "AutoModelForMultimodalLM",
+            "pipelineClass": "AnyToAnyPipeline",
+        }
+        or not isinstance(runtime, dict)
+        or runtime.get("modelClass") != _class_name(model)
+        or runtime.get("preprocessorClass") != _class_name(processor)
+        or runtime.get("pipelineClass") != _class_name(pipeline)
+    ):
+        raise ValueError("Any-to-Any model receipt does not match the reviewed adapter task.")
+    source = receipt.get("source")
+    if not isinstance(source, dict) or source.get("kind") not in {"hub", "local"}:
+        raise ValueError("Any-to-Any model receipt has an invalid source.")
+    if source["kind"] == "hub":
+        if not isinstance(source.get("repository"), str) or not IMMUTABLE_REVISION.fullmatch(
+            str(source.get("revision"))
+        ):
+            raise ValueError("Any-to-Any model receipt has a mutable Hub source.")
+    elif not isinstance(source.get("path"), str) or not re.fullmatch(
+        r"sha256:[0-9a-f]{64}", str(source.get("configSha256"))
+    ):
+        raise ValueError("Any-to-Any model receipt has an invalid local source.")
+    return model, processor, pipeline, _json_copy(receipt)
 
 
 def _validated_handle(value: Any, *, task: str) -> tuple[Any, Any, dict[str, Any]]:
@@ -632,6 +889,126 @@ def _multimodal_prompt(
     )
 
 
+def _normalized_optional_images(value: Any) -> tuple[list[Any], int]:
+    values = _media_items(value, field="images", maximum=MAX_IMAGES) if value is not None else []
+    images: list[Any] = []
+    total_pixels = 0
+    for item in values:
+        image, pixels = _normalized_media_item(item, field="images")
+        total_pixels += pixels
+        if total_pixels > MAX_TOTAL_MEDIA_PIXELS:
+            raise ValueError("Any-to-Any images exceeded the total pixel limit.")
+        images.append(image)
+    return images, total_pixels
+
+
+def _one_any_to_any_record(value: Any, *, output_key: str) -> dict[str, Any]:
+    if not isinstance(value, list) or len(value) != 1 or not isinstance(value[0], dict):
+        raise RuntimeError("Any-to-Any pipeline must return exactly one result record.")
+    record = value[0]
+    if set(record) != {"input_text", output_key}:
+        raise RuntimeError("Any-to-Any pipeline returned an unexpected result schema.")
+    return record
+
+
+def _generate_janus_any_to_any(
+    *, model: Any, processor: Any, pipeline: Any, receipt: dict[str, Any], kwargs: dict[str, Any]
+) -> dict[str, Any]:
+    mode = str(kwargs.get("generation_mode") or "text").strip().casefold()
+    if mode not in {"text", "image"}:
+        raise ValueError("The reviewed Janus adapter can generate exactly text or image outputs.")
+    if kwargs.get("video") is not None or kwargs.get("audio_input") is not None:
+        raise ValueError("The reviewed Janus adapter accepts only text and optional in-memory images.")
+    prompt = _bounded_string(kwargs.get("prompt"), field="prompt")
+    images, media_pixels = _normalized_optional_images(kwargs.get("images"))
+    if mode == "image" and images:
+        raise ValueError("The reviewed Janus image-generation adapter accepts a text prompt without source images.")
+    image_token = getattr(processor, "image_token", None)
+    if images:
+        if not isinstance(image_token, str) or not image_token or len(image_token) > 256 or "\x00" in image_token:
+            raise ValueError("The reviewed Janus processor has an invalid image placeholder token.")
+        adapted_prompt = _bounded_string(
+            (image_token * len(images)) + prompt,
+            field="adapted Janus prompt",
+            maximum_characters=MAX_RENDERED_PROMPT_CHARACTERS,
+            maximum_bytes=MAX_PROMPT_UTF8_BYTES * 2,
+        )
+    else:
+        adapted_prompt = prompt
+    processor_kwargs: dict[str, Any] = {
+        "text": adapted_prompt,
+        "return_tensors": "pt",
+        "generation_mode": mode,
+    }
+    if images:
+        processor_kwargs["images"] = images
+    preview = _batch_to_device(processor(**processor_kwargs), device=receipt["runtime"]["device"])
+    input_ids = preview["input_ids"]
+    input_tokens = _shape(input_ids)[1]
+    controls = _generation_controls(kwargs)
+    controls["num_beams"] = 1
+    invocation: dict[str, Any] = {"text": adapted_prompt}
+    if images:
+        invocation["images"] = images
+    call_kwargs: dict[str, Any] = {
+        "generation_mode": mode,
+        "generate_kwargs": controls,
+        "processor_kwargs": {"generation_mode": mode},
+    }
+    if mode == "text":
+        call_kwargs["return_tensors"] = True
+        record = _one_any_to_any_record(pipeline(invocation, **call_kwargs), output_key="generated_token_ids")
+        sequence = record["generated_token_ids"]
+        sequence_shape = _shape(sequence)
+        if sequence_shape is None or len(sequence_shape) != 1 or sequence_shape[0] <= 0:
+            raise RuntimeError("Any-to-Any text generation returned an invalid token sequence.")
+        sequence_batch = sequence[None, ...]
+        output_tokens = sequence_shape[0]
+        if output_tokens < input_tokens or not _token_prefix_matches(sequence_batch, input_ids, input_tokens):
+            raise RuntimeError("Any-to-Any text generation did not preserve the input token prefix.")
+        generated_tokens = output_tokens - input_tokens
+        if generated_tokens > controls["max_new_tokens"]:
+            raise RuntimeError("Any-to-Any text generation exceeded max_new_tokens.")
+        text = _decode(processor, sequence[input_tokens:])
+        result = {
+            "schemaVersion": SCHEMA_VERSION,
+            "task": "any-to-any-generation",
+            "adapter": receipt["adapter"]["adapterId"],
+            "outputModality": "text",
+            "text": text,
+            "image": None,
+            "audio": None,
+            "finishReason": "length" if generated_tokens == controls["max_new_tokens"] else "stop",
+            "inputTokens": input_tokens,
+            "generatedTokens": generated_tokens,
+            "inputImageCount": len(images),
+            "inputMediaPixels": media_pixels,
+            "modelReceipt": receipt,
+        }
+        return {"text": text, "image": None, "result": result}
+    record = _one_any_to_any_record(pipeline(invocation, **call_kwargs), output_key="generated_image")
+    image, output_pixels = _normalized_media_item(record["generated_image"], field="generated image")
+    geometry = receipt["adapter"]["imageGeneration"]
+    if image.size != (geometry["width"], geometry["height"]):
+        raise RuntimeError("The Janus adapter returned an image outside its reviewed output geometry.")
+    result = {
+        "schemaVersion": SCHEMA_VERSION,
+        "task": "any-to-any-generation",
+        "adapter": receipt["adapter"]["adapterId"],
+        "outputModality": "image",
+        "text": None,
+        "image": {"width": image.width, "height": image.height, "pixels": output_pixels},
+        "audio": None,
+        "finishReason": "fixed-image-token-contract",
+        "inputTokens": input_tokens,
+        "generatedTokens": geometry["tokenCount"],
+        "inputImageCount": 0,
+        "inputMediaPixels": 0,
+        "modelReceipt": receipt,
+    }
+    return {"text": None, "image": image, "result": result}
+
+
 class LoadTextGenerationModel(NodeBase):
     """Load an immutable local-only causal language model and tokenizer."""
 
@@ -838,3 +1215,86 @@ class GenerateImageVideoText(NodeBase):
             "modelReceipt": receipt,
         }
         return {"text": text, "result": result}
+
+
+class LoadAnyToAnyModel(NodeBase):
+    """Load one immutable model through a finite reviewed Any-to-Any adapter."""
+
+    label = "Load Any-to-Any Model"
+    category = "Hugging Face Transformers"
+    resizable = True
+    params = {
+        "model": {"label": "Model", "display": "output", "type": "transformers_any_to_any"},
+        "model_id": {
+            "label": "Model",
+            "display": "modelselect",
+            "type": "string",
+            "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]},
+        },
+        "revision": {"label": "Exact Hub Commit", "type": "string", "default": ""},
+        "dtype": {
+            "label": "DType",
+            "type": "string",
+            "options": ["float32", "float16", "bfloat16"],
+            "default": "float32",
+        },
+        "device": {"label": "Device", "type": "string", "options": DEVICE_LIST, "default": DEFAULT_DEVICE},
+        "receipt": {"label": "Model Receipt", "display": "output", "type": "object"},
+    }
+
+    def execute(self, **kwargs):
+        model, receipt = _load_any_to_any_model(
+            selection_value=kwargs.get("model_id"),
+            revision_value=kwargs.get("revision"),
+            dtype_value=kwargs.get("dtype"),
+            device_value=kwargs.get("device"),
+        )
+        return {"model": model, "receipt": receipt}
+
+
+class GenerateAnyToAny(NodeBase):
+    """Generate one bounded output through the handle's reviewed family adapter."""
+
+    label = "Generate Any-to-Any"
+    category = "Hugging Face Transformers"
+    resizable = True
+    params = {
+        "model": {"label": "Model", "display": "input", "type": "transformers_any_to_any"},
+        "prompt": {"label": "Prompt", "type": "text", "default": ""},
+        "images": {"label": "Images", "display": "input", "type": "image", "required": False},
+        "generation_mode": {
+            "label": "Output Modality",
+            "type": "string",
+            "options": ["text", "image"],
+            "default": "text",
+        },
+        "max_new_tokens": {"label": "Max New Tokens", "type": "int", "default": 256, "min": 1, "max": 2048},
+        "min_new_tokens": {"label": "Min New Tokens", "type": "int", "default": 0, "min": 0, "max": 2048},
+        "do_sample": {"label": "Sample", "type": "boolean", "default": False},
+        "temperature": {"label": "Temperature", "type": "float", "default": 1.0, "min": 0.01, "max": 5.0},
+        "top_p": {"label": "Top P", "type": "float", "default": 1.0, "min": 0.01, "max": 1.0},
+        "top_k": {"label": "Top K", "type": "int", "default": 50, "min": 0, "max": 1000},
+        "num_beams": {"label": "Beams", "type": "int", "default": 1, "min": 1, "max": 8},
+        "repetition_penalty": {
+            "label": "Repetition Penalty",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.1,
+            "max": 10.0,
+        },
+        "text": {"label": "Generated Text", "display": "output", "type": "string"},
+        "image": {"label": "Generated Image", "display": "output", "type": "image"},
+        "result": {"label": "Generation Result", "display": "output", "type": "object"},
+    }
+
+    def execute(self, **kwargs):
+        model, processor, pipeline, receipt = _validated_any_to_any_handle(kwargs.get("model"))
+        if receipt["adapter"]["adapterId"] != "janus-v1":  # pragma: no cover - validated finite registry
+            raise RuntimeError("The Any-to-Any adapter registry is inconsistent.")
+        return _generate_janus_any_to_any(
+            model=model,
+            processor=processor,
+            pipeline=pipeline,
+            receipt=receipt,
+            kwargs=kwargs,
+        )
