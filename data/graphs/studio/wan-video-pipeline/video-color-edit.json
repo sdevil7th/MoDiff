@@ -1003,7 +1003,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "@data/videos/wan_vace_video_color_grade.source_video.mp4"
+            "value": "@data/videos/wan_vace_video_color_grade.source_video_Faml3T.mp4"
           },
           "filename": {
             "display": "output",
@@ -1459,6 +1459,15 @@
             "type": "float",
             "value": 1
           },
+          "control_video": {
+            "disabled": false,
+            "display": "input",
+            "hidden": true,
+            "isConnected": false,
+            "label": "Control Video",
+            "required": false,
+            "type": "video"
+          },
           "denoise_strength": {
             "default": 1,
             "disabled": false,
@@ -1695,6 +1704,28 @@
             ],
             "type": "string",
             "value": "pil"
+          },
+          "pag_adaptive_scale": {
+            "default": 0,
+            "disabled": false,
+            "display": "slider",
+            "hidden": true,
+            "label": "PAG Adaptive Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
+          },
+          "pag_scale": {
+            "default": 3,
+            "disabled": false,
+            "display": "slider",
+            "hidden": true,
+            "label": "PAG Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
           },
           "pipeline": {
             "disabled": false,
@@ -2231,6 +2262,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "LTX2Pipeline",
+                "schemaVersion": 1,
+                "value": "LTX2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "HunyuanVideoFramepackPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanVideoFramepackPipeline"
@@ -2255,6 +2294,38 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "AnimateDiffPAGPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffVideoToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffVideoToVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffVideoToVideoControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffVideoToVideoControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "AnimateLCMPipeline",
                 "schemaVersion": 1,
                 "value": "AnimateLCMPipeline"
@@ -2266,6 +2337,14 @@
                 "label": "CogVideoXPipeline",
                 "schemaVersion": 1,
                 "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXVideoToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXVideoToVideoPipeline"
               },
               {
                 "availability": "installed",

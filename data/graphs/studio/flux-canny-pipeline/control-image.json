@@ -132,6 +132,13 @@
         ],
         "module": "modules.DiffusersImage",
         "params": {
+          "cfg_normalize": {
+            "default": false,
+            "disabled": false,
+            "hidden": true,
+            "label": "Normalize CFG",
+            "type": "bool"
+          },
           "conditioning_scale": {
             "default": 1,
             "disabled": false,
@@ -141,6 +148,28 @@
             "max": 2,
             "min": 0,
             "step": 0.05,
+            "type": "float"
+          },
+          "control_guidance_end": {
+            "default": 1,
+            "disabled": false,
+            "display": "slider",
+            "hidden": true,
+            "label": "Control Guidance End",
+            "max": 1,
+            "min": 0,
+            "step": 0.01,
+            "type": "float"
+          },
+          "control_guidance_start": {
+            "default": 0,
+            "disabled": false,
+            "display": "slider",
+            "hidden": true,
+            "label": "Control Guidance Start",
+            "max": 1,
+            "min": 0,
+            "step": 0.01,
             "type": "float"
           },
           "control_image": {
@@ -187,7 +216,16 @@
                 ]
               },
               "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
                 "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
                   "hidden": true
                 },
                 "guidance_scale": {
@@ -197,6 +235,9 @@
                   "hidden": false
                 },
                 "image_guidance_scale": {
+                  "hidden": true
+                },
+                "layers": {
                   "hidden": true
                 },
                 "max_sequence_length": {
@@ -217,7 +258,13 @@
                 "reference_strength": {
                   "hidden": true
                 },
+                "resolution": {
+                  "hidden": true
+                },
                 "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
                   "hidden": true
                 },
                 "width": {
@@ -243,7 +290,16 @@
                 ]
               },
               "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
                 "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
                   "hidden": true
                 },
                 "guidance_scale": {
@@ -253,6 +309,9 @@
                   "hidden": false
                 },
                 "image_guidance_scale": {
+                  "hidden": true
+                },
+                "layers": {
                   "hidden": true
                 },
                 "max_sequence_length": {
@@ -273,7 +332,13 @@
                 "reference_strength": {
                   "hidden": true
                 },
+                "resolution": {
+                  "hidden": true
+                },
                 "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
                   "hidden": true
                 },
                 "width": {
@@ -306,6 +371,15 @@
             "isConnected": true,
             "label": "Images",
             "type": "image"
+          },
+          "layers": {
+            "default": 4,
+            "disabled": false,
+            "hidden": true,
+            "label": "Layers",
+            "max": 10,
+            "min": 1,
+            "type": "int"
           },
           "max_sequence_length": {
             "default": 256,
@@ -400,7 +474,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -416,6 +490,31 @@
             "label": "Prompt",
             "type": "text",
             "value": "Control contract: strictly follow the supplied Canny control image as the authoritative architecture for massing, roofline, facade divisions, openings, stairs, perspective, horizon, and primary edges; do not move, omit, or invent major structural lines. Appearance brief: render the controlled structure as a compact coastal research pavilion built from board-formed concrete, low-iron glass, dark bronze mullions, weathered timber soffits, and a shallow reflecting pool. Add only scale-appropriate doors, railings, interior desks, dune grass, and one distant person where the control geometry permits. Camera and light: retain the control viewpoint and vanishing lines, wide 32 mm architectural lens, late-afternoon overcast key with a warm break near the horizon, soft interior practicals, grounded environmental shadows, realistic glass reflections, subtle sea haze, restrained gray-bronze-amber palette, and crisp material microtexture. Output must honor the edge map while remaining photographic: no warped facade, shifted windows, extra floor, broken stairs, ignored control lines, cluttered foreground, impossible reflection, flat light, blur, or rendered labels."
+          },
+          "resolution": {
+            "default": 640,
+            "disabled": false,
+            "hidden": true,
+            "label": "Resolution",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "640",
+                "schemaVersion": 1,
+                "value": "640"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "1024",
+                "schemaVersion": 1,
+                "value": "1024"
+              }
+            ],
+            "type": "int"
           },
           "seed": {
             "default": 0,
@@ -440,6 +539,13 @@
             "step": 0.01,
             "type": "float",
             "value": 0.8
+          },
+          "use_en_prompt": {
+            "default": false,
+            "disabled": false,
+            "hidden": true,
+            "label": "Use English Auto-caption",
+            "type": "bool"
           },
           "width": {
             "default": 1024,
@@ -797,7 +903,7 @@
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "model_id"
+              "origin": "pipeline_class"
             },
             "type": "image_diffusion_pipeline"
           },
@@ -840,6 +946,22 @@
                 "label": "QwenImagePipeline",
                 "schemaVersion": 1,
                 "value": "QwenImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageLayeredPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageLayeredPipeline"
               },
               {
                 "availability": "installed",
@@ -901,6 +1023,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "StableDiffusionXLControlNetImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLControlNetInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "HunyuanDiTPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanDiTPipeline"
@@ -952,6 +1090,22 @@
                 "label": "StableDiffusionXLPAGInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionXLPAGInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLControlNetPAGPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetPAGImg2ImgPipeline"
               },
               {
                 "availability": "installed",
@@ -1101,6 +1255,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "ChromaImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "ChromaImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ChromaInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "ChromaInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "CogView3PlusPipeline",
                 "schemaVersion": 1,
                 "value": "CogView3PlusPipeline"
@@ -1197,6 +1367,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "StableDiffusionControlNetImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionControlNetInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionImg2ImgPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionImg2ImgPipeline"
@@ -1248,6 +1434,22 @@
                 "label": "StableDiffusionPAGInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionPAGInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionControlNetPAGPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionControlNetPAGInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetPAGInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -1312,6 +1514,22 @@
                 "label": "FluxControlPipeline",
                 "schemaVersion": 1,
                 "value": "FluxControlPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -2406,7 +2624,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "@data/images/flux_control_canny.control_image.png"
+            "value": "@data/images/flux_control_canny.control_image_U02ekT.png"
           },
           "height": {
             "display": "output",

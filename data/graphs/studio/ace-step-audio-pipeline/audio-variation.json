@@ -2101,7 +2101,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "@data/audio/ace_step_audio_variation.source_audio.wav"
+            "value": "@data/audio/ace_step_audio_variation.source_audio_R_oA9J.wav"
           },
           "filename": {
             "display": "output",

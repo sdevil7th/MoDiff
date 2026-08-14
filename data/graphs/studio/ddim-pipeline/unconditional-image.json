@@ -462,6 +462,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "QwenImageControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImageLayeredPipeline",
+                "schemaVersion": 1,
+                "value": "QwenImageLayeredPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "ZImagePipeline",
                 "schemaVersion": 1,
                 "value": "ZImagePipeline"
@@ -518,6 +534,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "StableDiffusionXLControlNetImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLControlNetInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "HunyuanDiTPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanDiTPipeline"
@@ -569,6 +601,22 @@
                 "label": "StableDiffusionXLPAGInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionXLPAGInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLControlNetPAGPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLControlNetPAGImg2ImgPipeline"
               },
               {
                 "availability": "installed",
@@ -718,6 +766,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "ChromaImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "ChromaImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ChromaInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "ChromaInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "CogView3PlusPipeline",
                 "schemaVersion": 1,
                 "value": "CogView3PlusPipeline"
@@ -814,6 +878,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "StableDiffusionControlNetImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionControlNetInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionImg2ImgPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionImg2ImgPipeline"
@@ -865,6 +945,22 @@
                 "label": "StableDiffusionPAGInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionPAGInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionControlNetPAGPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionControlNetPAGInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionControlNetPAGInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -929,6 +1025,22 @@
                 "label": "FluxControlPipeline",
                 "schemaVersion": 1,
                 "value": "FluxControlPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -2031,7 +2143,16 @@
                 ]
               },
               "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
                 "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
                   "hidden": true
                 },
                 "guidance_scale": {
@@ -2041,6 +2162,9 @@
                   "hidden": true
                 },
                 "image_guidance_scale": {
+                  "hidden": true
+                },
+                "layers": {
                   "hidden": true
                 },
                 "max_sequence_length": {
@@ -2061,7 +2185,13 @@
                 "reference_strength": {
                   "hidden": true
                 },
+                "resolution": {
+                  "hidden": true
+                },
                 "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
                   "hidden": true
                 },
                 "width": {
@@ -2095,7 +2225,16 @@
                 ]
               },
               "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
                 "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
                   "hidden": true
                 },
                 "guidance_scale": {
@@ -2105,6 +2244,9 @@
                   "hidden": true
                 },
                 "image_guidance_scale": {
+                  "hidden": true
+                },
+                "layers": {
                   "hidden": true
                 },
                 "max_sequence_length": {
@@ -2125,7 +2267,13 @@
                 "reference_strength": {
                   "hidden": true
                 },
+                "resolution": {
+                  "hidden": true
+                },
                 "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
                   "hidden": true
                 },
                 "width": {

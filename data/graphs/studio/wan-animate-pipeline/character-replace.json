@@ -202,7 +202,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "931d7b1dd5d757ac3a9a23297df5369fe02c7e1f41b8a904130a2478d515b7e7",
+    "positionHash": "19ecb0bf800f9cd579eed5905dd042a1ab6032fb6c041e588e0d00a5fc1d3478",
     "verticalGap": 72
   },
   "nodes": [
@@ -1099,7 +1099,7 @@
       "id": "node-03",
       "position": {
         "x": 0,
-        "y": 1094
+        "y": 1468
       },
       "type": "custom"
     },
@@ -1182,7 +1182,7 @@
       "id": "node-04",
       "position": {
         "x": 0,
-        "y": 1468
+        "y": 1842
       },
       "type": "custom"
     },
@@ -1375,7 +1375,7 @@
       "id": "node-06",
       "position": {
         "x": 0,
-        "y": 1842
+        "y": 1094
       },
       "type": "custom"
     },
@@ -1610,6 +1610,15 @@
             "step": 0.05,
             "type": "float",
             "value": 1
+          },
+          "control_video": {
+            "disabled": false,
+            "display": "input",
+            "hidden": true,
+            "isConnected": false,
+            "label": "Control Video",
+            "required": false,
+            "type": "video"
           },
           "denoise_strength": {
             "default": 1,
@@ -1848,6 +1857,28 @@
             ],
             "type": "string",
             "value": "pil"
+          },
+          "pag_adaptive_scale": {
+            "default": 0,
+            "disabled": false,
+            "display": "slider",
+            "hidden": true,
+            "label": "PAG Adaptive Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
+          },
+          "pag_scale": {
+            "default": 3,
+            "disabled": false,
+            "display": "slider",
+            "hidden": true,
+            "label": "PAG Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
           },
           "pipeline": {
             "disabled": false,
@@ -2386,6 +2417,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "LTX2Pipeline",
+                "schemaVersion": 1,
+                "value": "LTX2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "HunyuanVideoFramepackPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanVideoFramepackPipeline"
@@ -2410,6 +2449,38 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "AnimateDiffPAGPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffVideoToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffVideoToVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffVideoToVideoControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffVideoToVideoControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "AnimateLCMPipeline",
                 "schemaVersion": 1,
                 "value": "AnimateLCMPipeline"
@@ -2421,6 +2492,14 @@
                 "label": "CogVideoXPipeline",
                 "schemaVersion": 1,
                 "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXVideoToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXVideoToVideoPipeline"
               },
               {
                 "availability": "installed",

@@ -1083,6 +1083,13 @@
             "type": "float",
             "value": 1
           },
+          "control_video": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Control Video",
+            "required": false,
+            "type": "video"
+          },
           "denoise_strength": {
             "default": 1,
             "label": "Denoise strength",
@@ -1252,6 +1259,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "control_video_to_video",
+                "schemaVersion": 1,
+                "value": "control_video_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "image_to_video",
                 "schemaVersion": 1,
                 "value": "image_to_video"
@@ -1385,6 +1400,24 @@
             ],
             "type": "string",
             "value": "pil"
+          },
+          "pag_adaptive_scale": {
+            "default": 0,
+            "display": "slider",
+            "label": "PAG Adaptive Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
+          },
+          "pag_scale": {
+            "default": 3,
+            "display": "slider",
+            "label": "PAG Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
           },
           "pipeline": {
             "disabled": false,
@@ -1900,6 +1933,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "LTX2Pipeline",
+                "schemaVersion": 1,
+                "value": "LTX2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "HunyuanVideoFramepackPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanVideoFramepackPipeline"
@@ -1924,6 +1965,38 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "AnimateDiffPAGPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffVideoToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffVideoToVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffVideoToVideoControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffVideoToVideoControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "AnimateLCMPipeline",
                 "schemaVersion": 1,
                 "value": "AnimateLCMPipeline"
@@ -1935,6 +2008,14 @@
                 "label": "CogVideoXPipeline",
                 "schemaVersion": 1,
                 "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXVideoToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXVideoToVideoPipeline"
               },
               {
                 "availability": "installed",
