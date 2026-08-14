@@ -391,6 +391,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 21,
                 "silence_latent.pt",
             ),
+            "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers": (
+                "aa76e7f4f4928f378716b6716a2130fba3caf5b1",
+                17,
+                "diffusion_pytorch_model.bin",
+            ),
             "jdopensource/JoyAI-Image-Edit-Diffusers": (
                 "4b41fb25d961f37668750178ccbb380da326201c",
                 38,

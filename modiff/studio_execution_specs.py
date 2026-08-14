@@ -220,6 +220,25 @@ SANA_600M_FP16_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.fp16.safetensors",
 ]
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+SANA_SPRINT_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 PIXART_SIGMA_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -6619,6 +6638,7 @@ _SANA_SPRINT_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": SANA_SPRINT_REPO,
+    "downloadFiles": SANA_SPRINT_DIFFUSERS_FILES,
     "artifactLabel": "Diffusers bfloat16 safetensors repo",
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
