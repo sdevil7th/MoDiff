@@ -63,6 +63,11 @@ from modiff.runtime_overlays import (
     locked_artifact_file_seal,
     managed_directory_identity,
 )
+from modiff.runtime_source_builds import (
+    build_locked_source_wheel,
+    source_build_output_artifact,
+    validate_source_build_contract,
+)
 from modiff.tool_locks import UV_TOOL_LOCKS
 
 
@@ -1501,6 +1506,18 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
 
     supported_tags = set(sys_tags())
     selected: dict[str, dict[str, Any]] = {}
+    source_outputs: dict[str, dict[str, Any]] = {}
+    for raw_source_build in profile.source_builds:
+        source_build = validate_source_build_contract(raw_source_build)
+        output = source_build_output_artifact(source_build)
+        distribution = str(output["distribution"])
+        if (
+            distribution not in expected
+            or output["version"] != expected[distribution]
+            or distribution in source_outputs
+        ):
+            raise RuntimeError("The optional-runtime source-build output is invalid.")
+        source_outputs[distribution] = output
     for artifact in profile.artifact_locks:
         if not isinstance(artifact, dict):
             continue
@@ -1532,6 +1549,7 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
             distribution not in expected
             or version != expected[distribution]
             or distribution in selected
+            or distribution in source_outputs
             or not filename.endswith(".whl")
             or parsed.scheme != "https"
             or parsed.hostname != "files.pythonhosted.org"
@@ -1562,15 +1580,22 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
             "pythonTag": python_tag,
             "machine": artifact_machine,
         }
-    if set(selected) != set(expected):
+    if set(selected) | set(source_outputs) != set(expected):
         raise RuntimeError("The optional-runtime artifact lock is incomplete for this Python and platform.")
-    return [selected[package.distribution] for package in profile.packages]
+    return [
+        source_outputs.get(package.distribution, selected.get(package.distribution))
+        for package in profile.packages
+    ]
 
 
 def _artifact_install_urls(profile) -> list[str]:
     """Compatibility projection used by contract tests and diagnostics."""
 
-    return [f"{item['url']}#sha256={item['sha256']}" for item in _artifact_install_plan(profile)]
+    return [
+        f"{item['url']}#sha256={item['sha256']}"
+        for item in _artifact_install_plan(profile)
+        if "url" in item
+    ]
 
 
 def validate_optional_runtime_install_request(
@@ -1603,6 +1628,9 @@ def validate_optional_runtime_install_request(
         "profile": profile,
         "spec": spec,
         "artifactLocks": artifacts,
+        "sourceBuilds": [
+            validate_source_build_contract(item) for item in profile.source_builds
+        ],
         "baseContracts": base_contracts,
         "installerExecutable": installer,
     }
@@ -1688,6 +1716,7 @@ def _install_reviewed_overlay(
     hash_locked: bool = True,
     installer_executable: str | None = None,
     artifact_locks: list[dict[str, Any]] | None = None,
+    source_builds: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     def report(phase: str, message: str) -> None:
         if progress:
@@ -1746,6 +1775,9 @@ def _install_reviewed_overlay(
         base_packages = _merge_contracts(existing_base, base_contracts)
         binding = current_base_binding(base_packages)
         selected_artifacts = [dict(item) for item in (artifact_locks or [])]
+        selected_source_builds = [
+            validate_source_build_contract(item) for item in (source_builds or [])
+        ]
         if hash_locked:
             if spec.get("kind") != "optional_runtime" or not selected_artifacts:
                 raise RuntimeError("A locked optional runtime requires a complete artifact plan.")
@@ -1755,11 +1787,50 @@ def _install_reviewed_overlay(
             if any(item.get("kind") != "optional_runtime" for item in specs):
                 raise RuntimeError("Hashless legacy packages cannot be mixed into an optional runtime.")
             ensure_managed_directory(ARTIFACTS_DIR, managed_root=MANAGED_ROOT)
-            cached_artifacts = cache_locked_artifacts(
-                selected_artifacts,
+            source_outputs = {
+                source_build_output_artifact(item)["distribution"]: item
+                for item in selected_source_builds
+            }
+            if len(source_outputs) != len(selected_source_builds):
+                raise RuntimeError("The optional-runtime source-build outputs are not unique.")
+            downloaded_artifacts = [
+                item
+                for item in selected_artifacts
+                if item["distribution"] not in source_outputs
+            ]
+            cached_downloads = cache_locked_artifacts(
+                downloaded_artifacts,
                 ARTIFACTS_DIR,
                 lease=lease,
             )
+            cached_by_distribution = {
+                item["distribution"]: path
+                for item, path in zip(downloaded_artifacts, cached_downloads, strict=True)
+            }
+            for index, source_build in enumerate(selected_source_builds):
+                workspace = staged / f"source-build-{index}"
+                result = build_locked_source_wheel(
+                    source_build,
+                    cache_root=ARTIFACTS_DIR,
+                    work_root=workspace,
+                    lease=lease,
+                )
+                expected_output = source_build_output_artifact(source_build)
+                if result.artifact != expected_output:
+                    raise RuntimeError("A source build returned an unexpected wheel lock.")
+                cached_by_distribution[result.artifact["distribution"]] = result.path
+                remove_managed_directory(
+                    workspace,
+                    parent=staged,
+                )
+            if set(cached_by_distribution) != {
+                item["distribution"] for item in selected_artifacts
+            }:
+                raise RuntimeError("The optional-runtime artifact cache is incomplete after source builds.")
+            cached_artifacts = [
+                cached_by_distribution[item["distribution"]]
+                for item in selected_artifacts
+            ]
             # Authenticate and structurally inspect every wheel before giving
             # any archive to the installer/extractor.
             locked_artifact_file_seal(
@@ -1966,6 +2037,7 @@ def install_optional_runtime(
         progress=progress,
         installer_executable=request["installerExecutable"],
         artifact_locks=request["artifactLocks"],
+        source_builds=request["sourceBuilds"],
     )
 
 

@@ -42,7 +42,7 @@ sys.path.insert(0, str(root))
 import modiff.optional_runtimes as optional_runtimes
 import modiff.optimization_packages as optimization_packages
 
-profile_id = "huggingface-transformers-peft-5.14.1-0.20.0"
+profile_id = sys.argv[2]
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
 plan = optimization_packages._artifact_install_plan(candidate)
 present = []
@@ -67,7 +67,7 @@ sys.path.insert(0, str(root))
 
 import modiff.optional_runtimes as optional_runtimes
 
-profile_id = "huggingface-transformers-peft-5.14.1-0.20.0"
+profile_id = sys.argv[2]
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
 qualified = optional_runtimes.project_optional_runtime_qualification(candidate)
 optional_runtimes.OPTIONAL_RUNTIME_PROFILES = {profile_id: qualified}
@@ -111,6 +111,8 @@ finite = bool(torch.isfinite(output).all().item())
 trainable = [name for name, value in model.named_parameters() if value.requires_grad]
 if not finite or list(output.shape) != [1, 4, 16] or len(trainable) != 4 or USE_PEFT_BACKEND is not True:
     raise RuntimeError("the no-weight Transformers/PEFT workload failed its invariant")
+if transformers.__version__ != candidate.packages[0].version:
+    raise RuntimeError("the workload loaded a different Transformers version")
 
 print(json.dumps({
     "status": "passed",
@@ -257,11 +259,11 @@ def _source_revision() -> dict[str, Any]:
     return {"commit": commit, "dirty": dirty}
 
 
-def _future_profile():
+def _future_profile(profile_id: str = PROFILE_ID):
     sys.path.insert(0, str(ROOT))
     import modiff.optional_runtimes as optional_runtimes
 
-    candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[PROFILE_ID]
+    candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
     qualified = optional_runtimes.project_optional_runtime_qualification(
         candidate,
         platform_name=_platform_name(),
@@ -270,13 +272,13 @@ def _future_profile():
     return candidate, qualified
 
 
-def qualification_preflight() -> dict[str, Any]:
-    candidate, qualified = _future_profile()
+def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
+    candidate, qualified = _future_profile(profile_id)
     source_target = candidate.contract_for_target(
         platform_name=_platform_name(),
         machine=_machine_name(),
     )
-    probe = _json_process(_PREFLIGHT_SCRIPT, str(ROOT), timeout=60)
+    probe = _json_process(_PREFLIGHT_SCRIPT, str(ROOT), profile_id, timeout=60)
     plan = probe.get("plan")
     present = probe.get("present")
     if not isinstance(plan, list) or not isinstance(present, list):
@@ -307,6 +309,7 @@ def qualification_preflight() -> dict[str, Any]:
         "artifactCount": len(plan),
         "artifactBytes": sum(int(item["byteSize"]) for item in plan),
         "artifactPlanDigest": "sha256:" + hashlib.sha256(artifact_body).hexdigest(),
+        "sourceBuildCount": len(candidate.source_builds),
     }
 
 
@@ -355,15 +358,15 @@ def _child(script: str, *arguments: str, timeout: int = 300) -> dict[str, Any]:
     return value
 
 
-def run_qualification(*, consent: bool) -> dict[str, Any]:
+def run_qualification(*, consent: bool, profile_id: str = PROFILE_ID) -> dict[str, Any]:
     if consent is not True:
         raise RuntimeError("explicit --consent is required")
     if "modiff.optimization_packages" in sys.modules or "modiff.runtime_overlays" in sys.modules:
         raise RuntimeError("qualification must start in a fresh Python process")
-    preflight = qualification_preflight()
+    preflight = qualification_preflight(profile_id)
     if preflight["status"] != "ready":
         raise RuntimeError("the host is not a clean, installer-ready qualification base")
-    candidate, qualified = _future_profile()
+    candidate, qualified = _future_profile(profile_id)
     progress: list[str] = []
     started = time.monotonic()
     previous_managed_root = os.environ.get("MODIFF_MANAGED_ROOT")
@@ -377,11 +380,11 @@ def run_qualification(*, consent: bool) -> dict[str, Any]:
             import modiff.optional_runtimes as optional_runtimes
             import modiff.optimization_packages as optimization_packages
 
-            profiles = {PROFILE_ID: qualified}
+            profiles = {profile_id: qualified}
             optional_runtimes.OPTIONAL_RUNTIME_PROFILES = profiles
             optimization_packages.OPTIONAL_RUNTIME_PROFILES = profiles
             install = optimization_packages.install_optional_runtime(
-                PROFILE_ID,
+                profile_id,
                 qualified.spec_digest,
                 consent=True,
                 progress=lambda update: progress.append(str(update.get("phase") or "")),
@@ -389,13 +392,13 @@ def run_qualification(*, consent: bool) -> dict[str, Any]:
             environment_id = install["environmentId"]
             activation = optimization_packages.activate_optional_runtime_environment(
                 environment_id,
-                PROFILE_ID,
+                profile_id,
                 qualified.spec_digest,
                 consent=True,
             )
             if activation.get("restartRequired") is not True:
                 raise RuntimeError("qualification activation did not require a fresh process")
-            workload = _child(_WORKLOAD_SCRIPT, str(ROOT), timeout=600)
+            workload = _child(_WORKLOAD_SCRIPT, str(ROOT), profile_id, timeout=600)
             rollback = optimization_packages.rollback_optional_runtime_environment(consent=True)
             if rollback.get("restartRequired") is not True:
                 raise RuntimeError("qualification rollback did not require a fresh process")
@@ -443,10 +446,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consent", action="store_true", help="Allow the networked temporary qualification run.")
     parser.add_argument("--preflight-only", action="store_true", help="Inspect readiness without network or mutation.")
+    parser.add_argument(
+        "--profile-id",
+        default=PROFILE_ID,
+        help="Qualify one exact source-controlled optional-runtime profile.",
+    )
     parser.add_argument("--evidence", type=Path, help="Create a bounded JSON evidence file (must not already exist).")
     args = parser.parse_args(argv)
     try:
-        result = qualification_preflight() if args.preflight_only else run_qualification(consent=args.consent)
+        result = (
+            qualification_preflight(args.profile_id)
+            if args.preflight_only
+            else run_qualification(consent=args.consent, profile_id=args.profile_id)
+        )
         if args.evidence:
             _write_evidence(args.evidence, result)
         print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))

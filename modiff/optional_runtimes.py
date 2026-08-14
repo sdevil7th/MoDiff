@@ -8,6 +8,7 @@ packages.  Installation and activation remain a later, explicit P0.5 slice.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, replace
 import hashlib
 from importlib import metadata
@@ -20,6 +21,10 @@ from typing import Callable, Iterable, Mapping
 
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
+TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = (
+    "huggingface-transformers-main-c1ff1186-peft-0.20.0"
+)
+TRANSFORMERS_MAIN_COMMIT = "c1ff11866b3e2c473f92460ee0bf68d739921609"
 _MAX_OBSERVED_VERSION_LENGTH = 128
 
 _OPTIONAL_RUNTIME_TARGETS = (
@@ -101,6 +106,64 @@ def _transformers_peft_artifact_locks() -> tuple[dict, ...]:
                 }
             )
     return tuple(locks)
+
+
+def _transformers_main_source_build() -> dict:
+    return {
+        "schemaVersion": 1,
+        "distribution": "transformers",
+        "version": "5.16.0.dev0",
+        "sourceArtifact": {
+            "kind": "github_commit_tarball",
+            "repository": "huggingface/transformers",
+            "commit": TRANSFORMERS_MAIN_COMMIT,
+            "archiveRoot": f"transformers-{TRANSFORMERS_MAIN_COMMIT}",
+            "filename": f"transformers-{TRANSFORMERS_MAIN_COMMIT}.tar.gz",
+            "url": (
+                "https://codeload.github.com/huggingface/transformers/tar.gz/"
+                f"{TRANSFORMERS_MAIN_COMMIT}"
+            ),
+            "sha256": "33e4d9f49ce72a48e65d61168863f891e3b9d966af6ccb7a56aca38a5890beb4",
+            "byteSize": 20_531_714,
+        },
+        "recipe": "modiff_pure_python_wheel_v1",
+        "pythonTag": "py3",
+        "sourceDateEpoch": 315_532_800,
+        "sourceFiles": ["LICENSE", "README.md", "pyproject.toml", "setup.py"],
+        "sourceTrees": ["src/transformers"],
+        "buildDependencies": [],
+        "wheelMetadata": {
+            "summary": "Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training.",
+            "license": "Apache 2.0 License",
+            "requiresPython": ">=3.10.0",
+            "requiresDist": [
+                "huggingface-hub>=1.5.0,<2.0",
+                "numpy>=1.17",
+                "packaging>=20.0",
+                "pyyaml>=5.1",
+                "regex>=2025.10.22",
+                "tokenizers>=0.22.0,<=0.23.0",
+                "typer",
+                "safetensors>=0.8.0",
+                "tqdm>=4.60",
+            ],
+            "consoleScripts": {
+                "transformers": "transformers.cli.transformers:main",
+            },
+            "packageRoot": "src",
+            "licenseFile": "LICENSE",
+        },
+        "outputWheel": {
+            "distribution": "transformers",
+            "version": "5.16.0.dev0",
+            "filename": "transformers-5.16.0.dev0-py3-none-any.whl",
+            "sha256": "8a439d25595c6dde486cfbd5a6ed8158e0fe7554ec236491668425e11952898f",
+            "byteSize": 52_395_984,
+            "platform": "any",
+            "pythonTag": "py3",
+            "machine": "any",
+        },
+    }
 
 
 @dataclass(frozen=True)
@@ -217,6 +280,7 @@ class OptionalRuntimeProfile:
     required_diffusers_symbols: tuple[str, ...] = ()
     require_peft_backend: bool = False
     artifact_locks: tuple[dict, ...] = ()
+    source_builds: tuple[dict, ...] = ()
     pipeline_adapter_symbols: tuple[str, ...] = ()
     excluded_qualification_symbols: tuple[str, ...] = ()
     pipeline_adapter_methods: tuple[tuple[str, tuple[str, ...]], ...] = ()
@@ -272,7 +336,7 @@ class OptionalRuntimeProfile:
     def to_spec_dict(self) -> dict:
         """Return immutable fields used to identify the exact reviewed spec."""
 
-        return {
+        spec = {
             "schemaVersion": OPTIONAL_RUNTIME_SCHEMA_VERSION,
             "id": self.id,
             "label": self.label,
@@ -297,6 +361,11 @@ class OptionalRuntimeProfile:
                 for method, parameters in self.pipeline_adapter_methods
             ],
         }
+        if self.source_builds:
+            spec["sourceBuilds"] = [
+                deepcopy(source_build) for source_build in self.source_builds
+            ]
+        return spec
 
     @property
     def spec_digest(self) -> str:
@@ -737,8 +806,50 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
     ),
 )
 
+
+_TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
+    _TRANSFORMERS_PEFT_PROFILE,
+    id=TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    label="Hugging Face Transformers main + PEFT (qualification candidate)",
+    packages=(
+        replace(
+            _TRANSFORMERS_PEFT_PROFILE.packages[0],
+            version="5.16.0.dev0",
+            distribution_url=(
+                "https://github.com/huggingface/transformers/commit/"
+                f"{TRANSFORMERS_MAIN_COMMIT}"
+            ),
+        ),
+        *_TRANSFORMERS_PEFT_PROFILE.packages[1:],
+    ),
+    artifact_locks=tuple(
+        dict(artifact)
+        for artifact in _TRANSFORMERS_PEFT_PROFILE.artifact_locks
+        if artifact["distribution"] != "transformers"
+    ),
+    source_builds=(_transformers_main_source_build(),),
+    contract_state="candidate_unqualified",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        OptionalRuntimeTargetContract(
+            platform=platform_name,
+            machine=machine,
+            contract_state="candidate_unqualified",
+            cutover_ready=False,
+            install_action_available=False,
+            activation_available=False,
+        )
+        for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    ),
+)
+
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
-    {_TRANSFORMERS_PEFT_PROFILE.id: _TRANSFORMERS_PEFT_PROFILE}
+    {
+        _TRANSFORMERS_PEFT_PROFILE.id: _TRANSFORMERS_PEFT_PROFILE,
+        _TRANSFORMERS_MAIN_PEFT_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_PROFILE,
+    }
 )
 
 

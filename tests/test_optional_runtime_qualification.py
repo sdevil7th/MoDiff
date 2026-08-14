@@ -73,6 +73,28 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             source.contract_for_target(platform_name="linux", machine="x86_64"),
         )
 
+    def test_exact_main_profile_has_an_independent_dormant_qualifier_path(self):
+        import modiff.optional_runtimes as optional_runtimes
+
+        profile_id = optional_runtimes.TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+        candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
+        result = qualification.qualification_preflight(profile_id)
+
+        self.assertEqual(result["profileId"], profile_id)
+        self.assertEqual(result["candidateSpecDigest"], candidate.spec_digest)
+        self.assertNotEqual(
+            result["qualificationSpecDigest"],
+            result["candidateSpecDigest"],
+        )
+        self.assertTrue(result["sourceFlagsDormant"])
+        self.assertFalse(result["sourceTargetQualified"])
+        self.assertEqual(result["sourceBuildCount"], 1)
+        self.assertEqual(result["artifactCount"], len(candidate.packages))
+        self.assertEqual(
+            candidate.packages[0].version,
+            "5.16.0.dev0",
+        )
+
     def test_verified_uv_copy_rejects_a_forged_executable(self):
         from modiff.tool_locks import UV_TOOL_LOCKS
 
