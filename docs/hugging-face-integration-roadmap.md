@@ -5364,6 +5364,26 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   the active queue. No duplicate POST was submitted; the pre-existing
   repository-wide app transfers were not interrupted and no older or partial
   cache entry was deleted.
+- [x] **P6.65 Bound AudioLDM2 and Shap-E app download selections:** backend
+  `56faa30` makes Model Manager use the same safe component surfaces already
+  enforced by both loaders. AudioLDM2 selects 28 files / 4,480,959,446 bytes,
+  including all seven safetensors component weights and their configs,
+  tokenizers, scheduler, feature extractor, model index, and card. It excludes
+  all seven co-published legacy `.bin` duplicates, totaling 4,475,112,301
+  bytes, from the 8,956,071,747-byte repository tree. Shap-E selects 14 files /
+  1,332,951,857 bytes for the exact fp16 prior, CLIP text encoder, pre-rename
+  safe renderer, tokenizer, scheduler, configs, index, and card. It excludes
+  the three legacy component `.bin` files plus the renamed unsafe-only renderer
+  directory, totaling 3,568,036,469 bytes, from the 4,900,988,326-byte tree.
+
+  Plan and POST regressions bind both capability-derived allowlists, and focused
+  artifact tests match them to their explicit loaders while rejecting every
+  unsafe duplicate. The media, capability, app, and loader matrix passes 277
+  tests, three optional-runtime skips, and 550 subtests; pinned Ruff E9/F,
+  66-package compatibility, and diff checks pass. Fresh exact app plans report
+  every selected byte already complete with zero remaining bytes, so no POST or
+  deletion was necessary; the preserved full snapshots remain available for
+  preview regression testing.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6626,4 +6646,5 @@ Add references only after the corresponding evidence exists.
 | P6.62 Bounded Chroma app download selection | `0922243` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 27,493,360,428-byte runnable Diffusers selection, excluding the 17,800,038,288-byte duplicate native checkpoint and demo artifacts. The selected files are already complete in the preserved full cache, so no POST or deletion occurred. |
 | P6.63 Bounded Allegro, Latte, and Mochi app download selections | `cb3448d` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 18/18/21-file runnable selections replace repository-wide planning and exclude Allegro's unsafe `.bin` duplicates, Latte's unsafe `.pt` plus unused decoder, and Mochi's 93.48 GB of duplicate/default partitions. Current queue-aware plans do not fit, so no POST or deletion occurred. |
 | P6.64 Bounded Stable Audio and Stable Video app download selections | `8c96321` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 19-file / 5,348,079,831-byte Stable Audio and 12-file / 4,509,218,296-byte Stable Video runnable selections replace repository-wide planning. They exclude 24.14 GB of duplicate original, default/full-precision, and demo surfaces while retaining safetensors-only runtime components and rights receipts. Queue-aware plans do not fit beside current reservations, so no duplicate POST, interruption, or deletion occurred. |
+| P6.65 Bounded AudioLDM2 and Shap-E app download selections | `56faa30` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28-file / 4,480,959,446-byte AudioLDM2 and 14-file / 1,332,951,857-byte Shap-E safe-component selections replace repository-wide planning and exclude 8.04 GB of legacy pickle and unsafe duplicate surfaces. Both selections are already complete in the preserved full caches, so no POST or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
