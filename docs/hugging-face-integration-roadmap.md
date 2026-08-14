@@ -5596,6 +5596,27 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   bytes, 298,645,384,241 queued reservation bytes, and the 68,719,476,736-byte
   safety reserve intact, so no POST or deletion occurred. The excluded cached
   assets remain available for preview regression testing.
+- [x] **P6.76 Bound PixArt Sigma component download selection:** backend
+  `a0fe20c` binds
+  `PixArt-alpha/PixArt-Sigma-XL-2-1024-MS@e102b3591cc82e97071b8b4cb90d834d0c487207`
+  to the exact 15-file / 21,828,231,839-byte Diffusers component surface used
+  by its existing safetensors-only generic image loader. The allowlist retains
+  the text encoder, transformer, VAE, tokenizer, scheduler, configs, indexes,
+  card, and attribute receipt while excluding the three documentation images:
+  4,258,550 bytes from the 21,832,490,389-byte repository tree.
+
+  App plan and POST regressions bind the capability-derived selection; a
+  focused PixArt artifact regression requires the exact component weights,
+  existing safe-serialization flag, and complete documentation-asset
+  exclusion. The capability, app, PixArt, and loader matrix passes 212 tests,
+  three optional-runtime skips, and 883 subtests; pinned Ruff E9/F, 66-package
+  compatibility, and diff checks pass. A fresh exact app plan reported zero
+  remaining bytes. Current free bytes were 366,990,446,592 against
+  298,645,384,241 queued reservation bytes and the 68,719,476,736-byte safety
+  reserve, so the aggregate queue envelope was temporarily 374,414,385 bytes
+  over the limit while an existing transfer finalized. PixArt required no new
+  bytes; no POST, interruption, or deletion occurred, and the cached
+  documentation assets remain preserved.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6869,4 +6890,5 @@ Add references only after the corresponding evidence exists.
 | P6.73 Bounded conditioned FLUX.1 component downloads and loader serialization | `d39bfe2` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28/28/26/26-file component selections for Depth, Canny, Fill, and Kontext total 155,032,793,063 bytes and exclude 96,561,961,318 logical bytes of native checkpoints, root autoencoders, and demo media while making all four loader paths safetensors-only. Every selected file is already complete in the preserved caches, so no POST or deletion occurred. |
 | P6.74 Bounded shared SD1.5 image/video download union and image-loader serialization | `896a723` | Not required | Exact immutable app plan plus prior local image/video smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 8,223,292,159-byte union covers the float32 image/PAG routes and fp16 AnimateDiff/AnimateLCM routes, excludes 39,036,647,490 bytes of pickle, non-EMA, single-file, and YAML surfaces, and makes all five image adapters safetensors-only. A fresh fitting plan preceded the app-only 2,740,639,959-byte fp16 completion request, with no deletion. |
 | P6.75 Bounded Z-Image component download and loader serialization | `8f96945` | Not required | Exact immutable app plan and prior local live smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 32,848,321,404-byte component selection excludes 51,345,993 bytes of gallery/PDF assets and makes all three generic Z-Image adapters safetensors-only. Every selected file is already complete in the preserved cache, so no POST or deletion occurred. |
+| P6.76 Bounded PixArt Sigma component download selection | `a0fe20c` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | One exact 15-file / 21,828,231,839-byte component selection excludes 4,258,550 bytes of documentation images and matches the existing safetensors-only loader. Every selected file is already complete; the active aggregate queue temporarily exceeded the safety envelope by 374,414,385 bytes, so no POST, interruption, or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
