@@ -23,6 +23,7 @@ from modules.DiffusersImage import (
     Edit,
     Generate,
     Inpaint,
+    LayerDecompose,
     LoadAdapter,
     LoadPipeline,
     MODULE_MAP,
@@ -58,6 +59,7 @@ from modules.DiffusersImage.main import (
     QWEN_IMAGE_2512_REPO,
     QWEN_IMAGE_EDIT_PLUS_REPO,
     QWEN_IMAGE_EDIT_REPO,
+    QWEN_IMAGE_LAYERED_REPO,
     LCM_DREAMSHAPER_REPO,
     MARIGOLD_DEPTH_LCM_REPO,
     OMNIGEN_REPO,
@@ -459,6 +461,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_inherited_nodes_are_registered_with_their_live_contracts(self):
         expected_inputs = {
             "Edit": {"pipeline", "image"},
+            "LayerDecompose": {"pipeline", "image"},
             "ControlEdit": {"pipeline", "image", "control_image"},
             "Inpaint": {"pipeline", "image", "mask_image"},
             "ControlInpaint": {"pipeline", "image", "mask_image", "control_image"},
@@ -477,6 +480,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_graph_contract_marks_mode_independent_image_inputs_as_required(self):
         self.assertTrue(Edit.params["pipeline"]["required"])
         self.assertTrue(Edit.params["image"]["required"])
+        self.assertTrue(LayerDecompose.params["image"]["required"])
         self.assertTrue(ControlEdit.params["control_image"]["required"])
         self.assertTrue(Inpaint.params["mask_image"]["required"])
         self.assertTrue(ControlInpaint.params["control_image"]["required"])
@@ -484,7 +488,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertTrue(LoadAdapter.params["pipeline"]["required"])
 
     def test_registered_classes_can_be_constructed(self):
-        for node_class in (Edit, ControlEdit, Inpaint, ControlInpaint, ControlGenerate):
+        for node_class in (Edit, LayerDecompose, ControlEdit, Inpaint, ControlInpaint, ControlGenerate):
             with self.subTest(node=node_class.__name__):
                 node = node_class("registry-probe")
                 self.assertEqual(node.node_id, "registry-probe")
@@ -924,6 +928,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "pag_adaptive_scale",
             "conditioning_scale",
             "image_guidance_scale",
+            "control_guidance_start",
+            "control_guidance_end",
+            "layers",
+            "resolution",
+            "cfg_normalize",
+            "use_en_prompt",
         }
         for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
             with self.subTest(pipeline_class=pipeline_class):
@@ -1543,6 +1553,22 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 QWEN_IMAGE_2512_REPO,
                 {"prompt", "image", "mask_image"},
             ),
+            "QwenImageControlNetPipeline": (
+                {"control_image"},
+                QWEN_IMAGE_2512_REPO,
+                {
+                    "prompt",
+                    "control_image",
+                    "control_guidance_start",
+                    "control_guidance_end",
+                    "controlnet_conditioning_scale",
+                },
+            ),
+            "QwenImageLayeredPipeline": (
+                {"layer_decomposition"},
+                QWEN_IMAGE_LAYERED_REPO,
+                {"image", "prompt", "layers", "resolution", "cfg_normalize", "use_en_prompt"},
+            ),
             "QwenImageEditPipeline": ({"edit_image"}, QWEN_IMAGE_EDIT_REPO, {"prompt", "image"}),
             "QwenImageEditPlusPipeline": (
                 {"edit_image", "multi_image_reference_edit"},
@@ -1597,9 +1623,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "FluxControlNetPipeline",
             "FluxControlNetImg2ImgPipeline",
             "FluxControlNetInpaintPipeline",
-            "QwenImageControlNetPipeline",
             "QwenImageControlNetInpaintPipeline",
-            "QwenImageLayeredPipeline",
             "ZImageControlNetPipeline",
             "ZImageControlNetInpaintPipeline",
             "ZImageOmniPipeline",
@@ -5176,7 +5200,14 @@ class DiffusersImageNodeRouteTests(unittest.IsolatedAsyncioTestCase):
         response = await server.nodes(FakeRequest())
         nodes = json.loads(response.text)["nodes"]
 
-        for action in ("Edit", "ControlEdit", "Inpaint", "ControlInpaint", "ControlGenerate"):
+        for action in (
+            "Edit",
+            "LayerDecompose",
+            "ControlEdit",
+            "Inpaint",
+            "ControlInpaint",
+            "ControlGenerate",
+        ):
             with self.subTest(node=action):
                 key = f"modules.DiffusersImage.{action}"
                 self.assertIn(key, nodes)

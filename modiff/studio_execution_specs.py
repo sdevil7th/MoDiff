@@ -1708,6 +1708,16 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
     ),
 }
 
+_STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageControlNetPipeline", "control_image")] = tuple(
+    {
+        **deepcopy(requirement),
+        "description": "Required by the generic standard Diffusers Qwen control-image workflow.",
+    }
+    for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+        ("QwenImageModularPipeline", "control_image")
+    ]
+)
+
 for _control_model_type, _source_model_type, _control_modes in (
     (
         "StableDiffusionPipeline",
@@ -2217,6 +2227,50 @@ _CONDITIONED_CONTROL_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
 _PAG_CONDITIONED_CONTROL_GRAPH_BINDINGS = _CONDITIONED_CONTROL_GRAPH_BINDINGS + (
     ("diffusersImageControl", "pag_scale", "pagScale"),
     ("diffusersImageControl", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
+_QWEN_DIRECT_CONTROL_GRAPH_BINDINGS = tuple(
+    item
+    for item in _CONTROL_GRAPH_BINDINGS
+    if item[:2] != ("diffusersImageControl", "strength")
+) + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("diffusersImagePipeline", "conditioning_kind", "kind"),
+    ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+    ("diffusersImagePipeline", "conditioning_revision", "revision"),
+    ("diffusersImageControl", "conditioning_scale", "conditioningScale"),
+    ("diffusersImageControl", "control_guidance_start", "controlGuidanceStart"),
+    ("diffusersImageControl", "control_guidance_end", "controlGuidanceEnd"),
+)
+_LAYER_DECOMPOSITION_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("diffusersImageLayerDecompose", "modules.DiffusersImage.LayerDecompose", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_LAYER_DECOMPOSITION_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageLayerDecompose", "pipeline"),
+    ("loadImage", "image", "diffusersImageLayerDecompose", "image"),
+    ("diffusersImageLayerDecompose", "images", "preview", "image"),
+)
+_LAYER_DECOMPOSITION_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
+    ("diffusersImagePipeline", "revision", "defaultRevision"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "addAlpha"),
+    ("diffusersImageLayerDecompose", "prompt", "prompt"),
+    ("diffusersImageLayerDecompose", "negative_prompt", "negativePrompt"),
+    ("diffusersImageLayerDecompose", "seed", "seed"),
+    ("diffusersImageLayerDecompose", "num_inference_steps", "steps"),
+    ("diffusersImageLayerDecompose", "guidance_scale", "guidanceScale"),
+    ("diffusersImageLayerDecompose", "max_sequence_length", "maxSequenceLength"),
+    ("diffusersImageLayerDecompose", "layers", "layers"),
+    ("diffusersImageLayerDecompose", "resolution", "resolution"),
+    ("diffusersImageLayerDecompose", "cfg_normalize", "cfgNormalize"),
+    ("diffusersImageLayerDecompose", "use_en_prompt", "useEnglishPrompt"),
+    ("diffusersImageLayerDecompose", "output_type", "outputType"),
 )
 _CONTROL_EDIT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -3282,6 +3336,8 @@ _BINDING_SOURCES = frozenset(
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
         *_CONTROL_GRAPH_BINDINGS,
         *_CONDITIONED_CONTROL_GRAPH_BINDINGS,
+        *_QWEN_DIRECT_CONTROL_GRAPH_BINDINGS,
+        *_LAYER_DECOMPOSITION_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
         *_QWEN_OUTPAINT_GRAPH_BINDINGS,
@@ -3384,6 +3440,52 @@ _MODULAR_CONTROL_PROFILE = {
     "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
     "max_low_memory_side": 768,
     "max_low_memory_steps": 28,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_QWEN_DIRECT_CONTROL_PROFILE = {
+    "id": "qwen-image-controlnet:direct",
+    "model_type": "QwenImageControlNetPipeline",
+    "modes": ("control_image",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "QwenImageControlNetPipeline",
+    "default_repo": QWEN_IMAGE_2512_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 28,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_QWEN_DIRECT_LAYERED_PROFILE = {
+    "id": "qwen-image-layered:direct",
+    "model_type": "QwenImageLayeredPipeline",
+    "modes": ("layer_decomposition",),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "QwenImageLayeredPipeline",
+    "default_repo": "Qwen/Qwen-Image-Layered",
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": (),
+    "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+    "retry_offload_modes": (
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 30,
     "live_proof": False,
     "compatible_repos": (),
 }
@@ -5498,6 +5600,139 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _MODULAR_CONTROL_GRAPH_ROLES,
         "edges": _MODULAR_CONTROL_GRAPH_EDGES,
         "bindings": _MODULAR_CONTROL_GRAPH_BINDINGS,
+    },
+    "qwen-image-controlnet-direct:control-image:v1": {
+        "modelType": "QwenImageControlNetPipeline",
+        "mode": "control_image",
+        "profile": _QWEN_DIRECT_CONTROL_PROFILE,
+        "roles": _CONTROL_GRAPH_ROLES,
+        "edges": _CONTROL_GRAPH_EDGES,
+        "bindings": _QWEN_DIRECT_CONTROL_GRAPH_BINDINGS,
+        "capability": {
+            "modelType": "QwenImageControlNetPipeline",
+            "label": "Qwen Image ControlNet (Standard Diffusers)",
+            "displayName": "Qwen-Image-2512 + ControlNet Union",
+            "family": "Qwen Image",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": QWEN_IMAGE_2512_REPO,
+            "downloadFiles": QWEN_IMAGE_2512_DIFFUSERS_FILES,
+            "artifactLabel": "Reused bfloat16 safetensors base plus pinned ControlNet safetensors component",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+            "recommendedSteps": 50,
+            "recommendedGuidance": 4.5,
+            "guidanceLabel": "Guidance",
+            "supportsNegativePrompt": True,
+            "supportsImageInput": True,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": True,
+            "supportsLayers": False,
+            "supportsLora": True,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "steps": 28,
+                "width": 768,
+                "height": 768,
+            },
+            "modes": ["control_image"],
+            "modeRequirements": {
+                "control_image": {
+                    "modelRequirements": studio_model_requirements_for_pair(
+                        "QwenImageControlNetPipeline", "control_image"
+                    ),
+                    "requiredImages": ["controlImage"],
+                    "note": "Requires the pinned Qwen ControlNet Union component and one prepared control image.",
+                }
+            },
+            "additionalRequirements": studio_model_requirements_for_pair(
+                "QwenImageControlNetPipeline", "control_image"
+            ),
+            "revisionCandidates": [require_catalog_revision(QWEN_IMAGE_2512_REPO)],
+            "executionStatus": "expert_only",
+            "autoEligible": False,
+            "templateEligible": True,
+            "galleryEligible": False,
+            "liveProof": False,
+            "notes": [
+                "This separate standard-pipeline pair does not replace the approved Modular Qwen control workflow.",
+                "Auto, Gallery, and live qualification remain disabled pending reviewed generated assets.",
+            ],
+        },
+    },
+    "qwen-image-layered-direct:layer-decomposition:v1": {
+        "modelType": "QwenImageLayeredPipeline",
+        "mode": "layer_decomposition",
+        "profile": _QWEN_DIRECT_LAYERED_PROFILE,
+        "roles": _LAYER_DECOMPOSITION_GRAPH_ROLES,
+        "edges": _LAYER_DECOMPOSITION_GRAPH_EDGES,
+        "bindings": _LAYER_DECOMPOSITION_GRAPH_BINDINGS,
+        "capability": {
+            "modelType": "QwenImageLayeredPipeline",
+            "label": "Qwen Image Layered (Standard Diffusers)",
+            "displayName": "Qwen-Image-Layered",
+            "family": "Qwen Image",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": "Qwen/Qwen-Image-Layered",
+            "downloadFiles": QWEN_IMAGE_LAYERED_DIFFUSERS_FILES,
+            "artifactLabel": "Reused bfloat16 safetensors Diffusers repository",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "source"},
+            "recommendedSteps": 50,
+            "recommendedGuidance": 4.0,
+            "guidanceLabel": "Guidance",
+            "supportsNegativePrompt": True,
+            "supportsImageInput": True,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": True,
+            "supportsLora": True,
+            "layerCount": {"default": 4, "min": 1, "max": 10},
+            "layerResolutions": [640, 1024],
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "steps": 30,
+                "resolution": 640,
+            },
+            "modes": ["layer_decomposition"],
+            "modeRequirements": {
+                "layer_decomposition": {
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires exactly one source image and emits one ordered layer stack.",
+                }
+            },
+            "revisionCandidates": [require_catalog_revision("Qwen/Qwen-Image-Layered")],
+            "executionStatus": "expert_only",
+            "autoEligible": False,
+            "templateEligible": True,
+            "galleryEligible": False,
+            "liveProof": False,
+            "notes": [
+                "This separate standard-pipeline pair does not replace the approved Modular Qwen layered workflow.",
+                "Auto, Gallery, and live qualification remain disabled pending reviewed generated assets.",
+            ],
+        },
     },
     "stable-audio-open-1.0:text-to-audio:v1": {
         "modelType": "StableAudioPipeline",

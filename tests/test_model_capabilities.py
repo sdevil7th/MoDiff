@@ -150,7 +150,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 145)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 147)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -182,6 +182,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "AceStepAudioPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",
+            "QwenImageControlNetPipeline",
+            "QwenImageLayeredPipeline",
             "StableDiffusionXLPipeline",
             "DDPMPipeline",
             "DDIMPipeline",
@@ -883,6 +885,32 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["controlnet", "route_state_out", "denoise", "route_state_in"],
             qwen_control_spec["edges"],
         )
+
+        qwen_direct_control = by_model["QwenImageControlNetPipeline"]
+        qwen_direct_layered = by_model["QwenImageLayeredPipeline"]
+        self.assertEqual(qwen_direct_control["runnableModes"], ["control_image"])
+        self.assertEqual(qwen_direct_layered["runnableModes"], ["layer_decomposition"])
+        for capability in (qwen_direct_control, qwen_direct_layered):
+            with self.subTest(model_type=capability["modelType"]):
+                self.assertEqual(capability["executionStatus"], "expert_only")
+                self.assertEqual(capability["qualificationStatus"], "graph-qualified-execution-pending")
+                self.assertEqual(capability["qualifiedModes"], [])
+                self.assertFalse(capability["autoEligible"])
+                self.assertFalse(capability["galleryEligible"])
+                self.assertFalse(capability["liveProof"])
+
+        self.assertEqual(qwen_direct_control["pipelineClasses"], ["QwenImageControlNetPipeline"])
+        self.assertEqual(qwen_direct_layered["pipelineClasses"], ["QwenImageLayeredPipeline"])
+        self.assertEqual(
+            qwen_direct_control["modeRequirements"]["control_image"]["requiredImages"],
+            ["controlImage"],
+        )
+        self.assertEqual(
+            qwen_direct_layered["modeRequirements"]["layer_decomposition"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertEqual(qwen_direct_layered["layerCount"], {"default": 4, "min": 1, "max": 10})
+        self.assertEqual(qwen_direct_layered["layerResolutions"], [640, 1024])
 
         wan = by_model["WanVACEPipeline"]
         self.assertEqual(wan["mediaKind"], "video")

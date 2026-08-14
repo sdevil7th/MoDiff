@@ -14,12 +14,17 @@ class QwenDownloadSelectionTests(unittest.TestCase):
     def test_qwen_image_selections_are_complete_and_safe(self):
         cases = {
             "QwenImageModularPipeline": (QWEN_IMAGE_2512_DIFFUSERS_FILES, 30),
+            "QwenImageControlNetPipeline": (QWEN_IMAGE_2512_DIFFUSERS_FILES, 30),
             "QwenImageEditModularPipeline": (QWEN_IMAGE_EDIT_DIFFUSERS_FILES, 39),
             "QwenImageEditPlusModularPipeline": (
                 QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES,
                 35,
             ),
             "QwenImageLayeredModularPipeline": (
+                QWEN_IMAGE_LAYERED_DIFFUSERS_FILES,
+                33,
+            ),
+            "QwenImageLayeredPipeline": (
                 QWEN_IMAGE_LAYERED_DIFFUSERS_FILES,
                 33,
             ),
@@ -56,6 +61,8 @@ class QwenDownloadSelectionTests(unittest.TestCase):
             "QwenImageEditPipeline",
             "QwenImageEditInpaintPipeline",
             "QwenImageEditPlusPipeline",
+            "QwenImageControlNetPipeline",
+            "QwenImageLayeredPipeline",
         ):
             with self.subTest(pipeline_class=pipeline_class):
                 self.assertTrue(

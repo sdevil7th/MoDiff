@@ -151,7 +151,15 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                 "StableDiffusionControlNetPAGInpaintPipeline",
                 "StableDiffusionXLControlNetInpaintPipeline",
                 "FluxControlInpaintPipeline",
+                "QwenImageControlNetModel",
+                "QwenImageControlNetPipeline",
+                "QwenImageLayeredPipeline",
             }.issubset(profile["requiredDiffusersSymbols"])
+        )
+        self.assertTrue(
+            {"QwenImageControlNetPipeline", "QwenImageLayeredPipeline"}.issubset(
+                profile["pipelineAdapterSymbols"]
+            )
         )
         self.assertNotIn("StableAudioPipeline", profile["pipelineAdapterSymbols"])
         self.assertNotIn("GlmImagePipeline", profile["pipelineAdapterSymbols"])

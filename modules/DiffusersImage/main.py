@@ -88,6 +88,8 @@ QWEN_IMAGE_2512_PREQUANTIZED_REPO = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
 QWEN_IMAGE_EDIT_PLUS_REPO = "Qwen/Qwen-Image-Edit-2511"
 QWEN_IMAGE_EDIT_PREQUANTIZED_REPO = "ovedrive/qwen-image-edit-4bit"
+QWEN_IMAGE_LAYERED_REPO = "Qwen/Qwen-Image-Layered"
+QWEN_IMAGE_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
 CONSISTENCY_IMAGENET64_REPO = "openai/diffusers-cd_imagenet64_l2"
 DEVICE_OPTIONS = list(DEVICE_LIST.keys())
@@ -96,6 +98,7 @@ _IMAGE_MODE_ORDER = (
     "depth_estimation",
     "text_to_image",
     "edit_image",
+    "layer_decomposition",
     "control_edit_image",
     "multi_image_reference_edit",
     "inpaint",
@@ -154,6 +157,10 @@ class ImagePipelineAdapter:
     conditioning_weight_variant: str | None = None
     control_image_parameter: str = "control_image"
     conditioning_scale_parameter: str | None = None
+    conditioning_config_requirements: tuple[tuple[str, int], ...] = ()
+    min_layers: int = 1
+    max_layers: int = 1
+    layer_resolutions: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         if self.upstream_pipeline_class is not None and not self.upstream_pipeline_class:
@@ -237,6 +244,32 @@ class ImagePipelineAdapter:
                 raise ValueError("A conditioning weight variant requires an auxiliary component contract.")
             if self.conditioning_weight_variant != "fp16":
                 raise ValueError("Only the reviewed fp16 conditioning weight variant is supported.")
+        conditioning_config_names = [name for name, _value in self.conditioning_config_requirements]
+        if (
+            len(conditioning_config_names) != len(set(conditioning_config_names))
+            or any(not name for name in conditioning_config_names)
+            or any(type(value) is not int for _name, value in self.conditioning_config_requirements)
+        ):
+            raise ValueError("Image conditioning config requirements must contain unique integer fields.")
+        if self.conditioning_config_requirements and self.conditioning_kind is None:
+            raise ValueError("Conditioning config requirements require an auxiliary component contract.")
+        layered = "layer_decomposition" in self.modes
+        if (
+            type(self.min_layers) is not int
+            or type(self.max_layers) is not int
+            or not 1 <= self.min_layers <= self.max_layers <= 16
+            or layered != bool(self.layer_resolutions)
+            or (not layered and (self.min_layers, self.max_layers) != (1, 1))
+            or any(
+                type(resolution) is not int
+                or resolution < 64
+                or resolution > 2048
+                or resolution % 16
+                for resolution in self.layer_resolutions
+            )
+            or len(set(self.layer_resolutions)) != len(self.layer_resolutions)
+        ):
+            raise ValueError("Layer-decomposition adapters must declare exact bounded layer and resolution contracts.")
 
     @property
     def managed_repos(self) -> frozenset[str]:
@@ -273,6 +306,8 @@ class ImagePipelineAdapter:
             "reference_strength": "reference_strength",
             "pag_scale": "pag_scale",
             "pag_adaptive_scale": "pag_adaptive_scale",
+            "control_guidance_start": "control_guidance_start",
+            "control_guidance_end": "control_guidance_end",
         }
         for source, destination in aliases.items():
             if source in self.ignored_generation_parameters:
@@ -345,6 +380,36 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
         guidance_parameter="true_cfg_scale",
         safe_serialization_required=True,
+    ),
+    "QwenImageControlNetPipeline": ImagePipelineAdapter(
+        "QwenImageControlNetPipeline",
+        frozenset({"control_image"}),
+        QWEN_IMAGE_2512_REPO,
+        artifact_pipeline_classes=("QwenImagePipeline", "QwenImageControlNetPipeline"),
+        guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=QWEN_IMAGE_CONTROLNET_REPO,
+        conditioning_component_class="QwenImageControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+        conditioning_config_requirements=(
+            ("in_channels", 64),
+            ("out_channels", 16),
+            ("extra_condition_channels", 0),
+            ("num_layers", 5),
+        ),
+    ),
+    "QwenImageLayeredPipeline": ImagePipelineAdapter(
+        "QwenImageLayeredPipeline",
+        frozenset({"layer_decomposition"}),
+        QWEN_IMAGE_LAYERED_REPO,
+        guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        min_layers=1,
+        max_layers=10,
+        layer_resolutions=(640, 1024),
     ),
     "ZImagePipeline": ImagePipelineAdapter(
         "ZImagePipeline",
@@ -1157,6 +1222,7 @@ IMAGE_PIPELINE_MODE_OPTIONS = [
     "depth_estimation",
     "text_to_image",
     "edit_image",
+    "layer_decomposition",
     "control_edit_image",
     "multi_image_reference_edit",
     "inpaint",
@@ -1178,6 +1244,7 @@ IMAGE_ACTION_MODES = {
     "PredictMap": ("depth_estimation",),
     "Generate": ("text_to_image",),
     "Edit": ("edit_image", "multi_image_reference_edit"),
+    "LayerDecompose": ("layer_decomposition",),
     "ControlEdit": ("control_edit_image",),
     "Inpaint": ("inpaint", "outpaint"),
     "ControlInpaint": ("control_inpaint",),
@@ -1197,6 +1264,12 @@ _IMAGE_CONTRACT_VISIBILITY_FIELDS = (
     "pag_scale",
     "pag_adaptive_scale",
     "conditioning_scale",
+    "control_guidance_start",
+    "control_guidance_end",
+    "layers",
+    "resolution",
+    "cfg_normalize",
+    "use_en_prompt",
 )
 
 
@@ -1271,6 +1344,29 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "QwenImagePipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "QwenImageControlNetPipeline": {
+        "control_image": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "max_sequence_length",
+            "conditioning_scale",
+            "control_guidance_start",
+            "control_guidance_end",
+        ),
+    },
+    "QwenImageLayeredPipeline": {
+        "layer_decomposition": _image_field_contract(
+            "negative_prompt",
+            "guidance_scale",
+            "max_sequence_length",
+            "layers",
+            "resolution",
+            "cfg_normalize",
+            "use_en_prompt",
+        ),
     },
     "ZImagePipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
@@ -1919,6 +2015,18 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
             "default": min(256, adapter.max_sequence_length),
             "max": adapter.max_sequence_length,
         }
+    if adapter.layer_resolutions:
+        field_params["layers"] = {
+            **field_params["layers"],
+            "default": min(4, adapter.max_layers),
+            "min": adapter.min_layers,
+            "max": adapter.max_layers,
+        }
+        field_params["resolution"] = {
+            **field_params["resolution"],
+            "options": list(adapter.layer_resolutions),
+            "default": adapter.layer_resolutions[0],
+        }
     actions = {
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
@@ -2196,6 +2304,13 @@ def _bounded_image_float(
     return parsed
 
 
+def _exact_image_bool(value: Any, *, field: str, default: bool) -> bool:
+    raw = default if value is None else value
+    if type(raw) is not bool:
+        raise ValueError(f"Diffusers image {field} must be a boolean.")
+    return raw
+
+
 def _normalized_image_prompt(value: Any, *, field: str) -> str | list[str]:
     if value is None:
         return ""
@@ -2398,17 +2513,79 @@ def preflight_image_action(
         minimum=0.0,
         maximum=2.0,
     )
+    values["control_guidance_start"] = _bounded_image_float(
+        values.get("control_guidance_start"),
+        field="control_guidance_start",
+        default=0.0,
+        minimum=0.0,
+        maximum=1.0,
+    )
+    values["control_guidance_end"] = _bounded_image_float(
+        values.get("control_guidance_end"),
+        field="control_guidance_end",
+        default=1.0,
+        minimum=0.0,
+        maximum=1.0,
+    )
+    if values["control_guidance_start"] > values["control_guidance_end"]:
+        raise ValueError("Diffusers image control guidance start cannot exceed its end.")
+    if adapter.layer_resolutions:
+        values["layers"] = _bounded_image_int(
+            values.get("layers"),
+            field="layers",
+            default=min(4, adapter.max_layers),
+            minimum=adapter.min_layers,
+            maximum=adapter.max_layers,
+        )
+        values["resolution"] = _bounded_image_int(
+            values.get("resolution"),
+            field="resolution",
+            default=adapter.layer_resolutions[0],
+            minimum=min(adapter.layer_resolutions),
+            maximum=max(adapter.layer_resolutions),
+        )
+        if values["resolution"] not in adapter.layer_resolutions:
+            allowed = ", ".join(str(item) for item in adapter.layer_resolutions)
+            raise ValueError(f"Diffusers image resolution must be exactly one of: {allowed}.")
+        values["cfg_normalize"] = _exact_image_bool(
+            values.get("cfg_normalize"), field="cfg_normalize", default=False
+        )
+        values["use_en_prompt"] = _exact_image_bool(
+            values.get("use_en_prompt"), field="use_en_prompt", default=False
+        )
+    else:
+        values["layers"] = 1
+        values["resolution"] = 640
+        values["cfg_normalize"] = False
+        values["use_en_prompt"] = False
 
     output_type = (
         "pil" if "output_type" not in values or values.get("output_type") is None else values.get("output_type")
     )
-    allowed_output_types = {"pil"} if action in {"Inpaint", "ControlInpaint"} else {"pil", "np", "pt"}
+    allowed_output_types = (
+        {"pil"}
+        if action in {"Inpaint", "ControlInpaint"}
+        else {"pil", "np"}
+        if action == "LayerDecompose"
+        else {"pil", "np", "pt"}
+    )
     if not isinstance(output_type, str) or output_type not in allowed_output_types:
         allowed = ", ".join(sorted(allowed_output_types))
         raise ValueError(f"Diffusers image {action} output_type must be exactly one of: {allowed}.")
     values["output_type"] = output_type
 
-    if action == "Edit":
+    if action == "LayerDecompose":
+        if not isinstance(values["prompt"], str) or not isinstance(values["negative_prompt"], str):
+            raise ValueError("Diffusers layer decomposition accepts one prompt and one negative prompt string.")
+        _validate_image_media(
+            values.get("image"),
+            field="Layer decomposition source",
+            max_items=1,
+            max_pixels=adapter.max_reference_pixels,
+            require_pil=True,
+            require_single_value=True,
+        )
+    elif action == "Edit":
         mode = getattr(pipeline, "_modiff_image_mode", None)
         max_references = adapter.max_reference_images if mode in (None, "multi_image_reference_edit") else 1
         _validate_image_media(
@@ -3524,6 +3701,14 @@ class LoadPipeline(NodeBase):
                     conditioning_model_id,
                     **component_kwargs,
                 )
+                component_config = getattr(conditioning_component, "config", None)
+                for field_name, expected_value in adapter.conditioning_config_requirements:
+                    actual_value = getattr(component_config, field_name, None)
+                    if type(actual_value) is not int or actual_value != expected_value:
+                        raise RuntimeError(
+                            f"{adapter.conditioning_component_class} config field {field_name!r} must be "
+                            f"{expected_value!r}; received {actual_value!r}."
+                        )
                 base_load_kwargs[str(adapter.conditioning_component_parameter)] = conditioning_component
                 pipeline = pipeline_class.from_pretrained(model_id, **base_load_kwargs)
         else:
@@ -3901,6 +4086,53 @@ class Generate(NodeBase):
             "step": 0.1,
             "hidden": True,
         },
+        "control_guidance_start": {
+            "label": "Control Guidance Start",
+            "display": "slider",
+            "type": "float",
+            "default": 0.0,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+            "hidden": True,
+        },
+        "control_guidance_end": {
+            "label": "Control Guidance End",
+            "display": "slider",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+            "hidden": True,
+        },
+        "layers": {
+            "label": "Layers",
+            "type": "int",
+            "default": 4,
+            "min": 1,
+            "max": 10,
+            "hidden": True,
+        },
+        "resolution": {
+            "label": "Resolution",
+            "type": "int",
+            "options": [640, 1024],
+            "default": 640,
+            "hidden": True,
+        },
+        "cfg_normalize": {
+            "label": "Normalize CFG",
+            "type": "bool",
+            "default": False,
+            "hidden": True,
+        },
+        "use_en_prompt": {
+            "label": "Use English Auto-caption",
+            "type": "bool",
+            "default": False,
+            "hidden": True,
+        },
         "strength": {
             "label": "Strength",
             "display": "slider",
@@ -3933,7 +4165,15 @@ class Generate(NodeBase):
         # The concrete registered class owns the action/mode check, so this
         # remains one generic facade for all prompt-conditioned image actions.
         action = self.class_name
-        if action not in {"Generate", "Edit", "ControlEdit", "Inpaint", "ControlInpaint", "ControlGenerate"}:
+        if action not in {
+            "Generate",
+            "Edit",
+            "LayerDecompose",
+            "ControlEdit",
+            "Inpaint",
+            "ControlInpaint",
+            "ControlGenerate",
+        }:
             raise ValueError(f"Unsupported Diffusers image action {action!r}.")
         _adapter, values = preflight_image_action(kwargs.get("pipeline"), action, kwargs)
         return super().__call__(**values)
@@ -4060,6 +4300,74 @@ class Edit(Generate):
             "width_out": actual_width if actual_width is not None else values["width"],
             "height_out": actual_height if actual_height is not None else values["height"],
         }
+
+
+def normalize_layer_decomposition_images(images: Any, *, layers: int, output_type: str) -> Any:
+    """Flatten the exact one-batch layered Diffusers result without losing layer order."""
+
+    if not isinstance(images, (list, tuple)) or len(images) != 1:
+        raise ValueError("Diffusers layer decomposition must return exactly one output batch.")
+    batch = images[0]
+    if output_type == "pil":
+        if not isinstance(batch, (list, tuple)) or len(batch) != layers:
+            raise ValueError(f"Diffusers layer decomposition must return exactly {layers} PIL layers.")
+        if not all(isinstance(item, Image.Image) for item in batch):
+            raise ValueError("Diffusers layer decomposition returned a non-PIL layer.")
+        if len({item.size for item in batch}) != 1:
+            raise ValueError("Diffusers layer decomposition returned mismatched PIL layer dimensions.")
+        return list(batch)
+    if not isinstance(batch, np.ndarray):
+        raise ValueError("Diffusers layer decomposition returned a non-NumPy layer batch.")
+    shape_value = getattr(batch, "shape", None)
+    try:
+        shape = tuple(int(value) for value in shape_value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Diffusers layer decomposition returned an invalid NumPy layer batch.") from error
+    if len(shape) != 4 or shape[0] != layers or any(value <= 0 for value in shape) or shape[-1] not in {1, 3, 4}:
+        raise ValueError(f"Diffusers layer decomposition must return exactly {layers} NumPy layers.")
+    return batch
+
+
+class LayerDecompose(Edit):
+    """Decompose one image into an exact bounded stack of generic image layers."""
+
+    label = "Diffusers Layer Decompose"
+    category = "Diffusers Image"
+    params = {
+        **Edit.params,
+        "image": {
+            "label": "Source Image",
+            "display": "input",
+            "type": "image",
+            "required": True,
+        },
+        "output_type": {"label": "Output type", "type": "string", "options": ["pil", "np"], "default": "pil"},
+    }
+
+    def execute(self, **kwargs):
+        pipeline = kwargs.get("pipeline")
+        adapter, values = preflight_image_action(pipeline, "LayerDecompose", kwargs)
+        result = self._execute_conditioned(
+            values,
+            {
+                adapter.image_parameter: values["image"],
+                "layers": values["layers"],
+                "resolution": values["resolution"],
+                "cfg_normalize": values["cfg_normalize"],
+                "use_en_prompt": values["use_en_prompt"],
+            },
+            adapter=adapter,
+        )
+        images = normalize_layer_decomposition_images(
+            result.get("images"),
+            layers=values["layers"],
+            output_type=values["output_type"],
+        )
+        result["images"] = images
+        width, height = output_image_dimensions(images, values["output_type"])
+        result["width_out"] = width
+        result["height_out"] = height
+        return result
 
 
 class Inpaint(Edit):

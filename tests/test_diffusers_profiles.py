@@ -71,6 +71,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "QwenImageEditModularPipeline",
             "QwenImageEditPlusModularPipeline",
             "QwenImageLayeredModularPipeline",
+            "QwenImageControlNetPipeline",
+            "QwenImageLayeredPipeline",
             "WanVACEPipeline",
             "WanVideoPipeline",
             "WanImageToVideoPipeline",
@@ -200,6 +202,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-edit:modular",
             "qwen-edit-plus:modular",
             "qwen-layered:modular",
+            "qwen-image-controlnet:direct",
+            "qwen-image-layered:direct",
         }
 
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
@@ -267,6 +271,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-edit:modular",
             "qwen-edit-plus:modular",
             "qwen-layered:modular",
+            "qwen-image-controlnet:direct",
+            "qwen-image-layered:direct",
             "wan-vace:direct",
             "wan-22-image-to-video:direct",
             "wan-22-ti2v-5b:direct",
@@ -299,6 +305,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-edit:modular",
             "qwen-edit-plus:modular",
             "qwen-layered:modular",
+            "qwen-image-controlnet:direct",
+            "qwen-image-layered:direct",
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             expected = ("bnb_4bit",) if profile_id in qwen_ids else flux_modes if profile.model_type.startswith("Flux") else ()

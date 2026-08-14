@@ -163,8 +163,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "PRXPixelPipeline",
         "PixArtAlphaPipeline",
         "QwenImageControlNetInpaintPipeline",
-        "QwenImageControlNetPipeline",
-        "QwenImageLayeredPipeline",
         "SanaControlNetPipeline",
         "ShapEImg2ImgPipeline",
         "StableDiffusion3PAGImg2ImgPipeline",

@@ -640,6 +640,8 @@ for profile_id in (
     "qwen-edit:modular",
     "qwen-edit-plus:modular",
     "qwen-layered:modular",
+    "qwen-image-controlnet:direct",
+    "qwen-image-layered:direct",
 ):
     DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
         DIFFUSERS_EXECUTION_PROFILES[profile_id],

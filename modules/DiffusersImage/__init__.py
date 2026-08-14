@@ -22,5 +22,13 @@ def _registry_entry(node_class):
 # precomputed-map path.
 MODULE_MAP = {
     node_class.__name__: _registry_entry(node_class)
-    for node_class in (Edit, ControlEdit, Inpaint, ControlInpaint, ControlGenerate, OutpaintCanvas)  # noqa: F405
+    for node_class in (
+        Edit,  # noqa: F405
+        LayerDecompose,  # noqa: F405
+        ControlEdit,  # noqa: F405
+        Inpaint,  # noqa: F405
+        ControlInpaint,  # noqa: F405
+        ControlGenerate,  # noqa: F405
+        OutpaintCanvas,  # noqa: F405
+    )
 }

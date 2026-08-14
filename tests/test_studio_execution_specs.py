@@ -55,6 +55,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "QwenImageModularPipeline",
             "control_image",
         )
+        qwen_direct = studio_model_dependencies_for_pair(
+            "QwenImageControlNetPipeline",
+            "control_image",
+        )
         redux = studio_model_dependencies_for_pair("FluxReduxPipeline", "edit_image")
         redux_multi = studio_model_dependencies_for_pair("FluxReduxPipeline", "multi_image_reference_edit")
         sdxl_controlnet = studio_model_dependencies_for_pair(
@@ -81,6 +85,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 }
             ],
         )
+        self.assertEqual(qwen_direct, qwen)
         self.assertEqual(
             redux,
             [
@@ -185,6 +190,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
                 ("QwenImageLayeredModularPipeline", "layer_decomposition"),
                 ("QwenImageModularPipeline", "control_image"),
+                ("QwenImageControlNetPipeline", "control_image"),
+                ("QwenImageLayeredPipeline", "layer_decomposition"),
                 ("StableAudioPipeline", "text_to_audio"),
                 ("LongCatAudioDiTPipeline", "text_to_audio"),
                 ("AudioLDM2Pipeline", "text_to_audio"),
@@ -1692,6 +1699,40 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("denoise", "route_state_out", "decode", "route_state_in"), spec["edges"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_standard_qwen_pairs_are_separate_expert_only_generic_graphs(self):
+        modular_control = studio_execution_spec_for_pair("QwenImageModularPipeline", "control_image")
+        modular_layered = studio_execution_spec_for_pair(
+            "QwenImageLayeredModularPipeline", "layer_decomposition"
+        )
+        direct_control = studio_execution_spec_for_pair("QwenImageControlNetPipeline", "control_image")
+        direct_layered = studio_execution_spec_for_pair("QwenImageLayeredPipeline", "layer_decomposition")
+
+        self.assertEqual(modular_control["id"], "qwen-image-2512:control-image:v1")
+        self.assertEqual(modular_layered["id"], "qwen-image-layered:layer-decomposition:v1")
+        self.assertEqual(direct_control["id"], "qwen-image-controlnet-direct:control-image:v1")
+        self.assertEqual(direct_layered["id"], "qwen-image-layered-direct:layer-decomposition:v1")
+        self.assertEqual(direct_control["executionProfileId"], "qwen-image-controlnet:direct")
+        self.assertEqual(direct_layered["executionProfileId"], "qwen-image-layered:direct")
+        self.assertEqual(direct_control["pipelineClass"], "QwenImageControlNetPipeline")
+        self.assertEqual(direct_layered["pipelineClass"], "QwenImageLayeredPipeline")
+        self.assertNotEqual(direct_control["roles"], modular_control["roles"])
+        self.assertNotEqual(direct_layered["roles"], modular_layered["roles"])
+        self.assertIn(
+            ("diffusersImageControl", "control_guidance_start", "controlGuidanceStart"),
+            direct_control["bindings"],
+        )
+        self.assertIn(("diffusersImageLayerDecompose", "layers", "layers"), direct_layered["bindings"])
+
+        for specification in (direct_control, direct_layered):
+            with self.subTest(pair=(specification["modelType"], specification["mode"])):
+                capability = STUDIO_MODEL_CAPABILITIES[specification["modelType"]]
+                self.assertEqual(capability["executionStatus"], "expert_only")
+                self.assertFalse(capability["autoEligible"])
+                self.assertFalse(capability["galleryEligible"])
+                self.assertFalse(capability["liveProof"])
+                graph, hints = executable_graph_for_spec(specification)
+                assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")

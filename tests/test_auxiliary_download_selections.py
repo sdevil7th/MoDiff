@@ -56,6 +56,11 @@ class AuxiliaryDownloadSelectionTests(unittest.TestCase):
             QWEN_CONTROLNET_FILES,
             3_536_036_150,
         ),
+        ("QwenImageControlNetPipeline", "control_image"): (
+            QWEN_CONTROLNET_REPO,
+            QWEN_CONTROLNET_FILES,
+            3_536_036_150,
+        ),
     }
 
     def test_every_admitted_dependency_repository_resolves_a_bounded_selection(self):
@@ -87,7 +92,7 @@ class AuxiliaryDownloadSelectionTests(unittest.TestCase):
                 self.assertGreater(selected_bytes, 0)
                 total_bytes += selected_bytes
 
-        self.assertEqual(total_bytes, 13_476_063_409)
+        self.assertEqual(total_bytes, 17_012_099_559)
 
     def test_auxiliary_selections_exclude_code_demos_and_unsafe_weights(self):
         for _pair, (_repo, files, _selected_bytes) in self.CASES.items():
