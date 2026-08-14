@@ -3670,14 +3670,18 @@ output and assets remotely. Assets: remote Dataset only.
     bytes. This is cache-readiness evidence only: no graph was submitted, no
     model was executed, and no output, review, publication, activation, or
     physical macOS evidence is claimed.
-  - [x] **P2.5c Exact default-input readiness:** client `d271a9f` extends the
-    campaign preflight to the byte-pinned Template Gallery defaults used by
-    each selected job. It validates the content-addressed runtime path against
+  - [x] **P2.5c Exact default-input readiness:** client `d271a9f`, corrected by
+    `7738537`, extends the campaign preflight to the byte-pinned Template
+    Gallery defaults used by each selected job. It validates the
+    content-addressed runtime path against
     the binding digest and checked asset manifest, rejects absent, linked,
     oversized, size-mismatched, or hash-mismatched local files, and stops the
     campaign before browser or inference startup when any input is unavailable.
     The focused 12-test matrix and complete client gate pass; production
-    JavaScript remains 530,915 gzip bytes. The current source checkout reports
+    JavaScript remains 530,915 gzip bytes. The corrective slice checks both the
+    lightweight authoring location and the normal installer's durable backend
+    `web/` payload, and the runner resolves the same installed-app fallback.
+    The current source checkout reports
     38 input-free jobs ready and 38 jobs blocked by 50 absent exact inputs
     totaling 33,867,388 bytes, while all 31 model/LoRA artifacts remain
     app-ready. The absent payload was not downloaded outside the app and no
@@ -6326,7 +6330,7 @@ Add references only after the corresponding evidence exists.
 | P2.5 | Pending | Pending | Pending | Pending | Remote execution, review, publication, and activation have not started; clean-host campaign preflight is complete in P2.5a. |
 | P2.5a Clean-host qualification campaign readiness | Not required | `8a93cf2` | Dry-run planning only; 76 live qualification receipts remain pending across six model-family batches | Pending | Missing local Auto history is correctly treated as no legacy evidence, ignored report directories initialize on clean hosts, and the complete client gate passes. The dry run submitted no graph and generated or published no media. |
 | P2.5b Exact app-cache qualification readiness | Not required | `a76ee04` | Read-only live-app cache proof only; 76 live qualification receipts remain pending | Pending | All 76 selected jobs and 31 unique immutable model/LoRA receipts match complete, installed, repair-free app-cache entries. The loopback-only bounded preflight and complete client gate pass; no graph, inference, output, review, or publication occurred. |
-| P2.5c Exact default-input qualification readiness | Not required | `d271a9f` | Read-only local-byte audit only; 76 live qualification receipts remain pending | Pending | The fail-closed campaign gate verifies selected Template Gallery defaults against their content-addressed bindings and asset-manifest size/hash receipts before browser or inference startup. The source checkout has none of the 50 required files (33,867,388 bytes), so 38 input-conditioned jobs are blocked and 38 input-free jobs are ready. No direct asset download, model deletion, graph, inference, output, review, or publication occurred. |
+| P2.5c Exact default-input qualification readiness | Not required | `d271a9f`, corrected by `7738537` | Read-only local-byte audit only; 76 live qualification receipts remain pending | Pending | The fail-closed campaign gate verifies selected Template Gallery defaults against their content-addressed bindings and asset-manifest size/hash receipts before browser or inference startup, checking both the authoring tree and the normal installer's durable backend `web/` payload. The runner uses the same installed-app fallback. The source checkout has none of the 50 required files (33,867,388 bytes), so 38 input-conditioned jobs are blocked and 38 input-free jobs are ready. No direct asset download, model deletion, graph, inference, output, review, or publication occurred. |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
