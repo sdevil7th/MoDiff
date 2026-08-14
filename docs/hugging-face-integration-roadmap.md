@@ -3645,6 +3645,18 @@ output and assets remotely. Assets: remote Dataset only.
   - Review and publish media to an immutable Dataset revision.
   - Commit descriptors, hashes, rights/provenance, quality reviews, activation,
     and the generated client mirror separately.
+  - [x] **P2.5a Clean-host campaign readiness:** client `8a93cf2` makes the
+    existing release-qualification campaign usable on a freshly provisioned
+    host whose local Auto history and ignored qualification output directory do
+    not exist yet. Missing history is treated as absent legacy evidence rather
+    than invented proof, and the report creates only its ignored evidence
+    directory before writing. A regression exercises that exact clean-host
+    boundary. The complete client gate passes with the unchanged 530,915-byte
+    production JavaScript gzip total. A campaign dry run now enumerates 76
+    missing qualification receipts in six reusable model-family batches
+    (ACE-Step, FLUX, LTX, Qwen Image, Wan, and Z-Image). It submitted no graph,
+    generated no media, and does not satisfy the remote output, human review,
+    Dataset, activation, or physical macOS gates above.
 
 ### Phase 2 test and asset gate
 
@@ -6283,7 +6295,8 @@ Add references only after the corresponding evidence exists.
 | P2.2 existing-image-path closure | `653168c` | `9862eea` | Remote pending | Pending | Complete: all 30 registered image pairs have deterministic canonical layouts; regeneration preserves catalog revisions and discovers base plus auxiliary Hub artifacts from each graph; focused backend integrity and complete client gates passed without weights or media. |
 | P2.3 existing audio paths | `8e91284` | `c0170b2` | Remote pending for Stable Audio | Pending | Complete source slice: Stable Audio has an exact pinned generic task workflow; all five canonical audio pairs and both ACE LoRA variants verify deterministically; complete backend/client gates passed without weights or media. |
 | P2.4 | `0ace2ae` | `8e25f5f` | Remote pending | Pending | Complete source slice: ten new exact short-video planning contracts and the existing Wan I2V/TI2V paths verify in the 70-workflow deterministic catalog; complete backend/client and focused browser gates passed without weights or media, while Auto and Gallery remain disabled pending P2.5. |
-| P2.5 | Pending | Pending | Pending | Pending | Not started |
+| P2.5 | Pending | Pending | Pending | Pending | Remote execution, review, publication, and activation have not started; clean-host campaign preflight is complete in P2.5a. |
+| P2.5a Clean-host qualification campaign readiness | Not required | `8a93cf2` | Dry-run planning only; 76 live qualification receipts remain pending across six model-family batches | Pending | Missing local Auto history is correctly treated as no legacy evidence, ignored report directories initialize on clean hosts, and the complete client gate passes. The dry run submitted no graph and generated or published no media. |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
