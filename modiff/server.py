@@ -1138,6 +1138,28 @@ STUDIO_MODEL_CAPABILITIES = {
 STUDIO_MODEL_CAPABILITIES.update(studio_capability_definitions())
 
 
+def studio_download_files_for_repo(repo_id):
+    """Return the one reviewed app-download selection for a Studio repository."""
+
+    matches = []
+    for capability in STUDIO_MODEL_CAPABILITIES.values():
+        if capability.get("defaultRepo") == repo_id and capability.get("downloadFiles"):
+            matches.append(capability["downloadFiles"])
+        requirements = list(capability.get("additionalRequirements") or [])
+        for mode_requirement in (capability.get("modeRequirements") or {}).values():
+            requirements.extend(mode_requirement.get("modelRequirements") or [])
+        matches.extend(
+            requirement["downloadFiles"]
+            for requirement in requirements
+            if requirement.get("repo") == repo_id and requirement.get("downloadFiles")
+        )
+
+    normalized = {tuple(sorted(set(selection))) for selection in matches}
+    if len(normalized) > 1:
+        raise RuntimeError(f"Conflicting reviewed Studio download selections for {repo_id}.")
+    return list(next(iter(normalized), ()))
+
+
 class WebServer:
     def __init__(
         self,
@@ -13195,16 +13217,7 @@ class WebServer:
             {item.strip() for raw in requested_files for item in str(raw or "").split(",") if item.strip()}
         )
         if not requested_files:
-            matching_capability = next(
-                (
-                    capability
-                    for capability in STUDIO_MODEL_CAPABILITIES.values()
-                    if capability.get("defaultRepo") == repo_id and capability.get("downloadFiles")
-                ),
-                None,
-            )
-            if matching_capability:
-                requested_files = sorted(set(matching_capability["downloadFiles"]))
+            requested_files = studio_download_files_for_repo(repo_id)
 
         try:
             plan = await asyncio.to_thread(
@@ -13444,16 +13457,7 @@ class WebServer:
             {item.strip() for raw in raw_files for item in str(raw or "").split(",") if item.strip()}
         )
         if not requested_files and repo_id:
-            matching_capability = next(
-                (
-                    capability
-                    for capability in STUDIO_MODEL_CAPABILITIES.values()
-                    if capability.get("defaultRepo") == repo_id and capability.get("downloadFiles")
-                ),
-                None,
-            )
-            if matching_capability:
-                requested_files = sorted(set(matching_capability["downloadFiles"]))
+            requested_files = studio_download_files_for_repo(repo_id)
         if repair and not repair_source_repo_id:
             repair_source_repo_id = VERIFIED_REPAIR_SOURCES.get(repo_id)
 

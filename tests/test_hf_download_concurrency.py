@@ -314,6 +314,35 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", captured["requested_files"])
 
+    async def test_framepack_auxiliary_plan_and_download_use_the_reviewed_component_selection(self):
+        cases = {
+            "hunyuanvideo-community/HunyuanVideo": (21, "transformer/config.json"),
+            "lllyasviel/flux_redux_bfl": (5, "image_embedder/config.json"),
+        }
+        for repo_id, (file_count, excluded_file) in cases.items():
+            with self.subTest(repo_id=repo_id):
+                server = WebServer(modules={})
+                server.loop = asyncio.get_running_loop()
+                captured = {}
+                with mock.patch(
+                    "modiff.server.plan_hub_model_download",
+                    return_value=self._space_plan(),
+                ) as plan:
+                    response = await server.hf_download_plan(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                planned_files = plan.call_args.args[1]
+
+                async def fake_download(download_repo_id, entry):
+                    captured.update(entry)
+                    return {"repo_id": download_repo_id, "complete": True, "repair_required": False}
+
+                server._run_hf_download_task = fake_download
+                response = await server.hf_download(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                self.assertEqual(planned_files, captured["requested_files"])
+                self.assertEqual(len(planned_files), file_count)
+                self.assertNotIn(excluded_file, planned_files)
+
     async def test_auraflow_app_download_automatically_selects_only_reviewed_fp16_files(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()

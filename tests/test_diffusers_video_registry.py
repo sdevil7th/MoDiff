@@ -2243,6 +2243,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             load_transformer.call_args.kwargs["revision"],
             "86cef4396041b6002c957852daac4c91aaa47c79",
         )
+        self.assertTrue(load_transformer.call_args.kwargs["use_safetensors"])
         self.assertEqual(load_processor.call_args.args[0], FRAMEPACK_VISION_REPO)
         self.assertEqual(
             load_processor.call_args.kwargs["revision"],
@@ -2253,11 +2254,13 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             load_encoder.call_args.kwargs["revision"],
             "45b801affc54ff2af4e5daf1b282e0921901db87",
         )
+        self.assertTrue(load_encoder.call_args.kwargs["use_safetensors"])
         self.assertEqual(load_pipeline.call_args.args[0], FRAMEPACK_BASE_REPO)
         self.assertEqual(
             load_pipeline.call_args.kwargs["revision"],
             "e8c2aaa66fe3742a32c11a6766aecbf07c56e773",
         )
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["transformer"], transformer)
         self.assertIs(load_pipeline.call_args.kwargs["feature_extractor"], feature_extractor)
         self.assertIs(load_pipeline.call_args.kwargs["image_encoder"], image_encoder)

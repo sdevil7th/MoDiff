@@ -1595,6 +1595,7 @@ class LoadPipeline(WanVACELoadPipeline):
             **common_kwargs,
             "revision": revision,
             "local_files_only": local_files_only(model_id),
+            "use_safetensors": True,
         }
         pipeline_quantization = recipe_load_kwargs.get("quantization_config")
         quant_mapping = getattr(pipeline_quantization, "quant_mapping", None)
@@ -1618,6 +1619,7 @@ class LoadPipeline(WanVACELoadPipeline):
             torch_dtype=dtype,
             low_cpu_mem_usage=common_kwargs["low_cpu_mem_usage"],
             local_files_only=local_files_only(FRAMEPACK_VISION_REPO),
+            use_safetensors=True,
             **({"cache_dir": common_kwargs["cache_dir"]} if "cache_dir" in common_kwargs else {}),
         )
         pipeline = HunyuanVideoFramepackPipeline.from_pretrained(
@@ -1627,6 +1629,7 @@ class LoadPipeline(WanVACELoadPipeline):
             image_encoder=image_encoder,
             revision=require_catalog_revision(FRAMEPACK_BASE_REPO),
             local_files_only=local_files_only(FRAMEPACK_BASE_REPO),
+            use_safetensors=True,
             **common_kwargs,
             **recipe_load_kwargs,
         )

@@ -5,6 +5,9 @@ import unittest
 from modiff.studio_execution_specs import (
     ALLEGRO_DIFFUSERS_FILES,
     COGVIDEOX_2B_DIFFUSERS_FILES,
+    FRAMEPACK_BASE_COMPONENT_FILES,
+    FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES,
+    FRAMEPACK_VISION_COMPONENT_FILES,
     LATTE_DIFFUSERS_FILES,
     LTX_VIDEO_DIFFUSERS_FILES,
     MOCHI_DIFFUSERS_FILES,
@@ -18,6 +21,40 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class VideoDownloadSelectionTests(unittest.TestCase):
+    def test_framepack_selection_matches_the_three_repository_loader_composition(self):
+        review = json.loads((ROOT / "data" / "framepack-artifact-review.json").read_text())
+        capability = studio_capability_definitions()["HunyuanVideoFramepackPipeline"]
+        requirements = capability["modeRequirements"]["image_to_video"]["modelRequirements"]
+
+        self.assertEqual(capability["downloadFiles"], FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES)
+        self.assertEqual(len(FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES), 7)
+        self.assertEqual(len(FRAMEPACK_BASE_COMPONENT_FILES), 21)
+        self.assertEqual(len(FRAMEPACK_VISION_COMPONENT_FILES), 5)
+        self.assertEqual(
+            {requirement["repo"]: requirement["downloadFiles"] for requirement in requirements},
+            {
+                "hunyuanvideo-community/HunyuanVideo": FRAMEPACK_BASE_COMPONENT_FILES,
+                "lllyasviel/flux_redux_bfl": FRAMEPACK_VISION_COMPONENT_FILES,
+            },
+        )
+        self.assertFalse(
+            any(
+                path.endswith((".bin", ".ckpt", ".pt", ".pth"))
+                for selection in (
+                    FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES,
+                    FRAMEPACK_BASE_COMPONENT_FILES,
+                    FRAMEPACK_VISION_COMPONENT_FILES,
+                )
+                for path in selection
+            )
+        )
+        self.assertNotIn("transformer/config.json", FRAMEPACK_BASE_COMPONENT_FILES)
+        self.assertNotIn("image_embedder/config.json", FRAMEPACK_VISION_COMPONENT_FILES)
+        self.assertEqual(review["repositories"]["transformer"]["selectedDownloadBytes"], 25_748_917_665)
+        self.assertEqual(review["repositories"]["base"]["selectedDownloadBytes"], 16_261_369_704)
+        self.assertEqual(review["repositories"]["vision"]["selectedDownloadBytes"], 856_508_718)
+        self.assertEqual(review["appDownloadQueue"]["aggregateSelectedBytes"], 42_866_796_087)
+
     def test_cogvideox_selection_is_complete_and_safe(self):
         selected = set(COGVIDEOX_2B_DIFFUSERS_FILES)
         capability = studio_capability_definitions()["CogVideoXPipeline"]

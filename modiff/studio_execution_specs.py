@@ -1062,6 +1062,47 @@ WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
 WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 LTX2_REPO = "Lightricks/LTX-2"
 FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
+FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model-00001-of-00003.safetensors",
+    "diffusion_pytorch_model-00002-of-00003.safetensors",
+    "diffusion_pytorch_model-00003-of-00003.safetensors",
+    "diffusion_pytorch_model.safetensors.index.json",
+]
+FRAMEPACK_BASE_REPO = "hunyuanvideo-community/HunyuanVideo"
+FRAMEPACK_BASE_COMPONENT_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00004.safetensors",
+    "text_encoder/model-00002-of-00004.safetensors",
+    "text_encoder/model-00003-of-00004.safetensors",
+    "text_encoder/model-00004-of-00004.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "text_encoder_2/config.json",
+    "text_encoder_2/model.safetensors",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer_2/merges.txt",
+    "tokenizer_2/special_tokens_map.json",
+    "tokenizer_2/tokenizer_config.json",
+    "tokenizer_2/vocab.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+FRAMEPACK_VISION_REPO = "lllyasviel/flux_redux_bfl"
+FRAMEPACK_VISION_COMPONENT_FILES = [
+    ".gitattributes",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "image_encoder/config.json",
+    "image_encoder/model.safetensors",
+]
 STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
 STABLE_VIDEO_DIFFUSION_FP16_FILES = [
     ".gitattributes",
@@ -1364,6 +1405,34 @@ CONSISTENCY_IMAGENET64_DIFFUSERS_FILES = [
 ]
 
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    ("HunyuanVideoFramepackPipeline", "image_to_video"): (
+        {
+            "id": "framepack-hunyuan-base-components",
+            "label": "FramePack HunyuanVideo base components",
+            "repo": FRAMEPACK_BASE_REPO,
+            "revision": require_catalog_revision(FRAMEPACK_BASE_REPO),
+            "kind": "base",
+            "requiredForModes": ["image_to_video"],
+            "downloadFiles": FRAMEPACK_BASE_COMPONENT_FILES,
+            "description": (
+                "Exact safetensors scheduler, encoders, tokenizers, and VAE composed with the "
+                "FramePack transformer."
+            ),
+        },
+        {
+            "id": "framepack-siglip-vision-components",
+            "label": "FramePack SigLIP vision components",
+            "repo": FRAMEPACK_VISION_REPO,
+            "revision": require_catalog_revision(FRAMEPACK_VISION_REPO),
+            "kind": "adapter",
+            "requiredForModes": ["image_to_video"],
+            "downloadFiles": FRAMEPACK_VISION_COMPONENT_FILES,
+            "description": (
+                "Exact SigLIP image processor and safetensors vision encoder used by FramePack "
+                "conditioning."
+            ),
+        },
+    ),
     ("AnimateDiffPipeline", "text_to_video"): (
         {
             "id": "animatediff-motion-adapter-v1-5-2",
@@ -5922,10 +5991,32 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "modelType": "HunyuanVideoFramepackPipeline",
             "mode": "image_to_video",
             "profile": _P2_VIDEO_PROFILES["framepack"],
-            "capability": _planning_video_capability(
-                "HunyuanVideoFramepackPipeline", "Hunyuan FramePack I2V", "Wan Video", FRAMEPACK_REPO,
-                ("image_to_video",), {"image_to_video": {"requiredImages": ["referenceImages"]}},
-            ),
+            "capability": {
+                **_planning_video_capability(
+                    "HunyuanVideoFramepackPipeline",
+                    "Hunyuan FramePack I2V",
+                    "Wan Video",
+                    FRAMEPACK_REPO,
+                    ("image_to_video",),
+                    {"image_to_video": {"requiredImages": ["referenceImages"]}},
+                    download_files=FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES,
+                ),
+                "additionalRequirements": studio_model_requirements_for_pair(
+                    "HunyuanVideoFramepackPipeline", "image_to_video"
+                ),
+                "modeRequirements": {
+                    "image_to_video": {
+                        "modelRequirements": studio_model_requirements_for_pair(
+                            "HunyuanVideoFramepackPipeline", "image_to_video"
+                        ),
+                        "requiredImages": ["referenceImages"],
+                        "note": (
+                            "Requires a source image plus the exact HunyuanVideo base and SigLIP "
+                            "vision component selections."
+                        ),
+                    }
+                },
+            },
             "roles": _FRAMEPACK_GRAPH_ROLES,
             "edges": _FRAMEPACK_GRAPH_EDGES,
             "bindings": _FRAMEPACK_GRAPH_BINDINGS,
