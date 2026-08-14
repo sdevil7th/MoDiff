@@ -5323,6 +5323,24 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   app/artifact matrix passes 95 tests and 46 subtests; pinned Ruff E9/F and the
   66-package compatibility check pass. No new POST was necessary, and the
   older complete repository snapshot and its duplicate bytes were preserved.
+- [x] **P6.63 Bound Allegro, Latte, and Mochi app download selections:** backend
+  `cb3448d` binds all three admitted video routes to exact runnable Diffusers
+  file allowlists. Allegro selects 18 files / 25,293,916,977 bytes and excludes
+  both duplicate unsafe PyTorch text-encoder shards. Latte selects 18 files /
+  23,615,823,652 bytes and excludes the legacy `.pt` checkpoint plus the
+  unreferenced temporal decoder. Mochi selects 21 files / 40,025,271,759 bytes
+  and preserves the indexed four-shard T5 plus BF16 transformer/VAE route while
+  excluding the flat-format duplicate, unindexed two-shard T5, FP32
+  transformer/VAE, and demo asset.
+
+  Real app plans prove those selections instead of the repository-wide
+  44,370,333,435-byte Allegro, 28,238,181,756-byte Latte, and
+  133,509,491,072-byte Mochi trees. Both app planning and POST admission derive
+  the same capability files; artifact tests require every reviewed weight and
+  reject every recorded duplicate/unsafe surface. The focused matrix passes
+  117 tests and 49 subtests with pinned Ruff E9/F and 66-package compatibility
+  green. None fit beside the active app queue, so no POST was submitted and no
+  existing complete or partial cache entry was removed.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6583,4 +6601,5 @@ Add references only after the corresponding evidence exists.
 | P6.60 Wan Animate 2 artifact/source review | `2b86e63` | Not required | Static immutable metadata/package-source review only; immutable component descriptors, remote compiled flex-attention execution/output review, and physical macOS pending | Not required | Two public Python-free 31-file snapshots and their distinct 45,920,934,868-byte safetensors receipts are sealed. The standard class is absent at the pin and both Modular indexes retain null and mutable PR component revisions, so no runtime/download catalog or runnable mode was admitted and no weights or media were fetched. |
 | P6.61 Bounded AuraFlow app download selection | `ed3982a` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 16,837,479,394-byte fp16 runnable selection from the capability, excluding four duplicate/default weight surfaces and the unrelated single-file/ComfyUI artifacts. The pre-existing full-repository app transfer remains untouched and no cache entry was deleted. |
 | P6.62 Bounded Chroma app download selection | `0922243` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 27,493,360,428-byte runnable Diffusers selection, excluding the 17,800,038,288-byte duplicate native checkpoint and demo artifacts. The selected files are already complete in the preserved full cache, so no POST or deletion occurred. |
+| P6.63 Bounded Allegro, Latte, and Mochi app download selections | `cb3448d` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 18/18/21-file runnable selections replace repository-wide planning and exclude Allegro's unsafe `.bin` duplicates, Latte's unsafe `.pt` plus unused decoder, and Mochi's 93.48 GB of duplicate/default partitions. Current queue-aware plans do not fit, so no POST or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
