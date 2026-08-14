@@ -46,6 +46,16 @@ from modiff.path_identifiers import (
 )
 from modiff.disk_activity import DiskActivitySampler
 from modiff.supervisor_control import compact_task_history
+from modiff.template_gallery import (
+    TEMPLATE_GALLERY_SOURCE_PATH,
+    TemplateGalleryError,
+    fetch_template_gallery_contract,
+    install_template_gallery,
+    load_template_gallery_source,
+    plan_template_gallery_install,
+    template_gallery_destination_present,
+    verify_template_gallery_tree,
+)
 
 logger = logging.getLogger("modiff")
 
@@ -1218,7 +1228,10 @@ class WebServer:
         # process-local lock as well.
         self.studio_history_file_lock = threading.RLock()
         self.hf_download_semaphore = asyncio.Semaphore(2)
+        self.download_reservation_lock = asyncio.Lock()
         self.hf_download_tasks = {}
+        self.template_gallery_install_task = None
+        self.template_gallery_reserved_bytes = 0
         # ROCm and MPS commonly use system RAM as accelerator memory. Loading a
         # large pipeline while hf-xet is assembling another model can exhaust
         # the same physical pool and let the kernel kill the app. Keep graph
@@ -1374,6 +1387,9 @@ class WebServer:
                 web.get("/hf_hub", self.hf_hub),
                 web.get("/hf_download/plan", self.hf_download_plan),
                 web.post("/hf_download", self.hf_download),
+                web.get("/template_gallery/status", self.template_gallery_status),
+                web.get("/template_gallery/plan", self.template_gallery_plan),
+                web.post("/template_gallery/install", self.template_gallery_install),
                 web.get("/static/{module}/{file}", self.user_assets),
                 web.get("/stream", self.stream),
             ]
@@ -10224,6 +10240,7 @@ class WebServer:
             or self.queued_tasks
             or self._active_nonruntime_mutations
             or self.hf_download_tasks
+            or (self.template_gallery_install_task is not None and not self.template_gallery_install_task.done())
         ):
             raise OverlayInstallBusy(
                 "Finish or stop active and queued runs before changing the runtime environment."
@@ -12921,6 +12938,208 @@ class WebServer:
             logger.error(f"Error enabling custom module: {e}", exc_info=True)
             return web.json_response({"error": True, "message": str(e)}, status=500)
 
+    @staticmethod
+    def _template_gallery_error_response(error, *, plan=None):
+        status = 409
+        if isinstance(error, TemplateGalleryError):
+            code = error.code
+            if code in {"template_gallery_contract_missing"}:
+                status = 404
+            elif code in {"template_gallery_download_unavailable"}:
+                status = 503
+        else:
+            code = "template_gallery_install_failed"
+            status = 500
+        return web.json_response(
+            {
+                "error": str(error) if isinstance(error, TemplateGalleryError) else "Template Gallery operation failed.",
+                "code": code,
+                "retryable": status >= 500,
+                **({"plan": plan} if isinstance(plan, dict) else {}),
+            },
+            status=status,
+        )
+
+    def _template_gallery_queue_reservation(self):
+        return sum(int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values())
+
+    async def template_gallery_status(self, request):
+        source = None
+        try:
+            source = load_template_gallery_source(TEMPLATE_GALLERY_SOURCE_PATH)
+            installing = self.template_gallery_install_task is not None and not self.template_gallery_install_task.done()
+            if not template_gallery_destination_present(TEMPLATE_GALLERY_ROOT):
+                return web.json_response(
+                    {
+                        "error": False,
+                        "schemaVersion": 1,
+                        "status": "installing" if installing else "missing",
+                        "installed": False,
+                        "complete": False,
+                        "repairRequired": False,
+                        "installing": installing,
+                        "repoId": source["repoId"],
+                        "revision": source["revision"],
+                        "assetSetId": source["assetSetId"],
+                    }
+                )
+            source, manifest = await asyncio.to_thread(fetch_template_gallery_contract, TEMPLATE_GALLERY_SOURCE_PATH)
+            verification = await asyncio.to_thread(verify_template_gallery_tree, TEMPLATE_GALLERY_ROOT, manifest)
+            return web.json_response(
+                {
+                    "error": False,
+                    "schemaVersion": 1,
+                    "status": "installing" if installing else "ready",
+                    "installing": installing,
+                    "repoId": source["repoId"],
+                    "revision": source["revision"],
+                    **verification,
+                }
+            )
+        except TemplateGalleryError as error:
+            return web.json_response(
+                {
+                    "error": False,
+                    "schemaVersion": 1,
+                    "status": (
+                        "repair_required"
+                        if template_gallery_destination_present(TEMPLATE_GALLERY_ROOT)
+                        else "unavailable"
+                    ),
+                    "installed": False,
+                    "complete": False,
+                    "repairRequired": template_gallery_destination_present(TEMPLATE_GALLERY_ROOT),
+                    "installing": False,
+                    "code": error.code,
+                    "message": str(error),
+                    **(
+                        {
+                            "repoId": source["repoId"],
+                            "revision": source["revision"],
+                            "assetSetId": source["assetSetId"],
+                        }
+                        if isinstance(source, dict)
+                        else {}
+                    ),
+                }
+            )
+        except Exception as error:
+            logger.error("Could not inspect the Template Gallery install", exc_info=True)
+            return self._template_gallery_error_response(error)
+
+    async def _template_gallery_plan(self):
+        async with self.download_reservation_lock:
+            queued_reservation = self._template_gallery_queue_reservation()
+            _source, _manifest, plan = await asyncio.to_thread(
+                partial(
+                    plan_template_gallery_install,
+                    TEMPLATE_GALLERY_SOURCE_PATH,
+                    TEMPLATE_GALLERY_ROOT,
+                    queued_reservation_bytes=queued_reservation,
+                )
+            )
+        plan["installing"] = self.template_gallery_install_task is not None and not self.template_gallery_install_task.done()
+        return plan
+
+    async def template_gallery_plan(self, request):
+        try:
+            return web.json_response({"error": False, **(await self._template_gallery_plan())})
+        except TemplateGalleryError as error:
+            return self._template_gallery_error_response(error)
+        except Exception as error:
+            logger.error("Could not plan the Template Gallery install", exc_info=True)
+            return self._template_gallery_error_response(error)
+
+    async def _run_template_gallery_install(self):
+        source = manifest = plan = None
+        try:
+            async with self.download_reservation_lock:
+                queued_reservation = self._template_gallery_queue_reservation()
+                source, manifest, plan = await asyncio.to_thread(
+                    partial(
+                        plan_template_gallery_install,
+                        TEMPLATE_GALLERY_SOURCE_PATH,
+                        TEMPLATE_GALLERY_ROOT,
+                        queued_reservation_bytes=queued_reservation,
+                    )
+                )
+                plan["installing"] = True
+                if not plan["sizeKnown"] or not plan["fitsWithQueue"]:
+                    return {
+                        "complete": False,
+                        "httpStatus": 507,
+                        "code": "insufficient_template_gallery_space",
+                        "error": (
+                            "The app refused the Template Gallery install because its exact download and staging "
+                            "reservation, active model reservations, and the 64 GiB safety reserve do not fit."
+                        ),
+                        "plan": plan,
+                    }
+                if plan["installed"]:
+                    return {"complete": True, "alreadyInstalled": True, "plan": plan}
+                self.template_gallery_reserved_bytes = int(plan["reservationBytes"])
+            result = await asyncio.to_thread(
+                partial(
+                    install_template_gallery,
+                    source,
+                    manifest,
+                    TEMPLATE_GALLERY_ROOT,
+                    receipt_path=Path(self.data_dir) / "template-gallery-install.v1.json",
+                )
+            )
+            return {"complete": True, "alreadyInstalled": False, "plan": plan, "result": result}
+        except TemplateGalleryError as error:
+            return {
+                "complete": False,
+                "httpStatus": 409,
+                "code": error.code,
+                "error": str(error),
+                **({"plan": plan} if isinstance(plan, dict) else {}),
+            }
+        except Exception:
+            logger.error("Template Gallery installation failed", exc_info=True)
+            return {
+                "complete": False,
+                "httpStatus": 500,
+                "code": "template_gallery_install_failed",
+                "error": "Template Gallery installation failed.",
+                **({"plan": plan} if isinstance(plan, dict) else {}),
+            }
+        finally:
+            self.template_gallery_reserved_bytes = 0
+
+    async def template_gallery_install(self, request):
+        if getattr(request, "can_read_body", False):
+            try:
+                payload = await request.json()
+            except (TypeError, ValueError):
+                return web.json_response({"error": "Invalid JSON body."}, status=400)
+            if not isinstance(payload, dict) or payload:
+                return web.json_response(
+                    {"error": "The Template Gallery install request must be an empty JSON object."}, status=400
+                )
+
+        if self.template_gallery_install_task is None or self.template_gallery_install_task.done():
+            self.template_gallery_install_task = asyncio.create_task(self._run_template_gallery_install())
+        task = self.template_gallery_install_task
+        try:
+            result = await asyncio.shield(task)
+            if not isinstance(result, dict) or result.get("complete") is not True:
+                status = int(result.get("httpStatus") or 409) if isinstance(result, dict) else 500
+                return web.json_response(
+                    {
+                        "error": result.get("error") if isinstance(result, dict) else "Template Gallery install failed.",
+                        "code": result.get("code") if isinstance(result, dict) else "template_gallery_install_failed",
+                        "retryable": status >= 500,
+                        **({"plan": result.get("plan")} if isinstance(result, dict) and result.get("plan") else {}),
+                    },
+                    status=status,
+                )
+            return web.json_response({"error": False, **result})
+        finally:
+            if self.template_gallery_install_task is task and task.done():
+                self.template_gallery_install_task = None
+
     async def hf_cache_delete(self, request):
         hashes = request.match_info.get("hash").split(",")
         if not hashes:
@@ -13011,7 +13230,7 @@ class WebServer:
                 },
                 status=503,
             )
-        queued_reservation = sum(
+        queued_reservation = self.template_gallery_reserved_bytes + sum(
             int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values()
         )
         remaining_bytes = plan.get("remainingBytes")
@@ -13029,6 +13248,57 @@ class WebServer:
                 "fitsWithQueue": fits_with_queue,
             }
         )
+
+    async def _reserve_hf_download_space(self, repo_id, entry):
+        async with self.download_reservation_lock:
+            try:
+                plan = await asyncio.to_thread(
+                    plan_hub_model_download,
+                    repo_id,
+                    entry.get("requested_files"),
+                    entry.get("revision"),
+                )
+            except Exception as error:
+                return {
+                    "complete": False,
+                    "errorCode": "huggingface_download_plan_failed",
+                    "httpStatus": 503,
+                    "validation": {"reason": str(error) or type(error).__name__},
+                }
+
+            remaining_bytes = plan.get("remainingBytes")
+            if not plan.get("sizeKnown") or not isinstance(remaining_bytes, int):
+                return {
+                    "complete": False,
+                    "errorCode": "huggingface_download_size_unknown",
+                    "httpStatus": 503,
+                    "downloadPlan": plan,
+                    "validation": {
+                        "reason": "The app could not prove the immutable model download size before writing files."
+                    },
+                }
+            queued_reservation = self.template_gallery_reserved_bytes + sum(
+                int(task.get("reserved_bytes") or 0)
+                for task in self.hf_download_tasks.values()
+                if task is not entry
+            )
+            required_with_reserve = remaining_bytes + queued_reservation + int(plan.get("reserveBytes") or 0)
+            if required_with_reserve > int(plan.get("freeBytes") or 0):
+                return {
+                    "complete": False,
+                    "errorCode": "insufficient_model_download_space",
+                    "httpStatus": 507,
+                    "downloadPlan": {**plan, "queuedReservationBytes": queued_reservation},
+                    "validation": {
+                        "reason": (
+                            "The app refused the model download because its conservative remaining-size reservation, "
+                            "the active download queue, and the 64 GiB safety reserve do not fit on the cache volume."
+                        )
+                    },
+                }
+            entry["reserved_bytes"] = remaining_bytes
+            entry["download_plan"] = plan
+            return None
 
     async def _run_hf_download_task(self, repo_id, entry):
         task_id = entry["task_id"]
@@ -13072,53 +13342,9 @@ class WebServer:
                 download_sid,
             )
 
-        try:
-            plan = await asyncio.to_thread(
-                plan_hub_model_download,
-                repo_id,
-                entry.get("requested_files"),
-                entry.get("revision"),
-            )
-        except Exception as error:
-            return {
-                "complete": False,
-                "errorCode": "huggingface_download_plan_failed",
-                "httpStatus": 503,
-                "validation": {"reason": str(error) or type(error).__name__},
-            }
-
-        remaining_bytes = plan.get("remainingBytes")
-        if not plan.get("sizeKnown") or not isinstance(remaining_bytes, int):
-            return {
-                "complete": False,
-                "errorCode": "huggingface_download_size_unknown",
-                "httpStatus": 503,
-                "downloadPlan": plan,
-                "validation": {
-                    "reason": "The app could not prove the immutable model download size before writing files."
-                },
-            }
-        queued_reservation = sum(
-            int(task.get("reserved_bytes") or 0)
-            for task in self.hf_download_tasks.values()
-            if task is not entry
-        )
-        required_with_reserve = remaining_bytes + queued_reservation + int(plan.get("reserveBytes") or 0)
-        if required_with_reserve > int(plan.get("freeBytes") or 0):
-            return {
-                "complete": False,
-                "errorCode": "insufficient_model_download_space",
-                "httpStatus": 507,
-                "downloadPlan": {**plan, "queuedReservationBytes": queued_reservation},
-                "validation": {
-                    "reason": (
-                        "The app refused the model download because its conservative remaining-size reservation, "
-                        "the active download queue, and the 64 GiB safety reserve do not fit on the cache volume."
-                    )
-                },
-            }
-        entry["reserved_bytes"] = remaining_bytes
-        entry["download_plan"] = plan
+        reservation_failure = await self._reserve_hf_download_space(repo_id, entry)
+        if reservation_failure is not None:
+            return reservation_failure
 
         try:
             return await self._run_reserved_hf_download(repo_id, entry, progress_cb)

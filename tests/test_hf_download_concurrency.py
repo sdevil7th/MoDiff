@@ -105,6 +105,24 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["result"]["downloadPlan"]["queuedReservationBytes"], 500)
         download.assert_not_called()
 
+    async def test_concurrent_model_admissions_reserve_space_serially(self):
+        server = WebServer(modules={})
+        first = {"requested_files": [], "revision": "a" * 40}
+        second = {"requested_files": [], "revision": "b" * 40}
+        server.hf_download_tasks = {"unit/first": first, "unit/second": second}
+        plan = self._space_plan(remainingBytes=500, freeBytes=1000, reserveBytes=100)
+
+        with mock.patch("modiff.server.plan_hub_model_download", return_value=plan):
+            results = await asyncio.gather(
+                server._reserve_hf_download_space("unit/first", first),
+                server._reserve_hf_download_space("unit/second", second),
+            )
+
+        self.assertEqual(sum(result is None for result in results), 1)
+        failure = next(result for result in results if result is not None)
+        self.assertEqual(failure["httpStatus"], 507)
+        self.assertEqual(sum(entry.get("reserved_bytes", 0) for entry in (first, second)), 500)
+
     async def test_app_refuses_download_when_immutable_size_is_unknown(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()

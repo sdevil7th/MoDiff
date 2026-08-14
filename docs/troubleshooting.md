@@ -89,6 +89,13 @@ public Hugging Face Dataset revision. For a local build, an empty or
 generated; keep the manifest and referenced media from one validated client
 build.
 
+The running app can also materialize or repair its exact byte-pinned payload
+from **Setup → Template Gallery assets**. The action first validates the remote
+manifest and refuses to start unless the full download plus staging copy,
+active model-download reservations, and the 64 GiB safety reserve fit. It does
+not delete cached models. After it completes, wait for active downloads to
+finish, restart MoDiff, and then verify `/template-gallery/manifest.json`.
+
 ## CUDA is not detected
 
 - Check `hardware.devices` and `hardware.torch` in preflight or `GET /system_stats`.

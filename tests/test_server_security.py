@@ -75,12 +75,16 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
         methods = {(route.method, route.resource.canonical) for route in self.server.app.router.routes()}
         self.assertIn(("POST", "/stop"), methods)
         self.assertIn(("POST", "/hf_download"), methods)
+        self.assertIn(("POST", "/template_gallery/install"), methods)
+        self.assertIn(("GET", "/template_gallery/status"), methods)
+        self.assertIn(("GET", "/template_gallery/plan"), methods)
         self.assertIn(("GET", "/hf_hub"), methods)
         self.assertIn(("GET", "/hf_cache"), methods)
         self.assertIn(("POST", "/hf_token"), methods)
         self.assertIn(("GET", "/model_artifact_catalog"), methods)
         self.assertNotIn(("GET", "/stop"), methods)
         self.assertNotIn(("GET", "/hf_download"), methods)
+        self.assertNotIn(("GET", "/template_gallery/install"), methods)
         self.assertFalse(any(path.startswith("/inference/") for _method, path in methods))
 
     def test_hidden_path_supports_dotfiles_and_windows_attributes(self):
