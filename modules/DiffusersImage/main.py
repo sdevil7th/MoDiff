@@ -818,6 +818,18 @@ IMAGE_PIPELINE_ADAPTERS = {
         LCM_DREAMSHAPER_REPO,
         safe_serialization_required=True,
     ),
+    "LatentConsistencyModelImg2ImgPipeline": ImagePipelineAdapter(
+        "LatentConsistencyModelImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        LCM_DREAMSHAPER_REPO,
+        artifact_pipeline_classes=(
+            "LatentConsistencyModelPipeline",
+            "LatentConsistencyModelImg2ImgPipeline",
+        ),
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        max_reference_pixels=_MAX_IMAGE_OUTPUT_PIXELS,
+    ),
     "StableDiffusionPAGPipeline": ImagePipelineAdapter(
         "StableDiffusionPAGPipeline",
         frozenset({"text_to_image"}),
@@ -1264,6 +1276,9 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "LatentConsistencyModelPipeline": {
         "text_to_image": _image_field_contract("width", "height", "guidance_scale"),
+    },
+    "LatentConsistencyModelImg2ImgPipeline": {
+        "edit_image": _image_field_contract("guidance_scale", "strength"),
     },
     "StableDiffusionPAGPipeline": {
         "text_to_image": _image_field_contract(

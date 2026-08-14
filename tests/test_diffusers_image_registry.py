@@ -840,6 +840,15 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertFalse(instruct["fieldParams"]["image_guidance_scale"]["hidden"])
         self.assertTrue(instruct["fieldParams"]["strength"]["hidden"])
+        lcm_img2img = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["LatentConsistencyModelImg2ImgPipeline"], "edit_image"
+        )
+        self.assertEqual(lcm_img2img["actions"], {"Edit": ["edit_image"]})
+        self.assertFalse(lcm_img2img["fieldParams"]["guidance_scale"]["hidden"])
+        self.assertFalse(lcm_img2img["fieldParams"]["strength"]["hidden"])
+        self.assertTrue(lcm_img2img["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertTrue(lcm_img2img["fieldParams"]["width"]["hidden"])
+        self.assertTrue(lcm_img2img["fieldParams"]["height"]["hidden"])
 
     def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
         for fields in (("unknown",), ("strength", "strength")):
@@ -851,6 +860,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         expected = {
             "StableDiffusionPAGPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
             "LatentConsistencyModelPipeline": ({"text_to_image"}, LCM_DREAMSHAPER_REPO, {"prompt"}),
+            "LatentConsistencyModelImg2ImgPipeline": (
+                {"edit_image"},
+                LCM_DREAMSHAPER_REPO,
+                {"prompt", "image", "strength"},
+            ),
             "StableDiffusionPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
             "StableDiffusionControlNetPipeline": (
                 {"control_image"},
@@ -1024,6 +1038,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         cases = (
             ("StableDiffusionPAGPipeline", "text_to_image", Generate, {}),
             ("LatentConsistencyModelPipeline", "text_to_image", Generate, {}),
+            (
+                "LatentConsistencyModelImg2ImgPipeline",
+                "edit_image",
+                Edit,
+                {"image": image},
+            ),
             ("StableDiffusionPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),

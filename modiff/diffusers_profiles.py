@@ -677,14 +677,20 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
 # the immutable artifact catalog.  A new class therefore cannot be published
 # here by copying a Diffusers name alone.
 CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
-    # Standard image adapters.  The final eleven were admitted by P0.3c.4;
-    # FLUX img2img/inpaint were already implemented but likewise unprofiled.
+    # Standard image adapters with an immutable source and generic action
+    # contract, but no Auto execution profile or public template.
     ("QwenImageEditPipeline", "image", "Qwen/Qwen-Image-Edit", ("edit_image",)),
     (
         "QwenImageEditPlusPipeline",
         "image",
         "Qwen/Qwen-Image-Edit-2511",
         ("edit_image", "multi_image_reference_edit"),
+    ),
+    (
+        "LatentConsistencyModelImg2ImgPipeline",
+        "image",
+        "SimianLuo/LCM_Dreamshaper_v7",
+        ("edit_image",),
     ),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
     (

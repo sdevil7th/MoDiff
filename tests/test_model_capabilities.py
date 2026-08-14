@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 33)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 34)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -50,6 +50,16 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             experimental["FluxModularPipeline"]["runnableModes"],
             ["text_to_image", "image_to_image"],
+        )
+        lcm_img2img = experimental["LatentConsistencyModelImg2ImgPipeline"]
+        self.assertEqual(lcm_img2img["runnableModes"], ["edit_image"])
+        self.assertEqual(
+            lcm_img2img["inputContracts"],
+            {"edit_image": {"requiredImages": ["referenceImages"]}},
+        )
+        self.assertEqual(
+            lcm_img2img["revisionCandidates"],
+            ["a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5"],
         )
         self.assertEqual(
             experimental["ZImageModularPipeline"]["backendPath"],
