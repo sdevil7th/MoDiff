@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 124)
+        self.assertEqual(len(self.contracts), 130)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -91,6 +91,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("image", "controlImage"),
             ],
             ("HunyuanDiTPipeline", "text_to_image"): [],
+            ("HunyuanDiTPAGPipeline", "text_to_image"): [],
             ("HunyuanDiTControlNetPipeline", "control_image"): [
                 ("image", "controlImage"),
             ],
@@ -106,9 +107,11 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("image", "maskImage"),
             ],
             ("SanaPipeline", "text_to_image"): [],
+            ("SanaPAGPipeline", "text_to_image"): [],
             ("SanaSprintPipeline", "text_to_image"): [],
             ("SanaSprintPipeline", "edit_image"): [("image", "referenceImages")],
             ("PixArtSigmaPipeline", "text_to_image"): [],
+            ("PixArtSigmaPAGPipeline", "text_to_image"): [],
             ("Kandinsky3Pipeline", "text_to_image"): [],
             ("Kandinsky3Pipeline", "edit_image"): [("image", "referenceImages")],
             ("OmniGenPipeline", "text_to_image"): [],
@@ -136,6 +139,16 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("image", "maskImage"),
             ],
             ("StableDiffusionPipeline", "control_image"): [("image", "controlImage")],
+            ("LatentConsistencyModelPipeline", "edit_image"): [
+                ("image", "referenceImages"),
+            ],
+            ("StableDiffusionPAGPipeline", "edit_image"): [
+                ("image", "referenceImages"),
+            ],
+            ("StableDiffusionPAGPipeline", "inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+            ],
             ("FluxDevPipeline", "edit_image"): [("image", "referenceImages")],
             ("FluxDevPipeline", "inpaint"): [
                 ("image", "referenceImages"),
@@ -233,15 +246,18 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionXLTurboPipeline", "text_to_image"),
             ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
             ("StableDiffusionXLControlNetPipeline", "control_image"),
+            ("HunyuanDiTPAGPipeline", "text_to_image"),
             ("HunyuanDiTControlNetPipeline", "control_image"),
             ("StableDiffusionXLAdapterPipeline", "control_image"),
             ("StableDiffusionXLPAGPipeline", "text_to_image"),
             ("StableDiffusionXLPAGPipeline", "edit_image"),
             ("StableDiffusionXLPAGPipeline", "inpaint"),
             ("SanaPipeline", "text_to_image"),
+            ("SanaPAGPipeline", "text_to_image"),
             ("SanaSprintPipeline", "text_to_image"),
             ("SanaSprintPipeline", "edit_image"),
             ("PixArtSigmaPipeline", "text_to_image"),
+            ("PixArtSigmaPAGPipeline", "text_to_image"),
             ("Kandinsky3Pipeline", "text_to_image"),
             ("Kandinsky3Pipeline", "edit_image"),
             ("OmniGenPipeline", "text_to_image"),
@@ -264,7 +280,10 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionPipeline", "edit_image"),
             ("StableDiffusionPipeline", "inpaint"),
             ("LatentConsistencyModelPipeline", "text_to_image"),
+            ("LatentConsistencyModelPipeline", "edit_image"),
             ("StableDiffusionPAGPipeline", "text_to_image"),
+            ("StableDiffusionPAGPipeline", "edit_image"),
+            ("StableDiffusionPAGPipeline", "inpaint"),
             ("FluxDevPipeline", "edit_image"),
             ("FluxDevPipeline", "inpaint"),
             ("FluxReduxPipeline", "edit_image"),

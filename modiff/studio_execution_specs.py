@@ -1776,6 +1776,16 @@ _PAG_GRAPH_BINDINGS = _SDXL_GRAPH_BINDINGS + (
     ("diffusersImageGenerate", "pag_scale", "pagScale"),
     ("diffusersImageGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
 )
+_PAG_TEXT_TO_IMAGE_BINDINGS = tuple(
+    item
+    for item in _PAG_GRAPH_BINDINGS
+    if item[:2] != ("diffusersImageGenerate", "strength")
+)
+_HUNYUAN_PAG_GRAPH_BINDINGS = tuple(
+    item
+    for item in _PAG_TEXT_TO_IMAGE_BINDINGS
+    if item[:2] != ("diffusersImageGenerate", "max_sequence_length")
+)
 _PERCEPTION_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -2105,6 +2115,37 @@ _PAG_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
     ("diffusersImageEdit", "pag_scale", "pagScale"),
     ("diffusersImageEdit", "pag_adaptive_scale", "pagAdaptiveScale"),
 )
+_LCM_EDIT_GRAPH_BINDINGS = tuple(
+    item
+    for item in _SDXL_EDIT_GRAPH_BINDINGS
+    if item[0] != "diffusersImageEdit"
+    or item[1]
+    in {
+        "prompt",
+        "seed",
+        "num_inference_steps",
+        "guidance_scale",
+        "strength",
+        "output_type",
+    }
+)
+_SD15_PAG_EDIT_GRAPH_BINDINGS = tuple(
+    item
+    for item in _PAG_EDIT_GRAPH_BINDINGS
+    if item[0] != "diffusersImageEdit"
+    or item[1]
+    in {
+        "prompt",
+        "negative_prompt",
+        "seed",
+        "num_inference_steps",
+        "guidance_scale",
+        "strength",
+        "pag_scale",
+        "pag_adaptive_scale",
+        "output_type",
+    }
+)
 _SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
     ("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),
 )
@@ -2203,6 +2244,25 @@ _SDXL_INPAINT_GRAPH_BINDINGS = _INPAINT_GRAPH_BINDINGS + (
 _PAG_INPAINT_GRAPH_BINDINGS = _SDXL_INPAINT_GRAPH_BINDINGS + (
     ("diffusersImageInpaint", "pag_scale", "pagScale"),
     ("diffusersImageInpaint", "pag_adaptive_scale", "pagAdaptiveScale"),
+)
+_SD15_PAG_INPAINT_GRAPH_BINDINGS = tuple(
+    item
+    for item in _PAG_INPAINT_GRAPH_BINDINGS
+    if item[0] != "diffusersImageInpaint"
+    or item[1]
+    in {
+        "prompt",
+        "negative_prompt",
+        "width",
+        "height",
+        "seed",
+        "num_inference_steps",
+        "guidance_scale",
+        "strength",
+        "pag_scale",
+        "pag_adaptive_scale",
+        "output_type",
+    }
 )
 _QWEN_OUTPAINT_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -7055,6 +7115,38 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["hunyuan-dit-v1-2-distilled:text-to-image:v1"]
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
 }
+_HUNYUAN_DIT_PAG_PROFILE = {
+    **_HUNYUAN_DIT_PROFILE,
+    "id": "hunyuan-dit-v1-2-distilled-pag:direct",
+    "model_type": "HunyuanDiTPAGPipeline",
+    "pipeline_class": "HunyuanDiTPAGPipeline",
+    "live_proof": False,
+}
+_HUNYUAN_DIT_PAG_CAPABILITY = deepcopy(_HUNYUAN_DIT_CAPABILITY)
+_HUNYUAN_DIT_PAG_CAPABILITY.update(
+    {
+        "modelType": "HunyuanDiTPAGPipeline",
+        "label": "Hunyuan-DiT PAG",
+        "displayName": "Hunyuan-DiT v1.2 Distilled PAG",
+        "recommendedPagScale": 3.0,
+        "recommendedPagAdaptiveScale": 0.0,
+        "notes": [
+            "Perturbed-attention guidance reuses the immutable Hunyuan-DiT v1.2 distilled safetensors snapshot without an auxiliary artifact.",
+            "The exact generic recipe is fixed at 1024x1024, at most 25 steps, guidance 5, PAG scale 3, and adaptive scale 0; the reviewed PAG call fixes both encoder lengths internally.",
+            "The Tencent community license and acceptable-use obligations require explicit acknowledgement; Auto and Gallery remain disabled pending live review.",
+        ],
+    }
+)
+_HUNYUAN_DIT_PAG_CAPABILITY.pop("recommendedMaxSequenceLength", None)
+STUDIO_EXECUTION_SPEC_DEFINITIONS["hunyuan-dit-v1-2-distilled-pag:text-to-image:v1"] = {
+    "modelType": "HunyuanDiTPAGPipeline",
+    "mode": "text_to_image",
+    "profile": _HUNYUAN_DIT_PAG_PROFILE,
+    "capability": _HUNYUAN_DIT_PAG_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _HUNYUAN_PAG_GRAPH_BINDINGS,
+}
 
 
 _HUNYUAN_DIT_CONTROLNET_CAPABILITY = {
@@ -7445,6 +7537,37 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-600m:text-to-image:v1"] = {
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
 }
+_SANA_PAG_PROFILE = {
+    **_SANA_PROFILE,
+    "id": "sana-600m-pag:direct",
+    "model_type": "SanaPAGPipeline",
+    "pipeline_class": "SanaPAGPipeline",
+    "live_proof": False,
+}
+_SANA_PAG_CAPABILITY = deepcopy(_SANA_CAPABILITY)
+_SANA_PAG_CAPABILITY.update(
+    {
+        "modelType": "SanaPAGPipeline",
+        "label": "Sana 0.6B PAG",
+        "displayName": "Sana 0.6B 1024px PAG",
+        "recommendedPagScale": 3.0,
+        "recommendedPagAdaptiveScale": 0.0,
+        "notes": [
+            "Perturbed-attention guidance reuses the immutable Sana 0.6B fp16 safetensors snapshot without an auxiliary artifact.",
+            "The reviewed generic recipe uses 1024x1024, 20 steps, guidance 4.5, at most 300 prompt tokens, PAG scale 3, and adaptive scale 0.",
+            "Apache-2.0 applies alongside the bundled Gemma terms and prohibited-use policy; Auto and Gallery remain disabled pending live review.",
+        ],
+    }
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sana-600m-pag:text-to-image:v1"] = {
+    "modelType": "SanaPAGPipeline",
+    "mode": "text_to_image",
+    "profile": _SANA_PAG_PROFILE,
+    "capability": _SANA_PAG_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _PAG_TEXT_TO_IMAGE_BINDINGS,
+}
 
 _SANA_SPRINT_PROFILE = {
     "id": "sana-sprint-600m:direct",
@@ -7632,6 +7755,37 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["pixart-sigma-1024:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
+}
+_PIXART_SIGMA_PAG_PROFILE = {
+    **_PIXART_SIGMA_PROFILE,
+    "id": "pixart-sigma-1024-pag:direct",
+    "model_type": "PixArtSigmaPAGPipeline",
+    "pipeline_class": "PixArtSigmaPAGPipeline",
+    "live_proof": False,
+}
+_PIXART_SIGMA_PAG_CAPABILITY = deepcopy(_PIXART_SIGMA_CAPABILITY)
+_PIXART_SIGMA_PAG_CAPABILITY.update(
+    {
+        "modelType": "PixArtSigmaPAGPipeline",
+        "label": "PixArt Sigma PAG",
+        "displayName": "PixArt Sigma XL 1024px PAG",
+        "recommendedPagScale": 3.0,
+        "recommendedPagAdaptiveScale": 0.0,
+        "notes": [
+            "Perturbed-attention guidance reuses the immutable PixArt Sigma XL 1024px safetensors snapshot without an auxiliary artifact.",
+            "The reviewed generic recipe uses 1024x1024, 20 steps, guidance 4.5, at most 300 prompt tokens, PAG scale 3, and adaptive scale 0.",
+            "The approximately 21.83 GB selected weight surface is remote-only; Auto and Gallery remain disabled pending live output review.",
+        ],
+    }
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS["pixart-sigma-1024-pag:text-to-image:v1"] = {
+    "modelType": "PixArtSigmaPAGPipeline",
+    "mode": "text_to_image",
+    "profile": _PIXART_SIGMA_PAG_PROFILE,
+    "capability": _PIXART_SIGMA_PAG_CAPABILITY,
+    "roles": _GRAPH_ROLES,
+    "edges": _GRAPH_EDGES,
+    "bindings": _PAG_TEXT_TO_IMAGE_BINDINGS,
 }
 
 
@@ -9284,7 +9438,7 @@ _LCM_CAPABILITY = {
     "recommendedSteps": 4,
     "recommendedGuidance": 8.5,
     "guidanceLabel": "Guidance",
-    "supportsImageInput": False,
+    "supportsImageInput": True,
     "supportsMask": False,
     "supportsMultiImage": False,
     "supportsControlImage": False,
@@ -9305,8 +9459,13 @@ _LCM_CAPABILITY = {
         "width": 512,
         "height": 512,
     },
-    "modes": ["text_to_image"],
-    "modeRequirements": {},
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for latent-consistency image-to-image transformation.",
+        }
+    },
     "executionStatus": "expert_only",
     "revisionCandidates": [
         require_catalog_revision(LCM_DREAMSHAPER_REPO, model_type="LatentConsistencyModelPipeline")
@@ -9315,7 +9474,7 @@ _LCM_CAPABILITY = {
     "templateEligible": True,
     "galleryEligible": False,
     "notes": [
-        "The exact LCM checkpoint supports one-to-four-step text-to-image generation through the generic image node.",
+        "The exact LCM checkpoint supports one-to-four-step text-to-image and image-to-image generation through generic image nodes.",
         "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
     ],
 }
@@ -9327,6 +9486,22 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["lcm-dreamshaper-v7:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _SDXL_GRAPH_BINDINGS,
+}
+_LCM_IMG2IMG_PROFILE = {
+    **_LCM_PROFILE,
+    "id": "lcm-dreamshaper-v7:img2img-direct",
+    "modes": ("edit_image",),
+    "pipeline_class": "LatentConsistencyModelImg2ImgPipeline",
+    "live_proof": False,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["lcm-dreamshaper-v7:edit-image:v1"] = {
+    "modelType": "LatentConsistencyModelPipeline",
+    "mode": "edit_image",
+    "profile": _LCM_IMG2IMG_PROFILE,
+    "capability": _LCM_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _LCM_EDIT_GRAPH_BINDINGS,
 }
 
 _PAG_PROFILE = {
@@ -9364,8 +9539,8 @@ _PAG_CAPABILITY = {
     "recommendedSteps": 30,
     "recommendedGuidance": 7.5,
     "guidanceLabel": "Guidance",
-    "supportsImageInput": False,
-    "supportsMask": False,
+    "supportsImageInput": True,
+    "supportsMask": True,
     "supportsMultiImage": False,
     "supportsControlImage": False,
     "supportsLayers": False,
@@ -9385,15 +9560,24 @@ _PAG_CAPABILITY = {
         "width": 512,
         "height": 512,
     },
-    "modes": ["text_to_image"],
-    "modeRequirements": {},
+    "modes": ["text_to_image", "edit_image", "inpaint"],
+    "modeRequirements": {
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for PAG image-to-image transformation.",
+        },
+        "inpaint": {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "note": "Requires one source image and one mask image for PAG inpainting.",
+        },
+    },
     "executionStatus": "expert_only",
     "revisionCandidates": [require_catalog_revision(SD15_BASE_REPO, model_type="StableDiffusionPAGPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
     "notes": [
-        "Perturbed-attention guidance reuses the immutable Stable Diffusion 1.5 safetensors base.",
+        "Perturbed-attention guidance text, image-to-image, and inpaint modes reuse the immutable Stable Diffusion 1.5 safetensors base.",
         "Auto and Gallery remain disabled until exact live output qualification is reviewed.",
     ],
 }
@@ -9405,6 +9589,38 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag:text-to-image:v1"] = {
     "roles": _GRAPH_ROLES,
     "edges": _GRAPH_EDGES,
     "bindings": _PAG_GRAPH_BINDINGS,
+}
+_PAG_IMG2IMG_PROFILE = {
+    **_PAG_PROFILE,
+    "id": "sd15-pag:img2img-direct",
+    "modes": ("edit_image",),
+    "pipeline_class": "StableDiffusionPAGImg2ImgPipeline",
+    "live_proof": False,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag:edit-image:v1"] = {
+    "modelType": "StableDiffusionPAGPipeline",
+    "mode": "edit_image",
+    "profile": _PAG_IMG2IMG_PROFILE,
+    "capability": _PAG_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _SD15_PAG_EDIT_GRAPH_BINDINGS,
+}
+_PAG_INPAINT_PROFILE = {
+    **_PAG_PROFILE,
+    "id": "sd15-pag:inpaint-direct",
+    "modes": ("inpaint",),
+    "pipeline_class": "StableDiffusionPAGInpaintPipeline",
+    "live_proof": False,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sd15-pag:inpaint:v1"] = {
+    "modelType": "StableDiffusionPAGPipeline",
+    "mode": "inpaint",
+    "profile": _PAG_INPAINT_PROFILE,
+    "capability": _PAG_CAPABILITY,
+    "roles": _INPAINT_GRAPH_ROLES,
+    "edges": _INPAINT_GRAPH_EDGES,
+    "bindings": _SD15_PAG_INPAINT_GRAPH_BINDINGS,
 }
 
 _MARIGOLD_DEPTH_PROFILE = {

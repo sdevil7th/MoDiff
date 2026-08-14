@@ -205,15 +205,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLInstructPix2PixPipeline", "edit_image"),
                 ("StableDiffusionXLControlNetPipeline", "control_image"),
                 ("HunyuanDiTPipeline", "text_to_image"),
+                ("HunyuanDiTPAGPipeline", "text_to_image"),
                 ("HunyuanDiTControlNetPipeline", "control_image"),
                 ("StableDiffusionXLAdapterPipeline", "control_image"),
                 ("StableDiffusionXLPAGPipeline", "text_to_image"),
                 ("StableDiffusionXLPAGPipeline", "edit_image"),
                 ("StableDiffusionXLPAGPipeline", "inpaint"),
                 ("SanaPipeline", "text_to_image"),
+                ("SanaPAGPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "text_to_image"),
                 ("SanaSprintPipeline", "edit_image"),
                 ("PixArtSigmaPipeline", "text_to_image"),
+                ("PixArtSigmaPAGPipeline", "text_to_image"),
                 ("Kandinsky3Pipeline", "text_to_image"),
                 ("Kandinsky3Pipeline", "edit_image"),
                 ("LongCatImagePipeline", "text_to_image"),
@@ -241,7 +244,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("DreamLiteMobilePipeline", "text_to_image"),
                 ("DreamLiteMobilePipeline", "edit_image"),
                 ("LatentConsistencyModelPipeline", "text_to_image"),
+                ("LatentConsistencyModelPipeline", "edit_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
+                ("StableDiffusionPAGPipeline", "edit_image"),
+                ("StableDiffusionPAGPipeline", "inpaint"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
                 ("HuggingFaceTextGenerationModel", "text_generation"),
                 ("HuggingFaceImageTextToTextModel", "image_to_text"),
@@ -388,6 +394,20 @@ class StudioExecutionSpecTests(unittest.TestCase):
             hunyuan_controlnet["edges"],
         )
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[hunyuan_controlnet["executionProfileId"]].live_proof)
+        hunyuan_pag = by_id["hunyuan-dit-v1-2-distilled-pag:text-to-image:v1"]
+        self.assertEqual(hunyuan_pag["modelType"], "HunyuanDiTPAGPipeline")
+        self.assertEqual(hunyuan_pag["pipelineClass"], "HunyuanDiTPAGPipeline")
+        self.assertEqual(
+            hunyuan_pag["defaultRepo"],
+            "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
+        )
+        self.assertIn(("diffusersImageGenerate", "pag_scale", "pagScale"), hunyuan_pag["bindings"])
+        self.assertNotIn(
+            ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
+            hunyuan_pag["bindings"],
+        )
+        self.assertNotIn(("diffusersImageGenerate", "strength", "strength"), hunyuan_pag["bindings"])
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[hunyuan_pag["executionProfileId"]].live_proof)
         sdxl_adapter = by_id["sdxl-t2i-adapter-canny:control-image:v1"]
         self.assertEqual(sdxl_adapter["modelType"], "StableDiffusionXLAdapterPipeline")
         self.assertEqual(sdxl_adapter["pipelineClass"], "StableDiffusionXLAdapterPipeline")
@@ -441,6 +461,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(sana["pipelineClass"], "SanaPipeline")
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sana["bindings"])
         self.assertEqual(DIFFUSERS_EXECUTION_PROFILES[sana["executionProfileId"]].max_low_memory_steps, 20)
+        sana_pag = by_id["sana-600m-pag:text-to-image:v1"]
+        self.assertEqual(sana_pag["modelType"], "SanaPAGPipeline")
+        self.assertEqual(sana_pag["pipelineClass"], "SanaPAGPipeline")
+        self.assertIn(("diffusersImageGenerate", "pag_scale", "pagScale"), sana_pag["bindings"])
+        self.assertIn(
+            ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
+            sana_pag["bindings"],
+        )
+        self.assertNotIn(("diffusersImageGenerate", "strength", "strength"), sana_pag["bindings"])
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[sana_pag["executionProfileId"]].live_proof)
         sana_sprint = by_id["sana-sprint-600m:text-to-image:v1"]
         self.assertEqual(sana_sprint["pipelineClass"], "SanaSprintPipeline")
         self.assertEqual(
@@ -466,6 +496,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertFalse(
             DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].live_proof
         )
+        pixart_pag = by_id["pixart-sigma-1024-pag:text-to-image:v1"]
+        self.assertEqual(pixart_pag["modelType"], "PixArtSigmaPAGPipeline")
+        self.assertEqual(pixart_pag["pipelineClass"], "PixArtSigmaPAGPipeline")
+        self.assertEqual(pixart_pag["defaultRepo"], pixart["defaultRepo"])
+        self.assertIn(("diffusersImageGenerate", "pag_scale", "pagScale"), pixart_pag["bindings"])
+        self.assertIn(
+            ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
+            pixart_pag["bindings"],
+        )
+        self.assertNotIn(("diffusersImageGenerate", "strength", "strength"), pixart_pag["bindings"])
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[pixart_pag["executionProfileId"]].live_proof)
         kandinsky3 = by_id["kandinsky3:text-to-image:v1"]
         self.assertEqual(kandinsky3["modelType"], "Kandinsky3Pipeline")
         self.assertEqual(kandinsky3["pipelineClass"], "Kandinsky3Pipeline")
@@ -581,6 +622,19 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(lcm["defaultRepo"], "SimianLuo/LCM_Dreamshaper_v7")
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), lcm["bindings"])
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES[lcm["executionProfileId"]].live_proof)
+        lcm_edit = by_id["lcm-dreamshaper-v7:edit-image:v1"]
+        self.assertEqual(lcm_edit["modelType"], "LatentConsistencyModelPipeline")
+        self.assertEqual(lcm_edit["pipelineClass"], "LatentConsistencyModelImg2ImgPipeline")
+        self.assertIn(("loadImage", "image", "diffusersImageEdit", "image"), lcm_edit["edges"])
+        self.assertIn(("diffusersImageEdit", "strength", "strength"), lcm_edit["bindings"])
+        self.assertNotIn(("diffusersImageEdit", "negative_prompt", "negativePrompt"), lcm_edit["bindings"])
+        self.assertNotIn(("diffusersImageEdit", "width", "width"), lcm_edit["bindings"])
+        self.assertNotIn(("diffusersImageEdit", "height", "height"), lcm_edit["bindings"])
+        self.assertNotIn(
+            ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
+            lcm_edit["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[lcm_edit["executionProfileId"]].live_proof)
         pag = by_id["sd15-pag:text-to-image:v1"]
         self.assertEqual(pag["modelType"], "StableDiffusionPAGPipeline")
         self.assertEqual(pag["pipelineClass"], "StableDiffusionPAGPipeline")
@@ -588,6 +642,29 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersImageGenerate", "pag_scale", "pagScale"), pag["bindings"])
         self.assertIn(("diffusersImageGenerate", "pag_adaptive_scale", "pagAdaptiveScale"), pag["bindings"])
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES[pag["executionProfileId"]].live_proof)
+        pag_edit = by_id["sd15-pag:edit-image:v1"]
+        self.assertEqual(pag_edit["pipelineClass"], "StableDiffusionPAGImg2ImgPipeline")
+        self.assertIn(("diffusersImageEdit", "pag_scale", "pagScale"), pag_edit["bindings"])
+        self.assertNotIn(("diffusersImageEdit", "width", "width"), pag_edit["bindings"])
+        self.assertNotIn(("diffusersImageEdit", "height", "height"), pag_edit["bindings"])
+        self.assertNotIn(
+            ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
+            pag_edit["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[pag_edit["executionProfileId"]].live_proof)
+        pag_inpaint = by_id["sd15-pag:inpaint:v1"]
+        self.assertEqual(pag_inpaint["pipelineClass"], "StableDiffusionPAGInpaintPipeline")
+        self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), pag_inpaint["edges"])
+        self.assertIn(("diffusersImageInpaint", "pag_scale", "pagScale"), pag_inpaint["bindings"])
+        self.assertNotIn(
+            ("diffusersImageInpaint", "reference_strength", "conditioningScale"),
+            pag_inpaint["bindings"],
+        )
+        self.assertNotIn(
+            ("diffusersImageInpaint", "max_sequence_length", "maxSequenceLength"),
+            pag_inpaint["bindings"],
+        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[pag_inpaint["executionProfileId"]].live_proof)
         sdxl = by_id["sdxl-base:text-to-image:v1"]
         self.assertEqual(sdxl["id"], "sdxl-base:text-to-image:v1")
         self.assertEqual(sdxl["pipelineClass"], "StableDiffusionXLPipeline")

@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 39)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 33)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -51,49 +51,6 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             experimental["FluxModularPipeline"]["runnableModes"],
             ["text_to_image", "image_to_image"],
         )
-        lcm_img2img = experimental["LatentConsistencyModelImg2ImgPipeline"]
-        self.assertEqual(lcm_img2img["runnableModes"], ["edit_image"])
-        self.assertEqual(
-            lcm_img2img["inputContracts"],
-            {"edit_image": {"requiredImages": ["referenceImages"]}},
-        )
-        self.assertEqual(
-            lcm_img2img["revisionCandidates"],
-            ["a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5"],
-        )
-        for pipeline_class, mode, required_images in (
-            ("StableDiffusionPAGImg2ImgPipeline", "edit_image", ["referenceImages"]),
-            (
-                "StableDiffusionPAGInpaintPipeline",
-                "inpaint",
-                ["referenceImages", "maskImage"],
-            ),
-        ):
-            with self.subTest(pag_pipeline=pipeline_class):
-                capability = experimental[pipeline_class]
-                self.assertEqual(capability["runnableModes"], [mode])
-                self.assertEqual(
-                    capability["inputContracts"],
-                    {mode: {"requiredImages": required_images}},
-                )
-                self.assertEqual(
-                    capability["revisionCandidates"],
-                    ["451f4fe16113bff5a5d2269ed5ad43b0592e9a14"],
-                )
-        for pipeline_class, revision in (
-            ("HunyuanDiTPAGPipeline", "ba991d1546d8c50936c4c16398ed0a87b9b99fb1"),
-            ("PixArtSigmaPAGPipeline", "e102b3591cc82e97071b8b4cb90d834d0c487207"),
-            ("SanaPAGPipeline", "28f3af7689de15f3883d5863059a2fca0aa9b829"),
-        ):
-            with self.subTest(pag_text_to_image=pipeline_class):
-                capability = experimental[pipeline_class]
-                self.assertEqual(capability["runnableModes"], ["text_to_image"])
-                self.assertEqual(capability["inputContracts"], {})
-                self.assertEqual(capability["revisionCandidates"], [revision])
-                self.assertEqual(capability["qualificationStatus"], "contract_only")
-                self.assertFalse(capability["autoEligible"])
-                self.assertFalse(capability["templateEligible"])
-                self.assertFalse(capability["galleryEligible"])
         self.assertEqual(
             experimental["ZImageModularPipeline"]["backendPath"],
             "modules.ModularDiffusers.ModelsLoader",
@@ -193,7 +150,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 124)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 130)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -234,12 +191,15 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionXLInstructPix2PixPipeline",
             "StableDiffusionXLControlNetPipeline",
             "HunyuanDiTPipeline",
+            "HunyuanDiTPAGPipeline",
             "HunyuanDiTControlNetPipeline",
             "StableDiffusionXLAdapterPipeline",
             "StableDiffusionXLPAGPipeline",
             "SanaPipeline",
+            "SanaPAGPipeline",
             "SanaSprintPipeline",
             "PixArtSigmaPipeline",
+            "PixArtSigmaPAGPipeline",
             "Kandinsky3Pipeline",
             "OvisImagePipeline",
             "PRXPipeline",
@@ -397,6 +357,21 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sdxl_pag["autoEligible"])
         self.assertFalse(sdxl_pag["galleryEligible"])
         self.assertNotIn("StableDiffusionXLPAGPipeline", experimental)
+        hunyuan_pag = by_model["HunyuanDiTPAGPipeline"]
+        self.assertEqual(
+            hunyuan_pag["revisionCandidates"],
+            ["ba991d1546d8c50936c4c16398ed0a87b9b99fb1"],
+        )
+        self.assertEqual(hunyuan_pag["recommendedSteps"], 25)
+        self.assertEqual(hunyuan_pag["recommendedGuidance"], 5.0)
+        self.assertEqual(hunyuan_pag["recommendedPagScale"], 3.0)
+        self.assertEqual(hunyuan_pag["recommendedPagAdaptiveScale"], 0.0)
+        self.assertNotIn("recommendedMaxSequenceLength", hunyuan_pag)
+        self.assertEqual(hunyuan_pag["modes"], ["text_to_image"])
+        self.assertEqual(hunyuan_pag["pipelineClasses"], ["HunyuanDiTPAGPipeline"])
+        self.assertFalse(hunyuan_pag["autoEligible"])
+        self.assertFalse(hunyuan_pag["galleryEligible"])
+        self.assertNotIn("HunyuanDiTPAGPipeline", experimental)
         sana = by_model["SanaPipeline"]
         self.assertEqual(sana["revisionCandidates"], ["28f3af7689de15f3883d5863059a2fca0aa9b829"])
         self.assertEqual(sana["recommendedSteps"], 20)
@@ -406,6 +381,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sana["pipelineClasses"], ["SanaPipeline"])
         self.assertFalse(sana["autoEligible"])
         self.assertFalse(sana["galleryEligible"])
+        sana_pag = by_model["SanaPAGPipeline"]
+        self.assertEqual(
+            sana_pag["revisionCandidates"],
+            ["28f3af7689de15f3883d5863059a2fca0aa9b829"],
+        )
+        self.assertEqual(sana_pag["recommendedSteps"], 20)
+        self.assertEqual(sana_pag["recommendedGuidance"], 4.5)
+        self.assertEqual(sana_pag["recommendedMaxSequenceLength"], 300)
+        self.assertEqual(sana_pag["recommendedPagScale"], 3.0)
+        self.assertEqual(sana_pag["recommendedPagAdaptiveScale"], 0.0)
+        self.assertEqual(sana_pag["pipelineClasses"], ["SanaPAGPipeline"])
+        self.assertFalse(sana_pag["autoEligible"])
+        self.assertFalse(sana_pag["galleryEligible"])
+        self.assertNotIn("SanaPAGPipeline", experimental)
         sana_sprint = by_model["SanaSprintPipeline"]
         self.assertEqual(
             sana_sprint["revisionCandidates"],
@@ -440,6 +429,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(pixart["autoEligible"])
         self.assertFalse(pixart["galleryEligible"])
         self.assertNotIn("PixArtSigmaPipeline", experimental)
+        pixart_pag = by_model["PixArtSigmaPAGPipeline"]
+        self.assertEqual(
+            pixart_pag["revisionCandidates"],
+            ["e102b3591cc82e97071b8b4cb90d834d0c487207"],
+        )
+        self.assertEqual(pixart_pag["recommendedSteps"], 20)
+        self.assertEqual(pixart_pag["recommendedGuidance"], 4.5)
+        self.assertEqual(pixart_pag["recommendedMaxSequenceLength"], 300)
+        self.assertEqual(pixart_pag["recommendedPagScale"], 3.0)
+        self.assertEqual(pixart_pag["recommendedPagAdaptiveScale"], 0.0)
+        self.assertEqual(pixart_pag["pipelineClasses"], ["PixArtSigmaPAGPipeline"])
+        self.assertFalse(pixart_pag["autoEligible"])
+        self.assertFalse(pixart_pag["galleryEligible"])
+        self.assertNotIn("PixArtSigmaPAGPipeline", experimental)
         kandinsky3 = by_model["Kandinsky3Pipeline"]
         self.assertEqual(
             kandinsky3["revisionCandidates"],
@@ -611,6 +614,45 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             sd15["modeRequirements"]["control_image"]["modelRequirements"][0]["revision"],
             "115a470d547982438f70198e353a921996e2e819",
         )
+        lcm = by_model["LatentConsistencyModelPipeline"]
+        self.assertEqual(lcm["modes"], ["text_to_image", "edit_image"])
+        self.assertEqual(lcm["studioExecutionSpecModes"], ["edit_image", "text_to_image"])
+        self.assertEqual(
+            lcm["pipelineClasses"],
+            ["LatentConsistencyModelImg2ImgPipeline", "LatentConsistencyModelPipeline"],
+        )
+        self.assertEqual(
+            lcm["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertTrue(lcm["supportsImageInput"])
+        self.assertNotIn("LatentConsistencyModelImg2ImgPipeline", experimental)
+        sd15_pag = by_model["StableDiffusionPAGPipeline"]
+        self.assertEqual(sd15_pag["modes"], ["text_to_image", "edit_image", "inpaint"])
+        self.assertEqual(
+            sd15_pag["studioExecutionSpecModes"],
+            ["edit_image", "inpaint", "text_to_image"],
+        )
+        self.assertEqual(
+            sd15_pag["pipelineClasses"],
+            [
+                "StableDiffusionPAGImg2ImgPipeline",
+                "StableDiffusionPAGInpaintPipeline",
+                "StableDiffusionPAGPipeline",
+            ],
+        )
+        self.assertEqual(
+            sd15_pag["modeRequirements"]["edit_image"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertEqual(
+            sd15_pag["modeRequirements"]["inpaint"]["requiredImages"],
+            ["referenceImages", "maskImage"],
+        )
+        self.assertTrue(sd15_pag["supportsImageInput"])
+        self.assertTrue(sd15_pag["supportsMask"])
+        self.assertNotIn("StableDiffusionPAGImg2ImgPipeline", experimental)
+        self.assertNotIn("StableDiffusionPAGInpaintPipeline", experimental)
         flux_dev = by_model["FluxDevPipeline"]
         self.assertEqual(flux_dev["studioExecutionSpecModes"], ["edit_image", "inpaint", "text_to_image"])
         self.assertEqual(

@@ -757,42 +757,6 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
         "Qwen/Qwen-Image-Edit-2511",
         ("edit_image", "multi_image_reference_edit"),
     ),
-    (
-        "LatentConsistencyModelImg2ImgPipeline",
-        "image",
-        "SimianLuo/LCM_Dreamshaper_v7",
-        ("edit_image",),
-    ),
-    (
-        "StableDiffusionPAGImg2ImgPipeline",
-        "image",
-        "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        ("edit_image",),
-    ),
-    (
-        "StableDiffusionPAGInpaintPipeline",
-        "image",
-        "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        ("inpaint",),
-    ),
-    (
-        "HunyuanDiTPAGPipeline",
-        "image",
-        "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
-        ("text_to_image",),
-    ),
-    (
-        "PixArtSigmaPAGPipeline",
-        "image",
-        "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
-        ("text_to_image",),
-    ),
-    (
-        "SanaPAGPipeline",
-        "image",
-        "Efficient-Large-Model/Sana_600M_1024px_diffusers",
-        ("text_to_image",),
-    ),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
     (
         "FluxKontextInpaintPipeline",
