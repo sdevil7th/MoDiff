@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 32)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 33)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -35,6 +35,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualificationStatus"], "contract_only")
                 self.assertTrue(capability["expertVisible"])
                 self.assertFalse(capability["autoEligible"])
+        minimax_music = experimental["MiniMaxMusic3ModularPipeline"]
+        self.assertEqual(minimax_music["upstreamWorkflows"], ["text_to_audio"])
+        self.assertEqual(minimax_music["runnableModes"], [])
+        self.assertFalse(minimax_music["templateEligible"])
+        self.assertFalse(minimax_music["galleryEligible"])
         # Official Hugging Face libraries may back generic task nodes, but the
         # removed library/model-specific driver must not return as a parallel path.
         self.assertNotIn("modules.TransformersMultimodal", module_registry.MODULE_MAP)

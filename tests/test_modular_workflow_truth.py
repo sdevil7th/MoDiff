@@ -56,7 +56,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
         self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 11)
         self.assertEqual(set(PINNED_MODULAR_WORKFLOW_TRUTH), registered)
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "bb56997d4b7e87f0743f26a612f49ec4e7ce7213")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "90b4e34e79a86ec5e7f2437634fe95ecd2108796")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
             f"diffusers.git@{PINNED_DIFFUSERS_REVISION}",

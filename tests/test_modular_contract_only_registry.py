@@ -9,6 +9,7 @@ import diffusers
 from modiff.auto_resource import AUTO_MODEL_REQUIREMENTS
 from modiff.diffusers_profiles import public_experimental_pipelines
 from modiff.modular_contract_only_registry import (
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES,
@@ -54,6 +55,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 9)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES), 1)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 5)
         self.assertTrue(
             all(item.batch == "image" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES)
@@ -62,12 +64,15 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             all(item.batch == "video" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES)
         )
         self.assertTrue(
+            all(item.batch == "audio" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES)
+        )
+        self.assertTrue(
             all(
                 item.batch == "multimodal"
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 22)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 23)
 
         exported_modular_classes = {
             name
@@ -164,6 +169,40 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 "transformer",
                 "transformer_ref",
             }.issubset(component_names)
+        )
+
+    def test_minimax_music_3_publishes_exact_generic_text_to_audio_contract(self):
+        contract = reviewed_modular_workflow_contract("MiniMaxMusic3ModularPipeline")
+        self.assertEqual(contract["blocksClass"], "MiniMaxMusic3Blocks")
+        self.assertEqual(contract["kind"], "sequential")
+        self.assertEqual(len(contract["workflows"]), 1)
+
+        workflow = contract["workflows"][0]
+        self.assertEqual((workflow["id"], workflow["taskId"]), ("default", "text_to_audio"))
+        self.assertEqual(workflow["requiredInputs"], ["lyrics", "prompt"])
+        self.assertEqual(
+            {item["name"] for item in workflow["inputs"]},
+            {
+                "audio_duration",
+                "generator",
+                "lyrics",
+                "num_inference_steps",
+                "output_type",
+                "prompt",
+            },
+        )
+        self.assertIn("audios", {item["name"] for item in workflow["outputs"]})
+        self.assertTrue(
+            {
+                "condition_encoder",
+                "guider",
+                "language_model",
+                "rvq_depth_decoder",
+                "scheduler",
+                "tokenizer",
+                "transformer",
+                "vocoder",
+            }.issubset({item["name"] for item in contract["components"]})
         )
 
     def test_ltx2_and_ltx25_publish_exact_joint_workflows_and_distinct_decoders(self):

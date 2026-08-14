@@ -42,7 +42,7 @@ jobs:
              "torchsde>=0.2.6",
              "torchvision>=0.21.0",
           -  "transformers>=4.49.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
-             "diffusers @ git+https://github.com/huggingface/diffusers.git@bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+             "diffusers @ git+https://github.com/huggingface/diffusers.git@90b4e34e79a86ec5e7f2437634fe95ecd2108796",
              "ftfy>=6.3.1",
              "huggingface-hub>=1.23.0,<2.0",
           PATCH

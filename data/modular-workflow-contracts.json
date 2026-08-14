@@ -23541,6 +23541,284 @@
       ]
     },
     {
+      "blocksClass": "MiniMaxMusic3Blocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "language_model",
+          "reuseKey": [
+            "language_model",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.qwen3.modeling_qwen3.Qwen3ForCausalLM"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "rvq_depth_decoder",
+          "reuseKey": [
+            "rvq_depth_decoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.minimax_music3_rvq_depth_decoder.MiniMaxMusic3RVQDepthDecoder"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "condition_encoder",
+          "reuseKey": [
+            "condition_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.condition_embedders.condition_embedder_minimax_music3.MiniMaxMusic3ConditionEncoder"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_minimax_music3.MiniMaxMusic3Transformer1DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "guider",
+          "reuseKey": [
+            "guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vocoder",
+          "reuseKey": [
+            "vocoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.minimax_music3_vocoder.MiniMaxMusic3Vocoder"
+        }
+      ],
+      "description": "Modular pipeline for lyrics- and caption-conditioned music generation using MiniMax Music 3. An autoregressive Qwen3 language model generates per-frame semantic codes and hidden states from the lyrics and the music description; a flow-matching transformer turns the hidden states into Flow-VAE latents chunk by chunk; and a DAC-style vocoder decodes them into a stereo waveform at 44.1 kHz.",
+      "kind": "sequential",
+      "pipelineClass": "MiniMaxMusic3ModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "MiniMaxMusic3ModularPipeline",
+          "id": "default",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The music description (genre, mood, vocals, instrumentation, arrangement).",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The lyrics to sing. Structure tags such as `[verse]` or `[chorus]` must each be on their own line; text on the same line as a leading tag is dropped by the checkpoint's input contract.",
+              "name": "lyrics",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": 60.0,
+              "description": "Upper bound on the generated audio length in seconds. The language model may stop earlier. Capped at 9000 frames (six minutes).",
+              "name": "audio_duration",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 30,
+              "description": "Number of flow-matching Euler steps per chunk.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": "np",
+              "description": "Output format: 'np' or 'pt'.",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Text To Audio",
+          "outputs": [
+            {
+              "default": null,
+              "description": "Token ids of shape `[2, sequence_length]` holding the conditional prompt and its classifier-free counterpart (every token except the first and the two trailing structure tokens replaced by the audio-CFG token).",
+              "name": "text_ids",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Concatenated per-frame hidden states of shape `[1, frames, num_codebooks * hidden_size]` that condition the flow-matching stage.",
+              "name": "frame_hiddens",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Frame index at which each 200-frame denoising window starts.",
+              "name": "chunk_starts",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "List of per-window denoised latent tensors (uncropped).",
+              "name": "latent_chunks",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "The generated stereo waveform of shape `(batch, channels, samples)` in `[-1, 1]`.",
+              "name": "audios",
+              "required": false,
+              "type": "UnionType[numpy.ndarray,torch.Tensor]"
+            }
+          ],
+          "requiredInputs": [
+            "lyrics",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "lyrics",
+            "audio_duration",
+            "generator",
+            "num_inference_steps",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "MiniMaxMusic3TokenizeStep",
+              "description": "Tokenize step that assembles the checkpoint's special-token prompt from the music description and the lyrics and tokenizes it into the conditional/unconditional token id pair.",
+              "kind": "block",
+              "path": "semantic_generator.tokenize"
+            },
+            {
+              "className": "MiniMaxMusic3AutoregressiveStep",
+              "description": "Autoregressive generation step: frame by frame, the global language model samples a semantic code with classifier-free guidance and the depth decoder samples the residual codes; the concatenated per-frame hidden states condition the flow-matching stage.",
+              "kind": "block",
+              "path": "semantic_generator.generate"
+            },
+            {
+              "className": "MiniMaxMusic3PrepareChunksStep",
+              "description": "Chunk bookkeeping step that splits the autoregressive frames into 200-frame windows with a 100-frame hop; each window is flow-matched with the previous window's trailing latents as an overlap prompt.",
+              "kind": "block",
+              "path": "denoise.prepare_chunks"
+            },
+            {
+              "className": "MiniMaxMusic3ChunkDenoiseStep",
+              "description": "Chunk denoise step that iterates over the 200-frame denoising windows. At each window: condition -> prepare_latents -> set_timesteps -> denoise_inner -> update_chunk.",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "MiniMaxMusic3ChunkConditionStep",
+              "description": "Chunk conditioning step that projects the window's per-frame hidden states onto the Flow-VAE latent timeline and splices in the previous window's conditioning over the overlapping latent frames.",
+              "kind": "block",
+              "path": "denoise.denoise.condition"
+            },
+            {
+              "className": "MiniMaxMusic3ChunkPrepareLatentsStep",
+              "description": "Chunk latent preparation step that draws the window's initial noise and snapshots the noise over the overlapping latent frames as the blending prompt.",
+              "kind": "block",
+              "path": "denoise.denoise.prepare_latents"
+            },
+            {
+              "className": "MiniMaxMusic3ChunkSetTimestepsStep",
+              "description": "Chunk scheduler step that resets the flow-matching sigma schedule for the current window.",
+              "kind": "block",
+              "path": "denoise.denoise.set_timesteps"
+            },
+            {
+              "className": "MiniMaxMusic3ChunkDenoiseInner",
+              "description": "Inner denoising loop that flow-matches one window's latents over the scheduler timesteps. The guider manages the conditional/unconditional transformer passes (the unconditional conditioning is all zeros), and the overlapping latent frames are blended toward the previous window's trailing latents at every step so neighboring windows share their boundary.",
+              "kind": "block",
+              "path": "denoise.denoise.denoise_inner"
+            },
+            {
+              "className": "MiniMaxMusic3ChunkUpdateStep",
+              "description": "Post-denoising update step that restores the previous window's latents over the overlap, appends the window's latents to the chunk list, and carries the trailing latents and conditioning to the next window.",
+              "kind": "block",
+              "path": "denoise.denoise.update_chunk"
+            },
+            {
+              "className": "MiniMaxMusic3VocoderDecodeStep",
+              "description": "Decode step that vocodes each window's Flow-VAE latents into a waveform, crops the overlapping spans, and stitches the windows into the final stereo waveform at 44.1 kHz.",
+              "kind": "block",
+              "path": "decode"
+            }
+          ],
+          "taskId": "text_to_audio"
+        }
+      ]
+    },
+    {
       "blocksClass": "QwenImageEditAutoBlocks",
       "components": [
         {
@@ -41786,6 +42064,6 @@
       ]
     }
   ],
-  "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+  "diffusersRevision": "90b4e34e79a86ec5e7f2437634fe95ecd2108796",
   "schemaVersion": 1
 }
