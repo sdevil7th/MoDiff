@@ -5236,6 +5236,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   passes the 100-test focused matrix with 175 subtests; remote heavy-hardware
   execution and physical macOS evidence remain pending independently.
 - [ ] Evaluate other heavy video families.
+  - [x] **Wan Animate 2 pinned Modular contract closure:** backend `d31d5b6`
+    and client `fc67a7f` register the two package exports that were absent from
+    the reviewed contract snapshot at Diffusers
+    `bb56997d354a708303c263769a49753d10587555`:
+    `WanAnimate2ModularPipeline` and
+    `WanAnimate2DistilledModularPipeline`. Both are Expert-visible,
+    contract-only video records with one generic `character_animate` workflow,
+    required prompt/image/driving-video inputs, video output, and distinct base
+    versus distilled denoise steps. The generated truth now seals all 33
+    exported Modular classes and 93 workflows; a pinned-overlay regression
+    requires the executable and contract-only registries to equal that exact
+    exported-class set.
+
+    The snapshot preserves the actual composed schemas: although the upstream
+    distilled prose describes ten steps, both pinned classes currently publish
+    a 40-step default. No default repository, artifact admission, runnable
+    mode, Auto/template/Gallery surface, or live qualification was inferred.
+    The focused optional-overlay gate passes 45 tests and 664 subtests; the
+    complete overlay passes 1,668 tests and 3,591 subtests with three platform
+    skips, and the clean base passes 1,631 tests and 3,279 subtests with 40
+    optional-runtime skips. Ruff, package compatibility, snapshot verification,
+    the complete client check, the 533,100 / 533,504-byte gzip budget, and the
+    107-case mocked Studio browser sweep pass. No weights, models, or media were
+    downloaded, deleted, or generated for this slice. Artifact admission,
+    real-weight remote execution, output review, and physical macOS evidence
+    remain pending independently.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6492,4 +6518,5 @@ Add references only after the corresponding evidence exists.
 | P6.56 Bounded 30-minute chunk planner | `88b5d33` | Not required | Deterministic planning proof only; durable restart recovery follows in P6.57, while the executable graph, remote execution, and physical macOS remain pending | Not required | Exact 1,800-second LTX planning produces 374 bounded continuation jobs at 16 FPS with explicit execution controls and a 512-job default ceiling. Oversized duration/job-count and unqualified long single-job FramePack plans fail before inference. No model or media was used. |
 | P6.57 Durable long-video loop restart recovery | `d648417` | `19620f9` | Synthetic process-replacement and temporary retained-file proof only; executable 30-minute graph, remote execution, and physical macOS pending | Not required | Opt-in durable loops persist bounded managed video-asset metadata after each completed iteration, bind recovery to the exact workflow/input identity, and remove the checkpoint on graph success. A replacement server with a different task ID resumes after segment 1 and runs only segment 2; generic and in-memory loops remain non-durable. |
 | P6.58 Executable 30-minute LTX qualification graph | `479d495` (`a9cf15c` schema-boundary fix) | Not required | Static graph/materializer and deterministic plan proof only; remote six-hour execution, output review/publication, and physical macOS pending | Not required | One reviewed API graph binds the exact LTX revision, 374-job continuation plan, durable retained-segment loop, and file-native join. The loopback-only helper binds the staged opening-image bytes to the recovery identity, verifies the exact app-cached model revision, and requires explicit consent before app submission. No graph was submitted and no inference or media generation occurred locally. |
+| P6.59 Wan Animate 2 Modular contract closure | `d31d5b6` | `fc67a7f` | Contract-only; artifact admission, real-weight remote execution, output review, and physical macOS pending | Not required | Both pinned package exports are Expert-visible with exact generic character-animation contracts and distinct base/distilled denoise steps. The 33-class / 93-workflow snapshot matches the complete pinned exported-class set; complete backend and client gates pass. No repository, runnable mode, Auto/template/Gallery surface, weights, models, or media were added or removed. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
