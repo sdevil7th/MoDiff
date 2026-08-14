@@ -406,6 +406,21 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 27,
                 "unet/diffusion_pytorch_model.bin",
             ),
+            "zai-org/CogView4-6B": (
+                "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
+                21,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "baidu/ERNIE-Image-Turbo": (
+                "bc68c81e2a1730a394d5fc9fae70713dee940140",
+                24,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "zai-org/GLM-Image": (
+                "2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4",
+                27,
+                "vision_language_encoder/pytorch_model.bin",
+            ),
             "jdopensource/JoyAI-Image-Edit-Diffusers": (
                 "4b41fb25d961f37668750178ccbb380da326201c",
                 38,
