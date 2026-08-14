@@ -314,6 +314,48 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", captured["requested_files"])
 
+    async def test_auraflow_app_download_automatically_selects_only_reviewed_fp16_files(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(FakeRequest(repo_id="fal/AuraFlow-v0.3"))
+        payload = json.loads(response.text)
+
+        self.assertFalse(payload["error"])
+        self.assertEqual(len(captured["requested_files"]), 18)
+        self.assertIn("model_index.json", captured["requested_files"])
+        self.assertIn("text_encoder/model.fp16.safetensors", captured["requested_files"])
+        self.assertIn(
+            "transformer/diffusion_pytorch_model.safetensors.fp16.index.json",
+            captured["requested_files"],
+        )
+        self.assertNotIn("aura_flow_0.3.safetensors", captured["requested_files"])
+        self.assertNotIn("text_encoder/model.safetensors", captured["requested_files"])
+
+    async def test_auraflow_space_plan_uses_the_same_reviewed_fp16_selection(self):
+        server = WebServer(modules={})
+        revision = "2cd8588f04c886002be4571697d84654a50e3af3"
+
+        with mock.patch(
+            "modiff.server.plan_hub_model_download",
+            return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+        ) as plan:
+            response = await server.hf_download_plan(FakeRequest(repo_id="fal/AuraFlow-v0.3"))
+
+        payload = json.loads(response.text)
+        self.assertFalse(payload["error"])
+        self.assertEqual(plan.call_args.args[0], "fal/AuraFlow-v0.3")
+        self.assertEqual(plan.call_args.args[2], revision)
+        self.assertEqual(len(plan.call_args.args[1]), 18)
+        self.assertIn("text_encoder/model.fp16.safetensors", plan.call_args.args[1])
+        self.assertNotIn("text_encoder/model.safetensors", plan.call_args.args[1])
+
     async def test_custom_download_carries_exact_commit_into_app_owned_task(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()

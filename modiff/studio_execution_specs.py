@@ -154,6 +154,26 @@ LUMINA2_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 AURAFLOW_V03_REPO = "fal/AuraFlow-v0.3"
+AURAFLOW_V03_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.fp16.safetensors",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.fp16.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.fp16.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.fp16.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.fp16.safetensors",
+]
 CHROMA1_HD_REPO = "lodestones/Chroma1-HD"
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
@@ -6816,6 +6836,7 @@ _AURAFLOW_V03_CAPABILITY = {
     "qualifiedModes": [],
     "defaultRepo": AURAFLOW_V03_REPO,
     "artifactLabel": "Apache-2.0 fp16 Diffusers safetensors repo",
+    "downloadFiles": AURAFLOW_V03_DIFFUSERS_FILES,
     "defaultDtype": "float16",
     "defaultSize": {"width": 1536, "height": 768, "aspectRatio": "custom"},
     "recommendedSteps": 50,

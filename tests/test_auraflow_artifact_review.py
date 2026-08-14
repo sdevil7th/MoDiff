@@ -5,6 +5,10 @@ import re
 import unittest
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.studio_execution_specs import (
+    AURAFLOW_V03_DIFFUSERS_FILES,
+    studio_capability_definitions,
+)
 
 
 REVIEW_PATH = Path(__file__).resolve().parents[1] / "data" / "auraflow-v0.3-artifact-review.json"
@@ -59,6 +63,22 @@ class AuraFlowArtifactReviewTests(unittest.TestCase):
             self.assertTrue(item["path"].endswith(".safetensors"))
             self.assertIn("fp16", item["path"])
             self.assertRegex(item["sha256"], SHA256)
+
+    def test_app_download_selection_is_runnable_and_excludes_duplicate_weights(self):
+        capability = studio_capability_definitions()["AuraFlowPipeline"]
+        self.assertEqual(capability["downloadFiles"], AURAFLOW_V03_DIFFUSERS_FILES)
+        self.assertEqual(len(AURAFLOW_V03_DIFFUSERS_FILES), 18)
+        selected = set(AURAFLOW_V03_DIFFUSERS_FILES)
+        reviewed_weights = {item["path"] for item in self.review["weightFiles"]}
+        self.assertTrue(reviewed_weights.issubset(selected))
+        self.assertIn(
+            "transformer/diffusion_pytorch_model.safetensors.fp16.index.json",
+            selected,
+        )
+        self.assertNotIn("aura_flow_0.3.safetensors", selected)
+        self.assertNotIn("text_encoder/model.safetensors", selected)
+        self.assertNotIn("transformer/diffusion_pytorch_model.safetensors.index.json", selected)
+        self.assertNotIn("vae/diffusion_pytorch_model.safetensors", selected)
 
     def test_bounded_package_owned_native_recipe_is_explicit(self):
         contract = self.review["pipelineContract"]
