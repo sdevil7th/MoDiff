@@ -5995,7 +5995,7 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   added. Explicit task-scoped authorization, bounded adapter controls, remote
   heavy-hardware execution, and physical macOS evidence remain independent
   gates.
-- [ ] Build the 30-minute video workflow only after chunk generation, checkpoint
+- [x] Build the 30-minute video workflow only after chunk generation, checkpoint
   resume, deterministic stitching, audio mux, cancellation, and recovery pass
   independently.
   - [x] **Continuation boundary handoff:** backend `67010c7` makes the existing
@@ -6064,13 +6064,36 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     pass. Test files existed only under a temporary directory. The executable
     30-minute graph, remote six-hour run, asset publication, and physical macOS
     evidence remain pending.
+  - [x] **Executable 30-minute qualification graph:** backend `479d495`, with
+    schema-boundary fix `a9cf15c`, adds a qualification-only API graph
+    template for the exact immutable
+    `Lightricks/LTX-Video-0.9.8-13B-distilled` revision. It binds the BF16
+    `LTXConditionPipeline`, eight-step/guidance-one recipe, opening image,
+    1,800-second planner, 374-job durable continuation loop, retained pinned
+    segment export, 0.25-second file-native join, and six-hour runtime ceiling
+    in one app-submittable graph. Every connection resolves to a registered
+    generic node and declared output.
+
+    The companion materializer requires the local opening-image path and its
+    portable app identifier to resolve to the same bytes, seals their digest
+    into the input-scoped recovery identity, and accepts submission only with
+    explicit long-run consent to a loopback app. Before `POST /graph` it also
+    requires the app cache to report the exact immutable LTX revision complete
+    and repair-free. Five direct graph/materializer tests plus the focused
+    video/loop matrix passes 144 tests and 219 subtests; the complete backend
+    overlay passes 1,651 tests, 3,583 subtests, and three platform skips, with
+    Ruff E9/F and package compatibility green. A CLI smoke materialized the
+    graph only to `/tmp`; it did not submit the graph, run inference, generate
+    media, or download a model. The approximately six-hour remote run,
+    output/safety/continuity review, asset publication, and physical macOS
+    evidence remain pending.
 
 ### Phase 6 test and asset gate
 
-- [ ] No Phase 6 live run occurs on the current development machine.
-- [ ] Heavy integrations can merge contract-only while clearly Expert-only and
+- [x] No Phase 6 live run occurs on the current development machine.
+- [x] Heavy integrations can merge contract-only while clearly Expert-only and
   `qualification_pending`.
-- [ ] Long-form component tests use synthetic/tiny segments.
+- [x] Long-form component tests use synthetic/tiny segments.
 - [ ] The approximately six-hour 30-minute-video qualification runs once as a
   scheduled release test after all component gates pass.
 - [ ] Generated video and receipts are published through the remote asset
@@ -6343,4 +6366,5 @@ Add references only after the corresponding evidence exists.
 | P6.55 Long-video component recovery gate | `53e22f2` (revalidates `76bbafe`) | Not required | Synthetic loop interruption/resume and temporary real-file FFmpeg proof only; process-restart persistence, final 30-minute graph, remote execution, and physical macOS pending | Not required | A completed loop segment survives node-cache clearing and cancellation recovery without regeneration. Two temporary retained MP4s stitch deterministically to 14 frames / 1.75 seconds and retain those values after audio mux. No model or live inference was used, and all test media was temporary. |
 | P6.56 Bounded 30-minute chunk planner | `88b5d33` | Not required | Deterministic planning proof only; durable restart recovery follows in P6.57, while the executable graph, remote execution, and physical macOS remain pending | Not required | Exact 1,800-second LTX planning produces 374 bounded continuation jobs at 16 FPS with explicit execution controls and a 512-job default ceiling. Oversized duration/job-count and unqualified long single-job FramePack plans fail before inference. No model or media was used. |
 | P6.57 Durable long-video loop restart recovery | `d648417` | `19620f9` | Synthetic process-replacement and temporary retained-file proof only; executable 30-minute graph, remote execution, and physical macOS pending | Not required | Opt-in durable loops persist bounded managed video-asset metadata after each completed iteration, bind recovery to the exact workflow/input identity, and remove the checkpoint on graph success. A replacement server with a different task ID resumes after segment 1 and runs only segment 2; generic and in-memory loops remain non-durable. |
+| P6.58 Executable 30-minute LTX qualification graph | `479d495` (`a9cf15c` schema-boundary fix) | Not required | Static graph/materializer and deterministic plan proof only; remote six-hour execution, output review/publication, and physical macOS pending | Not required | One reviewed API graph binds the exact LTX revision, 374-job continuation plan, durable retained-segment loop, and file-native join. The loopback-only helper binds the staged opening-image bytes to the recovery identity, verifies the exact app-cached model revision, and requires explicit consent before app submission. No graph was submitted and no inference or media generation occurred locally. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
