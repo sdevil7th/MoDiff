@@ -1,5 +1,6 @@
 import asyncio
 import json
+import threading
 import unittest
 from unittest import mock
 
@@ -182,6 +183,68 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             server.model_io_lock.release()
         self.assertTrue(called)
+
+    async def test_app_runs_two_ordinary_snapshot_transfers_concurrently(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        server.serialize_model_io = False
+        two_entered = threading.Event()
+        release = threading.Event()
+        state_lock = threading.Lock()
+        active = 0
+        maximum_active = 0
+        started = []
+
+        def fake_download(repo_id, *_args):
+            nonlocal active, maximum_active
+            with state_lock:
+                active += 1
+                maximum_active = max(maximum_active, active)
+                started.append(repo_id)
+                if active == 2:
+                    two_entered.set()
+            try:
+                self.assertTrue(release.wait(timeout=3))
+                return {"repo_id": repo_id, "complete": True}
+            finally:
+                with state_lock:
+                    active -= 1
+
+        async def run_callback(callback, **_kwargs):
+            return await asyncio.to_thread(callback)
+
+        entries = [
+            {
+                "task_id": f"task-{index}",
+                "sids": set(),
+                "started_at": 1.0,
+                "repair": False,
+                "repair_source_repo_id": None,
+                "requested_files": [],
+                "revision": chr(ord("a") + index) * 40,
+            }
+            for index in range(3)
+        ]
+
+        with (
+            mock.patch.object(server, "_run_executor_callback", side_effect=run_callback),
+            mock.patch("modiff.server.download_hub_model", side_effect=fake_download),
+            mock.patch("modiff.server.modelstore.actualize"),
+        ):
+            tasks = [
+                asyncio.create_task(server._run_reserved_hf_download(f"unit/model-{index}", entry, mock.Mock()))
+                for index, entry in enumerate(entries)
+            ]
+            try:
+                self.assertTrue(await asyncio.to_thread(two_entered.wait, 3))
+                await asyncio.sleep(0.05)
+                self.assertEqual(len(started), 2)
+            finally:
+                release.set()
+            await asyncio.gather(*tasks)
+
+        self.assertEqual(maximum_active, 2)
+        self.assertCountEqual(started, ["unit/model-0", "unit/model-1", "unit/model-2"])
 
     async def test_concurrent_requests_join_one_app_download(self):
         server = WebServer(modules={})

@@ -602,6 +602,97 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
         self.assertEqual(observed, [("unit/repair", True), ("unit/normal", False)])
         self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
 
+    def test_normal_downloads_share_the_app_transfer_window(self):
+        from huggingface_hub import constants as hf_constants
+
+        plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
+        validation = {"complete": True, "repair_required": False}
+        both_entered = threading.Event()
+        release_downloads = threading.Event()
+        observed = []
+        observed_lock = threading.Lock()
+
+        def record_snapshot_download(**kwargs):
+            with observed_lock:
+                observed.append((kwargs["repo_id"], hf_constants.HF_HUB_DISABLE_XET))
+                if len(observed) == 2:
+                    both_entered.set()
+            self.assertTrue(release_downloads.wait(timeout=3))
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.dict(
+            huggingface.CONFIG.hf, {"cache_dir": temp_dir, "token": None}
+        ), patch.object(
+            huggingface, "_repo_download_plan", side_effect=lambda *_args: dict(plan)
+        ), patch.object(
+            huggingface, "_repair_validation_summary", return_value=validation
+        ), patch.object(
+            hf_constants, "HF_HUB_DISABLE_XET", False
+        ), patch(
+            "huggingface_hub.snapshot_download", side_effect=record_snapshot_download
+        ):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                first = executor.submit(huggingface.download_hub_model, "unit/first")
+                second = executor.submit(huggingface.download_hub_model, "unit/second")
+                try:
+                    self.assertTrue(both_entered.wait(timeout=3))
+                finally:
+                    release_downloads.set()
+                self.assertTrue(first.result(timeout=3)["complete"])
+                self.assertTrue(second.result(timeout=3)["complete"])
+
+        self.assertCountEqual(observed, [("unit/first", False), ("unit/second", False)])
+        self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
+
+    def test_repair_waits_for_active_normal_download_before_changing_xet_mode(self):
+        from huggingface_hub import constants as hf_constants
+
+        plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
+        validation = {"complete": True, "repair_required": False}
+        normal_entered = threading.Event()
+        repair_started = threading.Event()
+        repair_entered = threading.Event()
+        release_normal = threading.Event()
+        observed = []
+
+        def record_snapshot_download(**kwargs):
+            observed.append((kwargs["repo_id"], hf_constants.HF_HUB_DISABLE_XET))
+            if kwargs["repo_id"] == "unit/normal":
+                normal_entered.set()
+                self.assertTrue(release_normal.wait(timeout=3))
+            else:
+                repair_entered.set()
+
+        def run_repair():
+            repair_started.set()
+            return huggingface.download_hub_model("unit/repair", None, True)
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.dict(
+            huggingface.CONFIG.hf, {"cache_dir": temp_dir, "token": None}
+        ), patch.object(
+            huggingface, "_repo_download_plan", side_effect=lambda *_args: dict(plan)
+        ), patch.object(
+            huggingface, "_repair_validation_summary", return_value=validation
+        ), patch.object(
+            hf_constants, "HF_HUB_DISABLE_XET", False
+        ), patch(
+            "huggingface_hub.snapshot_download", side_effect=record_snapshot_download
+        ):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                normal_future = executor.submit(huggingface.download_hub_model, "unit/normal")
+                self.assertTrue(normal_entered.wait(timeout=3))
+                repair_future = executor.submit(run_repair)
+                self.assertTrue(repair_started.wait(timeout=3))
+                try:
+                    self.assertFalse(repair_entered.wait(timeout=0.2))
+                    self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
+                finally:
+                    release_normal.set()
+                self.assertTrue(normal_future.result(timeout=3)["complete"])
+                self.assertTrue(repair_future.result(timeout=3)["complete"])
+
+        self.assertEqual(observed, [("unit/normal", False), ("unit/repair", True)])
+        self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
+
     def test_cataloged_download_uses_the_immutable_revision(self):
         plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
         validation = {"complete": True, "repair_required": False}

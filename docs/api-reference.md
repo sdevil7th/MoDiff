@@ -573,7 +573,10 @@ Uploads are written under configured data subdirectories and share the configure
   reserves that remaining size across the active queue, and preserves at least
   64 GiB free on the cache volume. An unknown plan fails with HTTP 503 and a
   plan that does not fit fails with HTTP 507; neither path deletes older models
-  or starts a snapshot download.
+  or starts a snapshot download. The app runs at most two ordinary snapshot
+  transfers concurrently. A repair waits for both slots to drain and blocks
+  new transfers while it temporarily disables process-global Xet behavior;
+  ordinary downloads no longer serialize behind one another.
 - `GET /template_gallery/status` verifies an existing local Gallery against the
   app's immutable Dataset identity. `GET /template_gallery/plan` obtains and
   validates the pinned manifest, returns exact download/staging reservations,

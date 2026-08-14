@@ -7,6 +7,7 @@ hf_logging.set_verbosity_error()
 from modiff.config import CONFIG
 from modiff.model_artifact_catalog import resolve_model_revision
 from collections import Counter
+from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
 import hashlib
@@ -79,7 +80,50 @@ def _common_appdata_hf_cache_candidates():
 HF_CACHE_REPO_PREFIXES = ('models--', 'datasets--', 'spaces--')
 HF_DOWNLOAD_PLAN_FILE_PREVIEW_LIMIT = 200
 HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES = 64 * 1024**3
-_HF_XET_MODE_LOCK = threading.RLock()
+
+
+class _HFDownloadModeGate:
+    """Share normal downloads while keeping process-global Xet repair mode exclusive."""
+
+    def __init__(self):
+        self._condition = threading.Condition()
+        self._normal_downloads = 0
+        self._repair_active = False
+        self._repair_waiters = 0
+
+    @contextmanager
+    def normal(self):
+        with self._condition:
+            while self._repair_active or self._repair_waiters:
+                self._condition.wait()
+            self._normal_downloads += 1
+        try:
+            yield
+        finally:
+            with self._condition:
+                self._normal_downloads -= 1
+                if self._normal_downloads == 0:
+                    self._condition.notify_all()
+
+    @contextmanager
+    def repair(self):
+        with self._condition:
+            self._repair_waiters += 1
+            try:
+                while self._repair_active or self._normal_downloads:
+                    self._condition.wait()
+                self._repair_active = True
+            finally:
+                self._repair_waiters -= 1
+        try:
+            yield
+        finally:
+            with self._condition:
+                self._repair_active = False
+                self._condition.notify_all()
+
+
+_HF_DOWNLOAD_MODE_GATE = _HFDownloadModeGate()
 
 
 def _path_looks_like_hf_cache_root(path_obj: Path):
@@ -1605,11 +1649,14 @@ def download_hub_model(
             monitor_thread = threading.Thread(target=monitor_download, daemon=True)
             monitor_thread.start()
         # huggingface_hub exposes Xet disabling only as process-global state.
-        # Serialize every app-owned snapshot download so a repair cannot leak
-        # its temporary mode into a concurrent normal download.
-        with _HF_XET_MODE_LOCK:
-            previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
+        # Ordinary downloads may share the app's bounded transfer slots, but a
+        # repair must wait for all of them and block new ones while it changes
+        # that global mode.
+        download_mode = _HF_DOWNLOAD_MODE_GATE.repair() if repair else _HF_DOWNLOAD_MODE_GATE.normal()
+        with download_mode:
+            previous_disable_xet = None
             if repair:
+                previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
                 # A repair must not repeat a wedged Xet reconstruction session.
                 # Standard Hub HTTP resumes immutable blobs with bounded request
                 # retries and leaves every already-valid cache blob untouched.
@@ -1650,7 +1697,8 @@ def download_hub_model(
                         emit('retrying', None, str(error))
                         time.sleep(2 ** attempt)
             finally:
-                hf_constants.HF_HUB_DISABLE_XET = previous_disable_xet
+                if repair:
+                    hf_constants.HF_HUB_DISABLE_XET = previous_disable_xet
         _cleanup_redundant_incomplete_files(model_id, cache_dir)
         stop_event.set()
         if monitor_thread:
