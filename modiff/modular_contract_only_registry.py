@@ -55,6 +55,18 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES = (
     ),
     ContractOnlyModularPipeline("LTXModularPipeline", "LTX Video (Contract only)", "video"),
     ContractOnlyModularPipeline(
+        "WanAnimate2ModularPipeline",
+        "Wan Animate 2 (Contract only)",
+        "video",
+        (("default", "character_animate"),),
+    ),
+    ContractOnlyModularPipeline(
+        "WanAnimate2DistilledModularPipeline",
+        "Wan Animate 2 Distilled (Contract only)",
+        "video",
+        (("default", "character_animate"),),
+    ),
+    ContractOnlyModularPipeline(
         "Wan22ModularPipeline",
         "Wan 2.2 Text to Video (Contract only)",
         "video",

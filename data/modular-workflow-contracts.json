@@ -39065,6 +39065,1074 @@
       ]
     },
     {
+      "blocksClass": "WanAnimate2DistilledBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "text_encoder",
+          "reuseKey": [
+            "text_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.umt5.modeling_umt5.UMT5EncoderModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "image_processor",
+          "reuseKey": [
+            "image_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.wan_animate_2.video_processor.WanAnimate2VideoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "image_encoder",
+          "reuseKey": [
+            "image_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.clip.modeling_clip.CLIPVisionModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "video_processor",
+          "reuseKey": [
+            "video_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.wan_animate_2.video_processor.WanAnimate2VideoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vae",
+          "reuseKey": [
+            "vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_wan.AutoencoderKLWan"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_wan_animate_2.WanAnimate2Transformer3DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_utils.SchedulerMixin"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "guider",
+          "reuseKey": [
+            "guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        }
+      ],
+      "description": "Modular pipeline blocks for distilled Wan-Animate-2 character animation, sampling in few steps without classifier-free guidance.",
+      "kind": "sequential",
+      "pipelineClass": "WanAnimate2DistilledModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "WanAnimate2ModularPipeline",
+          "id": "default",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": "人物动作的参考视频",
+              "description": "The reference prompt for the driving video context",
+              "name": "prompt_ref",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 512,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The reference image holding the character to animate.",
+              "name": "image",
+              "required": true,
+              "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+            },
+            {
+              "default": 800,
+              "description": "Together with `width`, the target *area* of the generated video; the aspect ratio comes from `image`. Overwritten with the resolved frame height.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 640,
+              "description": "See `height`. Overwritten with the resolved frame width.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The driving video that provides the motion, in any format accepted by `VideoProcessor.preprocess_video`.",
+              "name": "driving_video",
+              "required": true,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The frame rate `driving_video` was captured at — `load_video(..., return_fps=True)` reports it. When set, the driving frames are resampled from it to `fps`; when `None` they are used as-is.",
+              "name": "driving_video_fps",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24,
+              "description": "The frame rate the model generates at",
+              "name": "fps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 81,
+              "description": "The number of frames in each inference segment",
+              "name": "segment_frame_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1,
+              "description": "The number of conditioning frames carried over from the previous segment",
+              "name": "prev_segment_conditioning_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 40,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": "np",
+              "description": "The output type of the decoded videos",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Character Animate",
+          "outputs": [
+            {
+              "default": null,
+              "description": "The prompt embeddings.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The negative prompt embeddings.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "text embeddings of the reference prompt, conditioning the reference-extraction pass",
+              "name": "prompt_ref_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The letterboxed reference image as a `[1, 3, H, W]` tensor in `[-1, 1]`",
+              "name": "image_pixels",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "`(top, left, height, width)` of the reference image content inside the letterboxed frame",
+              "name": "crop_region",
+              "required": false,
+              "type": "tuple[builtins.int]"
+            },
+            {
+              "default": null,
+              "description": "CLIP vision features of the reference image, conditioning every denoising forward",
+              "name": "encoder_hidden_states_image",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The resampled, letterboxed, and zigzag-padded driving video, `[1, 3, T, height, width]` in `[-1, 1]`",
+              "name": "driving_video_pixels",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of driving frames before zigzag padding; the output is trimmed to it",
+              "name": "real_frame_len",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Number of inference segments",
+              "name": "num_segments",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Frames each segment advances by (`segment_frame_length - prev_segment_conditioning_frames`)",
+              "name": "effective_segment",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "CLIP vision features of the driving video's first frame",
+              "name": "condition_clip_context",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "i2v mask + reference image latents, `[20, 1, latent_height, latent_width]`",
+              "name": "reference_image_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Post-patch latent grid `[[T, H/2, W/2]]` of a driving-video segment, used as the offset grid of the reference-extraction pass and the reference grid of the denoising passes",
+              "name": "grid_sizes_ref",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed sequence length of the generation tokens",
+              "name": "max_seq_len",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Packed sequence length of the reference tokens",
+              "name": "max_seq_len_ref",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "VAE latents of this segment's driving-video slice",
+              "name": "driving_video_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "i2v mask + driving-slice latents, conditioning the reference-extraction pass",
+              "name": "driving_video_condition",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The full conditioning tensor: reference half stacked over the segment half",
+              "name": "reference_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "This segment's initial noise",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Fresh per-segment cache for the reference K/V",
+              "name": "kv_cache",
+              "required": false,
+              "type": "diffusers.models.transformers.transformer_wan_animate_2.WanAnimate2KVCache"
+            },
+            {
+              "default": null,
+              "description": "This segment's denoising timesteps",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "This segment's decoded frames on device; the next segment conditions on its tail",
+              "name": "out_frames",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-segment decoded frames on CPU, each `[1, 3, T, H, W]`",
+              "name": "segment_frames",
+              "required": false,
+              "type": "list[torch.Tensor]"
+            },
+            {
+              "default": null,
+              "description": "The generated videos, can be a PIL.Image.Image, torch.Tensor or a numpy array",
+              "name": "videos",
+              "required": false,
+              "type": "UnionType[list[list[PIL.Image.Image]],list[numpy.ndarray],list[torch.Tensor]]"
+            }
+          ],
+          "requiredInputs": [
+            "driving_video",
+            "image",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "prompt_ref",
+            "max_sequence_length",
+            "image",
+            "height",
+            "width",
+            "driving_video",
+            "driving_video_fps",
+            "fps",
+            "segment_frame_length",
+            "prev_segment_conditioning_frames",
+            "generator",
+            "num_inference_steps",
+            "denoiser_input_fields",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "WanAnimate2TextEncoderStep",
+              "description": "Text Encoder step that encodes the character/background prompt, the negative prompt (when the pipeline's guider needs unconditional embeddings, or one is passed explicitly), and the fixed reference prompt for the driving-video context",
+              "kind": "block",
+              "path": "text_encoder"
+            },
+            {
+              "className": "WanAnimate2ProcessImagesInputStep",
+              "description": "Image Resize step that resolves the output frame from the target area (`height * width`) and the reference image's aspect ratio, then letterboxes the reference image into that frame. The recorded crop box is used at the end to crop the letterbox bars back off the generated video.",
+              "kind": "block",
+              "path": "image_encoder.preprocess"
+            },
+            {
+              "className": "WanAnimate2ImageClipEncoderStep",
+              "description": "Image Encoder step that computes CLIP vision features of the letterboxed reference image",
+              "kind": "block",
+              "path": "image_encoder.encode"
+            },
+            {
+              "className": "WanAnimate2ProcessVideosInputStep",
+              "description": "Video preprocess step that optionally resamples the driving video to the model's frame rate, letterboxes every frame into the resolved output frame, and zigzag-pads the tail so the frame count splits into whole segments. The mirrored padding frames are real content to the model; the surplus generated frames are trimmed off again at the end.",
+              "kind": "block",
+              "path": "video_encoder.preprocess"
+            },
+            {
+              "className": "WanAnimate2VideoClipEncoderStep",
+              "description": "Image Encoder step that computes CLIP vision features of the driving video's first frame, conditioning the per-segment reference-extraction pass",
+              "kind": "block",
+              "path": "video_encoder.encode"
+            },
+            {
+              "className": "WanAnimate2ImageVaeEncoderStep",
+              "description": "VAE Encoder step that encodes the letterboxed reference image and stacks the i2v conditioning mask on top, producing the reference half of the conditioning tensor `reference_latents`",
+              "kind": "block",
+              "path": "vae_encoder"
+            },
+            {
+              "className": "WanAnimate2PrepareSegmentsStep",
+              "description": "Step that computes the segment-invariant geometry for the segment loop. The zigzag padding makes every segment exactly `segment_frame_length` frames, so the latent grid, the packed sequence lengths, and the noise shape are the same for all segments and are computed once here.",
+              "kind": "block",
+              "path": "denoise.prepare_segments"
+            },
+            {
+              "className": "WanAnimate2DistilledDenoiseStep",
+              "description": "Segment denoise step for the distilled model that iterates over the driving video's segments. At each segment: vae_encoder -> prev_frames -> prepare -> scheduler_reset -> ref_extract -> denoise_inner (no classifier-free guidance) -> decode.",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "WanAnimate2SegmentVaeEncoderStep",
+              "description": "Step within the segment loop that VAE-encodes this segment's slice of the driving video and stacks the i2v conditioning mask on top. The Wan VAE is causal in time, so encoding the whole video once and slicing the latents would not be equivalent — each segment restarts the temporal convolution on its own slice. A streaming mode would replace this block with one fed segments incrementally. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.vae_encoder"
+            },
+            {
+              "className": "WanAnimate2SegmentPrevFramesStep",
+              "description": "Step within the segment loop that builds the generation-side conditioning tensor `reference_latents`: the previous segment's tail frames (zeros for the first segment) are VAE-encoded, masked, and stacked under the reference half `reference_image_latents`. This is how motion continuity crosses segment boundaries — in pixel space, not latent space. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.prev_frames"
+            },
+            {
+              "className": "WanAnimate2SegmentPrepareStep",
+              "description": "Step within the segment loop that draws this segment's initial noise and allocates a fresh KV cache for the reference-extraction pass. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.prepare"
+            },
+            {
+              "className": "WanAnimate2SegmentSchedulerResetStep",
+              "description": "Step within the segment loop that resets the scheduler: each segment is an independent denoising trajectory, so the solver state and timesteps are re-prepared per segment. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.scheduler_reset"
+            },
+            {
+              "className": "WanAnimate2RefExtractStep",
+              "description": "Step within the segment loop that runs the transformer's reference-extraction pass (`kv_cache_mode=\"extract\"`): the driving-video segment is encoded once and every layer's reference K/V is stored in the KV cache, which the denoising forwards then attend over. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.ref_extract"
+            },
+            {
+              "className": "WanAnimate2DistilledSegmentDenoiseInner",
+              "description": "Inner timestep loop that denoises one segment for the distilled model, which is trained for few-step sampling without classifier-free guidance — the guider defaults to `guidance_scale=1.0`, so only the conditional branch runs. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.denoise_inner"
+            },
+            {
+              "className": "WanAnimate2SegmentDecodeStep",
+              "description": "Step within the segment loop that VAE-decodes the denoised segment. Decoding happens inside the loop because the next segment conditions on this segment's decoded pixels. Finished frames move to CPU and the per-segment KV cache and latents are freed — holding them across segments fragments the allocator enough to OOM at high resolution. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.decode"
+            },
+            {
+              "className": "WanAnimate2DecodeStep",
+              "description": "Step that assembles the final video from the per-segment decoded frames: concatenates the segments, trims the zigzag padding, crops the reference image's letterbox bars back off, and postprocesses. The VAE decode itself happens per segment inside the denoise loop, because each segment conditions on the previous segment's decoded pixels.",
+              "kind": "block",
+              "path": "decode"
+            }
+          ],
+          "taskId": "character_animate"
+        }
+      ]
+    },
+    {
+      "blocksClass": "WanAnimate2Blocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "name": "text_encoder",
+          "reuseKey": [
+            "text_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.umt5.modeling_umt5.UMT5EncoderModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "tokenizer",
+          "reuseKey": [
+            "tokenizer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "image_processor",
+          "reuseKey": [
+            "image_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.wan_animate_2.video_processor.WanAnimate2VideoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "image_encoder",
+          "reuseKey": [
+            "image_encoder",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "transformers.models.clip.modeling_clip.CLIPVisionModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "video_processor",
+          "reuseKey": [
+            "video_processor",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.modular_pipelines.wan_animate_2.video_processor.WanAnimate2VideoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "vae",
+          "reuseKey": [
+            "vae",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.autoencoders.autoencoder_kl_wan.AutoencoderKLWan"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "transformer",
+          "reuseKey": [
+            "transformer",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.models.transformers.transformer_wan_animate_2.WanAnimate2Transformer3DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "name": "scheduler",
+          "reuseKey": [
+            "scheduler",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.schedulers.scheduling_utils.SchedulerMixin"
+        },
+        {
+          "creationMethod": "from_config",
+          "name": "guider",
+          "reuseKey": [
+            "guider",
+            "loadId",
+            "dtype",
+            "quantization",
+            "device",
+            "offloadMode"
+          ],
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        }
+      ],
+      "description": "Modular pipeline blocks for Wan-Animate-2 character animation: a reference character image and a driving video produce a video of the character following the driving motion.",
+      "kind": "sequential",
+      "pipelineClass": "WanAnimate2ModularPipeline",
+      "schemaVersion": 1,
+      "uiDefaults": {},
+      "workflows": [
+        {
+          "executionPipelineClass": "WanAnimate2ModularPipeline",
+          "id": "default",
+          "inputs": [
+            {
+              "default": null,
+              "description": "The prompt or prompts to guide image generation.",
+              "name": "prompt",
+              "required": true,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "The prompt or prompts not to guide the image generation.",
+              "name": "negative_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": "人物动作的参考视频",
+              "description": "The reference prompt for the driving video context",
+              "name": "prompt_ref",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 512,
+              "description": "Maximum sequence length for prompt encoding.",
+              "name": "max_sequence_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The reference image holding the character to animate.",
+              "name": "image",
+              "required": true,
+              "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+            },
+            {
+              "default": 800,
+              "description": "Together with `width`, the target *area* of the generated video; the aspect ratio comes from `image`. Overwritten with the resolved frame height.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 640,
+              "description": "See `height`. Overwritten with the resolved frame width.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The driving video that provides the motion, in any format accepted by `VideoProcessor.preprocess_video`.",
+              "name": "driving_video",
+              "required": true,
+              "type": "list[PIL.Image.Image]"
+            },
+            {
+              "default": null,
+              "description": "The frame rate `driving_video` was captured at — `load_video(..., return_fps=True)` reports it. When set, the driving frames are resampled from it to `fps`; when `None` they are used as-is.",
+              "name": "driving_video_fps",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 24,
+              "description": "The frame rate the model generates at",
+              "name": "fps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 81,
+              "description": "The number of frames in each inference segment",
+              "name": "segment_frame_length",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": 1,
+              "description": "The number of conditioning frames carried over from the previous segment",
+              "name": "prev_segment_conditioning_frames",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Torch generator for deterministic generation.",
+              "name": "generator",
+              "required": false,
+              "type": "torch._C.Generator"
+            },
+            {
+              "default": 40,
+              "description": "The number of denoising steps.",
+              "name": "num_inference_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": "np",
+              "description": "The output type of the decoded videos",
+              "name": "output_type",
+              "required": false,
+              "type": "builtins.str"
+            }
+          ],
+          "kind": "sequential",
+          "label": "Character Animate",
+          "outputs": [
+            {
+              "default": null,
+              "description": "The prompt embeddings.",
+              "name": "prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The negative prompt embeddings.",
+              "name": "negative_prompt_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "text embeddings of the reference prompt, conditioning the reference-extraction pass",
+              "name": "prompt_ref_embeds",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The letterboxed reference image as a `[1, 3, H, W]` tensor in `[-1, 1]`",
+              "name": "image_pixels",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "`(top, left, height, width)` of the reference image content inside the letterboxed frame",
+              "name": "crop_region",
+              "required": false,
+              "type": "tuple[builtins.int]"
+            },
+            {
+              "default": null,
+              "description": "CLIP vision features of the reference image, conditioning every denoising forward",
+              "name": "encoder_hidden_states_image",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The resampled, letterboxed, and zigzag-padded driving video, `[1, 3, T, height, width]` in `[-1, 1]`",
+              "name": "driving_video_pixels",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Number of driving frames before zigzag padding; the output is trimmed to it",
+              "name": "real_frame_len",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Number of inference segments",
+              "name": "num_segments",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Frames each segment advances by (`segment_frame_length - prev_segment_conditioning_frames`)",
+              "name": "effective_segment",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "CLIP vision features of the driving video's first frame",
+              "name": "condition_clip_context",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "i2v mask + reference image latents, `[20, 1, latent_height, latent_width]`",
+              "name": "reference_image_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Post-patch latent grid `[[T, H/2, W/2]]` of a driving-video segment, used as the offset grid of the reference-extraction pass and the reference grid of the denoising passes",
+              "name": "grid_sizes_ref",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Packed sequence length of the generation tokens",
+              "name": "max_seq_len",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Packed sequence length of the reference tokens",
+              "name": "max_seq_len_ref",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "VAE latents of this segment's driving-video slice",
+              "name": "driving_video_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "i2v mask + driving-slice latents, conditioning the reference-extraction pass",
+              "name": "driving_video_condition",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "The full conditioning tensor: reference half stacked over the segment half",
+              "name": "reference_latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "This segment's initial noise",
+              "name": "latents",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Fresh per-segment cache for the reference K/V",
+              "name": "kv_cache",
+              "required": false,
+              "type": "diffusers.models.transformers.transformer_wan_animate_2.WanAnimate2KVCache"
+            },
+            {
+              "default": null,
+              "description": "This segment's denoising timesteps",
+              "name": "timesteps",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "This segment's decoded frames on device; the next segment conditions on its tail",
+              "name": "out_frames",
+              "required": false,
+              "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "Per-segment decoded frames on CPU, each `[1, 3, T, H, W]`",
+              "name": "segment_frames",
+              "required": false,
+              "type": "list[torch.Tensor]"
+            },
+            {
+              "default": null,
+              "description": "The generated videos, can be a PIL.Image.Image, torch.Tensor or a numpy array",
+              "name": "videos",
+              "required": false,
+              "type": "UnionType[list[list[PIL.Image.Image]],list[numpy.ndarray],list[torch.Tensor]]"
+            }
+          ],
+          "requiredInputs": [
+            "driving_video",
+            "image",
+            "prompt"
+          ],
+          "stateKeys": [
+            "prompt",
+            "negative_prompt",
+            "prompt_ref",
+            "max_sequence_length",
+            "image",
+            "height",
+            "width",
+            "driving_video",
+            "driving_video_fps",
+            "fps",
+            "segment_frame_length",
+            "prev_segment_conditioning_frames",
+            "generator",
+            "num_inference_steps",
+            "denoiser_input_fields",
+            "output_type"
+          ],
+          "steps": [
+            {
+              "className": "WanAnimate2TextEncoderStep",
+              "description": "Text Encoder step that encodes the character/background prompt, the negative prompt (when the pipeline's guider needs unconditional embeddings, or one is passed explicitly), and the fixed reference prompt for the driving-video context",
+              "kind": "block",
+              "path": "text_encoder"
+            },
+            {
+              "className": "WanAnimate2ProcessImagesInputStep",
+              "description": "Image Resize step that resolves the output frame from the target area (`height * width`) and the reference image's aspect ratio, then letterboxes the reference image into that frame. The recorded crop box is used at the end to crop the letterbox bars back off the generated video.",
+              "kind": "block",
+              "path": "image_encoder.preprocess"
+            },
+            {
+              "className": "WanAnimate2ImageClipEncoderStep",
+              "description": "Image Encoder step that computes CLIP vision features of the letterboxed reference image",
+              "kind": "block",
+              "path": "image_encoder.encode"
+            },
+            {
+              "className": "WanAnimate2ProcessVideosInputStep",
+              "description": "Video preprocess step that optionally resamples the driving video to the model's frame rate, letterboxes every frame into the resolved output frame, and zigzag-pads the tail so the frame count splits into whole segments. The mirrored padding frames are real content to the model; the surplus generated frames are trimmed off again at the end.",
+              "kind": "block",
+              "path": "video_encoder.preprocess"
+            },
+            {
+              "className": "WanAnimate2VideoClipEncoderStep",
+              "description": "Image Encoder step that computes CLIP vision features of the driving video's first frame, conditioning the per-segment reference-extraction pass",
+              "kind": "block",
+              "path": "video_encoder.encode"
+            },
+            {
+              "className": "WanAnimate2ImageVaeEncoderStep",
+              "description": "VAE Encoder step that encodes the letterboxed reference image and stacks the i2v conditioning mask on top, producing the reference half of the conditioning tensor `reference_latents`",
+              "kind": "block",
+              "path": "vae_encoder"
+            },
+            {
+              "className": "WanAnimate2PrepareSegmentsStep",
+              "description": "Step that computes the segment-invariant geometry for the segment loop. The zigzag padding makes every segment exactly `segment_frame_length` frames, so the latent grid, the packed sequence lengths, and the noise shape are the same for all segments and are computed once here.",
+              "kind": "block",
+              "path": "denoise.prepare_segments"
+            },
+            {
+              "className": "WanAnimate2DenoiseStep",
+              "description": "Segment denoise step that iterates over the driving video's segments. At each segment: vae_encoder -> prev_frames -> prepare -> scheduler_reset -> ref_extract -> denoise_inner -> decode.",
+              "kind": "loop",
+              "path": "denoise.denoise"
+            },
+            {
+              "className": "WanAnimate2SegmentVaeEncoderStep",
+              "description": "Step within the segment loop that VAE-encodes this segment's slice of the driving video and stacks the i2v conditioning mask on top. The Wan VAE is causal in time, so encoding the whole video once and slicing the latents would not be equivalent — each segment restarts the temporal convolution on its own slice. A streaming mode would replace this block with one fed segments incrementally. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.vae_encoder"
+            },
+            {
+              "className": "WanAnimate2SegmentPrevFramesStep",
+              "description": "Step within the segment loop that builds the generation-side conditioning tensor `reference_latents`: the previous segment's tail frames (zeros for the first segment) are VAE-encoded, masked, and stacked under the reference half `reference_image_latents`. This is how motion continuity crosses segment boundaries — in pixel space, not latent space. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.prev_frames"
+            },
+            {
+              "className": "WanAnimate2SegmentPrepareStep",
+              "description": "Step within the segment loop that draws this segment's initial noise and allocates a fresh KV cache for the reference-extraction pass. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.prepare"
+            },
+            {
+              "className": "WanAnimate2SegmentSchedulerResetStep",
+              "description": "Step within the segment loop that resets the scheduler: each segment is an independent denoising trajectory, so the solver state and timesteps are re-prepared per segment. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.scheduler_reset"
+            },
+            {
+              "className": "WanAnimate2RefExtractStep",
+              "description": "Step within the segment loop that runs the transformer's reference-extraction pass (`kv_cache_mode=\"extract\"`): the driving-video segment is encoded once and every layer's reference K/V is stored in the KV cache, which the denoising forwards then attend over. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.ref_extract"
+            },
+            {
+              "className": "WanAnimate2SegmentDenoiseInner",
+              "description": "Inner timestep loop that denoises one segment with guidance, attending over the segment's cached reference K/V. The unconditional branch passes `is_uncondtion=True` to the transformer (it skips a dedicated layer on that branch), routed through the guider as a per-branch input. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.denoise_inner"
+            },
+            {
+              "className": "WanAnimate2SegmentDecodeStep",
+              "description": "Step within the segment loop that VAE-decodes the denoised segment. Decoding happens inside the loop because the next segment conditions on this segment's decoded pixels. Finished frames move to CPU and the per-segment KV cache and latents are freed — holding them across segments fragments the allocator enough to OOM at high resolution. This block should be used to compose the `sub_blocks` attribute of `WanAnimate2SegmentLoopWrapper`.",
+              "kind": "block",
+              "path": "denoise.denoise.decode"
+            },
+            {
+              "className": "WanAnimate2DecodeStep",
+              "description": "Step that assembles the final video from the per-segment decoded frames: concatenates the segments, trims the zigzag padding, crops the reference image's letterbox bars back off, and postprocesses. The VAE decode itself happens per segment inside the denoise loop, because each segment conditions on the previous segment's decoded pixels.",
+              "kind": "block",
+              "path": "decode"
+            }
+          ],
+          "taskId": "character_animate"
+        }
+      ]
+    },
+    {
       "blocksClass": "WanImage2VideoAutoBlocks",
       "components": [
         {

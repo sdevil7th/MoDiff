@@ -15,6 +15,7 @@ from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES,
 )
+from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modules.ModularDiffusers.loaders import ModelsLoader
 from modules.ModularDiffusers.modular_utils import (
@@ -52,7 +53,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
     @requires_transformers
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 7)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 9)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 5)
         self.assertTrue(
             all(item.batch == "image" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES)
@@ -66,7 +67,20 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 20)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 22)
+
+        exported_modular_classes = {
+            name
+            for name in dir(diffusers)
+            if name.endswith("ModularPipeline")
+            and isinstance(getattr(diffusers, name), type)
+            and getattr(diffusers, name) is not diffusers.ModularPipeline
+            and issubclass(getattr(diffusers, name), diffusers.ModularPipeline)
+        }
+        self.assertEqual(
+            set(PINNED_MODULAR_WORKFLOW_TRUTH) | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME),
+            exported_modular_classes,
+        )
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
             with self.subTest(pipeline=specification.class_name):
@@ -213,6 +227,34 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 "LTX2DiffusionVaeDecoderStep",
                 {step["className"] for step in workflow["steps"]},
             )
+
+    def test_wan_animate_2_base_and_distilled_publish_distinct_exact_contracts(self):
+        base = reviewed_modular_workflow_contract("WanAnimate2ModularPipeline")
+        distilled = reviewed_modular_workflow_contract("WanAnimate2DistilledModularPipeline")
+
+        self.assertEqual(base["blocksClass"], "WanAnimate2Blocks")
+        self.assertEqual(distilled["blocksClass"], "WanAnimate2DistilledBlocks")
+        for contract in (base, distilled):
+            self.assertEqual(len(contract["workflows"]), 1)
+            workflow = contract["workflows"][0]
+            self.assertEqual((workflow["id"], workflow["taskId"]), ("default", "character_animate"))
+            self.assertEqual(workflow["requiredInputs"], ["driving_video", "image", "prompt"])
+            self.assertIn("videos", {output["name"] for output in workflow["outputs"]})
+
+        base_workflow = base["workflows"][0]
+        distilled_workflow = distilled["workflows"][0]
+        base_inputs = {item["name"]: item for item in base_workflow["inputs"]}
+        distilled_inputs = {item["name"]: item for item in distilled_workflow["inputs"]}
+        self.assertEqual(base_inputs["num_inference_steps"]["default"], 40)
+        # The pinned distilled class describes a ten-step recipe, but its
+        # composed input schema still inherits the base 40-step default. Keep
+        # the reviewed snapshot exact instead of silently rewriting upstream.
+        self.assertEqual(distilled_inputs["num_inference_steps"]["default"], 40)
+        self.assertIn("WanAnimate2DenoiseStep", {step["className"] for step in base_workflow["steps"]})
+        self.assertIn(
+            "WanAnimate2DistilledDenoiseStep",
+            {step["className"] for step in distilled_workflow["steps"]},
+        )
 
     def test_models_loader_rejects_contract_only_class_before_artifact_or_index_resolution(self):
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:

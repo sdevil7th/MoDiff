@@ -81,9 +81,11 @@ that a real model workload completed.
 `GET /model_capabilities` publishes reviewed but unqualified generic adapters
 under `experimentalCapabilities`. A record whose `qualificationStatus` is
 `contract_only` identifies one exact registered Diffusers pipeline class and
-execution kind, its generic `backendPath`, immutable
-`defaultRepo`/`revisionCandidates`, exact `runnableModes`, backend-owned
-parameter aliases, and mode input contracts.
+execution kind, its generic `backendPath`, exact `runnableModes`, reviewed
+upstream workflow contracts, backend-owned parameter aliases, and mode input
+contracts. Immutable `defaultRepo`/`revisionCandidates` appear only after a
+separate artifact admission; pure upstream contract discovery deliberately
+omits them.
 It also reports `autoEligible: false`, `templateEligible: false`, and
 `galleryEligible: false`.
 
