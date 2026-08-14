@@ -823,6 +823,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         "Flux2KleinPipeline",
         frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
         FLUX2_KLEIN_REPO,
+        safe_serialization_required=True,
         max_reference_images=8,
     ),
     "Flux2KleinInpaintPipeline": ImagePipelineAdapter(
@@ -830,6 +831,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"inpaint", "outpaint"}),
         FLUX2_KLEIN_REPO,
         artifact_pipeline_classes=("Flux2KleinPipeline", "Flux2KleinInpaintPipeline"),
+        safe_serialization_required=True,
     ),
     "FluxImg2ImgPipeline": ImagePipelineAdapter(
         "FluxImg2ImgPipeline",
