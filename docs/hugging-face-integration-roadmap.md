@@ -5384,6 +5384,25 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   every selected byte already complete with zero remaining bytes, so no POST or
   deletion was necessary; the preserved full snapshots remain available for
   preview regression testing.
+- [x] **P6.66 Bound Marigold app download and loader serialization:** backend
+  `c841203` binds `prs-eth/marigold-depth-lcm-v1-0` to the exact 14-file /
+  5,161,610,352-byte float32 safetensors component surface used by its generic
+  prediction-map route. The loader now explicitly requires safe serialization
+  instead of relying on the presence of preferred files. The app allowlist
+  retains the default text encoder, UNet, VAE, tokenizer, scheduler, configs,
+  index, and card while excluding six legacy `.bin` weights and three unused
+  fp16 duplicate variants: 10,320,895,232 bytes from the
+  15,482,505,584-byte repository tree.
+
+  App plan and POST regressions bind the capability-derived selection, while a
+  focused perception regression requires the loader's safe-serialization flag,
+  exact default-variant weights, and complete exclusion of legacy pickle
+  files. The capability, app, perception, and loader matrix passes 212 tests,
+  three optional-runtime skips, and 867 subtests; pinned Ruff E9/F, 66-package
+  compatibility, and diff checks pass. A fresh exact app plan reports every
+  selected byte already complete with zero remaining bytes, so no POST or
+  deletion occurred. The older extra variants and unfinished cache blobs were
+  preserved for regression testing.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6647,4 +6666,5 @@ Add references only after the corresponding evidence exists.
 | P6.63 Bounded Allegro, Latte, and Mochi app download selections | `cb3448d` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 18/18/21-file runnable selections replace repository-wide planning and exclude Allegro's unsafe `.bin` duplicates, Latte's unsafe `.pt` plus unused decoder, and Mochi's 93.48 GB of duplicate/default partitions. Current queue-aware plans do not fit, so no POST or deletion occurred. |
 | P6.64 Bounded Stable Audio and Stable Video app download selections | `8c96321` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 19-file / 5,348,079,831-byte Stable Audio and 12-file / 4,509,218,296-byte Stable Video runnable selections replace repository-wide planning. They exclude 24.14 GB of duplicate original, default/full-precision, and demo surfaces while retaining safetensors-only runtime components and rights receipts. Queue-aware plans do not fit beside current reservations, so no duplicate POST, interruption, or deletion occurred. |
 | P6.65 Bounded AudioLDM2 and Shap-E app download selections | `56faa30` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28-file / 4,480,959,446-byte AudioLDM2 and 14-file / 1,332,951,857-byte Shap-E safe-component selections replace repository-wide planning and exclude 8.04 GB of legacy pickle and unsafe duplicate surfaces. Both selections are already complete in the preserved full caches, so no POST or deletion occurred. |
+| P6.66 Bounded Marigold app download and loader serialization | `c841203` | Not required | Exact immutable app plan and prior local tiny smoke only; remote quality/output review and physical macOS remain pending | Not required | One exact 14-file / 5,161,610,352-byte float32 safetensors selection replaces repository-wide planning, excludes 10.32 GB of legacy pickle and duplicate fp16 surfaces, and makes the loader's safe-serialization requirement explicit. The selection is already complete; no POST or deletion occurred, and older extra/unfinished blobs remain preserved. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
