@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 from modiff.path_identifiers import resolve_runtime_input_path  # noqa: E402
 
 
-TEMPLATE_PATH = ROOT / "data" / "graphs" / "qualification" / "ltx-30-minute-continuation.template.json"
+TEMPLATE_PATH = ROOT / "data" / "qualification-graphs" / "ltx-30-minute-continuation.template.json"
 MODEL_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 MODEL_REVISION = "7c64400e1861cc0d7b98d570a1926d5408ec60cd"
 
@@ -164,7 +164,11 @@ def parse_args(argv=None):
         required=True,
         help="Portable app-managed path, for example images/qualification-opening.webp.",
     )
-    parser.add_argument("--sid", required=True, help="Active app WebSocket session ID.")
+    parser.add_argument(
+        "--sid",
+        required=True,
+        help="App session label; use the current WebSocket sid when live session messages are needed.",
+    )
     parser.add_argument("--output", type=Path, help="Write the materialized API graph to this path.")
     parser.add_argument("--submit", action="store_true", help="Queue the six-hour qualification through POST /graph.")
     parser.add_argument(

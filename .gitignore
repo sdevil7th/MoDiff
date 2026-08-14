@@ -24,6 +24,8 @@ custom/*
 data/*
 !data/model-artifact-catalog.json
 !data/modular-workflow-contracts.json
+!data/qualification-graphs/
+!data/qualification-graphs/**
 !data/graphs/
 !data/workflow-library-manifest.json
 data/graphs/*
@@ -35,8 +37,6 @@ data/graphs/*
 !data/graphs/studio/**
 !data/graphs/experimental/
 !data/graphs/experimental/**
-!data/graphs/qualification/
-!data/graphs/qualification/**
 #!data/.gitkeep
 
 web/user/*
