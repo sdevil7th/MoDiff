@@ -395,8 +395,8 @@ cap. A fresh backend returned HTTP 200 for `/`, `/assets/index.js`, and
 `/health`. No Gallery media or model asset was generated or downloaded.
 
 `.github/workflows/qualify-optional-runtime-macos.yml` is the smallest pending
-hosted macOS proposal: it is `workflow_dispatch` only, asserts the current
-`macos-14` runner is ARM64, applies and uploads the explicit two-dependency
+hosted macOS proposal: it is `workflow_dispatch` only, asserts the explicit
+`macos-15` runner is ARM64, applies and uploads the two-dependency
 prospective-base diff, requires `status: ready`, runs the same consented
 qualifier, and uploads bounded evidence plus target context for 14 days. The
 workflow has not run. Its presence is not macOS evidence or permission to

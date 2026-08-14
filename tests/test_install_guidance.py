@@ -265,7 +265,7 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", workflow)
         self.assertNotIn("pull_request:", workflow)
         self.assertNotIn("push:", workflow)
-        self.assertIn("runs-on: macos-14", workflow)
+        self.assertIn("runs-on: macos-15", workflow)
         self.assertIn('test "$(uname -m)" = "arm64"', workflow)
         self.assertIn('test "$(git diff --name-only)" = "pyproject.toml"', workflow)
         self.assertEqual(workflow.count('-  "peft>=0.17.0;'), 2)
