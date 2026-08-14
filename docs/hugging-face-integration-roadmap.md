@@ -5424,6 +5424,27 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   submitted through the app. It remains governed by the app's existing
   transfer queue; no older model or alternate cached framework file was
   deleted.
+- [x] **P6.68 Bound unconditional-image app downloads and loader serialization:**
+  backend `42fa625` makes both small-model routes safetensors-only in the loader
+  and Model Manager. DDPM and DDIM share the exact six-file /
+  143,025,496-byte `google/ddpm-cifar10-32` selection, excluding the
+  143,101,489-byte legacy `.bin`, repository Python, and four demo images from
+  the 286,139,260-byte tree. The consistency-model route selects six files /
+  1,183,678,409 bytes from `openai/diffusers-cd_imagenet64_l2`, excluding its
+  1,183,833,415-byte legacy `.bin` duplicate from the 2,367,511,824-byte tree.
+  Both selections retain their safetensors model, scheduler/config surface,
+  index, and immutable card/attribute receipts.
+
+  App plan and POST regressions bind both capability-derived allowlists; the
+  focused artifact regression requires the shared DDPM/DDIM identity, explicit
+  safe-serialization flags, code-free selection, and complete legacy-weight
+  exclusion. The capability, app, unconditional, and loader matrix passes 213
+  tests, three optional-runtime skips, and 872 subtests; pinned Ruff E9/F,
+  66-package compatibility, and diff checks pass. Independent fresh app plans
+  found the runtime weights complete and only 4,277 plus 11,427 receipt bytes
+  remaining; both exact fitting repairs were submitted concurrently through
+  the app and remain governed by its existing bounded queue. No older model,
+  unsafe duplicate, demo, or code file was deleted.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6689,4 +6710,5 @@ Add references only after the corresponding evidence exists.
 | P6.65 Bounded AudioLDM2 and Shap-E app download selections | `56faa30` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28-file / 4,480,959,446-byte AudioLDM2 and 14-file / 1,332,951,857-byte Shap-E safe-component selections replace repository-wide planning and exclude 8.04 GB of legacy pickle and unsafe duplicate surfaces. Both selections are already complete in the preserved full caches, so no POST or deletion occurred. |
 | P6.66 Bounded Marigold app download and loader serialization | `c841203` | Not required | Exact immutable app plan and prior local tiny smoke only; remote quality/output review and physical macOS remain pending | Not required | One exact 14-file / 5,161,610,352-byte float32 safetensors selection replaces repository-wide planning, excludes 10.32 GB of legacy pickle and duplicate fp16 surfaces, and makes the loader's safe-serialization requirement explicit. The selection is already complete; no POST or deletion occurred, and older extra/unfinished blobs remain preserved. |
 | P6.67 Bounded Whisper Tiny app download selection | `4783400` | Not required | Exact immutable app plan and prior local in-memory ASR smoke only; remote semantic/output review and physical macOS remain pending | Not required | One exact 13-file / 155,455,649-byte safetensors/processor selection excludes 453,397,578 bytes of duplicate PyTorch, Flax, and TensorFlow weights. Only 21,225 metadata bytes remained; a fresh fitting plan preceded the app-only completion request, with no deletion. |
+| P6.68 Bounded unconditional-image app downloads and loader serialization | `42fa625` | Not required | Exact immutable app plans and prior local tiny smokes only; remote quality/output review and physical macOS remain pending | Not required | Exact six-file safetensors selections for shared DDPM/DDIM CIFAR-10 and ImageNet64 consistency routes exclude 1.33 GB of legacy pickle plus repository code/demo surfaces and make all three loader serialization requirements explicit. Only 15,704 receipt bytes remained; fresh fitting plans preceded two concurrent app-only repairs, with no deletion. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
