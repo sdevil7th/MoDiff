@@ -3745,6 +3745,25 @@ output and assets remotely. Assets: remote Dataset only.
     downloads remain active, so this is source/unit evidence for the next safe
     worker restart, not a claim that the current transfers changed mode or that
     any model/media/macOS qualification completed.
+  - [x] **P2.5f Bounded app-owned Hub transport:** backend `77ed298` moves
+    model and Gallery snapshot payloads onto the standard Hub HTTP path, whose
+    per-request timeouts and retries provide a bounded failure boundary while
+    preserving completed cache blobs. Model and Gallery work now share the
+    app's existing two-transfer semaphore. Ordinary payload transfers may
+    overlap within that limit; repair is writer-exclusive from its first cache
+    preparation step and restores the exact prior process-global Hub transport
+    policy after the exclusive window drains. Queue-aware exact byte plans,
+    immutable revisions, the 64 GiB reserve, and the no-deletion policy remain
+    unchanged. The focused matrix passes 56 tests, the concurrency/repair/
+    Gallery race subset passes five repeated runs, and the complete backend
+    gate passes (`1630 passed, 40 skipped, 3273 subtests`) together with Ruff
+    E9/F, 66-package compatibility, shell/diff checks, and portable preflight.
+    The already-running worker still predates this source change and was not
+    restarted; its existing AuraFlow transfer and app-owned overnight queue
+    were left untouched. This records source/unit behavior only: no active
+    transfer was switched, no model or Gallery payload was deleted, and no
+    generation, review, Dataset publication, activation, remote, or physical
+    macOS evidence is claimed.
 
 ### Phase 2 test and asset gate
 
@@ -6389,6 +6408,7 @@ Add references only after the corresponding evidence exists.
 | P2.5c Exact default-input qualification readiness | Not required | `d271a9f`, corrected by `7738537` | Read-only local-byte audit only; 76 live qualification receipts remain pending | Pending | The fail-closed campaign gate verifies selected Template Gallery defaults against their content-addressed bindings and asset-manifest size/hash receipts before browser or inference startup, checking both the authoring tree and the normal installer's durable backend `web/` payload. The runner uses the same installed-app fallback. The source checkout has none of the 50 required files (33,867,388 bytes), so 38 input-conditioned jobs are blocked and 38 input-free jobs are ready. No direct asset download, model deletion, graph, inference, output, review, or publication occurred. |
 | P2.5d App-owned pinned Gallery materialization | `df71942` | `0fd0830` | Contract/unit/mocked-browser proof only; app activation, Gallery install, and 76 live qualification receipts remain pending | `b27198159c30d0c81aef397c188a7826866e5027` (`sha256:canonical-json:5ec869b755a6ce04a789d6835819da150493bfaef8a6bc1480f0274ba05bcab9` approved subset); payload not installed in this checkout | The app now exposes strict status, queue-aware plan, and explicit install/repair actions for the exact anonymous Dataset payload. It reserves download plus atomic staging bytes with active model reservations and a 64 GiB safety margin, hashes all 356 files / 480,430,370 bytes, and never deletes model caches. Complete backend/client gates and all 107 mocked Studio tests pass. The current old worker was intentionally not restarted while app-managed model downloads are active, so no Gallery POST/download occurred and the 38 conditioned jobs remain blocked until safe restart plus explicit in-app consent. |
 | P2.5e Bounded parallel app downloads | `c313908` | Not required | Source/unit concurrency proof only; current old worker and live qualification remain pending | Not required | Two ordinary app snapshot transfers can now share the existing two-slot semaphore instead of serializing behind the process-global Xet lock. Repair is writer-exclusive and restores the prior Xet mode before normal transfers resume. Queue reservations, the 64 GiB reserve, immutable revisions, and no-deletion behavior are unchanged. Focused and complete backend gates pass. The active worker was not restarted, so its existing queue remains uninterrupted and this commit makes no current-live-transfer or output claim. |
+| P2.5f Bounded app-owned Hub transport | `77ed298` | Not required | Source/unit transport, concurrency, and restoration proof only; current old worker and live qualification remain pending | Not required | App-owned model and Gallery snapshot payloads use standard Hub HTTP with bounded per-request timeouts/retries and share the existing two-transfer limit. Repair is writer-exclusive from cache preparation onward, completed blobs remain intact, exact global policy restoration is tested, and all admission/reserve/no-deletion behavior is unchanged. The focused 56-test matrix, five repeated race runs, complete 1,630-test backend gate, and static/package/preflight checks pass. The old active worker was not restarted, AuraFlow and the overnight queue were not interrupted, no active transport was switched, and no model/media/macOS qualification is claimed. |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
