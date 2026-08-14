@@ -1,6 +1,6 @@
 # Optional runtime optimizations
 
-Last reviewed: 2026-08-12
+Last reviewed: 2026-08-15
 
 MoDiff treats accelerator extensions and optional model libraries as reviewed
 runtime contracts, not as uncontrolled additions to the main Python
@@ -10,15 +10,17 @@ optimization overlays are classified as `legacy_unqualified`; they are never
 loaded or activated, and an explicit rollback deactivates them to the base
 environment.
 
-The first optional model-library contract moves Transformers `5.14.1` and PEFT
-`0.20.0` together with their eight overlay-owned transitive distributions. It
-publishes one immutable six-target contract. Linux and Windows x86-64 are
-`qualified` with install/activation actions available; Linux ARM64, Windows
-ARM64, and both macOS architectures remain `candidate_unqualified` and
-base-delivered.
-The lock covers ten wheels on Python 3.12 for Linux, macOS, and Windows on
-x86-64 and ARM64. Merely finding the requested versions—or merely publishing
-these locks—does not make the contract runnable.
+The optional model-library boundary now publishes two immutable profiles. The
+published-wheel profile moves Transformers `5.14.1` and PEFT `0.20.0` together
+with their eight overlay-owned transitive distributions; its lock covers ten
+Python 3.12 wheels for Linux, macOS, and Windows on x86-64 and ARM64. A separate
+profile delivers exact Transformers `main` commit
+`96fe6dce36cc929a5ffd3e34296554c4cb6b669e` (`5.16.0.dev0`) with the same PEFT
+version and reviewed transitive closure. Linux x86-64 execution is bound to that
+exact-main profile, while Windows x86-64 retains the published-wheel profile.
+Linux ARM64, Windows ARM64, and both macOS architectures remain
+`candidate_unqualified` and base-delivered. Merely finding the requested
+versions—or merely publishing the locks—does not make either profile runnable.
 
 ## Product contract
 
@@ -65,8 +67,11 @@ capability contract permits it.
 Optional-runtime dependency metadata is intentionally separate from executable
 delivery. Every current Diffusers execution profile publishes a complete
 platform-delivery table: Linux and Windows x86-64 use `optional_overlay`, while
-pending architectures use `base`. The effective target is resolved from that
-reviewed table rather than a hidden platform shortcut. Discovery, workflow
+pending architectures use `base`. A second explicit target table resolves the
+profile identity: Linux x86-64 requires exact Transformers `main`, Windows
+x86-64 requires the published `5.14.1` wheels, and the four pending targets
+remain base/candidate. The effective target is resolved from those reviewed
+tables rather than a hidden platform shortcut. Discovery, workflow
 browsing/opening, contract preview, and Auto planning remain non-installing on
 every target.
 
@@ -114,18 +119,39 @@ releases its completed mutation gate.
 | bitsandbytes | `bitsandbytes 0.50.0` | Unavailable pending artifact locks | Exact qualified workload only |
 | SageAttention | `sageattention 1.0.6` | Unavailable pending artifact locks | Manual experiment; never Auto |
 | xFormers | `0.0.32.post2` for the Torch 2.8 CUDA profile | Base NVIDIA profile | Exact qualified workload only |
-| AMD AITER | No universal pin | No generic installer | Manual, qualified Instinct/ABI combinations only |
 
 xFormers releases are tied to a specific PyTorch ABI. MoDiff therefore pins
 the Torch-2.8-compatible release rather than resolving the newest xFormers
 package. FlashAttention is source-built because upstream does not publish one
 wheel that safely covers every supported MoDiff CUDA/ROCm combination.
 
-AITER is not presented as a one-click install on general AMD systems. Its
-published builds target specific ROCm, Torch, and Instinct combinations.
-Showing a generic install action would risk replacing the managed Torch ABI.
-Setup links to the official build instructions for an administrator evaluating
-a qualified deployment.
+The reviewed Diffusers pin removed its old `aiter` attention-backend name and
+replaced it upstream with `aiter_fa2_hub`. MoDiff exposes neither name: the old
+name no longer has an implementation at the pin, while the replacement resolves
+a mutable Hub-kernel revision and therefore cannot satisfy the immutable runtime
+contract. Imported or saved recipes requesting either spelling fail closed.
+
+### Exact Transformers main source delivery
+
+The exact-main profile does not execute upstream setup or build code. The app
+authenticates the official commit archive by URL, SHA-256, byte size, member
+count, and archive root; applies bounded depth, member, and expanded-byte
+limits; rejects links, Windows reparse markers, traversal, case collisions, and
+nonzero data on non-regular entries; and extracts only the reviewed package
+tree. It then assembles a sorted `ZIP_STORED` wheel with fixed timestamps,
+permissions, `METADATA`, `WHEEL`, and `RECORD` using the Python standard library.
+The source-tree seal, final wheel hash/size, metadata, record closure, and full
+installed-file seal must all match the source-controlled profile before the
+ordinary isolated validation and atomic promotion path may continue.
+
+For `96fe6dce36cc929a5ffd3e34296554c4cb6b669e`, the official archive is
+20,532,315 bytes with SHA-256
+`e9903aec337657fd8ae1fd1e7812efed159c2cf4444e83e7fc877e252127e1b3`.
+The normalized 52,395,984-byte wheel has SHA-256
+`8a439d25595c6dde486cfbd5a6ed8158e0fe7554ec236491668425e11952898f`.
+Cold acquisition disables proxies and redirects, enforces exact response
+identity and length, cleans partials on cancellation/failure, and revalidates
+cache objects before reuse.
 
 ## Staged-overlay qualification boundary
 
@@ -309,8 +335,11 @@ base worker, the same loader was rejected before queueing with HTTP 409
 `POST /hf_download` now accepts a bounded exact lowercase 40-character commit
 `revision`, forwards it to the Hub snapshot operation, and permits concurrent
 join only for the same revision and file selection. All qualification-only
-state was removed. This closes the Windows guarded live-model/media check, not
-non-Windows qualification or the production dependency/action/cutover gate.
+state was removed. This was one 64-by-64, one-step Qwen guard canary on that
+Windows NVIDIA host. It was not a representative P0-P6 workload, an
+asset-quality review, a resource recipe, or whole-campaign CUDA qualification.
+It closes the Windows guarded live-model/media check only, not non-Windows
+qualification or the production dependency/action/cutover gate.
 
 Linux x86-64 CPU qualification on 2026-08-12 used a detached checkout at
 `b30c6b12989272b7399be1ed8102a25070ba00d0` with one reviewable prospective
@@ -366,7 +395,36 @@ AMD GPU execution, a Linux live-model/media run, macOS qualification, or source
 cutover. Production dependency, delivery, qualification, and action flags stay
 unchanged.
 
-The final Linux repository replay used the normal managed CPU environment and
+The later exact-main campaign superseded that source-cutover status for Linux
+x86-64 only at the then-current `a597f974` identity. From clean committed
+checkout `0eb10c8`, hardened preflight selected
+profile `huggingface-transformers-main-a597f974-peft-0.20.0`, verified a clean
+available source commit, and planned 10 artifacts totaling 58,228,145 bytes.
+The 40.163-second cold run acquired and assembled the exact no-code wheel,
+installed and validated the overlay, activated through a fresh worker, completed
+the finite `[1, 4, 16]` CLIP+PEFT workload with four trainable adapter
+parameters, rolled back through another fresh worker, and proved the base child
+contained no staged distribution. It retained no managed state. The bounded
+path-free evidence was 1,644 bytes with SHA-256
+`1a5dd156bb3ef48ea79c5051ea73215c27819f3163fa7d34eca16b27c0aff283`.
+That campaign established the Linux x86-64 exact-main profile family and
+platform-scoped cutover; global and other-target defaults remained closed. It
+is app-owned runtime and no-weight evidence, not AMD GPU, generated-media, or
+cross-platform proof. The current production identity is the later exact 96fe
+profile recorded below.
+
+That campaign remains historical evidence for byte-identical selected package
+content; it is not relabeled as a qualification run for a later commit. On
+2026-08-15 the app separately acquired, validated, activated, and fresh-process
+loaded profile `huggingface-transformers-main-96fe6dce-peft-0.20.0` at spec
+digest
+`sha256:7566ef4c2cd9b8ed1e39850bbf370c66fa98a2909960503bfdfe12fc469088cf`.
+The two commits after `a597f974` change only upstream Gemma and AXK1 CUDA A10G
+tests; the complete selected source seal and normalized wheel are unchanged.
+This cutover receipt proves the exact installed identity and isolated validation,
+not a new generated-media, performance, or physical-macOS qualification.
+
+The 2026-08-14 Linux repository replay used the normal managed CPU environment and
 the documented gates:
 
 ```bash
@@ -394,14 +452,15 @@ the four JavaScript chunks totaled 523,108 gzip bytes against the 523,264-byte
 cap. A fresh backend returned HTTP 200 for `/`, `/assets/index.js`, and
 `/health`. No Gallery media or model asset was generated or downloaded.
 
-`.github/workflows/qualify-optional-runtime-macos.yml` is the smallest pending
-hosted macOS proposal: it is `workflow_dispatch` only, asserts the explicit
+`.github/workflows/qualify-optional-runtime-macos.yml` is the pending hosted
+macOS qualification path: it is `workflow_dispatch` only, asserts the explicit
 `macos-15` runner is ARM64, creates one exact two-dependency prospective-base
-patch, verifies and applies that same patch, requires `status: ready`, runs the
-same consented qualifier, and uploads the resulting bounded diff, evidence,
-and target context for 14 days. A regression executes the patch check against
-the current project rather than only inspecting workflow text. The workflow
-has not run. As of 2026-08-14, the
+patch, verifies and applies that same patch, and passes exact profile ID
+`huggingface-transformers-main-96fe6dce-peft-0.20.0` to both preflight and the
+consented run. It asserts that profile and `sourceRevisionReady`, then uploads
+the bounded diff, evidence, and target context for 14 days. A regression
+executes the patch check against the current project rather than only inspecting
+workflow text. The workflow has not run. As of 2026-08-15, the
 [official GitHub-hosted runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 lists the standard `macos-15` label as an ARM64 M1 runner; the workflow still
 checks `uname -m` before changing the prospective checkout so a future label
@@ -414,7 +473,7 @@ The following features have concrete runtime implementations and remain
 disabled until explicitly selected or applied by an exact Auto receipt:
 
 - Diffusers attention dispatcher backends, including native SDPA, xFormers,
-  FlashAttention, Hub FlashAttention variants, SageAttention, and AITER when
+  FlashAttention, reviewed Hub FlashAttention variants, and SageAttention when
   their capability probes pass.
 - Diffusers regional compilation of repeated blocks.
 - Diffusers denoiser caches with model/workload output review.
@@ -445,7 +504,6 @@ feature safely.
 - [Diffusers quantization API](https://huggingface.co/docs/diffusers/main/api/quantization)
 - [Diffusers optimization CLI](https://huggingface.co/docs/diffusers/main/using-diffusers/cli)
 - [xFormers releases](https://github.com/facebookresearch/xformers/releases)
-- [AMD AITER](https://github.com/ROCm/aiter)
 - [bitsandbytes](https://huggingface.co/docs/bitsandbytes/main/index)
 
 These are reviewed pins. MoDiff does not resolve “latest” at runtime. A version

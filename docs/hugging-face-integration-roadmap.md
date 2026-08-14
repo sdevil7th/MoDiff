@@ -6,16 +6,29 @@ gaps. It is a durable product roadmap rather than a claim that every upstream
 pipeline is already runnable.
 
 The reviewed Diffusers installation is pinned to commit
-`bb56997d4b7e87f0743f26a612f49ec4e7ce7213`. The latest-upstream check on
-2026-08-13 found [Diffusers v0.39.0](https://github.com/huggingface/diffusers/releases/tag/v0.39.0)
-as the latest tagged release (release commit
-`a3608b512ed7248499a44c61d954965ed9bdae4d`) and
-`bb56997d4b7e87f0743f26a612f49ec4e7ce7213` as the latest `main` commit. The
-comparison inventory and executable dependency now use that reviewed immutable
-snapshot. Re-run the inventory before changing the Diffusers pin or marking a
-gap complete.
+[`90b4e34e79a86ec5e7f2437634fe95ecd2108796`](https://github.com/huggingface/diffusers/commit/90b4e34e79a86ec5e7f2437634fe95ecd2108796),
+the verified `main` head on 2026-08-15. The reviewed comparison from the prior
+pin contains 14 commits. The comparison inventory and executable dependency use
+that immutable snapshot; re-run the inventory before changing the pin or
+marking a gap complete.
 
-### Pin delta admitted 2026-08-13
+### Pin delta admitted 2026-08-14
+
+The 14-commit delta adds one exported pipeline family:
+`MiniMaxMusic3ModularPipeline`, with one prompt-and-lyrics text-to-audio
+workflow. It is registered as Expert-visible and contract-only; no repository,
+runnable mode, template, Gallery entry, download, or execution claim is inferred.
+The complete no-weight Modular snapshot now contains 34 classes and 94 upstream
+workflows.
+
+Other product-relevant changes add MiniMax-H3 LoRA loading, repair Wan
+video-to-video placement and Wan VACE RoPE dtype handling, align PEFT cleanup,
+and replace the old `aiter` attention backend upstream with `aiter_fa2_hub`.
+MoDiff removed the obsolete option and rejects both spellings: the replacement's
+mutable Hub-kernel revision does not meet the immutable artifact policy. No new
+standard `DiffusionPipeline` family was added by this delta.
+
+### Previous pin delta admitted 2026-08-13
 
 The admitted pin is 73 commits after the prior
 `13a7bee4878d62fccc8d25f97e480e68de96fa03` snapshot. Its product-relevant
@@ -65,6 +78,57 @@ workflows: text-only `t2va`, first/last-keyframe `fl2va`, and omni-reference
 contracts, not permission to add a MiniMax-named node or enable an unqualified
 artifact.
 
+### Transformers main audit 2026-08-15
+
+The reviewed Transformers `main` head is
+[`96fe6dce36cc929a5ffd3e34296554c4cb6b669e`](https://github.com/huggingface/transformers/commit/96fe6dce36cc929a5ffd3e34296554c4cb6b669e)
+(`5.16.0.dev0`). It is two test-only commits after the previously reviewed
+`a597f974857b3d92939971296bc0deb93d33d780`: only the Gemma and AXK1 CUDA A10G
+expected-value tests changed. `LICENSE`, `README.md`, package metadata,
+dependencies, and the entire `src/transformers` tree have identical Git object
+IDs. The selected-source seal and deterministic wheel bytes are therefore also
+unchanged.
+
+The app now has a separate immutable-main optional-runtime profile. It verifies
+the official commit archive by exact URL, size, and SHA-256; performs bounded,
+link/reparse-safe selected-tree extraction; and assembles a normalized wheel
+without executing upstream `setup.py`, a build backend, or downloaded source.
+The final wheel, metadata, `RECORD`, and complete file seal are independently
+validated before the existing isolated overlay promotion path may use them.
+Linux x86-64 passed a clean-checkout acquire, install, fresh-process activation,
+finite CLIP+PEFT workload, rollback, and clean-base-child campaign. Execution on
+that target was historically qualified at the byte-identical `a597f974`
+profile. The current app subsequently acquired, validated, activated, and
+fresh-process loaded the exact
+`huggingface-transformers-main-96fe6dce-peft-0.20.0` profile at spec digest
+`sha256:7566ef4c2cd9b8ed1e39850bbf370c66fa98a2909960503bfdfe12fc469088cf`.
+This exact app cutover does not rewrite the earlier qualification evidence as a
+96fe run. Windows x86-64 keeps
+the previously qualified published Transformers `5.14.1` profile; Linux ARM,
+Windows ARM, and both macOS architectures remain fail-closed candidates. The
+manually triggered macOS workflow now names and verifies the exact main profile,
+but physical macOS qualification is still pending.
+
+The main-tree delta adds AXK1/2, Cohere Compass, Cosmos3 Edge, Granite SWA/MoE
+SWA, and MuseGlimmer model packages but no new Transformers pipeline task
+registry. MoDiff now exposes bounded generic speech, causal-text, and
+image/video-to-text loaders/actions, plus a finite model-specific AnyToAny
+adapter for Janus text and image output. Immutable SmolLM2 and SmolVLM model
+contracts and Studio workflow specifications exercise the generic text and
+image-to-text paths, and both selected app-only downloads are complete. The app
+also downloaded and verified the exact 11-file / 4,161,125,359-byte
+`deepseek-community/Janus-Pro-1B@1655280bb75959cc1cb85529a2a8b26e7016072e`
+selection without deleting an older model. Its 4,153,396,574-byte safetensors
+blob matches SHA-256
+`9d1a416f95fb58d6e02858623c9c676003d66006d51fb5d5cc93348ba78cb942`;
+the app reports the cache complete and repair-free. Janus weights remain under
+the DeepSeek Model License Agreement v1.0, and product/user compliance review
+is still required. Native
+Emu3 image generation, Cosmos3 reasoner orchestration, and Qwen2.5-Omni output
+remain research-blocked pending their own safe artifact, resource, and bounded
+output contracts. Static symbol compatibility at `main` is not a live model or
+cross-platform qualification claim.
+
 ## How to update this tracker
 
 - Use `[x]` only after every required backend, client, test, live-proof, and
@@ -85,8 +149,8 @@ artifact.
 - [x] Identify the initial 18 missing official Modular pipeline classes and 69
   missing standard pipeline families listed in the appendices.
 - [x] Re-audit upstream through 2026-08-12 and append the two newly exported
-  LTX2/LTX2.5 Modular classes, bringing the current Modular gap inventory to
-  20 without changing the 69-family standard-pipeline inventory.
+  LTX2/LTX2.5 Modular classes, bringing that checkpoint's Modular gap inventory
+  to 20 without changing the 69-family standard-pipeline inventory.
 - [x] Run the pre-change backend baseline: 627 tests and 274 subtests passed;
   Ruff, dependency validation, and backend preflight passed.
 - [x] Confirm the following owner decisions:
@@ -430,7 +494,7 @@ every referenced node, parameter, and handle against `/nodes`, then materializes
 the same visible editable graph. Templates carry an execution-spec reference
 and reviewed overrides instead of hidden model-specific code.
 
-### Upstream workflow coverage discovered by the node audit
+### Historical upstream workflow coverage from the 2026-08-07 node audit
 
 | Family | Pinned upstream workflow surface | Current MoDiff gap or mismatch |
 | --- | --- | --- |
@@ -450,11 +514,13 @@ This table is an admission inventory, not permission to advertise every
 upstream workflow. Support is added only when all required node actions,
 parameter adapters, execution specification, tests, and proof level agree.
 
-### Missing actions inside families MoDiff already supports
+### Historical action gaps recorded by the 2026-08-07 audit
 
-These are action/adapter gaps within existing families, separate from the 69
-entirely missing standard families in Appendix B. They should extend generic
-image, video, and audio task nodes; none justifies a model-named node.
+This table preserves the pre-implementation action/adapter audit. It is not the
+current closure ledger; later completion entries and the generated coverage
+ledger supersede rows that have since been admitted. The architectural rule
+still applies: extend generic image, video, and audio task nodes unless a
+model-specific semantic truly requires its own bounded adapter.
 
 | Family | Existing generic coverage | Confirmed pinned classes/actions not yet covered or exposed |
 | --- | --- | --- |
@@ -6830,12 +6896,100 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 - [ ] Generated video and receipts are published through the remote asset
   workflow; no media is committed to Git.
 
-### P2-P6 locally available completion audit (2026-08-14)
+### P2-P6 source-scope audit correction (2026-08-15)
 
-All currently identifiable source, static-contract, safe-serialization,
-bounded-download, and generation-free campaign work that can be completed on
-this Linux CPU host is implemented through P6. The remaining unchecked roadmap
-items are deliberately external gates rather than missing local source slices:
+The earlier wording that all locally identifiable work through P6 was complete
+was too broad. It applied only to the finite slices already enumerated in those
+phases, not to the wider goal of classifying and covering every current
+Diffusers/Transformers semantic and researching a complete template catalog.
+
+The generic task/media architecture now has 165 exact backend execution-spec
+and task-planning pairs. It covers generic image, video, audio, unconditional,
+perception, 3D, speech, bounded causal-text, image/video-to-text, and
+model-specific bounded AnyToAny actions; model identities and artifacts remain
+separate from those task boundaries. The regenerated canonical library contains
+177 unique, deterministic, independently verified graph files: the 165 base
+pairs plus 12 retained variants. All 177 are executable at source/graph level.
+
+The 77 public templates pass their structural contracts and cover 51 canonical
+workflows. Every one of the other 126 workflows has an exact Gallery-hidden,
+zero-asset candidate contract: 90 image, 27 video, six JSON, and three audio;
+74 require reviewed input examples before promotion. These are authoring
+contracts, not generated assets or public Gallery claims.
+
+The generated full-coverage ledger classifies every one of the 327 exported
+non-Flax Diffusers pipeline symbols: 116 executable, 15 exact equivalents, 20
+contract-only, 120 research-blocked, 56 intentionally excluded, and zero
+unreviewed. Its six finite Transformers semantics contain four executable and
+two research-blocked entries. This is complete inventory and classification,
+not a claim that the 140 non-executable Diffusers classes have safe artifacts,
+bounded MoDiff actions, or live qualifications. Their primary blockers are
+finite: 54 require a new, unadmitted, or incompatible base/auxiliary artifact
+(46 research, eight contract); 46 are blocked by legal, gating, territory, or
+safety constraints (41 research, five contract); 34 lack an exact safe
+assembly/index/serialization/source contract (27 research, seven contract);
+and six still lack bounded generic pre/post-processing or output contracts.
+
+The final 2026-08-15 source wave added 35 execution pairs without removing a
+previous pair: 12 combined source/mask/control-image routes; five extended
+AnimateDiff/CogVideoX video routes; five direct Qwen control, layered, edit, and
+Edit-Plus routes; three Janus AnyToAny routes; Chroma image-to-image plus
+inpaint/outpaint; FLUX.2 Klein, FLUX Kontext, and Z-Image inpaint/outpaint; and
+direct LTX2 text-to-video with synchronized video and audio. Earlier same-day
+work also admitted generic Transformers text/image-to-text, PAG, LCM, and
+Stable Diffusion routes. At the reviewed pin, the 34 Modular classes now
+partition into 11 runnable, 19 contract-only, and four exact equivalents
+without distinct runnable Modular profiles.
+
+The official Comfy research foundation pins
+`Comfy-Org/workflow_templates` at
+`d9e66019b85da231b7c936ad9cb7ff08cec16557`, inventories all 581 templates and
+93 blueprints, and records conservative semantic evidence without importing or
+executing Comfy graphs. A separate fail-closed authoring-research ledger covers
+308 records: 217 templates and 91 blueprints. It contains 54 existing-MoDiff
+mapping candidates (39 templates and 15 blueprints), 138
+`new_contract_not_authored` candidates, and 116 `contract_undetermined`
+records. The research/listing and contract states are therefore complete, but
+the 138 proposed new MoDiff contracts are deliberately not yet authored. No
+Comfy graph, node package, model, or media asset was copied.
+
+Historical Gallery evidence discovery preserves all 70 approved examples. The
+current release audit finds 26 records whose retained evidence remains current
+and 44 stale records for targeted reconciliation; seven templates have no prior
+example. Eleven templates and 11 workflows already have complete release
+receipts. Visual approval remains attached to the reviewed bytes, while missing
+duration, peak-memory, graph, prompt, model-revision, or node-lock proof is never
+invented. Do not blanket-rerun approved examples: first reconcile exact bytes,
+graph and prompt locks, model revision, node contract, and receipt; regenerate
+only changed or unmatched cases plus representative canaries.
+
+The regenerated release report is correctly blocked rather than empty: 66 of
+77 templates and 166 of 177 workflows lack complete release evidence, and none
+of the 51 advertised resource recipes has a measured physical qualification
+receipt on this host. Source completeness, prior visual approval, asset
+authoring, and physical release qualification remain separate claims.
+
+App-only model provisioning completed exact SmolLM2, SmolVLM, and Janus
+selections totaling 4,951,475,788 bytes without deleting an older model. The
+separate pending campaign still contains ten exact selections totaling
+408,762,812,498 bytes (408.763 GB). The latest app plan reports
+70,983,499,776 free bytes, a 68,719,476,736-byte reserve, and only
+2,264,023,040 usable bytes; no pending selection currently fits. Stable Video
+and Stable Audio additionally remain access-gated after prior HTTP 403 results
+with no configured token. No direct download or reserve-bypassing submission is
+permitted.
+
+Closeout references: backend `d6b9069` relocks Transformers main, `94d5e09`
+records the app-only Janus cache receipt, `ccaf0d1`/`1df742a`/`f129a03`/
+`161710f`/`e9477bd`/`1272d31` contain the final generic and exact-class source
+closure, `b2d57ac` seals the 177-workflow library, and `5e2aae9` seals coverage
+and hidden candidate contracts. Client `fdadc34` bridges the final media routes,
+`01d531f` admits the authoritative supported runtime state, `b969a4e` makes
+canonical generation crash-bounded, and `f893dd6` preserves per-mode output
+media. Comfy inventory and fail-closed authoring contracts are recorded by
+backend `d9fb0a0` and `832e254`.
+
+The following separate gates do remain external:
 
 - P2.5 and the Phase 3-5 asset gates require remote real-weight execution,
   human quality/rights review, and immutable Dataset publication.
@@ -6851,6 +7005,14 @@ items are deliberately external gates rather than missing local source slices:
 
 These gates remain unchecked. Static, mocked, dry-run, cache-readiness, and
 CPU-smoke evidence must not be promoted into live output or release claims.
+A qualified accelerator means a supported device and runtime with sufficient
+RAM, VRAM, and disk that has completed the exact pinned model/recipe workload
+and produced a measured result receipt. Merely having a GPU is not
+qualification. The earlier NVIDIA evidence was one Windows 64-by-64, one-step
+Qwen guard canary; it was not broad P0-P6, asset-quality, or resource-envelope
+evidence. Source, graph, template-contract, and static security work can
+continue on this Linux AMD machine's CPU runtime, while CUDA output/resource
+qualification and physical macOS evidence remain separately postponable.
 
 ## Per-integration admission checklist
 
@@ -6871,12 +7033,17 @@ Complete this research before implementing any pipeline or model entry:
 - [ ] Define static, mocked/tiny, integrated, live, and asset evidence.
 - [ ] Decide local-allowlisted or remote-only before downloading weights.
 
-## Appendix A — Missing Modular classes
+## Appendix A — Classified non-runnable Modular classes
 
-The current inventory contains 20 classes. All are present at the MoDiff pin and
-all 20 are registered contract-only with reviewed no-weight workflow contracts.
+The reviewed pin exports 34 Modular classes and 94 upstream workflows. Eleven
+classes have at least one runnable MoDiff mode. Of the other 23, 19 are
+registered contract-only with reviewed no-weight workflow contracts and four
+are exact task equivalents without a distinct runnable Modular profile:
+`ErnieImageModularPipeline`, `LTXModularPipeline`, `Wan22ModularPipeline`, and
+`Wan22Image2VideoModularPipeline`. This inventory is not an artifact, template,
+live-execution, or qualification claim.
 
-Present in the current pin but not registered by MoDiff:
+Reviewed classes from the initial current-pin inventory:
 
 - [x] `AnimaModularPipeline`
 - [x] `Cosmos3OmniModularPipeline`
@@ -6894,13 +7061,16 @@ Present in the current pin but not registered by MoDiff:
 - [x] `Wan22ModularPipeline`
 - [x] `Wan22Image2VideoModularPipeline`
 
-Post-pin classes registered and reviewed by MoDiff:
+Later classes registered and reviewed by MoDiff:
 
 - [x] `Krea2ModularPipeline`
 - [x] `Krea2TurboModularPipeline`
 - [x] `MiniMaxH3ModularPipeline`
 - [x] `LTX2ModularPipeline`
 - [x] `LTX25ModularPipeline`
+- [x] `WanAnimate2ModularPipeline`
+- [x] `WanAnimate2DistilledModularPipeline`
+- [x] `MiniMaxMusic3ModularPipeline`
 
 ## Appendix B — Missing standard pipeline families
 
