@@ -1,3 +1,4 @@
+import importlib.util
 import unittest
 from contextlib import nullcontext
 from types import SimpleNamespace
@@ -16,6 +17,12 @@ from modules.DiffusersThreeD.main import (
     LoadPipeline,
     _load_safe_shap_e_components,
     _require_exact_selection,
+)
+
+
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
 )
 
 
@@ -67,6 +74,7 @@ class DiffusersThreeDTests(unittest.TestCase):
     @patch("transformers.CLIPTokenizer.from_pretrained")
     @patch("transformers.CLIPTextModelWithProjection.from_pretrained")
     @patch("diffusers.PriorTransformer.from_pretrained")
+    @requires_transformers
     def test_safe_component_assembly_never_selects_legacy_renderer_pickle(
         self,
         prior_loader,

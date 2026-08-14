@@ -1,4 +1,5 @@
 import inspect
+import importlib.util
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -54,6 +55,10 @@ from modules.ModularDiffusers.route_state import (
 from modules.ModularDiffusers.schedulers import SCHEDULER_CONFIGS, Scheduler
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 _NO_EXPLICIT_GUIDER = object()
 
 
@@ -452,6 +457,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         registered = set(get_all_model_types())
         self.assertTrue(required.issubset(registered), f"MoDiff registry is missing: {sorted(required - registered)}")
 
+    @requires_transformers
     def test_registered_pipeline_action_matrix_resolves_real_contracts(self):
         expected = {
             "StableDiffusionXLModularPipeline": {
@@ -508,6 +514,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                                 require_blocks=action != "controlnet",
                             )
 
+    @requires_transformers
     def test_qwen_layered_targeted_controls_match_the_pinned_upstream_contract_without_weights(self):
         expected_defaults = {
             "text_encoder": {
@@ -607,6 +614,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             },
         )
 
+    @requires_transformers
     def test_registered_encoder_seed_ports_exactly_match_upstream_generator_inputs(self):
         expected_generator_actions = {
             ("StableDiffusionXLModularPipeline", "vae_encoder"),
@@ -650,6 +658,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         self.assertEqual(actual_generator_actions, expected_generator_actions)
 
+    @requires_transformers
     def test_registered_denoise_component_ports_exactly_match_upstream_blocks(self):
         port_components = {
             "unet": {"transformer", "unet"},
@@ -900,6 +909,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                     ):
                         node.execute(**{connector: runtime_component})
 
+    @requires_transformers
     def test_sdxl_controlnet_keeps_its_supported_bundle_only_contract(self):
         pipeline_class = diffusers.StableDiffusionXLModularPipeline
         blocks, node_config = require_modiff_node_contract(
@@ -1105,6 +1115,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 control_image="fixture-control-image",
             )
 
+    @requires_transformers
     def test_qwen_controlnet_generator_is_closed_by_seed_and_optional_opaque_route(self):
         blocks, node_config = require_modiff_node_contract(
             diffusers.QwenImageModularPipeline,
@@ -1153,6 +1164,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertNotIn("QwenImageModularPipeline", layer_source)
         self.assertNotIn("FluxModularPipeline", layer_source)
 
+    @requires_transformers
     def test_guider_options_follow_reviewed_pipeline_components_and_layer_contracts(self):
         all_options = list(GUIDER_OPTIONS)
         layer_guiders = set(LAYER_CONFIG_MAPPING)
@@ -1194,6 +1206,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         for model_type in registered:
             self.assertNotIn(model_type, guider_source)
 
+    @requires_transformers
     def test_scheduler_options_follow_pinned_upstream_compatibility(self):
         expected_choices = [name for name in SCHEDULER_CONFIGS if name not in {"LCMScheduler", "TCDScheduler"}]
         expected = {

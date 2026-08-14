@@ -1,4 +1,5 @@
 import gc
+import importlib.util
 import json
 import pickle
 import unittest
@@ -197,8 +198,6 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
     from diffusers import ClassifierFreeGuidance
     from diffusers.models import ImageProjection
     from diffusers.models.attention_processor import IPAdapterAttnProcessor
-    from transformers import CLIPImageProcessor
-
     class FixtureEncoder(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -234,10 +233,22 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
             }
             self.config = type("FixtureIPAdapterUNetConfig", (), {"encoder_hid_dim_type": "ip_image_proj"})()
 
+    class FixtureCLIPImageProcessor:
+        size = {"shortest_edge": 224}
+        crop_size = {"height": 224, "width": 224}
+        do_convert_rgb = True
+        do_resize = True
+        do_rescale = True
+        rescale_factor = 1 / 255
+        do_normalize = True
+        do_center_crop = True
+        image_mean = [0.48145466, 0.4578275, 0.40821073]
+        image_std = [0.26862954, 0.26130258, 0.27577711]
+
     token, outputs = _bound_outputs(SDXL, suffix=suffix, model_id=f"ip-unet-{suffix}")
     unet = FixtureUNet()
     encoder = FixtureEncoder()
-    processor = CLIPImageProcessor(size=224, crop_size=224)
+    processor = FixtureCLIPImageProcessor()
     guider = ClassifierFreeGuidance(guidance_scale=7.5)
     image = Image.new("RGB", (32, 24), "purple")
     embeddings = [torch.zeros((1, 1, 1024))]
@@ -5282,6 +5293,10 @@ class PinnedRouteSchemaTests(unittest.TestCase):
         self.assertFalse({"seed", ROUTE_STATE_INPUT}.intersection(sdxl_control["input_names"]))
         self.assertNotIn(ROUTE_STATE_OUTPUT, sdxl_control["output_names"])
 
+    @unittest.skipUnless(
+        importlib.util.find_spec("transformers"),
+        "requires the staged optional Transformers runtime",
+    )
     def test_qwen_vae_route_inputs_and_edit_decoder_anomaly_are_pinned_exactly(self):
         image = get_model_type_metadata("QwenImageModularPipeline")["node_params"]["vae_encoder"]
         edit = get_model_type_metadata(QWEN_EDIT)["node_params"]["vae_encoder"]

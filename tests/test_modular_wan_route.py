@@ -1,3 +1,4 @@
+import importlib.util
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -39,6 +40,10 @@ from modules.ModularDiffusers.route_state import (
 )
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 WAN_I2V = "WanImage2VideoModularPipeline"
 WAN_LATENTS_MEAN = (
     -0.7571,
@@ -1123,6 +1128,7 @@ class WanActionBoundaryTests(unittest.TestCase):
         self.assertEqual(processor_spec.call_args.kwargs["type_hint"].__name__, "CLIPImageProcessor")
         return result, pipeline_calls
 
+    @requires_transformers
     def test_image_embeddings_manager_init_and_call_swaps_publish_no_route(self):
         for stage in ("init", "call"):
             replacement = _ImageEncoder()
@@ -1136,6 +1142,7 @@ class WanActionBoundaryTests(unittest.TestCase):
                     call_mutation=(swap if stage == "call" else None),
                 )
 
+    @requires_transformers
     def test_image_embeddings_processor_and_encoder_config_mutation_publish_no_route(self):
         mutations = (
             lambda _manager, processor: setattr(processor, "do_normalize", False),
@@ -1154,11 +1161,13 @@ class WanActionBoundaryTests(unittest.TestCase):
                 )
             )
 
+    @requires_transformers
     def test_image_embeddings_canonical_string_replay_hits_cache(self):
         result, calls = self._run_image_embeddings(use_cache=True)
         self.assertIsNotNone(result[ROUTE_STATE_OUTPUT])
         self.assertEqual(len(calls), 1)
 
+    @requires_transformers
     def test_exact_flf_artifact_executes_image_and_vae_actions(self):
         last_image = Image.new("RGB", (100, 200), "blue")
         image_result, image_calls = self._run_image_embeddings(last_image=last_image)
@@ -1352,6 +1361,7 @@ class WanActionBoundaryTests(unittest.TestCase):
                 )
             )
 
+    @requires_transformers
     def test_producer_device_mismatch_publishes_no_image_or_vae_route(self):
         with self.assertRaisesRegex(ValueError, "producing Wan execution device"):
             self._run_image_embeddings(execution_device="cuda")

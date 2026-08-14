@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import subprocess
 import sys
@@ -339,6 +340,10 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
         self.assertEqual(second.kwargs["average_step_seconds"], 600.0)
         self.assertEqual(second.kwargs["eta_seconds"], 22_800.0)
 
+    @unittest.skipUnless(
+        importlib.util.find_spec("transformers"),
+        "requires the staged optional Transformers runtime",
+    )
     def test_diffusers_loader_progress_reports_components_and_nested_shards(self):
         from transformers import core_model_loading
         from diffusers.utils import logging as diffusers_logging

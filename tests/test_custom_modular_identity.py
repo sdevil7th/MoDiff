@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import json
 import os
 import sys
@@ -48,6 +49,12 @@ from modules.ModularDiffusers.pipeline_schema import (
     MoDiffPipelineConfig,
 )
 from modules.ModularDiffusers.route_state import bind_standalone_component_output
+
+
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 
 
 def _config_bytes(label="Custom fixture", *, dtype="float16", steps=4):
@@ -845,6 +852,7 @@ class CustomPipelineBindingTests(unittest.TestCase):
         sidecar_loader.assert_not_called()
         pipeline_loader.assert_not_called()
 
+    @requires_transformers
     def test_exact_hub_contract_constructs_installed_blocks_from_private_metadata_snapshot(self):
         revision = "a" * 40
         repo_cache = Path(self.temporary_directory.name, "models--owner--pipeline")
@@ -884,6 +892,7 @@ class CustomPipelineBindingTests(unittest.TestCase):
         execution_snapshot.cleanup()
         self.assertFalse(snapshot_root.exists())
 
+    @requires_transformers
     def test_source_mutation_after_final_revalidation_cannot_change_constructed_metadata(self):
         revision = "b" * 40
         repo_cache = Path(self.temporary_directory.name, "models--owner--race")
@@ -953,6 +962,7 @@ class CustomPipelineBindingTests(unittest.TestCase):
         self.assertEqual(remote_code.exception.modiff_error_code, "custom_pipeline_authorization_required")
         importer.assert_not_called()
 
+    @requires_transformers
     def test_local_auxiliary_component_path_is_rejected(self):
         _write_reviewed_flux_index(self.pipeline_a)
         document = json.loads((self.pipeline_a / "modular_model_index.json").read_text(encoding="utf-8"))
@@ -1755,6 +1765,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         index_validator.assert_not_called()
         pipeline_loader.assert_not_called()
 
+    @requires_transformers
     def test_wan_standard_indexes_accept_only_exact_reviewed_concrete_component_types(self):
         base_document = {
             "_class_name": "WanImageToVideoPipeline",
@@ -1828,6 +1839,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
             )
 
+    @requires_transformers
     def test_wan_flf_loads_reviewed_image_only_processor_after_index_validation(self):
         from diffusers.pipelines.pipeline_loading_utils import _fetch_class_library_tuple
 
@@ -1857,6 +1869,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             ("transformers", "CLIPImageProcessor"),
         )
 
+    @requires_transformers
     def test_builtin_pipeline_rejects_cache_mutated_component_library_before_upstream(self):
         document = {
             "_class_name": "FluxModularPipeline",
@@ -1938,6 +1951,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         self.assertEqual(third["scheduler"]["version"], "B")
         self.assertEqual(node.execute.call_count, 2)
 
+    @requires_transformers
     def test_builtin_pipeline_rejects_cache_selected_blocks_before_construction(self):
         document = {
             "_class_name": "FluxModularPipeline",
@@ -1969,6 +1983,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 )
         constructor.assert_not_called()
 
+    @requires_transformers
     def test_registered_pipeline_component_contracts_accept_only_installed_expected_type_hints(self):
         from diffusers.pipelines.pipeline_loading_utils import _fetch_class_library_tuple
         from modules.ModularDiffusers.loaders import _validate_reviewed_pipeline_index

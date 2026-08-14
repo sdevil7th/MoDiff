@@ -1,4 +1,5 @@
 import inspect
+import importlib.util
 import sys
 import tempfile
 import unittest
@@ -55,6 +56,12 @@ from modules.DiffusersVideo.main import (
     _resolve_adapter_model_selection,
     _resolve_loader_revision,
     get_video_pipeline_adapter,
+)
+
+
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
 )
 
 
@@ -3251,6 +3258,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                             **update,
                         )
 
+    @requires_transformers
     def test_mochi_loader_pins_indexed_t5_and_bfloat16_variant(self):
         pipeline = SimpleNamespace(enable_vae_tiling=MagicMock())
         text_encoder = object()
@@ -3300,6 +3308,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         mm_add.assert_called_once_with(pipeline, priority=2)
 
+    @requires_transformers
     def test_mochi_loader_rejects_unreviewed_artifacts_before_diffusers(self):
         node = LoadPipeline("strict-mochi-loader")
         with patch("diffusers.MochiPipeline.from_pretrained") as from_pretrained:

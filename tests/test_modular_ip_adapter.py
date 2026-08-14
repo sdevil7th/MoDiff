@@ -10,7 +10,6 @@ from diffusers import ClassifierFreeGuidance, StableDiffusionXLModularPipeline
 from diffusers.models import ImageProjection
 from diffusers.models.attention_processor import IPAdapterAttnProcessor
 from PIL import Image
-from transformers import CLIPImageProcessor
 
 from modiff.auxiliary_ip_adapter import ResolvedSDXLIPAdapter
 from modules.ModularDiffusers.ip_adapter import IPAdapter
@@ -26,6 +25,19 @@ from modules.ModularDiffusers.route_state import (
 
 
 SDXL = "StableDiffusionXLModularPipeline"
+
+
+class FixtureCLIPImageProcessor:
+    size = {"shortest_edge": 224}
+    crop_size = {"height": 224, "width": 224}
+    do_convert_rgb = True
+    do_resize = True
+    do_rescale = True
+    rescale_factor = 1 / 255
+    do_normalize = True
+    do_center_crop = True
+    image_mean = [0.48145466, 0.4578275, 0.40821073]
+    image_std = [0.26862954, 0.26130258, 0.27577711]
 
 
 class FixtureEncoder(torch.nn.Module):
@@ -84,7 +96,7 @@ class FixturePipeline:
     def __init__(self, *, swap_manager=None, fail_call=False):
         self._execution_device = torch.device("cpu")
         self.blocks = type("FixtureBlocksDocument", (), {"doc": "fixture"})()
-        self.feature_extractor = CLIPImageProcessor(size=224, crop_size=224)
+        self.feature_extractor = FixtureCLIPImageProcessor()
         self.swap_manager = swap_manager
         self.fail_call = fail_call
         self.load_calls = []
@@ -276,11 +288,25 @@ class ModularIPAdapterTests(unittest.TestCase):
         vae = FixtureVAE()
         scheduler = object()
         calls = []
-        real_blocks, config = require_modiff_node_contract(StableDiffusionXLModularPipeline, "denoise")
+        _blocks, config = require_modiff_node_contract(
+            StableDiffusionXLModularPipeline,
+            "denoise",
+            resolve_blocks=False,
+        )
+        block_component_names = ["unet", "vae", "scheduler", "guider"]
+        block_input_names = [
+            "prompt_embeds",
+            "negative_prompt_embeds",
+            "pooled_prompt_embeds",
+            "negative_pooled_prompt_embeds",
+            "generator",
+            "ip_adapter_embeds",
+            "negative_ip_adapter_embeds",
+        ]
 
         class FixtureDenoisePipeline:
             _execution_device = torch.device("cpu")
-            component_names = list(real_blocks.component_names)
+            component_names = list(block_component_names)
             blocks = type("FixtureDenoiseDocument", (), {"doc": "fixture"})()
             transformer = None
 
@@ -295,8 +321,8 @@ class ModularIPAdapterTests(unittest.TestCase):
         pipeline = FixtureDenoisePipeline()
 
         class FixtureDenoiseBlocks:
-            component_names = list(real_blocks.component_names)
-            input_names = list(real_blocks.input_names)
+            component_names = list(block_component_names)
+            input_names = list(block_input_names)
 
             def __deepcopy__(self, memo):
                 return self

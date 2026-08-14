@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import unittest
 from pathlib import Path
@@ -20,6 +21,10 @@ from modules.ModularDiffusers.modular_utils import (
 )
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 MODULAR_BACKEND_PATH = "modules.ModularDiffusers.ModelsLoader"
 
 
@@ -59,6 +64,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             "A Diffusers pin update requires an explicit review of the Modular workflow truth matrix.",
         )
 
+    @requires_transformers
     def test_pinned_workflow_maps_and_fixed_sequences_are_exact(self):
         for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items():
             with self.subTest(model_type=model_type):
@@ -116,6 +122,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertNotIn("FluxKontextModularPipeline", expected)
         self.assertNotIn("Flux2KleinModularPipeline", expected)
 
+    @requires_transformers
     def test_every_advertised_mode_has_a_constructible_action_and_state_contract(self):
         for model_type, modes in _advertised_modular_modes().items():
             truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
@@ -220,6 +227,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 )
                 self.assertEqual(actual_edges, expected_edges[name])
 
+    @requires_transformers
     def test_sdxl_base_inpaint_state_flow_is_exact_constructible_and_contract_only(
         self,
     ):
@@ -382,6 +390,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             self.assertEqual(producer_param["type"], field_type)
             self.assertEqual(consumer_param["type"], field_type)
 
+    @requires_transformers
     def test_sdxl_controlnet_vae_state_flows_are_exact_constructible_and_nonadvertised(self):
         model_type = "StableDiffusionXLModularPipeline"
         truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
@@ -476,6 +485,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                         action_contracts[edge.consumer_action]["input_names"],
                     )
 
+    @requires_transformers
     def test_sdxl_ip_adapter_state_flows_match_all_nine_pinned_upstream_compositions(self):
         model_type = "StableDiffusionXLModularPipeline"
         truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
@@ -543,6 +553,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual(ip_contract["params"]["ip_adapter"]["display"], "output")
         self.assertEqual(metadata["node_params"]["denoise"]["params"]["ip_adapter"]["display"], "input")
 
+    @requires_transformers
     def test_qwen_state_flows_are_exact_constructible_and_nonadvertised(self):
         model_type = "QwenImageModularPipeline"
         truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]

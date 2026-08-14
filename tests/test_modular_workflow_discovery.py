@@ -1,3 +1,4 @@
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -16,7 +17,14 @@ from modiff.modular_workflow_discovery import (
 )
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
+
+
 class ModularWorkflowDiscoveryTests(unittest.TestCase):
+    @requires_transformers
     def test_reviewed_snapshot_matches_the_pinned_upstream_generator(self):
         result = subprocess.run(
             [sys.executable, "scripts/generate_modular_workflow_contracts.py", "--check"],

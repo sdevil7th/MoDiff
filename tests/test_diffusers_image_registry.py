@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import inspect
 import json
 import os
@@ -89,6 +90,10 @@ from utils.huggingface import resolve_managed_hf_cache_file
 
 CUSTOM_IMAGE_REVISION = "a" * 40
 HUB_ADAPTER_REVISION = "b" * 40
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 
 
 def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revision=None):
@@ -203,6 +208,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertEqual((result["width_out"], result["height_out"]), (32, 24))
                 self.assertEqual(len(result["images"]), 1)
 
+    @requires_transformers
     def test_marigold_depth_uses_the_generic_versioned_prediction_map_contract(self):
         adapter = IMAGE_PIPELINE_ADAPTERS["MarigoldDepthPipeline"]
         self.assertEqual(adapter.default_repo, MARIGOLD_DEPTH_LCM_REPO)
@@ -840,6 +846,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             with self.subTest(fields=fields), self.assertRaisesRegex(ValueError, "unique reviewed"):
                 ImageModeFieldContract(fields)
 
+    @requires_transformers
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
             "StableDiffusionPAGPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
@@ -1010,6 +1017,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             with self.subTest(deferred=deferred):
                 self.assertNotIn(deferred, IMAGE_PIPELINE_ADAPTERS)
 
+    @requires_transformers
     def test_new_standard_image_adapters_execute_only_their_pinned_signature(self):
         image = Image.new("RGB", (16, 16), "black")
         mask = Image.new("L", (16, 16), "white")

@@ -1,3 +1,4 @@
+import importlib.util
 import subprocess
 import sys
 import unittest
@@ -24,6 +25,12 @@ from modules.ModularDiffusers.modular_utils import (
 )
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
+
+
 class ContractOnlyModularRegistryTests(unittest.TestCase):
     def test_data_only_registry_does_not_import_diffusers(self):
         result = subprocess.run(
@@ -42,6 +49,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    @requires_transformers
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 7)
