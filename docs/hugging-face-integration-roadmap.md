@@ -5643,6 +5643,31 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   was temporarily 2,661,386,301 bytes over the limit while an existing transfer
   progressed. No Wan bytes were needed; no POST, interruption, or deletion
   occurred, and all cached documentation/example media remains preserved.
+- [x] **P6.78 Bound JoyAI Image Edit app download selections:** backend
+  `c0c5944` binds both admitted immutable JoyAI repositories to their exact
+  safetensors component surfaces. Image Edit retains 38 files /
+  50,347,541,462 bytes; Image Edit Plus retains 29 files / 50,338,627,834
+  bytes. The allowlists preserve their Qwen3-VL processors/text encoders,
+  tokenizers, transformers, Wan VAEs, schedulers, configs, indexes, cards, and
+  attribute receipts while excluding seven test images from Edit and three
+  example images plus repository `inference.py` from Plus: 16,592,417 bytes
+  from the combined 100,702,761,713-byte trees. Both generic adapters already
+  explicitly require safe serialization.
+
+  App plan and POST regressions bind both capability-derived selections; a
+  focused JoyAI artifact regression requires every indexed component, rejects
+  repository code, examples, tests, and legacy serialization surfaces, and
+  verifies both existing loader flags. The JoyAI, capability, app, and loader
+  matrix passes 220 tests, three optional-runtime skips, and 895 subtests;
+  pinned Ruff E9/F, 66-package compatibility, and diff checks pass. Concurrent
+  fresh app plans reported Edit complete with zero remaining bytes and Plus
+  with 50,315,694,156 selected bytes still outstanding while its pre-existing
+  repository-wide app job remained active. Current free bytes were
+  363,886,616,576 against 297,828,399,222 queued reservation bytes and the
+  68,719,476,736-byte safety reserve, leaving the active aggregate envelope
+  2,661,259,382 bytes over the limit. The differently scoped active Plus job
+  was not joined, replaced, cancelled, or interrupted; no new POST or deletion
+  occurred.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6918,4 +6943,5 @@ Add references only after the corresponding evidence exists.
 | P6.75 Bounded Z-Image component download and loader serialization | `8f96945` | Not required | Exact immutable app plan and prior local live smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 32,848,321,404-byte component selection excludes 51,345,993 bytes of gallery/PDF assets and makes all three generic Z-Image adapters safetensors-only. Every selected file is already complete in the preserved cache, so no POST or deletion occurred. |
 | P6.76 Bounded PixArt Sigma component download selection | `a0fe20c` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | One exact 15-file / 21,828,231,839-byte component selection excludes 4,258,550 bytes of documentation images and matches the existing safetensors-only loader. Every selected file is already complete; the active aggregate queue temporarily exceeded the safety envelope by 374,414,385 bytes, so no POST, interruption, or deletion occurred. |
 | P6.77 Bounded admitted Wan video component downloads and loader serialization | `e3fc376` | Not required | Exact immutable app plans plus prior local Wan smokes only; remote output review and physical macOS remain pending | Not required | Exact 21/19/43/22-file component selections for Wan 2.1 T2V/edit, VACE, Wan 2.2 I2V, and TI2V total 208,370,069,191 bytes, exclude 15,892,213 bytes of documentation/example media, and make every corresponding VAE/pipeline load explicitly safetensors-only. Every selected file is already complete; the active aggregate queue temporarily exceeded the safety envelope by 2,661,386,301 bytes, so no POST, interruption, or deletion occurred. |
+| P6.78 Bounded JoyAI Image Edit app download selections | `c0c5944` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 38/29-file component selections total 100,686,169,296 bytes and exclude 16,592,417 bytes of repository code plus test/example media while retaining both existing safetensors-only loader contracts. Edit is complete; the pre-existing repository-wide Plus app job remains active and differently scoped, so no new POST, join, interruption, or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
