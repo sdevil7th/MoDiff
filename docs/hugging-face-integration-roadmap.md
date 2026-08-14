@@ -5467,6 +5467,25 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   68,719,476,736-byte safety reserve, the bounded completion fit and was
   submitted through the app. It remains governed by the existing transfer
   queue, and no older cached artifact was deleted.
+- [x] **P6.70 Bound Sana 0.6B fp16 app download selection:** backend `982c1a3`
+  binds
+  `Efficient-Large-Model/Sana_600M_1024px_diffusers@28f3af7689de15f3883d5863059a2fca0aa9b829`
+  to the exact 17-file / 7,700,017,758-byte fp16 Diffusers runtime surface used
+  by its existing safetensors-only loader. The selection retains the fp16 text
+  encoder shards/index, transformer and VAE weights, tokenizer, scheduler,
+  configs, model index, license, card, and attribute receipts. It excludes the
+  default text-encoder aliases plus the full-precision transformer and default
+  VAE alias: 8,844,837,635 logical bytes from the 16,544,855,393-byte repository
+  tree. Existing identical-content aliases remain in cache.
+
+  App plan and POST regressions bind the capability-derived allowlist, and a
+  focused Sana artifact regression matches the loader's exact fp16 variant and
+  rejects every default alias or legacy serialization surface. The capability,
+  app, Sana, and loader matrix passes 213 tests, three optional-runtime skips,
+  and 872 subtests; pinned Ruff E9/F, 66-package compatibility, and diff checks
+  pass. A fresh exact app plan reported zero remaining bytes, with
+  382,775,398,400 free bytes, 302,075,919,129 queued reservation bytes, and the
+  68,719,476,736-byte safety reserve intact, so no POST or deletion occurred.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6734,4 +6753,5 @@ Add references only after the corresponding evidence exists.
 | P6.67 Bounded Whisper Tiny app download selection | `4783400` | Not required | Exact immutable app plan and prior local in-memory ASR smoke only; remote semantic/output review and physical macOS remain pending | Not required | One exact 13-file / 155,455,649-byte safetensors/processor selection excludes 453,397,578 bytes of duplicate PyTorch, Flax, and TensorFlow weights. Only 21,225 metadata bytes remained; a fresh fitting plan preceded the app-only completion request, with no deletion. |
 | P6.68 Bounded unconditional-image app downloads and loader serialization | `42fa625` | Not required | Exact immutable app plans and prior local tiny smokes only; remote quality/output review and physical macOS remain pending | Not required | Exact six-file safetensors selections for shared DDPM/DDIM CIFAR-10 and ImageNet64 consistency routes exclude 1.33 GB of legacy pickle plus repository code/demo surfaces and make all three loader serialization requirements explicit. Only 15,704 receipt bytes remained; fresh fitting plans preceded two concurrent app-only repairs, with no deletion. |
 | P6.69 Bounded LCM DreamShaper app download and loader serialization | `08c34f4` | Not required | Exact immutable app plan and prior local tiny smoke only; remote quality/output review and physical macOS remain pending | Not required | One exact 17-file / 5,482,979,343-byte safetensors component selection excludes 7,710,367,026 bytes of duplicate single-file, ONNX, repository-code, and demo surfaces and makes the generic loader's safe-serialization requirement explicit. Only 5,070 receipt bytes remained; a fresh fitting plan preceded the app-only completion request, with no deletion. |
+| P6.70 Bounded Sana 0.6B fp16 app download selection | `982c1a3` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | One exact 17-file / 7,700,017,758-byte fp16 Diffusers selection matches the loader variant and excludes 8,844,837,635 logical bytes of default/full-precision aliases. The selected files are already complete in the preserved cache, so no POST or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
