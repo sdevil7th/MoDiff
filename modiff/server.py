@@ -560,7 +560,6 @@ RUNTIME_ATTENTION_BACKENDS = {
     "_flash_varlen_3",
     "_flash_3_hub",
     "_flash_3_varlen_hub",
-    "aiter",
     "sage",
     "sage_hub",
     "sage_varlen",

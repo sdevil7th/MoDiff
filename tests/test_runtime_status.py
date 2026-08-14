@@ -1161,6 +1161,12 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(RuntimeError):
             self.server._coerce_runtime_hints({"resourceRetryPlans": [{}] * 33})
 
+    def test_runtime_hints_reject_obsolete_and_unreviewed_aiter_backends(self):
+        for backend in ("aiter", "aiter_fa2_hub"):
+            with self.subTest(backend=backend), self.assertRaises(RuntimeError) as raised:
+                self.server._coerce_runtime_hints({"attentionBackend": backend})
+            self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
     def test_retry_adjacent_runtime_containers_are_bounded_or_worker_owned(self):
         marker = "RUNTIME_CONTAINER_SECRET_MARKER"
         deep = {"marker": marker}

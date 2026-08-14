@@ -30,7 +30,6 @@ ATTENTION_BACKENDS = [
     "_flash_varlen_3",
     "_flash_3_hub",
     "_flash_3_varlen_hub",
-    "aiter",
     "sage",
     "sage_hub",
     "sage_varlen",
@@ -304,6 +303,8 @@ def build_quantization_config_v2(
 
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
+    if requested not in ATTENTION_BACKENDS:
+        raise ValueError(f"Unsupported attention backend {requested!r}.")
     if requested == "auto":
         return {"requested": "auto", "applied": [], "default_selection": True}
 
@@ -769,6 +770,9 @@ def build_execution_recipe(
     if normalized_device_map == "manual" and not manual_map:
         raise ValueError("Manual device mapping needs at least one component placement entry.")
     normalized_offload = str(offload_mode or "none")
+    normalized_attention_backend = str(attention_backend or "auto")
+    if normalized_attention_backend not in ATTENTION_BACKENDS:
+        raise ValueError(f"Unsupported attention backend {normalized_attention_backend!r}.")
     if quantization_config is not None and (
         normalized_offload != "none" or normalized_device_map not in {"none", "cuda"}
     ):
@@ -788,7 +792,7 @@ def build_execution_recipe(
         "max_memory": normalized_memory,
         "offload_mode": normalized_offload,
         "device": str(device or "cuda:0"),
-        "attention_backend": str(attention_backend or "auto"),
+        "attention_backend": normalized_attention_backend,
         "attention_components": _string_list(attention_components),
         "vae_slicing": bool(vae_slicing),
         "vae_tiling": bool(vae_tiling),
@@ -1075,7 +1079,6 @@ def build_runtime_capabilities(
     flash_attn_available = backend == "cuda" and package_available("flash_attn")
     flash_attn_3_available = vendor == "nvidia" and package_available("flash_attn_interface")
     hub_kernels_available = vendor == "nvidia" and package_available("kernels")
-    aiter_available = vendor == "amd" and package_available("aiter")
     sage_available = backend == "cuda" and package_available("sageattention")
     xformers_available = vendor == "nvidia" and package_available("xformers")
     attention = {
@@ -1146,16 +1149,6 @@ def build_runtime_capabilities(
         "_flash_3_varlen_hub": {
             "available": hub_kernels_available and bool(capability and capability >= (9, 0)),
             "reason": "FlashAttention 3 variable-length Hub kernels are available" if hub_kernels_available else "Requires Hub kernels on NVIDIA Hopper",
-        },
-        "aiter": {
-            "available": aiter_available,
-            "reason": (
-                "ROCm AITER package detected"
-                if aiter_available
-                else "AITER package is not installed"
-                if vendor == "amd"
-                else "Requires AMD ROCm"
-            ),
         },
         "sage": {
             "available": sage_available,

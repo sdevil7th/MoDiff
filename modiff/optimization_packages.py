@@ -1066,17 +1066,6 @@ def _catalog() -> dict[str, dict[str, Any]]:
             "summary": "Profile-managed xFormers build matched to the installed PyTorch release.",
             "documentation": "https://github.com/facebookresearch/xformers",
         },
-        "aiter": {
-            "label": "AMD AITER",
-            "kind": "external",
-            "distribution": "amd-aiter",
-            "importName": "aiter",
-            "profiles": ["amd-rocm-linux"],
-            "platforms": ["linux"],
-            "automaticEligible": False,
-            "summary": "AMD datacenter-kernel package; only qualified Instinct/ABI combinations are supported.",
-            "documentation": "https://github.com/ROCm/aiter",
-        },
         "regional_compile": {
             "label": "Regional torch.compile",
             "kind": "runtime",
@@ -2379,7 +2368,6 @@ def optimization_selections_from_graph(graph: dict[str, Any] | None) -> list[dic
                     "sage": "sage_attention",
                     "sage_hub": "hub_attention_kernels",
                     "xformers": "xformers",
-                    "aiter": "aiter",
                 }.get(attention)
                 if capability:
                     found[capability] = {

@@ -66,12 +66,28 @@ class OptimizationPackageTests(unittest.TestCase):
             hardware={"torch": {"version": "2.9.1+rocm7.2"}, "amd_architectures": ["gfx1151"]},
         )
         by_id = {item["id"]: item for item in catalog["capabilities"]}
+        self.assertNotIn("aiter", by_id)
         self.assertTrue(by_id["torchao"]["compatible"])
         self.assertFalse(by_id["hub_attention_kernels"]["compatible"])
         self.assertFalse(by_id["torchao"]["enabled"])
         self.assertFalse(by_id["torchao"]["canInstall"])
         self.assertFalse(by_id["torchao"]["canEnable"])
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
+
+    def test_obsolete_aiter_attention_is_not_advertised_or_recorded(self):
+        catalog = optimizations.public_catalog(
+            runtime_profile={"installed": "amd-rocm-linux"},
+            hardware={"torch": {"version": "2.9.1+rocm7.2"}, "amd_architectures": ["gfx942"]},
+        )
+        self.assertNotIn("aiter", {item["id"] for item in catalog["capabilities"]})
+        for backend in ("aiter", "aiter_fa2_hub"):
+            with self.subTest(backend=backend):
+                self.assertEqual(
+                    optimizations.optimization_selections_from_graph(
+                        {"nodes": [{"attention_backend": backend}]}
+                    ),
+                    [],
+                )
 
     def test_locked_requirements_keep_windows_file_hash_out_of_url_path(self):
         wheel = optimizations.OPTIMIZATION_ROOT / "demo_pkg-1.0.0-py3-none-any.whl"

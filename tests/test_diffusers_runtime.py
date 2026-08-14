@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from modules import MODULE_MAP
 from modules.DiffusersRuntime.main import (
+    ATTENTION_BACKENDS,
     ApplyPipelineRuntimeConfig,
     LoadPrequantizedDiffusersComponent,
     PipelineQuantizationConfigV2,
@@ -230,10 +231,22 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
     def test_attention_backend_applies_only_to_compatible_components(self):
         pipeline = FakePipeline()
-        result = apply_attention_backend(pipeline, "aiter")
+        result = apply_attention_backend(pipeline, "sage")
 
-        self.assertEqual(pipeline.transformer.backends, ["aiter"])
+        self.assertEqual(pipeline.transformer.backends, ["sage"])
         self.assertEqual(result["applied"], ["transformer"])
+
+    def test_obsolete_and_mutable_hub_aiter_backends_fail_closed(self):
+        self.assertNotIn("aiter", ATTENTION_BACKENDS)
+        self.assertNotIn("aiter_fa2_hub", ATTENTION_BACKENDS)
+        for backend in ("aiter", "aiter_fa2_hub"):
+            with self.subTest(backend=backend):
+                pipeline = FakePipeline()
+                with self.assertRaisesRegex(ValueError, "Unsupported attention backend"):
+                    apply_attention_backend(pipeline, backend)
+                with self.assertRaisesRegex(ValueError, "Unsupported attention backend"):
+                    build_execution_recipe(attention_backend=backend)
+                self.assertEqual(pipeline.transformer.backends, [])
 
     def test_attention_auto_preserves_diffusers_default(self):
         pipeline = FakePipeline()
@@ -424,11 +437,12 @@ class DiffusersRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(result["vendor"], "amd")
-        self.assertTrue(result["attention_backends"]["aiter"]["available"])
+        self.assertNotIn("aiter", result["attention_backends"])
+        self.assertNotIn("aiter_fa2_hub", result["attention_backends"])
         self.assertFalse(result["attention_backends"]["flash"]["available"])
         self.assertFalse(result["quantization_backends"]["torchao_float8"]["available"])
 
-    def test_capability_probe_explains_missing_rocm_attention_packages(self):
+    def test_capability_probe_excludes_obsolete_rocm_attention_backend(self):
         class FakeCuda:
             @staticmethod
             def get_device_capability(_index):
@@ -450,8 +464,8 @@ class DiffusersRuntimeTests(unittest.TestCase):
             package_available=lambda _name: False,
         )
 
-        self.assertFalse(result["attention_backends"]["aiter"]["available"])
-        self.assertEqual(result["attention_backends"]["aiter"]["reason"], "AITER package is not installed")
+        self.assertNotIn("aiter", result["attention_backends"])
+        self.assertNotIn("aiter_fa2_hub", result["attention_backends"])
         self.assertEqual(
             result["attention_backends"]["sage"]["reason"],
             "SageAttention package is not installed",
