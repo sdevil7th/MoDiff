@@ -60,6 +60,12 @@ _EQUIVALENT_PIPELINE_TARGETS = {
     # Lumina2Pipeline; it delegates initialization to that exact executable
     # class and emits a removal deprecation.
     "Lumina2Text2ImgPipeline": ("Lumina2Pipeline",),
+    # The exact admitted condition adapters already expose these task surfaces
+    # for the same LTX families. This is task equivalence only: optional direct
+    # pipeline features such as prompt enhancement are not claimed.
+    "LTX2ImageToVideoPipeline": ("LTX2ConditionPipeline",),
+    "LTXImageToVideoPipeline": ("LTXConditionPipeline",),
+    "LTXPipeline": ("LTXConditionPipeline",),
     "WanModularPipeline": ("WanPipeline",),
     "ZImageModularPipeline": ("ZImagePipeline", "ZImageImg2ImgPipeline"),
 }
@@ -89,6 +95,7 @@ _REVIEWED_NON_VIDEO_DEPRECATED_PIPELINES = frozenset(
         "AudioDiffusionPipeline",
         "AudioLDMPipeline",
         "BlipDiffusionPipeline",
+        "BlipDiffusionControlNetPipeline",
         "CycleDiffusionPipeline",
         "DanceDiffusionPipeline",
         "KarrasVePipeline",
@@ -128,7 +135,6 @@ _REVIEWED_NON_VIDEO_DEPRECATED_PIPELINES = frozenset(
 
 _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
     {
-        "BlipDiffusionControlNetPipeline",
         "BriaFiboEditPipeline",
         "BriaFiboPipeline",
         "BriaPipeline",
@@ -148,6 +154,7 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "KandinskyV22Img2ImgPipeline",
         "KolorsPAGPipeline",
         "LDMSuperResolutionPipeline",
+        "LLaDA2Pipeline",
         "LatentConsistencyModelImg2ImgPipeline",
         "MarigoldIntrinsicsPipeline",
         "MarigoldNormalsPipeline",
@@ -188,6 +195,95 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
     }
 )
 
+_REVIEWED_VIDEO_DEPRECATED_PIPELINES = frozenset(
+    {
+        "I2VGenXLPipeline",
+        "PIAPipeline",
+        "TextToVideoSDPipeline",
+        "TextToVideoZeroPipeline",
+        "TextToVideoZeroSDXLPipeline",
+        "VideoToVideoSDPipeline",
+    }
+)
+
+# Each reason is intentionally class-specific. A related executable model or a
+# reusable base checkpoint is not enough to admit a distinct conditioning,
+# scheduler, component, or output contract.
+_REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES = {
+    "AnimateDiffControlNetPipeline": (
+        "The class requires conditioning frames and a ControlNet component, while the admitted AnimateDiff "
+        "workflow is prompt-only and has no exact combined artifact assembly or action contract."
+    ),
+    "AnimateDiffPAGPipeline": (
+        "The class adds PAG layer selection and PAG scale semantics that the admitted AnimateDiff adapter does "
+        "not expose; reuse of its base and motion weights is not feature equivalence."
+    ),
+    "AnimateDiffSDXLPipeline": (
+        "The class requires an SDXL dual-text-encoder and compatible motion-adapter assembly, not the admitted "
+        "SD1.5 AnimateDiff artifact contract."
+    ),
+    "AnimateDiffSparseControlNetPipeline": (
+        "The class requires a SparseControlNetModel, sparse frame indices, and an immutable sparse-control "
+        "artifact selection that MoDiff has not admitted."
+    ),
+    "AnimateDiffVideoToVideoControlNetPipeline": (
+        "The class combines source-video denoising with ControlNet conditioning and independent strengths; "
+        "MoDiff has no exact combined handler, field contract, or workflow."
+    ),
+    "AnimateDiffVideoToVideoPipeline": (
+        "The prompt-only AnimateDiff action deliberately rejects source video; this class still needs an exact "
+        "video-to-video handler, artifact assembly receipt, and canonical workflow before admission."
+    ),
+    "CogVideoXFunControlPipeline": (
+        "The class requires a CogVideoX-Fun control-video artifact and control contract; the admitted CogVideoX-2B "
+        "selection and action are text-to-video only."
+    ),
+    "CogVideoXImageToVideoPipeline": (
+        "The admitted CogVideoX-2B artifact is text-to-video only and does not establish an image-conditioned "
+        "transformer selection or image-to-video action contract."
+    ),
+    "CogVideoXVideoToVideoPipeline": (
+        "The admitted CogVideoX-2B artifact is text-to-video only and does not establish a video-conditioned "
+        "transformer selection or video-to-video action contract."
+    ),
+    "HunyuanSkyreelsImageToVideoPipeline": (
+        "This SkyReels-specific Hunyuan image-to-video path has no exact immutable artifact, component recipe, "
+        "or MoDiff action/workflow admission."
+    ),
+    "HunyuanVideoImageToVideoPipeline": (
+        "The classic HunyuanVideo image-to-video class is distinct from the admitted FramePack assembly and the "
+        "separately reviewed HunyuanVideo-1.5 family; no exact artifact/action contract exists."
+    ),
+    "HunyuanVideoPipeline": (
+        "The classic HunyuanVideo text-to-video class is distinct from the admitted FramePack assembly and the "
+        "separately reviewed HunyuanVideo-1.5 family; no exact artifact/action contract exists."
+    ),
+    "LTX2HDRPipeline": (
+        "The class consumes an SDR reference video and an HDR IC-LoRA, then emits linear HDR video; MoDiff lacks "
+        "that immutable adapter selection, HDR output contract, and exact action/workflow."
+    ),
+    "LTX2InContextPipeline": (
+        "The pinned Modular inventory records IC-LoRA block truth, but this standard class still requires reference "
+        "video conditions, an immutable IC-LoRA, and an exact runnable adapter/workflow."
+    ),
+    "LTX2LatentUpsamplePipeline": (
+        "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or "
+        "bounded latent-input action/workflow for this class."
+    ),
+    "LTXLatentUpsamplePipeline": (
+        "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or "
+        "bounded latent-input action/workflow for this class."
+    ),
+    "MotifVideoImage2VideoPipeline": (
+        "The Motif-Video image-to-video family, guider, and model artifacts have no immutable MoDiff admission, "
+        "resource envelope, or exact action/workflow."
+    ),
+    "MotifVideoPipeline": (
+        "The Motif-Video text-to-video family, guider, and model artifacts have no immutable MoDiff admission, "
+        "resource envelope, or exact action/workflow."
+    ),
+}
+
 _REVIEWED_PIPELINE_DECISIONS = {
     **{
         name: {
@@ -211,6 +307,25 @@ _REVIEWED_PIPELINE_DECISIONS = {
             "review": "pinned-diffusers-non-video-source-triage",
         }
         for name in _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES
+    },
+    **{
+        name: {
+            "status": "intentionally-excluded",
+            "reason": (
+                "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose "
+                "contract receives no further fixes or feature updates; MoDiff does not add new workflows for it."
+            ),
+            "review": "pinned-diffusers-video-source-triage",
+        }
+        for name in _REVIEWED_VIDEO_DEPRECATED_PIPELINES
+    },
+    **{
+        name: {
+            "status": "research-blocked",
+            "reason": reason,
+            "review": "pinned-diffusers-video-source-triage",
+        }
+        for name, reason in _REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES.items()
     },
 }
 
@@ -286,11 +401,17 @@ _TRANSFORMERS_SEMANTIC_DEFINITIONS = (
     {
         "id": "any-to-any-generation",
         "label": "Any-to-any generation",
-        "status": "research-blocked",
-        "reason": "Upstream exposes the task, but MoDiff has no bounded AnyToAny action or workflow contract.",
-        "qualification": "no-modiff-action-contract",
-        "modes": ["any_to_any"],
-        "nodeKeys": [],
+        "status": "executable",
+        "reason": (
+            "Task-generic nodes use a finite adapter registry; Janus text/image is bounded and executable while "
+            "Qwen2.5-Omni remains contract-only because its official loader requires a non-safetensors speaker file."
+        ),
+        "qualification": "source-implemented-mocked-adapter-qualified",
+        "modes": ["any_to_any_text", "text_to_image"],
+        "nodeKeys": [
+            "modules.HuggingFaceTransformers.LoadAnyToAnyModel",
+            "modules.HuggingFaceTransformers.GenerateAnyToAny",
+        ],
         "canonicalWorkflowIds": [],
         "mainEvidence": {
             "models/auto/modeling_auto.py": ["AutoModelForMultimodalLM"],
@@ -883,7 +1004,10 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
             if missing_targets:
                 raise UpstreamCoverageError(f"Equivalent targets for {name} are not executable: {missing_targets}")
             status = "equivalent"
-            reason = "The public task surface is routed through the listed exact adapter class or classes."
+            reason = (
+                "The public task surface is routed through the listed exact adapter class or classes; this is not "
+                "a claim of byte-identical outputs or parity with class-specific optional features."
+            )
         elif name in _INTENTIONALLY_EXCLUDED_PIPELINES:
             status = "intentionally-excluded"
             reason = _INTENTIONALLY_EXCLUDED_PIPELINES[name]

@@ -46,11 +46,11 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "diffusersPipelineSymbolCount": 327,
                 "pipelineStatusCounts": {
                     "contract-only": 29,
-                    "equivalent": 7,
+                    "equivalent": 10,
                     "executable": 85,
-                    "intentionally-excluded": 49,
-                    "research-blocked": 129,
-                    "unreviewed": 28,
+                    "intentionally-excluded": 56,
+                    "research-blocked": 147,
+                    "unreviewed": 0,
                 },
                 "publicTemplateCount": 77,
                 "reviewedGalleryTemplateCount": 70,
@@ -67,9 +67,9 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "transformersSemanticStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 3,
+                    "executable": 4,
                     "intentionally-excluded": 0,
-                    "research-blocked": 3,
+                    "research-blocked": 2,
                     "unreviewed": 0,
                 },
                 "workflowStatusCounts": {
@@ -112,7 +112,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_non_video = [
             item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_non_video), 99)
+        self.assertEqual(len(reviewed_non_video), 100)
         self.assertEqual(
             {
                 status: sum(item["status"] == status for item in reviewed_non_video)
@@ -122,7 +122,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "contract-only": 0,
                 "equivalent": 0,
                 "executable": 0,
-                "intentionally-excluded": 42,
+                "intentionally-excluded": 43,
                 "research-blocked": 57,
                 "unreviewed": 0,
             },
@@ -134,6 +134,69 @@ class UpstreamCoverageTests(unittest.TestCase):
                 self.assertEqual(by_name[pipeline_class]["status"], "executable", pipeline_class)
         for pipeline_class in CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME:
             self.assertEqual(by_name[pipeline_class]["status"], "contract-only", pipeline_class)
+
+    def test_all_unreviewed_video_exports_have_conservative_decisions(self):
+        by_name = {item["name"]: item for item in self.ledger["diffusersPipelines"]}
+        equivalent = {
+            "LTX2ImageToVideoPipeline": ["LTX2ConditionPipeline"],
+            "LTXImageToVideoPipeline": ["LTXConditionPipeline"],
+            "LTXPipeline": ["LTXConditionPipeline"],
+        }
+        intentionally_excluded = {
+            "I2VGenXLPipeline",
+            "PIAPipeline",
+            "TextToVideoSDPipeline",
+            "TextToVideoZeroPipeline",
+            "TextToVideoZeroSDXLPipeline",
+            "VideoToVideoSDPipeline",
+        }
+        research_blocked = {
+            "AnimateDiffControlNetPipeline",
+            "AnimateDiffPAGPipeline",
+            "AnimateDiffSDXLPipeline",
+            "AnimateDiffSparseControlNetPipeline",
+            "AnimateDiffVideoToVideoControlNetPipeline",
+            "AnimateDiffVideoToVideoPipeline",
+            "CogVideoXFunControlPipeline",
+            "CogVideoXImageToVideoPipeline",
+            "CogVideoXVideoToVideoPipeline",
+            "HunyuanSkyreelsImageToVideoPipeline",
+            "HunyuanVideoImageToVideoPipeline",
+            "HunyuanVideoPipeline",
+            "LTX2HDRPipeline",
+            "LTX2InContextPipeline",
+            "LTX2LatentUpsamplePipeline",
+            "LTXLatentUpsamplePipeline",
+            "MotifVideoImage2VideoPipeline",
+            "MotifVideoPipeline",
+        }
+        self.assertEqual(len(equivalent) + len(intentionally_excluded) + len(research_blocked), 27)
+        for name, targets in equivalent.items():
+            self.assertEqual(by_name[name]["status"], "equivalent", name)
+            self.assertEqual(by_name[name]["equivalentTo"], targets, name)
+            self.assertIsNone(by_name[name]["reviewDecision"], name)
+        exact_pairs = {
+            (definition["profile"]["pipeline_class"], definition["mode"])
+            for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+        }
+        self.assertIn(("LTXConditionPipeline", "text_to_video"), exact_pairs)
+        self.assertIn(("LTXConditionPipeline", "image_to_video"), exact_pairs)
+        self.assertIn(("LTX2ConditionPipeline", "image_to_video"), exact_pairs)
+        for name in intentionally_excluded:
+            self.assertEqual(by_name[name]["status"], "intentionally-excluded", name)
+            self.assertEqual(by_name[name]["reviewDecision"], "pinned-diffusers-video-source-triage", name)
+        for name in research_blocked:
+            self.assertEqual(by_name[name]["status"], "research-blocked", name)
+            self.assertEqual(by_name[name]["reviewDecision"], "pinned-diffusers-video-source-triage", name)
+        reviewed_video = [
+            item for item in by_name.values() if item["reviewDecision"] == "pinned-diffusers-video-source-triage"
+        ]
+        self.assertEqual(len(reviewed_video), 24)
+        self.assertEqual({item["name"] for item in reviewed_video}, intentionally_excluded | research_blocked)
+        self.assertEqual(
+            {item["name"] for item in by_name.values() if item["status"] == "unreviewed"},
+            set(),
+        )
 
     def test_diffusers_scope_is_the_exact_dependency_pin(self):
         scope = self.ledger["scope"]["diffusers"]
@@ -177,12 +240,12 @@ class UpstreamCoverageTests(unittest.TestCase):
             "speech-recognition",
             "bounded-causal-text-generation",
             "bounded-image-video-to-text",
+            "any-to-any-generation",
         ):
             self.assertEqual(by_id[semantic_id]["status"], "executable")
             self.assertTrue(by_id[semantic_id]["nodeKeys"])
             self.assertTrue(by_id[semantic_id]["productionWheelSupport"])
         for semantic_id in (
-            "any-to-any-generation",
             "emu3-native-image-generation",
             "cosmos3-edge-reasoner-orchestration",
         ):

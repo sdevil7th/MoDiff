@@ -1611,7 +1611,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:2db4943ec9ab16135f6da01578574f86e34c5d80a00e029b51ec1e11db285882",
+  "contentHash": "sha256:5823903bc502d463c9090fb5e4fb27314dbbb7fcc9e5efc1f3a27d002c5dd9e8",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -1641,6 +1641,7 @@
       "modularWorkflowIds": [],
       "name": "AceStepPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1658,6 +1659,7 @@
       "modularWorkflowIds": [],
       "name": "AllegroPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1666,8 +1668,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AltDiffusionImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1675,8 +1678,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AltDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1684,8 +1688,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AmusedImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1693,8 +1698,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AmusedInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1702,8 +1708,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AmusedPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1715,6 +1722,7 @@
       ],
       "name": "AnimaModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -1723,8 +1731,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AnimateDiffControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class requires conditioning frames and a ControlNet component, while the admitted AnimateDiff workflow is prompt-only and has no exact combined artifact assembly or action contract.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1732,8 +1741,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AnimateDiffPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class adds PAG layer selection and PAG scale semantics that the admitted AnimateDiff adapter does not expose; reuse of its base and motion weights is not feature equivalence.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1748,6 +1758,7 @@
       "modularWorkflowIds": [],
       "name": "AnimateDiffPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1756,8 +1767,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AnimateDiffSDXLPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class requires an SDXL dual-text-encoder and compatible motion-adapter assembly, not the admitted SD1.5 AnimateDiff artifact contract.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1765,8 +1777,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AnimateDiffSparseControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class requires a SparseControlNetModel, sparse frame indices, and an immutable sparse-control artifact selection that MoDiff has not admitted.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1774,8 +1787,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AnimateDiffVideoToVideoControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class combines source-video denoising with ControlNet conditioning and independent strengths; MoDiff has no exact combined handler, field contract, or workflow.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1783,8 +1797,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AnimateDiffVideoToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The prompt-only AnimateDiff action deliberately rejects source video; this class still needs an exact video-to-video handler, artifact assembly receipt, and canonical workflow before admission.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -1795,6 +1810,7 @@
       "modularWorkflowIds": [],
       "name": "AnyFlowFARPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -1806,6 +1822,7 @@
       "modularWorkflowIds": [],
       "name": "AnyFlowPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -1814,8 +1831,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AudioDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1830,6 +1848,7 @@
       "modularWorkflowIds": [],
       "name": "AudioLDM2Pipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1838,8 +1857,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "AudioLDMPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -1856,6 +1876,7 @@
       "modularWorkflowIds": [],
       "name": "AuraFlowPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1864,8 +1885,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "BlipDiffusionControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1873,8 +1895,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "BlipDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -1882,8 +1905,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "BriaFiboEditPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1891,8 +1915,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "BriaFiboPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1900,8 +1925,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "BriaPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -1912,6 +1938,7 @@
       "modularWorkflowIds": [],
       "name": "ChromaImg2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -1920,8 +1947,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "ChromaInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -1938,6 +1966,7 @@
       "modularWorkflowIds": [],
       "name": "ChromaPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1949,6 +1978,7 @@
       "modularWorkflowIds": [],
       "name": "ChronoEditPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -1957,8 +1987,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "CogVideoXFunControlPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class requires a CogVideoX-Fun control-video artifact and control contract; the admitted CogVideoX-2B selection and action are text-to-video only.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1966,8 +1997,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "CogVideoXImageToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The admitted CogVideoX-2B artifact is text-to-video only and does not establish an image-conditioned transformer selection or image-to-video action contract.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -1982,6 +2014,7 @@
       "modularWorkflowIds": [],
       "name": "CogVideoXPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -1990,8 +2023,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "CogVideoXVideoToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The admitted CogVideoX-2B artifact is text-to-video only and does not establish a video-conditioned transformer selection or video-to-video action contract.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -2008,6 +2042,7 @@
       "modularWorkflowIds": [],
       "name": "CogView3PlusPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2016,8 +2051,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "CogView4ControlPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -2034,6 +2070,7 @@
       "modularWorkflowIds": [],
       "name": "CogView4Pipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2045,6 +2082,7 @@
       "modularWorkflowIds": [],
       "name": "ConsisIDPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2060,6 +2098,7 @@
       "modularWorkflowIds": [],
       "name": "ConsistencyModelPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2071,6 +2110,7 @@
       "modularWorkflowIds": [],
       "name": "Cosmos2TextToImagePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2082,6 +2122,7 @@
       "modularWorkflowIds": [],
       "name": "Cosmos2VideoToWorldPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2093,6 +2134,7 @@
       "modularWorkflowIds": [],
       "name": "Cosmos2_5_PredictBasePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2104,6 +2146,7 @@
       "modularWorkflowIds": [],
       "name": "Cosmos2_5_TransferPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2120,6 +2163,7 @@
       ],
       "name": "Cosmos3DistilledModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2142,6 +2186,7 @@
       ],
       "name": "Cosmos3OmniModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2153,6 +2198,7 @@
       "modularWorkflowIds": [],
       "name": "Cosmos3OmniPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2164,6 +2210,7 @@
       "modularWorkflowIds": [],
       "name": "CosmosTextToWorldPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2175,6 +2222,7 @@
       "modularWorkflowIds": [],
       "name": "CosmosVideoToWorldPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2183,8 +2231,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "CycleDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -2199,6 +2248,7 @@
       "modularWorkflowIds": [],
       "name": "DDIMPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2214,6 +2264,7 @@
       "modularWorkflowIds": [],
       "name": "DDPMPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2222,8 +2273,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "DanceDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -2234,6 +2286,7 @@
       "modularWorkflowIds": [],
       "name": "DiTPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2245,6 +2298,7 @@
       "modularWorkflowIds": [],
       "name": "DiffusionGemmaPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2254,6 +2308,7 @@
       "modularWorkflowIds": [],
       "name": "DiffusionPipeline",
       "reason": "Generic factory/base class; it is not an exact task adapter.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -2276,6 +2331,7 @@
       "modularWorkflowIds": [],
       "name": "DreamLiteMobilePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2298,6 +2354,7 @@
       "modularWorkflowIds": [],
       "name": "DreamLitePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2309,6 +2366,7 @@
       "modularWorkflowIds": [],
       "name": "EasyAnimateControlPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2320,6 +2378,7 @@
       "modularWorkflowIds": [],
       "name": "EasyAnimateInpaintPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2331,6 +2390,7 @@
       "modularWorkflowIds": [],
       "name": "EasyAnimatePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2342,6 +2402,7 @@
       ],
       "name": "ErnieImageModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2359,6 +2420,7 @@
       "modularWorkflowIds": [],
       "name": "ErnieImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2371,6 +2433,7 @@
       ],
       "name": "Flux2KleinBaseModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2380,6 +2443,7 @@
       "modularWorkflowIds": [],
       "name": "Flux2KleinInpaintPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2388,8 +2452,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "Flux2KleinKVPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2402,7 +2467,8 @@
         "text_to_image"
       ],
       "name": "Flux2KleinModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
       "status": "equivalent"
     },
     {
@@ -2428,6 +2494,7 @@
       "modularWorkflowIds": [],
       "name": "Flux2KleinPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2440,6 +2507,7 @@
       ],
       "name": "Flux2ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2448,8 +2516,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "Flux2Pipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2457,8 +2526,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "FluxControlImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2466,8 +2536,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "FluxControlInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2475,8 +2546,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "FluxControlNetImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2484,8 +2556,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "FluxControlNetInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2493,8 +2566,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "FluxControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2514,6 +2588,7 @@
       "modularWorkflowIds": [],
       "name": "FluxControlPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2536,6 +2611,7 @@
       "modularWorkflowIds": [],
       "name": "FluxFillPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2551,6 +2627,7 @@
       "modularWorkflowIds": [],
       "name": "FluxImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2566,6 +2643,7 @@
       "modularWorkflowIds": [],
       "name": "FluxInpaintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2575,6 +2653,7 @@
       "modularWorkflowIds": [],
       "name": "FluxKontextInpaintPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2588,7 +2667,8 @@
         "text_to_image"
       ],
       "name": "FluxKontextModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
       "status": "equivalent"
     },
     {
@@ -2609,6 +2689,7 @@
       "modularWorkflowIds": [],
       "name": "FluxKontextPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2623,7 +2704,8 @@
         "text_to_image"
       ],
       "name": "FluxModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
       "status": "equivalent"
     },
     {
@@ -2649,6 +2731,7 @@
       "modularWorkflowIds": [],
       "name": "FluxPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2659,7 +2742,8 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "FluxPriorReduxPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
       "status": "equivalent"
     },
     {
@@ -2677,6 +2761,7 @@
       "modularWorkflowIds": [],
       "name": "GlmImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2692,6 +2777,7 @@
       ],
       "name": "HeliosModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2703,6 +2789,7 @@
       "modularWorkflowIds": [],
       "name": "HeliosPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2718,6 +2805,7 @@
       ],
       "name": "HeliosPyramidDistilledModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2733,6 +2821,7 @@
       ],
       "name": "HeliosPyramidModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2744,6 +2833,7 @@
       "modularWorkflowIds": [],
       "name": "HeliosPyramidPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2755,6 +2845,7 @@
       "modularWorkflowIds": [],
       "name": "HiDreamImagePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2772,6 +2863,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanDiTControlNetPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2780,8 +2872,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "HunyuanDiTPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -2799,6 +2892,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanDiTPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2810,6 +2904,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanImagePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2821,6 +2916,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanImageRefinerPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2829,8 +2925,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "HunyuanSkyreelsImageToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "This SkyReels-specific Hunyuan image-to-video path has no exact immutable artifact, component recipe, or MoDiff action/workflow admission.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -2841,6 +2938,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanVideo15ImageToVideoPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2855,6 +2953,7 @@
       ],
       "name": "HunyuanVideo15ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2866,6 +2965,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanVideo15Pipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2883,6 +2983,7 @@
       "modularWorkflowIds": [],
       "name": "HunyuanVideoFramepackPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -2891,8 +2992,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "HunyuanVideoImageToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The classic HunyuanVideo image-to-video class is distinct from the admitted FramePack assembly and the separately reviewed HunyuanVideo-1.5 family; no exact artifact/action contract exists.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2900,8 +3002,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "HunyuanVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The classic HunyuanVideo text-to-video class is distinct from the admitted FramePack assembly and the separately reviewed HunyuanVideo-1.5 family; no exact artifact/action contract exists.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -2909,8 +3012,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "I2VGenXLPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -2921,6 +3025,7 @@
       "modularWorkflowIds": [],
       "name": "IFImg2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2932,6 +3037,7 @@
       "modularWorkflowIds": [],
       "name": "IFImg2ImgSuperResolutionPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2943,6 +3049,7 @@
       "modularWorkflowIds": [],
       "name": "IFInpaintingPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2954,6 +3061,7 @@
       "modularWorkflowIds": [],
       "name": "IFInpaintingSuperResolutionPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2965,6 +3073,7 @@
       "modularWorkflowIds": [],
       "name": "IFPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2976,6 +3085,7 @@
       "modularWorkflowIds": [],
       "name": "IFSuperResolutionPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -2987,6 +3097,7 @@
       ],
       "name": "Ideogram4ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -2995,8 +3106,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "Ideogram4Pipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3018,6 +3130,7 @@
       "modularWorkflowIds": [],
       "name": "JoyImageEditPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3040,6 +3153,7 @@
       "modularWorkflowIds": [],
       "name": "JoyImageEditPlusPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3057,6 +3171,7 @@
       "modularWorkflowIds": [],
       "name": "Kandinsky3Img2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3074,6 +3189,7 @@
       "modularWorkflowIds": [],
       "name": "Kandinsky3Pipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3082,8 +3198,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "Kandinsky5I2IPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3094,6 +3211,7 @@
       "modularWorkflowIds": [],
       "name": "Kandinsky5I2VPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3102,8 +3220,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "Kandinsky5T2IPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3114,6 +3233,7 @@
       "modularWorkflowIds": [],
       "name": "Kandinsky5T2VPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3125,6 +3245,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyCombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3136,6 +3257,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyImg2ImgCombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3147,6 +3269,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyImg2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3158,6 +3281,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyInpaintCombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3169,6 +3293,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyInpaintPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3181,6 +3306,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3192,6 +3318,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyPriorPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3203,6 +3330,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22CombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3214,6 +3342,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22ControlnetImg2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3225,6 +3354,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22ControlnetPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3236,6 +3366,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22Img2ImgCombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3244,8 +3375,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "KandinskyV22Img2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3256,6 +3388,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22InpaintCombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3267,6 +3400,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22InpaintPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3278,6 +3412,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22Pipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3289,6 +3424,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22PriorEmb2EmbPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3300,6 +3436,7 @@
       "modularWorkflowIds": [],
       "name": "KandinskyV22PriorPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3308,8 +3445,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "KarrasVePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -3320,6 +3458,7 @@
       "modularWorkflowIds": [],
       "name": "KolorsImg2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3328,8 +3467,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "KolorsPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3340,6 +3480,7 @@
       "modularWorkflowIds": [],
       "name": "KolorsPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3351,6 +3492,7 @@
       ],
       "name": "Krea2ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -3362,6 +3504,7 @@
       "modularWorkflowIds": [],
       "name": "Krea2Pipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3373,6 +3516,7 @@
       ],
       "name": "Krea2TurboModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -3381,8 +3525,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LDMPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -3390,8 +3535,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LDMSuperResolutionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3402,6 +3548,7 @@
       "modularWorkflowIds": [],
       "name": "LDMTextToImagePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3410,8 +3557,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LLaDA2Pipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3425,6 +3573,7 @@
       ],
       "name": "LTX25ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -3455,6 +3604,7 @@
       "modularWorkflowIds": [],
       "name": "LTX2ConditionPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3463,17 +3613,21 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTX2HDRPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The class consumes an SDR reference video and an HDR IC-LoRA, then emits linear HDR video; MoDiff lacks that immutable adapter selection, HDR output contract, and exact action/workflow.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "LTX2ConditionPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTX2ImageToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
+      "status": "equivalent"
     },
     {
       "artifactReviews": [],
@@ -3481,8 +3635,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTX2InContextPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The pinned Modular inventory records IC-LoRA block truth, but this standard class still requires reference video conditions, an immutable IC-LoRA, and an exact runnable adapter/workflow.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3490,8 +3645,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTX2LatentUpsamplePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or bounded latent-input action/workflow for this class.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3505,6 +3661,7 @@
       ],
       "name": "LTX2ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -3517,6 +3674,7 @@
       "modularWorkflowIds": [],
       "name": "LTX2Pipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3528,6 +3686,7 @@
       "modularWorkflowIds": [],
       "name": "LTX2VideoDiffusionDecodePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3560,6 +3719,7 @@
       "modularWorkflowIds": [],
       "name": "LTXConditionPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3575,16 +3735,20 @@
       "modularWorkflowIds": [],
       "name": "LTXI2VLongMultiPromptPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "LTXConditionPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTXImageToVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
+      "status": "equivalent"
     },
     {
       "artifactReviews": [],
@@ -3592,8 +3756,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTXLatentUpsamplePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or bounded latent-input action/workflow for this class.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3607,16 +3772,20 @@
       ],
       "name": "LTXModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "LTXConditionPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LTXPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
+      "status": "equivalent"
     },
     {
       "artifactReviews": [],
@@ -3624,8 +3793,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LatentConsistencyModelImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3640,6 +3810,7 @@
       "modularWorkflowIds": [],
       "name": "LatentConsistencyModelPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3657,6 +3828,7 @@
       "modularWorkflowIds": [],
       "name": "LattePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3672,6 +3844,7 @@
       "modularWorkflowIds": [],
       "name": "LongCatAudioDiTPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3689,6 +3862,7 @@
       "modularWorkflowIds": [],
       "name": "LongCatImageEditPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3706,6 +3880,7 @@
       "modularWorkflowIds": [],
       "name": "LongCatImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3717,6 +3892,7 @@
       "modularWorkflowIds": [],
       "name": "LucyEditPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3734,16 +3910,20 @@
       "modularWorkflowIds": [],
       "name": "Lumina2Pipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "Lumina2Pipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "Lumina2Text2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
+      "status": "equivalent"
     },
     {
       "artifactReviews": [
@@ -3760,6 +3940,7 @@
       "modularWorkflowIds": [],
       "name": "LuminaPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3771,6 +3952,7 @@
       "modularWorkflowIds": [],
       "name": "LuminaText2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -3786,6 +3968,7 @@
       "modularWorkflowIds": [],
       "name": "MarigoldDepthPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3794,8 +3977,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "MarigoldIntrinsicsPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3803,8 +3987,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "MarigoldNormalsPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -3819,6 +4004,7 @@
       ],
       "name": "MiniMaxH3ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -3830,6 +4016,7 @@
       ],
       "name": "MiniMaxMusic3ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -3847,6 +4034,7 @@
       "modularWorkflowIds": [],
       "name": "MochiPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3856,6 +4044,7 @@
       "modularWorkflowIds": [],
       "name": "ModularPipeline",
       "reason": "Generic composition base class; reviewed subclasses are inventoried separately.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -3864,8 +4053,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "MotifVideoImage2VideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The Motif-Video image-to-video family, guider, and model artifacts have no immutable MoDiff admission, resource envelope, or exact action/workflow.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3873,8 +4063,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "MotifVideoPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The Motif-Video text-to-video family, guider, and model artifacts have no immutable MoDiff admission, resource envelope, or exact action/workflow.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -3882,8 +4073,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "MusicLDMPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -3900,6 +4092,7 @@
       "modularWorkflowIds": [],
       "name": "NucleusMoEImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3927,6 +4120,7 @@
       "modularWorkflowIds": [],
       "name": "OmniGenPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3936,6 +4130,7 @@
       "modularWorkflowIds": [],
       "name": "OnnxStableDiffusionImg2ImgPipeline",
       "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -3945,6 +4140,7 @@
       "modularWorkflowIds": [],
       "name": "OnnxStableDiffusionInpaintPipeline",
       "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -3954,6 +4150,7 @@
       "modularWorkflowIds": [],
       "name": "OnnxStableDiffusionPipeline",
       "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -3963,6 +4160,7 @@
       "modularWorkflowIds": [],
       "name": "OnnxStableDiffusionUpscalePipeline",
       "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -3980,6 +4178,7 @@
       "modularWorkflowIds": [],
       "name": "OvisImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -3988,8 +4187,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "PIAPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -3997,8 +4197,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "PNDMPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -4015,6 +4216,7 @@
       "modularWorkflowIds": [],
       "name": "PRXPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4023,8 +4225,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "PRXPixelPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4032,8 +4235,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "PaintByExamplePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4041,8 +4245,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "PixArtAlphaPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4050,8 +4255,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "PixArtSigmaPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -4068,6 +4274,7 @@
       "modularWorkflowIds": [],
       "name": "PixArtSigmaPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4076,8 +4283,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "QwenImageControlNetInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4085,8 +4293,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "QwenImageControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4106,6 +4315,7 @@
       "modularWorkflowIds": [],
       "name": "QwenImageEditInpaintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4124,6 +4334,7 @@
       ],
       "name": "QwenImageEditModularPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4133,6 +4344,7 @@
       "modularWorkflowIds": [],
       "name": "QwenImageEditPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -4155,6 +4367,7 @@
       ],
       "name": "QwenImageEditPlusModularPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4164,6 +4377,7 @@
       "modularWorkflowIds": [],
       "name": "QwenImageEditPlusPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -4179,6 +4393,7 @@
       "modularWorkflowIds": [],
       "name": "QwenImageImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4194,6 +4409,7 @@
       "modularWorkflowIds": [],
       "name": "QwenImageInpaintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4211,6 +4427,7 @@
       ],
       "name": "QwenImageLayeredModularPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4219,8 +4436,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "QwenImageLayeredPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4242,6 +4460,7 @@
       ],
       "name": "QwenImageModularPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4257,6 +4476,7 @@
       "modularWorkflowIds": [],
       "name": "QwenImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4265,8 +4485,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "RePaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4274,8 +4495,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "SanaControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -4292,6 +4514,7 @@
       "modularWorkflowIds": [],
       "name": "SanaImageToVideoPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4300,8 +4523,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "SanaPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4316,6 +4540,7 @@
       "modularWorkflowIds": [],
       "name": "SanaPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4331,6 +4556,7 @@
       "modularWorkflowIds": [],
       "name": "SanaSprintImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4346,6 +4572,7 @@
       "modularWorkflowIds": [],
       "name": "SanaSprintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4363,6 +4590,7 @@
       "modularWorkflowIds": [],
       "name": "SanaVideoPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4371,8 +4599,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "ScoreSdeVePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4380,8 +4609,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "SemanticStableDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4389,8 +4619,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "ShapEImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4405,6 +4636,7 @@
       "modularWorkflowIds": [],
       "name": "ShapEPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4416,6 +4648,7 @@
       "modularWorkflowIds": [],
       "name": "SkyReelsV2DiffusionForcingImageToVideoPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4427,6 +4660,7 @@
       "modularWorkflowIds": [],
       "name": "SkyReelsV2DiffusionForcingPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4438,6 +4672,7 @@
       "modularWorkflowIds": [],
       "name": "SkyReelsV2DiffusionForcingVideoToVideoPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4449,6 +4684,7 @@
       "modularWorkflowIds": [],
       "name": "SkyReelsV2ImageToVideoPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4460,6 +4696,7 @@
       "modularWorkflowIds": [],
       "name": "SkyReelsV2Pipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4468,8 +4705,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "SpectrogramDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4484,6 +4722,7 @@
       "modularWorkflowIds": [],
       "name": "StableAudioPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4495,6 +4734,7 @@
       "modularWorkflowIds": [],
       "name": "StableCascadeCombinedPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4506,6 +4746,7 @@
       "modularWorkflowIds": [],
       "name": "StableCascadeDecoderPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4517,6 +4758,7 @@
       "modularWorkflowIds": [],
       "name": "StableCascadePriorPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4528,6 +4770,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusion3ControlNetInpaintingPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4539,6 +4782,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusion3ControlNetPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4550,6 +4794,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusion3Img2ImgPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4561,6 +4806,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusion3InpaintPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4573,6 +4819,7 @@
       ],
       "name": "StableDiffusion3ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -4581,8 +4828,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusion3PAGImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4590,8 +4838,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusion3PAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [
@@ -4602,6 +4851,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusion3Pipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4610,8 +4860,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionAdapterPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4619,8 +4870,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionAttendAndExcitePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4628,8 +4880,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4637,8 +4890,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4646,8 +4900,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetPAGInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4655,8 +4910,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4671,6 +4927,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4679,8 +4936,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetXSPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4688,8 +4946,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionDepth2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4697,8 +4956,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionDiffEditPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4706,8 +4966,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionGLIGENPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4715,8 +4976,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionGLIGENTextImagePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4724,8 +4986,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionImageVariationPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4740,6 +5003,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4755,6 +5019,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionInpaintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4763,8 +5028,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionInstructPix2PixPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4772,8 +5038,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionLDM3DPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4781,8 +5048,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionLatentUpscalePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4790,8 +5058,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionModelEditingPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4800,6 +5069,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionOnnxPipeline",
       "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "reviewDecision": null,
       "status": "intentionally-excluded"
     },
     {
@@ -4808,8 +5078,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionPAGImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4817,8 +5088,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionPAGInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4833,6 +5105,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionPAGPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4841,8 +5114,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionPanoramaPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4850,8 +5124,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionParadigmsPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4866,6 +5141,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4874,8 +5150,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionPix2PixZeroPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -4883,8 +5160,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionSAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -4895,6 +5173,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionUpscalePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -4910,6 +5189,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLAdapterPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4918,8 +5198,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4927,8 +5208,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4936,8 +5218,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetPAGImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4945,8 +5228,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetPAGPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4961,6 +5245,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -4969,8 +5254,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetUnionImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4978,8 +5264,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetUnionInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4987,8 +5274,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetUnionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -4996,8 +5284,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetXSPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5012,6 +5301,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5027,6 +5317,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLInpaintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5042,6 +5333,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLInstructPix2PixPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5070,6 +5362,7 @@
       ],
       "name": "StableDiffusionXLModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -5085,6 +5378,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLPAGImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5100,6 +5394,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLPAGInpaintPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5115,6 +5410,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLPAGPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5130,6 +5426,7 @@
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5138,8 +5435,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableUnCLIPImg2ImgPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -5147,8 +5445,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "StableUnCLIPPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -5163,6 +5462,7 @@
       "modularWorkflowIds": [],
       "name": "StableVideoDiffusionPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5171,8 +5471,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "TextToVideoSDPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5180,8 +5481,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "TextToVideoZeroPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5189,8 +5491,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "TextToVideoZeroSDXLPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5198,8 +5501,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "UnCLIPImageVariationPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5207,8 +5511,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "UnCLIPPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5216,8 +5521,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "UniDiffuserPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5225,8 +5531,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "VQDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5234,8 +5541,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "VersatileDiffusionDualGuidedPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5243,8 +5551,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "VersatileDiffusionImageVariationPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5252,8 +5561,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "VersatileDiffusionPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5261,8 +5571,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "VersatileDiffusionTextToImagePipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5270,8 +5581,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "VideoToVideoSDPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "reviewDecision": "pinned-diffusers-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [
@@ -5282,6 +5594,7 @@
       "modularWorkflowIds": [],
       "name": "VisualClozeGenerationPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -5293,6 +5606,7 @@
       "modularWorkflowIds": [],
       "name": "VisualClozePipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reviewDecision": null,
       "status": "research-blocked"
     },
     {
@@ -5306,6 +5620,7 @@
       ],
       "name": "Wan22Image2VideoModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -5319,6 +5634,7 @@
       ],
       "name": "Wan22ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -5332,6 +5648,7 @@
       ],
       "name": "WanAnimate2DistilledModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -5345,6 +5662,7 @@
       ],
       "name": "WanAnimate2ModularPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -5365,6 +5683,7 @@
       "modularWorkflowIds": [],
       "name": "WanAnimatePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5383,6 +5702,7 @@
       ],
       "name": "WanImage2VideoModularPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5402,6 +5722,7 @@
       "modularWorkflowIds": [],
       "name": "WanImageToVideoPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5414,7 +5735,8 @@
         "text_to_video"
       ],
       "name": "WanModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
       "status": "equivalent"
     },
     {
@@ -5433,6 +5755,7 @@
       "modularWorkflowIds": [],
       "name": "WanPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5463,6 +5786,7 @@
       "modularWorkflowIds": [],
       "name": "WanVACEPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5483,6 +5807,7 @@
       "modularWorkflowIds": [],
       "name": "WanVideoToVideoPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5491,8 +5816,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "WuerstchenCombinedPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5500,8 +5826,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "WuerstchenDecoderPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5509,8 +5836,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "WuerstchenPriorPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "intentionally-excluded"
     },
     {
       "artifactReviews": [],
@@ -5518,8 +5846,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "ZImageControlNetInpaintPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -5527,8 +5856,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "ZImageControlNetPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -5543,6 +5873,7 @@
       "modularWorkflowIds": [],
       "name": "ZImageImg2ImgPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     },
     {
@@ -5552,6 +5883,7 @@
       "modularWorkflowIds": [],
       "name": "ZImageInpaintPipeline",
       "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reviewDecision": null,
       "status": "contract-only"
     },
     {
@@ -5566,7 +5898,8 @@
         "text_to_image"
       ],
       "name": "ZImageModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reviewDecision": null,
       "status": "equivalent"
     },
     {
@@ -5575,8 +5908,9 @@
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "ZImageOmniPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
-      "status": "unreviewed"
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "reviewDecision": "pinned-diffusers-non-video-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -5591,6 +5925,7 @@
       "modularWorkflowIds": [],
       "name": "ZImagePipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
       "status": "executable"
     }
   ],
@@ -6768,7 +7103,7 @@
         "byteSize": 11625234,
         "filename": "transformers-5.14.1-py3-none-any.whl",
         "runtimeProfileId": "huggingface-transformers-peft-5.14.1-0.20.0",
-        "runtimeProfileSpecDigest": "sha256:361ed0a0bf56970519c3a7b9e1e26f183400bf26309ab1b3e09b0e6ae32b005b",
+        "runtimeProfileSpecDigest": "sha256:28a5d3348578d5ec0626fb7b502ac0d654e8a86b9444cb7710a378bbf5e7a6ed",
         "sha256": "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
         "version": "5.14.1"
       },
@@ -6787,11 +7122,11 @@
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 29,
-      "equivalent": 6,
+      "equivalent": 10,
       "executable": 85,
-      "intentionally-excluded": 7,
-      "research-blocked": 72,
-      "unreviewed": 128
+      "intentionally-excluded": 56,
+      "research-blocked": 147,
+      "unreviewed": 0
     },
     "publicTemplateCount": 77,
     "reviewedGalleryTemplateCount": 70,
@@ -6808,9 +7143,9 @@
     "transformersSemanticStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 3,
+      "executable": 4,
       "intentionally-excluded": 0,
-      "research-blocked": 3,
+      "research-blocked": 2,
       "unreviewed": 0
     },
     "workflowStatusCounts": {
@@ -6901,7 +7236,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "5d4b673e6e7672c9196ea2b3fd0a9b5d492ae2888185f3306f2a6bca39b6de29"
+          "sha256": "5f2966f000b42a4c73b16a47227f04b89a1af2164bbd42954dbe6583679aab5b"
         }
       ],
       "nodeKeys": [
@@ -6962,7 +7297,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "5d4b673e6e7672c9196ea2b3fd0a9b5d492ae2888185f3306f2a6bca39b6de29"
+          "sha256": "5f2966f000b42a4c73b16a47227f04b89a1af2164bbd42954dbe6583679aab5b"
         }
       ],
       "nodeKeys": [
@@ -7027,10 +7362,23 @@
       "id": "any-to-any-generation",
       "label": "Any-to-any generation",
       "modes": [
-        "any_to_any"
+        "any_to_any_text",
+        "text_to_image"
       ],
-      "nodeEvidence": [],
-      "nodeKeys": [],
+      "nodeEvidence": [
+        {
+          "actions": [
+            "GenerateAnyToAny",
+            "LoadAnyToAnyModel"
+          ],
+          "path": "modules/HuggingFaceTransformers/main.py",
+          "sha256": "5f2966f000b42a4c73b16a47227f04b89a1af2164bbd42954dbe6583679aab5b"
+        }
+      ],
+      "nodeKeys": [
+        "modules.HuggingFaceTransformers.LoadAnyToAnyModel",
+        "modules.HuggingFaceTransformers.GenerateAnyToAny"
+      ],
       "productionWheelAbsentPaths": [],
       "productionWheelEvidence": [
         {
@@ -7050,8 +7398,8 @@
       ],
       "productionWheelSupport": true,
       "publicTemplateEligible": false,
-      "qualification": "no-modiff-action-contract",
-      "reason": "Upstream exposes the task, but MoDiff has no bounded AnyToAny action or workflow contract.",
+      "qualification": "source-implemented-mocked-adapter-qualified",
+      "reason": "Task-generic nodes use a finite adapter registry; Janus text/image is bounded and executable while Qwen2.5-Omni remains contract-only because its official loader requires a non-safetensors speaker file.",
       "reviewedMainEvidence": [
         {
           "path": "models/auto/modeling_auto.py",
@@ -7068,7 +7416,7 @@
           ]
         }
       ],
-      "status": "research-blocked"
+      "status": "executable"
     },
     {
       "canonicalWorkflowIds": [],
