@@ -1602,8 +1602,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
-            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae),
-            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline),
+            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch(
                 "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler.from_config"
             ) as replace_scheduler,
@@ -1625,6 +1625,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertIs(loaded, pipeline)
         self.assertIs(loaded.scheduler, scheduler)
         self.assertEqual(loaded.scheduler.config["flow_shift"], 5.0)
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         replace_scheduler.assert_not_called()
 
     def test_wan_text_generation_can_override_flow_shift_for_a_locked_recipe(self):
@@ -1669,8 +1671,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
-            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae),
-            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline),
+            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch(
                 "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler.from_config",
                 return_value=replacement_scheduler,
@@ -1691,6 +1693,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             )
 
         self.assertIs(loaded.scheduler, replacement_scheduler)
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         replace_scheduler.assert_called_once_with(scheduler.config, flow_shift=8.0)
 
     def test_wan_22_quality_contract_rejects_shorter_than_five_second_clips(self):
@@ -1744,7 +1748,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertIs(loaded, pipeline)
         self.assertEqual(load_vae.call_args.args[0], adapter.default_repo)
         self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
         apply_recipe.assert_called_once()
 
@@ -2331,6 +2337,43 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(output["frames_out"], 2)
         self.assertEqual(pipeline.calls[0]["strength"], 0.35)
         self.assertEqual(pipeline.calls[0]["video"], ["source-a", "source-b"])
+
+    def test_wan_video_to_video_loader_requires_safe_serialization(self):
+        adapter = get_video_pipeline_adapter("WanVideoToVideoPipeline")
+        vae = object()
+        scheduler = SimpleNamespace(config={"flow_shift": 3.0})
+        replacement_scheduler = SimpleNamespace(config={"flow_shift": 3.0})
+        pipeline = SimpleNamespace(scheduler=scheduler)
+        node = LoadPipeline()
+
+        with (
+            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+            patch(
+                "diffusers.WanVideoToVideoPipeline.from_pretrained",
+                return_value=pipeline,
+            ) as load_pipeline,
+            patch(
+                "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler.from_config",
+                return_value=replacement_scheduler,
+            ),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+            patch.object(node, "progress"),
+            patch.object(node, "mm_add"),
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+        ):
+            loaded = node._load_wan_video_to_video(
+                adapter,
+                {
+                    "model_id": {"source": "hub", "value": adapter.default_repo},
+                    "dtype": "bfloat16",
+                    "device": "cpu",
+                    "execution_recipe": {"offload_mode": "none", "device": "cpu"},
+                },
+            )
+
+        self.assertIs(loaded, pipeline)
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
 
     def test_base_wan_text_to_video_uses_the_same_generic_node_contract(self):
         adapter = get_video_pipeline_adapter("WanPipeline")

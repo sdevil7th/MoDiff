@@ -386,6 +386,26 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "Wan-AI/Wan2.1-T2V-1.3B-Diffusers": (
+                "0fad780a534b6463e45facd96134c9f345acfa5b",
+                21,
+                "examples/i2v_input.JPG",
+            ),
+            "Wan-AI/Wan2.1-VACE-1.3B-diffusers": (
+                "ec4d2cb062b548996b179d493fdd05340de702a1",
+                19,
+                "assets/comp_effic.png",
+            ),
+            "Wan-AI/Wan2.2-I2V-A14B-Diffusers": (
+                "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+                43,
+                "examples/i2v_input.JPG",
+            ),
+            "Wan-AI/Wan2.2-TI2V-5B-Diffusers": (
+                "b8fff7315c768468a5333511427288870b2e9635",
+                22,
+                "assets/moe_arch.png",
+            ),
             "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS": (
                 "e102b3591cc82e97071b8b4cb90d834d0c487207",
                 15,

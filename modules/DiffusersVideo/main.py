@@ -2071,6 +2071,7 @@ class LoadPipeline(WanVACELoadPipeline):
             default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
         )
         load_kwargs = {
+            "use_safetensors": True,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "revision": revision,
             "local_files_only": local_files_only(model_id),
@@ -2116,6 +2117,7 @@ class LoadPipeline(WanVACELoadPipeline):
             default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
         )
         common = {
+            "use_safetensors": True,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "revision": revision,
             "local_files_only": local_files_only(model_id),
@@ -2163,6 +2165,7 @@ class LoadPipeline(WanVACELoadPipeline):
             default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
         )
         load_kwargs = {
+            "use_safetensors": True,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "revision": revision,
             "local_files_only": local_files_only(model_id),
