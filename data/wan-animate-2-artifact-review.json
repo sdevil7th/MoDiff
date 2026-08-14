@@ -1,0 +1,285 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "Both exact repositories are public, Python-free, and safetensors-only, but their standard model indexes name WanAnimate2Pipeline, which the pinned Diffusers package does not export. Their otherwise matching Modular indexes also bind components to null revisions and mutable refs/pr/1 or refs/pr/2 references. Repository-scoped execution therefore cannot be immutable at the current pin.",
+    "runtimeCatalogExposed": false,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "package_owned_standard_pipeline_at_pin_or_reviewed_modular_only_loader",
+      "immutable_component_descriptor_normalization",
+      "distilled_composed_step_default_resolution",
+      "compiled_flex_attention_remote_qualification",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+  "family": "Wan Animate 2 14B",
+  "format": "safetensors",
+  "license": {
+    "embeddedLicenseFilePresent": false,
+    "evidence": "Pinned model-card metadata on both repositories",
+    "id": "apache-2.0",
+    "metadataOnly": true,
+    "modelCardContainsDetailedUsageOrSafetyGuidance": false
+  },
+  "remoteResourceEnvelope": {
+    "basis": "Exact BF16 repository totals plus conservative loading, compiled flex-attention, KV-cache, segment decode, and output headroom; no live proof.",
+    "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+    "minimumSelectiveDiskBytes": 68719476736,
+    "minimumSystemRamBytes": 103079215104,
+    "status": "estimate_only_qualification_pending"
+  },
+  "repositories": [
+    {
+      "fullRepositoryBytes": 45947573015,
+      "fullRepositoryFileCount": 31,
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 560,
+        "className": "WanAnimate2Pipeline",
+        "diffusersVersion": "0.36.0.dev0",
+        "packageClassExportedAtPin": false,
+        "sha256": "c5b489acbab8823cce49b16a2aea972069ba061e6d69cd0b28960a7b4ba5f160"
+      },
+      "modularIndex": {
+        "allComponentRevisionsImmutable": false,
+        "blocksClass": "WanAnimate2Blocks",
+        "byteSize": 2081,
+        "componentRevisions": {
+          "image_encoder": null,
+          "scheduler": "refs/pr/2",
+          "text_encoder": null,
+          "tokenizer": null,
+          "transformer": "refs/pr/2",
+          "vae": null
+        },
+        "pipelineClass": "WanAnimate2ModularPipeline",
+        "selfRepositoryOnly": true,
+        "sha256": "5b24f4817ec380e8a47c972e079d7cb59362a754d5968109d09d1381814fef3b"
+      },
+      "private": false,
+      "pythonFileCount": 0,
+      "repository": "Wan-AI/Wan2.2-Animate-2-14B-Diffusers",
+      "revision": "7d48412d7b903ff3a89f4f5a960d99e1899605a1",
+      "role": "base",
+      "schedulerClass": "DPMSolverMultistepScheduler",
+      "transformerWeightFiles": [
+        {
+          "byteSize": 9874593104,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00004.safetensors",
+          "sha256": "af9719a7623c9d1606e876b7387a5be4444c34334ba76f3f2fb9a46690ded25a"
+        },
+        {
+          "byteSize": 9975379320,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00004.safetensors",
+          "sha256": "f4b73ff42e08584400120f3a519d021a337e3aeb8304980c90c357baed609a1c"
+        },
+        {
+          "byteSize": 9954401600,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00004.safetensors",
+          "sha256": "099d2a406ba1b72e1ef4a4396dbe38783b974831c334ae09c664541e2d0956bb"
+        },
+        {
+          "byteSize": 2985521520,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00004.safetensors",
+          "sha256": "01c7ab59033a407341cbfac1e90480f4a9816acf8a5f53fd84ef214e035f778f"
+        }
+      ],
+      "weightBytes": 45920934868,
+      "weightFileCount": 9,
+      "weightInventorySha256": "0051730e41dac58c7a7eea8d87adaf66608b74b496b131b0f8c11e3d200fe862"
+    },
+    {
+      "fullRepositoryBytes": 45947572641,
+      "fullRepositoryFileCount": 31,
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 564,
+        "className": "WanAnimate2Pipeline",
+        "diffusersVersion": "0.36.0.dev0",
+        "packageClassExportedAtPin": false,
+        "sha256": "da26517859f8e2766366795750dbfe3f758968fc9dfa6650f4c9f5beb1e6bc1d"
+      },
+      "modularIndex": {
+        "allComponentRevisionsImmutable": false,
+        "blocksClass": "WanAnimate2DistilledBlocks",
+        "byteSize": 2167,
+        "componentRevisions": {
+          "image_encoder": null,
+          "scheduler": "refs/pr/1",
+          "text_encoder": null,
+          "tokenizer": null,
+          "transformer": "refs/pr/1",
+          "vae": null
+        },
+        "pipelineClass": "WanAnimate2DistilledModularPipeline",
+        "selfRepositoryOnly": true,
+        "sha256": "ca29bd15a717e091b0aee14e22adc6669c511221e6e83ff82f42c339eee20827"
+      },
+      "private": false,
+      "pythonFileCount": 0,
+      "repository": "Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers",
+      "revision": "59e4141466bcb1bf9733eca1bc78be6891c9fbdf",
+      "role": "distilled",
+      "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+      "transformerWeightFiles": [
+        {
+          "byteSize": 9874593104,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00004.safetensors",
+          "sha256": "ebc182727d948cb61cac929af3b2887e0a4b7c8b683b7356628cf0350d332c0a"
+        },
+        {
+          "byteSize": 9975379320,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00004.safetensors",
+          "sha256": "e808cf7a7e7aaf358478a2198152f9e3ec8609c66712be397c21b4b7ec7ef501"
+        },
+        {
+          "byteSize": 9954401600,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00004.safetensors",
+          "sha256": "444eeea631fe6d2df80780f521f6c7716bd079fc177279ba09d2d20479f2dfaf"
+        },
+        {
+          "byteSize": 2985521520,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00004.safetensors",
+          "sha256": "130fd0a278a06096e483f08b2492ddd86b89fef8676b3d7b30556b3230a9b005"
+        }
+      ],
+      "weightBytes": 45920934868,
+      "weightFileCount": 9,
+      "weightInventorySha256": "7483d0d9d04f48b572901fcdb95b473328d83cec5ec3510b419b12facaf83ef0"
+    }
+  ],
+  "reviewedContracts": [
+    {
+      "blocksClass": "WanAnimate2Blocks",
+      "defaultFps": 24,
+      "defaultGuidanceScale": 3.0,
+      "defaultHeight": 800,
+      "defaultNumInferenceSteps": 40,
+      "defaultPreviousSegmentConditioningFrames": 1,
+      "defaultSegmentFrameLength": 81,
+      "defaultWidth": 640,
+      "pipelineClass": "WanAnimate2ModularPipeline",
+      "repositoryRole": "base",
+      "workflow": {
+        "id": "default",
+        "requiredInputs": [
+          "driving_video",
+          "image",
+          "prompt"
+        ],
+        "taskId": "character_animate"
+      }
+    },
+    {
+      "blocksClass": "WanAnimate2DistilledBlocks",
+      "composedSchemaDefaultNumInferenceSteps": 40,
+      "defaultFps": 24,
+      "defaultGuidanceScale": 1.0,
+      "defaultHeight": 800,
+      "defaultPreviousSegmentConditioningFrames": 1,
+      "defaultSegmentFrameLength": 81,
+      "defaultWidth": 640,
+      "documentedDefaultNumInferenceSteps": 10,
+      "pipelineClass": "WanAnimate2DistilledModularPipeline",
+      "repositoryRole": "distilled",
+      "workflow": {
+        "id": "default",
+        "requiredInputs": [
+          "driving_video",
+          "image",
+          "prompt"
+        ],
+        "taskId": "character_animate"
+      }
+    }
+  ],
+  "sharedWeightFiles": [
+    {
+      "byteSize": 1261596224,
+      "path": "image_encoder/model.safetensors",
+      "sha256": "e672f7dcb7f46458f8edc218669bc25d7ab1fc48bec53e8bd5b957bc1386a5e4"
+    },
+    {
+      "byteSize": 4935812536,
+      "path": "text_encoder/model-00001-of-00003.safetensors",
+      "sha256": "a8e861969c7433e707cc5a74065d795d36cca07ec96eb6763eb4083df7248f58"
+    },
+    {
+      "byteSize": 4983103192,
+      "path": "text_encoder/model-00002-of-00003.safetensors",
+      "sha256": "d57d948ece4837d850b7a859a4415121d57cacf8b9ee1d4db200c67f592902d7"
+    },
+    {
+      "byteSize": 1442935480,
+      "path": "text_encoder/model-00003-of-00003.safetensors",
+      "sha256": "0da9ee284e21d1406df708788db1d502d95d75f69faa25cd26151bf8829b7c5f"
+    },
+    {
+      "byteSize": 507591892,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  ],
+  "sourceReview": {
+    "compiledFlexAttentionRequiredAtVideoResolution": true,
+    "files": [
+      {
+        "path": "src/diffusers/models/transformers/transformer_wan_animate_2.py",
+        "sha256": "7c7fa3565f269bb1e5321106d8a7a1b74f55d8c55aaf4c911f9b9b918f82d01d"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/before_denoise.py",
+        "sha256": "20d5ca649adc0105942690bea7a14466e516f585dd785fe03e7ea369013100ba"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/decoders.py",
+        "sha256": "707f7bdc56c0b5b0347d6180c21a48d4ca438e17a5f35c72542d4d6b5f645f99"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/denoise.py",
+        "sha256": "6e3b266ee50955cd65856bdd3c33e7fcc3b7c9945e3729f8d30e1fae92937d5d"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/encoders.py",
+        "sha256": "e236115b0eb435987d0a6b02b137d88330be419796cccfc3a1b0ba1961648b18"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_blocks_wan_animate_2.py",
+        "sha256": "a53da73ef73c85c8b813b34163597a98d1046901f753625e7dd186c48e92ca2d"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_blocks_wan_animate_2_distilled.py",
+        "sha256": "b9be04de1940b4cb3735bbf908a34069ba47e52b62ff5ca9a562a217d0e3820c"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_pipeline.py",
+        "sha256": "3be57fb908553dfee6d2b48a05c1447776ee2ea6630b7f8f04b507da43f9e329"
+      },
+      {
+        "path": "src/diffusers/modular_pipelines/wan_animate_2/video_processor.py",
+        "sha256": "9e587e0d412c977e10341ce641625dbbf9698116de7c36db16cfc0664834a497"
+      }
+    ],
+    "generationAttentionBackend": "flex",
+    "remoteCodeRequired": false,
+    "segmentLoopCarriesDecodedTailFrames": true,
+    "standardPipelineClassExportedAtPin": false,
+    "transformerClass": "WanAnimate2Transformer3DModel",
+    "zigzagTailPaddingTrimmedFromOutput": true
+  }
+}
