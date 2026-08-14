@@ -226,9 +226,57 @@ STABLE_VIDEO_DIFFUSION_REPO = "stabilityai/stable-video-diffusion-img2vid-xt-1-1
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
+_VIDEO_T5_DIFFUSERS_FILES = [
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00004.safetensors",
+    "text_encoder/model-00002-of-00004.safetensors",
+    "text_encoder/model-00003-of-00004.safetensors",
+    "text_encoder/model-00004-of-00004.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+]
 ALLEGRO_REPO = "rhymes-ai/Allegro"
+ALLEGRO_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    *_VIDEO_T5_DIFFUSERS_FILES,
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 LATTE_REPO = "maxin-cn/Latte-1"
+LATTE_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    *_VIDEO_T5_DIFFUSERS_FILES,
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 MOCHI_REPO = "genmo/mochi-1-preview"
+MOCHI_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    *_VIDEO_T5_DIFFUSERS_FILES,
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.bf16-00001-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.bf16-00002-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.bf16-00003-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.bf16.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.bf16.safetensors",
+]
 SANA_VIDEO_REPO = "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
@@ -4325,6 +4373,7 @@ def _allegro_capability() -> dict[str, Any]:
         "qualifiedModes": [],
         "defaultRepo": ALLEGRO_REPO,
         "artifactLabel": "Official Apache-2.0 safetensors Diffusers repo",
+        "downloadFiles": ALLEGRO_DIFFUSERS_FILES,
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1280, "height": 720, "aspectRatio": "16:9"},
         "recommendedSteps": 100,
@@ -4387,6 +4436,7 @@ def _latte_capability() -> dict[str, Any]:
         "qualifiedModes": [],
         "defaultRepo": LATTE_REPO,
         "artifactLabel": "Official Apache-2.0 safetensors Diffusers repo",
+        "downloadFiles": LATTE_DIFFUSERS_FILES,
         "defaultDtype": "float16",
         "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
         "recommendedSteps": 50,
@@ -4449,6 +4499,7 @@ def _mochi_capability() -> dict[str, Any]:
         "qualifiedModes": [],
         "defaultRepo": MOCHI_REPO,
         "artifactLabel": "Official Apache-2.0 BF16 safetensors Diffusers repo",
+        "downloadFiles": MOCHI_DIFFUSERS_FILES,
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 848, "height": 480, "aspectRatio": "16:9"},
         "recommendedSteps": 64,
