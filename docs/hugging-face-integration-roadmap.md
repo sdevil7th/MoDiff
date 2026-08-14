@@ -5341,6 +5341,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   117 tests and 49 subtests with pinned Ruff E9/F and 66-package compatibility
   green. None fit beside the active app queue, so no POST was submitted and no
   existing complete or partial cache entry was removed.
+- [x] **P6.64 Bound Stable Audio and Stable Video app download selections:**
+  backend `8c96321` binds both existing admitted media routes to the runnable
+  component sets selected by their loaders. Stable Audio selects 19 files /
+  5,348,079,831 bytes, retaining its safetensors projection model, text
+  encoder, transformer, VAE, tokenizer/config surface, license/card, and both
+  dataset attribution receipts. It excludes the duplicate original `.ckpt`
+  and single-file safetensors checkpoints, original model configs, and demo
+  image from the 15,680,736,700-byte repository tree. Stable Video Diffusion
+  selects 12 files / 4,509,218,296 bytes, matching the loader's exact `fp16`
+  variant for its image encoder, UNet, and VAE. It excludes all three default
+  full-precision component weights, the duplicate single-file checkpoint, and
+  demo image from the 18,313,865,678-byte repository tree.
+
+  App plan and POST regressions require those identical capability-derived
+  selections, while the artifact regressions reject unsafe and duplicate
+  surfaces. The focused media, capability, app, and loader matrix passes 270
+  tests, two environment skips, and 544 subtests; pinned Ruff E9/F,
+  66-package compatibility, and diff checks pass. Fresh exact app plans report
+  400,730,861,568 free bytes, 328,468,945,405 queued reservation bytes, and the
+  68,719,476,736-byte safety reserve, so neither additional request fits beside
+  the active queue. No duplicate POST was submitted; the pre-existing
+  repository-wide app transfers were not interrupted and no older or partial
+  cache entry was deleted.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6602,4 +6625,5 @@ Add references only after the corresponding evidence exists.
 | P6.61 Bounded AuraFlow app download selection | `ed3982a` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 16,837,479,394-byte fp16 runnable selection from the capability, excluding four duplicate/default weight surfaces and the unrelated single-file/ComfyUI artifacts. The pre-existing full-repository app transfer remains untouched and no cache entry was deleted. |
 | P6.62 Bounded Chroma app download selection | `0922243` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 27,493,360,428-byte runnable Diffusers selection, excluding the 17,800,038,288-byte duplicate native checkpoint and demo artifacts. The selected files are already complete in the preserved full cache, so no POST or deletion occurred. |
 | P6.63 Bounded Allegro, Latte, and Mochi app download selections | `cb3448d` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 18/18/21-file runnable selections replace repository-wide planning and exclude Allegro's unsafe `.bin` duplicates, Latte's unsafe `.pt` plus unused decoder, and Mochi's 93.48 GB of duplicate/default partitions. Current queue-aware plans do not fit, so no POST or deletion occurred. |
+| P6.64 Bounded Stable Audio and Stable Video app download selections | `8c96321` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 19-file / 5,348,079,831-byte Stable Audio and 12-file / 4,509,218,296-byte Stable Video runnable selections replace repository-wide planning. They exclude 24.14 GB of duplicate original, default/full-precision, and demo surfaces while retaining safetensors-only runtime components and rights receipts. Queue-aware plans do not fit beside current reservations, so no duplicate POST, interruption, or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
