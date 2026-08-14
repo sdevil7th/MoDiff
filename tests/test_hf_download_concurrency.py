@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "stable-diffusion-v1-5/stable-diffusion-v1-5": (
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+                21,
+                "v1-5-pruned.safetensors",
+            ),
             "black-forest-labs/FLUX.1-schnell": (
                 "741f7c3ce8b383c54771c7003378a50191e9efe9",
                 25,

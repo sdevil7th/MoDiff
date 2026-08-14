@@ -175,6 +175,29 @@ SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 HUNYUAN_DIT_DISTILLED_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
 HUNYUAN_DIT_CONTROLNET_CANNY_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
+SD15_SHARED_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "model_index.json",
+    "safety_checker/config.json",
+    "safety_checker/model.fp16.safetensors",
+    "safety_checker/model.safetensors",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.fp16.safetensors",
+    "text_encoder/model.safetensors",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.fp16.safetensors",
+    "unet/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.fp16.safetensors",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_600M_FP16_DIFFUSERS_FILES = [
@@ -4561,6 +4584,7 @@ def _animatediff_capability(model_type: str, *, lcm: bool) -> dict[str, Any]:
         "qualificationStatus": "graph-qualified-execution-pending",
         "qualifiedModes": [],
         "defaultRepo": SD15_BASE_REPO,
+        "downloadFiles": SD15_SHARED_DIFFUSERS_FILES,
         "artifactLabel": "SD1.5 safetensors base plus pinned fp16 safetensors motion adapter",
         "defaultDtype": "float16",
         "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
@@ -5451,6 +5475,7 @@ _SD15_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": SD15_BASE_REPO,
+    "downloadFiles": SD15_SHARED_DIFFUSERS_FILES,
     "artifactLabel": "Diffusers safetensors repo",
     "defaultDtype": "float32",
     "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
@@ -8212,6 +8237,7 @@ _PAG_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": SD15_BASE_REPO,
+    "downloadFiles": SD15_SHARED_DIFFUSERS_FILES,
     "artifactLabel": "Diffusers safetensors repo",
     "defaultDtype": "float32",
     "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},

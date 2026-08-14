@@ -769,12 +769,14 @@ IMAGE_PIPELINE_ADAPTERS = {
         "StableDiffusionPipeline",
         frozenset({"text_to_image"}),
         SD15_BASE_REPO,
+        safe_serialization_required=True,
     ),
     "StableDiffusionControlNetPipeline": ImagePipelineAdapter(
         "StableDiffusionControlNetPipeline",
         frozenset({"control_image"}),
         SD15_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionPipeline",),
+        safe_serialization_required=True,
         conditioning_kind="controlnet",
         default_conditioning_repo=SD15_CONTROLNET_CANNY_REPO,
         conditioning_component_class="ControlNetModel",
@@ -787,12 +789,14 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"edit_image"}),
         SD15_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionImg2ImgPipeline"),
+        safe_serialization_required=True,
     ),
     "StableDiffusionInpaintPipeline": ImagePipelineAdapter(
         "StableDiffusionInpaintPipeline",
         frozenset({"inpaint", "outpaint"}),
         SD15_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionInpaintPipeline"),
+        safe_serialization_required=True,
     ),
     "LatentConsistencyModelPipeline": ImagePipelineAdapter(
         "LatentConsistencyModelPipeline",
@@ -805,6 +809,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"text_to_image"}),
         SD15_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionPAGPipeline"),
+        safe_serialization_required=True,
     ),
     "MarigoldDepthPipeline": ImagePipelineAdapter(
         "MarigoldDepthPipeline",
