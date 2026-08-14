@@ -245,6 +245,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 max_duration_seconds=ACE_MAX_DURATION_SECONDS,
             ),
         ),
+        safe_serialization_required=True,
         # The reviewed ACE-Step artifact uses AutoencoderOobleck with
         # ``audio_channels=2``. A mono waveform has one unambiguous,
         # deterministic stereo representation; layouts with more than two

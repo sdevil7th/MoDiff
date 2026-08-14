@@ -139,7 +139,12 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(audioldm2.default_inference_steps, 200)
         self.assertEqual(audioldm2.mode_contracts[0].max_duration_seconds, 10)
         self.assertTrue(audioldm2.supports_multiple_waveforms)
-        self.assertTrue(all(item.safe_serialization_required for item in (stable, longcat, audioldm2)))
+        self.assertTrue(
+            all(
+                item.safe_serialization_required
+                for item in (ace, stable, longcat, audioldm2)
+            )
+        )
         self.assertNotIn("extract", Generate.params["task_type"]["options"])
         self.assertNotIn("lego", Generate.params["task_type"]["options"])
         self.assertNotIn("complete", Generate.params["task_type"]["options"])
@@ -2055,6 +2060,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(loaded["repo"], "org/ace-step")
         self.assertEqual(loaded["kwargs"]["device_map"], "cuda")
         self.assertEqual(loaded["kwargs"]["revision"], "0123456789abcdef0123456789abcdef01234567")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
 
     def test_curated_audio_pipeline_uses_catalog_revision(self):
         loaded = {}

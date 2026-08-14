@@ -481,6 +481,7 @@ from modiff.optional_runtime_execution import (
     optional_runtime_requirement_for_execution,
 )
 from modiff.studio_execution_specs import (
+    ACE_STEP_DIFFUSERS_FILES,
     FLUX_FILL_DIFFUSERS_FILES,
     FLUX_KONTEXT_DIFFUSERS_FILES,
     WAN_T2V_1_3B_DIFFUSERS_FILES,
@@ -1052,6 +1053,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "acestep-v15-xl-turbo-diffusers",
         "family": "ACE Audio",
         "defaultRepo": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+        "downloadFiles": ACE_STEP_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},

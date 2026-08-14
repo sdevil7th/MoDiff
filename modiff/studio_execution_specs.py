@@ -644,6 +644,29 @@ WAN_VACE_1_3B_DIFFUSERS_FILES = [
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
+ACE_STEP_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "condition_encoder/config.json",
+    "condition_encoder/diffusion_pytorch_model.safetensors",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/added_tokens.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 ACE_STEP_LORA_BASE_REPO = "Runware/acestep-v15-turbo-diffusers"
 STABLE_AUDIO_REPO = "stabilityai/stable-audio-open-1.0"
 STABLE_AUDIO_DIFFUSERS_FILES = [

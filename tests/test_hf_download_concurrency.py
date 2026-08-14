@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "ACE-Step/acestep-v15-xl-turbo-diffusers": (
+                "200ba991ae448051e14b0183157e35c2d27c9fb0",
+                21,
+                "silence_latent.pt",
+            ),
             "jdopensource/JoyAI-Image-Edit-Diffusers": (
                 "4b41fb25d961f37668750178ccbb380da326201c",
                 38,
