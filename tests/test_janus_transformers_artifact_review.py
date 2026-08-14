@@ -22,6 +22,7 @@ REPOSITORY = "deepseek-community/Janus-Pro-1B"
 REVISION = "1655280bb75959cc1cb85529a2a8b26e7016072e"
 WEIGHT_SHA256 = "9d1a416f95fb58d6e02858623c9c676003d66006d51fb5d5cc93348ba78cb942"
 LICENSE_SHA256 = "09b2b4b4614509ff8baccd3c220e9d9b99e55152925b501f0d5f8b5e36eea982"
+MODEL_FINGERPRINT = "sha256:48dfc7e9692ebaa057356e2093f8440e314a8c862b7c4420a9c11633135f0246"
 
 
 class JanusTransformersArtifactReviewTests(unittest.TestCase):
@@ -217,13 +218,120 @@ class JanusTransformersArtifactReviewTests(unittest.TestCase):
         )
         self.assertFalse(runtime["probeDownloadedWeights"])
 
-    def test_admission_is_expert_only_pending_install_execution_and_rights_gate(self):
+    def test_app_only_install_receipt_is_exact_and_preserves_admission_time_truth(self):
         policy = self.review["downloadPolicy"]
-        self.assertTrue(policy["appOnly"])
-        self.assertFalse(policy["directWeightDownloadPerformed"])
-        self.assertEqual(policy["modelInstallStatus"], "not_started")
-        self.assertFalse(policy["olderModelsDeleted"])
-        self.assertIn("free disk space", policy["requiredPreflight"])
+        self.assertEqual(
+            policy,
+            {
+                "appOnly": True,
+                "directWeightDownloadPerformed": False,
+                "modelInstallStatus": "complete",
+                "olderModelsDeleted": False,
+                "requiredPreflight": (
+                    "The running app checked the exact plan twice before submission and twice "
+                    "after completion; each matching plan preserved the 64 GiB reserve."
+                ),
+            },
+        )
+
+        receipt = self.review["operationalReceipt"]
+        self.assertEqual(receipt["schemaVersion"], 1)
+        self.assertEqual(receipt["recordedAt"], "2026-08-15T03:33:18+05:30")
+        self.assertEqual(receipt["scope"], "linux_app_cache_install_only")
+        self.assertEqual(
+            receipt["admissionSnapshot"],
+            {
+                "reviewedAt": self.review["checkedAt"],
+                "modelInstallStatusAtReview": "not_started",
+                "probeDownloadedWeights": False,
+            },
+        )
+        self.assertEqual(
+            receipt["artifact"],
+            {
+                "repository": REPOSITORY,
+                "revision": REVISION,
+                "selectedFileCount": 11,
+                "selectedBytes": 4_161_125_359,
+                "weight": {
+                    "path": "model.safetensors",
+                    "byteSize": 4_153_396_574,
+                    "sha256": WEIGHT_SHA256,
+                },
+            },
+        )
+        self.assertEqual(
+            receipt["transport"],
+            {
+                "appOnly": True,
+                "directWeightDownloadPerformed": False,
+                "olderModelsDeleted": False,
+                "activeQueueAfterCompletion": 0,
+            },
+        )
+
+        pre_plan = receipt["preSubmissionPlanPair"]
+        self.assertEqual(
+            pre_plan,
+            {
+                "matchingPlanCount": 2,
+                "totalBytes": 4_161_125_359,
+                "completedBytes": 0,
+                "remainingBytes": 4_161_125_359,
+                "freeBytes": 75_320_348_672,
+                "reserveBytes": 68_719_476_736,
+                "fitsWithQueue": True,
+                "headroomAfterReserveBytes": 2_439_746_577,
+            },
+        )
+        self.assertEqual(
+            pre_plan["headroomAfterReserveBytes"],
+            pre_plan["freeBytes"] - pre_plan["remainingBytes"] - pre_plan["reserveBytes"],
+        )
+
+        post_plan = receipt["postCompletionPlanPair"]
+        self.assertEqual(
+            post_plan,
+            {
+                "matchingPlanCount": 2,
+                "totalBytes": 4_161_125_359,
+                "completedBytes": 4_161_125_359,
+                "remainingBytes": 0,
+                "freeBytes": 71_108_456_448,
+                "reserveBytes": 68_719_476_736,
+                "fitsWithQueue": True,
+                "headroomAfterReserveBytes": 2_388_979_712,
+            },
+        )
+        self.assertEqual(post_plan["completedBytes"], post_plan["totalBytes"])
+        self.assertEqual(
+            post_plan["headroomAfterReserveBytes"],
+            post_plan["freeBytes"] - post_plan["remainingBytes"] - post_plan["reserveBytes"],
+        )
+        self.assertEqual(
+            receipt["modelFingerprints"],
+            {
+                "installed": True,
+                "complete": True,
+                "repairRequired": False,
+                "fingerprint": MODEL_FINGERPRINT,
+            },
+        )
+
+    def test_cache_install_does_not_promote_live_gallery_auto_output_or_platform_proof(self):
+        receipt = self.review["operationalReceipt"]
+        self.assertEqual(
+            receipt["proofScope"],
+            {
+                "linuxAppCacheInstall": True,
+                "liveInference": False,
+                "galleryQualification": False,
+                "autoQualification": False,
+                "generatedOutput": False,
+                "outputQualityReview": False,
+                "crossPlatformQualification": False,
+            },
+        )
 
         admission = self.review["admission"]
         self.assertEqual(
@@ -247,7 +355,6 @@ class JanusTransformersArtifactReviewTests(unittest.TestCase):
         self.assertEqual(
             set(admission["unresolvedGates"]),
             {
-                "app_only_model_install",
                 "real_weight_text_execution",
                 "real_weight_image_execution",
                 "human_output_review",

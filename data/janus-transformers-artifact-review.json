@@ -172,9 +172,71 @@
   "downloadPolicy": {
     "appOnly": true,
     "directWeightDownloadPerformed": false,
-    "modelInstallStatus": "not_started",
+    "modelInstallStatus": "complete",
     "olderModelsDeleted": false,
-    "requiredPreflight": "The running app must re-check free disk space and reserve headroom before this immutable snapshot is queued."
+    "requiredPreflight": "The running app checked the exact plan twice before submission and twice after completion; each matching plan preserved the 64 GiB reserve."
+  },
+  "operationalReceipt": {
+    "schemaVersion": 1,
+    "recordedAt": "2026-08-15T03:33:18+05:30",
+    "scope": "linux_app_cache_install_only",
+    "admissionSnapshot": {
+      "reviewedAt": "2026-08-15T01:15:58+05:30",
+      "modelInstallStatusAtReview": "not_started",
+      "probeDownloadedWeights": false
+    },
+    "artifact": {
+      "repository": "deepseek-community/Janus-Pro-1B",
+      "revision": "1655280bb75959cc1cb85529a2a8b26e7016072e",
+      "selectedFileCount": 11,
+      "selectedBytes": 4161125359,
+      "weight": {
+        "path": "model.safetensors",
+        "byteSize": 4153396574,
+        "sha256": "9d1a416f95fb58d6e02858623c9c676003d66006d51fb5d5cc93348ba78cb942"
+      }
+    },
+    "transport": {
+      "appOnly": true,
+      "directWeightDownloadPerformed": false,
+      "olderModelsDeleted": false,
+      "activeQueueAfterCompletion": 0
+    },
+    "preSubmissionPlanPair": {
+      "matchingPlanCount": 2,
+      "totalBytes": 4161125359,
+      "completedBytes": 0,
+      "remainingBytes": 4161125359,
+      "freeBytes": 75320348672,
+      "reserveBytes": 68719476736,
+      "fitsWithQueue": true,
+      "headroomAfterReserveBytes": 2439746577
+    },
+    "postCompletionPlanPair": {
+      "matchingPlanCount": 2,
+      "totalBytes": 4161125359,
+      "completedBytes": 4161125359,
+      "remainingBytes": 0,
+      "freeBytes": 71108456448,
+      "reserveBytes": 68719476736,
+      "fitsWithQueue": true,
+      "headroomAfterReserveBytes": 2388979712
+    },
+    "modelFingerprints": {
+      "installed": true,
+      "complete": true,
+      "repairRequired": false,
+      "fingerprint": "sha256:48dfc7e9692ebaa057356e2093f8440e314a8c862b7c4420a9c11633135f0246"
+    },
+    "proofScope": {
+      "linuxAppCacheInstall": true,
+      "liveInference": false,
+      "galleryQualification": false,
+      "autoQualification": false,
+      "generatedOutput": false,
+      "outputQualityReview": false,
+      "crossPlatformQualification": false
+    }
   },
   "admission": {
     "status": "source_complete_execution_and_product_review_pending",
@@ -190,7 +252,6 @@
     "galleryEligible": false,
     "liveQualified": false,
     "unresolvedGates": [
-      "app_only_model_install",
       "real_weight_text_execution",
       "real_weight_image_execution",
       "human_output_review",
