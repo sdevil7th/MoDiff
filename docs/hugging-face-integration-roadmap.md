@@ -3797,6 +3797,27 @@ output and assets remotely. Assets: remote Dataset only.
     transfer was switched, no model or Gallery payload was deleted, and no
     generation, review, Dataset publication, activation, remote, or physical
     macOS evidence is claimed.
+  - [x] **P2.5g Live download-idle and Gallery-plan cutover:** backend
+    `578e0a3` activates the P2.5d-f source after the preserved old app queue
+    drained and fixes the last immutable Gallery-contract mismatch exposed by
+    that cutover. The pinned manifest has 186 original five-field records and
+    170 image records with an exact optional `width`/`height` pair. The backend
+    accepts only bounded positive image dimensions while continuing to reject
+    partial pairs, non-image dimensions, arbitrary metadata, and identity
+    drift. Twelve focused tests pass, and the exact 356-file / 480,430,370-byte
+    manifest validates at the reviewed asset-set identity.
+
+    The restarted Linux worker reports runtime-ready, schema-v1 download
+    status with zero active transfers and reservations, and a generation-free
+    P2.5 campaign dry run now exercises the real download-idle check. All 76
+    selected jobs and 31 artifacts remain app-ready; download readiness is
+    ready; input readiness remains correctly blocked for 38 jobs on 50 absent
+    files / 33,867,388 bytes. The app's Gallery plan reserves 969,249,348 bytes
+    for download plus same-volume staging, but 66,333,192,192 free bytes do not
+    satisfy that reservation plus the 68,719,476,736-byte safety floor. A
+    two-fresh-plan app-only monitor therefore holds without a POST. No cache
+    entry was deleted, no graph was submitted, and no inference, output,
+    publication, activation, or physical macOS evidence is claimed.
 
 ### Phase 2 test and asset gate
 
@@ -6890,6 +6911,7 @@ Add references only after the corresponding evidence exists.
 | P2.5a Clean-host qualification campaign readiness | Not required | `8a93cf2` | Dry-run planning only; 76 live qualification receipts remain pending across six model-family batches | Pending | Missing local Auto history is correctly treated as no legacy evidence, ignored report directories initialize on clean hosts, and the complete client gate passes. The dry run submitted no graph and generated or published no media. |
 | P2.5b Exact app-cache qualification readiness | Not required | `a76ee04` | Read-only live-app cache proof only; 76 live qualification receipts remain pending | Pending | All 76 selected jobs and 31 unique immutable model/LoRA receipts match complete, installed, repair-free app-cache entries. The loopback-only bounded preflight and complete client gate pass; no graph, inference, output, review, or publication occurred. |
 | P2.5c Exact default-input qualification readiness | Not required | `d271a9f`, corrected by `7738537` | Read-only local-byte audit only; 76 live qualification receipts remain pending | Pending | The fail-closed campaign gate verifies selected Template Gallery defaults against their content-addressed bindings and asset-manifest size/hash receipts before browser or inference startup, checking both the authoring tree and the normal installer's durable backend `web/` payload. The runner uses the same installed-app fallback. The source checkout has none of the 50 required files (33,867,388 bytes), so 38 input-conditioned jobs are blocked and 38 input-free jobs are ready. No direct asset download, model deletion, graph, inference, output, review, or publication occurred. |
+| P2.5g Live download-idle and Gallery-plan cutover | `578e0a3` | `3413455` | Current Linux worker readiness and generation-free dry-run evidence only; Gallery install, 76 live output receipts, review/publication, activation, and physical macOS remain pending | Pending | The restarted current worker exposes the bounded idle-status contract with zero active transfers and reservations. The immutable 356-file / 480,430,370-byte Gallery manifest now validates its bounded image dimensions and exact asset-set identity. A real app plan refuses its 969,249,348-byte download/staging reservation because 66,333,192,192 free bytes are below the 68,719,476,736-byte reserve even before that reservation. The dry run reports 76/76 jobs and 31/31 artifacts app-ready, download readiness ready, and 38/76 jobs still blocked on 50 absent inputs / 33,867,388 bytes. No install POST, graph, inference, deletion, or output occurred. |
 | P2.5d App-owned pinned Gallery materialization | `df71942` | `0fd0830` | Contract/unit/mocked-browser proof only; app activation, Gallery install, and 76 live qualification receipts remain pending | `b27198159c30d0c81aef397c188a7826866e5027` (`sha256:canonical-json:5ec869b755a6ce04a789d6835819da150493bfaef8a6bc1480f0274ba05bcab9` approved subset); payload not installed in this checkout | The app now exposes strict status, queue-aware plan, and explicit install/repair actions for the exact anonymous Dataset payload. It reserves download plus atomic staging bytes with active model reservations and a 64 GiB safety margin, hashes all 356 files / 480,430,370 bytes, and never deletes model caches. Complete backend/client gates and all 107 mocked Studio tests pass. The current old worker was intentionally not restarted while app-managed model downloads are active, so no Gallery POST/download occurred and the 38 conditioned jobs remain blocked until safe restart plus explicit in-app consent. |
 | P2.5e Bounded parallel app downloads | `c313908` | Not required | Source/unit concurrency proof only; current old worker and live qualification remain pending | Not required | Two ordinary app snapshot transfers can now share the existing two-slot semaphore instead of serializing behind the process-global Xet lock. Repair is writer-exclusive and restores the prior Xet mode before normal transfers resume. Queue reservations, the 64 GiB reserve, immutable revisions, and no-deletion behavior are unchanged. Focused and complete backend gates pass. The active worker was not restarted, so its existing queue remains uninterrupted and this commit makes no current-live-transfer or output claim. |
 | P2.5f Bounded app-owned Hub transport | `77ed298` | Not required | Source/unit transport, concurrency, and restoration proof only; current old worker and live qualification remain pending | Not required | App-owned model and Gallery snapshot payloads use standard Hub HTTP with bounded per-request timeouts/retries and share the existing two-transfer limit. Repair is writer-exclusive from cache preparation onward, completed blobs remain intact, exact global policy restoration is tested, and all admission/reserve/no-deletion behavior is unchanged. The focused 56-test matrix, five repeated race runs, complete 1,630-test backend gate, and static/package/preflight checks pass. The old active worker was not restarted, AuraFlow and the overnight queue were not interrupted, no active transport was switched, and no model/media/macOS qualification is claimed. |
