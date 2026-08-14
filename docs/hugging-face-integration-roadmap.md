@@ -3657,6 +3657,19 @@ output and assets remotely. Assets: remote Dataset only.
     (ACE-Step, FLUX, LTX, Qwen Image, Wan, and Z-Image). It submitted no graph,
     generated no media, and does not satisfy the remote output, human review,
     Dataset, activation, or physical macOS gates above.
+  - [x] **P2.5b Exact app-cache readiness:** client `a76ee04` adds a read-only
+    campaign preflight that compares every selected template's backend-derived
+    model and LoRA receipt with the running app's bounded `/hf_cache`
+    inventory. It accepts only an uncredentialed loopback HTTP(S) origin and
+    fails closed for a missing repository, wrong immutable revision,
+    non-installed or incomplete entry, repair requirement, malformed response,
+    missing artifact receipt, or mismatched execution server. Against the
+    current app it reports all 76 pending qualification jobs ready across all
+    31 unique exact artifacts. The focused nine-test campaign matrix and the
+    complete client gate pass; production JavaScript remains 530,915 gzip
+    bytes. This is cache-readiness evidence only: no graph was submitted, no
+    model was executed, and no output, review, publication, activation, or
+    physical macOS evidence is claimed.
 
 ### Phase 2 test and asset gate
 
@@ -6297,6 +6310,7 @@ Add references only after the corresponding evidence exists.
 | P2.4 | `0ace2ae` | `8e25f5f` | Remote pending | Pending | Complete source slice: ten new exact short-video planning contracts and the existing Wan I2V/TI2V paths verify in the 70-workflow deterministic catalog; complete backend/client and focused browser gates passed without weights or media, while Auto and Gallery remain disabled pending P2.5. |
 | P2.5 | Pending | Pending | Pending | Pending | Remote execution, review, publication, and activation have not started; clean-host campaign preflight is complete in P2.5a. |
 | P2.5a Clean-host qualification campaign readiness | Not required | `8a93cf2` | Dry-run planning only; 76 live qualification receipts remain pending across six model-family batches | Pending | Missing local Auto history is correctly treated as no legacy evidence, ignored report directories initialize on clean hosts, and the complete client gate passes. The dry run submitted no graph and generated or published no media. |
+| P2.5b Exact app-cache qualification readiness | Not required | `a76ee04` | Read-only live-app cache proof only; 76 live qualification receipts remain pending | Pending | All 76 selected jobs and 31 unique immutable model/LoRA receipts match complete, installed, repair-free app-cache entries. The loopback-only bounded preflight and complete client gate pass; no graph, inference, output, review, or publication occurred. |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
