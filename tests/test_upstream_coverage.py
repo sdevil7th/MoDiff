@@ -1,8 +1,8 @@
 import hashlib
 import json
 import os
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
@@ -46,11 +46,11 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "diffusersPipelineSymbolCount": 327,
                 "pipelineStatusCounts": {
                     "contract-only": 29,
-                    "equivalent": 6,
+                    "equivalent": 7,
                     "executable": 85,
-                    "intentionally-excluded": 7,
-                    "research-blocked": 72,
-                    "unreviewed": 128,
+                    "intentionally-excluded": 49,
+                    "research-blocked": 129,
+                    "unreviewed": 28,
                 },
                 "publicTemplateCount": 77,
                 "reviewedGalleryTemplateCount": 70,
@@ -97,7 +97,36 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(by_name["MiniMaxMusic3ModularPipeline"]["status"], "contract-only")
         self.assertEqual(by_name["Krea2Pipeline"]["status"], "research-blocked")
         self.assertEqual(by_name["DiffusionPipeline"]["status"], "intentionally-excluded")
-        self.assertEqual(by_name["AltDiffusionPipeline"]["status"], "unreviewed")
+        self.assertEqual(by_name["AltDiffusionPipeline"]["status"], "intentionally-excluded")
+        self.assertEqual(
+            by_name["AltDiffusionPipeline"]["reviewDecision"],
+            "pinned-diffusers-non-video-source-triage",
+        )
+        self.assertEqual(by_name["Lumina2Text2ImgPipeline"]["status"], "equivalent")
+        self.assertEqual(by_name["Lumina2Text2ImgPipeline"]["equivalentTo"], ["Lumina2Pipeline"])
+        self.assertEqual(by_name["ZImageOmniPipeline"]["status"], "research-blocked")
+        self.assertEqual(
+            by_name["ZImageOmniPipeline"]["reviewDecision"],
+            "pinned-diffusers-non-video-source-triage",
+        )
+        reviewed_non_video = [
+            item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
+        ]
+        self.assertEqual(len(reviewed_non_video), 99)
+        self.assertEqual(
+            {
+                status: sum(item["status"] == status for item in reviewed_non_video)
+                for status in UPSTREAM_COVERAGE_STATUSES
+            },
+            {
+                "contract-only": 0,
+                "equivalent": 0,
+                "executable": 0,
+                "intentionally-excluded": 42,
+                "research-blocked": 57,
+                "unreviewed": 0,
+            },
+        )
 
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
             pipeline_class = definition["profile"]["pipeline_class"]

@@ -9,17 +9,18 @@ adds stronger evidence.
 from __future__ import annotations
 
 import ast
-from collections import Counter, defaultdict
 import hashlib
 import importlib.metadata
 import json
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tomllib
-from typing import Any, Iterable
 import zipfile
+from collections import Counter, defaultdict
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
 
 from modiff.diffusers_profiles import EXPERIMENTAL_DIFFUSERS_PIPELINES
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
@@ -55,6 +56,10 @@ _EQUIVALENT_PIPELINE_TARGETS = {
     "FluxKontextModularPipeline": ("FluxKontextPipeline",),
     "FluxModularPipeline": ("FluxPipeline", "FluxImg2ImgPipeline"),
     "FluxPriorReduxPipeline": ("FluxReduxPipeline",),
+    # Upstream keeps this compatibility subclass solely to direct callers to
+    # Lumina2Pipeline; it delegates initialization to that exact executable
+    # class and emits a removal deprecation.
+    "Lumina2Text2ImgPipeline": ("Lumina2Pipeline",),
     "WanModularPipeline": ("WanPipeline",),
     "ZImageModularPipeline": ("ZImagePipeline", "ZImageImg2ImgPipeline"),
 }
@@ -67,6 +72,146 @@ _INTENTIONALLY_EXCLUDED_PIPELINES = {
     "OnnxStableDiffusionPipeline": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
     "OnnxStableDiffusionUpscalePipeline": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
     "StableDiffusionOnnxPipeline": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+}
+
+# This is a reviewed product decision layer over the static export inventory.
+# A symbol listed here was inspected in the exact pinned Diffusers checkout;
+# it is not promoted merely because it is importable. Keep the names explicit
+# so an upstream rename/addition returns to ``unreviewed`` instead of silently
+# inheriting a family-level claim.
+_REVIEWED_NON_VIDEO_DEPRECATED_PIPELINES = frozenset(
+    {
+        "AltDiffusionImg2ImgPipeline",
+        "AltDiffusionPipeline",
+        "AmusedImg2ImgPipeline",
+        "AmusedInpaintPipeline",
+        "AmusedPipeline",
+        "AudioDiffusionPipeline",
+        "AudioLDMPipeline",
+        "BlipDiffusionPipeline",
+        "CycleDiffusionPipeline",
+        "DanceDiffusionPipeline",
+        "KarrasVePipeline",
+        "LDMPipeline",
+        "MusicLDMPipeline",
+        "PNDMPipeline",
+        "PaintByExamplePipeline",
+        "RePaintPipeline",
+        "ScoreSdeVePipeline",
+        "SemanticStableDiffusionPipeline",
+        "SpectrogramDiffusionPipeline",
+        "StableDiffusionAttendAndExcitePipeline",
+        "StableDiffusionControlNetXSPipeline",
+        "StableDiffusionDiffEditPipeline",
+        "StableDiffusionGLIGENPipeline",
+        "StableDiffusionGLIGENTextImagePipeline",
+        "StableDiffusionLDM3DPipeline",
+        "StableDiffusionModelEditingPipeline",
+        "StableDiffusionPanoramaPipeline",
+        "StableDiffusionParadigmsPipeline",
+        "StableDiffusionPix2PixZeroPipeline",
+        "StableDiffusionSAGPipeline",
+        "StableDiffusionXLControlNetXSPipeline",
+        "UnCLIPImageVariationPipeline",
+        "UnCLIPPipeline",
+        "UniDiffuserPipeline",
+        "VQDiffusionPipeline",
+        "VersatileDiffusionDualGuidedPipeline",
+        "VersatileDiffusionImageVariationPipeline",
+        "VersatileDiffusionPipeline",
+        "VersatileDiffusionTextToImagePipeline",
+        "WuerstchenCombinedPipeline",
+        "WuerstchenDecoderPipeline",
+        "WuerstchenPriorPipeline",
+    }
+)
+
+_REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
+    {
+        "BlipDiffusionControlNetPipeline",
+        "BriaFiboEditPipeline",
+        "BriaFiboPipeline",
+        "BriaPipeline",
+        "ChromaInpaintPipeline",
+        "CogView4ControlPipeline",
+        "Flux2KleinKVPipeline",
+        "Flux2Pipeline",
+        "FluxControlImg2ImgPipeline",
+        "FluxControlInpaintPipeline",
+        "FluxControlNetImg2ImgPipeline",
+        "FluxControlNetInpaintPipeline",
+        "FluxControlNetPipeline",
+        "HunyuanDiTPAGPipeline",
+        "Ideogram4Pipeline",
+        "Kandinsky5I2IPipeline",
+        "Kandinsky5T2IPipeline",
+        "KandinskyV22Img2ImgPipeline",
+        "KolorsPAGPipeline",
+        "LDMSuperResolutionPipeline",
+        "LatentConsistencyModelImg2ImgPipeline",
+        "MarigoldIntrinsicsPipeline",
+        "MarigoldNormalsPipeline",
+        "PRXPixelPipeline",
+        "PixArtAlphaPipeline",
+        "PixArtSigmaPAGPipeline",
+        "QwenImageControlNetInpaintPipeline",
+        "QwenImageControlNetPipeline",
+        "QwenImageLayeredPipeline",
+        "SanaControlNetPipeline",
+        "SanaPAGPipeline",
+        "ShapEImg2ImgPipeline",
+        "StableDiffusion3PAGImg2ImgPipeline",
+        "StableDiffusion3PAGPipeline",
+        "StableDiffusionAdapterPipeline",
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        "StableDiffusionControlNetPAGPipeline",
+        "StableDiffusionDepth2ImgPipeline",
+        "StableDiffusionImageVariationPipeline",
+        "StableDiffusionInstructPix2PixPipeline",
+        "StableDiffusionLatentUpscalePipeline",
+        "StableDiffusionPAGImg2ImgPipeline",
+        "StableDiffusionPAGInpaintPipeline",
+        "StableDiffusionXLControlNetImg2ImgPipeline",
+        "StableDiffusionXLControlNetInpaintPipeline",
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        "StableDiffusionXLControlNetPAGPipeline",
+        "StableDiffusionXLControlNetUnionImg2ImgPipeline",
+        "StableDiffusionXLControlNetUnionInpaintPipeline",
+        "StableDiffusionXLControlNetUnionPipeline",
+        "StableUnCLIPImg2ImgPipeline",
+        "StableUnCLIPPipeline",
+        "ZImageControlNetInpaintPipeline",
+        "ZImageControlNetPipeline",
+        "ZImageOmniPipeline",
+    }
+)
+
+_REVIEWED_PIPELINE_DECISIONS = {
+    **{
+        name: {
+            "status": "intentionally-excluded",
+            "reason": (
+                "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; "
+                "MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces."
+            ),
+            "review": "pinned-diffusers-non-video-source-triage",
+        }
+        for name in _REVIEWED_NON_VIDEO_DEPRECATED_PIPELINES
+    },
+    **{
+        name: {
+            "status": "research-blocked",
+            "reason": (
+                "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution "
+                "specification backed by a reviewed immutable artifact selection; support for a related family "
+                "is not equivalence."
+            ),
+            "review": "pinned-diffusers-non-video-source-triage",
+        }
+        for name in _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES
+    },
 }
 
 _TRANSFORMERS_SEMANTIC_DEFINITIONS = (
@@ -726,6 +871,7 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
         modular = modular_contracts.get(name)
         artifact_reviews = artifact_evidence.get(name, [])
         equivalent_targets = list(_EQUIVALENT_PIPELINE_TARGETS.get(name, ()))
+        reviewed_decision = _REVIEWED_PIPELINE_DECISIONS.get(name)
         if specifications:
             status = "executable"
             reason = "At least one exact backend execution specification selects this upstream class."
@@ -741,6 +887,9 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
         elif name in _INTENTIONALLY_EXCLUDED_PIPELINES:
             status = "intentionally-excluded"
             reason = _INTENTIONALLY_EXCLUDED_PIPELINES[name]
+        elif reviewed_decision:
+            status = reviewed_decision["status"]
+            reason = reviewed_decision["reason"]
         elif artifact_reviews:
             status = "research-blocked"
             reason = "Immutable source/artifact research exists, but executable admission remains blocked or pending."
@@ -758,6 +907,7 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
                 "exactExecutionSpecs": specifications,
                 "equivalentTo": equivalent_targets,
                 "artifactReviews": artifact_reviews,
+                "reviewDecision": reviewed_decision["review"] if reviewed_decision else None,
                 "modularWorkflowIds": (
                     sorted(item["taskId"] for item in modular.get("workflows", [])) if modular else []
                 ),
@@ -767,6 +917,15 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
         raise UpstreamCoverageError("An equivalent-source decision names a pipeline absent from the reviewed pin.")
     if set(_INTENTIONALLY_EXCLUDED_PIPELINES) - symbol_set:
         raise UpstreamCoverageError("An exclusion decision names a pipeline absent from the reviewed pin.")
+    if set(_REVIEWED_PIPELINE_DECISIONS) - symbol_set:
+        raise UpstreamCoverageError("A reviewed pipeline decision names a pipeline absent from the reviewed pin.")
+    decision_conflicts = set(_REVIEWED_PIPELINE_DECISIONS) & (
+        set(exact_specs) | contract_only | set(_EQUIVALENT_PIPELINE_TARGETS) | set(_INTENTIONALLY_EXCLUDED_PIPELINES)
+    )
+    if decision_conflicts:
+        raise UpstreamCoverageError(
+            f"Reviewed pipeline decisions conflict with stronger coverage evidence: {sorted(decision_conflicts)}"
+        )
     return version, pipeline_items
 
 
