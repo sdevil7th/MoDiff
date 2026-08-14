@@ -421,6 +421,26 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 27,
                 "vision_language_encoder/pytorch_model.bin",
             ),
+            "Qwen/Qwen-Image-2512": (
+                "25468b98e3276ca6700de15c6628e51b7de54a26",
+                30,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-Edit": (
+                "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+                39,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-Edit-2511": (
+                "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9",
+                35,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-Layered": (
+                "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf",
+                33,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
             "jdopensource/JoyAI-Image-Edit-Diffusers": (
                 "4b41fb25d961f37668750178ccbb380da326201c",
                 38,

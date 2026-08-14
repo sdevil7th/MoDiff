@@ -342,6 +342,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         QWEN_IMAGE_2512_REPO,
         compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
         guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
     ),
     "ZImagePipeline": ImagePipelineAdapter(
         "ZImagePipeline",
@@ -917,6 +918,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({QWEN_IMAGE_EDIT_PREQUANTIZED_REPO}),
         artifact_pipeline_classes=("QwenImageEditPipeline", "QwenImageEditInpaintPipeline"),
         guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
     ),
     "QwenImageImg2ImgPipeline": ImagePipelineAdapter(
         "QwenImageImg2ImgPipeline",
@@ -925,6 +927,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
         artifact_pipeline_classes=("QwenImagePipeline", "QwenImageImg2ImgPipeline"),
         guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
     ),
     "QwenImageInpaintPipeline": ImagePipelineAdapter(
         "QwenImageInpaintPipeline",
@@ -933,6 +936,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
         artifact_pipeline_classes=("QwenImagePipeline", "QwenImageInpaintPipeline"),
         guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
     ),
     "QwenImageEditPipeline": ImagePipelineAdapter(
         "QwenImageEditPipeline",
@@ -940,6 +944,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         QWEN_IMAGE_EDIT_REPO,
         compatible_repos=frozenset({QWEN_IMAGE_EDIT_PREQUANTIZED_REPO}),
         guidance_parameter="true_cfg_scale",
+        safe_serialization_required=True,
     ),
     "QwenImageEditPlusPipeline": ImagePipelineAdapter(
         "QwenImageEditPlusPipeline",
@@ -947,6 +952,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         QWEN_IMAGE_EDIT_PLUS_REPO,
         guidance_parameter="true_cfg_scale",
         max_reference_images=8,
+        safe_serialization_required=True,
     ),
 }
 IMAGE_PIPELINE_CLASSES = list(IMAGE_PIPELINE_ADAPTERS)
