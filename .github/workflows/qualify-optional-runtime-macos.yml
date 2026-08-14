@@ -51,6 +51,11 @@ jobs:
           test "$(git diff --name-only)" = "pyproject.toml"
           git diff --check
           git diff -- pyproject.toml > "$RUNNER_TEMP/prospective-base.diff"
+          git config user.name "MoDiff qualification"
+          git config user.email "qualification@modiff.invalid"
+          git add -- pyproject.toml
+          git commit -m "chore: prepare prospective macOS qualification base"
+          test -z "$(git status --porcelain)"
 
       - name: Install isolated CPU base
         run: ./install.sh --accelerator cpu --backend-only --non-interactive
@@ -59,15 +64,17 @@ jobs:
         run: |
           ./scripts/with-runtime-env.sh ./.venv/bin/python \
             scripts/qualify_optional_runtime.py --preflight-only \
+            --profile-id huggingface-transformers-main-a597f974-peft-0.20.0 \
             | tee "$RUNNER_TEMP/preflight.json"
-          ./.venv/bin/python -c 'import json, os, pathlib; value=json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "preflight.json").read_text()); assert value["status"] == "ready"; assert value["platform"] == "macos"; assert value["machine"] == "arm64"; assert value["cleanBase"] is True; assert value["stagedPackagesPresent"] == []'
+          ./.venv/bin/python -c 'import json, os, pathlib; value=json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "preflight.json").read_text()); assert value["status"] == "ready"; assert value["profileId"] == "huggingface-transformers-main-a597f974-peft-0.20.0"; assert value["platform"] == "macos"; assert value["machine"] == "arm64"; assert value["sourceRevisionReady"] is True; assert value["cleanBase"] is True; assert value["stagedPackagesPresent"] == []'
 
       - name: Run explicit-consent qualification
         run: |
           ./scripts/with-runtime-env.sh ./.venv/bin/python \
             scripts/qualify_optional_runtime.py --consent \
+            --profile-id huggingface-transformers-main-a597f974-peft-0.20.0 \
             --evidence "$RUNNER_TEMP/optional-runtime-macos-arm64.json"
-          ./.venv/bin/python -c 'import json, os, pathlib; value=json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "optional-runtime-macos-arm64.json").read_text()); assert value["status"] == "passed"; assert value["platform"] == "macos"; assert value["machine"] == "arm64"; assert value["cleanBase"] is True; assert value["managedStateRetained"] is False; assert value["sourceFlagsChanged"] is False'
+          ./.venv/bin/python -c 'import json, os, pathlib; value=json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "optional-runtime-macos-arm64.json").read_text()); assert value["status"] == "passed"; assert value["profileId"] == "huggingface-transformers-main-a597f974-peft-0.20.0"; assert value["platform"] == "macos"; assert value["machine"] == "arm64"; assert value["sourceRevisionReady"] is True; assert value["cleanBase"] is True; assert value["managedStateRetained"] is False; assert value["sourceFlagsChanged"] is False'
 
       - name: Record bounded target context
         if: ${{ always() }}
