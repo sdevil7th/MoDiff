@@ -5290,6 +5290,24 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
     weights or media were downloaded, deleted, or generated. Immutable
     component normalization, remote compiled execution/output review, and
     physical macOS evidence remain pending.
+- [x] **P6.61 Bound AuraFlow app download selection:** backend `ed3982a`
+  binds `fal/AuraFlow-v0.3@2cd8588f04c886002be4571697d84654a50e3af3`
+  to the exact 18-file runnable fp16 selection used by the admitted
+  `AuraFlowPipeline`. The selection contains the four reviewed safetensors
+  weights, their exact variant index, package configs/tokenizer metadata, and
+  immutable license/card receipts. It excludes the duplicate native single
+  file, default text encoder, three-shard transformer, default VAE, and ComfyUI
+  workflow surfaces.
+
+  A real app `GET /hf_download/plan` over that explicit selection reports
+  18 files / 16,837,479,394 bytes instead of the repository-wide 26 files /
+  65,964,186,183 bytes. Plan and POST regressions require the same capability
+  allowlist, and the artifact regression requires every reviewed fp16 weight
+  while excluding each duplicate weight surface. The focused app/artifact
+  matrix passes 88 tests and 46 subtests; pinned Ruff E9/F and the 66-package
+  compatibility check pass. The already-running repository-wide app task was
+  not interrupted, replaced, or deleted, and no second AuraFlow POST was made;
+  this bound governs future installs and repairs after the app restarts.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6548,4 +6566,5 @@ Add references only after the corresponding evidence exists.
 | P6.58 Executable 30-minute LTX qualification graph | `479d495` (`a9cf15c` schema-boundary fix) | Not required | Static graph/materializer and deterministic plan proof only; remote six-hour execution, output review/publication, and physical macOS pending | Not required | One reviewed API graph binds the exact LTX revision, 374-job continuation plan, durable retained-segment loop, and file-native join. The loopback-only helper binds the staged opening-image bytes to the recovery identity, verifies the exact app-cached model revision, and requires explicit consent before app submission. No graph was submitted and no inference or media generation occurred locally. |
 | P6.59 Wan Animate 2 Modular contract closure | `d31d5b6` | `fc67a7f` | Contract-only; artifact admission, real-weight remote execution, output review, and physical macOS pending | Not required | Both pinned package exports are Expert-visible with exact generic character-animation contracts and distinct base/distilled denoise steps. The 33-class / 93-workflow snapshot matches the complete pinned exported-class set; complete backend and client gates pass. No repository, runnable mode, Auto/template/Gallery surface, weights, models, or media were added or removed. |
 | P6.60 Wan Animate 2 artifact/source review | `2b86e63` | Not required | Static immutable metadata/package-source review only; immutable component descriptors, remote compiled flex-attention execution/output review, and physical macOS pending | Not required | Two public Python-free 31-file snapshots and their distinct 45,920,934,868-byte safetensors receipts are sealed. The standard class is absent at the pin and both Modular indexes retain null and mutable PR component revisions, so no runtime/download catalog or runnable mode was admitted and no weights or media were fetched. |
+| P6.61 Bounded AuraFlow app download selection | `ed3982a` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 16,837,479,394-byte fp16 runnable selection from the capability, excluding four duplicate/default weight surfaces and the unrelated single-file/ComfyUI artifacts. The pre-existing full-repository app transfer remains untouched and no cache entry was deleted. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
