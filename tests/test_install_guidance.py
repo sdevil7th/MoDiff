@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import tomllib
 import types
 import unittest
@@ -268,8 +269,24 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertIn("runs-on: macos-15", workflow)
         self.assertIn('test "$(uname -m)" = "arm64"', workflow)
         self.assertIn('test "$(git diff --name-only)" = "pyproject.toml"', workflow)
-        self.assertEqual(workflow.count('-  "peft>=0.17.0;'), 2)
-        self.assertEqual(workflow.count('-  "transformers>=4.49.0;'), 2)
+        self.assertEqual(workflow.count('-  "peft>=0.17.0;'), 1)
+        self.assertEqual(workflow.count('-  "transformers>=4.49.0;'), 1)
+        patch_body = (
+            textwrap.dedent(
+                workflow.split("cat > \"$RUNNER_TEMP/prospective-base.patch\" <<'PATCH'\n", 1)[1]
+                .split("\n          PATCH", 1)[0]
+            )
+            + "\n"
+        )
+        patch_check = subprocess.run(
+            ["git", "apply", "--check", "-"],
+            cwd=root,
+            input=patch_body,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(patch_check.returncode, 0, patch_check.stderr)
         self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
         self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)
         self.assertIn('assert value["status"] == "ready"', workflow)
