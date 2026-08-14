@@ -26,6 +26,7 @@ TEMPLATE_GALLERY_SOURCE_MAX_BYTES = 64 * 1024
 TEMPLATE_GALLERY_MAX_ASSETS = 10_000
 TEMPLATE_GALLERY_MAX_FILE_BYTES = 2 * 1024**3
 TEMPLATE_GALLERY_MAX_TOTAL_BYTES = 32 * 1024**3
+TEMPLATE_GALLERY_MAX_IMAGE_DIMENSION = 32_768
 TEMPLATE_GALLERY_DOWNLOAD_OVERHEAD_BYTES = 8 * 1024**2
 IMMUTABLE_REVISION = re.compile(r"^[0-9a-f]{40}$")
 ASSET_SET_ID = re.compile(r"^sha256:canonical-json:[0-9a-f]{64}$")
@@ -128,9 +129,13 @@ def validate_template_gallery_manifest(source: dict[str, Any], manifest: dict[st
 
     paths: list[str] = []
     total_bytes = 0
-    expected_record_keys = {"path", "size", "sha256", "contentType", "purposes"}
+    required_record_keys = {"path", "size", "sha256", "contentType", "purposes"}
+    dimension_record_keys = required_record_keys | {"width", "height"}
     for record in records:
-        if not isinstance(record, dict) or set(record) != expected_record_keys:
+        if not isinstance(record, dict) or set(record) not in {
+            frozenset(required_record_keys),
+            frozenset(dimension_record_keys),
+        }:
             raise TemplateGalleryError("template_gallery_manifest_invalid", "Gallery asset record shape is invalid.")
         path = _safe_gallery_path(record.get("path"))
         size = record.get("size")
@@ -150,6 +155,24 @@ def validate_template_gallery_manifest(source: dict[str, Any], manifest: dict[st
             or any(not isinstance(purpose, str) or not purpose or len(purpose) > 64 for purpose in purposes)
         ):
             raise TemplateGalleryError("template_gallery_manifest_invalid", f"Gallery asset metadata is invalid: {path}.")
+        if "width" in record:
+            width = record["width"]
+            height = record["height"]
+            if (
+                not record["contentType"].startswith("image/")
+                or not isinstance(width, int)
+                or isinstance(width, bool)
+                or width < 1
+                or width > TEMPLATE_GALLERY_MAX_IMAGE_DIMENSION
+                or not isinstance(height, int)
+                or isinstance(height, bool)
+                or height < 1
+                or height > TEMPLATE_GALLERY_MAX_IMAGE_DIMENSION
+            ):
+                raise TemplateGalleryError(
+                    "template_gallery_manifest_invalid",
+                    f"Gallery image dimensions are invalid: {path}.",
+                )
         paths.append(path)
         total_bytes += size
     if (

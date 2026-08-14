@@ -112,6 +112,43 @@ class TemplateGalleryInstallTests(unittest.TestCase):
         with self.assertRaisesRegex(TemplateGalleryError, "immutable source identity"):
             validate_template_gallery_manifest(self.source, mismatched)
 
+    def test_manifest_accepts_only_bounded_image_dimensions(self):
+        source = json.loads(json.dumps(self.source))
+        manifest = json.loads(json.dumps(self.manifest))
+        image = next(record for record in manifest["assets"] if record["contentType"].startswith("image/"))
+        image.update({"width": 1024, "height": 768})
+        identity = (
+            "sha256:canonical-json:"
+            + hashlib.sha256(
+                canonical_json_bytes(
+                    {
+                        "schemaVersion": 1,
+                        "assetVersion": manifest["assetVersion"],
+                        "assets": manifest["assets"],
+                    }
+                )
+            ).hexdigest()
+        )
+        source["assetSetId"] = identity
+        source["completeAssetSetId"] = identity
+        manifest["assetSetId"] = identity
+        self.assertEqual(validate_template_gallery_manifest(source, manifest)["assetSetId"], identity)
+
+        incomplete_dimensions = json.loads(json.dumps(manifest))
+        del incomplete_dimensions["assets"][1]["height"]
+        with self.assertRaisesRegex(TemplateGalleryError, "record shape"):
+            validate_template_gallery_manifest(source, incomplete_dimensions)
+
+        invalid_dimensions = json.loads(json.dumps(manifest))
+        invalid_dimensions["assets"][1]["width"] = 0
+        with self.assertRaisesRegex(TemplateGalleryError, "image dimensions"):
+            validate_template_gallery_manifest(source, invalid_dimensions)
+
+        unexpected_metadata = json.loads(json.dumps(manifest))
+        unexpected_metadata["assets"][1]["alt"] = "unreviewed"
+        with self.assertRaisesRegex(TemplateGalleryError, "record shape"):
+            validate_template_gallery_manifest(source, unexpected_metadata)
+
     def test_windows_reparse_points_are_treated_as_links(self):
         attributes = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
         with patch.object(
