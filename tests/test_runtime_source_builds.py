@@ -18,6 +18,8 @@ from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_COMMIT,
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT,
+    TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     project_optional_runtime_qualification,
 )
@@ -233,9 +235,21 @@ class SourceBuildContractTests(SourceBuildFixture):
         self.assertEqual(source["sourceArtifact"]["commit"], TRANSFORMERS_MAIN_COMMIT)
         self.assertEqual(
             source["sourceArtifact"]["sha256"],
-            "33e4d9f49ce72a48e65d61168863f891e3b9d966af6ccb7a56aca38a5890beb4",
+            "206aaa32386db09202db21038f5610a7fb0f2817f013003ec3beb90aafbfc0d6",
         )
-        self.assertEqual(source["sourceArtifact"]["byteSize"], 20_531_714)
+        self.assertEqual(source["sourceArtifact"]["byteSize"], 20_532_481)
+        self.assertEqual(
+            TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT,
+            "c1ff11866b3e2c473f92460ee0bf68d739921609",
+        )
+        self.assertEqual(
+            TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS,
+            (
+                "docs/source/en/chat_templating_multimodal.md",
+                "docs/source/en/image_processors.md",
+                "docs/source/en/video_processors.md",
+            ),
+        )
         self.assertEqual(source["recipe"], "modiff_pure_python_wheel_v1")
         self.assertEqual(source["buildDependencies"], [])
         self.assertEqual(
@@ -292,6 +306,28 @@ class SourceBuildContractTests(SourceBuildFixture):
             )
         binding.assert_not_called()
         installer.assert_not_called()
+
+    def test_latest_main_relock_records_only_unselected_documentation_changes(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
+        source_build = profile.source_builds[0]
+
+        self.assertNotEqual(TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT, TRANSFORMERS_MAIN_COMMIT)
+        self.assertEqual(len(TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS), 3)
+        for path in TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS:
+            self.assertTrue(path.startswith("docs/"))
+            self.assertNotIn(path, source_build["sourceFiles"])
+            self.assertFalse(
+                any(
+                    path == tree or path.startswith(f"{tree}/")
+                    for tree in source_build["sourceTrees"]
+                )
+            )
+        # The reviewed a597 advance did not change any selected package bytes,
+        # so its normalized output remains the independently derived c1ff lock.
+        self.assertEqual(
+            source_build["outputWheel"]["sha256"],
+            "8a439d25595c6dde486cfbd5a6ed8158e0fe7554ec236491668425e11952898f",
+        )
 
     def test_in_memory_qualification_projection_exposes_complete_source_plan(self):
         candidate = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
