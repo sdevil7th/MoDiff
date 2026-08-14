@@ -5528,6 +5528,29 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   295,904,744,282 queued reservation bytes, and the 68,719,476,736-byte safety
   reserve intact, so no POST or deletion occurred. All excluded cached files
   remain available for preview regression testing.
+- [x] **P6.73 Bound conditioned FLUX.1 component downloads and loader
+  serialization:** backend `d39bfe2` binds Depth, Canny, Fill, and Kontext to
+  the exact component surfaces consumed by their generic control, inpaint,
+  outpaint, edit, and multi-reference routes. Depth/Canny each retain 28 files
+  and 43,685,183,091 / 43,685,182,867 bytes; Fill/Kontext each retain 26 files
+  and 33,916,013,136 / 33,746,413,969 bytes. The allowlists preserve the text
+  encoders, transformers, VAEs, tokenizers, schedulers, configs, indexes, and
+  rights receipts while excluding the four native checkpoints, four root
+  autoencoders, and Kontext teaser: 96,561,961,318 logical bytes from the
+  combined 251,594,754,381-byte repository trees. The shared control, Fill,
+  Kontext, and Kontext-inpaint loaders now explicitly require safe
+  serialization.
+
+  App plan and POST regressions bind all four capability-derived allowlists;
+  the focused FLUX artifact regression requires each component surface, every
+  loader flag, and complete native-checkpoint/autoencoder/demo exclusion. The
+  capability, app, FLUX, server, and loader matrix passes 234 tests, three
+  optional-runtime skips, and 925 subtests; pinned Ruff E9/F, 66-package
+  compatibility, and diff checks pass. Four concurrent fresh exact app plans
+  reported zero remaining bytes, with 374,784,069,632 free bytes,
+  295,904,744,282 queued reservation bytes, and the 68,719,476,736-byte safety
+  reserve intact, so no POST or deletion occurred. All excluded cached files
+  remain available for preview regression testing.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6798,4 +6821,5 @@ Add references only after the corresponding evidence exists.
 | P6.70 Bounded Sana 0.6B fp16 app download selection | `982c1a3` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | One exact 17-file / 7,700,017,758-byte fp16 Diffusers selection matches the loader variant and excludes 8,844,837,635 logical bytes of default/full-precision aliases. The selected files are already complete in the preserved cache, so no POST or deletion occurred. |
 | P6.71 Bounded FLUX.2 Klein component download and loader serialization | `80f7369` | Not required | Exact immutable app plan and prior local live smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 15,980,152,900-byte component selection excludes the 7,751,105,712-byte native duplicate and demo images while making both generic Klein loaders safetensors-only. The selected files are already complete in the preserved cache, so no POST or deletion occurred. |
 | P6.72 Bounded primary FLUX.1 component downloads and loader serialization | `274b158` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 25/26/26-file component selections for schnell, dev, and Krea total 101,218,748,600 bytes and exclude 72,409,924,695 logical bytes of native checkpoints, root autoencoders, and demos while making all three shared loaders safetensors-only. Every selected file is already complete in the preserved caches, so no POST or deletion occurred. |
+| P6.73 Bounded conditioned FLUX.1 component downloads and loader serialization | `d39bfe2` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28/28/26/26-file component selections for Depth, Canny, Fill, and Kontext total 155,032,793,063 bytes and exclude 96,561,961,318 logical bytes of native checkpoints, root autoencoders, and demo media while making all four loader paths safetensors-only. Every selected file is already complete in the preserved caches, so no POST or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
