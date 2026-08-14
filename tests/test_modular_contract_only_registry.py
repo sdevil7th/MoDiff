@@ -15,6 +15,7 @@ from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES,
+    CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
 )
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
@@ -53,8 +54,8 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
 
     @requires_transformers
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 8)
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 9)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 7)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 6)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES), 1)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 5)
         self.assertTrue(
@@ -72,7 +73,13 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 23)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 19)
+        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 4)
+        self.assertTrue(
+            set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS).isdisjoint(
+                CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
+            )
+        )
 
         exported_modular_classes = {
             name
@@ -83,7 +90,9 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             and issubclass(getattr(diffusers, name), diffusers.ModularPipeline)
         }
         self.assertEqual(
-            set(PINNED_MODULAR_WORKFLOW_TRUTH) | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME),
+            set(PINNED_MODULAR_WORKFLOW_TRUTH)
+            | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
+            | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS),
             exported_modular_classes,
         )
 
@@ -95,6 +104,11 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 self.assertEqual(contract["pipelineClass"], specification.class_name)
                 self.assertTrue(contract["workflows"])
                 self.assertTrue(contract["components"])
+
+        for source, targets in CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS.items():
+            with self.subTest(equivalent_modular=source):
+                self.assertTrue(issubclass(getattr(diffusers, source), diffusers.ModularPipeline))
+                self.assertTrue(all(hasattr(diffusers, target) for target in targets))
 
     def test_expert_registry_includes_contract_only_classes_without_widening_executable_registry(self):
         executable = get_all_model_types()

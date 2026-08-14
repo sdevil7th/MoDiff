@@ -15,7 +15,6 @@ class ContractOnlyModularPipeline:
 
 CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES = (
     ContractOnlyModularPipeline("AnimaModularPipeline", "Anima (Contract only)", "image"),
-    ContractOnlyModularPipeline("ErnieImageModularPipeline", "ERNIE Image (Contract only)", "image"),
     ContractOnlyModularPipeline("Flux2ModularPipeline", "FLUX.2 (Contract only)", "image"),
     ContractOnlyModularPipeline(
         "Flux2KleinBaseModularPipeline",
@@ -53,7 +52,6 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES = (
         "HunyuanVideo 1.5 (Contract only)",
         "video",
     ),
-    ContractOnlyModularPipeline("LTXModularPipeline", "LTX Video (Contract only)", "video"),
     ContractOnlyModularPipeline(
         "WanAnimate2ModularPipeline",
         "Wan Animate 2 (Contract only)",
@@ -65,18 +63,6 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES = (
         "Wan Animate 2 Distilled (Contract only)",
         "video",
         (("default", "character_animate"),),
-    ),
-    ContractOnlyModularPipeline(
-        "Wan22ModularPipeline",
-        "Wan 2.2 Text to Video (Contract only)",
-        "video",
-        (("default", "text_to_video"),),
-    ),
-    ContractOnlyModularPipeline(
-        "Wan22Image2VideoModularPipeline",
-        "Wan 2.2 Image to Video (Contract only)",
-        "video",
-        (("default", "image_to_video"),),
     ),
 )
 
@@ -149,4 +135,15 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES = (
 
 CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME = {
     item.class_name: item for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+}
+
+# These exact pinned Modular exports add no public task surface beyond the
+# already executable standard classes listed here. Keep them separate from the
+# contract-only registry: equivalence is a reviewed routing decision, not a
+# runnable Modular profile or loader claim.
+CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS = {
+    "ErnieImageModularPipeline": ("ErnieImagePipeline",),
+    "LTXModularPipeline": ("LTXConditionPipeline",),
+    "Wan22ModularPipeline": ("WanPipeline",),
+    "Wan22Image2VideoModularPipeline": ("WanImageToVideoPipeline",),
 }

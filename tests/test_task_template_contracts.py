@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 161)
+        self.assertEqual(len(self.contracts), 165)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -138,6 +138,16 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("NucleusMoEImagePipeline", "text_to_image"): [],
             ("AuraFlowPipeline", "text_to_image"): [],
             ("ChromaPipeline", "text_to_image"): [],
+            ("ChromaImg2ImgPipeline", "edit_image"): [
+                ("image", "referenceImages"),
+            ],
+            ("ChromaInpaintPipeline", "inpaint"): [
+                ("image", "referenceImages"),
+                ("image", "maskImage"),
+            ],
+            ("ChromaInpaintPipeline", "outpaint"): [
+                ("image", "referenceImages"),
+            ],
             ("CogView3PlusPipeline", "text_to_image"): [],
             ("CogView4Pipeline", "text_to_image"): [],
             ("ErnieImagePipeline", "text_to_image"): [],
@@ -282,6 +292,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("LTX2ConditionPipeline", "image_to_video"): [("image", "referenceImages")],
             ("LTX2ConditionPipeline", "reference_to_video"): [("image", "referenceImages")],
             ("LTX2ConditionPipeline", "video_to_video"): [("video", "sourceVideo")],
+            ("LTX2Pipeline", "text_to_video"): [],
             ("HunyuanVideoFramepackPipeline", "image_to_video"): [("image", "referenceImages")],
             ("StableVideoDiffusionPipeline", "image_to_video"): [("image", "referenceImages")],
             ("AnimateDiffPAGPipeline", "text_to_video"): [],
@@ -344,6 +355,10 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(output["nodeKey"], "modules.Video.ExportWithAudio")
             self.assertEqual(output["role"], "videoExport")
             self.assertEqual(output["inputHandle"], "video")
+        direct_output = self.contract_by_pair[("LTX2Pipeline", "text_to_video")]["output"]
+        self.assertEqual(direct_output["nodeKey"], "modules.Video.ExportWithAudio")
+        self.assertEqual(direct_output["role"], "videoExport")
+        self.assertEqual(direct_output["inputHandle"], "video")
 
     async def test_image_video_and_audio_graphs_round_trip_against_the_generic_contract(self):
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))

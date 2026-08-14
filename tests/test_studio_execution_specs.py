@@ -359,6 +359,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxKontextInpaintPipeline", "outpaint"),
                 ("Flux2KleinInpaintPipeline", "inpaint"),
                 ("Flux2KleinInpaintPipeline", "outpaint"),
+                ("ChromaImg2ImgPipeline", "edit_image"),
+                ("ChromaInpaintPipeline", "inpaint"),
+                ("ChromaInpaintPipeline", "outpaint"),
+                ("LTX2Pipeline", "text_to_video"),
             ],
         )
         by_id = {item["id"]: item for item in specs}

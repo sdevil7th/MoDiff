@@ -9,8 +9,19 @@ from unittest.mock import Mock, patch
 import numpy as np
 from PIL import Image
 
+import modules as module_registry
 from modiff.model_artifact_catalog import catalog_repository_pin, catalog_revision
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
+from modiff.optional_runtimes import (
+    OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+)
+from modiff.studio_execution_specs import (
+    CHROMA1_HD_DIFFUSERS_FILES,
+    studio_capability_definitions,
+    studio_execution_spec_for_pair,
+    validate_studio_execution_specs,
+)
 from modules.DiffusersImage.main import (
     CHROMA1_HD_REPO,
     IMAGE_PIPELINE_ADAPTERS,
@@ -327,6 +338,81 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             get_video_mode_field_contract(ltx2, "text_to_video").visible_fields,
             ("frame_rate",),
         )
+
+    def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
+        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 165)
+        capabilities = studio_capability_definitions()
+        cases = {
+            ("ChromaImg2ImgPipeline", "edit_image"): (
+                "chroma1-hd-img2img:edit-image:v1",
+                "chroma1-hd-img2img:direct",
+            ),
+            ("ChromaInpaintPipeline", "inpaint"): (
+                "chroma1-hd-inpaint:inpaint:v1",
+                "chroma1-hd-inpaint:direct",
+            ),
+            ("ChromaInpaintPipeline", "outpaint"): (
+                "chroma1-hd-inpaint:outpaint:v1",
+                "chroma1-hd-inpaint:direct",
+            ),
+            ("LTX2Pipeline", "text_to_video"): (
+                "ltx2-standard:text-to-video:v1",
+                "ltx2-standard:direct",
+            ),
+        }
+        for pair, (spec_id, profile_id) in cases.items():
+            with self.subTest(pair=pair):
+                specification = studio_execution_spec_for_pair(*pair)
+                capability = capabilities[pair[0]]
+                self.assertEqual(specification["id"], spec_id)
+                self.assertEqual(specification["executionProfileId"], profile_id)
+                self.assertEqual(specification["pipelineClass"], pair[0])
+                self.assertEqual(capability["executionStatus"], "expert_only")
+                self.assertFalse(capability["autoEligible"])
+                self.assertTrue(capability["templateEligible"])
+                self.assertFalse(capability["galleryEligible"])
+                self.assertFalse(capability["liveProof"])
+
+        edit = studio_execution_spec_for_pair("ChromaImg2ImgPipeline", "edit_image")
+        inpaint = studio_execution_spec_for_pair("ChromaInpaintPipeline", "inpaint")
+        outpaint = studio_execution_spec_for_pair("ChromaInpaintPipeline", "outpaint")
+        for specification in (edit, inpaint, outpaint):
+            capability = capabilities[specification["modelType"]]
+            self.assertEqual(capability["downloadFiles"], CHROMA1_HD_DIFFUSERS_FILES)
+            self.assertEqual(capability["revisionCandidates"], [CHROMA_REVISION])
+            self.assertFalse(capability["supportsLora"])
+            self.assertNotIn(
+                ("diffusersImageEdit", "reference_strength", "conditioningScale"),
+                specification["bindings"],
+            )
+            self.assertNotIn(
+                ("diffusersImageInpaint", "reference_strength", "conditioningScale"),
+                specification["bindings"],
+            )
+            self.assertTrue(
+                all(parameter != "true_cfg_scale" for _role, parameter, _source in specification["bindings"])
+            )
+        self.assertIn(("outpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"), outpaint["edges"])
+
+        ltx2 = studio_execution_spec_for_pair("LTX2Pipeline", "text_to_video")
+        ltx2_capability = capabilities["LTX2Pipeline"]
+        self.assertNotIn("downloadFiles", ltx2_capability)
+        self.assertEqual(ltx2_capability["revisionCandidates"], [LTX2_REVISION])
+        self.assertEqual(ltx2_capability["outputMedia"], ["video", "audio"])
+        self.assertIn(
+            ("wanGenerate", "audio", "videoExport", "audio"),
+            ltx2["edges"],
+        )
+        self.assertIn(
+            ("videoExport", "modules.Video.ExportWithAudio", 640, -80),
+            ltx2["roles"],
+        )
+
+    def test_optional_runtime_declares_every_exact_direct_symbol(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
+        expected = {"ChromaImg2ImgPipeline", "ChromaInpaintPipeline", "LTX2Pipeline"}
+        self.assertTrue(expected.issubset(profile.pipeline_adapter_symbols))
+        self.assertTrue(expected.issubset(profile.required_diffusers_symbols))
 
     def test_chroma_img2img_passes_the_exact_generic_edit_contract(self):
         source = Image.new("RGB", (48, 32), "red")

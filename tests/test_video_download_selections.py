@@ -33,7 +33,10 @@ class VideoDownloadSelectionTests(unittest.TestCase):
             and not capability.get("downloadFiles")
         }
 
-        self.assertEqual(unbounded, {"LTX2ConditionPipeline", "WanAnimatePipeline"})
+        self.assertEqual(
+            unbounded,
+            {"LTX2ConditionPipeline", "LTX2Pipeline", "WanAnimatePipeline"},
+        )
 
     def test_remaining_admitted_wan_routes_publish_bounded_component_selections(self):
         capabilities = studio_capability_definitions()

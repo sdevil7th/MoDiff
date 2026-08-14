@@ -23,7 +23,10 @@ from pathlib import Path
 from typing import Any
 
 from modiff.diffusers_profiles import EXPERIMENTAL_DIFFUSERS_PIPELINES
-from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
+from modiff.modular_contract_only_registry import (
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
+    CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
+)
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
@@ -56,6 +59,7 @@ _PINNED_DIFFUSERS_DEPENDENCY = re.compile(
 # adapter classes with registered execution specifications for the same public
 # task surface.
 _EQUIVALENT_PIPELINE_TARGETS = {
+    **CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
     "Flux2KleinModularPipeline": ("Flux2KleinPipeline",),
     "FluxKontextModularPipeline": ("FluxKontextPipeline",),
     "FluxModularPipeline": ("FluxPipeline", "FluxImg2ImgPipeline"),
@@ -64,6 +68,9 @@ _EQUIVALENT_PIPELINE_TARGETS = {
     # Lumina2Pipeline; it delegates initialization to that exact executable
     # class and emits a removal deprecation.
     "Lumina2Text2ImgPipeline": ("Lumina2Pipeline",),
+    # The pinned compatibility class inherits the exact admitted Lumina
+    # implementation without adding another public task surface.
+    "LuminaText2ImgPipeline": ("LuminaPipeline",),
     # The exact admitted condition adapters already expose these task surfaces
     # for the same LTX families. This is task equivalence only: optional direct
     # pipeline features such as prompt enhancement are not claimed.
@@ -142,7 +149,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "BriaFiboEditPipeline",
         "BriaFiboPipeline",
         "BriaPipeline",
-        "ChromaInpaintPipeline",
         "CogView4ControlPipeline",
         "Flux2KleinKVPipeline",
         "Flux2Pipeline",

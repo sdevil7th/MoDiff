@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 28)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 24)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -93,6 +93,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ),
             "LTX2ConditionPipeline": (
                 ["image_to_video", "reference_to_video", "text_to_video", "video_to_video"],
+                "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            ),
+            "LTX2Pipeline": (
+                ["text_to_video"],
                 "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
             ),
             "HunyuanVideoFramepackPipeline": (
@@ -170,7 +174,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 161)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 165)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -190,6 +194,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "LTXVideoPipeline",
             "LTXI2VLongMultiPromptPipeline",
             "LTX2ConditionPipeline",
+            "LTX2Pipeline",
             "HunyuanVideoFramepackPipeline",
             "StableVideoDiffusionPipeline",
             "AnimateDiffPipeline",
@@ -212,6 +217,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "QwenImageEditPipeline",
             "QwenImageEditPlusPipeline",
             "ZImageInpaintPipeline",
+            "ChromaImg2ImgPipeline",
+            "ChromaInpaintPipeline",
             "FluxKontextInpaintPipeline",
             "Flux2KleinInpaintPipeline",
             "StableDiffusionXLPipeline",

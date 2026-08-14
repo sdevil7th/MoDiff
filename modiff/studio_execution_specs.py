@@ -11568,6 +11568,39 @@ _FLUX2_KLEIN_INPAINT_DIRECT_PROFILE = _direct_image_promotion_profile(
     max_low_memory_side=768,
     max_low_memory_steps=4,
 )
+_CHROMA1_HD_IMG2IMG_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="chroma1-hd-img2img:direct",
+    model_type="ChromaImg2ImgPipeline",
+    modes=("edit_image",),
+    pipeline_class="ChromaImg2ImgPipeline",
+    repository=CHROMA1_HD_REPO,
+    quantizable_components=(),
+    default_quantized_components=(),
+    supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+    retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    max_low_memory_side=1024,
+    max_low_memory_steps=40,
+)
+_CHROMA1_HD_INPAINT_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="chroma1-hd-inpaint:direct",
+    model_type="ChromaInpaintPipeline",
+    modes=("inpaint", "outpaint"),
+    pipeline_class="ChromaInpaintPipeline",
+    repository=CHROMA1_HD_REPO,
+    quantizable_components=(),
+    default_quantized_components=(),
+    supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+    retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU),
+    max_low_memory_side=1024,
+    max_low_memory_steps=40,
+)
+_LTX2_STANDARD_DIRECT_PROFILE = _planning_video_profile(
+    "ltx2-standard:direct",
+    "LTX2Pipeline",
+    ("text_to_video",),
+    "LTX2Pipeline",
+    LTX2_REPO,
+)
 
 _QWEN_IMAGE_EDIT_DIRECT_CAPABILITY = _direct_image_promotion_capability(
     model_type="QwenImageEditPipeline",
@@ -11741,6 +11774,111 @@ _FLUX2_KLEIN_INPAINT_DIRECT_CAPABILITY = _direct_image_promotion_capability(
         "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
     ],
 )
+_CHROMA1_HD_IMG2IMG_DIRECT_CAPABILITY = {
+    **_direct_image_promotion_capability(
+        model_type="ChromaImg2ImgPipeline",
+        label="Chroma Image-to-Image (Standard Diffusers)",
+        display_name="Chroma1-HD Image-to-Image",
+        family="Chroma",
+        repository=CHROMA1_HD_REPO,
+        download_files=CHROMA1_HD_DIFFUSERS_FILES,
+        modes=("edit_image",),
+        mode_requirements={
+            "edit_image": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires exactly one source image for the exact standard Chroma image-to-image pipeline.",
+            }
+        },
+        supports_negative_prompt=True,
+        supports_mask=False,
+        supports_multi_image=False,
+        recommended_steps=35,
+        recommended_guidance=5.0,
+        low_vram_side=1024,
+        low_vram_steps=35,
+        supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+        low_vram_offload_mode=OFFLOAD_MODE_SEQUENTIAL_CPU,
+        notes=[
+            "This additive exact image-to-image class leaves the existing Chroma text-to-image route unchanged.",
+            "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+        ],
+    ),
+    "artifactLabel": "Reused Apache-2.0 bfloat16 safetensors Diffusers repository",
+    "recommendedMaxSequenceLength": 512,
+    "supportsLora": False,
+}
+_CHROMA1_HD_INPAINT_DIRECT_CAPABILITY = {
+    **_direct_image_promotion_capability(
+        model_type="ChromaInpaintPipeline",
+        label="Chroma Inpaint (Standard Diffusers)",
+        display_name="Chroma1-HD Inpaint",
+        family="Chroma",
+        repository=CHROMA1_HD_REPO,
+        download_files=CHROMA1_HD_DIFFUSERS_FILES,
+        modes=("inpaint", "outpaint"),
+        mode_requirements={
+            "inpaint": {
+                "requiredImages": ["referenceImages", "maskImage"],
+                "note": "Requires exactly one source image and one mask image.",
+            },
+            "outpaint": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+            },
+        },
+        supports_negative_prompt=True,
+        supports_mask=True,
+        supports_multi_image=False,
+        recommended_steps=28,
+        recommended_guidance=7.0,
+        low_vram_side=1024,
+        low_vram_steps=28,
+        supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+        low_vram_offload_mode=OFFLOAD_MODE_SEQUENTIAL_CPU,
+        notes=[
+            "This additive exact inpaint class leaves the existing Chroma text-to-image route unchanged.",
+            "The inert upstream true_cfg_scale field is rejected; the generic guidance_scale contract is authoritative.",
+            "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+        ],
+    ),
+    "artifactLabel": "Reused Apache-2.0 bfloat16 safetensors Diffusers repository",
+    "recommendedMaxSequenceLength": 512,
+    "supportsLora": False,
+}
+_LTX2_STANDARD_DIRECT_CAPABILITY = {
+    **_planning_video_capability(
+        "LTX2Pipeline",
+        "LTX-2 Standard Text-to-Video + Audio",
+        "LTX Video",
+        LTX2_REPO,
+        ("text_to_video",),
+        {
+            "text_to_video": {
+                "note": "Text-only generation returns both the synchronized video stream and its audio stream."
+            }
+        },
+    ),
+    "artifactLabel": "Reused immutable LTX-2 safetensors Diffusers repository",
+    "recommendedSteps": 40,
+    "recommendedGuidance": 4.0,
+    "recommendedFrames": 121,
+    "outputMedia": ["video", "audio"],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "This additive exact standard class leaves every existing LTX-2 condition workflow unchanged.",
+        "The immutable artifact is reused without a new download selection; its license and large-weight review remain explicit gates.",
+        "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+    ],
+}
+
+_CHROMA_IMG2IMG_DIRECT_BINDINGS = tuple(
+    item
+    for item in _SDXL_EDIT_GRAPH_BINDINGS
+    if item[:2] != ("diffusersImageEdit", "reference_strength")
+)
 
 _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS = {
     "qwen-image-edit-direct:edit-image:v1": {
@@ -11817,7 +11955,49 @@ for (
             ),
         }
 
+_STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS["chroma1-hd-img2img:edit-image:v1"] = {
+    "modelType": "ChromaImg2ImgPipeline",
+    "mode": "edit_image",
+    "profile": _CHROMA1_HD_IMG2IMG_DIRECT_PROFILE,
+    "capability": _CHROMA1_HD_IMG2IMG_DIRECT_CAPABILITY,
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _CHROMA_IMG2IMG_DIRECT_BINDINGS,
+}
+for _chroma_inpaint_mode in ("inpaint", "outpaint"):
+    _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS[
+        f"chroma1-hd-inpaint:{_chroma_inpaint_mode}:v1"
+    ] = {
+        "modelType": "ChromaInpaintPipeline",
+        "mode": _chroma_inpaint_mode,
+        "profile": _CHROMA1_HD_INPAINT_DIRECT_PROFILE,
+        "capability": _CHROMA1_HD_INPAINT_DIRECT_CAPABILITY,
+        "roles": (
+            _INPAINT_GRAPH_ROLES
+            if _chroma_inpaint_mode == "inpaint"
+            else _OUTPAINT_GRAPH_ROLES
+        ),
+        "edges": (
+            _INPAINT_GRAPH_EDGES
+            if _chroma_inpaint_mode == "inpaint"
+            else _OUTPAINT_GRAPH_EDGES
+        ),
+        "bindings": _direct_inpaint_bindings(
+            outpaint=_chroma_inpaint_mode == "outpaint",
+            unsupported_params=frozenset({"reference_strength"}),
+        ),
+    }
+
 STUDIO_EXECUTION_SPEC_DEFINITIONS.update(_STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS)
+STUDIO_EXECUTION_SPEC_DEFINITIONS["ltx2-standard:text-to-video:v1"] = {
+    "modelType": "LTX2Pipeline",
+    "mode": "text_to_video",
+    "profile": _LTX2_STANDARD_DIRECT_PROFILE,
+    "capability": _LTX2_STANDARD_DIRECT_CAPABILITY,
+    "roles": _LTX2_GRAPH_ROLES,
+    "edges": _LTX2_GRAPH_EDGES,
+    "bindings": _LTX2_GRAPH_BINDINGS,
+}
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",
