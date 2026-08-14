@@ -5403,6 +5403,27 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   selected byte already complete with zero remaining bytes, so no POST or
   deletion occurred. The older extra variants and unfinished cache blobs were
   preserved for regression testing.
+- [x] **P6.67 Bound Whisper Tiny app download selection:** backend `4783400`
+  binds `openai/whisper-tiny@169d4a4341b33bc18d8881c4b69c2e104e1cc0af`
+  to one exact 13-file / 155,455,649-byte Transformers runtime surface. The
+  selection retains the safetensors model, processor/tokenizer data,
+  generation/config metadata, and immutable card/attribute receipts while
+  excluding the duplicate 151,095,027-byte PyTorch pickle, 151,048,591-byte
+  Flax checkpoint, and 151,253,960-byte TensorFlow checkpoint from the
+  608,853,227-byte repository tree. This matches the existing generic ASR
+  loader's safetensors-only, no-remote-code boundary.
+
+  App plan and POST regressions bind the capability-derived allowlist, and a
+  focused speech artifact regression rejects every alternate framework and
+  legacy pickle surface. The capability, app, and speech matrix passes 101
+  tests and 80 subtests; pinned Ruff E9/F, 66-package compatibility, and diff
+  checks pass. A fresh exact app plan found all runtime bytes present and only
+  21,225 bytes of card/attribute receipts remaining; with
+  390,247,436,288 free bytes, 309,318,466,805 queued reservation bytes, and the
+  68,719,476,736-byte safety reserve, the bounded completion fit and was
+  submitted through the app. It remains governed by the app's existing
+  transfer queue; no older model or alternate cached framework file was
+  deleted.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6667,4 +6688,5 @@ Add references only after the corresponding evidence exists.
 | P6.64 Bounded Stable Audio and Stable Video app download selections | `8c96321` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 19-file / 5,348,079,831-byte Stable Audio and 12-file / 4,509,218,296-byte Stable Video runnable selections replace repository-wide planning. They exclude 24.14 GB of duplicate original, default/full-precision, and demo surfaces while retaining safetensors-only runtime components and rights receipts. Queue-aware plans do not fit beside current reservations, so no duplicate POST, interruption, or deletion occurred. |
 | P6.65 Bounded AudioLDM2 and Shap-E app download selections | `56faa30` | Not required | Exact immutable app plans only; remote real-weight execution/output review and physical macOS remain pending | Not required | Exact 28-file / 4,480,959,446-byte AudioLDM2 and 14-file / 1,332,951,857-byte Shap-E safe-component selections replace repository-wide planning and exclude 8.04 GB of legacy pickle and unsafe duplicate surfaces. Both selections are already complete in the preserved full caches, so no POST or deletion occurred. |
 | P6.66 Bounded Marigold app download and loader serialization | `c841203` | Not required | Exact immutable app plan and prior local tiny smoke only; remote quality/output review and physical macOS remain pending | Not required | One exact 14-file / 5,161,610,352-byte float32 safetensors selection replaces repository-wide planning, excludes 10.32 GB of legacy pickle and duplicate fp16 surfaces, and makes the loader's safe-serialization requirement explicit. The selection is already complete; no POST or deletion occurred, and older extra/unfinished blobs remain preserved. |
+| P6.67 Bounded Whisper Tiny app download selection | `4783400` | Not required | Exact immutable app plan and prior local in-memory ASR smoke only; remote semantic/output review and physical macOS remain pending | Not required | One exact 13-file / 155,455,649-byte safetensors/processor selection excludes 453,397,578 bytes of duplicate PyTorch, Flax, and TensorFlow weights. Only 21,225 metadata bytes remained; a fresh fitting plan preceded the app-only completion request, with no deletion. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
