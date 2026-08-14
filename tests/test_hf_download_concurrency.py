@@ -551,6 +551,21 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 20,
                 "validation_images/step_9900_val_img_3.png",
             ),
+            "zai-org/CogView3-Plus-3B": (
+                "5d70e40732ac0efac98524c51a7fa9c82707f1e5",
+                20,
+                "configuration.json",
+            ),
+            "kandinsky-community/kandinsky-3": (
+                "bf79e6c219da8a94abb50235fdc4567eb8fb4632",
+                19,
+                "assets/kandinsky.jpg",
+            ),
+            "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled": (
+                "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+                20,
+                "pytorch_model.bin",
+            ),
             "SimianLuo/LCM_Dreamshaper_v7": (
                 "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
                 17,

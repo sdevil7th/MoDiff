@@ -230,6 +230,28 @@ SDXL_INSTRUCT_PIX2PIX_DIFFUSERS_FILES = [
 SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 HUNYUAN_DIT_DISTILLED_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
+HUNYUAN_DIT_DISTILLED_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "text_encoder_2/config.json",
+    "text_encoder_2/model-00001-of-00002.safetensors",
+    "text_encoder_2/model-00002-of-00002.safetensors",
+    "text_encoder_2/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.txt",
+    "tokenizer_2/special_tokens_map.json",
+    "tokenizer_2/spiece.model",
+    "tokenizer_2/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 HUNYUAN_DIT_CONTROLNET_CANNY_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_SHARED_DIFFUSERS_FILES = [
@@ -315,6 +337,27 @@ PIXART_SIGMA_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
+KANDINSKY3_FP16_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "movq/config.json",
+    "movq/diffusion_pytorch_model.fp16.safetensors",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.fp16-00001-of-00005.safetensors",
+    "text_encoder/model.fp16-00002-of-00005.safetensors",
+    "text_encoder/model.fp16-00003-of-00005.safetensors",
+    "text_encoder/model.fp16-00004-of-00005.safetensors",
+    "text_encoder/model.fp16-00005-of-00005.safetensors",
+    "text_encoder/model.safetensors.index.fp16.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.fp16.safetensors",
+]
 LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
 LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
@@ -469,6 +512,28 @@ CHROMA1_HD_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 COGVIEW3_PLUS_REPO = "zai-org/CogView3-Plus-3B"
+COGVIEW3_PLUS_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00004.safetensors",
+    "text_encoder/model-00002-of-00004.safetensors",
+    "text_encoder/model-00003-of-00004.safetensors",
+    "text_encoder/model-00004-of-00004.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 COGVIEW4_6B_REPO = "zai-org/CogView4-6B"
 COGVIEW4_6B_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -6541,6 +6606,7 @@ _HUNYUAN_DIT_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": HUNYUAN_DIT_DISTILLED_REPO,
+    "downloadFiles": HUNYUAN_DIT_DISTILLED_DIFFUSERS_FILES,
     "artifactLabel": "Official Tencent community-license safetensors snapshot",
     "defaultDtype": "float16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -6606,6 +6672,7 @@ _HUNYUAN_DIT_CONTROLNET_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": HUNYUAN_DIT_DISTILLED_REPO,
+    "downloadFiles": HUNYUAN_DIT_DISTILLED_DIFFUSERS_FILES,
     "artifactLabel": "Official Tencent community-license safetensors assembly",
     "defaultDtype": "float16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -7202,6 +7269,7 @@ _KANDINSKY3_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": KANDINSKY3_REPO,
+    "downloadFiles": KANDINSKY3_FP16_DIFFUSERS_FILES,
     "artifactLabel": "Apache-2.0-declared fp16 Diffusers safetensors repo",
     "defaultDtype": "float16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -8071,6 +8139,7 @@ _COGVIEW3_PLUS_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": COGVIEW3_PLUS_REPO,
+    "downloadFiles": COGVIEW3_PLUS_DIFFUSERS_FILES,
     "artifactLabel": "Apache-2.0 bfloat16 Diffusers safetensors repo",
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
