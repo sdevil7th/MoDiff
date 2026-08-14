@@ -490,6 +490,35 @@ JOYIMAGE_EDIT_PLUS_DIFFUSERS_FILES = [
 ]
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
+DREAMLITE_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "processor/added_tokens.json",
+    "processor/chat_template.jinja",
+    "processor/merges.txt",
+    "processor/preprocessor_config.json",
+    "processor/special_tokens_map.json",
+    "processor/tokenizer.json",
+    "processor/tokenizer_config.json",
+    "processor/video_preprocessor_config.json",
+    "processor/vocab.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/generation_config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/added_tokens.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 LCM_DREAMSHAPER_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -8222,6 +8251,7 @@ _DREAMLITE_BASE_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": DREAMLITE_BASE_REPO,
+    "downloadFiles": DREAMLITE_DIFFUSERS_FILES,
     "artifactLabel": "Non-commercial Diffusers safetensors repo",
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -8324,6 +8354,7 @@ _DREAMLITE_MOBILE_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": DREAMLITE_MOBILE_REPO,
+    "downloadFiles": DREAMLITE_DIFFUSERS_FILES,
     "artifactLabel": "Non-commercial Diffusers safetensors repo",
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},

@@ -396,6 +396,16 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 17,
                 "diffusion_pytorch_model.bin",
             ),
+            "carlofkl/DreamLite-base": (
+                "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",
+                27,
+                "unet/diffusion_pytorch_model.bin",
+            ),
+            "carlofkl/DreamLite-mobile": (
+                "6695c3f4be230f0493fa5dbf78be3bc4d3bb2ab4",
+                27,
+                "unet/diffusion_pytorch_model.bin",
+            ),
             "jdopensource/JoyAI-Image-Edit-Diffusers": (
                 "4b41fb25d961f37668750178ccbb380da326201c",
                 38,
