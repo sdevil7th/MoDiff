@@ -877,6 +877,20 @@ SMOLVLM_256M_INSTRUCT_TRANSFORMERS_FILES = [
     "tokenizer_config.json",
     "vocab.json",
 ]
+JANUS_PRO_1B_REPO = "deepseek-community/Janus-Pro-1B"
+JANUS_PRO_1B_TRANSFORMERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "model.safetensors",
+    "preprocessor_config.json",
+    "processor_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+]
 WHISPER_TINY_REPO = "openai/whisper-tiny"
 WHISPER_TINY_TRANSFORMERS_FILES = [
     ".gitattributes",
@@ -1925,6 +1939,91 @@ _TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS = (
     ("loadImage", "file", "referenceImages"),
     ("loadImage", "alpha_channel", "alphaMode"),
     ("transformersImageTextGenerate", "prompt", "prompt"),
+)
+_TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_ROLES = (
+    (
+        "transformersAnyToAnyModel",
+        "modules.HuggingFaceTransformers.LoadAnyToAnyModel",
+        -720,
+        -80,
+    ),
+    (
+        "transformersAnyToAnyGenerate",
+        "modules.HuggingFaceTransformers.GenerateAnyToAny",
+        -240,
+        -80,
+    ),
+    ("transformersTextPreview", "modules.Primitive.DataViewer", 240, -80),
+)
+_TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_EDGES = (
+    ("transformersAnyToAnyModel", "model", "transformersAnyToAnyGenerate", "model"),
+    ("transformersAnyToAnyGenerate", "result", "transformersTextPreview", "value"),
+)
+_TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_BINDINGS = (
+    ("transformersAnyToAnyModel", "model_id", "artifact"),
+    ("transformersAnyToAnyModel", "revision", "defaultRevision"),
+    ("transformersAnyToAnyModel", "dtype", "dtype"),
+    ("transformersAnyToAnyModel", "device", "device"),
+    ("transformersAnyToAnyGenerate", "prompt", "prompt"),
+    ("transformersAnyToAnyGenerate", "generation_mode", "anyToAnyText"),
+)
+_TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_ROLES = (
+    (
+        "transformersAnyToAnyModel",
+        "modules.HuggingFaceTransformers.LoadAnyToAnyModel",
+        -720,
+        -80,
+    ),
+    ("loadImage", "modules.Image.Load", -720, 280),
+    (
+        "transformersAnyToAnyGenerate",
+        "modules.HuggingFaceTransformers.GenerateAnyToAny",
+        -240,
+        -80,
+    ),
+    ("transformersTextPreview", "modules.Primitive.DataViewer", 240, -80),
+)
+_TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_EDGES = (
+    ("transformersAnyToAnyModel", "model", "transformersAnyToAnyGenerate", "model"),
+    ("loadImage", "image", "transformersAnyToAnyGenerate", "images"),
+    ("transformersAnyToAnyGenerate", "result", "transformersTextPreview", "value"),
+)
+_TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_BINDINGS = (
+    ("transformersAnyToAnyModel", "model_id", "artifact"),
+    ("transformersAnyToAnyModel", "revision", "defaultRevision"),
+    ("transformersAnyToAnyModel", "dtype", "dtype"),
+    ("transformersAnyToAnyModel", "device", "device"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("transformersAnyToAnyGenerate", "prompt", "prompt"),
+    ("transformersAnyToAnyGenerate", "generation_mode", "anyToAnyText"),
+)
+_TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_ROLES = (
+    (
+        "transformersAnyToAnyModel",
+        "modules.HuggingFaceTransformers.LoadAnyToAnyModel",
+        -720,
+        -80,
+    ),
+    (
+        "transformersAnyToAnyGenerate",
+        "modules.HuggingFaceTransformers.GenerateAnyToAny",
+        -240,
+        -80,
+    ),
+    ("preview", "modules.Image.Preview", 240, -80),
+)
+_TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_EDGES = (
+    ("transformersAnyToAnyModel", "model", "transformersAnyToAnyGenerate", "model"),
+    ("transformersAnyToAnyGenerate", "image", "preview", "image"),
+)
+_TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_BINDINGS = (
+    ("transformersAnyToAnyModel", "model_id", "artifact"),
+    ("transformersAnyToAnyModel", "revision", "defaultRevision"),
+    ("transformersAnyToAnyModel", "dtype", "dtype"),
+    ("transformersAnyToAnyModel", "device", "device"),
+    ("transformersAnyToAnyGenerate", "prompt", "prompt"),
+    ("transformersAnyToAnyGenerate", "generation_mode", "anyToAnyImage"),
 )
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
@@ -3174,6 +3273,9 @@ _BINDING_SOURCES = frozenset(
         *_SPEECH_TRANSLATION_GRAPH_BINDINGS,
         *_TRANSFORMERS_TEXT_GRAPH_BINDINGS,
         *_TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS,
+        *_TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_BINDINGS,
+        *_TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_BINDINGS,
+        *_TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_BINDINGS,
         *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
@@ -10392,6 +10494,141 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["smolvlm-256m-instruct:image-to-text:v1"] = {
     "roles": _TRANSFORMERS_IMAGE_TEXT_GRAPH_ROLES,
     "edges": _TRANSFORMERS_IMAGE_TEXT_GRAPH_EDGES,
     "bindings": _TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS,
+}
+
+_JANUS_PRO_1B_PROFILE = {
+    "id": "janus-pro-1b:direct",
+    "model_type": "HuggingFaceAnyToAnyModel",
+    "modes": ("text_generation", "image_to_text", "text_to_image"),
+    "loader_module": "modules.HuggingFaceTransformers",
+    "loader_action": "LoadAnyToAnyModel",
+    "execution_path": "direct-huggingface-transformers-any-to-any",
+    "pipeline_class": "JanusForConditionalGeneration",
+    "default_repo": JANUS_PRO_1B_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": 384,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_JANUS_PRO_1B_CAPABILITY = {
+    "modelType": "HuggingFaceAnyToAnyModel",
+    "label": "Janus Pro 1B",
+    "displayName": "Janus-Pro-1B",
+    "family": "Janus",
+    "surfaceCategory": "Utility",
+    "runtimeKind": "transformers",
+    "isDiffusersBacked": False,
+    "catalogVisibility": "workflowOnly",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": JANUS_PRO_1B_REPO,
+    "artifactLabel": "Transformers safetensors repo (DeepSeek Model License)",
+    "downloadFiles": JANUS_PRO_1B_TRANSFORMERS_FILES,
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 384, "height": 384, "aspectRatio": "1:1"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "modeOutputKinds": {
+        "text_generation": "json",
+        "image_to_text": "json",
+        "text_to_image": "image",
+    },
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 384,
+        "height": 384,
+    },
+    "modes": ["text_generation", "image_to_text", "text_to_image"],
+    "modeRequirements": {
+        "text_generation": {
+            "note": "Accepts one bounded prompt and returns bounded text with a versioned receipt.",
+        },
+        "image_to_text": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one bounded local image and returns bounded text with a versioned receipt.",
+        },
+        "text_to_image": {
+            "note": "Accepts one bounded prompt and returns the native reviewed 384x384 image output.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            JANUS_PRO_1B_REPO,
+            model_type="HuggingFaceAnyToAnyModel",
+        )
+    ],
+    "license": "DeepSeek Model License Agreement v1.0",
+    "licenseCompliance": {
+        "state": "product_and_user_review_required",
+        "codeLicense": "MIT",
+        "weightsLicense": "DeepSeek Model License Agreement v1.0",
+        "noticePath": "licenses/DeepSeek-Model-License-1.0.txt",
+        "useRestrictionsPresent": True,
+        "distributionAndHostedUseCarryDuties": True,
+        "sourceExecutable": True,
+        "liveExecutionQualified": False,
+    },
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The native Janus adapter is finite, local-files-only, safetensors-only, and emits exact text or image schemas.",
+        "The app must preflight free space before installing the immutable 4.161 GB selection; no existing model may be deleted.",
+        "Auto, Gallery, and live execution claims remain disabled pending real-weight output and product/user license review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["janus-pro-1b:text-generation:v1"] = {
+    "modelType": "HuggingFaceAnyToAnyModel",
+    "mode": "text_generation",
+    "profile": _JANUS_PRO_1B_PROFILE,
+    "capability": _JANUS_PRO_1B_CAPABILITY,
+    "roles": _TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_ROLES,
+    "edges": _TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_EDGES,
+    "bindings": _TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_BINDINGS,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["janus-pro-1b:image-to-text:v1"] = {
+    "modelType": "HuggingFaceAnyToAnyModel",
+    "mode": "image_to_text",
+    "profile": _JANUS_PRO_1B_PROFILE,
+    "capability": _JANUS_PRO_1B_CAPABILITY,
+    "roles": _TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_ROLES,
+    "edges": _TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_EDGES,
+    "bindings": _TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_BINDINGS,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["janus-pro-1b:text-to-image:v1"] = {
+    "modelType": "HuggingFaceAnyToAnyModel",
+    "mode": "text_to_image",
+    "profile": _JANUS_PRO_1B_PROFILE,
+    "capability": _JANUS_PRO_1B_CAPABILITY,
+    "roles": _TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_ROLES,
+    "edges": _TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_EDGES,
+    "bindings": _TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_BINDINGS,
 }
 
 _WHISPER_TINY_PROFILE = {

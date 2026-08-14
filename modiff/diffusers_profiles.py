@@ -273,6 +273,10 @@ class DiffusersExecutionProfile:
                 "modules.HuggingFaceTransformers",
                 "LoadImageTextToTextModel",
             ),
+            "direct-huggingface-transformers-any-to-any": (
+                "modules.HuggingFaceTransformers",
+                "LoadAnyToAnyModel",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(
@@ -650,6 +654,7 @@ for profile_id in (
     )
 
 for profile_id in (
+    "janus-pro-1b:direct",
     "wan-vace:direct",
     "wan-22-image-to-video:direct",
     "wan-22-ti2v-5b:direct",

@@ -42,6 +42,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.HuggingFaceTransformers",
                 "LoadImageTextToTextModel",
             ),
+            "direct-huggingface-transformers-any-to-any": (
+                "modules.HuggingFaceTransformers",
+                "LoadAnyToAnyModel",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -145,6 +149,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "HuggingFaceSpeechRecognitionModel",
             "HuggingFaceTextGenerationModel",
             "HuggingFaceImageTextToTextModel",
+            "HuggingFaceAnyToAnyModel",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)
@@ -254,6 +259,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
 
     def test_profiles_publish_only_the_reviewed_expert_mps_policies(self):
         unqualified = {
+            "janus-pro-1b:direct",
             "qwen-image:img2img-direct",
             "qwen-image:inpaint-direct",
             "qwen-image:modular",

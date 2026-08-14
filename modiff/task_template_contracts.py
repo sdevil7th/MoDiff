@@ -203,7 +203,18 @@ def build_task_template_contracts(
             )
         )
 
-        media_kind = capability.get("mediaKind") or capability.get("outputKind") or "image"
+        mode_output_kinds = capability.get("modeOutputKinds") or {}
+        if not isinstance(mode_output_kinds, Mapping) or any(
+            not isinstance(output_mode, str) or not isinstance(output_kind, str)
+            for output_mode, output_kind in mode_output_kinds.items()
+        ):
+            raise TaskTemplateContractError("Task-template mode output contracts are invalid.")
+        media_kind = (
+            mode_output_kinds.get(mode)
+            or capability.get("mediaKind")
+            or capability.get("outputKind")
+            or "image"
+        )
         input_contracts = capability.get("inputContracts") or capability.get("modeRequirements") or {}
         if not isinstance(input_contracts, Mapping):
             raise TaskTemplateContractError("Task-template capability input contracts are invalid.")
