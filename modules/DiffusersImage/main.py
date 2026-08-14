@@ -837,6 +837,26 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("StableDiffusionPipeline", "StableDiffusionPAGPipeline"),
         safe_serialization_required=True,
     ),
+    "StableDiffusionPAGImg2ImgPipeline": ImagePipelineAdapter(
+        "StableDiffusionPAGImg2ImgPipeline",
+        frozenset({"edit_image"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=(
+            "StableDiffusionPipeline",
+            "StableDiffusionPAGImg2ImgPipeline",
+        ),
+        safe_serialization_required=True,
+    ),
+    "StableDiffusionPAGInpaintPipeline": ImagePipelineAdapter(
+        "StableDiffusionPAGInpaintPipeline",
+        frozenset({"inpaint"}),
+        SD15_BASE_REPO,
+        artifact_pipeline_classes=(
+            "StableDiffusionPipeline",
+            "StableDiffusionPAGInpaintPipeline",
+        ),
+        safe_serialization_required=True,
+    ),
     "MarigoldDepthPipeline": ImagePipelineAdapter(
         "MarigoldDepthPipeline",
         frozenset({"depth_estimation"}),
@@ -1283,6 +1303,23 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "StableDiffusionPAGPipeline": {
         "text_to_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "pag_scale", "pag_adaptive_scale"
+        ),
+    },
+    "StableDiffusionPAGImg2ImgPipeline": {
+        "edit_image": _image_field_contract(
+            "negative_prompt", "guidance_scale", "strength", "pag_scale", "pag_adaptive_scale"
+        ),
+    },
+    "StableDiffusionPAGInpaintPipeline": {
+        "inpaint": _image_field_contract(
+            "negative_prompt",
+            "width",
+            "height",
+            "guidance_scale",
+            "strength",
+            "padding_mask_crop",
+            "pag_scale",
+            "pag_adaptive_scale",
         ),
     },
     "MarigoldDepthPipeline": {

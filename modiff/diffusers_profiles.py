@@ -700,6 +700,18 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
         "SimianLuo/LCM_Dreamshaper_v7",
         ("edit_image",),
     ),
+    (
+        "StableDiffusionPAGImg2ImgPipeline",
+        "image",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        ("edit_image",),
+    ),
+    (
+        "StableDiffusionPAGInpaintPipeline",
+        "image",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        ("inpaint",),
+    ),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
     (
         "FluxKontextInpaintPipeline",

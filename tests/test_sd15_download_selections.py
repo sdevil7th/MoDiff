@@ -41,6 +41,8 @@ class StableDiffusion15DownloadSelectionTests(unittest.TestCase):
             "StableDiffusionImg2ImgPipeline",
             "StableDiffusionInpaintPipeline",
             "StableDiffusionPAGPipeline",
+            "StableDiffusionPAGImg2ImgPipeline",
+            "StableDiffusionPAGInpaintPipeline",
         ):
             with self.subTest(adapter=model_type):
                 self.assertTrue(

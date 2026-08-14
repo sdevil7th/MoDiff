@@ -812,6 +812,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for pipeline_name, mode in (
             ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
             ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
+            ("StableDiffusionPAGImg2ImgPipeline", "edit_image"),
+            ("StableDiffusionPAGInpaintPipeline", "inpaint"),
         ):
             with self.subTest(pipeline=pipeline_name):
                 contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
@@ -859,6 +861,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
             "StableDiffusionPAGPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
+            "StableDiffusionPAGImg2ImgPipeline": (
+                {"edit_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionPAGInpaintPipeline": (
+                {"inpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
             "LatentConsistencyModelPipeline": ({"text_to_image"}, LCM_DREAMSHAPER_REPO, {"prompt"}),
             "LatentConsistencyModelImg2ImgPipeline": (
                 {"edit_image"},
@@ -1037,6 +1049,13 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         mask = Image.new("L", (16, 16), "white")
         cases = (
             ("StableDiffusionPAGPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionPAGImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            (
+                "StableDiffusionPAGInpaintPipeline",
+                "inpaint",
+                Inpaint,
+                {"image": image, "mask_image": mask},
+            ),
             ("LatentConsistencyModelPipeline", "text_to_image", Generate, {}),
             (
                 "LatentConsistencyModelImg2ImgPipeline",

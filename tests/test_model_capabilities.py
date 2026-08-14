@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 34)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 36)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -61,6 +61,25 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             lcm_img2img["revisionCandidates"],
             ["a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5"],
         )
+        for pipeline_class, mode, required_images in (
+            ("StableDiffusionPAGImg2ImgPipeline", "edit_image", ["referenceImages"]),
+            (
+                "StableDiffusionPAGInpaintPipeline",
+                "inpaint",
+                ["referenceImages", "maskImage"],
+            ),
+        ):
+            with self.subTest(pag_pipeline=pipeline_class):
+                capability = experimental[pipeline_class]
+                self.assertEqual(capability["runnableModes"], [mode])
+                self.assertEqual(
+                    capability["inputContracts"],
+                    {mode: {"requiredImages": required_images}},
+                )
+                self.assertEqual(
+                    capability["revisionCandidates"],
+                    ["451f4fe16113bff5a5d2269ed5ad43b0592e9a14"],
+                )
         self.assertEqual(
             experimental["ZImageModularPipeline"]["backendPath"],
             "modules.ModularDiffusers.ModelsLoader",
