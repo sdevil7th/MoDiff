@@ -205,6 +205,22 @@ DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
+MARIGOLD_DEPTH_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 WHISPER_TINY_REPO = "openai/whisper-tiny"
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
@@ -8049,6 +8065,7 @@ _MARIGOLD_DEPTH_CAPABILITY = {
     "qualifiedModes": [],
     "defaultRepo": MARIGOLD_DEPTH_LCM_REPO,
     "artifactLabel": "Diffusers safetensors repo",
+    "downloadFiles": MARIGOLD_DEPTH_DIFFUSERS_FILES,
     "defaultDtype": "float32",
     "defaultSize": {"width": 768, "height": 768, "aspectRatio": "1:1"},
     "recommendedSteps": 1,

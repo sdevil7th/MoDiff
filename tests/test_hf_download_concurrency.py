@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "prs-eth/marigold-depth-lcm-v1-0": (
+                "04a73502f7fd8fc5e59947b9df3b2266d71d6849",
+                14,
+                "unet/diffusion_pytorch_model.bin",
+            ),
             "cvssp/audioldm2": (
                 "c8e7e189d324425c05c4c2f81214041ef4107983",
                 28,

@@ -806,6 +806,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         "MarigoldDepthPipeline",
         frozenset({"depth_estimation"}),
         MARIGOLD_DEPTH_LCM_REPO,
+        safe_serialization_required=True,
     ),
     "FluxPipeline": ImagePipelineAdapter(
         "FluxPipeline",
