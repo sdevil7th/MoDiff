@@ -1,0 +1,3548 @@
+{
+  "boundary": {
+    "allowsZeroAssets": true,
+    "comfyMappingMeaning": "semantic_comparison_candidate_only",
+    "downloadsModelsOrMedia": false,
+    "executesComfyNodes": false,
+    "generatesMedia": false,
+    "importsComfyGraphs": false,
+    "maximumEvidenceClaim": "canonical_graph_binding_only",
+    "publicTemplate": false,
+    "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
+    "studioVisible": false
+  },
+  "contentHash": "sha256:b3fb1043f095c8d135bfb51fa20f17e343c96749ab45639880c70d3603f23555",
+  "contractKind": "non_public_template_candidate_contract_ledger",
+  "contracts": [
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AllegroPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d263f9ff686f8a0eb4741f63021a181bc62b5daff64e20dd0411eeac707c7b97",
+      "graphPath": "studio/allegro-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "AllegroPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AllegroPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "rhymes-ai/Allegro"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Allegro safetensors snapshot with an FP32 tiled VAE and sequential CPU offload."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AnimateDiffPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a39d33676afba9bcfd364c5f9a1d8c3afb146a537e82d8818babfe156528c4cf",
+      "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "AnimateDiffPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AnimateDiffPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "guoyww/animatediff-motion-adapter-v1-5-2"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe.",
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "kind": "adapter",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+            "requiredForModes": [
+              "text_to_video"
+            ],
+            "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906"
+          }
+        ],
+        "note": "Uses the exact AnimateDiff SD1.5 v2 motion module and documented linear-beta DDIM scheduler."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AnimateLCMPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "658dff27b265437ef3528b6cdb46d7a7bd865b69727329658603bda7804ae726",
+      "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "AnimateLCMPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AnimateLCMPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "wangfuyun/AnimateLCM"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Exact fp16 safetensors motion module and named safetensors LoRA for the LCM recipe.",
+            "id": "animatelcm-motion-adapter-and-lora",
+            "kind": "adapter",
+            "label": "AnimateLCM MotionAdapter and spatial LoRA",
+            "repo": "wangfuyun/AnimateLCM",
+            "requiredForModes": [
+              "text_to_video"
+            ],
+            "revision": "3d4d00fc113225e1040f4d3bec504b6ec750c10c"
+          }
+        ],
+        "note": "Uses the exact AnimateLCM motion module, linear-beta LCM scheduler, and named spatial LoRA."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AudioLDM2Pipeline:text_to_audio",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "3d12073437be488529f71034602c94b8952eb580bb21d9d2c8e56abd4e763f84",
+      "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "audio",
+      "mode": "text_to_audio",
+      "modelType": "AudioLDM2Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AudioLDM2Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "cvssp/audioldm2"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "3b948485feee8adac387ece1a22c6519f8d09fe86871be2e056d5bd3cffe996c",
+      "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "AuraFlowPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AuraFlowPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "fal/AuraFlow-v0.3"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ChromaPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "49ff06911ef69bce9fa31c3a4b82b9a496fa3a029d51adaa3e9d628449b38914",
+      "graphPath": "studio/chroma-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "ChromaPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ChromaPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lodestones/Chroma1-HD"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "CogVideoXPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "6b9b9badc24068955b8beab40f3f8990292bd70d0c9dfd46dc5d295133245316",
+      "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "CogVideoXPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "CogVideoXPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "zai-org/CogVideoX-2b"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact CogVideoX-2B safetensors snapshot with VAE tiling and model CPU offload."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "CogView3PlusPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "8ad7b8b8914b9da151ba7d879c2d50782f91d478853fd55402a3e489ad523718",
+      "graphPath": "studio/cog-view3-plus-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "CogView3PlusPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "CogView3PlusPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "zai-org/CogView3-Plus-3B"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "2988ddc9e9f471144d535cecfebd2eb49fd3a5b83078043853c94781f5486148",
+      "graphPath": "studio/cog-view4-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "CogView4Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "CogView4Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "zai-org/CogView4-6B"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ConsistencyModelPipeline:unconditional_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "639bd0a6d60f2bdf67361aa36918736c9a9c17084c0c8699c29d8aaffb8d5143",
+      "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "unconditional_image",
+      "modelType": "ConsistencyModelPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ConsistencyModelPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "openai/diffusers-cd_imagenet64_l2"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "DDIMPipeline:unconditional_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "195f45f00f94a35538fa9c9e3a15359585d0ade9255ed9ac87db9c2723190fe2",
+      "graphPath": "studio/ddimpipeline/unconditional-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "unconditional_image",
+      "modelType": "DDIMPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "DDIMPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "google/ddpm-cifar10-32"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "DDPMPipeline:unconditional_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c3cbd284e7bbbc55e1335b71ac5e69c14aa0b69d91fed81a188fa2c2508d8fca",
+      "graphPath": "studio/ddpmpipeline/unconditional-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "unconditional_image",
+      "modelType": "DDPMPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "DDPMPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "google/ddpm-cifar10-32"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "DreamLiteMobilePipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "3ab28cdc0cd0782e3b7a03717c9127d0365a1639bd922b0247fdd4bc0fbec9cc",
+      "graphPath": "studio/dream-lite-mobile-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "DreamLiteMobilePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "DreamLiteMobilePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-mobile"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for distilled instruction editing.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "DreamLiteMobilePipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "1f5a2b3b02a4a266133d695a79539191dc7652aa80607e7fb06a839e66da6281",
+      "graphPath": "studio/dream-lite-mobile-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "DreamLiteMobilePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "DreamLiteMobilePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-mobile"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "DreamLitePipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "7b0a0a8f61125ee39cbf40383044ce8959dac5b5950622b46889555bb98ccca5",
+      "graphPath": "studio/dream-lite-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "DreamLitePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "DreamLitePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-base"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for instruction-guided dual-CFG editing.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "DreamLitePipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c55d65890ac84a17c61788ab37085055c9479882f7af44c98aaf5382b2c65243",
+      "graphPath": "studio/dream-lite-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "DreamLitePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "DreamLitePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "carlofkl/DreamLite-base"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
+      "comfyResearchRecords": [
+        {
+          "id": "text_to_image_ernie_image_turbo",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "blueprint"
+        },
+        {
+          "id": "image_ernie_image_turbo",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "88f090cf47611e346230bacdcf758edbbe6256de7bd7621ae2582d7a5302c83d",
+      "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "ErnieImagePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ErnieImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "baidu/ERNIE-Image-Turbo"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxDevPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "4908efa5eb214aa419324c2c2f30b119568f57ea9136e71f2ee9838440b8d68b",
+      "graphPath": "studio/flux-dev-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "FluxDevPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for image-to-image transformation.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxDevPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d176336b5c968da84ddbbf168f46c67c7f48192eb1f4518cf7d9112f64599825",
+      "graphPath": "studio/flux-dev-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "FluxDevPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxImg2ImgPipeline",
+        "FluxInpaintPipeline",
+        "FluxPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image for inpainting.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "GlmImagePipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "11e84722bb9144b5f82c499314d656ee6e9075709bf83a65c0e2d5e713716030",
+      "graphPath": "studio/glm-image-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "GlmImagePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "GlmImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "zai-org/GLM-Image"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce",
+      "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "speech_to_text",
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AutoModelForSpeechSeq2Seq"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "openai/whisper-tiny"
+      ],
+      "requiredInputs": {
+        "note": "Requires one bounded local audio source and returns a normalized transcript.",
+        "requiredAudio": [
+          "sourceAudio"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_translation",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4",
+      "graphPath": "studio/hugging-face-speech-recognition-model/speech-translation.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "speech_translation",
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AutoModelForSpeechSeq2Seq"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "openai/whisper-tiny"
+      ],
+      "requiredInputs": {
+        "note": "Requires one bounded local audio source and translates recognized speech to English.",
+        "requiredAudio": [
+          "sourceAudio"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HunyuanDiTControlNetPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "04412684fd4308b651f24768c7dbe5f2a67670e8b19629944cc8e3dd5412a67f",
+      "graphPath": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "HunyuanDiTControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "HunyuanDiTControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny",
+        "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Exact safetensors Canny component for the reviewed Hunyuan-DiT v1.2 distilled recipe.",
+            "id": "hunyuan-dit-v1-2-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Hunyuan-DiT v1.2 Canny ControlNet",
+            "repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "b2d21391ebcf78939344cfec84891932f9d53aa0"
+          }
+        ],
+        "note": "Requires one source image for the canonical Canny preprocessor and exact v1.2 ControlNet.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HunyuanDiTPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "63d2f08a38fd2dd788b1b980c03c94d05094b12e2bc0beabe4c5aff1a505fc27",
+      "graphPath": "studio/hunyuan-di-t-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "HunyuanDiTPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "HunyuanDiTPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "284765f71f658726b758ebd6f004de1a64723d2cc0a4a7c4f8257f1b8f0c7faa",
+      "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelType": "HunyuanVideoFramepackPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "HunyuanVideoFramepackPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/FramePackI2V_HY"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "JoyImageEditPipeline:edit_image",
+      "comfyResearchRecords": [
+        {
+          "id": "image_joyai_image_edit",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "474f4c082fed261305b5d602b25022503d291a1031fa412269e1c7aee94a56a6",
+      "graphPath": "studio/joy-image-edit-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "JoyImageEditPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JoyImageEditPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image; the package center-crops it to a reviewed 1024-base bucket.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "JoyImageEditPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "fc8d8dec98306e94dd8a8b1c0cfbc6b8c15cc73c58b1317cf8108380eeb89645",
+      "graphPath": "studio/joy-image-edit-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "JoyImageEditPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JoyImageEditPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "JoyImageEditPlusPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "2ec9e4cfa4a60d03d268ff73a584cccb6bbc4a98abe71d1d29b48d191ff390d7",
+      "graphPath": "studio/joy-image-edit-plus-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "JoyImageEditPlusPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JoyImageEditPlusPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "JoyImageEditPlusPipeline:multi_image_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "87aea933e0a45c24f3ceb70bfb36aa987474a2debe6d29cd13931b65f0aaf8c3",
+      "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "multi_image_reference_edit",
+      "modelType": "JoyImageEditPlusPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JoyImageEditPlusPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires 1 to 5 source images; each reference is independently resized to a 1024-base bucket.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Kandinsky3Pipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "da119b49fbe98603163b90c3777fd3b3f3d9c972ca9a51e9fe6fc4788392824c",
+      "graphPath": "studio/kandinsky3-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Kandinsky3Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Kandinsky3Img2ImgPipeline",
+        "Kandinsky3Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "kandinsky-community/kandinsky-3"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Kandinsky3Pipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "35ae4e67f4e12f04e9167218afdaad80d21f3a3c1dc9daf9f8ad44636e0ee50e",
+      "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Kandinsky3Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Kandinsky3Img2ImgPipeline",
+        "Kandinsky3Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "kandinsky-community/kandinsky-3"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
+      "comfyResearchRecords": [
+        {
+          "id": "video_ltx2_i2v",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d679c40dab19f246d101f7b3b5df1866a6d2c9c9a1c6724bfeb8dbc4c6352f0b",
+      "graphPath": "studio/ltx2-condition-pipeline/image-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "4f2ae81de6f42b4876e039addcd6f1cf33144bdb80ca01be051c36f06067d9e0",
+      "graphPath": "studio/ltx2-condition-pipeline/reference-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "reference_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
+      "comfyResearchRecords": [
+        {
+          "id": "video_ltx2_t2v",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "ca9cbd2c0b34a91e3fcdc6d6e1654492893ea8ca22290d5aeea9dd436586e5f4",
+      "graphPath": "studio/ltx2-condition-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LTX2ConditionPipeline:video_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "deab6c8345616c5d34c8f3266734dc94fc370151be7e25e037c9a540364fb13d",
+      "graphPath": "studio/ltx2-condition-pipeline/video-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "video_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LTX2ConditionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LTXI2VLongMultiPromptPipeline:image_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "7c840f4e5123636f6e125b48396aaa5aff98de322a072e302501e6a29a3c880a",
+      "graphPath": "studio/ltxi2-v-long-multi-prompt-pipeline/image-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelType": "LTXI2VLongMultiPromptPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LTXI2VLongMultiPromptPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Lightricks/LTX-Video-0.9.8-13B-distilled"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LatentConsistencyModelPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "16c33fbfe1882c0726e2f90a8bb2357d761e997d0cddf741b12af809ca694610",
+      "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "LatentConsistencyModelPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LatentConsistencyModelPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "SimianLuo/LCM_Dreamshaper_v7"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LattePipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "ec4bea1bca45f98672b76ff10a669ad1b776c59c0a4207b7b3957a6139beff4b",
+      "graphPath": "studio/latte-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "LattePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LattePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "maxin-cn/Latte-1"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Latte safetensors snapshot and its native 16-frame recipe with sequential CPU offload."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LongCatAudioDiTPipeline:text_to_audio",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "3e3010a5b93d458da8a0d6ff6a340914d117a3db67fe0543bc02313dfec596c9",
+      "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "audio",
+      "mode": "text_to_audio",
+      "modelType": "LongCatAudioDiTPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LongCatAudioDiTPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LongCatImageEditPipeline:edit_image",
+      "comfyResearchRecords": [
+        {
+          "id": "image_edit_longcat_image_edit",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "blueprint"
+        },
+        {
+          "id": "image_longcat_image_edit",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "5057f7679c35ab6818051a993db8c3430d11b2a6a2a3ea9f052238d0696fd33e",
+      "graphPath": "studio/long-cat-image-edit-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "LongCatImageEditPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LongCatImageEditPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "meituan-longcat/LongCat-Image-Edit"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image between 1:4 and 4:1 aspect ratio; output is normalized to an approximately one-megapixel bucket.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LongCatImagePipeline:text_to_image",
+      "comfyResearchRecords": [
+        {
+          "id": "image_longcat_text_to_image",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "fd188e3e4087ee90dd9c891c21550bd51e49e8c49a0d57ba39b48ac63540b6e2",
+      "graphPath": "studio/long-cat-image-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "LongCatImagePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LongCatImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "meituan-longcat/LongCat-Image"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Lumina2Pipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "7e49a5b118a3fe40ac9726330700684eca0a28bd5a928f7ef2c53cac1f4fb416",
+      "graphPath": "studio/lumina2-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Lumina2Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Lumina2Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Alpha-VLLM/Lumina-Image-2.0"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LuminaPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b9d3ee1de161d469c74f731c1d3d0ee65147a92ffd49009551ce21bbc952598e",
+      "graphPath": "studio/lumina-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "LuminaPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LuminaPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Alpha-VLLM/Lumina-Next-SFT-diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d9bef3a6a9c605444c0ff07981fd7a98203574102b253d7dc42a5cf63bb4db40",
+      "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "depth_estimation",
+      "modelType": "MarigoldDepthPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "MarigoldDepthPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "prs-eth/marigold-depth-lcm-v1-0"
+      ],
+      "requiredInputs": {
+        "note": "Requires exactly one source image; output is a normalized relative-depth map.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "MochiPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d98143499548db41d476a027c1958667efbe3734a2671332f7d7dba4237a2880",
+      "graphPath": "studio/mochi-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "MochiPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "MochiPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "genmo/mochi-1-preview"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Mochi BF16 variant, indexed T5 encoder, native 31-frame recipe, and mandatory VAE tiling."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "NucleusMoEImagePipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "4c09d4e08f5b0383623725a67852d56006aa9683521b2b8d54e65a8efcd6c8ea",
+      "graphPath": "studio/nucleus-mo-e-image-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "NucleusMoEImagePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "NucleusMoEImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "NucleusAI/Nucleus-Image"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "OmniGenPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "5f86a1ca82cc83415ea1dd7bd93277f3c06cf520176abcd72901cdd6652d235a",
+      "graphPath": "studio/omni-gen-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "OmniGenPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "OmniGenPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Shitao/OmniGen-v1-diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image; MoDiff inserts the package's reserved positional image tag.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "OmniGenPipeline:multi_image_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "be3f035288b57cf8528546eed2bf6eb5a81bc4d7f4852a3c8c90c128cae9143b",
+      "graphPath": "studio/omni-gen-pipeline/multi-image-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "multi_image_reference_edit",
+      "modelType": "OmniGenPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "OmniGenPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Shitao/OmniGen-v1-diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires 1 to 3 source images; MoDiff inserts one ordered positional tag per reference.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "OmniGenPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "0fbcf3c69ec7329f8fb65bd370b3b0298ede2fcd6fecf4027f84d128542d69ed",
+      "graphPath": "studio/omni-gen-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "OmniGenPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "OmniGenPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Shitao/OmniGen-v1-diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "OvisImagePipeline:text_to_image",
+      "comfyResearchRecords": [
+        {
+          "id": "image_ovis_text_to_image",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "2ba10c09773f90b00a4eb76414924e15aade0dce5a6d8113ed981b9d6efd377c",
+      "graphPath": "studio/ovis-image-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "OvisImagePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "OvisImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "ATH-MaaS/Ovis-Image-7B"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "PRXPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d75ca98f23098c2c7fb6eee390a7b945cb856510670746ec54f071bc096b3d14",
+      "graphPath": "studio/prx-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "PRXPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "PRXPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Photoroom/prx-512-t2i-sft"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "PixArtSigmaPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c8db41b72ad28c0692250cc1c57d04a194685e58b7aa46d775c4374b86ad964b",
+      "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "PixArtSigmaPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "PixArtSigmaPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "QwenImageModularPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "86c625f89ad14c2ddb68ad68633d0eba906fa77aba95b277a4569dd1599c67a1",
+      "graphPath": "studio/qwen-image-modular-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "QwenImageModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageImg2ImgPipeline",
+        "QwenImageModularPipeline",
+        "QwenImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-2512"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for image-to-image transformation.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "QwenImageModularPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "85a20e7b625f1d98fa3f0207d7df5cd2e5e4388d34a6d597dea79df6c7629a4c",
+      "graphPath": "studio/qwen-image-modular-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "QwenImageModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageImg2ImgPipeline",
+        "QwenImageInpaintPipeline",
+        "QwenImageModularPipeline",
+        "QwenImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-2512"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image for inpainting.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "SanaImageToVideoPipeline:image_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e6af29b78ffa4346b0a1d25739d0599313fef6642ce313454e2f4585911dedd7",
+      "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelType": "SanaImageToVideoPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "SanaImageToVideoPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires exactly one opening image and preserves it as the first latent frame.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "SanaPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "3184feed07ae57e6f0cdcc3cca8e07f36d3b205e564c6c8fdea2a83ebc94dc6d",
+      "graphPath": "studio/sana-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "SanaPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "SanaPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "Efficient-Large-Model/Sana_600M_1024px_diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "9a9ef604ec5da99da3616dd38b118162e75657c322b80e2c57f53b745b1d9bda",
+      "graphPath": "studio/sana-sprint-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "SanaSprintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "SanaSprintImg2ImgPipeline",
+        "SanaSprintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for the reviewed two-step Sprint transformation.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "SanaSprintPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "1867366ab8b89ff35cb9f09dbe6725b6184af5674df0b6076b5f24a7dc600fbe",
+      "graphPath": "studio/sana-sprint-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "SanaSprintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "SanaSprintImg2ImgPipeline",
+        "SanaSprintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "SanaVideoPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "329fbf6657f9fa74b3203c5480717b431261fbeda2056beb4d10ac14fda0a6eb",
+      "graphPath": "studio/sana-video-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "SanaVideoPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "SanaVideoPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
+      ],
+      "requiredInputs": {
+        "note": "Uses the native text-only recipe with a backend-owned motion-score suffix of 30."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ShapEPipeline:text_to_3d",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "da3650ce1a40f12e29760ee1ea58baaab3edb4f57b89683339be76ed4400d7c0",
+      "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_3d",
+      "modelType": "ShapEPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ShapEPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "openai/shap-e"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
+      "comfyResearchRecords": [
+        {
+          "id": "audio_stable_audio_example",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c6cb63923510b1455dfaec26ad940216f28d415e829e9227458ede15beafb09c",
+      "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "audio",
+      "mode": "text_to_audio",
+      "modelType": "StableAudioPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableAudioPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stabilityai/stable-audio-open-1.0"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f30cc2bb11ada8ed39ed629b561737f3383f053b7379e1a0437ab6d86e62f3ed",
+      "graphPath": "studio/stable-diffusion-pagpipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "983294ce6827b4bbb5c4b2c6c7c72dfb8c5620318e57b35d42086e8b5ae04bf3",
+      "graphPath": "studio/stable-diffusion-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionControlNetPipeline",
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic SD1.5 Canny ControlNet workflow.",
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Requires one control image and the immutable Canny ControlNet component.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e351927f3840f736bd6f6f5da3aa4b26d84aa24c5c10779feb2498cb2b2259fd",
+      "graphPath": "studio/stable-diffusion-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b9eccc4a3ece389535d7bee7d2c9147138b6c4ef4e51461d1683bf19ae58a581",
+      "graphPath": "studio/stable-diffusion-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "50366d1593997562e7b916c5e419097f6c2a6e04be9851f16dcd5e07653ce022",
+      "graphPath": "studio/stable-diffusion-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLAdapterPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "72e5373c48b4472816ae62ee37049ed1ff748ac6240628ba89c86023154b0097",
+      "graphPath": "studio/stable-diffusion-xladapter-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLAdapterPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLAdapterPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "TencentARC/t2i-adapter-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic SDXL Canny T2I-Adapter workflow.",
+            "id": "sdxl-t2i-adapter-canny",
+            "kind": "t2i_adapter",
+            "label": "Stable Diffusion XL Canny T2I Adapter",
+            "repo": "TencentARC/t2i-adapter-canny-sdxl-1.0",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "2d7244ba45ded9129cfbf8e96a4befb7f6094210"
+          }
+        ],
+        "note": "Requires one control image and the immutable SDXL Canny T2I-Adapter component.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "82b5656f35d3bd69c6c7a7a1e21aa5c10ea3484b8072e370b5104dc899567cd8",
+      "graphPath": "studio/stable-diffusion-xlcontrol-net-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic SDXL Canny ControlNet workflow.",
+            "id": "sdxl-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": "diffusers/controlnet-canny-sdxl-1.0",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "eb115a19a10d14909256db740ed109532ab1483c"
+          }
+        ],
+        "note": "Requires one control image and the immutable SDXL Canny ControlNet component.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "46bcc862706ffe2feb22005d563a4218f26ec2e627c7749fa859f7b99c324c8c",
+      "graphPath": "studio/stable-diffusion-xlinstruct-pix2-pix-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionXLInstructPix2PixPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLInstructPix2PixPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "diffusers/sdxl-instructpix2pix-768"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and a text edit instruction.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "2a74886a72cdf5c66b90a58fc4b31797d2e94073e44c61833da350979a21065f",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for PAG image-to-image transformation.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "6903adcae1149856449ba860706b887214f7493b365cb2264afc0ce4ebc1f762",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image for PAG inpainting.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d8751bcf22fa3f092f456ce7dfb9c9c3e294aa5af4d10b4dd3a5452c71893870",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f156389957adbbe998a368f499400c16c4cd4d46c97246b08a186e22abea5eed",
+      "graphPath": "studio/stable-diffusion-xlpipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionXLPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLImg2ImgPipeline",
+        "StableDiffusionXLPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for image-to-image transformation.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "7ea7e243484fb5dd3dd976557f76985e15456d19b55542855b513cba0f6ce0c5",
+      "graphPath": "studio/stable-diffusion-xlpipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionXLPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLImg2ImgPipeline",
+        "StableDiffusionXLInpaintPipeline",
+        "StableDiffusionXLPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPipeline:text_to_image",
+      "comfyResearchRecords": [
+        {
+          "id": "sdxl_simple_example",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "ed9f21370940ccad676c13a480464b5fcdee1b3cb90792e0d4c9cbb504c1be5e",
+      "graphPath": "studio/stable-diffusion-xlpipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionXLPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLImg2ImgPipeline",
+        "StableDiffusionXLPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLTurboPipeline:text_to_image",
+      "comfyResearchRecords": [
+        {
+          "id": "sdxlturbo_example",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "49f93b98bbebbf573017052d366437f513160774bef66406adc1b6141be7cfb1",
+      "graphPath": "studio/stable-diffusion-xlturbo-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionXLTurboPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLTurboPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stabilityai/sdxl-turbo"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableVideoDiffusionPipeline:image_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f84e9c44bd7ad1f7c77a376dfc898fe7d3bef5ddd2247a5e055f28ec0fb3ae02",
+      "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelType": "StableVideoDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableVideoDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stabilityai/stable-video-diffusion-img2vid-xt-1-1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
+      "comfyResearchRecords": [
+        {
+          "id": "text_to_video_wan_2_2",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "blueprint"
+        },
+        {
+          "id": "video_wan2_2_14B_t2v",
+          "mappingStatus": "existing_contract_candidate",
+          "recordType": "template"
+        }
+      ],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b5e9ad7013f83965abf055a8bddd0a16f9e99be0fa97dd96827589282ef965db",
+      "graphPath": "studio/wan22-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "Wan22Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Wan22Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "WanAnimatePipeline:character_animate",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e5fca12dccb6acb010d8cbf4db4ffad447704a017b81de3d0e26656045dae83d",
+      "graphPath": "studio/wan-animate-pipeline/character-animate.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "character_animate",
+      "modelType": "WanAnimatePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "WanAnimatePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.2-Animate-14B-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "requiredVideos": [
+          "poseVideo",
+          "faceVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a878554bbbab7bb6fbac8cee52f9ecd4b9c5a3fb5c284ed26565b2a578d85a3a",
+      "graphPath": "studio/wan-animate-pipeline/character-replace.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "character_replace",
+      "modelType": "WanAnimatePipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "WanAnimatePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.2-Animate-14B-Diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "requiredVideos": [
+          "poseVideo",
+          "faceVideo",
+          "backgroundVideo",
+          "maskVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f2648d9bb6fb91588686f955ddd485032149f199611190dc06cbc1ee6aca82c8",
+      "graphPath": "studio/wan-image2-video-modular-pipeline/image-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelType": "WanImage2VideoModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "WanImage2VideoModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages",
+          "lastImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "WanVACEPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "9370114396109aa817f1a004f4292bff404bfdad8f0ee66e59e4248170a35930",
+      "graphPath": "studio/wan-vacepipeline/text-to-video.json",
+      "graphQualificationStatus": "execution-qualified-gallery-review-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "WanVACEPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "WanVACEPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "execution-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "observed-on-recorded-platform"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ZImageModularPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "4cdbc3ae0335a72f8eebcb5955c190f8214969082fb5282369757bd987a77cc2",
+      "graphPath": "studio/zimage-modular-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "ZImageModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ZImageImg2ImgPipeline",
+        "ZImagePipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Tongyi-MAI/Z-Image-Turbo"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for image-to-image transformation.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    }
+  ],
+  "schemaVersion": 1,
+  "sources": {
+    "comfyResearchCatalog": {
+      "path": "data/research/comfy-workflow-catalog.v1.json",
+      "revision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+      "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
+    },
+    "upstreamCoverage": {
+      "contentHash": "sha256:2db4943ec9ab16135f6da01578574f86e34c5d80a00e029b51ec1e11db285882",
+      "path": "data/upstream-coverage.v1.json",
+      "sha256": "sha256:b9ab5300c36c688b8fbf598bd02a24e20d85966b11d9a1eff60e858055808c81"
+    },
+    "workflowManifest": {
+      "path": "data/workflow-library-manifest.json",
+      "sha256": "sha256:9183156e9c707e54541c9e331d0946cd2c9bd3f2602fa4494cb7af017a259650"
+    }
+  },
+  "summary": {
+    "candidateContractCount": 83,
+    "canonicalWorkflowCount": 134,
+    "canonicalWorkflowsWithPublicTemplates": 51,
+    "comfyMappingStatusCounts": {
+      "existing_contract_candidate": 14
+    },
+    "comfyResearchRecordCount": 14,
+    "contractsRequiringInputExamples": 39,
+    "contractsWithComfyResearchRecords": 11,
+    "mediaKindCounts": {
+      "audio": 3,
+      "image": 57,
+      "json": 2,
+      "video": 21
+    },
+    "publicTemplateCount": 77
+  }
+}
