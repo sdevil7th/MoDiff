@@ -9,7 +9,7 @@
   ],
   "canonicalWorkflows": [
     {
-      "graphHash": "4d9e7ffef5eda8766bca22123c7fff8e8323ed7cad6614c20066c8bda16208e0",
+      "graphHash": "11350de016d4d1cbbf84686639db43a72fcd0bf015a8ec7093e3f5a5f89bcdae",
       "graphPath": "studio/ace-step-audio-pipeline/audio-continuation.json",
       "id": "AceStepAudioPipeline:audio_continuation",
       "mode": "audio_continuation",
@@ -22,7 +22,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "69d560171f2f0af3c464719e111617d704fed7a4e999d51d6e23131cd23ad315",
+      "graphHash": "726aa9737b441a8d0aa02df26d9cb8285864cd4cda4baa244a9032b4d46fe0cb",
       "graphPath": "studio/ace-step-audio-pipeline/audio-repaint.json",
       "id": "AceStepAudioPipeline:audio_repaint",
       "mode": "audio_repaint",
@@ -35,7 +35,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "44fcaf7e1927498a566f0f4e86af8e88e918fd15e41133f63f3e84cb7e81b58c",
+      "graphHash": "6924a1b180cdd53fd5cb45e5123ab3ad172e423692c8aa4f9afc21cde36cae1e",
       "graphPath": "studio/ace-step-audio-pipeline/audio-variation.json",
       "id": "AceStepAudioPipeline:audio_variation",
       "mode": "audio_variation",
@@ -88,7 +88,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "efeba792a5d4bef40bbb64c34ba9d9c17f2dea7725b9b65a8e5463f709a090d3",
+      "graphHash": "1d04d6914298f9d7395bd17f8dfd82599069f266bdedd6f431d05cf0e1ca604a",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "id": "AllegroPipeline:text_to_video",
       "mode": "text_to_video",
@@ -99,7 +99,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "672d9c9c767e1b3d433994a759e45e142e5d84925523930b0232d9db778d0f52",
+      "graphHash": "aee3ac8d462054adcc18a47773a2be3c168db68afceff66558f1a32a84596ef4",
+      "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
+      "id": "AnimateDiffControlNetPipeline:control_to_video",
+      "mode": "control_to_video",
+      "modelType": "AnimateDiffControlNetPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "8831f3c7ed404e86b9e3cffaf38d5428714e207ee8ea708e518e89fd0959cbe1",
+      "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
+      "id": "AnimateDiffPAGPipeline:text_to_video",
+      "mode": "text_to_video",
+      "modelType": "AnimateDiffPAGPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "eecf568b427172e11b450a39ffa7b17f1ccbeb0e96b55e0038eb30f9ce4998ff",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
       "id": "AnimateDiffPipeline:text_to_video",
       "mode": "text_to_video",
@@ -110,7 +132,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "12c1c30e1bc5c124579d8a3d9089187142e47417bad257cb0d7f96874990ea91",
+      "graphHash": "7d69476818c5d03264257d295ca77ea054de854aa7440d5cf9206b10d6e2005b",
+      "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
+      "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+      "mode": "control_video_to_video",
+      "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "8e59c244969942533668edd180548705cd8b70c356718b96468b3d0fc1434cd7",
+      "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
+      "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
+      "mode": "video_to_video",
+      "modelType": "AnimateDiffVideoToVideoPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "37469de1d87a0576b9fb8aefedc3c543760d477e204cf6d2f85b2441268d229f",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
       "id": "AnimateLCMPipeline:text_to_video",
       "mode": "text_to_video",
@@ -132,7 +176,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ba71411516f572fa87ef5a8cf968c0efc51243c69db23211501a29ef682162e2",
+      "graphHash": "947eefe6822b88ca18f15a4a52eb8d5bfc12784fa258a78c8235c624441e9038",
       "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
       "id": "AuraFlowPipeline:text_to_image",
       "mode": "text_to_image",
@@ -143,7 +187,40 @@
       "status": "executable"
     },
     {
-      "graphHash": "0d99864056a9fb349e638762ed440875a84d1a354809736205ce24747902b53e",
+      "graphHash": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
+      "graphPath": "studio/chroma-img2-img-pipeline/edit-image.json",
+      "id": "ChromaImg2ImgPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "ChromaImg2ImgPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "b99e771b0375387c3ef6ec07100067b35fce282ab18c9b01fc8484fb73a7aa20",
+      "graphPath": "studio/chroma-inpaint-pipeline/inpaint.json",
+      "id": "ChromaInpaintPipeline:inpaint",
+      "mode": "inpaint",
+      "modelType": "ChromaInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "844b8a2f6bf3b24d66a7be2ef1e9776cd4cadfe974341f7489f825982ef15b6e",
+      "graphPath": "studio/chroma-inpaint-pipeline/outpaint.json",
+      "id": "ChromaInpaintPipeline:outpaint",
+      "mode": "outpaint",
+      "modelType": "ChromaInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "d1fdc14b41fcdd803c386b7c0f5121d52e19714d041566f159f3e63ab81a7b42",
       "graphPath": "studio/chroma-pipeline/text-to-image.json",
       "id": "ChromaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -154,7 +231,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c5f4fa979e4f5e0f5ac43a2f83376fc9e676ce3485e8cf5d805bccf3bf02d542",
+      "graphHash": "73ccd79e0aab9b8b5fd13dbbfb332ee928fcbca8516150594a186b6f64dc6334",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
       "id": "CogVideoXPipeline:text_to_video",
       "mode": "text_to_video",
@@ -165,7 +242,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "fd75ff77edc06a66f738d1ff0a7283d9f4516cfb77ef13688855ad4f0cbc33b7",
+      "graphHash": "7f0aa19c7c3c85d40e098e4230c6b4a97e4e947aa066042b3c3ce6943f3a7865",
+      "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
+      "id": "CogVideoXVideoToVideoPipeline:video_to_video",
+      "mode": "video_to_video",
+      "modelType": "CogVideoXVideoToVideoPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "d21ad49474f5c702db711fdf94c4d451010121a32bfe5cdd5a706a8d7fbe10bb",
       "graphPath": "studio/cog-view3-plus-pipeline/text-to-image.json",
       "id": "CogView3PlusPipeline:text_to_image",
       "mode": "text_to_image",
@@ -176,7 +264,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7472e96d3c8b2c699c2969643e5437901d53f1697c00ecf5a6f41dd62cb5a3e7",
+      "graphHash": "eb5c63006a8f0696abaabd6b7de5ae51b83946b67bcdc1bfe6611fae48420a29",
       "graphPath": "studio/cog-view4-pipeline/text-to-image.json",
       "id": "CogView4Pipeline:text_to_image",
       "mode": "text_to_image",
@@ -187,7 +275,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2a25f2696eb231ea199181cfa2bfcfeb86b049d93f65d048e730f9f99cb38591",
+      "graphHash": "023e8063f248ccc00443b545370b33b541212fdd09b1d682e4ec0a15a1674649",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
       "id": "ConsistencyModelPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -198,7 +286,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f134e6b72067cf3750d75c29bba8a26dcca69afe55036a700f76954491b101c4",
+      "graphHash": "5c256c06c376d41bde54b53e122cb792b992003e6a55f96dd25245a0462a6fb5",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "id": "DDIMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -209,7 +297,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8094fa1feab14be3a5b834e77de6437dccfc4c5264fc320345532ea4ff9f0a6b",
+      "graphHash": "05526121af00645ea2458528ba4ac4de718e3ea5596c825c21730c58986613ca",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
       "id": "DDPMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -220,7 +308,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0b09f37b61f3b6198a0ee3acd7e10789d0bfbb1d06e7b030e49cae3a0f361261",
+      "graphHash": "42db7cae121f0a9aa7755174ab9f61dd5850354ccf8ba93c15901a4ce6bb4037",
       "graphPath": "studio/dream-lite-mobile-pipeline/edit-image.json",
       "id": "DreamLiteMobilePipeline:edit_image",
       "mode": "edit_image",
@@ -231,7 +319,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "29b1951cf59ce4f3413d914986597702b42957c98c087a80fafb19aae5845bad",
+      "graphHash": "33aa7a7f04a15b5bcd4035d6034b3b8e4c1f6010893781b62e79b9f7a334bc04",
       "graphPath": "studio/dream-lite-mobile-pipeline/text-to-image.json",
       "id": "DreamLiteMobilePipeline:text_to_image",
       "mode": "text_to_image",
@@ -242,7 +330,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0e7bc9919a8ffb3a3f6a8f91135e233dc0f32bfd0106cf591bbbed5941dd3f8f",
+      "graphHash": "c4318637cd358c4c088e509c569216da8cdfdc6d1c4eacce122c2f593471cd75",
       "graphPath": "studio/dream-lite-pipeline/edit-image.json",
       "id": "DreamLitePipeline:edit_image",
       "mode": "edit_image",
@@ -253,7 +341,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1cfedd1bb304976532bf73449f91286535e756fd6b04d8984840a1c8333c400f",
+      "graphHash": "bf195379c3a1eaf29c033221a4a2256fd450e4fd35ba38eb63bc68bb17d76744",
       "graphPath": "studio/dream-lite-pipeline/text-to-image.json",
       "id": "DreamLitePipeline:text_to_image",
       "mode": "text_to_image",
@@ -264,7 +352,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1e0ba5a778e6dbce0fa261c9e3a0abe20f229313034eed35142eb6c19f0524b5",
+      "graphHash": "15078615ed5ef10e1c9d1614695c03d76198e05b13f2218f3c92c643fc41660a",
       "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
       "id": "ErnieImagePipeline:text_to_image",
       "mode": "text_to_image",
@@ -275,7 +363,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "061cbc3017ed13a046b00ebb3fdeea6a7d5223a496beda28e07c9fd6dfe9cacc",
+      "graphHash": "8b4405401a47ee2518bc6f798946e2e5ac2c5373024bd2b9f004e56d9dba1941",
+      "graphPath": "studio/flux2-klein-inpaint-pipeline/inpaint.json",
+      "id": "Flux2KleinInpaintPipeline:inpaint",
+      "mode": "inpaint",
+      "modelType": "Flux2KleinInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "9e610eeac59bfed59e1f288f5c9cb944f2b2a752614883f9ca6216543a9f0dec",
+      "graphPath": "studio/flux2-klein-inpaint-pipeline/outpaint.json",
+      "id": "Flux2KleinInpaintPipeline:outpaint",
+      "mode": "outpaint",
+      "modelType": "Flux2KleinInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "8317db6ae5d7d98374a9d860025c0ed6cf8504c1bad32c08b6b4ec6845f645bf",
       "graphPath": "studio/flux2-klein-pipeline/edit-image.json",
       "id": "Flux2KleinPipeline:edit_image",
       "mode": "edit_image",
@@ -288,7 +398,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2c2eac6aca04dfaa9f2e0f211cb67bf40a68ac2cd5cecb21dc3dc1450f8e091a",
+      "graphHash": "de99a00773700e0c968cbeba2ab845c6cb02c026f69d97e545786e84afd6c148",
       "graphPath": "studio/flux2-klein-pipeline/multi-image-reference-edit.json",
       "id": "Flux2KleinPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -301,7 +411,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c0e0ecb88558603a5848f35e980f116145fa2d067a92a651600ae3eea98b4e58",
+      "graphHash": "caab650a188957e3c3f50a7d1d928d79e8ca504332c7a2e81fce9c3f20a92506",
       "graphPath": "studio/flux2-klein-pipeline/text-to-image.json",
       "id": "Flux2KleinPipeline:text_to_image",
       "mode": "text_to_image",
@@ -314,7 +424,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "f6c0674a1fb44bb1e13257e330b78c35fbfd0b5010c6200315044b1d47b58d23",
+      "graphHash": "8b25d2aa65c84161309b7f54bf6e8d780bb7bd9db5311dcb2f4d87b1d1ad4e9c",
+      "graphPath": "studio/flux-canny-pipeline/control-edit-image.json",
+      "id": "FluxCannyPipeline:control_edit_image",
+      "mode": "control_edit_image",
+      "modelType": "FluxCannyPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "251d82489274fcb5cdf472b1852287a911f4bca2c1537644988e2e92746de214",
       "graphPath": "studio/flux-canny-pipeline/control-image.json",
       "id": "FluxCannyPipeline:control_image",
       "mode": "control_image",
@@ -327,7 +448,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "e3b64b504f81a2fe178ac2c2de1b5699c29bb6602db8553e5125b9c450d7f373",
+      "graphHash": "4695bd9f3f639881b1dd497d3e6885083a22af0e1a372b1f9146d0b670df1955",
+      "graphPath": "studio/flux-canny-pipeline/control-inpaint.json",
+      "id": "FluxCannyPipeline:control_inpaint",
+      "mode": "control_inpaint",
+      "modelType": "FluxCannyPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "aeb503ba807c33d83ebfc948047456c361ea9bede6da2b2484ff81533137481a",
+      "graphPath": "studio/flux-depth-pipeline/control-edit-image.json",
+      "id": "FluxDepthPipeline:control_edit_image",
+      "mode": "control_edit_image",
+      "modelType": "FluxDepthPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "442cabdecfcb7faecf081ae2e429818605afca8aca9593a033190f9b3eb9e689",
       "graphPath": "studio/flux-depth-pipeline/control-image.json",
       "id": "FluxDepthPipeline:control_image",
       "mode": "control_image",
@@ -340,7 +483,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "1f77188e325c54c7db0e3d27df5a65b846545cb65f93aaeafc28837035835c92",
+      "graphHash": "76fd7766d11bdabfe4d882f8b13692256ffde4d62e75a4848689ef0e879ce1b1",
+      "graphPath": "studio/flux-depth-pipeline/control-inpaint.json",
+      "id": "FluxDepthPipeline:control_inpaint",
+      "mode": "control_inpaint",
+      "modelType": "FluxDepthPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "093686aa8bf6f04aecae7704a73178d14b075b2fd6548f8cd31c97de1ed77539",
       "graphPath": "studio/flux-dev-pipeline/edit-image.json",
       "id": "FluxDevPipeline:edit_image",
       "mode": "edit_image",
@@ -351,7 +505,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "466ac8a220a15553465dfdd6d1c799b7945ef975e79973480e16c5a11ce6dd38",
+      "graphHash": "85bf8b9785bef7e58b1f8a5854012859ff42ccf0044748f5b676431d4c18d0d6",
       "graphPath": "studio/flux-dev-pipeline/inpaint.json",
       "id": "FluxDevPipeline:inpaint",
       "mode": "inpaint",
@@ -362,7 +516,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0d8ddd618403888b6bca450bd936db7aea874636be94164a442b0a71427420b9",
+      "graphHash": "2577997c0a23734d2c84dfce3a568c355a4f73b1b718b15e731943d2ca832a28",
       "graphPath": "studio/flux-dev-pipeline/text-to-image.json",
       "id": "FluxDevPipeline:text_to_image",
       "mode": "text_to_image",
@@ -375,7 +529,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "805c7464da168f6a72385edbe628df4cdbfa9a3211640797e2f69d899cc7e7bc",
+      "graphHash": "9014fea77441b0954932f601e2d8230943f1d7005c270c8b99a811fb4a483b92",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_cinematic_octane_3d",
       "mode": "text_to_image",
@@ -388,7 +542,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "9d8b90d8ab4633aaf147369acf24057a9011404de28ac1c7c49b8d2ba7c77d1e",
+      "graphHash": "6dfe55d4a266f85c25723e22c4b17aeea2eac19e8ca5de09a114da7442b24c29",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-film-noir.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_film_noir",
       "mode": "text_to_image",
@@ -401,7 +555,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "66d5bb56df5f7adbc65052cc993a21ab53690876d5963fd6e4b307389d38ff0f",
+      "graphHash": "c35df047f2de73618d6a24610273006a243dd06fb3387b57accc2b85dfc63f8e",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-ghibli-story.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_ghibli_story",
       "mode": "text_to_image",
@@ -414,7 +568,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "bbcd3773c4850f66b4def2652db5c9254e5aba2905aeb660ccee6d2a4a082667",
+      "graphHash": "22ceed54244a09559c2a0e514e0aaf969a3f1fbde1f6b65e33ab0112f6966fbf",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-oil-painting.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_oil_painting",
       "mode": "text_to_image",
@@ -427,7 +581,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d08f69b8c8d53d3e54e6f0b8db26dd238057855795343d8f6f3fed682cdecbac",
+      "graphHash": "0152969ad5207b3fd087a88d1c301daf80c37078bf3cd2a2766ab55f1a5878a4",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-paper-cutout.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_paper_cutout",
       "mode": "text_to_image",
@@ -440,7 +594,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e94bb4bc1f70651d5c8d7aa23e8a51a4294f2fe3b83c9a72f608cd56d9ede0dd",
+      "graphHash": "30c0188ccc76d3c830921a1780f6c5c6cf1e4250a7ffbc5f71d33546858971de",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-photoreal-documentary.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_photoreal_documentary",
       "mode": "text_to_image",
@@ -453,7 +607,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "24be0a7201fb536773ee2a55a38a35cd83403dc4f62e620f973efecfa225e302",
+      "graphHash": "f10e3346c2fbc271ae903a1ac454327a4dccd65a738eb5898b5473b17f6f1cd0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-retro-comic.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_retro_comic",
       "mode": "text_to_image",
@@ -466,7 +620,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "34cd592b34840789f72d5fb73b612a9d665701938a4ccd76719ed8286ae2aac5",
+      "graphHash": "aace6cbec5da18c12fef4a700a7b148d7701d67975ee1c9e33b8c41a1b80d866",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-watercolor.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_watercolor",
       "mode": "text_to_image",
@@ -479,7 +633,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7b0f929a3448cf27efc803b6226bce7f7f0ad1cc22b024b74bb4034365f14adc",
+      "graphHash": "3e7c71247dc61c57f9a55c8b1df889de8c4a066e25115f8f04f9e0b48fab0d8b",
       "graphPath": "studio/flux-fill-pipeline/inpaint.json",
       "id": "FluxFillPipeline:inpaint",
       "mode": "inpaint",
@@ -492,7 +646,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "68acbc96bb62f7616b9f1de19cda05cba26f663563e8c2206f6883829b64b31a",
+      "graphHash": "7482b6461a6acb8ca57318646f3331aacd733d6d4b1d345a0fd1c678427e9e02",
       "graphPath": "studio/flux-fill-pipeline/outpaint.json",
       "id": "FluxFillPipeline:outpaint",
       "mode": "outpaint",
@@ -505,7 +659,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "df6fed8ee3f8e7b24c361920f8ce2220989003483c7a7a2e9a7c73fa222480b9",
+      "graphHash": "a7108434eeef5ed608d215dd72ee56065bd9d165c1ce0f56d919f58f2a2dc62a",
+      "graphPath": "studio/flux-kontext-inpaint-pipeline/inpaint.json",
+      "id": "FluxKontextInpaintPipeline:inpaint",
+      "mode": "inpaint",
+      "modelType": "FluxKontextInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "f98a3012edc66d578a5985387cd50ae1bc62df53fe4b0645f12cfa3c439b8a70",
+      "graphPath": "studio/flux-kontext-inpaint-pipeline/outpaint.json",
+      "id": "FluxKontextInpaintPipeline:outpaint",
+      "mode": "outpaint",
+      "modelType": "FluxKontextInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "3b9ef9e5310c042c3340b4d784b3ec1ab48b3a85f822c44f9d24df00d7ec6597",
       "graphPath": "studio/flux-kontext-pipeline/edit-image.json",
       "id": "FluxKontextPipeline:edit_image",
       "mode": "edit_image",
@@ -518,7 +694,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "daec87144037744a22ae517584aa68f4022623882c78cf3bdbd3191bf93f2d8e",
+      "graphHash": "86f03d616260a4e4aa1b528a1c7eb0d490325e845bfe4e1c4707a2eaa261f86b",
       "graphPath": "studio/flux-kontext-pipeline/multi-image-reference-edit.json",
       "id": "FluxKontextPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -531,7 +707,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a0227372557864aad2739151d597f8ad112da975ddf3f099fc15274fde3d1fb2",
+      "graphHash": "e703f65909f33f94970e091a2191f672419310683dcd17fe62326634f1cc77c7",
       "graphPath": "studio/flux-krea-pipeline/text-to-image.json",
       "id": "FluxKreaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -544,7 +720,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "96304c932a1f1c45cdfc87ce12c0e61258760923e185e3c3172f36c134bfb7cb",
+      "graphHash": "4fe9e2b8bf2828a8cc450c2d3d0190c436b95921a6726a31d7e6498b047fe87c",
       "graphPath": "studio/flux-redux-pipeline/edit-image.json",
       "id": "FluxReduxPipeline:edit_image",
       "mode": "edit_image",
@@ -557,7 +733,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f653033eba7dcb8c9f621bc7d67a6ff5615a1eabb156b2113b8d85ab30b10a0c",
+      "graphHash": "c41070171ae6b6540c6bdc9115f148e7e54783afb7c4259fd1885650f19075c7",
       "graphPath": "studio/flux-redux-pipeline/multi-image-reference-edit.json",
       "id": "FluxReduxPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -570,7 +746,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "dff482f6eba8c7d633ba26a7432f1a5af9deb3961d177e06b03ad26a4e0a2b43",
+      "graphHash": "6cfd5dab78e2e1b45ab65c7f90037948f6f553be14d735ee558a92440887a432",
       "graphPath": "studio/flux-schnell-pipeline/text-to-image.json",
       "id": "FluxSchnellPipeline:text_to_image",
       "mode": "text_to_image",
@@ -583,11 +759,44 @@
       "status": "executable"
     },
     {
-      "graphHash": "89911e2e4f13e3c4dd643ae3d5c92dad7b118717d91fcc22fea2d1b6dac1cb54",
+      "graphHash": "f06e856d0dd0f16e3904ddd248135283088b798018da0a879aa36f7e179f9ecb",
       "graphPath": "studio/glm-image-pipeline/text-to-image.json",
       "id": "GlmImagePipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "GlmImagePipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "59bc0f75074aba755956db1e79e3e10025ed6b0ca518c93f66983f191a6766b2",
+      "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
+      "id": "HuggingFaceAnyToAnyModel:image_to_text",
+      "mode": "image_to_text",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "34f660b34415d0308c8895586a58951088c7a71228420140c52ad2c03e2f75e6",
+      "graphPath": "studio/hugging-face-any-to-any-model/text-generation.json",
+      "id": "HuggingFaceAnyToAnyModel:text_generation",
+      "mode": "text_generation",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "a8234d64116084dcbd27502671fd8fbde7ff7a6427225d05cbe3c12f0db5ec28",
+      "graphPath": "studio/hugging-face-any-to-any-model/text-to-image.json",
+      "id": "HuggingFaceAnyToAnyModel:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "HuggingFaceAnyToAnyModel",
       "publicTemplateIds": [],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
@@ -638,7 +847,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "296ff62dab4c3e23c294916149643ce1d03fcddb721deeec9c609a66b7ce24e5",
+      "graphHash": "aad9fec1e67aabf26af68c2e45994207c6cf084d8ac5d7f80bd3157873dea2e1",
       "graphPath": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
       "id": "HunyuanDiTControlNetPipeline:control_image",
       "mode": "control_image",
@@ -649,7 +858,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e02b298f8d30685bfd482ed9cbe952b2b7f36c44816de7c230eac5274b22d7cb",
+      "graphHash": "273f91b6b3f1c2a81a5fc132a0895f2f291e29922128fa8d497c6a7be951f95a",
       "graphPath": "studio/hunyuan-di-tpag-pipeline/text-to-image.json",
       "id": "HunyuanDiTPAGPipeline:text_to_image",
       "mode": "text_to_image",
@@ -660,7 +869,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1db10d21ea70f67a45ad427e5a1fad65b63842948128deacdf0d0bae2e5881a2",
+      "graphHash": "3e10eb5d87057d64b88b28f10da5943c6cb779a5c635f4429805a0184ddd39f2",
       "graphPath": "studio/hunyuan-di-t-pipeline/text-to-image.json",
       "id": "HunyuanDiTPipeline:text_to_image",
       "mode": "text_to_image",
@@ -671,7 +880,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "dc6625899b8057e6059b1f1345237e667efac9054f3fc7d65338837ff34ff10b",
+      "graphHash": "916c0801e3aff641e44a0dbf083e7b386c67a4ad5b9c244a880019b0f363e005",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
       "id": "HunyuanVideoFramepackPipeline:image_to_video",
       "mode": "image_to_video",
@@ -682,7 +891,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8c79c514f6877b4f9a1f3a0384236e78a3c653ae4b98ff617a95f93018fda6ca",
+      "graphHash": "959b162fb89a77e2732c665d2c52b7db0939dc8d39c316da7b57142dfbb1fd9c",
       "graphPath": "studio/joy-image-edit-pipeline/edit-image.json",
       "id": "JoyImageEditPipeline:edit_image",
       "mode": "edit_image",
@@ -693,7 +902,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1203db4e4bf91901d87776d7ea1fc8e165db397545ed5783ab6600ce90d8516b",
+      "graphHash": "3acab8b05eb0a1f4b00909ebcbfb91cc119c8a684877b2c145b6d0b921908978",
       "graphPath": "studio/joy-image-edit-pipeline/text-to-image.json",
       "id": "JoyImageEditPipeline:text_to_image",
       "mode": "text_to_image",
@@ -704,7 +913,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "780c217735239ac1aa569768f40dda64df23e972375dbfe14ea99b74651896ce",
+      "graphHash": "b2d55874a502a84f79fd9847575f9590febe671cec919f1429e73e24958dd9dd",
       "graphPath": "studio/joy-image-edit-plus-pipeline/edit-image.json",
       "id": "JoyImageEditPlusPipeline:edit_image",
       "mode": "edit_image",
@@ -715,7 +924,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d751fa6dfe2693b3d7ef47a3c8a17cb44db8ebac7d62e90f211f48cdf13e1193",
+      "graphHash": "2f9aa1acccc6eefbb97d65ab914d19e1a92961fbac55d93d96b6ccda6ec3e962",
       "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
       "id": "JoyImageEditPlusPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -726,7 +935,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2dca20ae7af86a820a2fada314d290a674818bbe583c31629160a9e8653c86a8",
+      "graphHash": "067a4719421ee2415712fade715dc37ed6cddb3fe6650d9ee004223b3c41e6ad",
       "graphPath": "studio/kandinsky3-pipeline/edit-image.json",
       "id": "Kandinsky3Pipeline:edit_image",
       "mode": "edit_image",
@@ -737,7 +946,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8fdd8202da89a00256d4cb59d3fd360f878471940cd6f721334e7b30a8e2c7aa",
+      "graphHash": "c61b1e055e52834d223547eed19e3269e2c22d542f395b4b87505a34825a1827",
       "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
       "id": "Kandinsky3Pipeline:text_to_image",
       "mode": "text_to_image",
@@ -748,7 +957,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6d70aca52df9a213d27d576824f2a4049ce3b852b3678eca7b79a02e3972e106",
+      "graphHash": "6b5ee18885bc097bbabebaa55ea2063960ae4438e9d8f8864fda07740b5b8d1f",
       "graphPath": "studio/ltx2-condition-pipeline/image-to-video.json",
       "id": "LTX2ConditionPipeline:image_to_video",
       "mode": "image_to_video",
@@ -759,7 +968,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "3ca4ba6e1fac729c77b18b3e1e7084848d56b868a39489552d0e5e46ce61db4c",
+      "graphHash": "45f99ff7b0e15f90bd2e2f934dd616f822e41e51977ad3688208836a1ec6839a",
       "graphPath": "studio/ltx2-condition-pipeline/reference-to-video.json",
       "id": "LTX2ConditionPipeline:reference_to_video",
       "mode": "reference_to_video",
@@ -770,7 +979,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f50c146b2cff8850872f0bb87bcd7e6bf9fb27c713b71156547a9cdf390032fc",
+      "graphHash": "2698c98b44c83c38da8ee109f9acd90ca6c4d93a62843d816c448f086fb7a996",
       "graphPath": "studio/ltx2-condition-pipeline/text-to-video.json",
       "id": "LTX2ConditionPipeline:text_to_video",
       "mode": "text_to_video",
@@ -781,7 +990,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ee9abdd4e017d549ca3e443b55d1487b058a58c05230f7b0d9690878f647d897",
+      "graphHash": "fa78e4f258a638eb3dee582ded618ff693231f499e973d3822a0b079909e1ee6",
       "graphPath": "studio/ltx2-condition-pipeline/video-to-video.json",
       "id": "LTX2ConditionPipeline:video_to_video",
       "mode": "video_to_video",
@@ -792,7 +1001,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "174931d55baea0db050732d4b0eece1c502dd9a641af2cce993315288bf1d1b1",
+      "graphHash": "cbea850b64d2b8250d64da065b5ba1c3b2da8f815e04337659bfa16247cacc9f",
+      "graphPath": "studio/ltx2-pipeline/text-to-video.json",
+      "id": "LTX2Pipeline:text_to_video",
+      "mode": "text_to_video",
+      "modelType": "LTX2Pipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "304be1307cf9ace571edac868f7cb8285c5f3e246069cf38f22f0157a4fb2c84",
       "graphPath": "studio/ltxi2-v-long-multi-prompt-pipeline/image-to-video.json",
       "id": "LTXI2VLongMultiPromptPipeline:image_to_video",
       "mode": "image_to_video",
@@ -803,7 +1023,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "58fb242114ca73bde5501b58a6c363bd0fc45414b973a3f7dfc6fa27a3c8a3af",
+      "graphHash": "ac9863921a757cf8e3c63886626a722b3edd84c82fd0d5d674458599c18253ed",
       "graphPath": "studio/ltx-video-pipeline/image-to-video.json",
       "id": "LTXVideoPipeline:image_to_video",
       "mode": "image_to_video",
@@ -817,7 +1037,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "fa3253bde73a59ac0f93f460aa89b2f7331b6ae5c3d7e699f1a3353c0115fe78",
+      "graphHash": "a591bd4647dc33a010e99bdc3959f003467a8b95ddfba4eccda47a65c7618df5",
       "graphPath": "studio/ltx-video-pipeline/reference-to-video.json",
       "id": "LTXVideoPipeline:reference_to_video",
       "mode": "reference_to_video",
@@ -830,7 +1050,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2ae38d141c9b37cc5963e73b9eb97b9d25a41d301a4e0759c4e1df2348aed5d3",
+      "graphHash": "d8878bf581f345fa82e8c6e06b8857b9b2ebc2dab4bc53725a7ed183e510363f",
       "graphPath": "studio/ltx-video-pipeline/text-to-video.json",
       "id": "LTXVideoPipeline:text_to_video",
       "mode": "text_to_video",
@@ -844,7 +1064,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "22adfa7dfa587f498b9d98658c81e39cd488d0c8338eec1376679b1c78ba635b",
+      "graphHash": "1c000b952722f21f56f9f0b0e67d1d1d877c9fd97467b73712ea7aeff9795b01",
       "graphPath": "studio/ltx-video-pipeline/video-to-video.json",
       "id": "LTXVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -857,7 +1077,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0ffc2f6e531eb002a4b479c2174e593a409df0ace311cff0ed83cecaab24dc39",
+      "graphHash": "ad3eb743824392c9c2cfbb74a9df479cd2882d500559d01909273b4eb59e8243",
       "graphPath": "studio/latent-consistency-model-pipeline/edit-image.json",
       "id": "LatentConsistencyModelPipeline:edit_image",
       "mode": "edit_image",
@@ -868,7 +1088,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a001d60be7b42a055578b0dbfe06d1d889a580af21037a65fd4d0c3ba72e0ee0",
+      "graphHash": "e8572689f94d379e4bff23bdf7ffeb43d0f8f2f429f95e6edf3b5d12075c1f3d",
       "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
       "id": "LatentConsistencyModelPipeline:text_to_image",
       "mode": "text_to_image",
@@ -879,7 +1099,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "46cfdfb61d77488accfb40b4f9a05c936b62eb57ab85e9bf7903abe307c5901e",
+      "graphHash": "9a40342ef5ab2afb45e4f3f6c00db92145f39df5b693102e28b7fb97263c33c4",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
       "id": "LattePipeline:text_to_video",
       "mode": "text_to_video",
@@ -901,7 +1121,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2b4c72ee141d77512d204923bbbc2b3dee60bf5afb84e6fd88f09e47ccb2f92b",
+      "graphHash": "4d9046b3e5d55e22eded45dc9431a56d5fe468395e4b3b704bfc4cfe26f4becc",
       "graphPath": "studio/long-cat-image-edit-pipeline/edit-image.json",
       "id": "LongCatImageEditPipeline:edit_image",
       "mode": "edit_image",
@@ -912,7 +1132,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0bf9e0d0e0725ad96d1a30af72355f029a67aa83a6439e7d11d9a8fe2d8e7979",
+      "graphHash": "9bebe5defb6b8a7e4747ffec8ebe9c638175174ba4dc3fb013fea5b0390b354f",
       "graphPath": "studio/long-cat-image-pipeline/text-to-image.json",
       "id": "LongCatImagePipeline:text_to_image",
       "mode": "text_to_image",
@@ -923,7 +1143,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0e958685c08136b7cd665c469e64df0356094b585a5b8c8d2e918396c8bffb07",
+      "graphHash": "81394f7fa836da9416af36e4f2243af3d5765c036c62e59dad38daba6aeea251",
       "graphPath": "studio/lumina2-pipeline/text-to-image.json",
       "id": "Lumina2Pipeline:text_to_image",
       "mode": "text_to_image",
@@ -934,7 +1154,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "38cf56e430c40538adbaa20a197e753f301db45d9e155819de5e15fbbbda4b82",
+      "graphHash": "51f8a546d9da1cba9859b9a9b7799982fb237bcffb59eff1240444bea8056ebb",
       "graphPath": "studio/lumina-pipeline/text-to-image.json",
       "id": "LuminaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -945,7 +1165,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "3336d7ec33ad8b4d9340e7d4e394418a589b4d8ea6452298d370ae8b49490c58",
+      "graphHash": "da165b5a20b76d3f1da64b96bc22f2b8ea4ec9095a84de11ca0a465b71a4392d",
       "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
       "id": "MarigoldDepthPipeline:depth_estimation",
       "mode": "depth_estimation",
@@ -956,7 +1176,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7b27dbd2c428c77ee8fc81e11721e00698720fc904efec1e53a068336d2c187c",
+      "graphHash": "e07b4d7fb702ef3f80ad40393a3851d79ab75315e3b50324c596bafdfa81cd82",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "id": "MochiPipeline:text_to_video",
       "mode": "text_to_video",
@@ -967,7 +1187,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "028d5ba33c6fa2a0dc345f5352cdbb14aed5b3be295df90dedd4ff3262489498",
+      "graphHash": "9f0c924a90cd512ffe59678fc2abddbd69b3e13f70a25f16c76863032f59433e",
       "graphPath": "studio/nucleus-mo-e-image-pipeline/text-to-image.json",
       "id": "NucleusMoEImagePipeline:text_to_image",
       "mode": "text_to_image",
@@ -978,7 +1198,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8d27d410eac024815715eb409a5888e2e26f8e41a190ce7ac9940562980f58ef",
+      "graphHash": "f6c71685e75fde37f0696be04917749c1a03b27be3ef07ca82c7e954893d02f9",
       "graphPath": "studio/omni-gen-pipeline/edit-image.json",
       "id": "OmniGenPipeline:edit_image",
       "mode": "edit_image",
@@ -989,7 +1209,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "986cd19b23075a9395b048d905e05336ff313824ec4a46841e55423c0678bfa1",
+      "graphHash": "2662728b6c2bd0ee7acfc9c0aaa4a4e5e4be2fee80773e528a20f7ae3af3e4e2",
       "graphPath": "studio/omni-gen-pipeline/multi-image-reference-edit.json",
       "id": "OmniGenPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -1000,7 +1220,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a2be6202ee488bc453434554602e5d8f49e6f5e7fc59fa0d7563ce4d3a1e605d",
+      "graphHash": "075bd71067f5228717ffa9574d400d2e913ab57644e7ab92bc08fca17acabc75",
       "graphPath": "studio/omni-gen-pipeline/text-to-image.json",
       "id": "OmniGenPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1011,7 +1231,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "22912bc8218f804e790eb8410377875a57793c0a5aff082db7e4eb661f252e77",
+      "graphHash": "f2d4303c17caafba097bedb6918139c729e87fa874c0804af2bcd1435260b52d",
       "graphPath": "studio/ovis-image-pipeline/text-to-image.json",
       "id": "OvisImagePipeline:text_to_image",
       "mode": "text_to_image",
@@ -1022,7 +1242,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "80c8627c71caf8972a98000b0bb3ebe75c7d63285bcef7abb217f7bba537b387",
+      "graphHash": "651f27cfbedc07f63fe77dfd9d25b3e83491ba413c80eb59398e7acf319e772e",
       "graphPath": "studio/prx-pipeline/text-to-image.json",
       "id": "PRXPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1033,7 +1253,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c422c669a1aee09d78f848a71a78b7b5f7b3c591dfdfae64c8143fbe569ccb25",
+      "graphHash": "a2356878df94bca81002448d1a72108c6c8d6686d8d14c54c9f53b6af2de1e10",
       "graphPath": "studio/pix-art-sigma-pag-pipeline/text-to-image.json",
       "id": "PixArtSigmaPAGPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1044,7 +1264,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "84d194ed35236ae3049d216a27a955b6bddcbdc37b5f18cf66a15483ccd31679",
+      "graphHash": "782bd32748aa489255d52ef2a8378efbbd28bfe5f469dd38be09396f7489c852",
       "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
       "id": "PixArtSigmaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1055,7 +1275,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "57b2c496fa78c2853c4b4f3ad2b875b8e304917bac83ae1a33ebc087784df7a6",
+      "graphHash": "61525a8e6b25e0e001d1dacf8f0d05fb3da10b41f02f82cc54b1387808b90083",
+      "graphPath": "studio/qwen-image-control-net-pipeline/control-image.json",
+      "id": "QwenImageControlNetPipeline:control_image",
+      "mode": "control_image",
+      "modelType": "QwenImageControlNetPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "51bfdcf4e6a8436a58b2d62e6434a97dac66f45e2aab448b815f6811f12a86fd",
       "graphPath": "studio/qwen-image-edit-modular-pipeline/edit-image.json",
       "id": "QwenImageEditModularPipeline:edit_image",
       "mode": "edit_image",
@@ -1070,7 +1301,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f0c67378aa675c05a89c6150166c003c828398b3385a3c163b0e82c1216c68a8",
+      "graphHash": "1b10de0a14d26347d85881567fd5cf32b1c5502fd0dd5ac6be34cb3dae2e8bb6",
       "graphPath": "studio/qwen-image-edit-modular-pipeline/inpaint.json",
       "id": "QwenImageEditModularPipeline:inpaint",
       "mode": "inpaint",
@@ -1084,7 +1315,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "91597107602470cbc0f17d3558a4b1361731c2db1a5e048d3e937d22d65506e7",
+      "graphHash": "d56cc9896b10f54f8dcb0b94bb7a05a7ca2392d543d91991c4931d1a636ec325",
       "graphPath": "studio/qwen-image-edit-modular-pipeline/outpaint.json",
       "id": "QwenImageEditModularPipeline:outpaint",
       "mode": "outpaint",
@@ -1098,7 +1329,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "a11287f565b8bb8538c5b55145cd77b903eb4d563a06c293e9309f1219451084",
+      "graphHash": "c9dee5e88e26fe0375fbc39a8af4c448d54387c7758069bf1ef24a3fc799f18b",
+      "graphPath": "studio/qwen-image-edit-pipeline/edit-image.json",
+      "id": "QwenImageEditPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "ebe2c3ed273419249773bb72905cf90f0435f846339457a6eb81160d20cb3d8c",
       "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/edit-image.json",
       "id": "QwenImageEditPlusModularPipeline:edit_image",
       "mode": "edit_image",
@@ -1112,7 +1354,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2cb38464a6868ff1f510f5bd220f775eb39090aa25977dd31bd57256847fbdd9",
+      "graphHash": "47ddb1f06e06b0716e775a6a97836933189f8b7facecf8203efd2933b1a8b949",
       "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/multi-image-reference-edit.json",
       "id": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -1129,7 +1371,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "251b1e0fa98f8915afcf536917f1cd568cfeb2c54cc8f9a9938047ca551d2136",
+      "graphHash": "a349cc61f8d07c2a2815aada3bf15f2a65d68c05a5d0981fa81383e4b418f769",
+      "graphPath": "studio/qwen-image-edit-plus-pipeline/edit-image.json",
+      "id": "QwenImageEditPlusPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPlusPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "067daf9b1830dc44ba8407dc90fed0bd41f6f97fbb875196edc7372d9910ae2d",
+      "graphPath": "studio/qwen-image-edit-plus-pipeline/multi-image-reference-edit.json",
+      "id": "QwenImageEditPlusPipeline:multi_image_reference_edit",
+      "mode": "multi_image_reference_edit",
+      "modelType": "QwenImageEditPlusPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "b1e2b53f0a350b13e36ddb438820b76314e3c8168e0d652073d23b1bcf204c2c",
       "graphPath": "studio/qwen-image-layered-modular-pipeline/layer-decomposition.json",
       "id": "QwenImageLayeredModularPipeline:layer_decomposition",
       "mode": "layer_decomposition",
@@ -1142,7 +1406,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "47a7e2ef5fdb93282f958e4e33d2479bdd28a02dc18ab5723d217a50625a706c",
+      "graphHash": "8090ca88d42252af11bcfb8789107ecc9eff2721fb2f13f19878f2b1f8c290da",
+      "graphPath": "studio/qwen-image-layered-pipeline/layer-decomposition.json",
+      "id": "QwenImageLayeredPipeline:layer_decomposition",
+      "mode": "layer_decomposition",
+      "modelType": "QwenImageLayeredPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "f6f5c6dfc3c0e7ae315cf7994f4fc6c4caef5d790ac72f9c06b285bfde31739d",
       "graphPath": "studio/qwen-image-modular-pipeline/control-image.json",
       "id": "QwenImageModularPipeline:control_image",
       "mode": "control_image",
@@ -1156,7 +1431,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e7a27a486b93c9dc542306c50e82a4538a0824fb2f80fe7752a86e82aa3d4684",
+      "graphHash": "eb4d4f5a0025dee55e7c03b32ef7698e7434d5b73b1877ccb703d624128bad1e",
       "graphPath": "studio/qwen-image-modular-pipeline/edit-image.json",
       "id": "QwenImageModularPipeline:edit_image",
       "mode": "edit_image",
@@ -1167,7 +1442,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "cc200a36817bc9da733b66b142b45b9bbbaf316ada39c13d2b7dbf62743369a6",
+      "graphHash": "53b73f0ae866be2936b93de86cba8c51e9f3508a7481ad61125f22fb1925ce30",
       "graphPath": "studio/qwen-image-modular-pipeline/inpaint.json",
       "id": "QwenImageModularPipeline:inpaint",
       "mode": "inpaint",
@@ -1178,7 +1453,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5c0af1854fa640bc0c4a0b0da9126c3c79d05ff4fb449a4f0a1ab98a599adf1c",
+      "graphHash": "f054a6461a55c23aee2cbbf65656303d7ae83282f52bccd03ef54b65db2aa415",
       "graphPath": "studio/qwen-image-modular-pipeline/text-to-image.json",
       "id": "QwenImageModularPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1198,7 +1473,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b89d9d15ab5900cb493674146402878b9aba0435df028b21a9ebcbe53d4fe8a9",
+      "graphHash": "63d884964e7ac0a90dcde7d1e30733eeb652bdd72f606c18b794840040ffd872",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "id": "SanaImageToVideoPipeline:image_to_video",
       "mode": "image_to_video",
@@ -1209,7 +1484,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d073ccdecce14036220d3a0171f2a0daa92fac87cd2738760b691a93b42d395e",
+      "graphHash": "765475cf4505c7aee180db25740b7a978f86bdbe504512de040c36fbe167bb43",
       "graphPath": "studio/sana-pag-pipeline/text-to-image.json",
       "id": "SanaPAGPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1220,7 +1495,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6f9faa20e5285810efe410ee501051943f94ce3079b65e5dd1482f66485dc3c5",
+      "graphHash": "cbd9bd5c7c9470baef6953b64a4604768841089b6f1c402356426c7803ca1a90",
       "graphPath": "studio/sana-pipeline/text-to-image.json",
       "id": "SanaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1231,7 +1506,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "08ba0dfdbd224084e0e52af82ac4e6f29ba70646bd7a573ccc6388a8c0872dcf",
+      "graphHash": "6c81da740dbe64979061155715a3424d05191813349b92855b50482134d71fe4",
       "graphPath": "studio/sana-sprint-pipeline/edit-image.json",
       "id": "SanaSprintPipeline:edit_image",
       "mode": "edit_image",
@@ -1242,7 +1517,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5bac87df00223dae08aa7bb98c1bfef9bc87c132bba3d014ca0dff8b97ccca9d",
+      "graphHash": "daa35b6f47e818df5a263c2cc7bbb4a041ce710c141a81365be2076b9a27dd92",
       "graphPath": "studio/sana-sprint-pipeline/text-to-image.json",
       "id": "SanaSprintPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1253,7 +1528,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f9bff57aadaa6fa5b23eef68a1ca11b06734917a257e151c000a335be8805c4d",
+      "graphHash": "6604b59d807bf6f99ebc821fb8bfbf741076df6559b9f98c800ae198ba291ef5",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
       "id": "SanaVideoPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1286,7 +1561,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "6d735888b2c03475b2d3020b1e24e712366535a02721d324f75dfb77b69e4826",
+      "graphHash": "ef89768fa0a99406ab5bd909223106d40372013f76537299e2063d93cdcfce67",
+      "graphPath": "studio/stable-diffusion-pag-pipeline/control-image.json",
+      "id": "StableDiffusionPAGPipeline:control_image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "0b69d302a7ee84e62e541c526cddb5eb620d8c9226bf1582b68c11697aa95029",
+      "graphPath": "studio/stable-diffusion-pag-pipeline/control-inpaint.json",
+      "id": "StableDiffusionPAGPipeline:control_inpaint",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionPAGPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "adce7be184c1901c5d285b2a2a98d087b6cae115dcde2faf8979d0ac09ec6970",
       "graphPath": "studio/stable-diffusion-pag-pipeline/edit-image.json",
       "id": "StableDiffusionPAGPipeline:edit_image",
       "mode": "edit_image",
@@ -1297,7 +1594,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b1763230c483df19237dc9abbb26c82c3b89222cd568524a911250e30147f33d",
+      "graphHash": "d9a60f2c6c57ad85e365db649e8f1f939159be244e10ab1b56528461a772b8ec",
       "graphPath": "studio/stable-diffusion-pag-pipeline/inpaint.json",
       "id": "StableDiffusionPAGPipeline:inpaint",
       "mode": "inpaint",
@@ -1308,7 +1605,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2decfbba6a02e036143b6f44c4afe8d7e6a40ce4253f5e74c948baafecaefdc0",
+      "graphHash": "03547b6ae65fc8022ec874df10b1db90a8253a7c1b740ca3d4e69409e5e6e6a3",
       "graphPath": "studio/stable-diffusion-pag-pipeline/text-to-image.json",
       "id": "StableDiffusionPAGPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1319,7 +1616,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "3904ac9a230e43b5f7b5fc8269d7a6fab2d268f515fe2f8e609195f8fb9e8886",
+      "graphHash": "ef4fdac8f502616c11b43650ee922e9cbb074b69285f1f020da8ac9d948ff306",
+      "graphPath": "studio/stable-diffusion-pipeline/control-edit-image.json",
+      "id": "StableDiffusionPipeline:control_edit_image",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "d9e3eabb5a47d0ed5a54316d09747c8681d16d8d6fe87750655bccbee88ec1ee",
       "graphPath": "studio/stable-diffusion-pipeline/control-image.json",
       "id": "StableDiffusionPipeline:control_image",
       "mode": "control_image",
@@ -1330,7 +1638,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "c440ba69d942a578d6b89549b9646c8156625efe3bd73be4531a75192cb17a48",
+      "graphHash": "27063e499d847027dbf3542e4af88d2580ea7f1dc7ba5a059661c11ca4093d02",
+      "graphPath": "studio/stable-diffusion-pipeline/control-inpaint.json",
+      "id": "StableDiffusionPipeline:control_inpaint",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "6e0f54f9a2702a6fd37fa587115fb7b7ba57cbed056d0988df68b3253d22c086",
       "graphPath": "studio/stable-diffusion-pipeline/edit-image.json",
       "id": "StableDiffusionPipeline:edit_image",
       "mode": "edit_image",
@@ -1341,7 +1660,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "35babfcd6f16d597192cf51c620111cc286246389758ffa8afdf5b2c25a37fa4",
+      "graphHash": "c6fc64135d01a872ae51a86bf0c9c8f5df058600fff5cb9ca04d76b2874e7219",
       "graphPath": "studio/stable-diffusion-pipeline/inpaint.json",
       "id": "StableDiffusionPipeline:inpaint",
       "mode": "inpaint",
@@ -1352,7 +1671,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b84537db66e154910bdac4ef5c369c4b2acbe958388371e311158fb70bbf7758",
+      "graphHash": "a30835bdfb5f6f9c93c9666114f5c8f65bf3147b36274d9a8f660b7e2a88132d",
       "graphPath": "studio/stable-diffusion-pipeline/text-to-image.json",
       "id": "StableDiffusionPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1363,7 +1682,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "3bad3019a325e953c01c6e5f0831aaa196e26d5007fe48bc8a45bb47ed254666",
+      "graphHash": "5eb28b65541e891c76d8a5d4f33513498c7eb48fd5693b0d881806ee3a3451f7",
       "graphPath": "studio/stable-diffusion-xl-adapter-pipeline/control-image.json",
       "id": "StableDiffusionXLAdapterPipeline:control_image",
       "mode": "control_image",
@@ -1374,7 +1693,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "99cc0fcdcccee970213fe9d9ef1d6c675267161a098fe0383160d5ba98320059",
+      "graphHash": "1cfd0521d2c8750f2945ad54ea82553269161724f0fb978e05816cdbe24af40d",
+      "graphPath": "studio/stable-diffusion-xl-control-net-pipeline/control-edit-image.json",
+      "id": "StableDiffusionXLControlNetPipeline:control_edit_image",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "4f779cb5ad0b920799b260231cfddc77113c12b138633436215a3ebccce71f20",
       "graphPath": "studio/stable-diffusion-xl-control-net-pipeline/control-image.json",
       "id": "StableDiffusionXLControlNetPipeline:control_image",
       "mode": "control_image",
@@ -1385,7 +1715,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "d7204ef99adc322fef1a4542e2e5453e88203eed81477c4a8352c96d416571cc",
+      "graphHash": "5e53b315197449c5815bf10b3072b1bd3992d182e03372c6720b2c15892ed4da",
+      "graphPath": "studio/stable-diffusion-xl-control-net-pipeline/control-inpaint.json",
+      "id": "StableDiffusionXLControlNetPipeline:control_inpaint",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "6ca1024304e70a7f2ad3ece682cebf550e2bc125b0ca3a2f7bc4991568a529c3",
       "graphPath": "studio/stable-diffusion-xl-instruct-pix2-pix-pipeline/edit-image.json",
       "id": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
       "mode": "edit_image",
@@ -1396,7 +1737,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "6f494bdf25523566904208c6b83182417787b9dd9d1fc3c7fbccd71cd86a32a9",
+      "graphHash": "e93ffb65b1d61da73ba0a12388ff3356854c858ae7fd5dccf5fd2ca0750e1d1c",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/control-edit-image.json",
+      "id": "StableDiffusionXLPAGPipeline:control_edit_image",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "c7c1c39a03f8aa24fc8d780f2b12856f179b53515fb56f7cf7746d01a86f3c5e",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/control-image.json",
+      "id": "StableDiffusionXLPAGPipeline:control_image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "4b496ca518c7de6ed73b728a8a185693e1c361c696792f613b26e9a464f5ea67",
       "graphPath": "studio/stable-diffusion-xlpag-pipeline/edit-image.json",
       "id": "StableDiffusionXLPAGPipeline:edit_image",
       "mode": "edit_image",
@@ -1407,7 +1770,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "46dcaa0c0253770a2966082e1d719f57062a37cb61f0051e274652b68dbe8de6",
+      "graphHash": "9ccc50465d9e749459a269fca5371a31d7c1b1b97a78992b56026bf4c8ba735c",
       "graphPath": "studio/stable-diffusion-xlpag-pipeline/inpaint.json",
       "id": "StableDiffusionXLPAGPipeline:inpaint",
       "mode": "inpaint",
@@ -1418,7 +1781,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a8c03f983ac100b4d51ec371a0796b93f934991b7e4536d825653b07e6941bfd",
+      "graphHash": "23f824ac14954aafd401f35658d5bcbdc0b9fb790ae489a9fbbe99d41eb7e496",
       "graphPath": "studio/stable-diffusion-xlpag-pipeline/text-to-image.json",
       "id": "StableDiffusionXLPAGPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1429,7 +1792,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "25e9e69d9c4477cb95a5e38655a3936e78e0888cfad74b5064f3f229e89e7e78",
+      "graphHash": "f4bd168f3f09065b2d15550d371a31af6dc491cb198ee3e44c6ea80c26b82915",
       "graphPath": "studio/stable-diffusion-xl-pipeline/edit-image.json",
       "id": "StableDiffusionXLPipeline:edit_image",
       "mode": "edit_image",
@@ -1440,7 +1803,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "77996be7e7a63fb4cac8137097a887b311c670205704a78d387547ff689b070a",
+      "graphHash": "5850e6d16f9361d1dc900cbd102bf3875df2ddc07527bf89bc5e0c53a25cf2e4",
       "graphPath": "studio/stable-diffusion-xl-pipeline/inpaint.json",
       "id": "StableDiffusionXLPipeline:inpaint",
       "mode": "inpaint",
@@ -1451,7 +1814,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5690f94b0f3af0b3d280c82dc9254d8d06f034a2a58be375868da12077cadf6c",
+      "graphHash": "b82e5cc52159d93f85a0864e2aa42fcf8dd8be3975fef199d029358333254653",
       "graphPath": "studio/stable-diffusion-xl-pipeline/text-to-image.json",
       "id": "StableDiffusionXLPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1462,7 +1825,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1a62402c66f4c1bda0a3644f9e55ec3499da6e8c3636ee64a48fff23d2ed140d",
+      "graphHash": "13840dd4f022d85bb52d8f90d1fd1da43e0b3873d078b83cbb127b38f755e30d",
       "graphPath": "studio/stable-diffusion-xl-turbo-pipeline/text-to-image.json",
       "id": "StableDiffusionXLTurboPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1473,7 +1836,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "fdd8889f1db2aff6db30a30f52447314eb576d4726ee4cfd64ca811ac0e6de09",
+      "graphHash": "6f080372bd727f36d241b95305b9ccf287a3fffadf2dc50ef44f47540c43df3b",
       "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
       "id": "StableVideoDiffusionPipeline:image_to_video",
       "mode": "image_to_video",
@@ -1484,7 +1847,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "45fe918e6b549bdfb9f7ce895f2e94b148c6480c6361e07f6fca966fb00696ec",
+      "graphHash": "00310bbf122da1eb96eb85e33099df87455af289bdcf0cb5fefd116c6d7779e1",
       "graphPath": "studio/wan22-pipeline/text-to-video.json",
       "id": "Wan22Pipeline:text_to_video",
       "mode": "text_to_video",
@@ -1495,7 +1858,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "70d9c7bcd96f39b143083a118a36138313543851256370096c2982d2100cf3e0",
+      "graphHash": "f486e24a1ffcaf48ec78642f046ec075e3b1d549fdb27fecff5566beea7c5c6b",
       "graphPath": "studio/wan-animate-pipeline/character-animate.json",
       "id": "WanAnimatePipeline:character_animate",
       "mode": "character_animate",
@@ -1506,7 +1869,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d874ff3e12b3a8052aaa650369d418105c52762713f743c290d203412879c032",
+      "graphHash": "491edaec4335c2cfefb0e3a288f3b81eefaefb8b129d3a920077bca0b24f515e",
       "graphPath": "studio/wan-animate-pipeline/character-replace.json",
       "id": "WanAnimatePipeline:character_replace",
       "mode": "character_replace",
@@ -1517,7 +1880,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "cd9432d9dbd6b7621ac5e034552d952a503cb01b379354119d145b33a347ce7c",
+      "graphHash": "6408030f3d660b223b4c2c02aed853d57a630e09a4830ca6f7f2401fe17af729",
       "graphPath": "studio/wan-image2-video-modular-pipeline/image-to-video.json",
       "id": "WanImage2VideoModularPipeline:image_to_video",
       "mode": "image_to_video",
@@ -1528,7 +1891,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a04506af9d9f3365cfc9d50e322dee3117efa82dd2a5d038f98ff1462e3f356c",
+      "graphHash": "6019dcb0a2b6115748d04064f93130a9fd784329525ffeb05bd0406b09d5719d",
       "graphPath": "studio/wan-image-to-video-pipeline/image-to-video.json",
       "id": "WanImageToVideoPipeline:image_to_video",
       "mode": "image_to_video",
@@ -1541,7 +1904,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "4495c89d7888b0da64e1bc29744d180623d1b0156b9821c50ef28f7ff8fb34fa",
+      "graphHash": "9d4380f008671fb4007dfaad273b3e7421ac0073f4176bda5bb40e18e94a3d18",
       "graphPath": "studio/wan-ti2-v-pipeline/text-to-video.json",
       "id": "WanTI2VPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1554,7 +1917,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c696db90c7350f28ff7d8d0ef4fae6d5906483f873ed749e2852c07045c6e4a0",
+      "graphHash": "cde231d20032da7e37a304653061f714a264a82fa8268be2294d5a910afcd931",
       "graphPath": "studio/wan-vace-pipeline/control-to-video.json",
       "id": "WanVACEPipeline:control_to_video",
       "mode": "control_to_video",
@@ -1567,7 +1930,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "3390785b777ba18383e1999ba9da794aa95e6ca8e56971a54866923fed86c41d",
+      "graphHash": "b7cc597ebd276f2c61108b1a8b88dddd6fd242cc63d5a8a384d171205b5a056e",
       "graphPath": "studio/wan-vace-pipeline/text-to-video.json",
       "id": "WanVACEPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1578,7 +1941,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "635c4c0648eac7d52e045e34e7b10f518e0aed94fd949e41af92d6ba076438ee",
+      "graphHash": "3fb99656957dbc6bc4bed196ae9c982b3ccb9ce080ed2afc367e04a3b058f7a2",
       "graphPath": "studio/wan-vace-pipeline/video-inpaint.json",
       "id": "WanVACEPipeline:video_inpaint",
       "mode": "video_inpaint",
@@ -1591,7 +1954,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ef631b49372f8197f93bd4c1373d2fd5bc6dd9c1632c078d388d8b59e26beed8",
+      "graphHash": "1ebfae469a43f227b5613819d3b6930776638952092cf2be173d51a442ee5a11",
       "graphPath": "studio/wan-vace-pipeline/video-outpaint.json",
       "id": "WanVACEPipeline:video_outpaint",
       "mode": "video_outpaint",
@@ -1604,7 +1967,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "74faf74013fbd69bb81aded6932b51d9f5dc52bb6857f6005ab86b3d5ca03bf2",
+      "graphHash": "17a8346b3c667443d4b34a251f659e388574204de768732593c00e3601aab3e8",
       "graphPath": "studio/wan-video-pipeline/text-to-video.json",
       "id": "WanVideoPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1619,7 +1982,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a9237420d7ab56dfedacd63ededea88bd7a0b810e12c0e9d71a42384b4c12e6b",
+      "graphHash": "7a1db68bee6529aba269eebbdb3f8c60934e01d2a60bae1914c687d170d54e8a",
       "graphPath": "studio/wan-video-pipeline/video-color-edit.json",
       "id": "WanVideoPipeline:video_color_edit",
       "mode": "video_color_edit",
@@ -1632,7 +1995,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "76d64439a521a9efee2dce7f07c853cf3417bf768e61b3880578dd0db11e509c",
+      "graphHash": "c66766c3e4f9f1a26eca3f94eec4a23f5001321c87f558b01dc90e22ca7aa538",
       "graphPath": "studio/wan-video-pipeline/video-to-video.json",
       "id": "WanVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -1645,7 +2008,29 @@
       "status": "executable"
     },
     {
-      "graphHash": "c1e3fdc5427780c0753e52d2e64d9e9cc1c653dfc7179b636e0fa3ba39e61f8a",
+      "graphHash": "0b8e148ed0b7fd270d8de4fed61448e6b050244069af805ddf6c927236102593",
+      "graphPath": "studio/z-image-inpaint-pipeline/inpaint.json",
+      "id": "ZImageInpaintPipeline:inpaint",
+      "mode": "inpaint",
+      "modelType": "ZImageInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "32f752fc5958091e456f9c098e6eae84dee9fb42695ef5ef2298ac310ad3de68",
+      "graphPath": "studio/z-image-inpaint-pipeline/outpaint.json",
+      "id": "ZImageInpaintPipeline:outpaint",
+      "mode": "outpaint",
+      "modelType": "ZImageInpaintPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "70b900760d789469cbe71e855e8d4443f4c23fc2cef0d592950bf6d0121a37a9",
       "graphPath": "studio/z-image-modular-pipeline/edit-image.json",
       "id": "ZImageModularPipeline:edit_image",
       "mode": "edit_image",
@@ -1656,7 +2041,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "304daee05f956120c540bcfc37111154c0b4c2c513702591d72564153889c1af",
+      "graphHash": "c575504bbceab470bbe3c5e27aa66150b19863367aef7cc73e13c16e6498db0b",
       "graphPath": "studio/z-image-modular-pipeline/text-to-image.json",
       "id": "ZImageModularPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1673,7 +2058,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "82b07e83bf3dbe40e9e47c5e55e37e1bd7cded69d4e50bcb356b845939a27ea3",
+      "graphHash": "2bee3847c33b6a9d3cc36c6a2f78a8657a157179ed14658a0875d7ecca1525e4",
       "graphPath": "studio/z-image-modular-pipeline/text-to-image--fast-lora.json",
       "id": "ZImageModularPipeline:text_to_image:fast_lora",
       "mode": "text_to_image",
@@ -1686,7 +2071,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "568c989c99d65bef3489b3b3416ef4e27511b0865a5c9c35a3288bf2ca27e01f",
+      "graphHash": "d2ea5ee13a83a4f83d8bc9339ba311eb8dd5a8b3810d1ba20be799f23ed42004",
       "graphPath": "studio/z-image-modular-pipeline/text-to-image--z-image-lora-style.json",
       "id": "ZImageModularPipeline:text_to_image:z_image_lora_style",
       "mode": "text_to_image",
@@ -1699,7 +2084,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:dc19a05d969b79d7de9c512c985a7ae236617461a31e0bf7846e1806a5ed6340",
+  "contentHash": "sha256:c6b11b23dd5fc8389e69fd3fd8821c2dbe81bfdce1831bb0343b80b7bebb9f4f",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -1816,22 +2201,34 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "animatediff-controlnet:control-to-video:v1",
+          "mode": "control_to_video",
+          "modelType": "AnimateDiffControlNetPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "AnimateDiffControlNetPipeline",
-      "reason": "The class requires conditioning frames and a ControlNet component, while the admitted AnimateDiff workflow is prompt-only and has no exact combined artifact assembly or action contract.",
-      "reviewDecision": "pinned-diffusers-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "animatediff-pag:text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "AnimateDiffPAGPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "AnimateDiffPAGPipeline",
-      "reason": "The class adds PAG layer selection and PAG scale semantics that the admitted AnimateDiff adapter does not expose; reuse of its base and motion weights is not feature equivalence.",
-      "reviewDecision": "pinned-diffusers-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -1872,22 +2269,34 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "animatediff-controlnet-video-to-video:control-video-to-video:v1",
+          "mode": "control_video_to_video",
+          "modelType": "AnimateDiffVideoToVideoControlNetPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "AnimateDiffVideoToVideoControlNetPipeline",
-      "reason": "The class combines source-video denoising with ControlNet conditioning and independent strengths; MoDiff has no exact combined handler, field contract, or workflow.",
-      "reviewDecision": "pinned-diffusers-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "animatediff-video-to-video:video-to-video:v1",
+          "mode": "video_to_video",
+          "modelType": "AnimateDiffVideoToVideoPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "AnimateDiffVideoToVideoPipeline",
-      "reason": "The prompt-only AnimateDiff action deliberately rejects source video; this class still needs an exact video-to-video handler, artifact assembly receipt, and canonical workflow before admission.",
-      "reviewDecision": "pinned-diffusers-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -2022,22 +2431,39 @@
         "data/chroma1-hd-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "chroma1-hd-img2img:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "ChromaImg2ImgPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "ChromaImg2ImgPipeline",
-      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "research-blocked"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "chroma1-hd-inpaint:inpaint:v1",
+          "mode": "inpaint",
+          "modelType": "ChromaInpaintPipeline"
+        },
+        {
+          "id": "chroma1-hd-inpaint:outpaint:v1",
+          "mode": "outpaint",
+          "modelType": "ChromaInpaintPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "ChromaInpaintPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -2108,12 +2534,18 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "cogvideox-2b-video-to-video:video-to-video:v1",
+          "mode": "video_to_video",
+          "modelType": "CogVideoXVideoToVideoPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "CogVideoXVideoToVideoPipeline",
-      "reason": "The admitted CogVideoX-2B artifact is text-to-video only and does not establish a video-conditioned transformer selection or video-to-video action contract.",
-      "reviewDecision": "pinned-diffusers-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -2483,15 +2915,17 @@
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "ErnieImagePipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "text_to_image"
       ],
       "name": "ErnieImageModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [
@@ -2527,12 +2961,23 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux2-klein-inpaint-direct:inpaint:v1",
+          "mode": "inpaint",
+          "modelType": "Flux2KleinInpaintPipeline"
+        },
+        {
+          "id": "flux2-klein-inpaint-direct:outpaint:v1",
+          "mode": "outpaint",
+          "modelType": "Flux2KleinInpaintPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "Flux2KleinInpaintPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -2611,22 +3056,44 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-canny:control-edit-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "FluxCannyPipeline"
+        },
+        {
+          "id": "flux-depth:control-edit-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "FluxDepthPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "FluxControlImg2ImgPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-canny:control-inpaint:v1",
+          "mode": "control_inpaint",
+          "modelType": "FluxCannyPipeline"
+        },
+        {
+          "id": "flux-depth:control-inpaint:v1",
+          "mode": "control_inpaint",
+          "modelType": "FluxDepthPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "FluxControlInpaintPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -2737,12 +3204,23 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-kontext-inpaint-direct:inpaint:v1",
+          "mode": "inpaint",
+          "modelType": "FluxKontextInpaintPipeline"
+        },
+        {
+          "id": "flux-kontext-inpaint-direct:outpaint:v1",
+          "mode": "outpaint",
+          "modelType": "FluxKontextInpaintPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "FluxKontextInpaintPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3764,12 +4242,18 @@
         "data/ltx-family-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "ltx2-standard:text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "LTX2Pipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "LTX2Pipeline",
-      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "research-blocked"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -3858,16 +4342,18 @@
       "artifactReviews": [
         "data/ltx-family-artifact-review.json"
       ],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "LTXConditionPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "image_to_video",
         "text_to_video"
       ],
       "name": "LTXModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [],
@@ -4047,13 +4533,15 @@
       "artifactReviews": [
         "data/lumina-image-artifact-review.json"
       ],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "LuminaPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
       "name": "LuminaText2ImgPipeline",
-      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "research-blocked"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [],
@@ -4396,12 +4884,18 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "qwen-image-controlnet-direct:control-image:v1",
+          "mode": "control_image",
+          "modelType": "QwenImageControlNetPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "QwenImageControlNetPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -4446,12 +4940,18 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "qwen-image-edit-direct:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "QwenImageEditPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "QwenImageEditPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -4479,12 +4979,23 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "qwen-image-edit-plus-direct:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "QwenImageEditPlusPipeline"
+        },
+        {
+          "id": "qwen-image-edit-plus-direct:multi-image-reference-edit:v1",
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImageEditPlusPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "QwenImageEditPlusPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -4539,12 +5050,18 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "qwen-image-layered-direct:layer-decomposition:v1",
+          "mode": "layer_decomposition",
+          "modelType": "QwenImageLayeredPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "QwenImageLayeredPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -4989,42 +5506,66 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sd15-controlnet-canny:control-edit-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "StableDiffusionPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetImg2ImgPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sd15-controlnet-canny:control-inpaint:v1",
+          "mode": "control_inpaint",
+          "modelType": "StableDiffusionPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetInpaintPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sd15-pag-controlnet-canny:control-inpaint:v1",
+          "mode": "control_inpaint",
+          "modelType": "StableDiffusionPAGPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetPAGInpaintPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sd15-pag-controlnet-canny:control-image:v1",
+          "mode": "control_image",
+          "modelType": "StableDiffusionPAGPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionControlNetPAGPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -5319,42 +5860,66 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sdxl-controlnet-canny:control-edit-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "StableDiffusionXLControlNetPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetImg2ImgPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sdxl-controlnet-canny:control-inpaint:v1",
+          "mode": "control_inpaint",
+          "modelType": "StableDiffusionXLControlNetPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetInpaintPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sdxl-pag-controlnet-canny:control-edit-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "StableDiffusionXLPAGPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetPAGImg2ImgPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sdxl-pag-controlnet-canny:control-image:v1",
+          "mode": "control_image",
+          "modelType": "StableDiffusionXLPAGPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "StableDiffusionXLControlNetPAGPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -5737,29 +6302,33 @@
       "artifactReviews": [
         "data/wan22-a14b-modular-artifact-review.json"
       ],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "WanImageToVideoPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "image_to_video"
       ],
       "name": "Wan22Image2VideoModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [
         "data/wan22-a14b-modular-artifact-review.json"
       ],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "WanPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "text_to_video"
       ],
       "name": "Wan22ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [
@@ -6003,12 +6572,23 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "z-image-inpaint-direct:inpaint:v1",
+          "mode": "inpaint",
+          "modelType": "ZImageInpaintPipeline"
+        },
+        {
+          "id": "z-image-inpaint-direct:outpaint:v1",
+          "mode": "outpaint",
+          "modelType": "ZImageInpaintPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "ZImageInpaintPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -7227,12 +7807,12 @@
         "byteSize": 11625234,
         "filename": "transformers-5.14.1-py3-none-any.whl",
         "runtimeProfileId": "huggingface-transformers-peft-5.14.1-0.20.0",
-        "runtimeProfileSpecDigest": "sha256:7ac7fcf3b38718dbfc1d8c73e8836b9ee754c6801494ce0184f2c5d726525ab7",
+        "runtimeProfileSpecDigest": "sha256:fc1ec7d64d3401981b818ccbed49f8b3d7072d1f6db9b1b55b9fce60d980c8ea",
         "sha256": "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
         "version": "5.14.1"
       },
       "reviewedMainDeliveredInProduction": false,
-      "reviewedMainRevision": "a597f974857b3d92939971296bc0deb93d33d780",
+      "reviewedMainRevision": "96fe6dce36cc929a5ffd3e34296554c4cb6b669e",
       "reviewedMainVersion": "5.16.0.dev0",
       "semanticInventoryRule": "Finite reviewed inference semantics are classified; AutoModel aliases are not counted as product features."
     },
@@ -7240,16 +7820,16 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 142,
+    "canonicalWorkflowCount": 177,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 91,
+    "canonicalWorkflowsWithoutPublicTemplates": 126,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
-      "contract-only": 29,
-      "equivalent": 10,
-      "executable": 91,
+      "contract-only": 20,
+      "equivalent": 15,
+      "executable": 116,
       "intentionally-excluded": 56,
-      "research-blocked": 141,
+      "research-blocked": 120,
       "unreviewed": 0
     },
     "publicTemplateCount": 77,
@@ -7275,7 +7855,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 142,
+      "executable": 177,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

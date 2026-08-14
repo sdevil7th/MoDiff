@@ -44,16 +44,16 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 142,
+                "canonicalWorkflowCount": 177,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "canonicalWorkflowsWithoutPublicTemplates": 91,
+                "canonicalWorkflowsWithoutPublicTemplates": 126,
                 "diffusersPipelineSymbolCount": 327,
                 "pipelineStatusCounts": {
-                    "contract-only": 29,
-                    "equivalent": 10,
-                    "executable": 91,
+                    "contract-only": 20,
+                    "equivalent": 15,
+                    "executable": 116,
                     "intentionally-excluded": 56,
-                    "research-blocked": 141,
+                    "research-blocked": 120,
                     "unreviewed": 0,
                 },
                 "publicTemplateCount": 77,
@@ -79,7 +79,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 142,
+                    "executable": 177,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -116,7 +116,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_non_video = [
             item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_non_video), 94)
+        self.assertEqual(len(reviewed_non_video), 81)
         self.assertEqual(
             {
                 status: sum(item["status"] == status for item in reviewed_non_video)
@@ -127,7 +127,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "equivalent": 0,
                 "executable": 0,
                 "intentionally-excluded": 43,
-                "research-blocked": 51,
+                "research-blocked": 38,
                 "unreviewed": 0,
             },
         )
@@ -171,15 +171,10 @@ class UpstreamCoverageTests(unittest.TestCase):
             "VideoToVideoSDPipeline",
         }
         research_blocked = {
-            "AnimateDiffControlNetPipeline",
-            "AnimateDiffPAGPipeline",
             "AnimateDiffSDXLPipeline",
             "AnimateDiffSparseControlNetPipeline",
-            "AnimateDiffVideoToVideoControlNetPipeline",
-            "AnimateDiffVideoToVideoPipeline",
             "CogVideoXFunControlPipeline",
             "CogVideoXImageToVideoPipeline",
-            "CogVideoXVideoToVideoPipeline",
             "HunyuanSkyreelsImageToVideoPipeline",
             "HunyuanVideoImageToVideoPipeline",
             "HunyuanVideoPipeline",
@@ -190,7 +185,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             "MotifVideoImage2VideoPipeline",
             "MotifVideoPipeline",
         }
-        self.assertEqual(len(equivalent) + len(intentionally_excluded) + len(research_blocked), 27)
+        self.assertEqual(len(equivalent) + len(intentionally_excluded) + len(research_blocked), 22)
         for name, targets in equivalent.items():
             self.assertEqual(by_name[name]["status"], "equivalent", name)
             self.assertEqual(by_name[name]["equivalentTo"], targets, name)
@@ -211,7 +206,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_video = [
             item for item in by_name.values() if item["reviewDecision"] == "pinned-diffusers-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_video), 24)
+        self.assertEqual(len(reviewed_video), 19)
         self.assertEqual({item["name"] for item in reviewed_video}, intentionally_excluded | research_blocked)
         self.assertEqual(
             {item["name"] for item in by_name.values() if item["status"] == "unreviewed"},

@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:2fb23648a61360df388c19b185c1923f55901744a9d3a6b815c98c4b96ead99b",
+  "contentHash": "sha256:ab67d45211bacd0bf228920e8a065f7cd7ea77457645fb12172896e6d2b17032",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -31,7 +31,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "efeba792a5d4bef40bbb64c34ba9d9c17f2dea7725b9b65a8e5463f709a090d3",
+      "graphHash": "1d04d6914298f9d7395bd17f8dfd82599069f266bdedd6f431d05cf0e1ca604a",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -58,6 +58,144 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "aee3ac8d462054adcc18a47773a2be3c168db68afceff66558f1a32a84596ef4",
+      "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "control_to_video",
+      "modelType": "AnimateDiffControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AnimateDiffControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "guoyww/animatediff-motion-adapter-v1-5-2"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic AnimateDiffControlNetPipeline control to video workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "kind": "adapter",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+            "requiredForModes": [
+              "control_to_video"
+            ],
+            "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906"
+          },
+          {
+            "description": "Required by the generic AnimateDiffControlNetPipeline control to video workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_to_video"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Uses the exact AnimateDiff SD1.5 v2 motion module and pinned SD1.5 Canny ControlNet.",
+        "requiredVideos": [
+          "controlVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AnimateDiffPAGPipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "8831f3c7ed404e86b9e3cffaf38d5428714e207ee8ea708e518e89fd0959cbe1",
+      "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "AnimateDiffPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AnimateDiffPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "guoyww/animatediff-motion-adapter-v1-5-2"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic AnimateDiffPAGPipeline text to video workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "kind": "adapter",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+            "requiredForModes": [
+              "text_to_video"
+            ],
+            "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906"
+          }
+        ],
+        "note": "Uses the exact AnimateDiff SD1.5 v2 motion module."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -70,7 +208,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "672d9c9c767e1b3d433994a759e45e142e5d84925523930b0232d9db778d0f52",
+      "graphHash": "eecf568b427172e11b450a39ffa7b17f1ccbeb0e96b55e0038eb30f9ce4998ff",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -117,6 +255,148 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "7d69476818c5d03264257d295ca77ea054de854aa7440d5cf9206b10d6e2005b",
+      "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "control_video_to_video",
+      "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AnimateDiffVideoToVideoControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "guoyww/animatediff-motion-adapter-v1-5-2"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic AnimateDiffVideoToVideoControlNetPipeline control video to video workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "kind": "adapter",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+            "requiredForModes": [
+              "control_video_to_video"
+            ],
+            "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906"
+          },
+          {
+            "description": "Required by the generic AnimateDiffVideoToVideoControlNetPipeline control video to video workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_video_to_video"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Uses the exact AnimateDiff SD1.5 v2 motion module and pinned SD1.5 Canny ControlNet.",
+        "requiredVideos": [
+          "sourceVideo",
+          "controlVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "AnimateDiffVideoToVideoPipeline:video_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "8e59c244969942533668edd180548705cd8b70c356718b96468b3d0fc1434cd7",
+      "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "video_to_video",
+      "modelType": "AnimateDiffVideoToVideoPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AnimateDiffVideoToVideoPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "stable-diffusion-v1-5/stable-diffusion-v1-5",
+        "guoyww/animatediff-motion-adapter-v1-5-2"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic AnimateDiffVideoToVideoPipeline video to video workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "animatediff-motion-adapter-v1-5-2",
+            "kind": "adapter",
+            "label": "AnimateDiff SD1.5 v2 MotionAdapter",
+            "repo": "guoyww/animatediff-motion-adapter-v1-5-2",
+            "requiredForModes": [
+              "video_to_video"
+            ],
+            "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906"
+          }
+        ],
+        "note": "Uses the exact AnimateDiff SD1.5 v2 motion module.",
+        "requiredVideos": [
+          "sourceVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -129,7 +409,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "12c1c30e1bc5c124579d8a3d9089187142e47417bad257cb0d7f96874990ea91",
+      "graphHash": "37469de1d87a0576b9fb8aefedc3c543760d477e204cf6d2f85b2441268d229f",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -226,7 +506,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "ba71411516f572fa87ef5a8cf968c0efc51243c69db23211501a29ef682162e2",
+      "graphHash": "947eefe6822b88ca18f15a4a52eb8d5bfc12784fa258a78c8235c624441e9038",
       "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -251,6 +531,133 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
+      "graphPath": "studio/chroma-img2-img-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "ChromaImg2ImgPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ChromaImg2ImgPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lodestones/Chroma1-HD"
+      ],
+      "requiredInputs": {
+        "note": "Requires exactly one source image for the exact standard Chroma image-to-image pipeline.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b99e771b0375387c3ef6ec07100067b35fce282ab18c9b01fc8484fb73a7aa20",
+      "graphPath": "studio/chroma-inpaint-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "ChromaInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ChromaInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lodestones/Chroma1-HD"
+      ],
+      "requiredInputs": {
+        "note": "Requires exactly one source image and one mask image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ChromaInpaintPipeline:outpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "844b8a2f6bf3b24d66a7be2ef1e9776cd4cadfe974341f7489f825982ef15b6e",
+      "graphPath": "studio/chroma-inpaint-pipeline/outpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "outpaint",
+      "modelType": "ChromaInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ChromaInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lodestones/Chroma1-HD"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -263,7 +670,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0d99864056a9fb349e638762ed440875a84d1a354809736205ce24747902b53e",
+      "graphHash": "d1fdc14b41fcdd803c386b7c0f5121d52e19714d041566f159f3e63ab81a7b42",
       "graphPath": "studio/chroma-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -300,7 +707,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c5f4fa979e4f5e0f5ac43a2f83376fc9e676ce3485e8cf5d805bccf3bf02d542",
+      "graphHash": "73ccd79e0aab9b8b5fd13dbbfb332ee928fcbca8516150594a186b6f64dc6334",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -327,6 +734,48 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "CogVideoXVideoToVideoPipeline:video_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "7f0aa19c7c3c85d40e098e4230c6b4a97e4e947aa066042b3c3ce6943f3a7865",
+      "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "video_to_video",
+      "modelType": "CogVideoXVideoToVideoPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "CogVideoXVideoToVideoPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "zai-org/CogVideoX-2b"
+      ],
+      "requiredInputs": {
+        "note": "Uses one normalized source video with the exact CogVideoX-2B safetensors snapshot.",
+        "requiredVideos": [
+          "sourceVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -339,7 +788,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "fd75ff77edc06a66f738d1ff0a7283d9f4516cfb77ef13688855ad4f0cbc33b7",
+      "graphHash": "d21ad49474f5c702db711fdf94c4d451010121a32bfe5cdd5a706a8d7fbe10bb",
       "graphPath": "studio/cog-view3-plus-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -376,7 +825,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "7472e96d3c8b2c699c2969643e5437901d53f1697c00ecf5a6f41dd62cb5a3e7",
+      "graphHash": "eb5c63006a8f0696abaabd6b7de5ae51b83946b67bcdc1bfe6611fae48420a29",
       "graphPath": "studio/cog-view4-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -413,7 +862,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "2a25f2696eb231ea199181cfa2bfcfeb86b049d93f65d048e730f9f99cb38591",
+      "graphHash": "023e8063f248ccc00443b545370b33b541212fdd09b1d682e4ec0a15a1674649",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -450,7 +899,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "f134e6b72067cf3750d75c29bba8a26dcca69afe55036a700f76954491b101c4",
+      "graphHash": "5c256c06c376d41bde54b53e122cb792b992003e6a55f96dd25245a0462a6fb5",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -487,7 +936,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8094fa1feab14be3a5b834e77de6437dccfc4c5264fc320345532ea4ff9f0a6b",
+      "graphHash": "05526121af00645ea2458528ba4ac4de718e3ea5596c825c21730c58986613ca",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -524,7 +973,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0b09f37b61f3b6198a0ee3acd7e10789d0bfbb1d06e7b030e49cae3a0f361261",
+      "graphHash": "42db7cae121f0a9aa7755174ab9f61dd5850354ccf8ba93c15901a4ce6bb4037",
       "graphPath": "studio/dream-lite-mobile-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -566,7 +1015,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "29b1951cf59ce4f3413d914986597702b42957c98c087a80fafb19aae5845bad",
+      "graphHash": "33aa7a7f04a15b5bcd4035d6034b3b8e4c1f6010893781b62e79b9f7a334bc04",
       "graphPath": "studio/dream-lite-mobile-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -603,7 +1052,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0e7bc9919a8ffb3a3f6a8f91135e233dc0f32bfd0106cf591bbbed5941dd3f8f",
+      "graphHash": "c4318637cd358c4c088e509c569216da8cdfdc6d1c4eacce122c2f593471cd75",
       "graphPath": "studio/dream-lite-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -645,7 +1094,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1cfedd1bb304976532bf73449f91286535e756fd6b04d8984840a1c8333c400f",
+      "graphHash": "bf195379c3a1eaf29c033221a4a2256fd450e4fd35ba38eb63bc68bb17d76744",
       "graphPath": "studio/dream-lite-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -693,7 +1142,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1e0ba5a778e6dbce0fa261c9e3a0abe20f229313034eed35142eb6c19f0524b5",
+      "graphHash": "15078615ed5ef10e1c9d1614695c03d76198e05b13f2218f3c92c643fc41660a",
       "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -722,6 +1171,273 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "Flux2KleinInpaintPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "8b4405401a47ee2518bc6f798946e2e5ac2c5373024bd2b9f004e56d9dba1941",
+      "graphPath": "studio/flux2-klein-inpaint-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "Flux2KleinInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux2KleinInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.2-klein-4B"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux2KleinInpaintPipeline:outpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "9e610eeac59bfed59e1f288f5c9cb944f2b2a752614883f9ca6216543a9f0dec",
+      "graphPath": "studio/flux2-klein-inpaint-pipeline/outpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "outpaint",
+      "modelType": "Flux2KleinInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux2KleinInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.2-klein-4B"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxCannyPipeline:control_edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "8b25d2aa65c84161309b7f54bf6e8d780bb7bd9db5311dcb2f4d87b1d1ad4e9c",
+      "graphPath": "studio/flux-canny-pipeline/control-edit-image.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "control_edit_image",
+      "modelType": "FluxCannyPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxControlImg2ImgPipeline",
+        "FluxControlInpaintPipeline",
+        "FluxControlPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Canny-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one prepared Canny control image.",
+        "requiredImages": [
+          "referenceImages",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxCannyPipeline:control_inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "4695bd9f3f639881b1dd497d3e6885083a22af0e1a372b1f9146d0b670df1955",
+      "graphPath": "studio/flux-canny-pipeline/control-inpaint.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "control_inpaint",
+      "modelType": "FluxCannyPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxControlImg2ImgPipeline",
+        "FluxControlInpaintPipeline",
+        "FluxControlPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Canny-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image, one mask, and one prepared Canny control image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxDepthPipeline:control_edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "aeb503ba807c33d83ebfc948047456c361ea9bede6da2b2484ff81533137481a",
+      "graphPath": "studio/flux-depth-pipeline/control-edit-image.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "control_edit_image",
+      "modelType": "FluxDepthPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxControlImg2ImgPipeline",
+        "FluxControlInpaintPipeline",
+        "FluxControlPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Depth-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one prepared depth control image.",
+        "requiredImages": [
+          "referenceImages",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxDepthPipeline:control_inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "76fd7766d11bdabfe4d882f8b13692256ffde4d62e75a4848689ef0e879ce1b1",
+      "graphPath": "studio/flux-depth-pipeline/control-inpaint.json",
+      "graphQualificationStatus": "graph-qualified",
+      "mediaKind": "image",
+      "mode": "control_inpaint",
+      "modelType": "FluxDepthPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxControlImg2ImgPipeline",
+        "FluxControlInpaintPipeline",
+        "FluxControlPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Depth-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image, one mask, and one prepared depth control image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "FluxDevPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -730,7 +1446,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1f77188e325c54c7db0e3d27df5a65b846545cb65f93aaeafc28837035835c92",
+      "graphHash": "093686aa8bf6f04aecae7704a73178d14b075b2fd6548f8cd31c97de1ed77539",
       "graphPath": "studio/flux-dev-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "image",
@@ -774,7 +1490,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "466ac8a220a15553465dfdd6d1c799b7945ef975e79973480e16c5a11ce6dd38",
+      "graphHash": "85bf8b9785bef7e58b1f8a5854012859ff42ccf0044748f5b676431d4c18d0d6",
       "graphPath": "studio/flux-dev-pipeline/inpaint.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "image",
@@ -807,6 +1523,91 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxKontextInpaintPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a7108434eeef5ed608d215dd72ee56065bd9d165c1ce0f56d919f58f2a2dc62a",
+      "graphPath": "studio/flux-kontext-inpaint-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "FluxKontextInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxKontextInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Kontext-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "FluxKontextInpaintPipeline:outpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f98a3012edc66d578a5985387cd50ae1bc62df53fe4b0645f12cfa3c439b8a70",
+      "graphPath": "studio/flux-kontext-inpaint-pipeline/outpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "outpaint",
+      "modelType": "FluxKontextInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "FluxKontextInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Kontext-dev"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -819,7 +1620,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "89911e2e4f13e3c4dd643ae3d5c92dad7b118717d91fcc22fea2d1b6dac1cb54",
+      "graphHash": "f06e856d0dd0f16e3904ddd248135283088b798018da0a879aa36f7e179f9ecb",
       "graphPath": "studio/glm-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -837,6 +1638,126 @@
         "zai-org/GLM-Image"
       ],
       "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "59bc0f75074aba755956db1e79e3e10025ed6b0ca518c93f66983f191a6766b2",
+      "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "image_to_text",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JanusForConditionalGeneration"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "deepseek-community/Janus-Pro-1B"
+      ],
+      "requiredInputs": {
+        "note": "Requires exactly one bounded local image and returns bounded text with a versioned receipt.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "34f660b34415d0308c8895586a58951088c7a71228420140c52ad2c03e2f75e6",
+      "graphPath": "studio/hugging-face-any-to-any-model/text-generation.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "text_generation",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JanusForConditionalGeneration"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "deepseek-community/Janus-Pro-1B"
+      ],
+      "requiredInputs": {
+        "note": "Accepts one bounded prompt and returns bounded text with a versioned receipt."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a8234d64116084dcbd27502671fd8fbde7ff7a6427225d05cbe3c12f0db5ec28",
+      "graphPath": "studio/hugging-face-any-to-any-model/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "JanusForConditionalGeneration"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "deepseek-community/Janus-Pro-1B"
+      ],
+      "requiredInputs": {
+        "note": "Accepts one bounded prompt and returns the native reviewed 384x384 image output."
+      },
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -1019,7 +1940,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "296ff62dab4c3e23c294916149643ce1d03fcddb721deeec9c609a66b7ce24e5",
+      "graphHash": "aad9fec1e67aabf26af68c2e45994207c6cf084d8ac5d7f80bd3157873dea2e1",
       "graphPath": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1081,7 +2002,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e02b298f8d30685bfd482ed9cbe952b2b7f36c44816de7c230eac5274b22d7cb",
+      "graphHash": "273f91b6b3f1c2a81a5fc132a0895f2f291e29922128fa8d497c6a7be951f95a",
       "graphPath": "studio/hunyuan-di-tpag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1118,7 +2039,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1db10d21ea70f67a45ad427e5a1fad65b63842948128deacdf0d0bae2e5881a2",
+      "graphHash": "3e10eb5d87057d64b88b28f10da5943c6cb779a5c635f4429805a0184ddd39f2",
       "graphPath": "studio/hunyuan-di-t-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1155,7 +2076,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "dc6625899b8057e6059b1f1345237e667efac9054f3fc7d65338837ff34ff10b",
+      "graphHash": "916c0801e3aff641e44a0dbf083e7b386c67a4ad5b9c244a880019b0f363e005",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1257,7 +2178,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8c79c514f6877b4f9a1f3a0384236e78a3c653ae4b98ff617a95f93018fda6ca",
+      "graphHash": "959b162fb89a77e2732c665d2c52b7db0939dc8d39c316da7b57142dfbb1fd9c",
       "graphPath": "studio/joy-image-edit-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1299,7 +2220,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1203db4e4bf91901d87776d7ea1fc8e165db397545ed5783ab6600ce90d8516b",
+      "graphHash": "3acab8b05eb0a1f4b00909ebcbfb91cc119c8a684877b2c145b6d0b921908978",
       "graphPath": "studio/joy-image-edit-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1336,7 +2257,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "780c217735239ac1aa569768f40dda64df23e972375dbfe14ea99b74651896ce",
+      "graphHash": "b2d55874a502a84f79fd9847575f9590febe671cec919f1429e73e24958dd9dd",
       "graphPath": "studio/joy-image-edit-plus-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1378,7 +2299,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "d751fa6dfe2693b3d7ef47a3c8a17cb44db8ebac7d62e90f211f48cdf13e1193",
+      "graphHash": "2f9aa1acccc6eefbb97d65ab914d19e1a92961fbac55d93d96b6ccda6ec3e962",
       "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1420,7 +2341,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "2dca20ae7af86a820a2fada314d290a674818bbe583c31629160a9e8653c86a8",
+      "graphHash": "067a4719421ee2415712fade715dc37ed6cddb3fe6650d9ee004223b3c41e6ad",
       "graphPath": "studio/kandinsky3-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1462,7 +2383,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8fdd8202da89a00256d4cb59d3fd360f878471940cd6f721334e7b30a8e2c7aa",
+      "graphHash": "c61b1e055e52834d223547eed19e3269e2c22d542f395b4b87505a34825a1827",
       "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1506,7 +2427,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6d70aca52df9a213d27d576824f2a4049ce3b852b3678eca7b79a02e3972e106",
+      "graphHash": "6b5ee18885bc097bbabebaa55ea2063960ae4438e9d8f8864fda07740b5b8d1f",
       "graphPath": "studio/ltx2-condition-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1547,7 +2468,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3ca4ba6e1fac729c77b18b3e1e7084848d56b868a39489552d0e5e46ce61db4c",
+      "graphHash": "45f99ff7b0e15f90bd2e2f934dd616f822e41e51977ad3688208836a1ec6839a",
       "graphPath": "studio/ltx2-condition-pipeline/reference-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1594,7 +2515,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "f50c146b2cff8850872f0bb87bcd7e6bf9fb27c713b71156547a9cdf390032fc",
+      "graphHash": "2698c98b44c83c38da8ee109f9acd90ca6c4d93a62843d816c448f086fb7a996",
       "graphPath": "studio/ltx2-condition-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1631,7 +2552,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "ee9abdd4e017d549ca3e443b55d1487b058a58c05230f7b0d9690878f647d897",
+      "graphHash": "fa78e4f258a638eb3dee582ded618ff693231f499e973d3822a0b079909e1ee6",
       "graphPath": "studio/ltx2-condition-pipeline/video-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1660,6 +2581,45 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "LTX2Pipeline:text_to_video",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "cbea850b64d2b8250d64da065b5ba1c3b2da8f815e04337659bfa16247cacc9f",
+      "graphPath": "studio/ltx2-pipeline/text-to-video.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelType": "LTX2Pipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "LTX2Pipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Lightricks/LTX-2"
+      ],
+      "requiredInputs": {
+        "note": "Text-only generation returns both the synchronized video stream and its audio stream."
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "required",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -1672,7 +2632,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "174931d55baea0db050732d4b0eece1c502dd9a641af2cce993315288bf1d1b1",
+      "graphHash": "304be1307cf9ace571edac868f7cb8285c5f3e246069cf38f22f0157a4fb2c84",
       "graphPath": "studio/ltxi2-v-long-multi-prompt-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1713,7 +2673,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0ffc2f6e531eb002a4b479c2174e593a409df0ace311cff0ed83cecaab24dc39",
+      "graphHash": "ad3eb743824392c9c2cfbb74a9df479cd2882d500559d01909273b4eb59e8243",
       "graphPath": "studio/latent-consistency-model-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1756,7 +2716,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a001d60be7b42a055578b0dbfe06d1d889a580af21037a65fd4d0c3ba72e0ee0",
+      "graphHash": "e8572689f94d379e4bff23bdf7ffeb43d0f8f2f429f95e6edf3b5d12075c1f3d",
       "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1794,7 +2754,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "46cfdfb61d77488accfb40b4f9a05c936b62eb57ab85e9bf7903abe307c5901e",
+      "graphHash": "9a40342ef5ab2afb45e4f3f6c00db92145f39df5b693102e28b7fb97263c33c4",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1881,7 +2841,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "2b4c72ee141d77512d204923bbbc2b3dee60bf5afb84e6fd88f09e47ccb2f92b",
+      "graphHash": "4d9046b3e5d55e22eded45dc9431a56d5fe468395e4b3b704bfc4cfe26f4becc",
       "graphPath": "studio/long-cat-image-edit-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1929,7 +2889,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0bf9e0d0e0725ad96d1a30af72355f029a67aa83a6439e7d11d9a8fe2d8e7979",
+      "graphHash": "9bebe5defb6b8a7e4747ffec8ebe9c638175174ba4dc3fb013fea5b0390b354f",
       "graphPath": "studio/long-cat-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1966,7 +2926,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0e958685c08136b7cd665c469e64df0356094b585a5b8c8d2e918396c8bffb07",
+      "graphHash": "81394f7fa836da9416af36e4f2243af3d5765c036c62e59dad38daba6aeea251",
       "graphPath": "studio/lumina2-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2003,7 +2963,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "38cf56e430c40538adbaa20a197e753f301db45d9e155819de5e15fbbbda4b82",
+      "graphHash": "51f8a546d9da1cba9859b9a9b7799982fb237bcffb59eff1240444bea8056ebb",
       "graphPath": "studio/lumina-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2040,7 +3000,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3336d7ec33ad8b4d9340e7d4e394418a589b4d8ea6452298d370ae8b49490c58",
+      "graphHash": "da165b5a20b76d3f1da64b96bc22f2b8ea4ec9095a84de11ca0a465b71a4392d",
       "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2082,7 +3042,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "7b27dbd2c428c77ee8fc81e11721e00698720fc904efec1e53a068336d2c187c",
+      "graphHash": "e07b4d7fb702ef3f80ad40393a3851d79ab75315e3b50324c596bafdfa81cd82",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -2121,7 +3081,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "028d5ba33c6fa2a0dc345f5352cdbb14aed5b3be295df90dedd4ff3262489498",
+      "graphHash": "9f0c924a90cd512ffe59678fc2abddbd69b3e13f70a25f16c76863032f59433e",
       "graphPath": "studio/nucleus-mo-e-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2158,7 +3118,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8d27d410eac024815715eb409a5888e2e26f8e41a190ce7ac9940562980f58ef",
+      "graphHash": "f6c71685e75fde37f0696be04917749c1a03b27be3ef07ca82c7e954893d02f9",
       "graphPath": "studio/omni-gen-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2200,7 +3160,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "986cd19b23075a9395b048d905e05336ff313824ec4a46841e55423c0678bfa1",
+      "graphHash": "2662728b6c2bd0ee7acfc9c0aaa4a4e5e4be2fee80773e528a20f7ae3af3e4e2",
       "graphPath": "studio/omni-gen-pipeline/multi-image-reference-edit.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2242,7 +3202,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a2be6202ee488bc453434554602e5d8f49e6f5e7fc59fa0d7563ce4d3a1e605d",
+      "graphHash": "075bd71067f5228717ffa9574d400d2e913ab57644e7ab92bc08fca17acabc75",
       "graphPath": "studio/omni-gen-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2285,7 +3245,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "22912bc8218f804e790eb8410377875a57793c0a5aff082db7e4eb661f252e77",
+      "graphHash": "f2d4303c17caafba097bedb6918139c729e87fa874c0804af2bcd1435260b52d",
       "graphPath": "studio/ovis-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2322,7 +3282,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "80c8627c71caf8972a98000b0bb3ebe75c7d63285bcef7abb217f7bba537b387",
+      "graphHash": "651f27cfbedc07f63fe77dfd9d25b3e83491ba413c80eb59398e7acf319e772e",
       "graphPath": "studio/prx-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2359,7 +3319,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c422c669a1aee09d78f848a71a78b7b5f7b3c591dfdfae64c8143fbe569ccb25",
+      "graphHash": "a2356878df94bca81002448d1a72108c6c8d6686d8d14c54c9f53b6af2de1e10",
       "graphPath": "studio/pix-art-sigma-pag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2396,7 +3356,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "84d194ed35236ae3049d216a27a955b6bddcbdc37b5f18cf66a15483ccd31679",
+      "graphHash": "782bd32748aa489255d52ef2a8378efbbd28bfe5f469dd38be09396f7489c852",
       "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2425,6 +3385,236 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "61525a8e6b25e0e001d1dacf8f0d05fb3da10b41f02f82cc54b1387808b90083",
+      "graphPath": "studio/qwen-image-control-net-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "QwenImageControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "InstantX/Qwen-Image-ControlNet-Union",
+        "Qwen/Qwen-Image-2512"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic standard Diffusers Qwen control-image workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "qwen-controlnet-union",
+            "kind": "controlnet",
+            "label": "Qwen ControlNet Union",
+            "repo": "InstantX/Qwen-Image-ControlNet-Union",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "b13036f066d6dee7c20513e263d3d673055e9de8"
+          }
+        ],
+        "note": "Requires the pinned Qwen ControlNet Union component and one prepared control image.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "QwenImageEditPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c9dee5e88e26fe0375fbc39a8af4c448d54387c7758069bf1ef24a3fc799f18b",
+      "graphPath": "studio/qwen-image-edit-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageEditPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-Edit"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for the exact standard Qwen edit pipeline.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "QwenImageEditPlusPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a349cc61f8d07c2a2815aada3bf15f2a65d68c05a5d0981fa81383e4b418f769",
+      "graphPath": "studio/qwen-image-edit-plus-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPlusPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageEditPlusPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-Edit-2511"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image for the exact standard Qwen Edit Plus pipeline.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "QwenImageEditPlusPipeline:multi_image_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "067daf9b1830dc44ba8407dc90fed0bd41f6f97fbb875196edc7372d9910ae2d",
+      "graphPath": "studio/qwen-image-edit-plus-pipeline/multi-image-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "multi_image_reference_edit",
+      "modelType": "QwenImageEditPlusPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageEditPlusPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-Edit-2511"
+      ],
+      "requiredInputs": {
+        "note": "Requires two or more source images and accepts at most eight reviewed references.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "QwenImageLayeredPipeline:layer_decomposition",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "8090ca88d42252af11bcfb8789107ecc9eff2721fb2f13f19878f2b1f8c290da",
+      "graphPath": "studio/qwen-image-layered-pipeline/layer-decomposition.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "layer_decomposition",
+      "modelType": "QwenImageLayeredPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "QwenImageLayeredPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Qwen/Qwen-Image-Layered"
+      ],
+      "requiredInputs": {
+        "note": "Requires exactly one source image and emits one ordered layer stack.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "QwenImageModularPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -2433,7 +3623,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e7a27a486b93c9dc542306c50e82a4538a0824fb2f80fe7752a86e82aa3d4684",
+      "graphHash": "eb4d4f5a0025dee55e7c03b32ef7698e7434d5b73b1877ccb703d624128bad1e",
       "graphPath": "studio/qwen-image-modular-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "image",
@@ -2478,7 +3668,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "cc200a36817bc9da733b66b142b45b9bbbaf316ada39c13d2b7dbf62743369a6",
+      "graphHash": "53b73f0ae866be2936b93de86cba8c51e9f3508a7481ad61125f22fb1925ce30",
       "graphPath": "studio/qwen-image-modular-pipeline/inpaint.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "image",
@@ -2524,7 +3714,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b89d9d15ab5900cb493674146402878b9aba0435df028b21a9ebcbe53d4fe8a9",
+      "graphHash": "63d884964e7ac0a90dcde7d1e30733eeb652bdd72f606c18b794840040ffd872",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -2566,7 +3756,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "d073ccdecce14036220d3a0171f2a0daa92fac87cd2738760b691a93b42d395e",
+      "graphHash": "765475cf4505c7aee180db25740b7a978f86bdbe504512de040c36fbe167bb43",
       "graphPath": "studio/sana-pag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2603,7 +3793,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6f9faa20e5285810efe410ee501051943f94ce3079b65e5dd1482f66485dc3c5",
+      "graphHash": "cbd9bd5c7c9470baef6953b64a4604768841089b6f1c402356426c7803ca1a90",
       "graphPath": "studio/sana-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2640,7 +3830,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "08ba0dfdbd224084e0e52af82ac4e6f29ba70646bd7a573ccc6388a8c0872dcf",
+      "graphHash": "6c81da740dbe64979061155715a3424d05191813349b92855b50482134d71fe4",
       "graphPath": "studio/sana-sprint-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2683,7 +3873,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5bac87df00223dae08aa7bb98c1bfef9bc87c132bba3d014ca0dff8b97ccca9d",
+      "graphHash": "daa35b6f47e818df5a263c2cc7bbb4a041ce710c141a81365be2076b9a27dd92",
       "graphPath": "studio/sana-sprint-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2721,7 +3911,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "f9bff57aadaa6fa5b23eef68a1ca11b06734917a257e151c000a335be8805c4d",
+      "graphHash": "6604b59d807bf6f99ebc821fb8bfbf741076df6559b9f98c800ae198ba291ef5",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -2832,6 +4022,140 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "ef89768fa0a99406ab5bd909223106d40372013f76537299e2063d93cdcfce67",
+      "graphPath": "studio/stable-diffusion-pag-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        "StableDiffusionControlNetPAGPipeline",
+        "StableDiffusionPAGImg2ImgPipeline",
+        "StableDiffusionPAGInpaintPipeline",
+        "StableDiffusionPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionPAGPipeline control image workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Requires one control image and the immutable Canny ControlNet component.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "0b69d302a7ee84e62e541c526cddb5eb620d8c9226bf1582b68c11697aa95029",
+      "graphPath": "studio/stable-diffusion-pag-pipeline/control-inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        "StableDiffusionControlNetPAGPipeline",
+        "StableDiffusionPAGImg2ImgPipeline",
+        "StableDiffusionPAGInpaintPipeline",
+        "StableDiffusionPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionPAGPipeline control inpaint workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_inpaint"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Requires one source image, one mask, one control image, and the immutable Canny ControlNet component.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "StableDiffusionPAGPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -2840,7 +4164,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6d735888b2c03475b2d3020b1e24e712366535a02721d324f75dfb77b69e4826",
+      "graphHash": "adce7be184c1901c5d285b2a2a98d087b6cae115dcde2faf8979d0ac09ec6970",
       "graphPath": "studio/stable-diffusion-pag-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2848,6 +4172,8 @@
       "modelType": "StableDiffusionPAGPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        "StableDiffusionControlNetPAGPipeline",
         "StableDiffusionPAGImg2ImgPipeline",
         "StableDiffusionPAGInpaintPipeline",
         "StableDiffusionPAGPipeline"
@@ -2884,7 +4210,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b1763230c483df19237dc9abbb26c82c3b89222cd568524a911250e30147f33d",
+      "graphHash": "d9a60f2c6c57ad85e365db649e8f1f939159be244e10ab1b56528461a772b8ec",
       "graphPath": "studio/stable-diffusion-pag-pipeline/inpaint.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2892,6 +4218,8 @@
       "modelType": "StableDiffusionPAGPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        "StableDiffusionControlNetPAGPipeline",
         "StableDiffusionPAGImg2ImgPipeline",
         "StableDiffusionPAGInpaintPipeline",
         "StableDiffusionPAGPipeline"
@@ -2929,7 +4257,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "2decfbba6a02e036143b6f44c4afe8d7e6a40ce4253f5e74c948baafecaefdc0",
+      "graphHash": "03547b6ae65fc8022ec874df10b1db90a8253a7c1b740ca3d4e69409e5e6e6a3",
       "graphPath": "studio/stable-diffusion-pag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2937,6 +4265,8 @@
       "modelType": "StableDiffusionPAGPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetPAGInpaintPipeline",
+        "StableDiffusionControlNetPAGPipeline",
         "StableDiffusionPAGImg2ImgPipeline",
         "StableDiffusionPAGInpaintPipeline",
         "StableDiffusionPAGPipeline"
@@ -2960,6 +4290,74 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "StableDiffusionPipeline:control_edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "ef4fdac8f502616c11b43650ee922e9cbb074b69285f1f020da8ac9d948ff306",
+      "graphPath": "studio/stable-diffusion-pipeline/control-edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
+        "StableDiffusionControlNetPipeline",
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionPipeline control edit image workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_edit_image"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Requires one source image, one control image, and the immutable Canny ControlNet component.",
+        "requiredImages": [
+          "referenceImages",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -2968,7 +4366,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3904ac9a230e43b5f7b5fc8269d7a6fab2d268f515fe2f8e609195f8fb9e8886",
+      "graphHash": "d9e3eabb5a47d0ed5a54316d09747c8681d16d8d6fe87750655bccbee88ec1ee",
       "graphPath": "studio/stable-diffusion-pipeline/control-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2976,6 +4374,8 @@
       "modelType": "StableDiffusionPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
         "StableDiffusionControlNetPipeline",
         "StableDiffusionImg2ImgPipeline",
         "StableDiffusionInpaintPipeline",
@@ -3025,6 +4425,75 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "StableDiffusionPipeline:control_inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "27063e499d847027dbf3542e4af88d2580ea7f1dc7ba5a059661c11ca4093d02",
+      "graphPath": "studio/stable-diffusion-pipeline/control-inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
+        "StableDiffusionControlNetPipeline",
+        "StableDiffusionImg2ImgPipeline",
+        "StableDiffusionInpaintPipeline",
+        "StableDiffusionPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "lllyasviel/control_v11p_sd15_canny",
+        "stable-diffusion-v1-5/stable-diffusion-v1-5"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionPipeline control inpaint workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.safetensors"
+            ],
+            "id": "sd15-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion 1.5 Canny ControlNet",
+            "repo": "lllyasviel/control_v11p_sd15_canny",
+            "requiredForModes": [
+              "control_inpaint"
+            ],
+            "revision": "115a470d547982438f70198e353a921996e2e819"
+          }
+        ],
+        "note": "Requires one source image, one mask, one control image, and the immutable Canny ControlNet component.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "StableDiffusionPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -3033,7 +4502,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c440ba69d942a578d6b89549b9646c8156625efe3bd73be4531a75192cb17a48",
+      "graphHash": "6e0f54f9a2702a6fd37fa587115fb7b7ba57cbed056d0988df68b3253d22c086",
       "graphPath": "studio/stable-diffusion-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3041,6 +4510,8 @@
       "modelType": "StableDiffusionPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
         "StableDiffusionControlNetPipeline",
         "StableDiffusionImg2ImgPipeline",
         "StableDiffusionInpaintPipeline",
@@ -3078,7 +4549,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "35babfcd6f16d597192cf51c620111cc286246389758ffa8afdf5b2c25a37fa4",
+      "graphHash": "c6fc64135d01a872ae51a86bf0c9c8f5df058600fff5cb9ca04d76b2874e7219",
       "graphPath": "studio/stable-diffusion-pipeline/inpaint.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3086,6 +4557,8 @@
       "modelType": "StableDiffusionPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
         "StableDiffusionControlNetPipeline",
         "StableDiffusionImg2ImgPipeline",
         "StableDiffusionInpaintPipeline",
@@ -3124,7 +4597,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b84537db66e154910bdac4ef5c369c4b2acbe958388371e311158fb70bbf7758",
+      "graphHash": "a30835bdfb5f6f9c93c9666114f5c8f65bf3147b36274d9a8f660b7e2a88132d",
       "graphPath": "studio/stable-diffusion-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3132,6 +4605,8 @@
       "modelType": "StableDiffusionPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionControlNetImg2ImgPipeline",
+        "StableDiffusionControlNetInpaintPipeline",
         "StableDiffusionControlNetPipeline",
         "StableDiffusionImg2ImgPipeline",
         "StableDiffusionInpaintPipeline",
@@ -3164,7 +4639,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3bad3019a325e953c01c6e5f0831aaa196e26d5007fe48bc8a45bb47ed254666",
+      "graphHash": "5eb28b65541e891c76d8a5d4f33513498c7eb48fd5693b0d881806ee3a3451f7",
       "graphPath": "studio/stable-diffusion-xl-adapter-pipeline/control-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3218,6 +4693,71 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "1cfd0521d2c8750f2945ad54ea82553269161724f0fb978e05816cdbe24af40d",
+      "graphPath": "studio/stable-diffusion-xl-control-net-pipeline/control-edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLControlNetImg2ImgPipeline",
+        "StableDiffusionXLControlNetInpaintPipeline",
+        "StableDiffusionXLControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionXLControlNetPipeline control edit image workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "sdxl-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": "diffusers/controlnet-canny-sdxl-1.0",
+            "requiredForModes": [
+              "control_edit_image"
+            ],
+            "revision": "eb115a19a10d14909256db740ed109532ab1483c"
+          }
+        ],
+        "note": "Requires one source image, one control image, and the immutable SDXL Canny ControlNet component.",
+        "requiredImages": [
+          "referenceImages",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -3226,7 +4766,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "99cc0fcdcccee970213fe9d9ef1d6c675267161a098fe0383160d5ba98320059",
+      "graphHash": "4f779cb5ad0b920799b260231cfddc77113c12b138633436215a3ebccce71f20",
       "graphPath": "studio/stable-diffusion-xl-control-net-pipeline/control-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3234,6 +4774,8 @@
       "modelType": "StableDiffusionXLControlNetPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionXLControlNetImg2ImgPipeline",
+        "StableDiffusionXLControlNetInpaintPipeline",
         "StableDiffusionXLControlNetPipeline"
       ],
       "publicationState": "hidden_candidate",
@@ -3280,6 +4822,72 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "5e53b315197449c5815bf10b3072b1bd3992d182e03372c6720b2c15892ed4da",
+      "graphPath": "studio/stable-diffusion-xl-control-net-pipeline/control-inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLControlNetImg2ImgPipeline",
+        "StableDiffusionXLControlNetInpaintPipeline",
+        "StableDiffusionXLControlNetPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionXLControlNetPipeline control inpaint workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "sdxl-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": "diffusers/controlnet-canny-sdxl-1.0",
+            "requiredForModes": [
+              "control_inpaint"
+            ],
+            "revision": "eb115a19a10d14909256db740ed109532ab1483c"
+          }
+        ],
+        "note": "Requires one source image, one mask, one control image, and the immutable SDXL Canny ControlNet component.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -3288,7 +4896,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "d7204ef99adc322fef1a4542e2e5453e88203eed81477c4a8352c96d416571cc",
+      "graphHash": "6ca1024304e70a7f2ad3ece682cebf550e2bc125b0ca3a2f7bc4991568a529c3",
       "graphPath": "studio/stable-diffusion-xl-instruct-pix2-pix-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3322,6 +4930,139 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e93ffb65b1d61da73ba0a12388ff3356854c858ae7fd5dccf5fd2ca0750e1d1c",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/control-edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        "StableDiffusionXLControlNetPAGPipeline",
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionXLPAGPipeline control edit image workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "sdxl-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": "diffusers/controlnet-canny-sdxl-1.0",
+            "requiredForModes": [
+              "control_edit_image"
+            ],
+            "revision": "eb115a19a10d14909256db740ed109532ab1483c"
+          }
+        ],
+        "note": "Requires one source image, one control image, and the immutable SDXL Canny ControlNet component.",
+        "requiredImages": [
+          "referenceImages",
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c7c1c39a03f8aa24fc8d780f2b12856f179b53515fb56f7cf7746d01a86f3c5e",
+      "graphPath": "studio/stable-diffusion-xlpag-pipeline/control-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        "StableDiffusionXLControlNetPAGPipeline",
+        "StableDiffusionXLPAGImg2ImgPipeline",
+        "StableDiffusionXLPAGInpaintPipeline",
+        "StableDiffusionXLPAGPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "diffusers/controlnet-canny-sdxl-1.0",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "description": "Required by the generic StableDiffusionXLPAGPipeline control image workflow.",
+            "downloadFiles": [
+              ".gitattributes",
+              "README.md",
+              "config.json",
+              "diffusion_pytorch_model.fp16.safetensors"
+            ],
+            "id": "sdxl-controlnet-canny",
+            "kind": "controlnet",
+            "label": "Stable Diffusion XL Canny ControlNet",
+            "repo": "diffusers/controlnet-canny-sdxl-1.0",
+            "requiredForModes": [
+              "control_image"
+            ],
+            "revision": "eb115a19a10d14909256db740ed109532ab1483c"
+          }
+        ],
+        "note": "Requires one control image and the immutable SDXL Canny ControlNet component.",
+        "requiredImages": [
+          "controlImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -3330,7 +5071,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6f494bdf25523566904208c6b83182417787b9dd9d1fc3c7fbccd71cd86a32a9",
+      "graphHash": "4b496ca518c7de6ed73b728a8a185693e1c361c696792f613b26e9a464f5ea67",
       "graphPath": "studio/stable-diffusion-xlpag-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3338,6 +5079,8 @@
       "modelType": "StableDiffusionXLPAGPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        "StableDiffusionXLControlNetPAGPipeline",
         "StableDiffusionXLPAGImg2ImgPipeline",
         "StableDiffusionXLPAGInpaintPipeline",
         "StableDiffusionXLPAGPipeline"
@@ -3374,7 +5117,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "46dcaa0c0253770a2966082e1d719f57062a37cb61f0051e274652b68dbe8de6",
+      "graphHash": "9ccc50465d9e749459a269fca5371a31d7c1b1b97a78992b56026bf4c8ba735c",
       "graphPath": "studio/stable-diffusion-xlpag-pipeline/inpaint.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3382,6 +5125,8 @@
       "modelType": "StableDiffusionXLPAGPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        "StableDiffusionXLControlNetPAGPipeline",
         "StableDiffusionXLPAGImg2ImgPipeline",
         "StableDiffusionXLPAGInpaintPipeline",
         "StableDiffusionXLPAGPipeline"
@@ -3419,7 +5164,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a8c03f983ac100b4d51ec371a0796b93f934991b7e4536d825653b07e6941bfd",
+      "graphHash": "23f824ac14954aafd401f35658d5bcbdc0b9fb790ae489a9fbbe99d41eb7e496",
       "graphPath": "studio/stable-diffusion-xlpag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3427,6 +5172,8 @@
       "modelType": "StableDiffusionXLPAGPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
+        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+        "StableDiffusionXLControlNetPAGPipeline",
         "StableDiffusionXLPAGImg2ImgPipeline",
         "StableDiffusionXLPAGInpaintPipeline",
         "StableDiffusionXLPAGPipeline"
@@ -3458,7 +5205,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "25e9e69d9c4477cb95a5e38655a3936e78e0888cfad74b5064f3f229e89e7e78",
+      "graphHash": "f4bd168f3f09065b2d15550d371a31af6dc491cb198ee3e44c6ea80c26b82915",
       "graphPath": "studio/stable-diffusion-xl-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3502,7 +5249,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "77996be7e7a63fb4cac8137097a887b311c670205704a78d387547ff689b070a",
+      "graphHash": "5850e6d16f9361d1dc900cbd102bf3875df2ddc07527bf89bc5e0c53a25cf2e4",
       "graphPath": "studio/stable-diffusion-xl-pipeline/inpaint.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3553,7 +5300,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5690f94b0f3af0b3d280c82dc9254d8d06f034a2a58be375868da12077cadf6c",
+      "graphHash": "b82e5cc52159d93f85a0864e2aa42fcf8dd8be3975fef199d029358333254653",
       "graphPath": "studio/stable-diffusion-xl-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3598,7 +5345,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1a62402c66f4c1bda0a3644f9e55ec3499da6e8c3636ee64a48fff23d2ed140d",
+      "graphHash": "13840dd4f022d85bb52d8f90d1fd1da43e0b3873d078b83cbb127b38f755e30d",
       "graphPath": "studio/stable-diffusion-xl-turbo-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3635,7 +5382,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "fdd8889f1db2aff6db30a30f52447314eb576d4726ee4cfd64ca811ac0e6de09",
+      "graphHash": "6f080372bd727f36d241b95305b9ccf287a3fffadf2dc50ef44f47540c43df3b",
       "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -3687,7 +5434,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "45fe918e6b549bdfb9f7ce895f2e94b148c6480c6361e07f6fca966fb00696ec",
+      "graphHash": "00310bbf122da1eb96eb85e33099df87455af289bdcf0cb5fefd116c6d7779e1",
       "graphPath": "studio/wan22-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -3724,7 +5471,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "70d9c7bcd96f39b143083a118a36138313543851256370096c2982d2100cf3e0",
+      "graphHash": "f486e24a1ffcaf48ec78642f046ec075e3b1d549fdb27fecff5566beea7c5c6b",
       "graphPath": "studio/wan-animate-pipeline/character-animate.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -3769,7 +5516,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "d874ff3e12b3a8052aaa650369d418105c52762713f743c290d203412879c032",
+      "graphHash": "491edaec4335c2cfefb0e3a288f3b81eefaefb8b129d3a920077bca0b24f515e",
       "graphPath": "studio/wan-animate-pipeline/character-replace.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -3816,7 +5563,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "cd9432d9dbd6b7621ac5e034552d952a503cb01b379354119d145b33a347ce7c",
+      "graphHash": "6408030f3d660b223b4c2c02aed853d57a630e09a4830ca6f7f2401fe17af729",
       "graphPath": "studio/wan-image2-video-modular-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -3858,7 +5605,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3390785b777ba18383e1999ba9da794aa95e6ca8e56971a54866923fed86c41d",
+      "graphHash": "b7cc597ebd276f2c61108b1a8b88dddd6fd242cc63d5a8a384d171205b5a056e",
       "graphPath": "studio/wan-vace-pipeline/text-to-video.json",
       "graphQualificationStatus": "execution-qualified-gallery-review-pending",
       "mediaKind": "video",
@@ -3888,6 +5635,91 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "ZImageInpaintPipeline:inpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "0b8e148ed0b7fd270d8de4fed61448e6b050244069af805ddf6c927236102593",
+      "graphPath": "studio/z-image-inpaint-pipeline/inpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "inpaint",
+      "modelType": "ZImageInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ZImageInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Tongyi-MAI/Z-Image-Turbo"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image and one mask image.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "ZImageInpaintPipeline:outpaint",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "32f752fc5958091e456f9c098e6eae84dee9fb42695ef5ef2298ac310ad3de68",
+      "graphPath": "studio/z-image-inpaint-pipeline/outpaint.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "outpaint",
+      "modelType": "ZImageInpaintPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "ZImageInpaintPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "Tongyi-MAI/Z-Image-Turbo"
+      ],
+      "requiredInputs": {
+        "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "ZImageModularPipeline:edit_image",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -3896,7 +5728,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c1e3fdc5427780c0753e52d2e64d9e9cc1c653dfc7179b636e0fa3ba39e61f8a",
+      "graphHash": "70b900760d789469cbe71e855e8d4443f4c23fc2cef0d592950bf6d0121a37a9",
       "graphPath": "studio/z-image-modular-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "image",
@@ -3931,30 +5763,30 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:dc19a05d969b79d7de9c512c985a7ae236617461a31e0bf7846e1806a5ed6340",
+      "contentHash": "sha256:c6b11b23dd5fc8389e69fd3fd8821c2dbe81bfdce1831bb0343b80b7bebb9f4f",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:33f497f38902c6d024b764092e81139228edd05731f39acccf1cf2a37b817c6d"
+      "sha256": "sha256:388b00cdc8ea3f1251884e673f08d8b9957e3cf9a46902053e0038b1b2e0dad0"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:a591580405c8c48a56560d419235a023988ced6f1d7ade14ac4fc45e14c090ab"
+      "sha256": "sha256:1ffd2a491c2e78ab7ef7838a75a7624e5faf3fe1876231f046fd4c46e7f3be39"
     }
   },
   "summary": {
-    "candidateContractCount": 91,
-    "canonicalWorkflowCount": 142,
+    "candidateContractCount": 126,
+    "canonicalWorkflowCount": 177,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 43,
+    "contractsRequiringInputExamples": 74,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 3,
-      "image": 63,
-      "json": 4,
-      "video": 21
+      "image": 90,
+      "json": 6,
+      "video": 27
     },
     "publicTemplateCount": 77
   }
