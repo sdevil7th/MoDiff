@@ -521,6 +521,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 26,
                 "flux1-kontext-dev.safetensors",
             ),
+            "black-forest-labs/FLUX.1-Redux-dev": (
+                "c95859fbf7703ca4d6824b4da4407d7cd0434f81",
+                9,
+                "flux1-redux-dev.safetensors",
+            ),
             "black-forest-labs/FLUX.2-klein-4B": (
                 "e7b7dc27f91deacad38e78976d1f2b499d76a294",
                 21,

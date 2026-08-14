@@ -138,6 +138,17 @@ FLUX_CONTROL_DIFFUSERS_FILES = [
 ]
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
+FLUX_REDUX_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE.md",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "image_embedder/config.json",
+    "image_embedder/diffusion_pytorch_model.safetensors",
+    "image_encoder/config.json",
+    "image_encoder/model.safetensors",
+    "model_index.json",
+]
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
 FLUX_KONTEXT_DIFFUSERS_FILES = list(FLUX_DEV_DIFFUSERS_FILES)
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
@@ -3081,6 +3092,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 low_vram_steps=20,
                 execution_status="expert_only",
             ),
+            "downloadFiles": FLUX_REDUX_DIFFUSERS_FILES,
             "artifactCandidates": [FLUX_REDUX_REPO, FLUX_DEV_REPO],
             "supportsImageInput": True,
             "modes": ["edit_image"],

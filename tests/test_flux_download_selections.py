@@ -6,6 +6,7 @@ from modiff.studio_execution_specs import (
     FLUX_FILL_DIFFUSERS_FILES,
     FLUX_KREA_DIFFUSERS_FILES,
     FLUX_KONTEXT_DIFFUSERS_FILES,
+    FLUX_REDUX_DIFFUSERS_FILES,
     FLUX_SCHNELL_DIFFUSERS_FILES,
     FLUX2_KLEIN_DIFFUSERS_FILES,
     studio_capability_definitions,
@@ -137,6 +138,23 @@ class FluxDownloadSelectionTests(unittest.TestCase):
         self.assertIn("vae/diffusion_pytorch_model.safetensors", selected)
         self.assertNotIn("flux-2-klein-4b.safetensors", selected)
         self.assertFalse(any(path.endswith(".jpg") for path in selected))
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
+
+    def test_flux_redux_selection_keeps_only_prior_components(self):
+        selected = set(FLUX_REDUX_DIFFUSERS_FILES)
+        capability = studio_capability_definitions()["FluxReduxPipeline"]
+
+        self.assertEqual(capability["downloadFiles"], FLUX_REDUX_DIFFUSERS_FILES)
+        self.assertEqual(len(selected), 9)
+        self.assertTrue(
+            IMAGE_PIPELINE_ADAPTERS["FluxReduxPipeline"].safe_serialization_required
+        )
+        self.assertIn("image_embedder/diffusion_pytorch_model.safetensors", selected)
+        self.assertIn("image_encoder/model.safetensors", selected)
+        self.assertNotIn("flux1-redux-dev.safetensors", selected)
+        self.assertNotIn("redux.png", selected)
         self.assertFalse(
             any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
         )

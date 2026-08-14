@@ -3198,6 +3198,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(loaded[1][2]["text_encoder_2"], "t5")
         self.assertEqual(loaded[1][2]["tokenizer"], "clip-tokenizer")
         self.assertEqual(loaded[1][2]["tokenizer_2"], "t5-tokenizer")
+        self.assertTrue(loaded[0][2]["use_safetensors"])
+        self.assertTrue(loaded[1][2]["use_safetensors"])
         self.assertTrue(loaded[0][2]["local_files_only"])
         self.assertTrue(loaded[1][2]["local_files_only"])
         self.assertIsNone(result["pipeline"].base.text_encoder)

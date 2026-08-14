@@ -905,6 +905,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_REDUX_REPO,
         artifact_pipeline_classes=("FluxPriorReduxPipeline",),
         runtime_pipeline_classes=("FluxReduxPipelineBundle",),
+        safe_serialization_required=True,
         # Current Diffusers performs the documented per-reference scaling and
         # weighted sum inside FluxPriorReduxPipeline. Keep the references as a
         # list and delegate the conditioning math to the upstream pipeline.
