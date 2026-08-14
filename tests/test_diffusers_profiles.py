@@ -34,6 +34,14 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.HuggingFaceSpeech",
                 "LoadSpeechRecognitionModel",
             ),
+            "direct-huggingface-transformers-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadTextGenerationModel",
+            ),
+            "direct-huggingface-transformers-image-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadImageTextToTextModel",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -98,12 +106,15 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "StableDiffusionXLInstructPix2PixPipeline",
             "StableDiffusionXLControlNetPipeline",
             "HunyuanDiTPipeline",
+            "HunyuanDiTPAGPipeline",
             "HunyuanDiTControlNetPipeline",
             "StableDiffusionXLAdapterPipeline",
             "StableDiffusionXLPAGPipeline",
             "SanaPipeline",
+            "SanaPAGPipeline",
             "SanaSprintPipeline",
             "PixArtSigmaPipeline",
+            "PixArtSigmaPAGPipeline",
             "Kandinsky3Pipeline",
             "LongCatImagePipeline",
             "LongCatImageEditPipeline",
@@ -132,6 +143,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
             "HuggingFaceSpeechRecognitionModel",
+            "HuggingFaceTextGenerationModel",
+            "HuggingFaceImageTextToTextModel",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

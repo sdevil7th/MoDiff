@@ -4,7 +4,10 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from modiff.diffusers_profiles import CONTRACT_ONLY_DIFFUSERS_PIPELINES
+from modiff.diffusers_profiles import (
+    CONTRACT_ONLY_DIFFUSERS_PIPELINES,
+    execution_profiles_for_execution,
+)
 from modiff.model_artifact_catalog import catalog_revision
 from modules.DiffusersImage import Edit, Inpaint, LoadPipeline
 from modules.DiffusersImage.main import (
@@ -113,10 +116,14 @@ class StableDiffusion15PagEditContractTests(unittest.TestCase):
                     ),
                     revision,
                 )
-                self.assertEqual(
-                    declared[pipeline_class],
-                    ("image", SD15_BASE_REPO, (mode,)),
-                )
+                self.assertNotIn(pipeline_class, declared)
+                profiles = execution_profiles_for_execution("StableDiffusionPAGPipeline", mode)
+                self.assertEqual(len(profiles), 1)
+                profile = profiles[0]
+                self.assertEqual(profile.pipeline_class, pipeline_class)
+                self.assertEqual(profile.modes, (mode,))
+                self.assertEqual(profile.default_repo, SD15_BASE_REPO)
+                self.assertEqual(profile.backend_path, "modules.DiffusersImage.LoadPipeline")
 
     def test_generic_actions_pass_only_the_reviewed_pag_arguments(self):
         image = Image.new("RGB", (32, 48), "black")
