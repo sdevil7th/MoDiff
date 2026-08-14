@@ -39,6 +39,25 @@ HUNYUAN_DIT_CONTROLNET_CANNY_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
+SANA_600M_FP16_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.fp16-00001-of-00002.safetensors",
+    "text_encoder/model.fp16-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.fp16.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.fp16.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.fp16.safetensors",
+]
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
@@ -6096,6 +6115,7 @@ _SANA_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": SANA_REPO,
+    "downloadFiles": SANA_600M_FP16_DIFFUSERS_FILES,
     "artifactLabel": "Diffusers fp16 safetensors repo",
     "defaultDtype": "float16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},

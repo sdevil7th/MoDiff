@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "Efficient-Large-Model/Sana_600M_1024px_diffusers": (
+                "28f3af7689de15f3883d5863059a2fca0aa9b829",
+                17,
+                "transformer/diffusion_pytorch_model.safetensors",
+            ),
             "SimianLuo/LCM_Dreamshaper_v7": (
                 "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
                 17,
