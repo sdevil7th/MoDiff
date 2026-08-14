@@ -6,7 +6,11 @@ from pathlib import Path
 
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
-from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES, TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+from modiff.optional_runtimes import (
+    OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_COMMIT,
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+)
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
 from modiff.upstream_coverage import (
     TRANSFORMERS_REVIEWED_MAIN_REVISION,
@@ -40,16 +44,16 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 134,
+                "canonicalWorkflowCount": 142,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "canonicalWorkflowsWithoutPublicTemplates": 83,
+                "canonicalWorkflowsWithoutPublicTemplates": 91,
                 "diffusersPipelineSymbolCount": 327,
                 "pipelineStatusCounts": {
                     "contract-only": 29,
                     "equivalent": 10,
-                    "executable": 85,
+                    "executable": 91,
                     "intentionally-excluded": 56,
-                    "research-blocked": 147,
+                    "research-blocked": 141,
                     "unreviewed": 0,
                 },
                 "publicTemplateCount": 77,
@@ -75,7 +79,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 134,
+                    "executable": 142,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -112,7 +116,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_non_video = [
             item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_non_video), 100)
+        self.assertEqual(len(reviewed_non_video), 94)
         self.assertEqual(
             {
                 status: sum(item["status"] == status for item in reviewed_non_video)
@@ -123,7 +127,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "equivalent": 0,
                 "executable": 0,
                 "intentionally-excluded": 43,
-                "research-blocked": 57,
+                "research-blocked": 51,
                 "unreviewed": 0,
             },
         )
@@ -134,6 +138,22 @@ class UpstreamCoverageTests(unittest.TestCase):
                 self.assertEqual(by_name[pipeline_class]["status"], "executable", pipeline_class)
         for pipeline_class in CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME:
             self.assertEqual(by_name[pipeline_class]["status"], "contract-only", pipeline_class)
+
+    def test_new_image_admissions_replace_their_research_decisions(self):
+        by_name = {item["name"]: item for item in self.ledger["diffusersPipelines"]}
+        expected_specs = {
+            "HunyuanDiTPAGPipeline": "hunyuan-dit-v1-2-distilled-pag:text-to-image:v1",
+            "LatentConsistencyModelImg2ImgPipeline": "lcm-dreamshaper-v7:edit-image:v1",
+            "PixArtSigmaPAGPipeline": "pixart-sigma-1024-pag:text-to-image:v1",
+            "SanaPAGPipeline": "sana-600m-pag:text-to-image:v1",
+            "StableDiffusionPAGImg2ImgPipeline": "sd15-pag:edit-image:v1",
+            "StableDiffusionPAGInpaintPipeline": "sd15-pag:inpaint:v1",
+        }
+        for pipeline_class, spec_id in expected_specs.items():
+            item = by_name[pipeline_class]
+            self.assertEqual(item["status"], "executable", pipeline_class)
+            self.assertEqual([spec["id"] for spec in item["exactExecutionSpecs"]], [spec_id])
+            self.assertIsNone(item["reviewDecision"], pipeline_class)
 
     def test_all_unreviewed_video_exports_have_conservative_decisions(self):
         by_name = {item["name"]: item for item in self.ledger["diffusersPipelines"]}
@@ -207,6 +227,11 @@ class UpstreamCoverageTests(unittest.TestCase):
 
     def test_transformers_main_and_production_are_not_conflated(self):
         scope = self.ledger["scope"]["transformers"]
+        self.assertEqual(
+            TRANSFORMERS_REVIEWED_MAIN_REVISION,
+            "a597f974857b3d92939971296bc0deb93d33d780",
+        )
+        self.assertEqual(TRANSFORMERS_REVIEWED_MAIN_REVISION, TRANSFORMERS_MAIN_COMMIT)
         self.assertEqual(scope["reviewedMainRevision"], TRANSFORMERS_REVIEWED_MAIN_REVISION)
         self.assertEqual(scope["reviewedMainVersion"], TRANSFORMERS_REVIEWED_MAIN_VERSION)
         self.assertFalse(scope["reviewedMainDeliveredInProduction"])

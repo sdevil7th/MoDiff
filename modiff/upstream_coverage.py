@@ -25,7 +25,11 @@ from typing import Any
 from modiff.diffusers_profiles import EXPERIMENTAL_DIFFUSERS_PIPELINES
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
-from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES, TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+from modiff.optional_runtimes import (
+    OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_COMMIT,
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+)
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
 
 
@@ -39,7 +43,7 @@ UPSTREAM_COVERAGE_STATUSES = (
     "intentionally-excluded",
     "unreviewed",
 )
-TRANSFORMERS_REVIEWED_MAIN_REVISION = "c1ff11866b3e2c473f92460ee0bf68d739921609"
+TRANSFORMERS_REVIEWED_MAIN_REVISION = TRANSFORMERS_MAIN_COMMIT
 TRANSFORMERS_REVIEWED_MAIN_VERSION = "5.16.0.dev0"
 
 _PIPELINE_SYMBOL = re.compile(r"[A-Za-z][A-Za-z0-9_]*Pipeline")
@@ -147,7 +151,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "FluxControlNetImg2ImgPipeline",
         "FluxControlNetInpaintPipeline",
         "FluxControlNetPipeline",
-        "HunyuanDiTPAGPipeline",
         "Ideogram4Pipeline",
         "Kandinsky5I2IPipeline",
         "Kandinsky5T2IPipeline",
@@ -155,17 +158,14 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "KolorsPAGPipeline",
         "LDMSuperResolutionPipeline",
         "LLaDA2Pipeline",
-        "LatentConsistencyModelImg2ImgPipeline",
         "MarigoldIntrinsicsPipeline",
         "MarigoldNormalsPipeline",
         "PRXPixelPipeline",
         "PixArtAlphaPipeline",
-        "PixArtSigmaPAGPipeline",
         "QwenImageControlNetInpaintPipeline",
         "QwenImageControlNetPipeline",
         "QwenImageLayeredPipeline",
         "SanaControlNetPipeline",
-        "SanaPAGPipeline",
         "ShapEImg2ImgPipeline",
         "StableDiffusion3PAGImg2ImgPipeline",
         "StableDiffusion3PAGPipeline",
@@ -178,8 +178,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "StableDiffusionImageVariationPipeline",
         "StableDiffusionInstructPix2PixPipeline",
         "StableDiffusionLatentUpscalePipeline",
-        "StableDiffusionPAGImg2ImgPipeline",
-        "StableDiffusionPAGInpaintPipeline",
         "StableDiffusionXLControlNetImg2ImgPipeline",
         "StableDiffusionXLControlNetInpaintPipeline",
         "StableDiffusionXLControlNetPAGImg2ImgPipeline",
