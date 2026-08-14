@@ -1,0 +1,247 @@
+{
+  "qualification": {
+    "schemaVersion": 1,
+    "id": "p6-ltx-30-minute-continuation-v1",
+    "status": "qualification_pending",
+    "submitThrough": "POST /graph",
+    "openingImagePlaceholder": "__OPENING_IMAGE__",
+    "runInputHashPlaceholder": "__RUN_INPUT_HASH__",
+    "expected": {
+      "strategy": "ltx_continuation",
+      "targetSeconds": 1800,
+      "fps": 16,
+      "chunkSeconds": 5,
+      "overlapSeconds": 0.25,
+      "jobCount": 374,
+      "plannedFrames": 28802,
+      "plannedSeconds": 1800.125
+    },
+    "evidenceBoundary": "Remote real-weight execution, output review, publication, and physical macOS evidence remain pending."
+  },
+  "sid": "__SID__",
+  "runtimeHints": {
+    "source": "qualification",
+    "modelType": "LTXVideoPipeline",
+    "mode": "image_to_video",
+    "modelRepo": "Lightricks/LTX-Video-0.9.8-13B-distilled",
+    "resolvedModelRepo": "Lightricks/LTX-Video-0.9.8-13B-distilled",
+    "resolvedArtifact": "Lightricks/LTX-Video-0.9.8-13B-distilled@7c64400e1861cc0d7b98d570a1926d5408ec60cd",
+    "pipelineClass": "LTXConditionPipeline",
+    "dtype": "bfloat16",
+    "resourceMode": "expert",
+    "resolvedResourceMode": "expert",
+    "offloadMode": "none",
+    "workflowTabId": "p6-ltx-30-minute-continuation-v1",
+    "workflowTitle": "P6 LTX 30-minute continuation qualification",
+    "runInputHash": "__RUN_INPUT_HASH__",
+    "maxRuntimeSeconds": 21600
+  },
+  "nodes": {
+    "quantization": {
+      "module": "modules.DiffusersRuntime",
+      "action": "PipelineQuantizationConfigV2",
+      "params": {
+        "backend": { "value": "none" },
+        "components": { "value": ["transformer"] },
+        "dtype": { "value": "bfloat16" }
+      }
+    },
+    "recipe": {
+      "module": "modules.DiffusersRuntime",
+      "action": "DiffusersExecutionRecipe",
+      "params": {
+        "quantization_config": {
+          "sourceId": "quantization",
+          "sourceKey": "quantization_config",
+          "value": null
+        },
+        "device": { "value": "cuda:0" },
+        "device_map": { "value": "none" },
+        "offload_mode": { "value": "none" },
+        "attention_backend": { "value": "_native_flash" },
+        "attention_components": { "value": "transformer" },
+        "vae_slicing": { "value": true },
+        "vae_tiling": { "value": true },
+        "channels_last": { "value": false },
+        "regional_compile": { "value": false },
+        "denoiser_cache": { "value": "none" },
+        "layerwise_casting": { "value": false }
+      }
+    },
+    "opening-image": {
+      "module": "modules.Image",
+      "action": "Load",
+      "params": {
+        "file": { "value": ["__OPENING_IMAGE__"] },
+        "alpha_channel": { "value": "ignore" }
+      }
+    },
+    "pipeline": {
+      "module": "modules.DiffusersVideo",
+      "action": "LoadPipeline",
+      "params": {
+        "execution_recipe": {
+          "sourceId": "recipe",
+          "sourceKey": "execution_recipe",
+          "value": null
+        },
+        "model_id": {
+          "value": {
+            "source": "hub",
+            "value": "Lightricks/LTX-Video-0.9.8-13B-distilled"
+          }
+        },
+        "revision": { "value": "7c64400e1861cc0d7b98d570a1926d5408ec60cd" },
+        "pipeline_class": { "value": "LTXConditionPipeline" },
+        "dtype": { "value": "bfloat16" },
+        "device": { "value": "cuda:0" },
+        "auto_offload": { "value": false },
+        "offload_mode": { "value": "none" }
+      }
+    },
+    "plan": {
+      "module": "modules.DiffusersVideo",
+      "action": "PlanLongVideo",
+      "params": {
+        "opening_image": {
+          "sourceId": "opening-image",
+          "sourceKey": "image",
+          "value": null
+        },
+        "prompt": {
+          "value": "One continuous restrained tracking shot through a coherent physical environment; preserve subject identity, geometry, lighting direction, camera direction, and motion across every continuation boundary."
+        },
+        "target_seconds": { "value": 1800 },
+        "fps": { "value": 16 },
+        "strategy": { "value": "ltx_continuation" },
+        "chunk_seconds": { "value": 5 },
+        "overlap_seconds": { "value": 0.25 },
+        "max_jobs": { "value": 512 },
+        "width": { "value": 704 },
+        "height": { "value": 480 },
+        "steps": { "value": 8 },
+        "guidance_scale": { "value": 1 },
+        "conditioning_strength": { "value": 0.75 },
+        "negative_prompt": {
+          "value": "cut, camera reversal, identity drift, geometry drift, flicker, duplicate subject, frozen motion, text, watermark"
+        },
+        "shot_prompts": { "value": "[]" },
+        "seed": { "value": 640000 }
+      }
+    },
+    "carry": {
+      "module": "modules.WorkflowControl",
+      "action": "LoopInput",
+      "params": {
+        "initial": { "value": null }
+      }
+    },
+    "items": {
+      "module": "modules.WorkflowControl",
+      "action": "LoopItems",
+      "params": {
+        "collection": {
+          "sourceId": "plan",
+          "sourceKey": "jobs",
+          "value": null
+        },
+        "item_index": { "value": 0 }
+      }
+    },
+    "generate": {
+      "module": "modules.DiffusersVideo",
+      "action": "GenerateShotJob",
+      "params": {
+        "pipeline": {
+          "sourceId": "pipeline",
+          "sourceKey": "pipeline",
+          "value": null
+        },
+        "job": {
+          "sourceId": "items",
+          "sourceKey": "item",
+          "value": null
+        },
+        "previous_video": {
+          "sourceId": "carry",
+          "sourceKey": "value",
+          "value": null
+        }
+      }
+    },
+    "retain": {
+      "module": "modules.Video",
+      "action": "ExportAsset",
+      "params": {
+        "video": {
+          "sourceId": "generate",
+          "sourceKey": "video_out",
+          "value": null
+        },
+        "fps": {
+          "sourceId": "generate",
+          "sourceKey": "fps_out",
+          "value": 16
+        },
+        "quality": { "value": 10 },
+        "pin": { "value": true }
+      }
+    },
+    "result": {
+      "module": "modules.WorkflowControl",
+      "action": "LoopResult",
+      "params": {
+        "value_input": {
+          "sourceId": "retain",
+          "sourceKey": "asset",
+          "value": null
+        },
+        "stop_input": { "value": false }
+      }
+    },
+    "join": {
+      "module": "modules.Video",
+      "action": "ConcatenateAssets",
+      "params": {
+        "clips": {
+          "sourceId": "result",
+          "sourceKey": "collection",
+          "value": null
+        },
+        "transition_seconds": { "value": 0.25 },
+        "pin": { "value": true }
+      }
+    }
+  },
+  "paths": [
+    [
+      "quantization",
+      "recipe",
+      "opening-image",
+      "pipeline",
+      "plan",
+      "carry",
+      "items",
+      "generate",
+      "retain",
+      "result",
+      "join"
+    ]
+  ],
+  "loops": [
+    {
+      "id": "segment-loop",
+      "bodyNodeIds": ["carry", "items", "generate", "retain", "result"],
+      "iterations": 374,
+      "maxIterations": 512,
+      "inputNodeId": "carry",
+      "itemNodeId": "items",
+      "resultNodeId": "result",
+      "iterationMode": "collection",
+      "carry": true,
+      "collect": true,
+      "durable": true,
+      "maxRetries": 1
+    }
+  ]
+}

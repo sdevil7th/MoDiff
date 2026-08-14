@@ -35,6 +35,8 @@ data/graphs/*
 !data/graphs/studio/**
 !data/graphs/experimental/
 !data/graphs/experimental/**
+!data/graphs/qualification/
+!data/graphs/qualification/**
 #!data/.gitkeep
 
 web/user/*
