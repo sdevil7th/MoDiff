@@ -816,7 +816,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
 _TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
     _TRANSFORMERS_PEFT_PROFILE,
     id=TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
-    label="Hugging Face Transformers main + PEFT (qualification candidate)",
+    label="Hugging Face Transformers main + PEFT (Linux x86-64 qualified)",
     packages=(
         replace(
             _TRANSFORMERS_PEFT_PROFILE.packages[0],
@@ -834,7 +834,10 @@ _TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
         if artifact["distribution"] != "transformers"
     ),
     source_builds=(_transformers_main_source_build(),),
-    contract_state="candidate_unqualified",
+    # Actions are admitted by exact target contracts below. Keep the profile
+    # defaults closed so no unlisted or newly detected platform inherits the
+    # Linux qualification.
+    contract_state="qualified_platform_scoped",
     cutover_ready=False,
     install_action_available=False,
     activation_available=False,
@@ -842,10 +845,15 @@ _TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
         OptionalRuntimeTargetContract(
             platform=platform_name,
             machine=machine,
-            contract_state="candidate_unqualified",
-            cutover_ready=False,
-            install_action_available=False,
-            activation_available=False,
+            contract_state=(
+                "qualified"
+                if (platform_name, machine) == ("linux", "x86_64")
+                else "candidate_unqualified"
+            ),
+            cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+            install_action_available=(platform_name, machine)
+            == ("linux", "x86_64"),
+            activation_available=(platform_name, machine) == ("linux", "x86_64"),
         )
         for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
     ),

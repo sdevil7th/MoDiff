@@ -73,7 +73,7 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             source.contract_for_target(platform_name="linux", machine="x86_64"),
         )
 
-    def test_exact_main_profile_has_an_independent_dormant_qualifier_path(self):
+    def test_exact_main_profile_has_a_linux_scoped_requalification_path(self):
         import modiff.optional_runtimes as optional_runtimes
 
         profile_id = optional_runtimes.TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
@@ -82,12 +82,12 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
 
         self.assertEqual(result["profileId"], profile_id)
         self.assertEqual(result["candidateSpecDigest"], candidate.spec_digest)
-        self.assertNotEqual(
+        self.assertEqual(
             result["qualificationSpecDigest"],
             result["candidateSpecDigest"],
         )
-        self.assertTrue(result["sourceFlagsDormant"])
-        self.assertFalse(result["sourceTargetQualified"])
+        self.assertFalse(result["sourceFlagsDormant"])
+        self.assertTrue(result["sourceTargetQualified"])
         self.assertEqual(result["sourceBuildCount"], 1)
         self.assertEqual(result["artifactCount"], len(candidate.packages))
         self.assertEqual(

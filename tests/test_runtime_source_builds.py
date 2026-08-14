@@ -218,7 +218,7 @@ class SourceBuildFixture(unittest.TestCase):
 
 
 class SourceBuildContractTests(SourceBuildFixture):
-    def test_exact_transformers_main_profile_is_immutable_and_dormant(self):
+    def test_exact_transformers_main_profile_is_immutable_and_linux_scoped(self):
         current = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
         source = runtime_source_builds.validate_source_build_contract(
@@ -277,7 +277,22 @@ class SourceBuildContractTests(SourceBuildFixture):
             "unreviewed.py",
             profile.to_spec_dict()["sourceBuilds"][0]["sourceFiles"],
         )
+        self.assertEqual(profile.contract_state, "qualified_platform_scoped")
+        self.assertFalse(profile.cutover_ready)
+        self.assertFalse(profile.install_action_available)
+        self.assertFalse(profile.activation_available)
+        qualified_targets = {
+            (target.platform, target.machine)
+            for target in profile.target_contracts
+            if target.contract_state == "qualified"
+            and target.cutover_ready
+            and target.install_action_available
+            and target.activation_available
+        }
+        self.assertEqual(qualified_targets, {("linux", "x86_64")})
         for target in profile.target_contracts:
+            if (target.platform, target.machine) == ("linux", "x86_64"):
+                continue
             self.assertEqual(target.contract_state, "candidate_unqualified")
             self.assertFalse(target.cutover_ready)
             self.assertFalse(target.install_action_available)
@@ -292,9 +307,16 @@ class SourceBuildContractTests(SourceBuildFixture):
             all(url.startswith("https://files.pythonhosted.org/") for url in install_urls)
         )
 
-    def test_dormant_profile_rejects_before_binding_or_installer_resolution(self):
+    def test_unqualified_main_target_rejects_before_binding_or_installer_resolution(self):
+        import modiff.optional_runtimes as optional_runtimes
+
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
         with (
+            mock.patch.object(
+                optional_runtimes,
+                "optional_runtime_target",
+                return_value=("macos", "arm64"),
+            ),
             mock.patch.object(optimization_packages, "current_base_binding") as binding,
             mock.patch.object(optimization_packages, "_verified_uv_executable") as installer,
             self.assertRaisesRegex(RuntimeError, "not qualified for installation"),
@@ -306,6 +328,78 @@ class SourceBuildContractTests(SourceBuildFixture):
             )
         binding.assert_not_called()
         installer.assert_not_called()
+
+    def test_only_linux_x86_64_target_reaches_install_request_validation(self):
+        import modiff.optional_runtimes as optional_runtimes
+
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
+        targets = (
+            ("linux", "x86_64"),
+            ("linux", "arm64"),
+            ("macos", "x86_64"),
+            ("macos", "arm64"),
+            ("windows", "x86_64"),
+            ("windows", "arm64"),
+        )
+        for target in targets:
+            binding = mock.Mock(return_value={"reviewed": True})
+            installer = mock.Mock(return_value="reviewed-uv")
+            with (
+                self.subTest(target=target),
+                mock.patch.object(
+                    optional_runtimes,
+                    "optional_runtime_target",
+                    return_value=target,
+                ),
+                mock.patch.object(
+                    optimization_packages,
+                    "current_base_binding",
+                    binding,
+                ),
+                mock.patch.object(
+                    optimization_packages,
+                    "_verified_uv_executable",
+                    installer,
+                ),
+            ):
+                if target == ("linux", "x86_64"):
+                    request = optimization_packages.validate_optional_runtime_install_request(
+                        profile.id,
+                        profile.spec_digest,
+                        consent=True,
+                    )
+                    self.assertEqual(request["profile"], profile)
+                    binding.assert_called_once()
+                    installer.assert_called_once()
+                    activation_spec = (
+                        optimization_packages.validate_optional_runtime_activation_request(
+                            profile.id,
+                            profile.spec_digest,
+                            consent=True,
+                        )
+                    )
+                    self.assertEqual(activation_spec["id"], profile.id)
+                else:
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "not qualified for installation",
+                    ):
+                        optimization_packages.validate_optional_runtime_install_request(
+                            profile.id,
+                            profile.spec_digest,
+                            consent=True,
+                        )
+                    binding.assert_not_called()
+                    installer.assert_not_called()
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "not qualified for activation",
+                    ):
+                        optimization_packages.validate_optional_runtime_activation_request(
+                            profile.id,
+                            profile.spec_digest,
+                            consent=True,
+                        )
 
     def test_latest_main_relock_records_only_unselected_documentation_changes(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
