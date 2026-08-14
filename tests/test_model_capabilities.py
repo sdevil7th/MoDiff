@@ -145,7 +145,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 121)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 122)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -597,9 +597,18 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(canny_spec["roles"], depth_spec["roles"])
         self.assertEqual(canny_spec["edges"], depth_spec["edges"])
 
-        redux_spec = by_model["FluxReduxPipeline"]["studioExecutionSpecs"][0]
-        self.assertEqual(by_model["FluxReduxPipeline"]["modes"], ["edit_image"])
+        redux_specs = by_model["FluxReduxPipeline"]["studioExecutionSpecs"]
+        redux_spec = next(item for item in redux_specs if item["mode"] == "edit_image")
+        redux_multi_spec = next(
+            item for item in redux_specs if item["mode"] == "multi_image_reference_edit"
+        )
+        self.assertEqual(
+            by_model["FluxReduxPipeline"]["modes"],
+            ["edit_image", "multi_image_reference_edit"],
+        )
         self.assertEqual(redux_spec["mode"], "edit_image")
+        self.assertEqual(redux_multi_spec["pipelineClass"], "FluxReduxPipeline")
+        self.assertNotEqual(redux_multi_spec["contentHash"], redux_spec["contentHash"])
         self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
         redux_requirement = by_model["FluxReduxPipeline"]["modeRequirements"]["edit_image"][
             "modelRequirements"
@@ -611,6 +620,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             by_model["FluxReduxPipeline"]["additionalRequirements"][0],
+            redux_requirement,
+        )
+        self.assertEqual(
+            by_model["FluxReduxPipeline"]["modeRequirements"]["multi_image_reference_edit"][
+                "modelRequirements"
+            ][0],
             redux_requirement,
         )
 

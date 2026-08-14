@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T22:57:39.653Z",
+  "generatedAt": "2026-08-14T13:53:29.314Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 121,
-  "supportedPairCount": 133,
+  "supportedCanonicalPairCount": 122,
+  "supportedPairCount": 134,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -1313,6 +1313,51 @@
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware"
+    },
+    {
+      "id": "FluxReduxPipeline:multi_image_reference_edit",
+      "modelType": "FluxReduxPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "multi_image_reference_edit",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified",
+      "graphQualificationStatus": "graph-qualified",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.1-Redux-dev"
+      ],
+      "requiredInputs": {
+        "modelRequirements": [
+          {
+            "id": "flux-redux-base",
+            "label": "FLUX.1-dev base pipeline",
+            "repo": "black-forest-labs/FLUX.1-dev",
+            "revision": "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+            "kind": "base",
+            "requiredForModes": [
+              "edit_image",
+              "multi_image_reference_edit"
+            ],
+            "description": "Redux supplies reference embeddings to the app-installed FLUX.1-dev base pipeline."
+          }
+        ],
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires multiple reference images plus the reviewed FLUX.1-dev base pipeline."
+      },
+      "pipelineClasses": [
+        "FluxReduxPipeline"
+      ],
+      "sourceTemplateId": "flux_redux_multi_reference",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/flux-redux-pipeline/multi-image-reference-edit.json",
+      "graphHash": "693087f46c6fdb2d948f61be5bdf2e5d5e8fcc9f77f5f0247243130c5b6b4446"
     },
     {
       "id": "FluxSchnellPipeline:text_to_image",

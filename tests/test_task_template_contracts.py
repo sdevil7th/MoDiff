@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 121)
+        self.assertEqual(len(self.contracts), 122)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -140,6 +140,10 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("FluxDevPipeline", "inpaint"): [
                 ("image", "referenceImages"),
                 ("image", "maskImage"),
+            ],
+            ("FluxReduxPipeline", "edit_image"): [("image", "referenceImages")],
+            ("FluxReduxPipeline", "multi_image_reference_edit"): [
+                ("image", "referenceImages"),
             ],
             ("ZImageModularPipeline", "edit_image"): [("image", "referenceImages")],
             ("QwenImageModularPipeline", "edit_image"): [("image", "referenceImages")],
@@ -259,6 +263,8 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("StableDiffusionPAGPipeline", "text_to_image"),
             ("FluxDevPipeline", "edit_image"),
             ("FluxDevPipeline", "inpaint"),
+            ("FluxReduxPipeline", "edit_image"),
+            ("FluxReduxPipeline", "multi_image_reference_edit"),
             ("ZImageModularPipeline", "edit_image"),
             ("QwenImageModularPipeline", "edit_image"),
             ("QwenImageModularPipeline", "inpaint"),

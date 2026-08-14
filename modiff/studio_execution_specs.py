@@ -1647,7 +1647,18 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "repo": FLUX_DEV_REPO,
             "revision": require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline"),
             "kind": "base",
-            "requiredForModes": ["edit_image"],
+            "requiredForModes": ["edit_image", "multi_image_reference_edit"],
+            "description": "Redux supplies reference embeddings to the app-installed FLUX.1-dev base pipeline.",
+        },
+    ),
+    ("FluxReduxPipeline", "multi_image_reference_edit"): (
+        {
+            "id": "flux-redux-base",
+            "label": "FLUX.1-dev base pipeline",
+            "repo": FLUX_DEV_REPO,
+            "revision": require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline"),
+            "kind": "base",
+            "requiredForModes": ["edit_image", "multi_image_reference_edit"],
             "description": "Redux supplies reference embeddings to the app-installed FLUX.1-dev base pipeline.",
         },
     ),
@@ -3049,6 +3060,28 @@ def _capability(
     }
 
 
+def _flux_redux_profile() -> dict[str, Any]:
+    profile = _profile(
+        "flux-redux:direct",
+        "FluxReduxPipeline",
+        FLUX_REDUX_REPO,
+        default_quantized_components=("transformer",),
+        supported_offload_modes=(
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_SEQUENTIAL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
+        retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+        max_low_memory_side=768,
+        max_low_memory_steps=24,
+        mode="edit_image",
+        pipeline_class="FluxReduxPipeline",
+    )
+    profile["modes"] = ("edit_image", "multi_image_reference_edit")
+    return profile
+
+
 STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     "flux-schnell:text-to-image:v1": {
         "modelType": "FluxSchnellPipeline",
@@ -3482,23 +3515,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     "flux-redux:edit-image:v1": {
         "modelType": "FluxReduxPipeline",
         "mode": "edit_image",
-        "profile": _profile(
-            "flux-redux:direct",
-            "FluxReduxPipeline",
-            FLUX_REDUX_REPO,
-            default_quantized_components=("transformer",),
-            supported_offload_modes=(
-                OFFLOAD_MODE_MODEL_CPU,
-                OFFLOAD_MODE_SEQUENTIAL_CPU,
-                OFFLOAD_MODE_GROUP_CPU,
-                OFFLOAD_MODE_GROUP_DISK,
-            ),
-            retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
-            max_low_memory_side=768,
-            max_low_memory_steps=24,
-            mode="edit_image",
-            pipeline_class="FluxReduxPipeline",
-        ),
+        "profile": _flux_redux_profile(),
         "capability": {
             **_capability(
                 "FluxReduxPipeline",
@@ -3516,7 +3533,8 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "downloadFiles": FLUX_REDUX_DIFFUSERS_FILES,
             "artifactCandidates": [FLUX_REDUX_REPO, FLUX_DEV_REPO],
             "supportsImageInput": True,
-            "modes": ["edit_image"],
+            "supportsMultiImage": True,
+            "modes": ["edit_image", "multi_image_reference_edit"],
             "additionalRequirements": studio_model_requirements_for_pair(
                 "FluxReduxPipeline", "edit_image"
             ),
@@ -3527,6 +3545,13 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                     ),
                     "requiredImages": ["referenceImages"],
                     "note": "Requires reference images plus the reviewed FLUX.1-dev base pipeline.",
+                },
+                "multi_image_reference_edit": {
+                    "modelRequirements": studio_model_requirements_for_pair(
+                        "FluxReduxPipeline", "multi_image_reference_edit"
+                    ),
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires multiple reference images plus the reviewed FLUX.1-dev base pipeline.",
                 }
             },
         },
@@ -9483,6 +9508,14 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["whisper-tiny:speech-translation:v1"] = {
     "roles": _SPEECH_GRAPH_ROLES,
     "edges": _SPEECH_GRAPH_EDGES,
     "bindings": _SPEECH_TRANSLATION_GRAPH_BINDINGS,
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = {
+    "modelType": "FluxReduxPipeline",
+    "mode": "multi_image_reference_edit",
+    "profile": _flux_redux_profile(),
+    "roles": _EDIT_GRAPH_ROLES,
+    "edges": _EDIT_GRAPH_EDGES,
+    "bindings": _EDIT_GRAPH_BINDINGS,
 }
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {

@@ -56,6 +56,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "control_image",
         )
         redux = studio_model_dependencies_for_pair("FluxReduxPipeline", "edit_image")
+        redux_multi = studio_model_dependencies_for_pair(
+            "FluxReduxPipeline", "multi_image_reference_edit"
+        )
         sdxl_controlnet = studio_model_dependencies_for_pair(
             "StableDiffusionXLControlNetPipeline",
             "control_image",
@@ -87,6 +90,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 }
             ],
         )
+        self.assertEqual(redux_multi, redux)
         self.assertEqual(
             sdxl_controlnet,
             [
@@ -111,7 +115,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         )
         self.assertEqual(
             studio_model_requirements_for_pair("FluxReduxPipeline", "edit_image")[0]["requiredForModes"],
-            ["edit_image"],
+            ["edit_image", "multi_image_reference_edit"],
         )
         self.assertEqual(studio_model_dependencies_for_pair("FluxReduxPipeline", "text_to_image"), [])
 
@@ -241,6 +245,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("MarigoldDepthPipeline", "depth_estimation"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_to_text"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_translation"),
+                ("FluxReduxPipeline", "multi_image_reference_edit"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -1409,6 +1414,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
         self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxKontextPipeline"]["supportedTasks"], ["edit_image"])
+
+    def test_flux_redux_modes_have_exact_receipts_and_multi_reference_stays_expert_only(self):
+        edit = studio_execution_spec_for_pair("FluxReduxPipeline", "edit_image")
+        multi = studio_execution_spec_for_pair(
+            "FluxReduxPipeline", "multi_image_reference_edit"
+        )
+        self.assertIsNotNone(edit)
+        self.assertIsNotNone(multi)
+        self.assertEqual(edit["pipelineClass"], "FluxReduxPipeline")
+        self.assertEqual(multi["pipelineClass"], "FluxReduxPipeline")
+        self.assertEqual(edit["executionProfileId"], multi["executionProfileId"])
+        self.assertNotEqual(edit["contentHash"], multi["contentHash"])
+        for spec in (edit, multi):
+            graph, hints = executable_graph_for_spec(spec)
+            assert_studio_execution_graph(graph, hints)
+        self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxReduxPipeline"]["supportedTasks"], ["edit_image"])
 
     def test_flux_fill_modes_have_distinct_exact_receipts_and_shared_auto_requirements(self):
         inpaint = studio_execution_spec_for_pair("FluxFillPipeline", "inpaint")
