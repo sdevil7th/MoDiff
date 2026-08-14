@@ -5617,6 +5617,32 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   over the limit while an existing transfer finalized. PixArt required no new
   bytes; no POST, interruption, or deletion occurred, and the cached
   documentation assets remain preserved.
+- [x] **P6.77 Bound admitted Wan video component downloads and loader
+  serialization:** backend `e3fc376` binds the four currently cached admitted
+  Wan families to their exact Diffusers runtime surfaces. Wan 2.1 T2V/video
+  edit retains 21 files / 28,928,908,149 bytes; Wan 2.1 VACE retains 19 files /
+  19,037,151,627 bytes; Wan 2.2 dual-expert I2V retains 43 files /
+  126,202,571,522 bytes; and Wan 2.2 TI2V retains 22 files / 34,201,437,893
+  bytes. Each allowlist includes the required text encoder, transformer(s),
+  VAE, tokenizer, scheduler, configs, indexes, card, and attribute receipt while
+  excluding repository documentation and example media: 15,892,213 bytes from
+  the combined 208,385,961,404-byte trees. VACE, T2V, video-to-video, TI2V, and
+  dual-expert I2V loads now all pass `use_safetensors=True` to both explicit
+  VAE and pipeline component loads.
+
+  App plan and POST regressions bind all four capabilities to their exact
+  allowlists. Focused artifact and loader regressions require every indexed
+  component, exclude all asset/example and legacy serialization surfaces, and
+  exercise safetensors propagation through each distinct Wan loader. The Wan,
+  capability, app, server, and video-loader matrix passes 233 tests, two
+  optional-runtime skips, and 338 subtests; pinned Ruff E9/F, 66-package
+  compatibility, and diff checks pass. Four concurrent fresh app plans
+  reported zero remaining bytes. Current free bytes were 364,487,782,400
+  against 298,429,691,965 queued reservation bytes and the
+  68,719,476,736-byte safety reserve, so the active aggregate queue envelope
+  was temporarily 2,661,386,301 bytes over the limit while an existing transfer
+  progressed. No Wan bytes were needed; no POST, interruption, or deletion
+  occurred, and all cached documentation/example media remains preserved.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6891,4 +6917,5 @@ Add references only after the corresponding evidence exists.
 | P6.74 Bounded shared SD1.5 image/video download union and image-loader serialization | `896a723` | Not required | Exact immutable app plan plus prior local image/video smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 8,223,292,159-byte union covers the float32 image/PAG routes and fp16 AnimateDiff/AnimateLCM routes, excludes 39,036,647,490 bytes of pickle, non-EMA, single-file, and YAML surfaces, and makes all five image adapters safetensors-only. A fresh fitting plan preceded the app-only 2,740,639,959-byte fp16 completion request, with no deletion. |
 | P6.75 Bounded Z-Image component download and loader serialization | `8f96945` | Not required | Exact immutable app plan and prior local live smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 32,848,321,404-byte component selection excludes 51,345,993 bytes of gallery/PDF assets and makes all three generic Z-Image adapters safetensors-only. Every selected file is already complete in the preserved cache, so no POST or deletion occurred. |
 | P6.76 Bounded PixArt Sigma component download selection | `a0fe20c` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | One exact 15-file / 21,828,231,839-byte component selection excludes 4,258,550 bytes of documentation images and matches the existing safetensors-only loader. Every selected file is already complete; the active aggregate queue temporarily exceeded the safety envelope by 374,414,385 bytes, so no POST, interruption, or deletion occurred. |
+| P6.77 Bounded admitted Wan video component downloads and loader serialization | `e3fc376` | Not required | Exact immutable app plans plus prior local Wan smokes only; remote output review and physical macOS remain pending | Not required | Exact 21/19/43/22-file component selections for Wan 2.1 T2V/edit, VACE, Wan 2.2 I2V, and TI2V total 208,370,069,191 bytes, exclude 15,892,213 bytes of documentation/example media, and make every corresponding VAE/pipeline load explicitly safetensors-only. Every selected file is already complete; the active aggregate queue temporarily exceeded the safety envelope by 2,661,386,301 bytes, so no POST, interruption, or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
