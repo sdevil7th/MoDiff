@@ -21,6 +21,7 @@ from modiff.diffusers_profiles import (
     resolve_execution_profiles_for_loader,
 )
 from modiff.optimization_packages import public_optional_runtime_catalog
+from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
 
 
 _PROCESS_BLOCK_STATES = {
@@ -244,6 +245,17 @@ def optional_runtime_requirement_for_profiles(
             requirement,
             state="unavailable",
             reason="optional_runtime_profile_unknown",
+        )
+    if any(
+        profile_id not in OPTIONAL_RUNTIME_PROFILES
+        or by_id[profile_id]["specDigest"]
+        != OPTIONAL_RUNTIME_PROFILES[profile_id].spec_digest
+        for profile_id in requested
+    ):
+        return _copy_requirement(
+            requirement,
+            state="unavailable",
+            reason="optional_runtime_profile_digest_mismatch",
         )
 
     states = [_catalog_profile_state(by_id[profile_id], process_status) for profile_id in requested]

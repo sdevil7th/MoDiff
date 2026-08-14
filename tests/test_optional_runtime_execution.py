@@ -29,13 +29,14 @@ from modiff.optional_runtime_execution import (
 )
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
 )
 from modiff.server import WebServer
 
 
 EXECUTION_PROFILE_ID = "z-image:auto"
-OPTIONAL_PROFILE_ID = TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+OPTIONAL_PROFILE_ID = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
 
 
 class JsonRequest:
@@ -88,8 +89,9 @@ def runtime_catalog(
     process_status="base",
     overlay_status="missing",
     qualified=False,
+    profile_id=OPTIONAL_PROFILE_ID,
 ):
-    contract = OPTIONAL_RUNTIME_PROFILES[OPTIONAL_PROFILE_ID]
+    contract = OPTIONAL_RUNTIME_PROFILES[profile_id]
     return {
         "schemaVersion": 1,
         "profiles": [
@@ -176,6 +178,55 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     )
                     self.assertEqual(targeted["delivery"], expected)
                     self.assertEqual(targeted["requiredNow"], expected == "optional_overlay")
+                    expected_profile_id = (
+                        TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+                        if (platform_name, machine) == ("linux", "x86_64")
+                        else TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+                    )
+                    self.assertEqual(targeted["profileIds"], [expected_profile_id])
+
+    def test_platform_profile_binding_is_explicit_and_fail_closed(self):
+        profile = DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID]
+        self.assertEqual(
+            profile.optional_runtime_profile_ids_for_target(
+                platform_name="linux",
+                machine="x86_64",
+            ),
+            (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,),
+        )
+        self.assertEqual(
+            profile.optional_runtime_profile_ids_for_target(
+                platform_name="windows",
+                machine="AMD64",
+            ),
+            (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+        )
+        for platform_name, machine in (
+            ("linux", "arm64"),
+            ("macos", "x86_64"),
+            ("macos", "arm64"),
+            ("windows", "arm64"),
+        ):
+            with self.subTest(platform_name=platform_name, machine=machine):
+                targeted = declarative_requirement(
+                    (profile,),
+                    platform_name=platform_name,
+                    machine=machine,
+                )
+                self.assertEqual(targeted["delivery"], OPTIONAL_RUNTIME_DELIVERY_BASE)
+                self.assertFalse(targeted["requiredNow"])
+                self.assertEqual(
+                    targeted["profileIds"],
+                    [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                )
+
+        unknown = declarative_requirement(
+            (profile,),
+            platform_name="freebsd",
+            machine="x86_64",
+        )
+        self.assertEqual(unknown["state"], "unavailable")
+        self.assertEqual(unknown["reason"], "execution_profile_contract_invalid")
 
     def test_base_delivery_never_observes_runtime_catalog(self):
         profile = replace(
@@ -488,6 +539,60 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     )
                     self.assertEqual(requirement["state"], expected)
                     self.assertEqual(requirement["requiredNow"], True)
+
+    def test_linux_graph_requires_exact_main_profile_and_digest(self):
+        active_main = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        active_old = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+            profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ):
+            ready = graph_optional_runtime_requirement(
+                loader_graph(),
+                catalog_resolver=lambda: active_main,
+            )
+            stale = graph_optional_runtime_requirement(
+                loader_graph(),
+                catalog_resolver=lambda: active_old,
+            )
+            forged = graph_optional_runtime_requirement(
+                loader_graph(),
+                catalog_resolver=lambda: {
+                    **active_main,
+                    "profiles": [
+                        {
+                            **active_main["profiles"][0],
+                            "specDigest": OPTIONAL_RUNTIME_PROFILES[
+                                TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+                            ].spec_digest,
+                        }
+                    ],
+                },
+            )
+
+        self.assertEqual(ready["state"], "active")
+        self.assertEqual(
+            ready["profileIds"],
+            [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(stale["state"], "unavailable")
+        self.assertEqual(stale["reason"], "optional_runtime_profile_unknown")
+        self.assertEqual(forged["state"], "unavailable")
+        self.assertEqual(
+            forged["reason"],
+            "optional_runtime_profile_digest_mismatch",
+        )
 
     def test_fake_active_catalog_cannot_override_base_worker_status(self):
         with overlay_delivery() as profile, mock.patch.dict(
@@ -1237,6 +1342,53 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status, 409)
         self.assertEqual(response_json(response)["error_code"], "optional_runtime_missing")
         importer.assert_not_called()
+
+    async def test_linux_field_action_accepts_exact_main_and_rejects_old_profile(self):
+        active_main = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        active_old = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+            profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_main,
+        ):
+            ready = await self.server.field_action(self.request())
+        self.assertEqual(ready.status, 200)
+        self.assertEqual(len(self.node.calls), 1)
+        self.assertEqual(
+            self.node.calls[0][0]["pipeline_class"],
+            "ZImagePipeline",
+        )
+
+        self.node.calls.clear()
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_old,
+        ):
+            stale = await self.server.field_action(self.request())
+        self.assertEqual(stale.status, 409)
+        stale_body = response_json(stale)
+        self.assertEqual(stale_body["error_code"], "optional_runtime_unavailable")
+        self.assertEqual(
+            stale_body["optionalRuntimeRequirement"]["profileIds"],
+            [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(self.node.calls, [])
 
     async def test_queued_field_action_rechecks_state_before_callback(self):
         active = runtime_catalog(

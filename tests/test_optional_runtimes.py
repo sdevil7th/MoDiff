@@ -18,6 +18,7 @@ from modiff.diffusers_profiles import (
 )
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_requirements,
     public_optional_runtime_profiles,
@@ -252,27 +253,38 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                 self.assertEqual(profile.optional_runtime_profiles, expected)
                 for mode in profile.modes:
                     self.assertIn(
-                        TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+                        TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
                         optional_runtime_profile_ids_for_execution(
                             profile.model_type,
                             mode,
+                            platform_name="linux",
+                            machine="x86_64",
                         ),
+                    )
+                    self.assertEqual(
+                        optional_runtime_profile_ids_for_execution(
+                            profile.model_type,
+                            mode,
+                            platform_name="windows",
+                            machine="AMD64",
+                        ),
+                        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
                     )
 
         public_profile = public_execution_profiles()[0]
         self.assertEqual(
             public_profile["optional_runtime_profiles"],
-            [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+            [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
         )
         self.assertNotIn("optionalRuntimeProfiles", public_profile)
 
     def test_optional_metadata_state_does_not_change_auto_readiness(self):
         observations = {
             "present_unqualified": _version_resolver(
-                {"transformers": "5.14.1", "peft": "0.20.0"}
+                {"transformers": "5.16.0.dev0", "peft": "0.20.0"}
             ),
             "wrong_version": _version_resolver(
-                {"transformers": "5.14.1", "peft": "0.19.0"}
+                {"transformers": "5.16.0.dev0", "peft": "0.19.0"}
             ),
             "missing": _version_resolver({}),
         }
@@ -468,11 +480,11 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(
                 plan["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
             )
             self.assertEqual(
                 plan["candidates"][0]["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
             )
             # This metadata-only slice must not affect the existing Auto result.
             self.assertEqual(plan["canAutoRun"], bool(plan["selectedCandidate"]))
@@ -485,8 +497,14 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
 
             capabilities = json.loads(capabilities_response.text)
             self.assertEqual(
-                capabilities["optionalRuntimeProfiles"][0]["id"],
-                TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+                {
+                    profile["id"]
+                    for profile in capabilities["optionalRuntimeProfiles"]
+                },
+                {
+                    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                },
             )
             z_image = next(
                 capability
@@ -495,14 +513,14 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 z_image["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
             )
 
             graph_tree = json.loads(listgraphs_response.text)
             graph_file = next(_walk_graph_files(graph_tree))
             self.assertEqual(
                 graph_file["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
             )
             self.assertEqual(
                 graph_file["optionalRuntimeProfiles"][0]["contractState"],

@@ -17,6 +17,7 @@ from modiff.modular_workflow_contracts import (
 )
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_target,
     public_optional_runtime_profiles,
@@ -57,13 +58,47 @@ OPTIONAL_RUNTIME_DELIVERY_OVERLAY = "optional_overlay"
 OPTIONAL_RUNTIME_DELIVERIES = frozenset(
     {OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY}
 )
-OPTIONAL_RUNTIME_PLATFORM_DELIVERIES = (
-    ("linux", "x86_64", OPTIONAL_RUNTIME_DELIVERY_OVERLAY),
-    ("linux", "arm64", OPTIONAL_RUNTIME_DELIVERY_BASE),
-    ("macos", "x86_64", OPTIONAL_RUNTIME_DELIVERY_BASE),
-    ("macos", "arm64", OPTIONAL_RUNTIME_DELIVERY_BASE),
-    ("windows", "x86_64", OPTIONAL_RUNTIME_DELIVERY_OVERLAY),
-    ("windows", "arm64", OPTIONAL_RUNTIME_DELIVERY_BASE),
+OPTIONAL_RUNTIME_PLATFORM_CONTRACTS = (
+    (
+        "linux",
+        "x86_64",
+        OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+        (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "linux",
+        "arm64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "macos",
+        "x86_64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "macos",
+        "arm64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "windows",
+        "x86_64",
+        OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "windows",
+        "arm64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+)
+OPTIONAL_RUNTIME_PLATFORM_DELIVERIES = tuple(
+    (platform_name, machine, delivery)
+    for platform_name, machine, delivery, _profile_ids in OPTIONAL_RUNTIME_PLATFORM_CONTRACTS
 )
 _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
 _EXECUTION_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._:-]{0,127}")
@@ -302,6 +337,31 @@ class DiffusersExecutionProfile:
         )
         return matches[0] if len(matches) == 1 else "invalid"
 
+    def optional_runtime_profile_ids_for_target(
+        self,
+        *,
+        platform_name: str | None = None,
+        machine: str | None = None,
+    ) -> tuple[str, ...]:
+        """Resolve exact profile IDs from the reviewed target delivery table."""
+
+        if not self.optional_runtime_profiles:
+            return ()
+        if not self.optional_runtime_platform_deliveries:
+            return self.optional_runtime_profiles
+        if self.optional_runtime_profiles != (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,):
+            return self.optional_runtime_profiles
+        selected_platform, selected_machine = optional_runtime_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
+        matches = tuple(
+            profile_ids
+            for target_platform, target_machine, _delivery, profile_ids in OPTIONAL_RUNTIME_PLATFORM_CONTRACTS
+            if target_platform == selected_platform and target_machine == selected_machine
+        )
+        return matches[0] if len(matches) == 1 else ()
+
     def to_public_dict(
         self,
         *,
@@ -311,6 +371,9 @@ class DiffusersExecutionProfile:
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
         public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target()
+        public["optional_runtime_profiles"] = list(
+            self.optional_runtime_profile_ids_for_target()
+        )
         public["optional_runtime_platform_deliveries"] = [
             {"platform": platform_name, "machine": machine, "delivery": delivery}
             for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
@@ -870,7 +933,10 @@ def optional_runtime_requirement_for_profiles(
             deliveries.add(delivery)
         valid_ids_for_profile = 0
         profile_seen_ids: set[str] = set()
-        for raw_profile_id in profile.optional_runtime_profiles:
+        for raw_profile_id in profile.optional_runtime_profile_ids_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        ):
             if (
                 not isinstance(raw_profile_id, str)
                 or not _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN.fullmatch(raw_profile_id)
@@ -1160,12 +1226,18 @@ def public_execution_profiles(
 def optional_runtime_profile_ids_for_execution(
     model_type: str,
     mode: str | None = None,
+    *,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> tuple[str, ...]:
     """Resolve optional runtime IDs for one declared model/mode pair."""
 
     profile_ids: list[str] = []
     for profile in execution_profiles_for_execution(model_type, mode):
-        for profile_id in profile.optional_runtime_profiles:
+        for profile_id in profile.optional_runtime_profile_ids_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        ):
             if profile_id not in profile_ids:
                 profile_ids.append(profile_id)
     return tuple(profile_ids)
