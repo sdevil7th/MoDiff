@@ -222,6 +222,21 @@ MARIGOLD_DEPTH_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 WHISPER_TINY_REPO = "openai/whisper-tiny"
+WHISPER_TINY_TRANSFORMERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "added_tokens.json",
+    "config.json",
+    "generation_config.json",
+    "merges.txt",
+    "model.safetensors",
+    "normalizer.json",
+    "preprocessor_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_TI2V_5B_REPO = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
@@ -8151,6 +8166,7 @@ _WHISPER_TINY_CAPABILITY = {
     "qualifiedModes": [],
     "defaultRepo": WHISPER_TINY_REPO,
     "artifactLabel": "Transformers safetensors repo",
+    "downloadFiles": WHISPER_TINY_TRANSFORMERS_FILES,
     "defaultDtype": "float32",
     "defaultSize": {"width": 1, "height": 1, "aspectRatio": "audio"},
     "recommendedSteps": 1,

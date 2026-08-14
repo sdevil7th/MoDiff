@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "openai/whisper-tiny": (
+                "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
+                13,
+                "pytorch_model.bin",
+            ),
             "prs-eth/marigold-depth-lcm-v1-0": (
                 "04a73502f7fd8fc5e59947b9df3b2266d71d6849",
                 14,
