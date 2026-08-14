@@ -392,13 +392,13 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "image_diffusion_pipeline"
           },
@@ -802,13 +802,13 @@
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "model_id"
+              "origin": "pipeline_class"
             },
             "type": "image_diffusion_pipeline"
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -914,6 +914,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "HunyuanDiTPAGPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "HunyuanDiTControlNetPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanDiTControlNetPipeline"
@@ -962,6 +970,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "SanaPAGPipeline",
+                "schemaVersion": 1,
+                "value": "SanaPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "SanaSprintPipeline",
                 "schemaVersion": 1,
                 "value": "SanaSprintPipeline"
@@ -981,6 +997,14 @@
                 "label": "PixArtSigmaPipeline",
                 "schemaVersion": 1,
                 "value": "PixArtSigmaPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "PixArtSigmaPAGPipeline",
+                "schemaVersion": 1,
+                "value": "PixArtSigmaPAGPipeline"
               },
               {
                 "availability": "installed",
@@ -1202,9 +1226,33 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "LatentConsistencyModelImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "LatentConsistencyModelImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionPAGPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionPAGImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionPAGImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionPAGInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionPAGInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -1873,15 +1921,6 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
                 "disabledReason": "Requires a CUDA/ROCm torch backend",
                 "installationState": "unavailable",
                 "label": "sage",
@@ -2373,8 +2412,8 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/flux_redux_multi_reference.reference_image_1.webp",
-              "@data/images/flux_redux_multi_reference.reference_image_2.webp"
+              "@data/images/flux_redux_multi_reference.reference_image_1_j5cp64.webp",
+              "@data/images/flux_redux_multi_reference.reference_image_2_0fQhP5.webp"
             ]
           },
           "height": {

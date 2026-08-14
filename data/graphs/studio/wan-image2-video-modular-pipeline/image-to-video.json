@@ -483,7 +483,6 @@
             "type": "modular_route_state"
           },
           "vae": {
-            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -547,7 +546,6 @@
           "guidance_scale": {
             "default": 5,
             "display": "slider",
-            "hidden": false,
             "label": "Guidance Scale",
             "max": 30,
             "min": 1,
@@ -644,7 +642,7 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -734,7 +732,7 @@
             "type": "image_embeds"
           },
           "image_encoder": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Image Encoder *",
@@ -879,7 +877,7 @@
             }
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -1180,6 +1178,7 @@
             "value": "cuda:0"
           },
           "dtype": {
+            "disabled": false,
             "label": "dtype",
             "options": [
               {
@@ -1231,14 +1230,42 @@
             "disabled": true,
             "label": "Model Type",
             "options": {
-              "": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "",
-                "schemaVersion": 1,
-                "value": ""
-              }
+              "": "",
+              "AnimaModularPipeline": "Anima (Contract only)",
+              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
+              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
+              "DummyCustomPipeline": "Custom",
+              "ErnieImageModularPipeline": "ERNIE Image (Contract only)",
+              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
+              "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
+              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
+              "FluxKontextModularPipeline": "Flux Kontext",
+              "FluxModularPipeline": "Flux",
+              "HeliosModularPipeline": "Helios (Contract only)",
+              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
+              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
+              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
+              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
+              "Krea2ModularPipeline": "Krea 2 (Contract only)",
+              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
+              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
+              "LTX2ModularPipeline": "LTX-2 (Contract only)",
+              "LTXModularPipeline": "LTX Video (Contract only)",
+              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
+              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
+              "QwenImageEditModularPipeline": "Qwen-Image-Edit",
+              "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
+              "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
+              "QwenImageModularPipeline": "Qwen-Image-2512",
+              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
+              "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
+              "Wan22Image2VideoModularPipeline": "Wan 2.2 Image to Video (Contract only)",
+              "Wan22ModularPipeline": "Wan 2.2 Text to Video (Contract only)",
+              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
+              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
+              "WanImage2VideoModularPipeline": "WAN2 I2V",
+              "WanModularPipeline": "WAN2 T2V",
+              "ZImageModularPipeline": "Z-Image"
             },
             "type": "string",
             "value": "WanImage2VideoModularPipeline"
@@ -1316,12 +1343,7 @@
               "filter": {
                 "hub": {
                   "className": [
-                    ""
-                  ]
-                },
-                "local": {
-                  "className": [
-                    ""
+                    "WanImage2VideoModularPipeline"
                   ]
                 }
               },
@@ -1470,7 +1492,7 @@
             "value": ""
           },
           "text_encoders": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

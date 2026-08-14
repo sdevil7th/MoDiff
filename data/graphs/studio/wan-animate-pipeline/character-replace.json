@@ -202,7 +202,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "a480406a42606ecbf986366a6f9061017e37d73d5a1a14367545eed6c817a8cf",
+    "positionHash": "931d7b1dd5d757ac3a9a23297df5369fe02c7e1f41b8a904130a2478d515b7e7",
     "verticalGap": 72
   },
   "nodes": [
@@ -582,15 +582,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",
@@ -1108,7 +1099,7 @@
       "id": "node-03",
       "position": {
         "x": 0,
-        "y": 1468
+        "y": 1094
       },
       "type": "custom"
     },
@@ -1191,7 +1182,7 @@
       "id": "node-04",
       "position": {
         "x": 0,
-        "y": 720
+        "y": 1468
       },
       "type": "custom"
     },
@@ -1467,7 +1458,7 @@
       "id": "node-07",
       "position": {
         "x": 0,
-        "y": 1094
+        "y": 720
       },
       "type": "custom"
     },
@@ -2217,6 +2208,25 @@
               "value": "Wan-AI/Wan2.2-Animate-14B-Diffusers"
             }
           },
+          "motion_adapter_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub"
+              ]
+            },
+            "hidden": true,
+            "label": "Motion Adapter",
+            "type": "string",
+            "value": ""
+          },
+          "motion_adapter_revision": {
+            "default": "",
+            "hidden": true,
+            "label": "Motion Adapter Revision",
+            "type": "string"
+          },
           "offload_mode": {
             "default": "model_cpu",
             "label": "Offload Mode",
@@ -2387,6 +2397,70 @@
                 "label": "StableVideoDiffusionPipeline",
                 "schemaVersion": 1,
                 "value": "StableVideoDiffusionPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateLCMPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateLCMPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AllegroPipeline",
+                "schemaVersion": 1,
+                "value": "AllegroPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LattePipeline",
+                "schemaVersion": 1,
+                "value": "LattePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MochiPipeline",
+                "schemaVersion": 1,
+                "value": "MochiPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaImageToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaImageToVideoPipeline"
               }
             ],
             "type": "string",
@@ -2421,7 +2495,7 @@
       "id": "node-10",
       "position": {
         "x": 880,
-        "y": 879
+        "y": 851
       },
       "type": "custom"
     }

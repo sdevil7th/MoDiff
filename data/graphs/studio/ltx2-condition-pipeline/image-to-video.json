@@ -136,7 +136,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "3005ea3f54b0af96578a90198a9d0779549769033947d9a2a98571aca7ded38b",
+    "positionHash": "9288561ffdccac37bd777f1b4485a8823b9ccbb527660f38987a560802284350",
     "verticalGap": 72
   },
   "nodes": [
@@ -516,15 +516,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",
@@ -1528,13 +1519,13 @@
             "value": "pil"
           },
           "pipeline": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "video_diffusion_pipeline"
           },
@@ -1708,14 +1699,11 @@
               "mediaKind": "video",
               "modes": [
                 "text_to_video",
+                "image_to_video",
                 "video_to_video",
-                "video_inpaint",
-                "video_outpaint",
-                "reference_to_video",
-                "control_to_video",
-                "video_color_edit"
+                "reference_to_video"
               ],
-              "pipelineClass": "WanVACEPipeline",
+              "pipelineClass": "LTX2ConditionPipeline",
               "schemaVersion": 1
             }
           },
@@ -1866,6 +1854,25 @@
               "value": "Lightricks/LTX-2"
             }
           },
+          "motion_adapter_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub"
+              ]
+            },
+            "hidden": true,
+            "label": "Motion Adapter",
+            "type": "string",
+            "value": ""
+          },
+          "motion_adapter_revision": {
+            "default": "",
+            "hidden": true,
+            "label": "Motion Adapter Revision",
+            "type": "string"
+          },
           "offload_mode": {
             "default": "model_cpu",
             "label": "Offload Mode",
@@ -1923,6 +1930,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -2027,6 +2035,78 @@
                 "label": "HunyuanVideoFramepackPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanVideoFramepackPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableVideoDiffusionPipeline",
+                "schemaVersion": 1,
+                "value": "StableVideoDiffusionPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateLCMPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateLCMPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AllegroPipeline",
+                "schemaVersion": 1,
+                "value": "AllegroPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LattePipeline",
+                "schemaVersion": 1,
+                "value": "LattePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MochiPipeline",
+                "schemaVersion": 1,
+                "value": "MochiPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaImageToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaImageToVideoPipeline"
               }
             ],
             "type": "string",
@@ -2061,7 +2141,7 @@
       "id": "node-06",
       "position": {
         "x": 880,
-        "y": 131
+        "y": 103
       },
       "type": "custom"
     }

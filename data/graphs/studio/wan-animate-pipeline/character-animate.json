@@ -158,7 +158,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "62291a07673c4882a3745bd62c435a9a2654dc0d68a48d247b73567f4feb55c1",
+    "positionHash": "5ada547d845958a55a74a270116f5fadc7f3a333200a386c51c09abe67601103",
     "verticalGap": 72
   },
   "nodes": [
@@ -538,15 +538,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",
@@ -2007,6 +1998,25 @@
               "value": "Wan-AI/Wan2.2-Animate-14B-Diffusers"
             }
           },
+          "motion_adapter_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub"
+              ]
+            },
+            "hidden": true,
+            "label": "Motion Adapter",
+            "type": "string",
+            "value": ""
+          },
+          "motion_adapter_revision": {
+            "default": "",
+            "hidden": true,
+            "label": "Motion Adapter Revision",
+            "type": "string"
+          },
           "offload_mode": {
             "default": "model_cpu",
             "label": "Offload Mode",
@@ -2177,6 +2187,70 @@
                 "label": "StableVideoDiffusionPipeline",
                 "schemaVersion": 1,
                 "value": "StableVideoDiffusionPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateLCMPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateLCMPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AllegroPipeline",
+                "schemaVersion": 1,
+                "value": "AllegroPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LattePipeline",
+                "schemaVersion": 1,
+                "value": "LattePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MochiPipeline",
+                "schemaVersion": 1,
+                "value": "MochiPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaImageToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaImageToVideoPipeline"
               }
             ],
             "type": "string",
@@ -2211,7 +2285,7 @@
       "id": "node-08",
       "position": {
         "x": 880,
-        "y": 505
+        "y": 477
       },
       "type": "custom"
     }

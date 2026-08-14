@@ -1038,7 +1038,7 @@
           },
           "mode": {
             "default": "text_to_audio",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1050,7 +1050,7 @@
             "value": "text_to_audio"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1135,7 +1135,7 @@
           },
           "pipeline_class": {
             "default": "AceStepPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1586,15 +1586,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",

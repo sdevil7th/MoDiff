@@ -1,0 +1,349 @@
+{
+  "edges": [
+    {
+      "className": "category-object",
+      "data": {
+        "connectionType": "object"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "hsl(130 71% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "result",
+      "style": {
+        "stroke": "hsl(130 71% 70%)"
+      },
+      "target": "node-03",
+      "targetHandle": "value",
+      "type": "default"
+    },
+    {
+      "className": "category-transformers_causal_lm",
+      "data": {
+        "connectionType": "transformers_causal_lm"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "hsl(151 79% 68%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "model",
+      "style": {
+        "stroke": "hsl(151 79% 68%)"
+      },
+      "target": "node-01",
+      "targetHandle": "model",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "d18ffa25c886eea3029fff68d0f88b159787ae116d3ea50327f73a5d9f50849f",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "GenerateText",
+        "cache": false,
+        "category": "Hugging Face Transformers",
+        "description": "Generate a bounded text continuation from one loaded causal language model.",
+        "label": "Generate Text",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.HuggingFaceTransformers",
+        "params": {
+          "do_sample": {
+            "default": false,
+            "label": "Sample",
+            "type": "boolean"
+          },
+          "max_new_tokens": {
+            "default": 256,
+            "label": "Max New Tokens",
+            "max": 2048,
+            "min": 1,
+            "type": "int"
+          },
+          "min_new_tokens": {
+            "default": 0,
+            "label": "Min New Tokens",
+            "max": 2048,
+            "min": 0,
+            "type": "int"
+          },
+          "model": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Model",
+            "type": "transformers_causal_lm"
+          },
+          "num_beams": {
+            "default": 1,
+            "label": "Beams",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "prompt": {
+            "default": "",
+            "label": "Prompt",
+            "type": "text",
+            "value": ""
+          },
+          "repetition_penalty": {
+            "default": 1,
+            "label": "Repetition Penalty",
+            "max": 10,
+            "min": 0.1,
+            "type": "float"
+          },
+          "result": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Generation Result",
+            "type": "object"
+          },
+          "temperature": {
+            "default": 1,
+            "label": "Temperature",
+            "max": 5,
+            "min": 0.01,
+            "type": "float"
+          },
+          "text": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Generated Text",
+            "type": "string"
+          },
+          "top_k": {
+            "default": 50,
+            "label": "Top K",
+            "max": 1000,
+            "min": 0,
+            "type": "int"
+          },
+          "top_p": {
+            "default": 1,
+            "label": "Top P",
+            "max": 1,
+            "min": 0.01,
+            "type": "float"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transformersTextGenerate",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 440,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "LoadTextGenerationModel",
+        "cache": false,
+        "category": "Hugging Face Transformers",
+        "description": "Load an immutable local-only causal language model and tokenizer.",
+        "label": "Load Text Generation Model",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.HuggingFaceTransformers",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "dtype": {
+            "default": "float32",
+            "label": "DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "type": "string",
+            "value": "float32"
+          },
+          "model": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Model",
+            "type": "transformers_causal_lm"
+          },
+          "model_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Model",
+            "type": "string",
+            "value": {
+              "source": "hub",
+              "value": "HuggingFaceTB/SmolLM2-135M-Instruct"
+            }
+          },
+          "receipt": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Model Receipt",
+            "type": "object"
+          },
+          "revision": {
+            "default": "",
+            "label": "Exact Hub Commit",
+            "type": "string",
+            "value": "12fd25f77366fa6b3b4b768ec3050bf629380bac"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transformersTextModel",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 84
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "DataViewer",
+        "cache": false,
+        "category": "primitive",
+        "description": "",
+        "label": "Data Viewer",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Primitive",
+        "params": {
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Output",
+            "type": "string"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_text",
+            "label": "Preview"
+          },
+          "value": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Data",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transformersTextPreview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 880,
+        "y": 126
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

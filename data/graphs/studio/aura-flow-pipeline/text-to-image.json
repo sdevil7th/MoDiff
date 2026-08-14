@@ -211,13 +211,17 @@
                 },
                 "height": {
                   "hidden": false,
-                  "max": 1536
+                  "max": 1536,
+                  "min": 16,
+                  "step": 16
                 },
                 "image_guidance_scale": {
                   "hidden": true
                 },
                 "max_sequence_length": {
-                  "hidden": false
+                  "default": 256,
+                  "hidden": false,
+                  "max": 256
                 },
                 "negative_prompt": {
                   "hidden": false
@@ -239,7 +243,9 @@
                 },
                 "width": {
                   "hidden": false,
-                  "max": 1536
+                  "max": 1536,
+                  "min": 16,
+                  "step": 16
                 }
               },
               "library": "diffusers",
@@ -274,7 +280,7 @@
             "disabled": false,
             "hidden": false,
             "label": "Max Sequence Length",
-            "max": 512,
+            "max": 256,
             "min": 1,
             "type": "int",
             "value": 256
@@ -656,7 +662,7 @@
           },
           "mode": {
             "default": "text_to_image",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -668,7 +674,7 @@
             "value": "text_to_image"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
@@ -765,7 +771,7 @@
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -863,6 +869,30 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "HunyuanDiTPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanDiTPAGPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanDiTControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionXLAdapterPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionXLAdapterPipeline"
@@ -903,6 +933,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "SanaPAGPipeline",
+                "schemaVersion": 1,
+                "value": "SanaPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "SanaSprintPipeline",
                 "schemaVersion": 1,
                 "value": "SanaSprintPipeline"
@@ -927,9 +965,153 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "PixArtSigmaPAGPipeline",
+                "schemaVersion": 1,
+                "value": "PixArtSigmaPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Kandinsky3Pipeline",
+                "schemaVersion": 1,
+                "value": "Kandinsky3Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Kandinsky3Img2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "Kandinsky3Img2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LongCatImagePipeline",
+                "schemaVersion": 1,
+                "value": "LongCatImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LongCatImageEditPipeline",
+                "schemaVersion": 1,
+                "value": "LongCatImageEditPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LuminaPipeline",
+                "schemaVersion": 1,
+                "value": "LuminaPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Lumina2Pipeline",
+                "schemaVersion": 1,
+                "value": "Lumina2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "OmniGenPipeline",
+                "schemaVersion": 1,
+                "value": "OmniGenPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "OvisImagePipeline",
+                "schemaVersion": 1,
+                "value": "OvisImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "PRXPipeline",
+                "schemaVersion": 1,
+                "value": "PRXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "NucleusMoEImagePipeline",
+                "schemaVersion": 1,
+                "value": "NucleusMoEImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "AuraFlowPipeline",
                 "schemaVersion": 1,
                 "value": "AuraFlowPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ChromaPipeline",
+                "schemaVersion": 1,
+                "value": "ChromaPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogView3PlusPipeline",
+                "schemaVersion": 1,
+                "value": "CogView3PlusPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogView4Pipeline",
+                "schemaVersion": 1,
+                "value": "CogView4Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ErnieImagePipeline",
+                "schemaVersion": 1,
+                "value": "ErnieImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "GlmImagePipeline",
+                "schemaVersion": 1,
+                "value": "GlmImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "JoyImageEditPipeline",
+                "schemaVersion": 1,
+                "value": "JoyImageEditPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "JoyImageEditPlusPipeline",
+                "schemaVersion": 1,
+                "value": "JoyImageEditPlusPipeline"
               },
               {
                 "availability": "installed",
@@ -1007,9 +1189,33 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "LatentConsistencyModelImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "LatentConsistencyModelImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionPAGPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionPAGImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionPAGImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionPAGInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionPAGInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -1674,15 +1880,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",

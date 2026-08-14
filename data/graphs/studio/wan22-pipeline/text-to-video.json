@@ -92,7 +92,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "fdb9c2611b2593246b719f458bd057d3fc7fcfdcb62e415592ee2f3caabdf6c3",
+    "positionHash": "467717ded041f40c144d0da005cc76a1b8e3d9760b7c3218fcc71468e98b134d",
     "verticalGap": 72
   },
   "nodes": [
@@ -472,15 +472,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",
@@ -1024,6 +1015,8 @@
         "params": {
           "adain_factor": {
             "default": 0.25,
+            "disabled": false,
+            "hidden": true,
             "label": "Long Color Consistency",
             "max": 1,
             "min": 0,
@@ -1038,7 +1031,9 @@
             "value": ""
           },
           "background_video": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Background Video",
             "required": false,
@@ -1054,7 +1049,9 @@
           },
           "conditioning_scale": {
             "default": 1,
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Conditioning Scale",
             "max": 2,
             "min": 0,
@@ -1064,6 +1061,8 @@
           },
           "denoise_strength": {
             "default": 1,
+            "disabled": false,
+            "hidden": true,
             "label": "Denoise strength",
             "max": 1,
             "min": 0,
@@ -1072,7 +1071,9 @@
             "value": 0.8
           },
           "face_video": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Face Video",
             "required": false,
@@ -1083,6 +1084,8 @@
           },
           "frame_rate": {
             "default": 25,
+            "disabled": false,
+            "hidden": true,
             "label": "Frame rate",
             "max": 60,
             "min": 1,
@@ -1091,6 +1094,8 @@
           },
           "framepack_sampling": {
             "default": "inverted_anti_drifting",
+            "disabled": false,
+            "hidden": true,
             "label": "FramePack Sampling",
             "options": [
               {
@@ -1130,7 +1135,9 @@
           },
           "guidance_scale_2": {
             "default": 0,
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Guidance 2",
             "max": 20,
             "min": 0,
@@ -1154,7 +1161,9 @@
             "type": "int"
           },
           "last_image": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Optional Last Image",
             "required": false,
@@ -1162,6 +1171,8 @@
           },
           "latent_window_size": {
             "default": 9,
+            "disabled": false,
+            "hidden": true,
             "label": "FramePack Window",
             "max": 32,
             "min": 1,
@@ -1175,7 +1186,9 @@
             "type": "tensor"
           },
           "mask": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Mask video",
             "required": false,
@@ -1197,19 +1210,15 @@
             },
             "label": "Mode",
             "options": [
-              "text_to_video",
-              "video_to_video",
-              "video_inpaint",
-              "video_outpaint",
-              "reference_to_video",
-              "control_to_video",
-              "video_color_edit"
+              "text_to_video"
             ],
             "type": "string",
             "value": "text_to_video"
           },
           "motion_encode_batch_size": {
             "default": 1,
+            "disabled": false,
+            "hidden": true,
             "label": "Motion Batch",
             "max": 32,
             "min": 1,
@@ -1287,18 +1296,20 @@
             "value": "pil"
           },
           "pipeline": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "video_diffusion_pipeline"
           },
           "pose_video": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Pose Video",
             "required": false,
@@ -1309,6 +1320,8 @@
           },
           "previous_conditioning_frames": {
             "default": 1,
+            "disabled": false,
+            "hidden": true,
             "label": "Previous Frames",
             "max": 16,
             "min": 1,
@@ -1330,12 +1343,16 @@
           },
           "prompt_segments_json": {
             "default": "",
+            "disabled": false,
             "display": "textarea",
+            "hidden": true,
             "label": "Timed Prompt Segments",
             "type": "text"
           },
           "reference_images": {
+            "disabled": false,
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "Reference images",
             "required": false,
@@ -1343,6 +1360,8 @@
           },
           "scheduler_flow_shift": {
             "default": 0,
+            "disabled": false,
+            "hidden": false,
             "label": "Flow Shift",
             "max": 32,
             "min": 0,
@@ -1352,6 +1371,8 @@
           },
           "secondary_guidance_scale": {
             "default": 3.5,
+            "disabled": false,
+            "hidden": true,
             "label": "Low-noise Guidance",
             "max": 20,
             "min": 0,
@@ -1372,6 +1393,8 @@
           },
           "segment_frame_length": {
             "default": 77,
+            "disabled": false,
+            "hidden": true,
             "label": "Segment Frames",
             "max": 241,
             "min": 5,
@@ -1379,6 +1402,7 @@
           },
           "strength": {
             "default": 1,
+            "disabled": false,
             "fieldOptions": {
               "studioBinding": {
                 "formFields": [
@@ -1389,6 +1413,7 @@
                 "transform": "identity"
               }
             },
+            "hidden": true,
             "label": "Condition strength",
             "max": 1,
             "min": 0,
@@ -1398,6 +1423,8 @@
           },
           "temporal_overlap": {
             "default": 24,
+            "disabled": false,
+            "hidden": true,
             "label": "Temporal Overlap",
             "max": 128,
             "min": 1,
@@ -1405,6 +1432,8 @@
           },
           "temporal_overlap_condition_strength": {
             "default": 0.5,
+            "disabled": false,
+            "hidden": true,
             "label": "Overlap Preservation",
             "max": 1,
             "min": 0,
@@ -1413,6 +1442,8 @@
           },
           "temporal_tile_size": {
             "default": 80,
+            "disabled": false,
+            "hidden": true,
             "label": "Temporal Window",
             "max": 257,
             "min": 17,
@@ -1420,6 +1451,8 @@
           },
           "true_cfg_scale": {
             "default": 1,
+            "disabled": false,
+            "hidden": true,
             "label": "True CFG",
             "max": 20,
             "min": 0,
@@ -1427,6 +1460,8 @@
           },
           "use_guidance_scale_2": {
             "default": false,
+            "disabled": false,
+            "hidden": true,
             "label": "Use guidance 2",
             "type": "bool",
             "value": false
@@ -1463,15 +1498,9 @@
               "library": "diffusers",
               "mediaKind": "video",
               "modes": [
-                "text_to_video",
-                "video_to_video",
-                "video_inpaint",
-                "video_outpaint",
-                "reference_to_video",
-                "control_to_video",
-                "video_color_edit"
+                "text_to_video"
               ],
-              "pipelineClass": "WanVACEPipeline",
+              "pipelineClass": "Wan22Pipeline",
               "schemaVersion": 1
             }
           },
@@ -1606,7 +1635,7 @@
             "type": "bool"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1621,6 +1650,25 @@
               "source": "hub",
               "value": "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
             }
+          },
+          "motion_adapter_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub"
+              ]
+            },
+            "hidden": true,
+            "label": "Motion Adapter",
+            "type": "string",
+            "value": ""
+          },
+          "motion_adapter_revision": {
+            "default": "",
+            "hidden": true,
+            "label": "Motion Adapter Revision",
+            "type": "string"
           },
           "offload_mode": {
             "default": "model_cpu",
@@ -1679,6 +1727,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -1690,7 +1739,7 @@
           },
           "pipeline_class": {
             "default": "WanVACEPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1783,6 +1832,78 @@
                 "label": "HunyuanVideoFramepackPipeline",
                 "schemaVersion": 1,
                 "value": "HunyuanVideoFramepackPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableVideoDiffusionPipeline",
+                "schemaVersion": 1,
+                "value": "StableVideoDiffusionPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateDiffPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateDiffPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AnimateLCMPipeline",
+                "schemaVersion": 1,
+                "value": "AnimateLCMPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogVideoXPipeline",
+                "schemaVersion": 1,
+                "value": "CogVideoXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AllegroPipeline",
+                "schemaVersion": 1,
+                "value": "AllegroPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LattePipeline",
+                "schemaVersion": 1,
+                "value": "LattePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MochiPipeline",
+                "schemaVersion": 1,
+                "value": "MochiPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "SanaImageToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "SanaImageToVideoPipeline"
               }
             ],
             "type": "string",
@@ -1817,7 +1938,7 @@
       "id": "node-05",
       "position": {
         "x": 880,
-        "y": 117
+        "y": 89
       },
       "type": "custom"
     }

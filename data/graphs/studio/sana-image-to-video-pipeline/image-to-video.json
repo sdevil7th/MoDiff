@@ -496,15 +496,6 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
                 "disabledReason": "Requires a CUDA/ROCm torch backend",
                 "installationState": "unavailable",
                 "label": "sage",
@@ -1773,7 +1764,7 @@
             "type": "bool"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1877,7 +1868,7 @@
           },
           "pipeline_class": {
             "default": "WanVACEPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },

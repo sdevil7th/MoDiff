@@ -355,7 +355,7 @@
             "type": "modular_route_state"
           },
           "vae": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -425,10 +425,6 @@
             "display": "input",
             "isConnected": false,
             "label": "Guider",
-            "signal": {
-              "direction": "input",
-              "origin": "unet"
-            },
             "type": "custom_guider"
           },
           "image_latents": {
@@ -486,7 +482,7 @@
             }
           },
           "unet": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -581,7 +577,7 @@
             }
           },
           "vae": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -667,8 +663,8 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/qwen_product_ad_composite.reference_image_1_xgw-7V.webp",
-              "@data/images/qwen_product_ad_composite.reference_image_2_YfhoVi.webp"
+              "@data/images/qwen_product_ad_composite.reference_image_1_v_IKWE.webp",
+              "@data/images/qwen_product_ad_composite.reference_image_2_IoPBFM.webp"
             ]
           },
           "height": {
@@ -862,6 +858,7 @@
             "value": "cuda:0"
           },
           "dtype": {
+            "disabled": false,
             "label": "dtype",
             "options": [
               {
@@ -910,17 +907,45 @@
             "type": "custom_lora"
           },
           "model_type": {
-            "disabled": true,
+            "disabled": false,
             "label": "Model Type",
             "options": {
-              "": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "",
-                "schemaVersion": 1,
-                "value": ""
-              }
+              "": "",
+              "AnimaModularPipeline": "Anima (Contract only)",
+              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
+              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
+              "DummyCustomPipeline": "Custom",
+              "ErnieImageModularPipeline": "ERNIE Image (Contract only)",
+              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
+              "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
+              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
+              "FluxKontextModularPipeline": "Flux Kontext",
+              "FluxModularPipeline": "Flux",
+              "HeliosModularPipeline": "Helios (Contract only)",
+              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
+              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
+              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
+              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
+              "Krea2ModularPipeline": "Krea 2 (Contract only)",
+              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
+              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
+              "LTX2ModularPipeline": "LTX-2 (Contract only)",
+              "LTXModularPipeline": "LTX Video (Contract only)",
+              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
+              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
+              "QwenImageEditModularPipeline": "Qwen-Image-Edit",
+              "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
+              "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
+              "QwenImageModularPipeline": "Qwen-Image-2512",
+              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
+              "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
+              "Wan22Image2VideoModularPipeline": "Wan 2.2 Image to Video (Contract only)",
+              "Wan22ModularPipeline": "Wan 2.2 Text to Video (Contract only)",
+              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
+              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
+              "WanImage2VideoModularPipeline": "WAN2 I2V",
+              "WanModularPipeline": "WAN2 T2V",
+              "ZImageModularPipeline": "Z-Image"
             },
             "type": "string",
             "value": "QwenImageEditPlusModularPipeline"
@@ -992,18 +1017,13 @@
             "value": false
           },
           "repo_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
                 "hub": {
                   "className": [
-                    ""
-                  ]
-                },
-                "local": {
-                  "className": [
-                    ""
+                    "QwenImageEditPlusModularPipeline"
                   ]
                 }
               },
@@ -1022,7 +1042,7 @@
           },
           "revision": {
             "description": "Required exact 40-character commit hash for Hub custom contracts.",
-            "disabled": true,
+            "disabled": false,
             "label": "Revision",
             "type": "string",
             "value": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9"
@@ -1051,7 +1071,7 @@
           },
           "trust_remote_code": {
             "description": "Repository code execution is disabled; keep this off for contract preview.",
-            "disabled": true,
+            "disabled": false,
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
@@ -1252,7 +1272,7 @@
             "value": "Create one premium magazine advertisement by combining the two supplied references. Input 1 defines the restrained editorial grid, generous warm-white margins and disciplined typography hierarchy. Input 2 defines the immutable ASTERMIST lavender sleep-spray bottle. Build a believable bedside ritual context: place exactly one ASTERMIST bottle at normal cosmetic scale on a honed limestone nightstand beside one folded linen eye mask and a small dried-lavender stem. A softly blurred bed and dawn window belong to the same quiet room; every object rests on the same physical surface with coherent perspective, contact shadows and window light. Preserve the bottle’s pale-lavender glass, liquid level, dip tube, satin-silver atomizer, clear cap and rectangular label. Keep both exact label lines readable: “ASTERMIST” and “LAVENDER SLEEP SPRAY”. Do not enlarge it into architecture, a sculpture or a surreal monument. Use Input 1 only for layout discipline. Add exactly one clean headline in the upper negative space: “NIGHT RITUAL”. Include no other campaign copy. Use black editorial type, warm stone, muted lavender and natural blue dawn light with realistic glass refraction and premium photographic grain. The output must read as one real-location commercial photograph, not a pasted packshot or fantasy composite: matching scale, lens, light direction, color spill, focus falloff and surface contact, with no collage edge, halo, floating product, unrelated scenery or arbitrary object replacement."
           },
           "text_encoders": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

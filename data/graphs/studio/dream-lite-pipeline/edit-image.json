@@ -134,7 +134,9 @@
         "params": {
           "guidance_scale": {
             "default": 0,
+            "disabled": false,
             "display": "slider",
+            "hidden": false,
             "label": "Guidance",
             "max": 20,
             "min": 0,
@@ -144,6 +146,8 @@
           },
           "height": {
             "default": 1024,
+            "disabled": false,
+            "hidden": false,
             "label": "Height",
             "max": 2048,
             "min": 16,
@@ -224,6 +228,9 @@
             "type": "object",
             "value": {
               "actions": {
+                "Edit": [
+                  "edit_image"
+                ],
                 "Generate": [
                   "text_to_image"
                 ]
@@ -239,10 +246,12 @@
                   "hidden": false
                 },
                 "image_guidance_scale": {
-                  "hidden": true
+                  "hidden": false
                 },
                 "max_sequence_length": {
-                  "hidden": false
+                  "default": 200,
+                  "hidden": true,
+                  "max": 200
                 },
                 "negative_prompt": {
                   "hidden": false
@@ -268,18 +277,20 @@
               },
               "library": "diffusers",
               "mediaKind": "image",
-              "mode": "text_to_image",
+              "mode": "edit_image",
               "modes": [
-                "text_to_image"
+                "text_to_image",
+                "edit_image"
               ],
-              "pipelineClass": "FluxPipeline",
+              "pipelineClass": "DreamLitePipeline",
               "schemaVersion": 1
             }
           },
           "image_guidance_scale": {
             "default": 1.5,
+            "disabled": false,
             "display": "slider",
-            "hidden": true,
+            "hidden": false,
             "label": "Image Guidance",
             "max": 20,
             "min": 1,
@@ -294,15 +305,19 @@
             "type": "image"
           },
           "max_sequence_length": {
-            "default": 256,
+            "default": 200,
+            "disabled": false,
+            "hidden": true,
             "label": "Max Sequence Length",
-            "max": 512,
+            "max": 200,
             "min": 1,
             "type": "int"
           },
           "negative_prompt": {
             "default": "",
+            "disabled": false,
             "display": "textarea",
+            "hidden": false,
             "label": "Negative Prompt",
             "type": "text",
             "value": ""
@@ -350,6 +365,7 @@
           },
           "padding_mask_crop": {
             "default": 0,
+            "disabled": false,
             "hidden": true,
             "label": "Padding Mask Crop",
             "max": 512,
@@ -359,6 +375,7 @@
           },
           "pag_adaptive_scale": {
             "default": 0,
+            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "PAG Adaptive Scale",
@@ -369,6 +386,7 @@
           },
           "pag_scale": {
             "default": 3,
+            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "PAG Scale",
@@ -384,7 +402,7 @@
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "image_diffusion_pipeline"
           },
@@ -398,6 +416,7 @@
           "reference_strength": {
             "default": 1,
             "description": "Relative influence of every reference after the first composition anchor, when supported by the selected adapter.",
+            "disabled": false,
             "hidden": true,
             "label": "Secondary reference strength",
             "max": 1,
@@ -419,6 +438,7 @@
           },
           "strength": {
             "default": 0.8,
+            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "Strength",
@@ -429,6 +449,8 @@
           },
           "width": {
             "default": 1024,
+            "disabled": false,
+            "hidden": false,
             "label": "Width",
             "max": 2048,
             "min": 16,
@@ -515,7 +537,8 @@
                 "value": "t2i_adapter"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "none"
           },
           "conditioning_model_id": {
             "display": "modelselect",
@@ -534,16 +557,13 @@
             },
             "label": "Conditioning Model",
             "type": "string",
-            "value": {
-              "source": "hub",
-              "value": "lllyasviel/control_v11p_sd15_canny"
-            }
+            "value": ""
           },
           "conditioning_revision": {
             "default": "",
             "label": "Conditioning Revision",
             "type": "string",
-            "value": "115a470d547982438f70198e353a921996e2e819"
+            "value": ""
           },
           "device": {
             "default": "cpu:0",
@@ -680,93 +700,31 @@
           },
           "mode": {
             "default": "text_to_image",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Mode",
             "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "unconditional_image",
-                "schemaVersion": 1,
-                "value": "unconditional_image"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "depth_estimation",
-                "schemaVersion": 1,
-                "value": "depth_estimation"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "text_to_image",
-                "schemaVersion": 1,
-                "value": "text_to_image"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "edit_image",
-                "schemaVersion": 1,
-                "value": "edit_image"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "multi_image_reference_edit",
-                "schemaVersion": 1,
-                "value": "multi_image_reference_edit"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "inpaint",
-                "schemaVersion": 1,
-                "value": "inpaint"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "outpaint",
-                "schemaVersion": 1,
-                "value": "outpaint"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "control_image",
-                "schemaVersion": 1,
-                "value": "control_image"
-              }
+              "text_to_image",
+              "edit_image"
             ],
             "type": "string",
             "value": "edit_image"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
                 "hub": {
                   "className": [
-                    "FluxPipeline"
+                    "DreamLitePipeline"
                   ]
                 },
                 "local": {
                   "className": [
-                    "FluxPipeline"
+                    "DreamLitePipeline"
                   ]
                 }
               },
@@ -840,18 +798,19 @@
             "value": "model_cpu"
           },
           "pipeline": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "pipeline_class"
+              "origin": "mode"
             },
             "type": "image_diffusion_pipeline"
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -949,6 +908,30 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "HunyuanDiTPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanDiTPAGPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanDiTControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "HunyuanDiTControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionXLAdapterPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionXLAdapterPipeline"
@@ -989,6 +972,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "SanaPAGPipeline",
+                "schemaVersion": 1,
+                "value": "SanaPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "SanaSprintPipeline",
                 "schemaVersion": 1,
                 "value": "SanaSprintPipeline"
@@ -1000,6 +991,166 @@
                 "label": "SanaSprintImg2ImgPipeline",
                 "schemaVersion": 1,
                 "value": "SanaSprintImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "PixArtSigmaPipeline",
+                "schemaVersion": 1,
+                "value": "PixArtSigmaPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "PixArtSigmaPAGPipeline",
+                "schemaVersion": 1,
+                "value": "PixArtSigmaPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Kandinsky3Pipeline",
+                "schemaVersion": 1,
+                "value": "Kandinsky3Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Kandinsky3Img2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "Kandinsky3Img2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LongCatImagePipeline",
+                "schemaVersion": 1,
+                "value": "LongCatImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LongCatImageEditPipeline",
+                "schemaVersion": 1,
+                "value": "LongCatImageEditPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LuminaPipeline",
+                "schemaVersion": 1,
+                "value": "LuminaPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Lumina2Pipeline",
+                "schemaVersion": 1,
+                "value": "Lumina2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "OmniGenPipeline",
+                "schemaVersion": 1,
+                "value": "OmniGenPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "OvisImagePipeline",
+                "schemaVersion": 1,
+                "value": "OvisImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "PRXPipeline",
+                "schemaVersion": 1,
+                "value": "PRXPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "NucleusMoEImagePipeline",
+                "schemaVersion": 1,
+                "value": "NucleusMoEImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AuraFlowPipeline",
+                "schemaVersion": 1,
+                "value": "AuraFlowPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ChromaPipeline",
+                "schemaVersion": 1,
+                "value": "ChromaPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogView3PlusPipeline",
+                "schemaVersion": 1,
+                "value": "CogView3PlusPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "CogView4Pipeline",
+                "schemaVersion": 1,
+                "value": "CogView4Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ErnieImagePipeline",
+                "schemaVersion": 1,
+                "value": "ErnieImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "GlmImagePipeline",
+                "schemaVersion": 1,
+                "value": "GlmImagePipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "JoyImageEditPipeline",
+                "schemaVersion": 1,
+                "value": "JoyImageEditPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "JoyImageEditPlusPipeline",
+                "schemaVersion": 1,
+                "value": "JoyImageEditPlusPipeline"
               },
               {
                 "availability": "installed",
@@ -1077,9 +1228,33 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "LatentConsistencyModelImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "LatentConsistencyModelImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "StableDiffusionPAGPipeline",
                 "schemaVersion": 1,
                 "value": "StableDiffusionPAGPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionPAGImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionPAGImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "StableDiffusionPAGInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "StableDiffusionPAGInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -1744,15 +1919,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",

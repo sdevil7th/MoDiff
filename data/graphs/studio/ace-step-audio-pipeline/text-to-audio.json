@@ -145,6 +145,22 @@
             "default": 48000,
             "label": "Export Sample Rate",
             "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
               "44100": {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -522,7 +538,7 @@
           },
           "num_waveforms": {
             "default": 1,
-            "description": "Number of StableAudioPipeline waveforms; ignored by ACE-Step.",
+            "description": "Number of generated waveforms when supported; ignored by ACE-Step.",
             "disabled": false,
             "hidden": true,
             "label": "Variations",
@@ -537,7 +553,7 @@
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "audio_diffusion_pipeline"
           },
@@ -592,6 +608,22 @@
             "default": 48000,
             "label": "Sample Rate",
             "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
               "44100": {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -672,7 +704,7 @@
           },
           "stable_audio_guidance": {
             "default": 7,
-            "description": "StableAudioPipeline-only classifier-free guidance; ignored by ACE-Step.",
+            "description": "Classifier-free guidance for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
             "disabled": false,
             "hidden": true,
             "label": "Stable Audio Guidance",
@@ -682,7 +714,7 @@
           },
           "stable_audio_steps": {
             "default": 100,
-            "description": "StableAudioPipeline-only denoising steps; ignored by ACE-Step.",
+            "description": "Denoising steps for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
             "disabled": false,
             "hidden": true,
             "label": "Stable Audio Steps",
@@ -845,7 +877,95 @@
             },
             "hidden": true,
             "label": "Audio Contract",
-            "type": "object"
+            "type": "object",
+            "value": {
+              "fieldParams": {
+                "audio_cover_strength": {
+                  "hidden": true
+                },
+                "audio_duration": {
+                  "hidden": false,
+                  "max": 240
+                },
+                "bpm": {
+                  "hidden": false
+                },
+                "extension_duration": {
+                  "hidden": true,
+                  "max": 180
+                },
+                "guidance_scale": {
+                  "hidden": false
+                },
+                "keyscale": {
+                  "hidden": false
+                },
+                "lyrics": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": true
+                },
+                "num_inference_steps": {
+                  "hidden": false
+                },
+                "num_waveforms": {
+                  "hidden": true
+                },
+                "reference_audio": {
+                  "hidden": true,
+                  "required": false
+                },
+                "repainting_end": {
+                  "hidden": true
+                },
+                "repainting_start": {
+                  "hidden": true
+                },
+                "return_continuation_tail": {
+                  "hidden": true
+                },
+                "shift": {
+                  "hidden": false
+                },
+                "source_audio": {
+                  "hidden": true,
+                  "required": false
+                },
+                "stable_audio_guidance": {
+                  "hidden": true
+                },
+                "stable_audio_steps": {
+                  "hidden": true
+                },
+                "task_type": {
+                  "default": "text2music",
+                  "options": [
+                    "text2music"
+                  ],
+                  "value": "text2music"
+                },
+                "timesignature": {
+                  "hidden": false
+                },
+                "vocal_language": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "maxDurationSeconds": 240,
+              "maxExtensionSeconds": null,
+              "mediaKind": "audio",
+              "mode": "text_to_audio",
+              "pipelineClass": "AceStepPipeline",
+              "referenceAudio": "forbidden",
+              "repository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+              "schemaVersion": 1,
+              "sourceAudio": "forbidden",
+              "taskType": "text2music",
+              "upstreamTaskType": "text2music",
+              "validateRepaintInterval": false
+            }
           },
           "auto_offload": {
             "default": true,
@@ -928,48 +1048,22 @@
           },
           "mode": {
             "default": "text_to_audio",
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Mode",
             "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "text_to_audio",
-                "schemaVersion": 1,
-                "value": "text_to_audio"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "audio_variation",
-                "schemaVersion": 1,
-                "value": "audio_variation"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "audio_continuation",
-                "schemaVersion": 1,
-                "value": "audio_continuation"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "audio_repaint",
-                "schemaVersion": 1,
-                "value": "audio_repaint"
-              }
+              "text_to_audio",
+              "audio_variation",
+              "audio_continuation",
+              "audio_repaint"
             ],
             "type": "string",
             "value": "text_to_audio"
           },
           "model_id": {
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1042,6 +1136,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -1053,6 +1148,7 @@
           },
           "pipeline_class": {
             "default": "AceStepPipeline",
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1073,6 +1169,22 @@
                 "label": "StableAudioPipeline",
                 "schemaVersion": 1,
                 "value": "StableAudioPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LongCatAudioDiTPipeline",
+                "schemaVersion": 1,
+                "value": "LongCatAudioDiTPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AudioLDM2Pipeline",
+                "schemaVersion": 1,
+                "value": "AudioLDM2Pipeline"
               }
             ],
             "type": "string",
@@ -1487,15 +1599,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",
@@ -1936,8 +2039,8 @@
     }
   ],
   "viewport": {
-    "x": 84,
-    "y": 73.5848635235732,
-    "zoom": 0.5245657568238213
+    "x": 0,
+    "y": 0,
+    "zoom": 1
   }
 }

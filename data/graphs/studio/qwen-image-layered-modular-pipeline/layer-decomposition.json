@@ -246,7 +246,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "a6acf30febec0d87cd7e15935a1d70913b64eed657302ccb49e3431f029aa060",
+    "positionHash": "40bb9dce6bdb472a9537b6bd5a63fe5e9cf5251772588b087296b6d8016dbe51",
     "verticalGap": 72
   },
   "nodes": [
@@ -287,7 +287,6 @@
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -309,7 +308,7 @@
       "id": "node-01",
       "position": {
         "x": 1320,
-        "y": 369
+        "y": 397
       },
       "type": "custom"
     },
@@ -354,16 +353,6 @@
             "display": "input",
             "isConnected": false,
             "label": "Guider",
-            "onChange": {
-              "false": [
-                "guidance_scale"
-              ],
-              "true": []
-            },
-            "signal": {
-              "direction": "input",
-              "origin": "unet"
-            },
             "type": "custom_guider"
           },
           "image_latents": {
@@ -400,6 +389,9 @@
             "display": "input",
             "isConnected": true,
             "label": "Scheduler *",
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_auto_model"
           },
           "seed": {
@@ -419,17 +411,6 @@
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
-            "onSignal": [
-              "update_node",
-              {
-                "action": "signal",
-                "target": "guider"
-              },
-              {
-                "action": "signal",
-                "target": "controlnet_bundle"
-              }
-            ],
             "required": true,
             "signal": {
               "direction": "output"
@@ -452,7 +433,7 @@
       "id": "node-02",
       "position": {
         "x": 880,
-        "y": 271
+        "y": 299
       },
       "type": "custom"
     },
@@ -502,12 +483,59 @@
             "label": "Image Latents",
             "type": "latents"
           },
+          "resolution": {
+            "default": 640,
+            "fieldOptions": {
+              "controlTier": "advanced",
+              "studioBinding": {
+                "formFields": [
+                  "width",
+                  "height"
+                ],
+                "group": "source-resolution",
+                "schemaVersion": 1,
+                "transform": "nearest-option-to-long-edge"
+              }
+            },
+            "label": "Source Resolution",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "640",
+                "schemaVersion": 1,
+                "value": "640"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "1024",
+                "schemaVersion": 1,
+                "value": "1024"
+              }
+            ],
+            "type": "int",
+            "value": 640
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 7102
+            }
+          },
           "vae": {
             "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -529,7 +557,7 @@
       "id": "node-03",
       "position": {
         "x": 440,
-        "y": 500
+        "y": 542
       },
       "type": "custom"
     },
@@ -577,7 +605,7 @@
               }
             ],
             "type": "string",
-            "value": "ignore"
+            "value": "add alpha"
           },
           "file": {
             "display": "filebrowser",
@@ -590,7 +618,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "images/qwen_layered_portrait.reference_image_1_yoYnZx.webp"
+              "@data/images/qwen_layered_portrait.reference_image_1_gybdIk.webp"
             ]
           },
           "height": {
@@ -641,7 +669,7 @@
       "id": "node-04",
       "position": {
         "x": 0,
-        "y": 626
+        "y": 682
       },
       "type": "custom"
     },
@@ -662,7 +690,7 @@
           "auto_offload": {
             "label": "Enable Auto Offload",
             "type": "boolean",
-            "value": false
+            "value": true
           },
           "device": {
             "label": "Device",
@@ -682,14 +710,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -708,9 +728,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -727,12 +748,13 @@
             "value": "bfloat16"
           },
           "image_encoder": {
+            "disabled": false,
             "display": "output",
             "isConnected": false,
             "label": "Image Encoder",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -745,42 +767,52 @@
           "model_type": {
             "disabled": false,
             "label": "Model Type",
-            "onChange": [
-              "set_filters",
-              {
-                "action": "signal",
-                "target": "unet_out"
-              },
-              {
-                "action": "signal",
-                "target": "text_encoders"
-              },
-              {
-                "action": "signal",
-                "target": "vae_out"
-              },
-              {
-                "action": "signal",
-                "target": "image_encoder"
-              }
-            ],
             "options": {
               "": "",
+              "AnimaModularPipeline": "Anima (Contract only)",
+              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
+              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
               "DummyCustomPipeline": "Custom",
+              "ErnieImageModularPipeline": "ERNIE Image (Contract only)",
+              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
               "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
+              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
               "FluxKontextModularPipeline": "Flux Kontext",
               "FluxModularPipeline": "Flux",
+              "HeliosModularPipeline": "Helios (Contract only)",
+              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
+              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
+              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
+              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
+              "Krea2ModularPipeline": "Krea 2 (Contract only)",
+              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
+              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
+              "LTX2ModularPipeline": "LTX-2 (Contract only)",
+              "LTXModularPipeline": "LTX Video (Contract only)",
+              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
+              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
               "QwenImageEditModularPipeline": "Qwen-Image-Edit",
               "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
               "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
               "QwenImageModularPipeline": "Qwen-Image-2512",
+              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
               "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
+              "Wan22Image2VideoModularPipeline": "Wan 2.2 Image to Video (Contract only)",
+              "Wan22ModularPipeline": "Wan 2.2 Text to Video (Contract only)",
+              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
+              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
               "WanImage2VideoModularPipeline": "WAN2 I2V",
               "WanModularPipeline": "WAN2 T2V",
               "ZImageModularPipeline": "Z-Image"
             },
             "type": "string",
             "value": "QwenImageLayeredModularPipeline"
+          },
+          "modiff_pipeline_identity": {
+            "hidden": true,
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": null
           },
           "offload_mode": {
             "default": "model_cpu",
@@ -828,13 +860,19 @@
               }
             ],
             "type": "string",
-            "value": "none"
+            "value": "model_cpu"
           },
           "quant_config": {
             "display": "input",
             "isConnected": false,
             "label": "Quant Config",
             "type": "quant_config"
+          },
+          "refresh_pipeline_identity_button": {
+            "display": "ui_button",
+            "hidden": true,
+            "label": "Review and Refresh Custom Contract",
+            "value": false
           },
           "repo_id": {
             "disabled": false,
@@ -860,23 +898,38 @@
               "value": "Qwen/Qwen-Image-Layered"
             }
           },
+          "revision": {
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "disabled": false,
+            "label": "Revision",
+            "type": "string",
+            "value": "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf"
+          },
           "scheduler": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_models"
           },
           "trust_remote_code": {
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "disabled": false,
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
@@ -888,12 +941,13 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -904,20 +958,15 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
-          },
-          "revision": {
-            "label": "Revision",
-            "type": "string",
-            "default": "",
-            "value": "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf"
           }
         },
         "resizable": true,
@@ -955,7 +1004,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cuda:0",
+            "default": "cpu:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -973,14 +1022,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -999,19 +1040,6 @@
           "image": {
             "display": "input",
             "isConnected": true,
-            "onChange": {
-              "action": "show",
-              "condition": {
-                "type": "latent"
-              },
-              "data": {
-                "false": [],
-                "true": [
-                  "vae",
-                  "device"
-                ]
-              }
-            },
             "type": [
               "image",
               "latent"
@@ -1051,7 +1079,7 @@
       "id": "node-06",
       "position": {
         "x": 1760,
-        "y": 327
+        "y": 355
       },
       "type": "custom"
     },
@@ -1087,6 +1115,26 @@
             "label": "Image *",
             "type": "image"
           },
+          "max_sequence_length": {
+            "default": 1024,
+            "fieldOptions": {
+              "controlTier": "advanced",
+              "studioBinding": {
+                "formFields": [
+                  "maxSequenceLength"
+                ],
+                "group": "maximum-sequence-length",
+                "schemaVersion": 1,
+                "transform": "identity"
+              }
+            },
+            "label": "Maximum Sequence Length",
+            "max": 1024,
+            "min": 1,
+            "step": 1,
+            "type": "int",
+            "value": 512
+          },
           "negative_prompt": {
             "default": "",
             "display": "textarea",
@@ -1101,16 +1149,60 @@
             "type": "string",
             "value": "Decompose the supplied image into three ordered editable RGBA layers while faithfully preserving the complete photographed content. Overall image description: at blue hour on an alpine observatory deck, one adult woman astronomer in a navy field jacket and charcoal trousers stands center-right with both empty hands relaxed beside her body. One physically separate brass-and-matte-black refractor telescope on a complete three-leg tripod occupies the lower-left foreground without touching or overlapping the woman. A white observatory dome, a standard-height open doorway, a metal safety rail, mountain silhouettes and a clear deep-blue sky form the background. Occluded-content description: reconstruct the uninterrupted deck, rail, observatory wall, mountains and sky behind the woman and telescope so hiding a layer does not reveal an obvious cutout hole. Keep the source identity, pose, scale, eye-level 50 mm perspective, blue-hour lighting and object placement. Preserve the measured source relationship: the complete telescope assembly is about ninety-four percent of the woman’s visible height, its tube length is about fifty-one percent of her visible height, and a clear gap of about three percent of the image width separates the telescope from her body. Keep the entire telescope and all three grounded tripod feet coherent in one place without a detached tube, mount or tripod fragment elsewhere. Produce useful alpha boundaries and a recomposition that matches the source without bright fringe, dark matte, duplicated feature, missing content or flattened depth."
           },
+          "resolution": {
+            "default": 640,
+            "fieldOptions": {
+              "controlTier": "advanced",
+              "studioBinding": {
+                "formFields": [
+                  "width",
+                  "height"
+                ],
+                "group": "source-resolution",
+                "schemaVersion": 1,
+                "transform": "nearest-option-to-long-edge"
+              }
+            },
+            "label": "Source Resolution",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "640",
+                "schemaVersion": 1,
+                "value": "640"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "1024",
+                "schemaVersion": 1,
+                "value": "1024"
+              }
+            ],
+            "type": "int",
+            "value": 640
+          },
           "text_encoders": {
             "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
             "type": "diffusers_auto_models"
+          },
+          "use_en_prompt": {
+            "default": false,
+            "fieldOptions": {
+              "controlTier": "advanced"
+            },
+            "label": "Use English Prompt Template",
+            "type": "boolean",
+            "value": false
           }
         },
         "resizable": true,
@@ -1128,7 +1220,7 @@
       "id": "node-07",
       "position": {
         "x": 440,
-        "y": 182
+        "y": 140
       },
       "type": "custom"
     }

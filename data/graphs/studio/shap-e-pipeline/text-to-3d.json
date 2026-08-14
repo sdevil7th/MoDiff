@@ -474,15 +474,6 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
                 "disabledReason": "Requires a CUDA/ROCm torch backend",
                 "installationState": "unavailable",
                 "label": "sage",
@@ -933,6 +924,7 @@
         "params": {
           "frame_size": {
             "default": 256,
+            "disabled": false,
             "label": "Frame Size",
             "max": 256,
             "min": 64,

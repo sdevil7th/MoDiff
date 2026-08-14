@@ -145,6 +145,22 @@
             "default": 48000,
             "label": "Export Sample Rate",
             "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
               "44100": {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -320,32 +336,32 @@
                 },
                 "audio_duration": {
                   "hidden": false,
-                  "max": 240
+                  "max": 47
                 },
                 "bpm": {
-                  "hidden": false
+                  "hidden": true
                 },
                 "extension_duration": {
                   "hidden": true,
                   "max": 180
                 },
                 "guidance_scale": {
-                  "hidden": false
+                  "hidden": true
                 },
                 "keyscale": {
-                  "hidden": false
+                  "hidden": true
                 },
                 "lyrics": {
-                  "hidden": false
+                  "hidden": true
                 },
                 "negative_prompt": {
-                  "hidden": true
-                },
-                "num_inference_steps": {
                   "hidden": false
                 },
-                "num_waveforms": {
+                "num_inference_steps": {
                   "hidden": true
+                },
+                "num_waveforms": {
+                  "hidden": false
                 },
                 "reference_audio": {
                   "hidden": true,
@@ -361,49 +377,50 @@
                   "hidden": true
                 },
                 "shift": {
-                  "hidden": false
+                  "hidden": true
                 },
                 "source_audio": {
                   "hidden": true,
                   "required": false
                 },
                 "stable_audio_guidance": {
-                  "hidden": true
+                  "hidden": false
                 },
                 "stable_audio_steps": {
-                  "hidden": true
+                  "hidden": false
                 },
                 "task_type": {
-                  "default": "text2music",
+                  "default": "text2audio",
                   "options": [
-                    "text2music"
+                    "text2audio"
                   ],
-                  "value": "text2music"
+                  "value": "text2audio"
                 },
                 "timesignature": {
-                  "hidden": false
+                  "hidden": true
                 },
                 "vocal_language": {
-                  "hidden": false
+                  "hidden": true
                 }
               },
               "library": "diffusers",
-              "maxDurationSeconds": 240,
+              "maxDurationSeconds": 47,
               "maxExtensionSeconds": null,
               "mediaKind": "audio",
               "mode": "text_to_audio",
-              "pipelineClass": "AceStepPipeline",
+              "pipelineClass": "StableAudioPipeline",
               "referenceAudio": "forbidden",
-              "repository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+              "repository": "stabilityai/stable-audio-open-1.0",
               "schemaVersion": 1,
               "sourceAudio": "forbidden",
-              "taskType": "text2music",
-              "upstreamTaskType": "text2music",
+              "taskType": "text2audio",
+              "upstreamTaskType": "text2audio",
               "validateRepaintInterval": false
             }
           },
           "audio_cover_strength": {
             "default": 0.85,
+            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "Cover Strength",
@@ -414,8 +431,10 @@
           },
           "audio_duration": {
             "default": 30,
+            "disabled": false,
+            "hidden": false,
             "label": "Duration",
-            "max": 240,
+            "max": 47,
             "min": 1,
             "step": 0.5,
             "type": "float",
@@ -429,6 +448,8 @@
           },
           "bpm": {
             "default": 0,
+            "disabled": false,
+            "hidden": true,
             "label": "BPM",
             "max": 400,
             "min": 0,
@@ -442,6 +463,7 @@
           },
           "extension_duration": {
             "default": 15,
+            "disabled": false,
             "hidden": true,
             "label": "Extension",
             "max": 180,
@@ -452,7 +474,9 @@
           "guidance_scale": {
             "default": 1,
             "description": "XL Turbo is guidance-distilled; values above 1 are ignored by the Diffusers pipeline.",
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Guidance",
             "max": 20,
             "min": 0,
@@ -461,6 +485,8 @@
           },
           "keyscale": {
             "default": "",
+            "disabled": false,
+            "hidden": true,
             "label": "Key",
             "type": "string"
           },
@@ -477,7 +503,9 @@
           },
           "lyrics": {
             "default": "",
+            "disabled": false,
             "display": "textarea",
+            "hidden": true,
             "label": "Lyrics",
             "type": "text"
           },
@@ -485,7 +513,7 @@
             "default": "",
             "disabled": false,
             "display": "textarea",
-            "hidden": true,
+            "hidden": false,
             "label": "Negative Prompt",
             "type": "text",
             "value": ""
@@ -493,7 +521,9 @@
           "num_inference_steps": {
             "default": 8,
             "description": "ACE-Step v1.5 XL Turbo is designed for 8 denoising steps.",
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Steps",
             "max": 100,
             "min": 1,
@@ -501,8 +531,9 @@
           },
           "num_waveforms": {
             "default": 1,
-            "description": "Number of StableAudioPipeline waveforms; ignored by ACE-Step.",
-            "hidden": true,
+            "description": "Number of generated waveforms when supported; ignored by ACE-Step.",
+            "disabled": false,
+            "hidden": false,
             "label": "Variations",
             "max": 8,
             "min": 1,
@@ -510,13 +541,13 @@
             "value": 1
           },
           "pipeline": {
-            "disabled": true,
+            "disabled": false,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "output"
+              "direction": "input"
             },
             "type": "audio_diffusion_pipeline"
           },
@@ -528,6 +559,7 @@
             "value": ""
           },
           "reference_audio": {
+            "disabled": false,
             "display": "input",
             "hidden": true,
             "isConnected": false,
@@ -540,6 +572,7 @@
           },
           "repainting_end": {
             "default": 0,
+            "disabled": false,
             "hidden": true,
             "label": "Repaint End",
             "min": 0,
@@ -548,6 +581,7 @@
           },
           "repainting_start": {
             "default": 0,
+            "disabled": false,
             "hidden": true,
             "label": "Repaint Start",
             "min": 0,
@@ -556,6 +590,7 @@
           },
           "return_continuation_tail": {
             "default": true,
+            "disabled": false,
             "hidden": true,
             "label": "Return Tail Only",
             "type": "bool"
@@ -564,6 +599,22 @@
             "default": 48000,
             "label": "Sample Rate",
             "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
               "44100": {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -620,7 +671,9 @@
           },
           "shift": {
             "default": 3,
+            "disabled": false,
             "display": "slider",
+            "hidden": true,
             "label": "Shift",
             "max": 10,
             "min": 0.1,
@@ -628,6 +681,7 @@
             "type": "float"
           },
           "source_audio": {
+            "disabled": false,
             "display": "input",
             "hidden": true,
             "isConnected": false,
@@ -640,9 +694,9 @@
           },
           "stable_audio_guidance": {
             "default": 7,
-            "description": "StableAudioPipeline-only classifier-free guidance; ignored by ACE-Step.",
+            "description": "Classifier-free guidance for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Stable Audio Guidance",
             "max": 20,
             "min": 0,
@@ -651,9 +705,9 @@
           },
           "stable_audio_steps": {
             "default": 100,
-            "description": "StableAudioPipeline-only denoising steps; ignored by ACE-Step.",
+            "description": "Denoising steps for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
             "disabled": false,
-            "hidden": true,
+            "hidden": false,
             "label": "Stable Audio Steps",
             "max": 300,
             "min": 1,
@@ -661,31 +715,29 @@
             "value": 100
           },
           "task_type": {
-            "default": "text2music",
+            "default": "text2audio",
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Task",
             "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "text2music",
-                "schemaVersion": 1,
-                "value": "text2music"
-              }
+              "text2audio"
             ],
             "type": "string",
             "value": "text2audio"
           },
           "timesignature": {
             "default": "4",
+            "disabled": false,
+            "hidden": true,
             "label": "Time",
             "type": "string"
           },
           "vocal_language": {
             "default": "en",
+            "disabled": false,
+            "hidden": true,
             "label": "Language",
             "type": "string"
           }
@@ -815,7 +867,95 @@
             },
             "hidden": true,
             "label": "Audio Contract",
-            "type": "object"
+            "type": "object",
+            "value": {
+              "fieldParams": {
+                "audio_cover_strength": {
+                  "hidden": true
+                },
+                "audio_duration": {
+                  "hidden": false,
+                  "max": 47
+                },
+                "bpm": {
+                  "hidden": true
+                },
+                "extension_duration": {
+                  "hidden": true,
+                  "max": 180
+                },
+                "guidance_scale": {
+                  "hidden": true
+                },
+                "keyscale": {
+                  "hidden": true
+                },
+                "lyrics": {
+                  "hidden": true
+                },
+                "negative_prompt": {
+                  "hidden": false
+                },
+                "num_inference_steps": {
+                  "hidden": true
+                },
+                "num_waveforms": {
+                  "hidden": false
+                },
+                "reference_audio": {
+                  "hidden": true,
+                  "required": false
+                },
+                "repainting_end": {
+                  "hidden": true
+                },
+                "repainting_start": {
+                  "hidden": true
+                },
+                "return_continuation_tail": {
+                  "hidden": true
+                },
+                "shift": {
+                  "hidden": true
+                },
+                "source_audio": {
+                  "hidden": true,
+                  "required": false
+                },
+                "stable_audio_guidance": {
+                  "hidden": false
+                },
+                "stable_audio_steps": {
+                  "hidden": false
+                },
+                "task_type": {
+                  "default": "text2audio",
+                  "options": [
+                    "text2audio"
+                  ],
+                  "value": "text2audio"
+                },
+                "timesignature": {
+                  "hidden": true
+                },
+                "vocal_language": {
+                  "hidden": true
+                }
+              },
+              "library": "diffusers",
+              "maxDurationSeconds": 47,
+              "maxExtensionSeconds": null,
+              "mediaKind": "audio",
+              "mode": "text_to_audio",
+              "pipelineClass": "StableAudioPipeline",
+              "referenceAudio": "forbidden",
+              "repository": "stabilityai/stable-audio-open-1.0",
+              "schemaVersion": 1,
+              "sourceAudio": "forbidden",
+              "taskType": "text2audio",
+              "upstreamTaskType": "text2audio",
+              "validateRepaintInterval": false
+            }
           },
           "auto_offload": {
             "default": true,
@@ -898,50 +1038,19 @@
           },
           "mode": {
             "default": "text_to_audio",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Mode",
             "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "text_to_audio",
-                "schemaVersion": 1,
-                "value": "text_to_audio"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "audio_variation",
-                "schemaVersion": 1,
-                "value": "audio_variation"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "audio_continuation",
-                "schemaVersion": 1,
-                "value": "audio_continuation"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "audio_repaint",
-                "schemaVersion": 1,
-                "value": "audio_repaint"
-              }
+              "text_to_audio"
             ],
             "type": "string",
             "value": "text_to_audio"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1014,6 +1123,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
+            "disabled": false,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -1025,7 +1135,7 @@
           },
           "pipeline_class": {
             "default": "AceStepPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1046,6 +1156,22 @@
                 "label": "StableAudioPipeline",
                 "schemaVersion": 1,
                 "value": "StableAudioPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LongCatAudioDiTPipeline",
+                "schemaVersion": 1,
+                "value": "LongCatAudioDiTPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AudioLDM2Pipeline",
+                "schemaVersion": 1,
+                "value": "AudioLDM2Pipeline"
               }
             ],
             "type": "string",
@@ -1460,15 +1586,6 @@
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
-              },
-              {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires AMD ROCm",
-                "installationState": "unavailable",
-                "label": "aiter",
-                "schemaVersion": 1,
-                "value": "aiter"
               },
               {
                 "availability": "unavailable",
