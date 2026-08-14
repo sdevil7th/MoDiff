@@ -642,6 +642,8 @@ for profile_id in (
     "qwen-layered:modular",
     "qwen-image-controlnet:direct",
     "qwen-image-layered:direct",
+    "qwen-image-edit:direct",
+    "qwen-image-edit-plus:direct",
 ):
     DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
         DIFFUSERS_EXECUTION_PROFILES[profile_id],
@@ -754,25 +756,7 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
 # The registry tests compare this table with the task-module adapter maps and
 # the immutable artifact catalog.  A new class therefore cannot be published
 # here by copying a Diffusers name alone.
-CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
-    # Standard image adapters with an immutable source and generic action
-    # contract, but no Auto execution profile or public template.
-    ("QwenImageEditPipeline", "image", "Qwen/Qwen-Image-Edit", ("edit_image",)),
-    (
-        "QwenImageEditPlusPipeline",
-        "image",
-        "Qwen/Qwen-Image-Edit-2511",
-        ("edit_image", "multi_image_reference_edit"),
-    ),
-    ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
-    (
-        "FluxKontextInpaintPipeline",
-        "image",
-        FLUX_KONTEXT_REPO,
-        ("inpaint", "outpaint"),
-    ),
-    ("Flux2KleinInpaintPipeline", "image", FLUX2_KLEIN_REPO, ("inpaint", "outpaint")),
-)
+CONTRACT_ONLY_DIFFUSERS_PIPELINES = ()
 
 
 _CONTRACT_ONLY_BACKEND_PATHS = {

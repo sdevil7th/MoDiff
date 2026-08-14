@@ -73,6 +73,9 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "QwenImageLayeredModularPipeline",
             "QwenImageControlNetPipeline",
             "QwenImageLayeredPipeline",
+            "QwenImageEditPipeline",
+            "QwenImageEditPlusPipeline",
+            "ZImageInpaintPipeline",
             "WanVACEPipeline",
             "WanVideoPipeline",
             "WanImageToVideoPipeline",
@@ -107,11 +110,13 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxDevPipeline",
             "FluxKreaPipeline",
             "FluxKontextPipeline",
+            "FluxKontextInpaintPipeline",
             "FluxFillPipeline",
             "FluxDepthPipeline",
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "Flux2KleinPipeline",
+            "Flux2KleinInpaintPipeline",
             "StableDiffusionXLPipeline",
             "StableDiffusionXLTurboPipeline",
             "StableDiffusionXLInstructPix2PixPipeline",
@@ -209,6 +214,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-layered:modular",
             "qwen-image-controlnet:direct",
             "qwen-image-layered:direct",
+            "qwen-image-edit:direct",
+            "qwen-image-edit-plus:direct",
         }
 
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
@@ -278,6 +285,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-layered:modular",
             "qwen-image-controlnet:direct",
             "qwen-image-layered:direct",
+            "qwen-image-edit:direct",
+            "qwen-image-edit-plus:direct",
             "wan-vace:direct",
             "wan-22-image-to-video:direct",
             "wan-22-ti2v-5b:direct",
@@ -312,6 +321,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-layered:modular",
             "qwen-image-controlnet:direct",
             "qwen-image-layered:direct",
+            "qwen-image-edit:direct",
+            "qwen-image-edit-plus:direct",
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             expected = ("bnb_4bit",) if profile_id in qwen_ids else flux_modes if profile.model_type.startswith("Flux") else ()

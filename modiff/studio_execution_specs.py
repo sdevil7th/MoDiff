@@ -1415,6 +1415,7 @@ QWEN_IMAGE_2512_DIFFUSERS_FILES = [
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
 ]
+QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
 QWEN_IMAGE_EDIT_DIFFUSERS_FILES = [
     ".gitattributes",
     "README.md",
@@ -1456,6 +1457,7 @@ QWEN_IMAGE_EDIT_DIFFUSERS_FILES = [
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
 ]
+QWEN_IMAGE_EDIT_PLUS_REPO = "Qwen/Qwen-Image-Edit-2511"
 QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES = [
     ".gitattributes",
     "README.md",
@@ -2481,6 +2483,15 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageEdit", "output_type", "outputType"),
     ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
 )
+_QWEN_DIRECT_EDIT_GRAPH_BINDINGS = tuple(
+    item
+    for item in _EDIT_GRAPH_BINDINGS
+    if item[:2]
+    not in {
+        ("diffusersImageEdit", "strength"),
+        ("diffusersImageEdit", "reference_strength"),
+    }
+) + (("diffusersImagePipeline", "revision", "defaultRevision"),)
 _SDXL_EDIT_GRAPH_BINDINGS = _EDIT_GRAPH_BINDINGS + (
     ("diffusersImagePipeline", "revision", "defaultRevision"),
 )
@@ -2666,6 +2677,46 @@ _QWEN_OUTPAINT_GRAPH_BINDINGS = tuple(item for item in _INPAINT_GRAPH_BINDINGS i
     ("qwenOutpaintCanvas", "feather", "outpaintFeather"),
     ("qwenOutpaintCanvas", "fill_color", "outpaintFillColor"),
 )
+_OUTPAINT_GRAPH_ROLES = (
+    ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
+    ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
+    ("diffusersImagePipeline", "modules.DiffusersImage.LoadPipeline", -520, -80),
+    ("loadImage", "modules.Image.Load", -520, 300),
+    ("outpaintCanvas", "modules.DiffusersImage.OutpaintCanvas", -520, 300),
+    ("diffusersImageInpaint", "modules.DiffusersImage.Inpaint", -120, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_OUTPAINT_GRAPH_EDGES = (
+    ("diffusersQuantization", "quantization_config", "diffusersRecipe", "quantization_config"),
+    ("diffusersRecipe", "execution_recipe", "diffusersImagePipeline", "execution_recipe"),
+    ("diffusersImagePipeline", "pipeline", "diffusersImageInpaint", "pipeline"),
+    ("loadImage", "image", "outpaintCanvas", "image"),
+    ("outpaintCanvas", "canvas", "diffusersImageInpaint", "image"),
+    ("outpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"),
+    ("diffusersImageInpaint", "images", "preview", "image"),
+)
+_OUTPAINT_GRAPH_BINDINGS = tuple(
+    item for item in _INPAINT_GRAPH_BINDINGS if item[0] != "loadMask"
+) + (
+    ("outpaintCanvas", "width", "width"),
+    ("outpaintCanvas", "height", "height"),
+    ("outpaintCanvas", "left", "outpaintLeft"),
+    ("outpaintCanvas", "right", "outpaintRight"),
+    ("outpaintCanvas", "top", "outpaintTop"),
+    ("outpaintCanvas", "bottom", "outpaintBottom"),
+    ("outpaintCanvas", "overlap", "outpaintOverlap"),
+    ("outpaintCanvas", "feather", "outpaintFeather"),
+    ("outpaintCanvas", "fill_color", "outpaintFillColor"),
+)
+
+
+def _direct_inpaint_bindings(*, outpaint: bool, unsupported_params: frozenset[str]) -> tuple:
+    bindings = _OUTPAINT_GRAPH_BINDINGS if outpaint else _INPAINT_GRAPH_BINDINGS
+    return tuple(
+        item
+        for item in bindings
+        if item[0] != "diffusersImageInpaint" or item[1] not in unsupported_params
+    ) + (("diffusersImagePipeline", "revision", "defaultRevision"),)
 _VIDEO_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -3480,8 +3531,10 @@ _BINDING_SOURCES = frozenset(
         *_QWEN_DIRECT_CONTROL_GRAPH_BINDINGS,
         *_LAYER_DECOMPOSITION_GRAPH_BINDINGS,
         *_EDIT_GRAPH_BINDINGS,
+        *_QWEN_DIRECT_EDIT_GRAPH_BINDINGS,
         *_INPAINT_GRAPH_BINDINGS,
         *_QWEN_OUTPAINT_GRAPH_BINDINGS,
+        *_OUTPAINT_GRAPH_BINDINGS,
         *_VIDEO_GRAPH_BINDINGS,
         *_WAN_VACE_GRAPH_BINDINGS,
         *_I2V_GRAPH_BINDINGS,
@@ -11312,6 +11365,460 @@ for _flux_combined_spec_id, _flux_combined_definition in _FLUX_COMBINED_CONTROL_
     _flux_combined_definition["autoRequirements"] = _flux_control_base["autoRequirements"]
     STUDIO_EXECUTION_SPEC_DEFINITIONS[_flux_combined_spec_id] = _flux_combined_definition
 
+
+def _direct_image_promotion_profile(
+    *,
+    profile_id: str,
+    model_type: str,
+    modes: tuple[str, ...],
+    pipeline_class: str,
+    repository: str,
+    quantizable_components: tuple[str, ...],
+    default_quantized_components: tuple[str, ...],
+    supported_offload_modes: tuple[str, ...],
+    retry_offload_modes: tuple[str, ...],
+    max_low_memory_side: int,
+    max_low_memory_steps: int,
+    compatible_repos: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    return {
+        "id": profile_id,
+        "model_type": model_type,
+        "modes": modes,
+        "loader_module": "modules.DiffusersImage",
+        "loader_action": "LoadPipeline",
+        "execution_path": "direct-diffusers-image",
+        "pipeline_class": pipeline_class,
+        "default_repo": repository,
+        "fallback_repo": None,
+        "quantizable_components": quantizable_components,
+        "default_quantized_components": default_quantized_components,
+        "supported_offload_modes": supported_offload_modes,
+        "retry_offload_modes": retry_offload_modes,
+        "max_low_memory_side": max_low_memory_side,
+        "max_low_memory_steps": max_low_memory_steps,
+        "live_proof": False,
+        "compatible_repos": compatible_repos,
+    }
+
+
+def _direct_image_promotion_capability(
+    *,
+    model_type: str,
+    label: str,
+    display_name: str,
+    family: str,
+    repository: str,
+    download_files: list[str],
+    modes: tuple[str, ...],
+    mode_requirements: dict[str, dict[str, Any]],
+    supports_negative_prompt: bool,
+    supports_mask: bool,
+    supports_multi_image: bool,
+    recommended_steps: int,
+    recommended_guidance: float,
+    low_vram_side: int,
+    low_vram_steps: int,
+    supported_offload_modes: tuple[str, ...],
+    low_vram_offload_mode: str,
+    notes: list[str],
+    alternate_artifact: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "modelType": model_type,
+        "label": label,
+        "displayName": display_name,
+        "family": family,
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": repository,
+        "downloadFiles": download_files,
+        **({"alternateArtifact": alternate_artifact} if alternate_artifact else {}),
+        "artifactLabel": "Reused immutable safetensors Diffusers repository",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+        "recommendedSteps": recommended_steps,
+        "recommendedGuidance": recommended_guidance,
+        "guidanceLabel": "Guidance",
+        "supportsNegativePrompt": supports_negative_prompt,
+        "supportsImageInput": True,
+        "supportsMask": supports_mask,
+        "supportsMultiImage": supports_multi_image,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": True,
+        "outputKind": "image",
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_MODEL_CPU,
+            "lowVram": low_vram_offload_mode,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": list(supported_offload_modes),
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": low_vram_offload_mode,
+            "steps": low_vram_steps,
+            "width": low_vram_side,
+            "height": low_vram_side,
+        },
+        "modes": list(modes),
+        "modeRequirements": mode_requirements,
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(repository)],
+        "autoEligible": False,
+        # Source-executable pairs may be contracted for hidden authoring while
+        # public Gallery publication remains a separate qualification gate.
+        "templateEligible": True,
+        "galleryEligible": False,
+        "liveProof": False,
+        "notes": notes,
+    }
+
+
+_QWEN_IMAGE_EDIT_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="qwen-image-edit:direct",
+    model_type="QwenImageEditPipeline",
+    modes=("edit_image",),
+    pipeline_class="QwenImageEditPipeline",
+    repository=QWEN_IMAGE_EDIT_REPO,
+    quantizable_components=("transformer", "text_encoder"),
+    default_quantized_components=(),
+    supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+    retry_offload_modes=(
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    max_low_memory_side=768,
+    max_low_memory_steps=24,
+)
+_QWEN_IMAGE_EDIT_PLUS_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="qwen-image-edit-plus:direct",
+    model_type="QwenImageEditPlusPipeline",
+    modes=("edit_image", "multi_image_reference_edit"),
+    pipeline_class="QwenImageEditPlusPipeline",
+    repository=QWEN_IMAGE_EDIT_PLUS_REPO,
+    quantizable_components=("transformer", "text_encoder"),
+    default_quantized_components=(),
+    supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+    retry_offload_modes=(
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    max_low_memory_side=768,
+    max_low_memory_steps=24,
+)
+_Z_IMAGE_INPAINT_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="z-image-inpaint:direct",
+    model_type="ZImageInpaintPipeline",
+    modes=("inpaint", "outpaint"),
+    pipeline_class="ZImageInpaintPipeline",
+    repository=Z_IMAGE_REPO,
+    quantizable_components=(),
+    default_quantized_components=(),
+    supported_offload_modes=(
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    max_low_memory_side=1024,
+    max_low_memory_steps=8,
+)
+_FLUX_KONTEXT_INPAINT_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="flux-kontext-inpaint:direct",
+    model_type="FluxKontextInpaintPipeline",
+    modes=("inpaint", "outpaint"),
+    pipeline_class="FluxKontextInpaintPipeline",
+    repository=FLUX_KONTEXT_REPO,
+    quantizable_components=("transformer", "text_encoder_2"),
+    default_quantized_components=("transformer",),
+    supported_offload_modes=(
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    max_low_memory_side=768,
+    max_low_memory_steps=24,
+    compatible_repos=(FLUX_KONTEXT_NVFP4_REPO,),
+)
+_FLUX2_KLEIN_INPAINT_DIRECT_PROFILE = _direct_image_promotion_profile(
+    profile_id="flux2-klein-inpaint:direct",
+    model_type="Flux2KleinInpaintPipeline",
+    modes=("inpaint", "outpaint"),
+    pipeline_class="Flux2KleinInpaintPipeline",
+    repository=FLUX2_KLEIN_REPO,
+    # The exact standard inpaint constructor owns one text_encoder component,
+    # unlike the older base route's historical text_encoder_2 declaration.
+    quantizable_components=("transformer", "text_encoder"),
+    default_quantized_components=("transformer",),
+    supported_offload_modes=(
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    retry_offload_modes=(OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    max_low_memory_side=768,
+    max_low_memory_steps=4,
+)
+
+_QWEN_IMAGE_EDIT_DIRECT_CAPABILITY = _direct_image_promotion_capability(
+    model_type="QwenImageEditPipeline",
+    label="Qwen Image Edit (Standard Diffusers)",
+    display_name="Qwen-Image-Edit",
+    family="Qwen Image",
+    repository=QWEN_IMAGE_EDIT_REPO,
+    download_files=QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
+    modes=("edit_image",),
+    mode_requirements={
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for the exact standard Qwen edit pipeline.",
+        }
+    },
+    supports_negative_prompt=True,
+    supports_mask=False,
+    supports_multi_image=False,
+    recommended_steps=40,
+    recommended_guidance=4.0,
+    low_vram_side=768,
+    low_vram_steps=24,
+    supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+    low_vram_offload_mode=OFFLOAD_MODE_SEQUENTIAL_CPU,
+    notes=[
+        "This additive standard-pipeline pair does not replace the approved Qwen Modular edit workflow.",
+        "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+    ],
+)
+_QWEN_IMAGE_EDIT_PLUS_DIRECT_CAPABILITY = _direct_image_promotion_capability(
+    model_type="QwenImageEditPlusPipeline",
+    label="Qwen Image Edit Plus (Standard Diffusers)",
+    display_name="Qwen-Image-Edit-2511",
+    family="Qwen Image",
+    repository=QWEN_IMAGE_EDIT_PLUS_REPO,
+    download_files=QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES,
+    modes=("edit_image", "multi_image_reference_edit"),
+    mode_requirements={
+        "edit_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for the exact standard Qwen Edit Plus pipeline.",
+        },
+        "multi_image_reference_edit": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires two or more source images and accepts at most eight reviewed references.",
+        },
+    },
+    supports_negative_prompt=True,
+    supports_mask=False,
+    supports_multi_image=True,
+    recommended_steps=40,
+    recommended_guidance=4.0,
+    low_vram_side=768,
+    low_vram_steps=24,
+    supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+    low_vram_offload_mode=OFFLOAD_MODE_SEQUENTIAL_CPU,
+    notes=[
+        "These additive standard-pipeline pairs do not replace the approved Qwen Edit Plus Modular workflows.",
+        "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+    ],
+)
+_Z_IMAGE_INPAINT_DIRECT_CAPABILITY = _direct_image_promotion_capability(
+    model_type="ZImageInpaintPipeline",
+    label="Z-Image Inpaint (Standard Diffusers)",
+    display_name="Z-Image-Turbo Inpaint",
+    family="Z-Image",
+    repository=Z_IMAGE_REPO,
+    download_files=Z_IMAGE_DIFFUSERS_FILES,
+    modes=("inpaint", "outpaint"),
+    mode_requirements={
+        "inpaint": {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "note": "Requires one source image and one mask image.",
+        },
+        "outpaint": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        },
+    },
+    supports_negative_prompt=True,
+    supports_mask=True,
+    supports_multi_image=False,
+    recommended_steps=8,
+    recommended_guidance=1.0,
+    low_vram_side=1024,
+    low_vram_steps=8,
+    supported_offload_modes=(
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    low_vram_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+    notes=[
+        "This additive exact inpaint class leaves the existing Z-Image text and edit routes unchanged.",
+        "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+    ],
+)
+_FLUX_KONTEXT_INPAINT_DIRECT_CAPABILITY = _direct_image_promotion_capability(
+    model_type="FluxKontextInpaintPipeline",
+    label="FLUX.1 Kontext Inpaint (Standard Diffusers)",
+    display_name="FLUX.1-Kontext-dev Inpaint",
+    family="FLUX Image",
+    repository=FLUX_KONTEXT_REPO,
+    download_files=FLUX_KONTEXT_DIFFUSERS_FILES,
+    modes=("inpaint", "outpaint"),
+    mode_requirements={
+        "inpaint": {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "note": "Requires one source image and one mask image.",
+        },
+        "outpaint": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        },
+    },
+    supports_negative_prompt=True,
+    supports_mask=True,
+    supports_multi_image=False,
+    recommended_steps=24,
+    recommended_guidance=3.5,
+    low_vram_side=768,
+    low_vram_steps=24,
+    supported_offload_modes=(
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    low_vram_offload_mode=OFFLOAD_MODE_SEQUENTIAL_CPU,
+    alternate_artifact=FLUX_KONTEXT_NVFP4_REPO,
+    notes=[
+        "This additive exact inpaint class leaves the existing FLUX Kontext edit routes unchanged.",
+        "Public publication, Auto, Gallery, live output, and rights review remain separate pending gates.",
+    ],
+)
+_FLUX2_KLEIN_INPAINT_DIRECT_CAPABILITY = _direct_image_promotion_capability(
+    model_type="Flux2KleinInpaintPipeline",
+    label="FLUX.2 Klein Inpaint (Standard Diffusers)",
+    display_name="FLUX.2-klein-4B Inpaint",
+    family="FLUX Image",
+    repository=FLUX2_KLEIN_REPO,
+    download_files=FLUX2_KLEIN_DIFFUSERS_FILES,
+    modes=("inpaint", "outpaint"),
+    mode_requirements={
+        "inpaint": {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "note": "Requires one source image and one mask image.",
+        },
+        "outpaint": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image; the generic canvas node derives the expansion mask.",
+        },
+    },
+    supports_negative_prompt=False,
+    supports_mask=True,
+    supports_multi_image=False,
+    recommended_steps=4,
+    recommended_guidance=1.0,
+    low_vram_side=768,
+    low_vram_steps=4,
+    supported_offload_modes=(
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    low_vram_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+    notes=[
+        "This additive exact inpaint class leaves the existing FLUX.2 Klein generation and edit routes unchanged.",
+        "Auto, Gallery publication, and live qualification remain disabled pending reviewed generated assets.",
+    ],
+)
+
+_STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS = {
+    "qwen-image-edit-direct:edit-image:v1": {
+        "modelType": "QwenImageEditPipeline",
+        "mode": "edit_image",
+        "profile": _QWEN_IMAGE_EDIT_DIRECT_PROFILE,
+        "capability": _QWEN_IMAGE_EDIT_DIRECT_CAPABILITY,
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _QWEN_DIRECT_EDIT_GRAPH_BINDINGS,
+    },
+    "qwen-image-edit-plus-direct:edit-image:v1": {
+        "modelType": "QwenImageEditPlusPipeline",
+        "mode": "edit_image",
+        "profile": _QWEN_IMAGE_EDIT_PLUS_DIRECT_PROFILE,
+        "capability": _QWEN_IMAGE_EDIT_PLUS_DIRECT_CAPABILITY,
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _QWEN_DIRECT_EDIT_GRAPH_BINDINGS,
+    },
+    "qwen-image-edit-plus-direct:multi-image-reference-edit:v1": {
+        "modelType": "QwenImageEditPlusPipeline",
+        "mode": "multi_image_reference_edit",
+        "profile": _QWEN_IMAGE_EDIT_PLUS_DIRECT_PROFILE,
+        "capability": _QWEN_IMAGE_EDIT_PLUS_DIRECT_CAPABILITY,
+        "roles": _EDIT_GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES,
+        "bindings": _QWEN_DIRECT_EDIT_GRAPH_BINDINGS,
+    },
+}
+
+for (
+    _inpaint_prefix,
+    _inpaint_model_type,
+    _inpaint_profile,
+    _inpaint_capability,
+    _inpaint_unsupported_params,
+) in (
+    (
+        "z-image-inpaint-direct",
+        "ZImageInpaintPipeline",
+        _Z_IMAGE_INPAINT_DIRECT_PROFILE,
+        _Z_IMAGE_INPAINT_DIRECT_CAPABILITY,
+        frozenset({"reference_strength"}),
+    ),
+    (
+        "flux-kontext-inpaint-direct",
+        "FluxKontextInpaintPipeline",
+        _FLUX_KONTEXT_INPAINT_DIRECT_PROFILE,
+        _FLUX_KONTEXT_INPAINT_DIRECT_CAPABILITY,
+        frozenset({"reference_strength"}),
+    ),
+    (
+        "flux2-klein-inpaint-direct",
+        "Flux2KleinInpaintPipeline",
+        _FLUX2_KLEIN_INPAINT_DIRECT_PROFILE,
+        _FLUX2_KLEIN_INPAINT_DIRECT_CAPABILITY,
+        frozenset({"negative_prompt", "reference_strength"}),
+    ),
+):
+    for _inpaint_mode in ("inpaint", "outpaint"):
+        _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS[
+            f"{_inpaint_prefix}:{_inpaint_mode}:v1"
+        ] = {
+            "modelType": _inpaint_model_type,
+            "mode": _inpaint_mode,
+            "profile": _inpaint_profile,
+            "capability": _inpaint_capability,
+            "roles": _INPAINT_GRAPH_ROLES if _inpaint_mode == "inpaint" else _OUTPAINT_GRAPH_ROLES,
+            "edges": _INPAINT_GRAPH_EDGES if _inpaint_mode == "inpaint" else _OUTPAINT_GRAPH_EDGES,
+            "bindings": _direct_inpaint_bindings(
+                outpaint=_inpaint_mode == "outpaint",
+                unsupported_params=_inpaint_unsupported_params,
+            ),
+        }
+
+STUDIO_EXECUTION_SPEC_DEFINITIONS.update(_STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS)
+
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",
     "flux-canny:img2img-direct",
@@ -11324,10 +11831,12 @@ _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-dev:inpaint-direct",
     "flux-fill:direct",
     "flux-kontext:direct",
+    "flux-kontext-inpaint:direct",
     "flux-krea:direct",
     "flux-redux:direct",
     "flux-schnell:direct",
     "flux2-klein:direct",
+    "flux2-klein-inpaint:direct",
 }
 for _definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
     if _definition["profile"]["id"] in _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS:

@@ -350,6 +350,15 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("FluxDepthPipeline", "control_inpaint"),
                 ("FluxCannyPipeline", "control_edit_image"),
                 ("FluxCannyPipeline", "control_inpaint"),
+                ("QwenImageEditPipeline", "edit_image"),
+                ("QwenImageEditPlusPipeline", "edit_image"),
+                ("QwenImageEditPlusPipeline", "multi_image_reference_edit"),
+                ("ZImageInpaintPipeline", "inpaint"),
+                ("ZImageInpaintPipeline", "outpaint"),
+                ("FluxKontextInpaintPipeline", "inpaint"),
+                ("FluxKontextInpaintPipeline", "outpaint"),
+                ("Flux2KleinInpaintPipeline", "inpaint"),
+                ("Flux2KleinInpaintPipeline", "outpaint"),
             ],
         )
         by_id = {item["id"]: item for item in specs}

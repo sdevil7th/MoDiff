@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 33)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 28)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -170,7 +170,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 152)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 161)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -209,6 +209,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "QwenImageModularPipeline",
             "QwenImageControlNetPipeline",
             "QwenImageLayeredPipeline",
+            "QwenImageEditPipeline",
+            "QwenImageEditPlusPipeline",
+            "ZImageInpaintPipeline",
+            "FluxKontextInpaintPipeline",
+            "Flux2KleinInpaintPipeline",
             "StableDiffusionXLPipeline",
             "DDPMPipeline",
             "DDIMPipeline",
