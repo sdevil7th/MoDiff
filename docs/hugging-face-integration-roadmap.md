@@ -3079,9 +3079,10 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       evidence; source flags remain dormant.
     - [ ] macOS ARM64 executable qualification: the manual-only
       `.github/workflows/qualify-optional-runtime-macos.yml` proposal asserts the
-      hosted architecture, retains the explicit prospective dependency diff,
-      requires ready preflight, runs the consented qualifier, and uploads bounded
-      evidence for review. It has not run and makes no macOS success claim.
+      hosted architecture on the explicit `macos-15` ARM64 standard runner,
+      retains the prospective dependency diff, requires ready preflight, runs
+      the consented qualifier, and uploads bounded evidence for review. It has
+      not run and makes no macOS success claim.
     - [x] Enabled-target executable qualification: Windows and Linux x86-64
       have reviewed wheel/installer, clean-base/staged workload, fresh-process,
       restart, and rollback evidence. The four pending target rows remain
@@ -3276,6 +3277,17 @@ passed with `1625 passed, 40 skipped, 3273 subtests` and only the existing
 Diffusers `torch_dtype` deprecation warning. Those skips do not constitute
 macOS evidence: the physical macOS qualifier remains pending, and the skipped
 contracts still run on a base-delivered or activated qualified runtime.
+
+Hosted-runner maintenance (2026-08-14): backend `6e08028` moves the manual
+optional-runtime qualifier and the ordinary backend CI matrix from GitHub's
+scheduled-for-deprecation macOS 14 image to the explicit macOS 15 ARM64
+standard runner. The qualifier remains manual-only and preserves its ARM64
+assertion, prospective clean-base diff, ready-preflight requirement, consented
+execution, and bounded 14-day evidence upload. Both workflow files parse as
+YAML; the focused installer/runtime regression passed `50 tests, 126 subtests`
+with Ruff E9/F, shell syntax, and diff checks green. This is source/static
+evidence only: the workflow has not run, no production flag changed, and the
+physical macOS gate remains unchecked.
 
 ## Phase 1 — Modular foundation without large model runs
 
