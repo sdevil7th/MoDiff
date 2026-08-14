@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS": (
+                "e102b3591cc82e97071b8b4cb90d834d0c487207",
+                15,
+                "asset/4K_image.jpg",
+            ),
             "Tongyi-MAI/Z-Image-Turbo": (
                 "f332072aa78be7aecdf3ee76d5c247082da564a6",
                 21,

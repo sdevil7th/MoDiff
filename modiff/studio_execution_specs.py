@@ -221,6 +221,23 @@ SANA_600M_FP16_DIFFUSERS_FILES = [
 ]
 SANA_SPRINT_REPO = "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
 PIXART_SIGMA_REPO = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+PIXART_SIGMA_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 KANDINSKY3_REPO = "kandinsky-community/kandinsky-3"
 LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
 LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
@@ -6496,6 +6513,7 @@ _PIXART_SIGMA_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": PIXART_SIGMA_REPO,
+    "downloadFiles": PIXART_SIGMA_DIFFUSERS_FILES,
     "artifactLabel": "OpenRAIL++ Diffusers safetensors repo",
     "defaultDtype": "float16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
