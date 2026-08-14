@@ -3266,6 +3266,17 @@ Priority: immediate. Hardware: CPU only. Assets: none.
   requiring workflow remains blocked until its explicit first-use composite
   runtime installation succeeds.
 
+Clean-base test-topology revalidation (2026-08-14): backend `e29fbf4` removes
+unintended top-level Transformers use from exact fixture-only tests and scopes
+40 tests that construct real optional upstream objects to hosts where the
+staged runtime is base-delivered or explicitly activated. The Linux clean CPU
+base therefore exercises the full data-only, security, route, installer, and
+fixture surface without reinstalling Transformers or PEFT; its complete gate
+passed with `1625 passed, 40 skipped, 3273 subtests` and only the existing
+Diffusers `torch_dtype` deprecation warning. Those skips do not constitute
+macOS evidence: the physical macOS qualifier remains pending, and the skipped
+contracts still run on a base-delivered or activated qualified runtime.
+
 ## Phase 1 — Modular foundation without large model runs
 
 Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
@@ -3689,6 +3700,30 @@ output and assets remotely. Assets: remote Dataset only.
     still required on the approved qualification app host before P2.5 remote
     execution begins; no graph, inference, media, review, publication,
     activation, or physical macOS evidence is claimed.
+  - [x] **P2.5d App-owned pinned Gallery materialization:** backend `df71942`
+    and client `0fd0830` add the normal running-app path needed to close the
+    absent-input condition without bypassing the app. Setup now exposes strict
+    status, plan, and explicit install/repair actions for the exact anonymous
+    Dataset revision. The backend validates the immutable source descriptor
+    and canonical manifest identity, reserves the complete download and
+    same-volume staging copy alongside active model-download reservations and
+    the 64 GiB safety margin, hashes every staged byte, and atomically promotes
+    the verified tree. Admission is serialized with model-download space
+    reservations, while transfers retain the app's bounded parallelism. This
+    action never deletes model-cache entries. The reviewed approved-subset
+    descriptor resolves to 356 assets / 480,430,370 bytes and
+    `sha256:canonical-json:5ec869b755a6ce04a789d6835819da150493bfaef8a6bc1480f0274ba05bcab9`.
+    Focused backend tests passed (43 tests / 29 subtests), the complete backend
+    gate passed (`1625 passed, 40 skipped, 3273 subtests`), the complete client
+    gate and bundle budget passed, and the full mocked Studio sweep passed all
+    107 tests. The currently running app predates these routes and was not
+    restarted because app-managed model downloads remain active; no Gallery
+    install POST or payload download has occurred. Until those downloads
+    finish, the new app code is activated by a safe restart, and the user
+    explicitly confirms the in-app plan, the present source-checkout result
+    remains 38 input-free jobs ready and 38 input-conditioned jobs blocked. No
+    graph, inference, media, review, publication, activation, or physical macOS
+    evidence is claimed.
 
 ### Phase 2 test and asset gate
 
@@ -6309,7 +6344,7 @@ Add references only after the corresponding evidence exists.
 | P0.3e image-path and Expert quantization-choice cleanup | `fd514f7` | `a63d882`, `5abfab9` | Not required | Not required | Complete: managed image topology and loader class now come only from the exact selected specification or existing managed binding; exact Qwen/Flux profiles own the bounded Expert quantization choices; controlled tab restore retains its execution-spec receipt. The complete backend/client gates and final 94/94 mocked Studio suite passed, with the bundle 259 bytes inside the stricter safety target. No live model execution was required. |
 | P0.3e resource-path overlay | `8fb2cb9` (exact schema-v2 Auto target contract) | `16b7f12` | Not required | Not required | Complete: the client no longer guesses execution paths from Qwen or family identity before planning; exact selected backend candidates remain the only Auto path authority, and the complete 89/89 Studio gate passed. |
 | P0.4 | `bf0af6b` (Auto schema/profile history binding), `f0ccd13` (optional-runtime receipt binding), `3a0b355` (specification-owned graph receipt binding), `e2a1bf2` (auxiliary-artifact receipt binding), `5cb785d` (executable controlled-LoRA history/cache receipt binding), `31cbc47` (current controlled-workflow artifact receipts), `a4efd6c` (Z-Image exact graph specification), `6e40bab` (Qwen Image exact graph specification), `4596728` (Qwen Image Edit Modular exact graph specification), `0e7a8f1` (Qwen Image Edit Plus exact graph specifications), `dd594ba` (Qwen Layered exact graph specification), `03c358b` (Qwen Image Control exact graph specification) | `12847d0`, `4cad1b2`, `0131ea7`, `453da03`, `54a610a` (exact controlled-artifact metadata and proof label), `77ceab9`, `531d4b9`, `e8aab4e`, `57a4072`, `ff3f9c6`, `1102249` | Not required | Not required | Complete for the current reviewed contract set: schema-v3 seals LoRA, sequence, upscaler, quality, soundtrack, and lyric/mux graph transformations; Auto candidates/history bind planner/profile/runtime/topology and all current executable auxiliary artifact receipts; every one of the 39 current execution-profile pairs has an exact backend-owned graph specification; stale, malformed, disconnected, or unreviewed receipt claims fail closed; and plan-time UI no longer presents base-only history as proof of controlled artifacts. Future controlled artifact kinds require a new reviewed receipt and qualification slice. |
-| P0.5 | `4073711` (qualifier), `655baa6` (platform cutover), corrected by `1e95362` | `16046ab` (target-aware Setup status) | Windows x86-64 guarded live-model proof; Linux x86-64 clean-base/no-weight, supervised lifecycle, and production-cutover proof; macOS pending and base-delivered | Not required | Complete for qualified x86 targets: the exact six-target profile/delivery table enables explicit first-use install/activation only on Linux and Windows x86-64. Direct base dependencies remain only on macOS/ARM targets. A committed clean Linux CPU base contained 61 packages and none of the ten staged distributions; the exact overlay installed, validated, activated, passed the finite CLIP+LoRA child, rolled back, and restored a fresh clean base. A fresh worker exposed actionable status and rejected required execution with `optional_runtime_missing` before queueing. macOS and ARM rows remain explicitly non-actionable/base-delivered pending their own qualifier evidence. |
+| P0.5 | `4073711` (qualifier), `655baa6` (platform cutover), corrected by `1e95362`; clean-base topology revalidated by `e29fbf4` | `16046ab` (target-aware Setup status) | Windows x86-64 guarded live-model proof; Linux x86-64 clean-base/no-weight, supervised lifecycle, and production-cutover proof; macOS pending and base-delivered | Not required | Complete for qualified x86 targets: the exact six-target profile/delivery table enables explicit first-use install/activation only on Linux and Windows x86-64. Direct base dependencies remain only on macOS/ARM targets. A committed clean Linux CPU base contained 61 packages and none of the ten staged distributions; the exact overlay installed, validated, activated, passed the finite CLIP+LoRA child, rolled back, and restored a fresh clean base. The later clean-base full suite passed with 40 exact optional-upstream tests scoped to base-delivered or activated runtimes instead of reinstalling Transformers. A fresh worker exposed actionable status and rejected required execution with `optional_runtime_missing` before queueing. macOS and ARM rows remain explicitly non-actionable/base-delivered pending their own qualifier evidence. |
 | P1.1 | `207d8f1`; actionable API message follow-up `5dc7313` | `c3e932c` | Not required | Not required | Complete: reviewed official component execution is bound to exact main/auxiliary Hub commits, an installed pinned pipeline/block pair, immediate identity revalidation, a private content-addressed metadata snapshot, and P0.5 runtime admission. Local sources remain preview-only and repository Python remains disabled without a future non-persistable task authorization. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.2 | `50dafa6` | `7c6bdbf` | Not required | Not required | Complete: the reproducible pinned snapshot normalizes Sequential, Auto, Loop, state, output, and component contracts; DynamicBlock exposes and executes only sidecar-carryable reviewed tasks; the client consumes the declarative task visibility contract generically. Complete backend/client and focused browser gates passed without model or asset execution. |
 | P1.3 | `b48355b` | `f044594` | Not required | Not required | Complete: all three planned guiders use exact pinned official exports and constructor contracts; layer requirements, component compatibility, typed parameters, and backend-driven generic option signals passed complete backend/client and focused browser gates without weights. |
@@ -6331,6 +6366,7 @@ Add references only after the corresponding evidence exists.
 | P2.5a Clean-host qualification campaign readiness | Not required | `8a93cf2` | Dry-run planning only; 76 live qualification receipts remain pending across six model-family batches | Pending | Missing local Auto history is correctly treated as no legacy evidence, ignored report directories initialize on clean hosts, and the complete client gate passes. The dry run submitted no graph and generated or published no media. |
 | P2.5b Exact app-cache qualification readiness | Not required | `a76ee04` | Read-only live-app cache proof only; 76 live qualification receipts remain pending | Pending | All 76 selected jobs and 31 unique immutable model/LoRA receipts match complete, installed, repair-free app-cache entries. The loopback-only bounded preflight and complete client gate pass; no graph, inference, output, review, or publication occurred. |
 | P2.5c Exact default-input qualification readiness | Not required | `d271a9f`, corrected by `7738537` | Read-only local-byte audit only; 76 live qualification receipts remain pending | Pending | The fail-closed campaign gate verifies selected Template Gallery defaults against their content-addressed bindings and asset-manifest size/hash receipts before browser or inference startup, checking both the authoring tree and the normal installer's durable backend `web/` payload. The runner uses the same installed-app fallback. The source checkout has none of the 50 required files (33,867,388 bytes), so 38 input-conditioned jobs are blocked and 38 input-free jobs are ready. No direct asset download, model deletion, graph, inference, output, review, or publication occurred. |
+| P2.5d App-owned pinned Gallery materialization | `df71942` | `0fd0830` | Contract/unit/mocked-browser proof only; app activation, Gallery install, and 76 live qualification receipts remain pending | `b27198159c30d0c81aef397c188a7826866e5027` (`sha256:canonical-json:5ec869b755a6ce04a789d6835819da150493bfaef8a6bc1480f0274ba05bcab9` approved subset); payload not installed in this checkout | The app now exposes strict status, queue-aware plan, and explicit install/repair actions for the exact anonymous Dataset payload. It reserves download plus atomic staging bytes with active model reservations and a 64 GiB safety margin, hashes all 356 files / 480,430,370 bytes, and never deletes model caches. Complete backend/client gates and all 107 mocked Studio tests pass. The current old worker was intentionally not restarted while app-managed model downloads are active, so no Gallery POST/download occurred and the 38 conditioned jobs remain blocked until safe restart plus explicit in-app consent. |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
