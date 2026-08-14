@@ -229,7 +229,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         scope = self.ledger["scope"]["transformers"]
         self.assertEqual(
             TRANSFORMERS_REVIEWED_MAIN_REVISION,
-            "a597f974857b3d92939971296bc0deb93d33d780",
+            "96fe6dce36cc929a5ffd3e34296554c4cb6b669e",
         )
         self.assertEqual(TRANSFORMERS_REVIEWED_MAIN_REVISION, TRANSFORMERS_MAIN_COMMIT)
         self.assertEqual(scope["reviewedMainRevision"], TRANSFORMERS_REVIEWED_MAIN_REVISION)

@@ -22,14 +22,13 @@ from typing import Callable, Iterable, Mapping
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = (
-    "huggingface-transformers-main-a597f974-peft-0.20.0"
+    "huggingface-transformers-main-96fe6dce-peft-0.20.0"
 )
-TRANSFORMERS_MAIN_COMMIT = "a597f974857b3d92939971296bc0deb93d33d780"
-TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT = "c1ff11866b3e2c473f92460ee0bf68d739921609"
+TRANSFORMERS_MAIN_COMMIT = "96fe6dce36cc929a5ffd3e34296554c4cb6b669e"
+TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT = "a597f974857b3d92939971296bc0deb93d33d780"
 TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS = (
-    "docs/source/en/chat_templating_multimodal.md",
-    "docs/source/en/image_processors.md",
-    "docs/source/en/video_processors.md",
+    "tests/models/axk1/test_modeling_axk1.py",
+    "tests/models/gemma/test_modeling_gemma.py",
 )
 _MAX_OBSERVED_VERSION_LENGTH = 128
 
@@ -129,8 +128,8 @@ def _transformers_main_source_build() -> dict:
                 "https://codeload.github.com/huggingface/transformers/tar.gz/"
                 f"{TRANSFORMERS_MAIN_COMMIT}"
             ),
-            "sha256": "206aaa32386db09202db21038f5610a7fb0f2817f013003ec3beb90aafbfc0d6",
-            "byteSize": 20_532_481,
+            "sha256": "e9903aec337657fd8ae1fd1e7812efed159c2cf4444e83e7fc877e252127e1b3",
+            "byteSize": 20_532_315,
         },
         "recipe": "modiff_pure_python_wheel_v1",
         "pythonTag": "py3",

@@ -257,25 +257,24 @@ class SourceBuildContractTests(SourceBuildFixture):
         self.assertNotIn("sourceBuilds", current.to_spec_dict())
         self.assertEqual(
             current.spec_digest,
-            "sha256:1805ca0aafcbf64d77f746fdf6499c31d2e41935b1c0a17d2ef9d9988ca6adad",
+            "sha256:fc1ec7d64d3401981b818ccbed49f8b3d7072d1f6db9b1b55b9fce60d980c8ea",
         )
         self.assertEqual(profile.packages[0].version, "5.16.0.dev0")
         self.assertEqual(source["sourceArtifact"]["commit"], TRANSFORMERS_MAIN_COMMIT)
         self.assertEqual(
             source["sourceArtifact"]["sha256"],
-            "206aaa32386db09202db21038f5610a7fb0f2817f013003ec3beb90aafbfc0d6",
+            "e9903aec337657fd8ae1fd1e7812efed159c2cf4444e83e7fc877e252127e1b3",
         )
-        self.assertEqual(source["sourceArtifact"]["byteSize"], 20_532_481)
+        self.assertEqual(source["sourceArtifact"]["byteSize"], 20_532_315)
         self.assertEqual(
             TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT,
-            "c1ff11866b3e2c473f92460ee0bf68d739921609",
+            "a597f974857b3d92939971296bc0deb93d33d780",
         )
         self.assertEqual(
             TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS,
             (
-                "docs/source/en/chat_templating_multimodal.md",
-                "docs/source/en/image_processors.md",
-                "docs/source/en/video_processors.md",
+                "tests/models/axk1/test_modeling_axk1.py",
+                "tests/models/gemma/test_modeling_gemma.py",
             ),
         )
         self.assertEqual(source["recipe"], "modiff_pure_python_wheel_v1")
@@ -429,14 +428,14 @@ class SourceBuildContractTests(SourceBuildFixture):
                             consent=True,
                         )
 
-    def test_latest_main_relock_records_only_unselected_documentation_changes(self):
+    def test_latest_main_relock_records_only_unselected_upstream_test_changes(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
         source_build = profile.source_builds[0]
 
         self.assertNotEqual(TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT, TRANSFORMERS_MAIN_COMMIT)
-        self.assertEqual(len(TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS), 3)
+        self.assertEqual(len(TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS), 2)
         for path in TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS:
-            self.assertTrue(path.startswith("docs/"))
+            self.assertTrue(path.startswith("tests/"))
             self.assertNotIn(path, source_build["sourceFiles"])
             self.assertFalse(
                 any(
@@ -444,8 +443,8 @@ class SourceBuildContractTests(SourceBuildFixture):
                     for tree in source_build["sourceTrees"]
                 )
             )
-        # The reviewed a597 advance did not change any selected package bytes,
-        # so its normalized output remains the independently derived c1ff lock.
+        # The reviewed 96fe advance did not change any selected package bytes,
+        # so its normalized output remains the independently derived wheel lock.
         self.assertEqual(
             source_build["outputWheel"]["sha256"],
             "8a439d25595c6dde486cfbd5a6ed8158e0fe7554ec236491668425e11952898f",

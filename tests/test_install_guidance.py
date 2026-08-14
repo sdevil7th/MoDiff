@@ -289,6 +289,11 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertEqual(patch_check.returncode, 0, patch_check.stderr)
         self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
         self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)
+        self.assertEqual(
+            workflow.count("huggingface-transformers-main-96fe6dce-peft-0.20.0"),
+            4,
+        )
+        self.assertNotIn("huggingface-transformers-main-a597f974-peft-0.20.0", workflow)
         self.assertIn('assert value["status"] == "ready"', workflow)
         self.assertIn('assert value["status"] == "passed"', workflow)
         self.assertIn("prospective-base.diff", workflow)
