@@ -2887,6 +2887,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             num_frames=8,
             num_inference_steps=6,
             guidance_scale=1.5,
+            max_sequence_length=77,
             seed=23,
             output_type="pil",
         )
@@ -2898,6 +2899,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(call["guidance_scale"], 1.5)
         self.assertEqual(call["decode_chunk_size"], 16)
         self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertEqual(VIDEO_PIPELINE_ADAPTERS["AnimateDiffPipeline"].max_prompt_tokens, 77)
+        self.assertEqual(VIDEO_PIPELINE_ADAPTERS["AnimateLCMPipeline"].max_prompt_tokens, 77)
+        self.assertNotIn("max_sequence_length", call)
         self.assertNotIn("image", call)
         with self.assertRaisesRegex(ValueError, "step count must be an integer from 1 through 8"):
             Generate().execute(
@@ -3006,7 +3010,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             max_sequence_length=226,
         )
 
-        self.assertEqual(result, {"video_out": Output.frames[0], "width_out": 720, "height_out": 480, "frames_out": 25})
+        self.assertEqual(
+            result, {"video_out": Output.frames[0], "width_out": 720, "height_out": 480, "frames_out": 25}
+        )
         call = pipeline.calls[0]
         self.assertEqual(call["num_frames"], 25)
         self.assertEqual(call["num_inference_steps"], 25)
@@ -3552,7 +3558,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                     {"video_out": Output.frames[0], "width_out": 832, "height_out": 480, "frames_out": 81},
                 )
                 call_kwargs = pipeline.calls[0]
-                self.assertEqual(call_kwargs["prompt"], "A red kite crosses a windswept coastal bluff. motion score: 30.")
+                self.assertEqual(
+                    call_kwargs["prompt"], "A red kite crosses a windswept coastal bluff. motion score: 30."
+                )
                 self.assertEqual(call_kwargs["frames"], 81)
                 self.assertEqual(call_kwargs["num_inference_steps"], 50)
                 self.assertEqual(call_kwargs["guidance_scale"], 6)
@@ -3633,7 +3641,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             output_type="pil",
         )
 
-        self.assertEqual(result, {"video_out": Output.frames[0], "width_out": 1024, "height_out": 576, "frames_out": 8})
+        self.assertEqual(
+            result, {"video_out": Output.frames[0], "width_out": 1024, "height_out": 576, "frames_out": 8}
+        )
         call = pipeline.calls[0]
         self.assertIs(call["image"], reference)
         self.assertEqual(call["num_frames"], 8)

@@ -56,9 +56,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "control_image",
         )
         redux = studio_model_dependencies_for_pair("FluxReduxPipeline", "edit_image")
-        redux_multi = studio_model_dependencies_for_pair(
-            "FluxReduxPipeline", "multi_image_reference_edit"
-        )
+        redux_multi = studio_model_dependencies_for_pair("FluxReduxPipeline", "multi_image_reference_edit")
         sdxl_controlnet = studio_model_dependencies_for_pair(
             "StableDiffusionXLControlNetPipeline",
             "control_image",
@@ -326,9 +324,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(specification["mode"], mode)
                 self.assertEqual(specification["pipelineClass"], pipeline_class)
                 self.assertEqual(specification["defaultRepo"], "stable-diffusion-v1-5/stable-diffusion-v1-5")
-                self.assertIn(
-                    ("diffusersImagePipeline", "revision", "defaultRevision"), specification["bindings"]
-                )
+                self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), specification["bindings"])
         controlnet = by_id["sd15-controlnet-canny:control-image:v1"]
         self.assertEqual(controlnet["pipelineClass"], "StableDiffusionControlNetPipeline")
         self.assertIn(("diffusersImagePipeline", "conditioning_kind", "kind"), controlnet["bindings"])
@@ -493,9 +489,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
             DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].max_low_memory_steps,
             20,
         )
-        self.assertFalse(
-            DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].live_proof
-        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[pixart["executionProfileId"]].live_proof)
         pixart_pag = by_id["pixart-sigma-1024-pag:text-to-image:v1"]
         self.assertEqual(pixart_pag["modelType"], "PixArtSigmaPAGPipeline")
         self.assertEqual(pixart_pag["pipelineClass"], "PixArtSigmaPAGPipeline")
@@ -588,8 +582,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(dreamlite_mobile["pipelineClass"], "DreamLiteMobilePipeline")
         self.assertFalse(
             any(
-                role == "diffusersImageGenerate"
-                and parameter in {"guidance_scale", "negative_prompt"}
+                role == "diffusersImageGenerate" and parameter in {"guidance_scale", "negative_prompt"}
                 for role, parameter, _source in dreamlite_mobile["bindings"]
             )
         )
@@ -606,12 +599,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 for role, parameter, _source in dreamlite_mobile_edit["bindings"]
             )
         )
-        self.assertFalse(
-            DIFFUSERS_EXECUTION_PROFILES[dreamlite["executionProfileId"]].live_proof
-        )
-        self.assertFalse(
-            DIFFUSERS_EXECUTION_PROFILES[dreamlite_mobile["executionProfileId"]].live_proof
-        )
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[dreamlite["executionProfileId"]].live_proof)
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[dreamlite_mobile["executionProfileId"]].live_proof)
         self.assertIn(
             ("loadMask", "image", "diffusersImageInpaint", "mask_image"),
             sdxl_pag_inpaint["edges"],
@@ -1068,9 +1057,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
             assert_studio_execution_graph(graph, hints)
 
         selected["executionProfileId"] = spec["executionProfileId"]
-        graph["nodes"][hints["studioExecutionSpec"]["nodes"]["preview"]]["params"]["image"].pop(
-            "sourceId"
-        )
+        graph["nodes"][hints["studioExecutionSpec"]["nodes"]["preview"]]["params"]["image"].pop("sourceId")
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
 
@@ -1179,6 +1166,64 @@ class StudioExecutionSpecTests(unittest.TestCase):
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
 
+    def test_video_specs_bind_only_controls_consumed_by_each_adapter(self):
+        guidance_only_pairs = {
+            ("LTXVideoPipeline", "text_to_video"),
+            ("LTXVideoPipeline", "image_to_video"),
+            ("LTXVideoPipeline", "video_to_video"),
+            ("LTXVideoPipeline", "reference_to_video"),
+            ("WanImageToVideoPipeline", "image_to_video"),
+            ("WanTI2VPipeline", "text_to_video"),
+            ("WanVACEPipeline", "text_to_video"),
+            ("WanVACEPipeline", "video_inpaint"),
+            ("WanVACEPipeline", "video_outpaint"),
+            ("WanVACEPipeline", "control_to_video"),
+            ("WanVideoPipeline", "text_to_video"),
+            ("WanVideoPipeline", "video_to_video"),
+            ("WanVideoPipeline", "video_color_edit"),
+        }
+        for pair in guidance_only_pairs:
+            with self.subTest(pair=pair, control="true_cfg_scale"):
+                spec = studio_execution_spec_for_pair(*pair)
+                self.assertIn(("wanGenerate", "guidance_scale", "guidanceScale"), spec["bindings"])
+                self.assertFalse(
+                    any(
+                        role == "wanGenerate" and param == "true_cfg_scale"
+                        for role, param, _source in spec["bindings"]
+                    )
+                )
+
+        framepack = studio_execution_spec_for_pair("HunyuanVideoFramepackPipeline", "image_to_video")
+        self.assertIn(("wanGenerate", "true_cfg_scale", "trueCfgScale1"), framepack["bindings"])
+
+        no_flow_shift_pairs = {
+            ("LTXVideoPipeline", "text_to_video"),
+            ("LTXVideoPipeline", "image_to_video"),
+            ("LTXVideoPipeline", "video_to_video"),
+            ("LTXVideoPipeline", "reference_to_video"),
+            ("WanImageToVideoPipeline", "image_to_video"),
+        }
+        for pair in no_flow_shift_pairs:
+            with self.subTest(pair=pair, control="scheduler_flow_shift"):
+                spec = studio_execution_spec_for_pair(*pair)
+                self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
+        wan_ti2v = studio_execution_spec_for_pair("WanTI2VPipeline", "text_to_video")
+        self.assertIn(("wanGenerate", "scheduler_flow_shift", "shift"), wan_ti2v["bindings"])
+
+        native_flash_pairs = guidance_only_pairs - {
+            ("LTXVideoPipeline", "text_to_video"),
+            ("LTXVideoPipeline", "image_to_video"),
+            ("LTXVideoPipeline", "video_to_video"),
+            ("LTXVideoPipeline", "reference_to_video"),
+        }
+        for pair in native_flash_pairs:
+            with self.subTest(pair=pair, control="attention_backend"):
+                spec = studio_execution_spec_for_pair(*pair)
+                self.assertIn(("diffusersRecipe", "attention_backend", "nativeFlashAttention"), spec["bindings"])
+        for mode in ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"):
+            ltx = studio_execution_spec_for_pair("LTXVideoPipeline", mode)
+            self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), ltx["bindings"])
+
     def test_all_ace_modes_seal_exact_generic_audio_routes(self):
         text = studio_execution_spec_for_pair("AceStepAudioPipeline", "text_to_audio")
         variation = studio_execution_spec_for_pair("AceStepAudioPipeline", "audio_variation")
@@ -1198,7 +1243,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("loadAudio", "file", "sourceAudio"), variation["bindings"])
         self.assertIn(("loadAudio", "audio", "audioGenerate", "source_audio"), variation["edges"])
         self.assertIn(("audioGenerate", "task_type", "continuation"), continuation["bindings"])
-        self.assertIn(("audioLoudnessMatch", "reference_window_seconds", "referenceWindow15"), continuation["bindings"])
+        self.assertIn(
+            ("audioLoudnessMatch", "reference_window_seconds", "referenceWindow15"), continuation["bindings"]
+        )
         self.assertIn(("audioJoin", "boundary_fade_seconds", "boundaryFade001"), continuation["bindings"])
         self.assertIn(("loadAudio", "audio", "audioJoin", "source"), continuation["edges"])
         self.assertIn(("audioGenerate", "task_type", "repaint"), repaint["bindings"])
@@ -1380,9 +1427,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
-        graph["nodes"][hints["studioExecutionSpec"]["nodes"]["denoise"]]["params"]["route_state_in"].pop(
-            "sourceId"
-        )
+        graph["nodes"][hints["studioExecutionSpec"]["nodes"]["denoise"]]["params"]["route_state_in"].pop("sourceId")
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
 
@@ -1513,9 +1558,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
 
     def test_flux_redux_modes_have_exact_receipts_and_multi_reference_stays_expert_only(self):
         edit = studio_execution_spec_for_pair("FluxReduxPipeline", "edit_image")
-        multi = studio_execution_spec_for_pair(
-            "FluxReduxPipeline", "multi_image_reference_edit"
-        )
+        multi = studio_execution_spec_for_pair("FluxReduxPipeline", "multi_image_reference_edit")
         self.assertIsNotNone(edit)
         self.assertIsNotNone(multi)
         self.assertEqual(edit["pipelineClass"], "FluxReduxPipeline")
