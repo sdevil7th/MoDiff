@@ -230,6 +230,14 @@ class DiffusersExecutionProfile:
                 "modules.HuggingFaceSpeech",
                 "LoadSpeechRecognitionModel",
             ),
+            "direct-huggingface-transformers-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadTextGenerationModel",
+            ),
+            "direct-huggingface-transformers-image-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadImageTextToTextModel",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(
