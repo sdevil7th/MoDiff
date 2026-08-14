@@ -581,6 +581,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 12,
                 "svd_xt_1_1.safetensors",
             ),
+            "zai-org/CogVideoX-2b": (
+                "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01",
+                17,
+                "README_zh.md",
+            ),
             "rhymes-ai/Allegro": (
                 "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
                 18,

@@ -899,6 +899,25 @@ STABLE_VIDEO_DIFFUSION_FP16_FILES = [
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
+COGVIDEOX_2B_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 _VIDEO_T5_DIFFUSERS_FILES = [
     "text_encoder/config.json",
     "text_encoder/model-00001-of-00004.safetensors",
@@ -5184,6 +5203,7 @@ def _cogvideox_capability() -> dict[str, Any]:
         "qualificationStatus": "graph-qualified-execution-pending",
         "qualifiedModes": [],
         "defaultRepo": COGVIDEOX_2B_REPO,
+        "downloadFiles": COGVIDEOX_2B_DIFFUSERS_FILES,
         "artifactLabel": "Official Apache-2.0 safetensors Diffusers repo",
         "defaultDtype": "float16",
         "defaultSize": {"width": 720, "height": 480, "aspectRatio": "custom"},

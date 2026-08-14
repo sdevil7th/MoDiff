@@ -4,6 +4,7 @@ import unittest
 
 from modiff.studio_execution_specs import (
     ALLEGRO_DIFFUSERS_FILES,
+    COGVIDEOX_2B_DIFFUSERS_FILES,
     LATTE_DIFFUSERS_FILES,
     MOCHI_DIFFUSERS_FILES,
     STABLE_VIDEO_DIFFUSION_FP16_FILES,
@@ -15,6 +16,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class VideoDownloadSelectionTests(unittest.TestCase):
+    def test_cogvideox_selection_is_complete_and_safe(self):
+        selected = set(COGVIDEOX_2B_DIFFUSERS_FILES)
+        capability = studio_capability_definitions()["CogVideoXPipeline"]
+
+        self.assertEqual(capability["downloadFiles"], COGVIDEOX_2B_DIFFUSERS_FILES)
+        self.assertEqual(len(selected), 17)
+        self.assertIn("text_encoder/model.safetensors.index.json", selected)
+        self.assertIn("transformer/diffusion_pytorch_model.safetensors", selected)
+        self.assertIn("vae/diffusion_pytorch_model.safetensors", selected)
+        self.assertNotIn(".gitignore", selected)
+        self.assertNotIn("README_zh.md", selected)
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
+
     def test_stable_video_selection_matches_loader_variant_and_excludes_duplicates(self):
         selected = set(STABLE_VIDEO_DIFFUSION_FP16_FILES)
         capability = studio_capability_definitions()["StableVideoDiffusionPipeline"]
