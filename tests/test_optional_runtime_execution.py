@@ -31,6 +31,7 @@ from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    public_optional_runtime_profiles,
 )
 from modiff.server import WebServer
 
@@ -80,6 +81,14 @@ def loader_graph(*, runtime_hints=None):
     }
     if runtime_hints is not None:
         graph["runtimeHints"] = runtime_hints
+    return graph
+
+
+def qwen_loader_graph():
+    graph = loader_graph()
+    loader = graph["nodes"]["loader"]
+    loader["params"]["pipeline_class"]["value"] = "QwenImagePipeline"
+    loader["params"]["model_id"]["value"]["value"] = "Qwen/Qwen-Image-2512"
     return graph
 
 
@@ -219,6 +228,17 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     targeted["profileIds"],
                     [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
                 )
+                pending_profile = public_optional_runtime_profiles(
+                    [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                    platform_name=platform_name,
+                    machine=machine,
+                    version_resolver=lambda _distribution: "0",
+                )[0]
+                self.assertEqual(
+                    pending_profile["contractState"],
+                    "candidate_unqualified",
+                )
+                self.assertFalse(pending_profile["cutoverReady"])
 
         unknown = declarative_requirement(
             (profile,),
@@ -554,20 +574,23 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
             qualified=True,
             profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
         )
-        with mock.patch.dict(
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
             os.environ,
             {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
         ):
             ready = graph_optional_runtime_requirement(
-                loader_graph(),
+                qwen_loader_graph(),
                 catalog_resolver=lambda: active_main,
             )
             stale = graph_optional_runtime_requirement(
-                loader_graph(),
+                qwen_loader_graph(),
                 catalog_resolver=lambda: active_old,
             )
             forged = graph_optional_runtime_requirement(
-                loader_graph(),
+                qwen_loader_graph(),
                 catalog_resolver=lambda: {
                     **active_main,
                     "profiles": [
@@ -585,6 +608,10 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual(
             ready["profileIds"],
             [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(
+            ready["executionProfileIds"],
+            ["qwen-image:t2i-direct"],
         )
         self.assertEqual(stale["state"], "unavailable")
         self.assertEqual(stale["reason"], "optional_runtime_profile_unknown")
@@ -988,6 +1015,53 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
                     self.server.execute_graph(loader_graph())
             capture.assert_not_called()
 
+    async def test_linux_qwen_graph_endpoint_accepts_main_and_rejects_old_profile(self):
+        active_main = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        active_old = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+            profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_main,
+        ):
+            ready, ready_queue = await self._graph_response(qwen_loader_graph())
+        self.assertEqual(ready.status, 200)
+        ready_queue.assert_awaited_once()
+
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_old,
+        ):
+            stale, stale_queue = await self._graph_response(qwen_loader_graph())
+        self.assertEqual(stale.status, 409)
+        stale_queue.assert_not_awaited()
+        stale_body = response_json(stale)
+        self.assertEqual(
+            stale_body["optionalRuntimeRequirement"]["executionProfileIds"],
+            ["qwen-image:t2i-direct"],
+        )
+
     def test_loader_boundary_blocks_before_module_import(self):
         self.server.modules = {
             "modules.DiffusersImage": {
@@ -1296,6 +1370,12 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             path="/fields/action",
         )
 
+    def qwen_request(self):
+        request = self.request()
+        request.body["values"]["pipeline_class"] = "QwenImagePipeline"
+        request.body["values"]["model_id"]["value"] = "Qwen/Qwen-Image-2512"
+        return request
+
     async def test_base_direct_and_queued_field_actions_survive_persistent_states(self):
         catalog = mock.Mock(side_effect=AssertionError("base action must not scan catalog"))
         with base_delivery(), mock.patch(
@@ -1357,36 +1437,46 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             qualified=True,
             profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
         )
-        with mock.patch.dict(
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
             os.environ,
             {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
         ), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             return_value=active_main,
         ):
-            ready = await self.server.field_action(self.request())
+            ready = await self.server.field_action(self.qwen_request())
         self.assertEqual(ready.status, 200)
         self.assertEqual(len(self.node.calls), 1)
         self.assertEqual(
             self.node.calls[0][0]["pipeline_class"],
-            "ZImagePipeline",
+            "QwenImagePipeline",
         )
 
         self.node.calls.clear()
-        with mock.patch.dict(
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
             os.environ,
             {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
         ), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             return_value=active_old,
         ):
-            stale = await self.server.field_action(self.request())
+            stale = await self.server.field_action(self.qwen_request())
         self.assertEqual(stale.status, 409)
         stale_body = response_json(stale)
         self.assertEqual(stale_body["error_code"], "optional_runtime_unavailable")
         self.assertEqual(
             stale_body["optionalRuntimeRequirement"]["profileIds"],
             [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(
+            stale_body["optionalRuntimeRequirement"]["executionProfileIds"],
+            ["qwen-image:t2i-direct"],
         )
         self.assertEqual(self.node.calls, [])
 

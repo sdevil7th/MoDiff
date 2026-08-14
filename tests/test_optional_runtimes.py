@@ -271,20 +271,31 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                         (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
                     )
 
+        host_profile_id = optional_runtime_profile_ids_for_execution(
+            "ZImageModularPipeline",
+            "text_to_image",
+        )[0]
         public_profile = public_execution_profiles()[0]
         self.assertEqual(
             public_profile["optional_runtime_profiles"],
-            [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+            [host_profile_id],
         )
         self.assertNotIn("optionalRuntimeProfiles", public_profile)
 
     def test_optional_metadata_state_does_not_change_auto_readiness(self):
+        host_profile_id = optional_runtime_profile_ids_for_execution(
+            "ZImageModularPipeline",
+            "text_to_image",
+        )[0]
+        transformers_version = OPTIONAL_RUNTIME_PROFILES[
+            host_profile_id
+        ].packages[0].version
         observations = {
             "present_unqualified": _version_resolver(
-                {"transformers": "5.16.0.dev0", "peft": "0.20.0"}
+                {"transformers": transformers_version, "peft": "0.20.0"}
             ),
             "wrong_version": _version_resolver(
-                {"transformers": "5.16.0.dev0", "peft": "0.19.0"}
+                {"transformers": transformers_version, "peft": "0.19.0"}
             ),
             "missing": _version_resolver({}),
         }
@@ -373,6 +384,13 @@ assert not any(
 
 class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
     async def test_auto_capabilities_and_listgraphs_are_non_installing_and_import_free(self):
+        host_profile_id = optional_runtime_profile_ids_for_execution(
+            "ZImageModularPipeline",
+            "text_to_image",
+        )[0]
+        host_target = OPTIONAL_RUNTIME_PROFILES[
+            host_profile_id
+        ].contract_for_target()
         with tempfile.TemporaryDirectory() as temp_dir:
             data_dir = Path(temp_dir)
             graph_dir = data_dir / "graphs" / "studio"
@@ -480,20 +498,37 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(
                 plan["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+                [host_profile_id],
             )
             self.assertEqual(
                 plan["candidates"][0]["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+                [host_profile_id],
             )
             # This metadata-only slice must not affect the existing Auto result.
             self.assertEqual(plan["canAutoRun"], bool(plan["selectedCandidate"]))
-            self.assertEqual(plan["optionalRuntimeProfiles"][0]["contractState"], "qualified")
-            self.assertTrue(plan["optionalRuntimeProfiles"][0]["cutoverReady"])
+            self.assertEqual(
+                plan["optionalRuntimeProfiles"][0]["contractState"],
+                host_target.contract_state,
+            )
+            self.assertEqual(
+                plan["optionalRuntimeProfiles"][0]["cutoverReady"],
+                host_target.cutover_ready,
+            )
             self.assertEqual(template_open_response.status, 200)
             optional_runtime_catalog = json.loads(optional_runtime_response.text)
-            self.assertEqual(optional_runtime_catalog["profiles"][0]["contractState"], "qualified")
-            self.assertTrue(optional_runtime_catalog["profiles"][0]["cutoverReady"])
+            selected_catalog_profile = next(
+                profile
+                for profile in optional_runtime_catalog["profiles"]
+                if profile["id"] == host_profile_id
+            )
+            self.assertEqual(
+                selected_catalog_profile["contractState"],
+                host_target.contract_state,
+            )
+            self.assertEqual(
+                selected_catalog_profile["cutoverReady"],
+                host_target.cutover_ready,
+            )
 
             capabilities = json.loads(capabilities_response.text)
             self.assertEqual(
@@ -513,18 +548,18 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 z_image["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+                [host_profile_id],
             )
 
             graph_tree = json.loads(listgraphs_response.text)
             graph_file = next(_walk_graph_files(graph_tree))
             self.assertEqual(
                 graph_file["optionalRuntimeProfileIds"],
-                [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+                [host_profile_id],
             )
             self.assertEqual(
                 graph_file["optionalRuntimeProfiles"][0]["contractState"],
-                "qualified",
+                host_target.contract_state,
             )
 
 

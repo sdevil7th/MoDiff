@@ -767,7 +767,12 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(candidate["executionProfileId"], "flux-schnell:direct")
         self.assertEqual(
             candidate["optionalRuntimeProfileIds"],
-            ["huggingface-transformers-main-a597f974-peft-0.20.0"],
+            list(
+                optional_runtime_profile_ids_for_execution(
+                    "FluxSchnellPipeline",
+                    "text_to_image",
+                )
+            ),
         )
         self.assertEqual(
             candidate["optionalRuntimeRequirement"]["executionProfileIds"],
