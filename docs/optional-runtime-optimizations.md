@@ -401,8 +401,12 @@ patch, verifies and applies that same patch, requires `status: ready`, runs the
 same consented qualifier, and uploads the resulting bounded diff, evidence,
 and target context for 14 days. A regression executes the patch check against
 the current project rather than only inspecting workflow text. The workflow
-has not run. Its presence is not macOS evidence or permission to enable any
-production flag.
+has not run. As of 2026-08-14, the
+[official GitHub-hosted runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+lists the standard `macos-15` label as an ARM64 M1 runner; the workflow still
+checks `uname -m` before changing the prospective checkout so a future label
+drift fails closed. This runner-catalog inspection is infrastructure metadata,
+not macOS executable evidence or permission to enable any production flag.
 
 ## Runtime features
 

@@ -3082,7 +3082,11 @@ Priority: immediate. Hardware: CPU only. Assets: none.
       hosted architecture on the explicit `macos-15` ARM64 standard runner,
       retains the prospective dependency diff, requires ready preflight, runs
       the consented qualifier, and uploads bounded evidence for review. It has
-      not run and makes no macOS success claim.
+      not run and makes no macOS success claim. The
+      [official GitHub-hosted runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+      was rechecked on 2026-08-14 and still identifies `macos-15` as ARM64; the
+      workflow's independent `uname -m` assertion remains the fail-closed
+      runtime authority.
     - [x] Enabled-target executable qualification: Windows and Linux x86-64
       have reviewed wheel/installer, clean-base/staged workload, fresh-process,
       restart, and rollback evidence. The four pending target rows remain
