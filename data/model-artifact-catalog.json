@@ -499,6 +499,20 @@
       "artifacts": []
     },
     {
+      "modelType": "HuggingFaceTextGenerationModel",
+      "baseRepo": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "baseRevision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "HuggingFaceImageTextToTextModel",
+      "baseRepo": "HuggingFaceTB/SmolVLM-256M-Instruct",
+      "baseRevision": "7e3e67edbbed1bf9888184d9df282b700a323964",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
       "modelType": "HuggingFaceSpeechRecognitionModel",
       "baseRepo": "openai/whisper-tiny",
       "baseRevision": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",

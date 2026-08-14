@@ -243,6 +243,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LatentConsistencyModelPipeline", "text_to_image"),
                 ("StableDiffusionPAGPipeline", "text_to_image"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
+                ("HuggingFaceTextGenerationModel", "text_generation"),
+                ("HuggingFaceImageTextToTextModel", "image_to_text"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_to_text"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_translation"),
                 ("FluxReduxPipeline", "multi_image_reference_edit"),
@@ -282,6 +284,23 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersPredictMap", "preview_images", "preview", "image"), marigold["edges"])
         self.assertIn(("diffusersPredictMap", "processing_resolution", "processingResolution"), marigold["bindings"])
         self.assertIn(("diffusersPredictMap", "match_input_resolution", "matchInputResolution"), marigold["bindings"])
+        smollm = by_id["smollm2-135m-instruct:text-generation:v1"]
+        self.assertEqual(smollm["pipelineClass"], "AutoModelForCausalLM")
+        self.assertIn(
+            ("transformersTextModel", "model", "transformersTextGenerate", "model"),
+            smollm["edges"],
+        )
+        self.assertIn(
+            ("transformersTextGenerate", "result", "transformersTextPreview", "value"),
+            smollm["edges"],
+        )
+        smolvlm = by_id["smolvlm-256m-instruct:image-to-text:v1"]
+        self.assertEqual(smolvlm["pipelineClass"], "AutoModelForImageTextToText")
+        self.assertIn(
+            ("loadImage", "image", "transformersImageTextGenerate", "images"),
+            smolvlm["edges"],
+        )
+        self.assertIn(("loadImage", "file", "referenceImages"), smolvlm["bindings"])
         whisper = by_id["whisper-tiny:speech-to-text:v1"]
         self.assertEqual(whisper["pipelineClass"], "AutoModelForSpeechSeq2Seq")
         self.assertIn(("speechModel", "model", "transcribeAudio", "model"), whisper["edges"])

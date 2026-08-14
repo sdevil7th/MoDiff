@@ -847,6 +847,36 @@ MARIGOLD_DEPTH_DIFFUSERS_FILES = [
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
 ]
+SMOLLM2_135M_INSTRUCT_REPO = "HuggingFaceTB/SmolLM2-135M-Instruct"
+SMOLLM2_135M_INSTRUCT_TRANSFORMERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "generation_config.json",
+    "merges.txt",
+    "model.safetensors",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
+SMOLVLM_256M_INSTRUCT_REPO = "HuggingFaceTB/SmolVLM-256M-Instruct"
+SMOLVLM_256M_INSTRUCT_TRANSFORMERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "added_tokens.json",
+    "chat_template.json",
+    "config.json",
+    "generation_config.json",
+    "merges.txt",
+    "model.safetensors",
+    "preprocessor_config.json",
+    "processor_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
 WHISPER_TINY_REPO = "openai/whisper-tiny"
 WHISPER_TINY_TRANSFORMERS_FILES = [
     ".gitattributes",
@@ -1797,6 +1827,57 @@ _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS = (
 _SPEECH_TRANSLATION_GRAPH_BINDINGS = tuple(
     (role, param, "translate" if source == "transcribe" else source)
     for role, param, source in _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS
+)
+_TRANSFORMERS_TEXT_GRAPH_ROLES = (
+    (
+        "transformersTextModel",
+        "modules.HuggingFaceTransformers.LoadTextGenerationModel",
+        -720,
+        -80,
+    ),
+    ("transformersTextGenerate", "modules.HuggingFaceTransformers.GenerateText", -240, -80),
+    ("transformersTextPreview", "modules.Primitive.DataViewer", 240, -80),
+)
+_TRANSFORMERS_TEXT_GRAPH_EDGES = (
+    ("transformersTextModel", "model", "transformersTextGenerate", "model"),
+    ("transformersTextGenerate", "result", "transformersTextPreview", "value"),
+)
+_TRANSFORMERS_TEXT_GRAPH_BINDINGS = (
+    ("transformersTextModel", "model_id", "artifact"),
+    ("transformersTextModel", "revision", "defaultRevision"),
+    ("transformersTextModel", "dtype", "dtype"),
+    ("transformersTextModel", "device", "device"),
+    ("transformersTextGenerate", "prompt", "prompt"),
+)
+_TRANSFORMERS_IMAGE_TEXT_GRAPH_ROLES = (
+    (
+        "transformersImageTextModel",
+        "modules.HuggingFaceTransformers.LoadImageTextToTextModel",
+        -720,
+        -80,
+    ),
+    ("loadImage", "modules.Image.Load", -720, 280),
+    (
+        "transformersImageTextGenerate",
+        "modules.HuggingFaceTransformers.GenerateImageVideoText",
+        -240,
+        -80,
+    ),
+    ("transformersTextPreview", "modules.Primitive.DataViewer", 240, -80),
+)
+_TRANSFORMERS_IMAGE_TEXT_GRAPH_EDGES = (
+    ("transformersImageTextModel", "model", "transformersImageTextGenerate", "model"),
+    ("loadImage", "image", "transformersImageTextGenerate", "images"),
+    ("transformersImageTextGenerate", "result", "transformersTextPreview", "value"),
+)
+_TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS = (
+    ("transformersImageTextModel", "model_id", "artifact"),
+    ("transformersImageTextModel", "revision", "defaultRevision"),
+    ("transformersImageTextModel", "dtype", "dtype"),
+    ("transformersImageTextModel", "device", "device"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("transformersImageTextGenerate", "prompt", "prompt"),
 )
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
@@ -2852,6 +2933,8 @@ _BINDING_SOURCES = frozenset(
         *_PERCEPTION_GRAPH_BINDINGS,
         *_SPEECH_TRANSCRIPTION_GRAPH_BINDINGS,
         *_SPEECH_TRANSLATION_GRAPH_BINDINGS,
+        *_TRANSFORMERS_TEXT_GRAPH_BINDINGS,
+        *_TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS,
         *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
@@ -9410,6 +9493,180 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["marigold-depth-lcm-v1-0:depth-estimation:v1"]
     "bindings": _PERCEPTION_GRAPH_BINDINGS,
 }
 
+_SMOLLM2_135M_INSTRUCT_PROFILE = {
+    "id": "smollm2-135m-instruct:direct",
+    "model_type": "HuggingFaceTextGenerationModel",
+    "modes": ("text_generation",),
+    "loader_module": "modules.HuggingFaceTransformers",
+    "loader_action": "LoadTextGenerationModel",
+    "execution_path": "direct-huggingface-transformers-text",
+    "pipeline_class": "AutoModelForCausalLM",
+    "default_repo": SMOLLM2_135M_INSTRUCT_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SMOLLM2_135M_INSTRUCT_CAPABILITY = {
+    "modelType": "HuggingFaceTextGenerationModel",
+    "label": "SmolLM2 135M Instruct",
+    "displayName": "SmolLM2 135M Instruct",
+    "family": "SmolLM",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SMOLLM2_135M_INSTRUCT_REPO,
+    "artifactLabel": "Transformers safetensors repo",
+    "downloadFiles": SMOLLM2_135M_INSTRUCT_TRANSFORMERS_FILES,
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 1, "height": 1, "aspectRatio": "text"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "json",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 1,
+        "height": 1,
+    },
+    "modes": ["text_generation"],
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            SMOLLM2_135M_INSTRUCT_REPO,
+            model_type="HuggingFaceTextGenerationModel",
+        )
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The generic causal-LM boundary clamps input and output tokens and returns a versioned JSON receipt plus plain text.",
+        "Auto and Gallery remain disabled until app-installed weights receive live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["smollm2-135m-instruct:text-generation:v1"] = {
+    "modelType": "HuggingFaceTextGenerationModel",
+    "mode": "text_generation",
+    "profile": _SMOLLM2_135M_INSTRUCT_PROFILE,
+    "capability": _SMOLLM2_135M_INSTRUCT_CAPABILITY,
+    "roles": _TRANSFORMERS_TEXT_GRAPH_ROLES,
+    "edges": _TRANSFORMERS_TEXT_GRAPH_EDGES,
+    "bindings": _TRANSFORMERS_TEXT_GRAPH_BINDINGS,
+}
+
+_SMOLVLM_256M_INSTRUCT_PROFILE = {
+    "id": "smolvlm-256m-instruct:direct",
+    "model_type": "HuggingFaceImageTextToTextModel",
+    "modes": ("image_to_text",),
+    "loader_module": "modules.HuggingFaceTransformers",
+    "loader_action": "LoadImageTextToTextModel",
+    "execution_path": "direct-huggingface-transformers-image-text",
+    "pipeline_class": "AutoModelForImageTextToText",
+    "default_repo": SMOLVLM_256M_INSTRUCT_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": 4096,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_SMOLVLM_256M_INSTRUCT_CAPABILITY = {
+    "modelType": "HuggingFaceImageTextToTextModel",
+    "label": "SmolVLM 256M Instruct",
+    "displayName": "SmolVLM 256M Instruct",
+    "family": "SmolVLM",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": SMOLVLM_256M_INSTRUCT_REPO,
+    "artifactLabel": "Transformers safetensors repo",
+    "downloadFiles": SMOLVLM_256M_INSTRUCT_TRANSFORMERS_FILES,
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "json",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 512,
+        "height": 512,
+    },
+    "modes": ["image_to_text"],
+    "modeRequirements": {
+        "image_to_text": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one bounded local image and returns bounded text with a versioned receipt.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            SMOLVLM_256M_INSTRUCT_REPO,
+            model_type="HuggingFaceImageTextToTextModel",
+        )
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The generic image-to-text boundary clamps media count, image geometry, input tokens, and generated tokens.",
+        "Auto and Gallery remain disabled until app-installed weights receive live output review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["smolvlm-256m-instruct:image-to-text:v1"] = {
+    "modelType": "HuggingFaceImageTextToTextModel",
+    "mode": "image_to_text",
+    "profile": _SMOLVLM_256M_INSTRUCT_PROFILE,
+    "capability": _SMOLVLM_256M_INSTRUCT_CAPABILITY,
+    "roles": _TRANSFORMERS_IMAGE_TEXT_GRAPH_ROLES,
+    "edges": _TRANSFORMERS_IMAGE_TEXT_GRAPH_EDGES,
+    "bindings": _TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS,
+}
+
 _WHISPER_TINY_PROFILE = {
     "id": "whisper-tiny:direct",
     "model_type": "HuggingFaceSpeechRecognitionModel",
@@ -9711,12 +9968,18 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
             connections.add(edge)
             source_param = roles[source_role]["params"].get(source_handle)
             target_param = roles[target_role]["params"].get(target_handle)
+            source_types = _param_types(source_param) if isinstance(source_param, dict) else set()
+            target_types = _param_types(target_param) if isinstance(target_param, dict) else set()
             if (
                 not isinstance(source_param, dict)
                 or source_param.get("display") != "output"
                 or not isinstance(target_param, dict)
                 or target_param.get("display") != "input"
-                or not (_param_types(source_param) & _param_types(target_param))
+                or not (
+                    source_types & target_types
+                    or "any" in source_types
+                    or "any" in target_types
+                )
             ):
                 raise ValueError("Studio execution specification references an incompatible handle.")
             adjacency[source_role].add(target_role)
