@@ -70,17 +70,38 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 134,
+                "canonicalWorkflowCount": 142,
                 "publicTemplateCount": 77,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "candidateContractCount": 83,
-                "mediaKindCounts": {"audio": 3, "image": 57, "json": 2, "video": 21},
-                "contractsRequiringInputExamples": 39,
+                "candidateContractCount": 91,
+                "mediaKindCounts": {"audio": 3, "image": 63, "json": 4, "video": 21},
+                "contractsRequiringInputExamples": 43,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
             },
         )
+
+    def test_newly_admitted_workflows_are_exact_hidden_zero_asset_contracts(self):
+        expected = {
+            "HuggingFaceImageTextToTextModel:image_to_text",
+            "HuggingFaceTextGenerationModel:text_generation",
+            "HunyuanDiTPAGPipeline:text_to_image",
+            "LatentConsistencyModelPipeline:edit_image",
+            "PixArtSigmaPAGPipeline:text_to_image",
+            "SanaPAGPipeline:text_to_image",
+            "StableDiffusionPAGPipeline:edit_image",
+            "StableDiffusionPAGPipeline:inpaint",
+        }
+        contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
+
+        self.assertTrue(expected <= contracts_by_id.keys())
+        for workflow_id in expected:
+            contract = contracts_by_id[workflow_id]
+            self.assertEqual(contract["publicationState"], "hidden_candidate")
+            self.assertEqual(contract["assetState"], "not_generated")
+            self.assertEqual(contract["assets"], [])
+            self.assertEqual(contract["evidenceState"]["maximumClaim"], "canonical_graph_binding_only")
 
     def test_candidates_are_the_exact_complement_of_public_template_workflows(self):
         manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
@@ -194,6 +215,25 @@ class TemplateCandidateContractTests(unittest.TestCase):
 
         visit(self.ledger)
 
+    def test_source_provenance_is_bound_to_exact_checked_in_bytes(self):
+        source_paths = {
+            "workflowManifest": MANIFEST_PATH,
+            "upstreamCoverage": COVERAGE_PATH,
+            "comfyResearchCatalog": COMFY_PATH,
+        }
+        for source_name, path in source_paths.items():
+            expected = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+            self.assertEqual(self.ledger["sources"][source_name]["sha256"], expected)
+
+        self.assertEqual(
+            self.ledger["sources"]["upstreamCoverage"]["contentHash"],
+            self.coverage["contentHash"],
+        )
+        self.assertEqual(
+            self.ledger["sources"]["comfyResearchCatalog"]["revision"],
+            self.comfy["source"]["revision"],
+        )
+
     def test_self_consistent_tampering_still_fails_against_current_sources(self):
         mutations = []
 
@@ -215,6 +255,10 @@ class TemplateCandidateContractTests(unittest.TestCase):
         mapped = next(row for row in comfy_omission["contracts"] if row["comfyResearchRecords"])
         mapped["comfyResearchRecords"].pop()
         mutations.append(comfy_omission)
+
+        source_hash = copy.deepcopy(self.ledger)
+        source_hash["sources"]["workflowManifest"]["sha256"] = "sha256:" + "0" * 64
+        mutations.append(source_hash)
 
         for mutated in mutations:
             _reseal(mutated)
