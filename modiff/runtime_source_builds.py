@@ -74,6 +74,32 @@ class _RejectRedirects(HTTPRedirectHandler):
         raise RuntimeError("A source archive redirect is forbidden.")
 
 
+def _is_reparse_point(details: os.stat_result) -> bool:
+    """Recognize Windows junctions/symlinks without platform branching."""
+
+    return bool(
+        getattr(details, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    )
+
+
+def _safe_directory_details(details: os.stat_result) -> bool:
+    return (
+        stat.S_ISDIR(details.st_mode)
+        and not stat.S_ISLNK(details.st_mode)
+        and not _is_reparse_point(details)
+    )
+
+
+def _safe_regular_details(details: os.stat_result) -> bool:
+    return (
+        stat.S_ISREG(details.st_mode)
+        and not stat.S_ISLNK(details.st_mode)
+        and not _is_reparse_point(details)
+        and details.st_nlink == 1
+    )
+
+
 def _canonical_digest(value: Any) -> str:
     body = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return f"sha256:{hashlib.sha256(body).hexdigest()}"
@@ -395,9 +421,7 @@ def _source_artifact_path(cache_root: Path, source: dict[str, Any]) -> Path:
 def _stream_sha256(path: Path, *, maximum_bytes: int, lease: InstallLease) -> tuple[str, int]:
     details = path.lstat()
     if (
-        not stat.S_ISREG(details.st_mode)
-        or stat.S_ISLNK(details.st_mode)
-        or details.st_nlink != 1
+        not _safe_regular_details(details)
         or details.st_size > maximum_bytes
     ):
         raise RuntimeError("A source-build artifact is unsafe or oversized.")
@@ -428,12 +452,12 @@ def cache_locked_source_archive(
     source = normalized["sourceArtifact"]
     cache_root.mkdir(parents=True, exist_ok=True)
     root_details = cache_root.lstat()
-    if not stat.S_ISDIR(root_details.st_mode) or stat.S_ISLNK(root_details.st_mode):
+    if not _safe_directory_details(root_details):
         raise RuntimeError("The source archive cache root is unsafe.")
     destination = _source_artifact_path(cache_root, source)
     destination.parent.mkdir(parents=False, exist_ok=True)
     parent_details = destination.parent.lstat()
-    if not stat.S_ISDIR(parent_details.st_mode) or stat.S_ISLNK(parent_details.st_mode):
+    if not _safe_directory_details(parent_details):
         raise RuntimeError("The source archive cache directory is unsafe.")
     if destination.exists():
         digest, byte_size = _stream_sha256(
@@ -532,6 +556,8 @@ def extract_locked_source_tree(
     if digest != source["sha256"] or byte_size != source["byteSize"]:
         raise RuntimeError("The source archive failed its reviewed identity.")
     destination.mkdir(parents=False, exist_ok=False)
+    if not _safe_directory_details(destination.lstat()):
+        raise RuntimeError("The extracted source destination is unsafe.")
     destination_root = destination.resolve(strict=True)
     source_files = set(normalized["sourceFiles"])
     source_trees = tuple(normalized["sourceTrees"])
@@ -563,9 +589,20 @@ def extract_locked_source_tree(
                 raise RuntimeError("The source archive has an unexpected root directory.")
             relative_path = PurePosixPath(*path.parts[1:])
             relative = relative_path.as_posix() if relative_path.parts else ""
+            if (
+                member.size < 0
+                or member.size > MAX_SOURCE_MEMBER_BYTES
+                or total_declared + member.size > MAX_SOURCE_TOTAL_BYTES
+            ):
+                raise RuntimeError("The source archive exceeds its reviewed expansion bounds.")
+            total_declared += member.size
             if member.isdir():
+                if member.size != 0:
+                    raise RuntimeError("A source archive directory declares file data.")
                 continue
             if member.issym():
+                if member.size != 0:
+                    raise RuntimeError("A source archive link declares file data.")
                 target = _resolved_link_target(path, member.linkname)
                 if target.parts[0] != source["archiveRoot"]:
                     raise RuntimeError("A source archive link escapes its reviewed root.")
@@ -578,13 +615,6 @@ def extract_locked_source_tree(
                 continue
             if member.islnk() or member.isdev() or member.isfifo() or not member.isfile():
                 raise RuntimeError("The source archive contains a non-regular member.")
-            if (
-                member.size < 0
-                or member.size > MAX_SOURCE_MEMBER_BYTES
-                or total_declared + member.size > MAX_SOURCE_TOTAL_BYTES
-            ):
-                raise RuntimeError("The source archive exceeds its reviewed expansion bounds.")
-            total_declared += member.size
             if not relative or not _selected_source_path(
                 relative,
                 files=source_files,
@@ -593,6 +623,8 @@ def extract_locked_source_tree(
                 continue
             output_path = destination_root.joinpath(*relative_path.parts)
             output_path.parent.mkdir(parents=True, exist_ok=True)
+            if not _safe_directory_details(output_path.parent.lstat()):
+                raise RuntimeError("A source extraction directory is unsafe.")
             resolved_parent = output_path.parent.resolve(strict=True)
             resolved_parent.relative_to(destination_root)
             archive_file = opened.extractfile(member)
@@ -611,6 +643,8 @@ def extract_locked_source_tree(
                     hasher.update(chunk)
                 output.flush()
                 os.fsync(output.fileno())
+            if not _safe_regular_details(output_path.lstat()):
+                raise RuntimeError("An extracted source member is unsafe.")
             if observed != member.size:
                 raise RuntimeError("A reviewed source member was truncated.")
             output_path.chmod(0o644)
@@ -633,7 +667,7 @@ def extract_locked_source_tree(
         reverse=True,
     )
     for directory in directories:
-        if directory.is_symlink():
+        if not _safe_directory_details(directory.lstat()):
             raise RuntimeError("The extracted source tree contains a link.")
         directory.chmod(0o755)
         os.utime(
@@ -723,7 +757,7 @@ def _metadata_documents(contract: dict[str, Any], source_root: Path) -> dict[str
         *PurePosixPath(metadata["licenseFile"]).parts
     )
     details = license_path.lstat()
-    if not stat.S_ISREG(details.st_mode) or stat.S_ISLNK(details.st_mode):
+    if not _safe_regular_details(details):
         raise RuntimeError("The source-build license input is not a regular file.")
     if details.st_size > MAX_SOURCE_MEMBER_BYTES:
         raise RuntimeError("The source-build license input is oversized.")
@@ -738,6 +772,8 @@ def _package_members(
     """Map reviewed package trees to wheel members without importing them."""
 
     root = source_root.resolve(strict=True)
+    if not _safe_directory_details(source_root.lstat()):
+        raise RuntimeError("The source-build package root is unsafe.")
     package_root = PurePosixPath(contract["wheelMetadata"]["packageRoot"])
     members: list[tuple[str, Path]] = []
     seen: set[str] = set()
@@ -747,7 +783,7 @@ def _package_members(
         relative_tree = PurePosixPath(*tree.parts[len(package_root.parts) :])
         tree_path = root.joinpath(*tree.parts)
         tree_details = tree_path.lstat()
-        if not stat.S_ISDIR(tree_details.st_mode) or stat.S_ISLNK(tree_details.st_mode):
+        if not _safe_directory_details(tree_details):
             raise RuntimeError("A source-build package tree is not a regular directory.")
         tree_path.resolve(strict=True).relative_to(root)
         for directory, directory_names, filenames in os.walk(
@@ -756,14 +792,14 @@ def _package_members(
             followlinks=False,
         ):
             current = Path(directory)
+            if not _safe_directory_details(current.lstat()):
+                raise RuntimeError("A source-build package directory is unsafe.")
             current.resolve(strict=True).relative_to(root)
             safe_directories: list[str] = []
             for name in sorted(directory_names):
                 child = current / name
                 child_details = child.lstat()
-                if stat.S_ISLNK(child_details.st_mode) or not stat.S_ISDIR(
-                    child_details.st_mode
-                ):
+                if not _safe_directory_details(child_details):
                     raise RuntimeError("A source-build package tree contains a link.")
                 safe_directories.append(name)
             directory_names[:] = safe_directories
@@ -771,9 +807,7 @@ def _package_members(
                 path = current / name
                 details = path.lstat()
                 if (
-                    stat.S_ISLNK(details.st_mode)
-                    or not stat.S_ISREG(details.st_mode)
-                    or details.st_nlink != 1
+                    not _safe_regular_details(details)
                     or details.st_size > MAX_SOURCE_MEMBER_BYTES
                 ):
                     raise RuntimeError("A source-build package input is unsafe or oversized.")
@@ -820,7 +854,9 @@ def assemble_locked_pure_python_wheel(
 
     record_rows: list[tuple[str, str, str]] = []
     total_bytes = 0
-    output_path.parent.resolve(strict=True)
+    output_parent = output_path.parent.resolve(strict=True)
+    if not _safe_directory_details(output_parent.lstat()):
+        raise RuntimeError("The source-build output directory is unsafe.")
     with output_path.open("xb") as raw_output:
         with zipfile.ZipFile(
             raw_output,
@@ -908,8 +944,12 @@ def _store_built_wheel(
     lease: InstallLease,
 ) -> Path:
     cache_root.mkdir(parents=True, exist_ok=True)
+    if not _safe_directory_details(cache_root.lstat()):
+        raise RuntimeError("The source-build wheel cache root is unsafe.")
     destination = locked_artifact_path(cache_root, artifact)
     destination.parent.mkdir(parents=False, exist_ok=True)
+    if not _safe_directory_details(destination.parent.lstat()):
+        raise RuntimeError("The source-build wheel cache directory is unsafe.")
     if destination.exists():
         digest, byte_size = _stream_sha256(
             destination,
@@ -957,7 +997,7 @@ def build_locked_source_wheel(
     normalized = validate_source_build_contract(contract)
     work_root.mkdir(parents=False, exist_ok=False)
     work_details = work_root.lstat()
-    if not stat.S_ISDIR(work_details.st_mode) or stat.S_ISLNK(work_details.st_mode):
+    if not _safe_directory_details(work_details):
         raise RuntimeError("The source-build workspace is unsafe.")
     source_archive = cache_locked_source_archive(normalized, cache_root, lease=lease)
     source_root = work_root / "source"
@@ -969,6 +1009,8 @@ def build_locked_source_wheel(
     )
     output_root = work_root / "output"
     output_root.mkdir()
+    if not _safe_directory_details(output_root.lstat()):
+        raise RuntimeError("The source-build output workspace is unsafe.")
     output_artifact = dict(normalized["outputWheel"])
     built_wheel = output_root / output_artifact["filename"]
     assembly_receipt = assemble_locked_pure_python_wheel(
@@ -978,11 +1020,7 @@ def build_locked_source_wheel(
         lease=lease,
     )
     built_details = built_wheel.lstat()
-    if (
-        not stat.S_ISREG(built_details.st_mode)
-        or stat.S_ISLNK(built_details.st_mode)
-        or built_details.st_nlink != 1
-    ):
+    if not _safe_regular_details(built_details):
         raise RuntimeError("The source build output is not a safe regular wheel.")
     digest, output_bytes = _stream_sha256(
         built_wheel,

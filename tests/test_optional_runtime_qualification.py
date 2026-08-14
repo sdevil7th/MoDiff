@@ -1,4 +1,6 @@
+from contextlib import redirect_stdout
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -94,6 +96,43 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             candidate.packages[0].version,
             "5.16.0.dev0",
         )
+
+    def test_preflight_rejects_dirty_or_unavailable_source_revision(self):
+        for source in (
+            {"commit": "a" * 40, "dirty": True, "available": True},
+            {"commit": "unavailable", "dirty": True, "available": False},
+        ):
+            with self.subTest(source=source), mock.patch.object(
+                qualification,
+                "_source_revision",
+                return_value=source,
+            ):
+                result = qualification.qualification_preflight()
+            self.assertEqual(result["status"], "not_ready")
+            self.assertFalse(result["sourceRevisionReady"])
+            self.assertEqual(result["source"], source)
+
+    def test_source_revision_rejects_noncommit_output(self):
+        completed = mock.Mock(stdout="main\n")
+        with mock.patch.object(
+            qualification.subprocess,
+            "run",
+            return_value=completed,
+        ):
+            source = qualification._source_revision()
+        self.assertEqual(
+            source,
+            {"commit": "unavailable", "dirty": True, "available": False},
+        )
+
+    def test_not_ready_preflight_returns_a_failing_exit_status(self):
+        with mock.patch.object(
+            qualification,
+            "qualification_preflight",
+            return_value={"status": "not_ready"},
+        ), redirect_stdout(io.StringIO()):
+            status = qualification.main(["--preflight-only"])
+        self.assertEqual(status, 1)
 
     def test_verified_uv_copy_rejects_a_forged_executable(self):
         from modiff.tool_locks import UV_TOOL_LOCKS

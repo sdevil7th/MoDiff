@@ -26,6 +26,34 @@ from modiff.optional_runtimes import (
 from modiff.runtime_overlays import InstallLease, locked_artifact_file_seal
 
 
+class FakeSourceResponse:
+    def __init__(self, body, *, url, content_length=None, on_read=None):
+        self.body = body
+        self.url = url
+        self.headers = {}
+        if content_length is not None:
+            self.headers["Content-Length"] = str(content_length)
+        self.on_read = on_read
+        self.sent = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def geturl(self):
+        return self.url
+
+    def read(self, _size):
+        if self.sent:
+            return b""
+        self.sent = True
+        if self.on_read is not None:
+            self.on_read()
+        return self.body
+
+
 class SourceBuildFixture(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -619,6 +647,177 @@ class SourceArchiveSecurityTests(SourceBuildFixture):
                 self.cache,
                 lease=self.lease(),
             )
+
+    def test_nonzero_directory_and_link_sizes_are_rejected_before_type_exit(self):
+        contract, source = self.make_contract()
+
+        class FakeArchive:
+            def __init__(self, member):
+                self.member = member
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def __iter__(self):
+                return iter((self.member,))
+
+        for member_type, message in (
+            (tarfile.DIRTYPE, "directory declares file data"),
+            (tarfile.SYMTYPE, "link declares file data"),
+        ):
+            member = tarfile.TarInfo(f"{self.archive_root}/ignored")
+            member.type = member_type
+            member.size = 1
+            member.linkname = "README.md"
+            with self.subTest(member_type=member_type), mock.patch.object(
+                runtime_source_builds.tarfile,
+                "open",
+                return_value=FakeArchive(member),
+            ), self.assertRaisesRegex(RuntimeError, message):
+                runtime_source_builds.extract_locked_source_tree(
+                    contract,
+                    source,
+                    self.root / f"nonzero-{member_type.decode('ascii')}",
+                    lease=self.lease(),
+                )
+
+        member = tarfile.TarInfo(f"{self.archive_root}/ignored")
+        member.type = tarfile.DIRTYPE
+        member.size = 1
+        with mock.patch.object(
+            runtime_source_builds,
+            "MAX_SOURCE_TOTAL_BYTES",
+            0,
+        ), mock.patch.object(
+            runtime_source_builds.tarfile,
+            "open",
+            return_value=FakeArchive(member),
+        ), self.assertRaisesRegex(RuntimeError, "expansion bounds"):
+            runtime_source_builds.extract_locked_source_tree(
+                contract,
+                source,
+                self.root / "nonzero-accounted-before-exit",
+                lease=self.lease(),
+            )
+
+    def test_cold_source_download_disables_proxies_redirects_and_locks_length(self):
+        contract, destination = self.make_contract()
+        body = destination.read_bytes()
+        destination.unlink()
+        source = contract["sourceArtifact"]
+        response = FakeSourceResponse(
+            body,
+            url=source["url"],
+            content_length=len(body),
+        )
+        opener = mock.Mock()
+        opener.open.return_value = response
+        with mock.patch.object(
+            runtime_source_builds,
+            "build_opener",
+            return_value=opener,
+        ) as build:
+            acquired = runtime_source_builds.cache_locked_source_archive(
+                contract,
+                self.cache,
+                lease=self.lease(),
+            )
+
+        self.assertEqual(acquired, destination)
+        self.assertEqual(acquired.read_bytes(), body)
+        opener.open.assert_called_once()
+        handlers = build.call_args.args
+        proxy_handlers = [
+            handler
+            for handler in handlers
+            if isinstance(handler, runtime_source_builds.ProxyHandler)
+        ]
+        self.assertEqual(len(proxy_handlers), 1)
+        self.assertEqual(proxy_handlers[0].proxies, {})
+        self.assertTrue(
+            any(
+                isinstance(handler, runtime_source_builds._RejectRedirects)
+                for handler in handlers
+            )
+        )
+
+    def test_cold_source_download_failures_leave_no_archive_or_partial(self):
+        cases = ("redirect", "length", "truncated", "cancelled")
+        for case in cases:
+            with self.subTest(case=case):
+                contract, destination = self.make_contract()
+                body = destination.read_bytes()
+                destination.unlink()
+                source = contract["sourceArtifact"]
+                lease = self.lease()
+                response_body = body
+                response_url = source["url"]
+                content_length = len(body)
+                on_read = None
+                expected_error = RuntimeError
+                if case == "redirect":
+                    response_url = "https://example.invalid/unreviewed.tar.gz"
+                elif case == "length":
+                    content_length += 1
+                elif case == "truncated":
+                    response_body = body[:-1]
+                    content_length = None
+                else:
+                    on_read = lease.cancel_event.set
+                    expected_error = runtime_source_builds.OverlayCancelled
+                response = FakeSourceResponse(
+                    response_body,
+                    url=response_url,
+                    content_length=content_length,
+                    on_read=on_read,
+                )
+                opener = mock.Mock()
+                opener.open.return_value = response
+                with mock.patch.object(
+                    runtime_source_builds,
+                    "build_opener",
+                    return_value=opener,
+                ), self.assertRaises(expected_error):
+                    runtime_source_builds.cache_locked_source_archive(
+                        contract,
+                        self.cache,
+                        lease=lease,
+                    )
+                self.assertFalse(destination.exists())
+                self.assertEqual(
+                    list(destination.parent.glob(f".{destination.name}.*.part")),
+                    [],
+                )
+
+    def test_windows_reparse_markers_reject_archive_cache_and_workspace_paths(self):
+        contract, source = self.make_contract(derive_output=True)
+        with mock.patch.object(
+            runtime_source_builds,
+            "_is_reparse_point",
+            return_value=True,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "artifact is unsafe"):
+                runtime_source_builds._stream_sha256(
+                    source,
+                    maximum_bytes=runtime_source_builds.MAX_LOCKED_ARCHIVE_BYTES,
+                    lease=self.lease(),
+                )
+            with self.assertRaisesRegex(RuntimeError, "cache root is unsafe"):
+                runtime_source_builds.cache_locked_source_archive(
+                    contract,
+                    self.cache,
+                    lease=self.lease(),
+                )
+            with self.assertRaisesRegex(RuntimeError, "workspace is unsafe"):
+                runtime_source_builds.build_locked_source_wheel(
+                    contract,
+                    cache_root=self.cache,
+                    work_root=self.root / "reparse-work",
+                    lease=self.lease(),
+                )
 
 
 class SourceWheelAssemblyTests(SourceBuildFixture):

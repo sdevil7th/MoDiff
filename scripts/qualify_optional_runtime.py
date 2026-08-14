@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import stat
 import subprocess
@@ -254,9 +255,15 @@ def _source_revision() -> dict[str, Any]:
                 timeout=10,
             ).stdout.strip()
         )
-    except (OSError, subprocess.SubprocessError):
+        if re.fullmatch(r"[0-9a-f]{40}", commit) is None:
+            raise RuntimeError("the source revision is not an exact Git commit")
+    except (OSError, RuntimeError, subprocess.SubprocessError):
         commit, dirty = "unavailable", True
-    return {"commit": commit, "dirty": dirty}
+    return {
+        "commit": commit,
+        "dirty": dirty,
+        "available": commit != "unavailable",
+    }
 
 
 def _future_profile(profile_id: str = PROFILE_ID):
@@ -291,13 +298,26 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
     except (OSError, RuntimeError, TypeError, ValueError):
         pass
     artifact_body = json.dumps(plan, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    source_revision = _source_revision()
+    source_revision_ready = bool(
+        source_revision.get("available") is True
+        and source_revision.get("dirty") is False
+    )
     return {
         "schemaVersion": 1,
-        "status": "ready" if not present and uv_ready and sys.version_info[:2] == (3, 12) else "not_ready",
+        "status": (
+            "ready"
+            if not present
+            and uv_ready
+            and sys.version_info[:2] == (3, 12)
+            and source_revision_ready
+            else "not_ready"
+        ),
         "platform": _platform_name(),
         "machine": _machine_name(),
         "pythonVersion": platform.python_version(),
-        "source": _source_revision(),
+        "source": source_revision,
+        "sourceRevisionReady": source_revision_ready,
         "profileId": candidate.id,
         "candidateSpecDigest": candidate.spec_digest,
         "qualificationSpecDigest": qualified.spec_digest,
@@ -462,7 +482,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.evidence:
             _write_evidence(args.evidence, result)
         print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
-        return 0 if result["status"] == "passed" or args.preflight_only else 1
+        return 0 if result["status"] in {"passed", "ready"} else 1
     except Exception as exc:  # keep public failure evidence bounded and path-free
         failure = {
             "schemaVersion": 1,
