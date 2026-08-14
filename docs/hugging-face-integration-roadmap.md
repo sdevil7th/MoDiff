@@ -3642,6 +3642,24 @@ output and assets remotely. Assets: remote Dataset only.
       for the final P2.2h slice (`1263 passed, 3 skipped, 2349 subtests`). No
       weights, media, live inference, or public assets were used, and remote
       Gallery qualification remains isolated to P2.5.
+  - [x] **P2.2i FLUX Redux multi-reference contract closure**
+    - Backend `cae34b8` adds the exact
+      `FluxReduxPipeline:multi_image_reference_edit` execution specification,
+      shares the reviewed direct profile with single-image Redux editing, and
+      binds both modes to the immutable FLUX.1-dev base requirement. The
+      generated generic Edit graph requires `referenceImages` and has canonical
+      workflow hash
+      `693087f46c6fdb2d948f61be5bdf2e5d5e8fcc9f77f5f0247243130c5b6b4446`.
+      Multi-reference Redux remains Expert-only; its addition does not expand
+      the Redux Auto task allowlist.
+    - Client `f7cd3c1` adds a catalog-wide invariant requiring every one of the
+      77 public Studio templates to resolve an exact canonical workflow, so a
+      public template cannot again remain structurally disconnected from its
+      backend execution receipt. The manifest now verifies 122 canonical pairs
+      and 134 supported workflows. The complete backend suite passes (`1695
+      passed`, `40 skipped`, `3446 subtests passed`), and the complete client
+      check passes with the unchanged `533425 / 533504`-byte production gzip
+      budget. No graph was submitted and no model or media was generated.
 - [x] **P2.3 Existing audio paths**
   - Stable Audio and existing ACE-Step modes using the generic audio nodes.
   - Evidence 2026-08-13: Stable Audio Open 1.0 moved from the
@@ -3898,6 +3916,15 @@ output and assets remotely. Assets: remote Dataset only.
     matrix passes 57 tests and the complete client gate passes with the
     unchanged 533,425 / 533,504-byte gzip budget. No graph, inference, output,
     publication, activation, or physical macOS evidence is claimed.
+
+Fresh 2026-08-14 app readiness after the P2.2i contract repair remains
+generation-free. The running app installed, validated, activated, and restarted
+the exact qualified Transformers 5.14.1 / PEFT 0.20.0 optional runtime through
+its explicit first-use API. A campaign dry run then reports all 76 pending jobs,
+31 immutable artifacts, and 50 byte-pinned inputs / 33,867,388 bytes ready in
+six family batches while downloads are idle. The host is still CPU-only, while
+P2.5 output qualification is remote-only, so no live campaign, output receipt,
+quality review, publication, or activation was started.
 
 ### Phase 2 test and asset gate
 
@@ -6803,6 +6830,28 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
 - [ ] Generated video and receipts are published through the remote asset
   workflow; no media is committed to Git.
 
+### P2-P6 locally available completion audit (2026-08-14)
+
+All currently identifiable source, static-contract, safe-serialization,
+bounded-download, and generation-free campaign work that can be completed on
+this Linux CPU host is implemented through P6. The remaining unchecked roadmap
+items are deliberately external gates rather than missing local source slices:
+
+- P2.5 and the Phase 3-5 asset gates require remote real-weight execution,
+  human quality/rights review, and immutable Dataset publication.
+- P3.2b requires authenticated access to the official Stable Diffusion 2.x
+  repositories before exact artifact admission.
+- P4.1b and P4.5 publish only legacy unsafe `.bin` weights at their reviewed
+  revisions; no serialization exception or unreviewed conversion is approved.
+- Phase 5 live proof requires a qualifying remote accelerator. This host has no
+  CUDA, XPU, or MPS device and is not a valid substitute for that evidence.
+- P6 remaining gates require accepted model terms, legal/product approval,
+  sufficient dedicated remote hardware, the approximately six-hour long-form
+  run, output review/publication, or physical macOS evidence.
+
+These gates remain unchecked. Static, mocked, dry-run, cache-readiness, and
+CPU-smoke evidence must not be promoted into live output or release claims.
+
 ## Per-integration admission checklist
 
 Complete this research before implementing any pipeline or model entry:
@@ -6985,6 +7034,7 @@ Add references only after the corresponding evidence exists.
 | P2.2g Qwen-Image-2512 image-to-image | `8a4dbd8` | `538a79c` | Remote pending | Pending | Complete source slice: exact standard img2img loader, immutable Qwen-Image-2512 revision, generic source-image binding, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged and Gallery activation remains pending. |
 | P2.2h Qwen-Image-2512 inpaint | `556be5f` | `bd8278f` | Remote pending | Pending | Complete source slice: exact standard inpaint loader, immutable Qwen-Image-2512 revision, generic source/mask bindings, reviewed Expert policy, task-contract generation, complete suites, and bundle gate passed; Auto remains unchanged, outpaint remains unadvertised, and Gallery activation remains pending. |
 | P2.2 existing-image-path closure | `653168c` | `9862eea` | Remote pending | Pending | Complete: all 30 registered image pairs have deterministic canonical layouts; regeneration preserves catalog revisions and discovers base plus auxiliary Hub artifacts from each graph; focused backend integrity and complete client gates passed without weights or media. |
+| P2.2i FLUX Redux multi-reference closure | `cae34b8` | `f7cd3c1` | Remote pending | Pending | Complete source slice: the public Redux multi-reference template now owns an exact backend specification, immutable base requirement, generic Edit graph, and canonical workflow hash. All 77 public templates resolve exact workflows; 122 task pairs and 134 workflows verify. The complete backend/client gates pass, Auto remains edit-only, and no graph or model ran. |
 | P2.3 existing audio paths | `8e91284` | `c0170b2` | Remote pending for Stable Audio | Pending | Complete source slice: Stable Audio has an exact pinned generic task workflow; all five canonical audio pairs and both ACE LoRA variants verify deterministically; complete backend/client gates passed without weights or media. |
 | P2.4 | `0ace2ae` | `8e25f5f` | Remote pending | Pending | Complete source slice: ten new exact short-video planning contracts and the existing Wan I2V/TI2V paths verify in the 70-workflow deterministic catalog; complete backend/client and focused browser gates passed without weights or media, while Auto and Gallery remain disabled pending P2.5. |
 | P2.5 | Pending | Pending | Pending | Pending | Remote execution, review, publication, and activation have not started; clean-host campaign preflight is complete in P2.5a. |
