@@ -3724,6 +3724,27 @@ output and assets remotely. Assets: remote Dataset only.
     remains 38 input-free jobs ready and 38 input-conditioned jobs blocked. No
     graph, inference, media, review, publication, activation, or physical macOS
     evidence is claimed.
+  - [x] **P2.5e Bounded parallel app downloads:** backend `c313908` closes a
+    mismatch between the server's two-slot download semaphore and the Hub
+    transfer boundary. The prior process-wide Xet lock wrapped every complete
+    snapshot call, so independently admitted ordinary downloads still ran one
+    at a time. A writer-preferring shared/exclusive mode gate now lets two
+    ordinary app-owned snapshots use the existing bounded slots concurrently,
+    while a repair waits for all normal transfers to drain, blocks new ones,
+    temporarily disables process-global Xet behavior, and restores its exact
+    prior value before ordinary work resumes. Queue-aware immutable byte
+    reservations and the 64 GiB safety margin are unchanged, and this path
+    deletes no cache entries. The focused download matrix passes 44 tests;
+    repeated overlap tests prove two normal transfers enter together, a third
+    stays queued, and repair mode never leaks in either admission order. The
+    complete backend gate passes (`1627 passed, 40 skipped, 3273 subtests`),
+    Ruff E9/F, 66-package compatibility, shell/diff checks, and portable
+    preflight pass; preflight intentionally observed the healthy existing app
+    on port 8088 rather than claiming a free-port startup. That running worker
+    predates this commit and was not restarted while its already-admitted
+    downloads remain active, so this is source/unit evidence for the next safe
+    worker restart, not a claim that the current transfers changed mode or that
+    any model/media/macOS qualification completed.
 
 ### Phase 2 test and asset gate
 
@@ -6367,6 +6388,7 @@ Add references only after the corresponding evidence exists.
 | P2.5b Exact app-cache qualification readiness | Not required | `a76ee04` | Read-only live-app cache proof only; 76 live qualification receipts remain pending | Pending | All 76 selected jobs and 31 unique immutable model/LoRA receipts match complete, installed, repair-free app-cache entries. The loopback-only bounded preflight and complete client gate pass; no graph, inference, output, review, or publication occurred. |
 | P2.5c Exact default-input qualification readiness | Not required | `d271a9f`, corrected by `7738537` | Read-only local-byte audit only; 76 live qualification receipts remain pending | Pending | The fail-closed campaign gate verifies selected Template Gallery defaults against their content-addressed bindings and asset-manifest size/hash receipts before browser or inference startup, checking both the authoring tree and the normal installer's durable backend `web/` payload. The runner uses the same installed-app fallback. The source checkout has none of the 50 required files (33,867,388 bytes), so 38 input-conditioned jobs are blocked and 38 input-free jobs are ready. No direct asset download, model deletion, graph, inference, output, review, or publication occurred. |
 | P2.5d App-owned pinned Gallery materialization | `df71942` | `0fd0830` | Contract/unit/mocked-browser proof only; app activation, Gallery install, and 76 live qualification receipts remain pending | `b27198159c30d0c81aef397c188a7826866e5027` (`sha256:canonical-json:5ec869b755a6ce04a789d6835819da150493bfaef8a6bc1480f0274ba05bcab9` approved subset); payload not installed in this checkout | The app now exposes strict status, queue-aware plan, and explicit install/repair actions for the exact anonymous Dataset payload. It reserves download plus atomic staging bytes with active model reservations and a 64 GiB safety margin, hashes all 356 files / 480,430,370 bytes, and never deletes model caches. Complete backend/client gates and all 107 mocked Studio tests pass. The current old worker was intentionally not restarted while app-managed model downloads are active, so no Gallery POST/download occurred and the 38 conditioned jobs remain blocked until safe restart plus explicit in-app consent. |
+| P2.5e Bounded parallel app downloads | `c313908` | Not required | Source/unit concurrency proof only; current old worker and live qualification remain pending | Not required | Two ordinary app snapshot transfers can now share the existing two-slot semaphore instead of serializing behind the process-global Xet lock. Repair is writer-exclusive and restores the prior Xet mode before normal transfers resume. Queue reservations, the 64 GiB reserve, immutable revisions, and no-deletion behavior are unchanged. Focused and complete backend gates pass. The active worker was not restarted, so its existing queue remains uninterrupted and this commit makes no current-live-transfer or output claim. |
 | P3.4 | Pending | Pending | Not required | Not required | Policy implementation and gates complete; paired commits pending |
 | P3.1 | `80e4587` | `8f2a671` | Local cached CPU smoke passed; remote quality review pending | Pending | Complete source/live-smoke slice: the generic unconditional adapter, three immutable exact pairs, 73-workflow deterministic catalog, complete backend/client gates, and 102-case mocked Studio sweep passed. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
 | P3.2a Stable Diffusion 1.5 | `a0815b8` | `5a633a9` | Local cached CPU node smokes passed for text-to-image, img2img, and inpaint; remote quality review pending | Pending | Complete source/live-smoke slice: three exact generic pairs reuse one immutable safetensors base, the 76-workflow deterministic catalog and complete gates passed, and no generated media was retained. Auto and Gallery remain disabled pending remote output review and Dataset publication. |
