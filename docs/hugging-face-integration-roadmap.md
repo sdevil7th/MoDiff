@@ -5308,6 +5308,21 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   compatibility check pass. The already-running repository-wide app task was
   not interrupted, replaced, or deleted, and no second AuraFlow POST was made;
   this bound governs future installs and repairs after the app restarts.
+- [x] **P6.62 Bound Chroma app download selection:** backend `0922243`
+  binds `lodestones/Chroma1-HD@0e0c60ece1e82b17cb7f77342d765ba5024c40c0`
+  to its exact 18-file runnable Diffusers selection. The allowlist contains the
+  five reviewed safetensors weights, both shard indexes, component configs,
+  tokenizer, and immutable card receipt. It excludes the duplicate
+  17,800,038,288-byte native single-file checkpoint plus the ComfyUI workflow
+  and demo images.
+
+  A real app plan reports the selected 18 files / 27,493,360,428 bytes are
+  already complete, versus 45,300,383,271 bytes for the repository-wide tree.
+  Plan and POST regressions require the identical selection and the artifact
+  regression binds it to every reviewed component weight. The focused
+  app/artifact matrix passes 95 tests and 46 subtests; pinned Ruff E9/F and the
+  66-package compatibility check pass. No new POST was necessary, and the
+  older complete repository snapshot and its duplicate bytes were preserved.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6567,4 +6582,5 @@ Add references only after the corresponding evidence exists.
 | P6.59 Wan Animate 2 Modular contract closure | `d31d5b6` | `fc67a7f` | Contract-only; artifact admission, real-weight remote execution, output review, and physical macOS pending | Not required | Both pinned package exports are Expert-visible with exact generic character-animation contracts and distinct base/distilled denoise steps. The 33-class / 93-workflow snapshot matches the complete pinned exported-class set; complete backend and client gates pass. No repository, runnable mode, Auto/template/Gallery surface, weights, models, or media were added or removed. |
 | P6.60 Wan Animate 2 artifact/source review | `2b86e63` | Not required | Static immutable metadata/package-source review only; immutable component descriptors, remote compiled flex-attention execution/output review, and physical macOS pending | Not required | Two public Python-free 31-file snapshots and their distinct 45,920,934,868-byte safetensors receipts are sealed. The standard class is absent at the pin and both Modular indexes retain null and mutable PR component revisions, so no runtime/download catalog or runnable mode was admitted and no weights or media were fetched. |
 | P6.61 Bounded AuraFlow app download selection | `ed3982a` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 16,837,479,394-byte fp16 runnable selection from the capability, excluding four duplicate/default weight surfaces and the unrelated single-file/ComfyUI artifacts. The pre-existing full-repository app transfer remains untouched and no cache entry was deleted. |
+| P6.62 Bounded Chroma app download selection | `0922243` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | Plan and POST now derive one exact 18-file / 27,493,360,428-byte runnable Diffusers selection, excluding the 17,800,038,288-byte duplicate native checkpoint and demo artifacts. The selected files are already complete in the preserved full cache, so no POST or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
