@@ -13236,8 +13236,16 @@ class WebServer:
                 },
                 status=503,
             )
+        active_entry = self.hf_download_tasks.get(repo_id)
+        joins_active_download = bool(
+            isinstance(active_entry, dict)
+            and sorted(active_entry.get("requested_files") or []) == requested_files
+            and active_entry.get("revision") == revision
+        )
         queued_reservation = self.template_gallery_reserved_bytes + sum(
-            int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values()
+            int(task.get("reserved_bytes") or 0)
+            for task in self.hf_download_tasks.values()
+            if not joins_active_download or task is not active_entry
         )
         remaining_bytes = plan.get("remainingBytes")
         fits_with_queue = bool(
@@ -13251,7 +13259,9 @@ class WebServer:
                 "error": False,
                 **plan,
                 "queuedReservationBytes": queued_reservation,
-                "fitsWithQueue": fits_with_queue,
+                "fitsWithQueue": joins_active_download or fits_with_queue,
+                "alreadyQueued": joins_active_download,
+                "taskId": active_entry.get("task_id") if joins_active_download else None,
             }
         )
 

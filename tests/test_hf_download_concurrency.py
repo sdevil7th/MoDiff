@@ -210,6 +210,47 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first["total_bytes"], 100)
         self.assertNotIn("requested_files", first)
 
+    async def test_app_plan_does_not_double_count_an_identical_active_download(self):
+        server = WebServer(modules={})
+        revision = "a" * 40
+        server.template_gallery_reserved_bytes = 50
+        server.hf_download_tasks = {
+            "unit/exact-model": {
+                "task_id": "active-task",
+                "revision": revision,
+                "requested_files": ["model.safetensors"],
+                "reserved_bytes": 400,
+            },
+            "unit/other": {"reserved_bytes": 300},
+        }
+        plan = self._space_plan(
+            revision=revision,
+            snapshotCommit=revision,
+            remainingBytes=400,
+            freeBytes=1_000,
+            reserveBytes=200,
+        )
+
+        with mock.patch("modiff.server.plan_hub_model_download", return_value=plan):
+            joined_response = await server.hf_download_plan(
+                FakeRequest(repo_id="unit/exact-model", revision=revision, file="model.safetensors")
+            )
+            conflict_response = await server.hf_download_plan(
+                FakeRequest(repo_id="unit/exact-model", revision=revision, file="different.safetensors")
+            )
+
+        joined = json.loads(joined_response.text)
+        self.assertTrue(joined["alreadyQueued"])
+        self.assertEqual(joined["taskId"], "active-task")
+        self.assertEqual(joined["queuedReservationBytes"], 350)
+        self.assertTrue(joined["fitsWithQueue"])
+
+        conflict = json.loads(conflict_response.text)
+        self.assertFalse(conflict["alreadyQueued"])
+        self.assertIsNone(conflict["taskId"])
+        self.assertEqual(conflict["queuedReservationBytes"], 750)
+        self.assertFalse(conflict["fitsWithQueue"])
+
     async def test_shared_memory_runtime_serializes_graph_and_download_model_io(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
