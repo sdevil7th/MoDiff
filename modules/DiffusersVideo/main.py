@@ -57,6 +57,8 @@ ANIMATELCM_MOTION_REVISION = "3d4d00fc113225e1040f4d3bec504b6ec750c10c"
 ANIMATELCM_LORA_WEIGHT_NAME = "AnimateLCM_sd15_t2v_lora.safetensors"
 ANIMATELCM_LORA_ADAPTER_NAME = "animatelcm-lora"
 ANIMATELCM_LORA_SCALE = 0.8
+ANIMATEDIFF_CONTROLNET_REPO = "lllyasviel/control_v11p_sd15_canny"
+ANIMATEDIFF_CONTROLNET_REVISION = "115a470d547982438f70198e353a921996e2e819"
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 COGVIDEOX_2B_REVISION = "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01"
 ALLEGRO_REPO = "rhymes-ai/Allegro"
@@ -89,6 +91,20 @@ class VideoPipelineAdapter:
     supports_mask: bool = False
     max_prompt_tokens: int | None = None
     default_audio_sample_rate: int | None = None
+    conditioning_repo: str | None = None
+    conditioning_component_class: str | None = None
+    conditioning_component_parameter: str | None = None
+
+    def __post_init__(self) -> None:
+        conditioning_fields = (
+            self.conditioning_repo,
+            self.conditioning_component_class,
+            self.conditioning_component_parameter,
+        )
+        if any(value is not None for value in conditioning_fields) and not all(
+            isinstance(value, str) and value for value in conditioning_fields
+        ):
+            raise ValueError("Conditioned video adapters must declare one complete auxiliary component contract.")
 
 
 @dataclass(frozen=True)
@@ -100,6 +116,7 @@ class VideoModeMediaContract:
 
 _VIDEO_DYNAMIC_FIELDS = (
     "video",
+    "control_video",
     "mask",
     "reference_images",
     "conditioning_scale",
@@ -125,10 +142,13 @@ _VIDEO_DYNAMIC_FIELDS = (
     "temporal_overlap_condition_strength",
     "adain_factor",
     "prompt_segments_json",
+    "pag_scale",
+    "pag_adaptive_scale",
 )
 _VIDEO_INPUT_FIELDS = frozenset(
     {
         "video",
+        "control_video",
         "mask",
         "reference_images",
         "last_image",
@@ -302,6 +322,44 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("text_to_video",),
         max_prompt_tokens=77,
     ),
+    "AnimateDiffPAGPipeline": VideoPipelineAdapter(
+        id="animatediff-pag",
+        pipeline_class="AnimateDiffPAGPipeline",
+        diffusers_class="AnimateDiffPAGPipeline",
+        default_repo=ANIMATEDIFF_BASE_REPO,
+        modes=("text_to_video",),
+        max_prompt_tokens=77,
+    ),
+    "AnimateDiffVideoToVideoPipeline": VideoPipelineAdapter(
+        id="animatediff-video-to-video",
+        pipeline_class="AnimateDiffVideoToVideoPipeline",
+        diffusers_class="AnimateDiffVideoToVideoPipeline",
+        default_repo=ANIMATEDIFF_BASE_REPO,
+        modes=("video_to_video",),
+        max_prompt_tokens=77,
+    ),
+    "AnimateDiffControlNetPipeline": VideoPipelineAdapter(
+        id="animatediff-controlnet",
+        pipeline_class="AnimateDiffControlNetPipeline",
+        diffusers_class="AnimateDiffControlNetPipeline",
+        default_repo=ANIMATEDIFF_BASE_REPO,
+        modes=("control_to_video",),
+        max_prompt_tokens=77,
+        conditioning_repo=ANIMATEDIFF_CONTROLNET_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+    ),
+    "AnimateDiffVideoToVideoControlNetPipeline": VideoPipelineAdapter(
+        id="animatediff-video-to-video-controlnet",
+        pipeline_class="AnimateDiffVideoToVideoControlNetPipeline",
+        diffusers_class="AnimateDiffVideoToVideoControlNetPipeline",
+        default_repo=ANIMATEDIFF_BASE_REPO,
+        modes=("control_video_to_video",),
+        max_prompt_tokens=77,
+        conditioning_repo=ANIMATEDIFF_CONTROLNET_REPO,
+        conditioning_component_class="ControlNetModel",
+        conditioning_component_parameter="controlnet",
+    ),
     "AnimateLCMPipeline": VideoPipelineAdapter(
         id="animatelcm",
         pipeline_class="AnimateLCMPipeline",
@@ -316,6 +374,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         diffusers_class="CogVideoXPipeline",
         default_repo=COGVIDEOX_2B_REPO,
         modes=("text_to_video",),
+        max_prompt_tokens=226,
+    ),
+    "CogVideoXVideoToVideoPipeline": VideoPipelineAdapter(
+        id="cogvideox-2b-video-to-video",
+        pipeline_class="CogVideoXVideoToVideoPipeline",
+        diffusers_class="CogVideoXVideoToVideoPipeline",
+        default_repo=COGVIDEOX_2B_REPO,
+        modes=("video_to_video",),
         max_prompt_tokens=226,
     ),
     "AllegroPipeline": VideoPipelineAdapter(
@@ -501,8 +567,32 @@ VIDEO_MODE_FIELD_CONTRACTS = {
         )
     },
     "AnimateDiffPipeline": {"text_to_video": _video_field_contract()},
+    "AnimateDiffPAGPipeline": {"text_to_video": _video_field_contract("pag_scale", "pag_adaptive_scale")},
+    "AnimateDiffVideoToVideoPipeline": {
+        "video_to_video": _video_field_contract("video", "strength", required_fields=("video",))
+    },
+    "AnimateDiffControlNetPipeline": {
+        "control_to_video": _video_field_contract(
+            "control_video",
+            "conditioning_scale",
+            required_fields=("control_video",),
+            strength_form_field="conditioningScale",
+        )
+    },
+    "AnimateDiffVideoToVideoControlNetPipeline": {
+        "control_video_to_video": _video_field_contract(
+            "video",
+            "control_video",
+            "strength",
+            "conditioning_scale",
+            required_fields=("video", "control_video"),
+        )
+    },
     "AnimateLCMPipeline": {"text_to_video": _video_field_contract()},
     "CogVideoXPipeline": {"text_to_video": _video_field_contract()},
+    "CogVideoXVideoToVideoPipeline": {
+        "video_to_video": _video_field_contract("video", "strength", required_fields=("video",))
+    },
     "AllegroPipeline": {"text_to_video": _video_field_contract()},
     "LattePipeline": {"text_to_video": _video_field_contract()},
     "MochiPipeline": {"text_to_video": _video_field_contract()},
@@ -537,8 +627,13 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "HunyuanVideoFramepackPipeline": "_load_framepack",
     "StableVideoDiffusionPipeline": "_load_stable_video_diffusion",
     "AnimateDiffPipeline": "_load_animatediff",
+    "AnimateDiffPAGPipeline": "_load_animatediff",
+    "AnimateDiffVideoToVideoPipeline": "_load_animatediff",
+    "AnimateDiffControlNetPipeline": "_load_animatediff",
+    "AnimateDiffVideoToVideoControlNetPipeline": "_load_animatediff",
     "AnimateLCMPipeline": "_load_animatediff",
     "CogVideoXPipeline": "_load_cogvideox",
+    "CogVideoXVideoToVideoPipeline": "_load_cogvideox",
     "AllegroPipeline": "_load_allegro",
     "LattePipeline": "_load_latte",
     "MochiPipeline": "_load_mochi",
@@ -561,14 +656,31 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "HunyuanVideoFramepackPipeline": "_execute_framepack",
     "StableVideoDiffusionPipeline": "_execute_stable_video_diffusion",
     "AnimateDiffPipeline": "_execute_animatediff",
+    "AnimateDiffPAGPipeline": "_execute_animatediff",
+    "AnimateDiffVideoToVideoPipeline": "_execute_animatediff",
+    "AnimateDiffControlNetPipeline": "_execute_animatediff",
+    "AnimateDiffVideoToVideoControlNetPipeline": "_execute_animatediff",
     "AnimateLCMPipeline": "_execute_animatediff",
     "CogVideoXPipeline": "_execute_cogvideox",
+    "CogVideoXVideoToVideoPipeline": "_execute_cogvideox",
     "AllegroPipeline": "_execute_allegro",
     "LattePipeline": "_execute_latte",
     "MochiPipeline": "_execute_mochi",
     "SanaVideoPipeline": "_execute_sana_video",
     "SanaImageToVideoPipeline": "_execute_sana_video",
 }
+
+
+ANIMATEDIFF_PIPELINE_CLASSES = frozenset(
+    {
+        "AnimateDiffPipeline",
+        "AnimateDiffPAGPipeline",
+        "AnimateDiffVideoToVideoPipeline",
+        "AnimateDiffControlNetPipeline",
+        "AnimateDiffVideoToVideoControlNetPipeline",
+        "AnimateLCMPipeline",
+    }
+)
 
 
 def get_video_pipeline_adapter(name: Any) -> VideoPipelineAdapter:
@@ -711,7 +823,7 @@ def _require_animatediff_artifacts(
     motion_selection: Any,
     motion_revision: Any,
 ) -> tuple[str, str, str]:
-    if adapter.pipeline_class not in {"AnimateDiffPipeline", "AnimateLCMPipeline"}:
+    if adapter.pipeline_class not in ANIMATEDIFF_PIPELINE_CLASSES:
         raise ValueError("AnimateDiff artifact validation requires a reviewed AnimateDiff adapter.")
     source = model_selection.get("source") if isinstance(model_selection, dict) else "hub"
     if source != "hub" or model_id != ANIMATEDIFF_BASE_REPO:
@@ -721,14 +833,10 @@ def _require_animatediff_artifacts(
         raise ValueError(f"AnimateDiff's SD1.5 base is pinned to {ANIMATEDIFF_BASE_REVISION}.")
 
     expected_motion_repo = (
-        ANIMATELCM_MOTION_REPO
-        if adapter.pipeline_class == "AnimateLCMPipeline"
-        else ANIMATEDIFF_MOTION_REPO
+        ANIMATELCM_MOTION_REPO if adapter.pipeline_class == "AnimateLCMPipeline" else ANIMATEDIFF_MOTION_REPO
     )
     expected_motion_revision = (
-        ANIMATELCM_MOTION_REVISION
-        if adapter.pipeline_class == "AnimateLCMPipeline"
-        else ANIMATEDIFF_MOTION_REVISION
+        ANIMATELCM_MOTION_REVISION if adapter.pipeline_class == "AnimateLCMPipeline" else ANIMATEDIFF_MOTION_REVISION
     )
     if not isinstance(motion_selection, dict) or motion_selection.get("source") != "hub":
         raise ValueError(f"{adapter.pipeline_class} requires an exact reviewed Hub MotionAdapter.")
@@ -739,6 +847,24 @@ def _require_animatediff_artifacts(
     if motion_revision != reviewed_motion_revision or motion_revision != expected_motion_revision:
         raise ValueError(f"{adapter.pipeline_class} MotionAdapter is pinned to {expected_motion_revision}.")
     return base_revision, expected_motion_repo, reviewed_motion_revision
+
+
+def _require_animatediff_controlnet_artifact(adapter: VideoPipelineAdapter) -> tuple[str, str] | None:
+    if adapter.conditioning_repo is None:
+        return None
+    if adapter.pipeline_class not in {
+        "AnimateDiffControlNetPipeline",
+        "AnimateDiffVideoToVideoControlNetPipeline",
+    } or (
+        adapter.conditioning_repo != ANIMATEDIFF_CONTROLNET_REPO
+        or adapter.conditioning_component_class != "ControlNetModel"
+        or adapter.conditioning_component_parameter != "controlnet"
+    ):
+        raise ValueError("AnimateDiff ControlNet routes require the exact reviewed SD1.5 Canny ControlNet.")
+    revision = require_catalog_revision(ANIMATEDIFF_CONTROLNET_REPO)
+    if revision != ANIMATEDIFF_CONTROLNET_REVISION:
+        raise ValueError(f"AnimateDiff ControlNet is pinned to {ANIMATEDIFF_CONTROLNET_REVISION}.")
+    return ANIMATEDIFF_CONTROLNET_REPO, revision
 
 
 def _require_cogvideox_artifact(model_selection: Any, model_id: str, revision: Any) -> str:
@@ -863,7 +989,13 @@ def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
     }
 
 
-def _media_frame_container_family(frame: Any, *, field_name: str, index: int) -> str:
+def _media_frame_container_family(
+    frame: Any,
+    *,
+    field_name: str,
+    index: int,
+    media_family: str = "Wan VACE",
+) -> str:
     label = f"{field_name} frame {index + 1}"
     if isinstance(frame, Image.Image):
         return "pil"
@@ -881,13 +1013,24 @@ def _media_frame_container_family(frame: Any, *, field_name: str, index: int) ->
     )
     if is_torch_like:
         return "torch"
-    raise ValueError(f"Wan VACE {label} must be a PIL image, NumPy array, or Torch tensor-like image.")
+    raise ValueError(f"{media_family} {label} must be a PIL image, NumPy array, or Torch tensor-like image.")
 
 
-def _media_frame_spatial_size(frame: Any, *, field_name: str, index: int) -> tuple[int, int]:
+def _media_frame_spatial_size(
+    frame: Any,
+    *,
+    field_name: str,
+    index: int,
+    media_family: str = "Wan VACE",
+) -> tuple[int, int]:
     """Validate one image-like frame without importing a heavyweight runtime."""
 
-    family = _media_frame_container_family(frame, field_name=field_name, index=index)
+    family = _media_frame_container_family(
+        frame,
+        field_name=field_name,
+        index=index,
+        media_family=media_family,
+    )
     size = getattr(frame, "size", None)
 
     label = f"{field_name} frame {index + 1}"
@@ -895,12 +1038,12 @@ def _media_frame_spatial_size(frame: Any, *, field_name: str, index: int) -> tup
         try:
             width, height = (int(value) for value in size)
         except (TypeError, ValueError) as error:
-            raise ValueError(f"Wan VACE {label} has an invalid PIL spatial size.") from error
+            raise ValueError(f"{media_family} {label} has an invalid PIL spatial size.") from error
     else:
         try:
             shape = tuple(int(value) for value in frame.shape)
         except (AttributeError, TypeError, ValueError) as error:
-            raise ValueError(f"Wan VACE {label} has an invalid array/tensor shape.") from error
+            raise ValueError(f"{media_family} {label} has an invalid array/tensor shape.") from error
         if len(shape) == 2:
             height, width = shape
         elif len(shape) == 3:
@@ -910,19 +1053,21 @@ def _media_frame_spatial_size(frame: Any, *, field_name: str, index: int) -> tup
             # axes before the upstream processor runs.
             if family == "numpy":
                 if shape[-1] not in {1, 3, 4}:
-                    raise ValueError(f"Wan VACE {label} NumPy images must use HWC layout with 1, 3, or 4 channels.")
+                    raise ValueError(
+                        f"{media_family} {label} NumPy images must use HWC layout with 1, 3, or 4 channels."
+                    )
                 height, width = shape[0], shape[1]
             else:
                 if shape[0] not in {1, 3, 4}:
                     raise ValueError(
-                        f"Wan VACE {label} Torch tensor-like images must use CHW layout with 1, 3, or 4 channels."
+                        f"{media_family} {label} Torch tensor-like images must use CHW layout with 1, 3, or 4 channels."
                     )
                 height, width = shape[1], shape[2]
         else:
-            raise ValueError(f"Wan VACE {label} must be a 2D or 3D image frame; received shape {shape}.")
+            raise ValueError(f"{media_family} {label} must be a 2D or 3D image frame; received shape {shape}.")
 
     if width <= 0 or height <= 0:
-        raise ValueError(f"Wan VACE {label} must have positive spatial dimensions; received {width}x{height}.")
+        raise ValueError(f"{media_family} {label} must have positive spatial dimensions; received {width}x{height}.")
     return width, height
 
 
@@ -931,20 +1076,33 @@ def _validate_media_sequence(
     *,
     field_name: str,
     uniform_spatial_size: bool,
+    media_family: str = "Wan VACE",
 ) -> list[tuple[int, int]]:
     if frames is None:
         return []
     families = [
-        _media_frame_container_family(frame, field_name=field_name, index=index) for index, frame in enumerate(frames)
+        _media_frame_container_family(
+            frame,
+            field_name=field_name,
+            index=index,
+            media_family=media_family,
+        )
+        for index, frame in enumerate(frames)
     ]
     if any(family != families[0] for family in families[1:]):
         received = ", ".join(dict.fromkeys(families))
-        raise ValueError(f"Wan VACE {field_name} frames must use one container family; received {received}.")
+        raise ValueError(f"{media_family} {field_name} frames must use one container family; received {received}.")
     sizes = [
-        _media_frame_spatial_size(frame, field_name=field_name, index=index) for index, frame in enumerate(frames)
+        _media_frame_spatial_size(
+            frame,
+            field_name=field_name,
+            index=index,
+            media_family=media_family,
+        )
+        for index, frame in enumerate(frames)
     ]
     if uniform_spatial_size and any(size != sizes[0] for size in sizes[1:]):
-        raise ValueError(f"Wan VACE {field_name} frames must all have the same spatial dimensions.")
+        raise ValueError(f"{media_family} {field_name} frames must all have the same spatial dimensions.")
     return sizes
 
 
@@ -1230,9 +1388,7 @@ def _bounded_short_video_int(
     try:
         number = float(default if value is None else value)
     except (TypeError, ValueError, OverflowError) as error:
-        raise ValueError(
-            f"{family} {label} must be an integer from {minimum} through {maximum}."
-        ) from error
+        raise ValueError(f"{family} {label} must be an integer from {minimum} through {maximum}.") from error
     if not isfinite(number) or not number.is_integer() or not minimum <= number <= maximum:
         raise ValueError(f"{family} {label} must be an integer from {minimum} through {maximum}.")
     return int(number)
@@ -1252,9 +1408,7 @@ def _bounded_short_video_float(
     try:
         number = float(default if value is None else value)
     except (TypeError, ValueError, OverflowError) as error:
-        raise ValueError(
-            f"{family} {label} must be finite and from {minimum:g} through {maximum:g}."
-        ) from error
+        raise ValueError(f"{family} {label} must be finite and from {minimum:g} through {maximum:g}.") from error
     if not isfinite(number) or not minimum <= number <= maximum:
         raise ValueError(f"{family} {label} must be finite and from {minimum:g} through {maximum:g}.")
     return number
@@ -1395,9 +1549,19 @@ class LoadPipeline(WanVACELoadPipeline):
         setattr(pipeline, "_modiff_video_pipeline_class", adapter.pipeline_class)
         setattr(pipeline, "_modiff_video_repo", model_id or adapter.default_repo)
         setattr(pipeline, "_modiff_video_revision", values["revision"])
-        if adapter.pipeline_class in {"AnimateDiffPipeline", "AnimateLCMPipeline"}:
+        if adapter.pipeline_class in ANIMATEDIFF_PIPELINE_CLASSES:
             setattr(pipeline, "_modiff_video_motion_adapter_repo", repo_value(values.get("motion_adapter_id")))
             setattr(pipeline, "_modiff_video_motion_adapter_revision", values.get("motion_adapter_revision"))
+        conditioning_artifact = _require_animatediff_controlnet_artifact(adapter)
+        if conditioning_artifact is not None:
+            conditioning_repo, conditioning_revision = conditioning_artifact
+            setattr(
+                pipeline,
+                "_modiff_video_conditioning_component_class",
+                adapter.conditioning_component_class,
+            )
+            setattr(pipeline, "_modiff_video_conditioning_repo", conditioning_repo)
+            setattr(pipeline, "_modiff_video_conditioning_revision", conditioning_revision)
         return {
             "pipeline": pipeline,
             "resolved_artifact": model_id or adapter.default_repo,
@@ -1652,6 +1816,7 @@ class LoadPipeline(WanVACELoadPipeline):
             kwargs.get("motion_adapter_id"),
             kwargs.get("motion_adapter_revision"),
         )
+        conditioning_artifact = _require_animatediff_controlnet_artifact(adapter)
         if str(kwargs.get("dtype") or "float16") != "float16":
             raise ValueError("AnimateDiff source qualification requires dtype=float16.")
         dtype = str_to_dtype("float16")
@@ -1663,7 +1828,12 @@ class LoadPipeline(WanVACELoadPipeline):
         if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
             raise ValueError("AnimateDiff source qualification does not admit on-load quantization or a device map.")
 
-        from diffusers import AnimateDiffPipeline, DDIMScheduler, LCMScheduler, MotionAdapter
+        import diffusers
+        from diffusers import DDIMScheduler, LCMScheduler, MotionAdapter
+
+        pipeline_class = getattr(diffusers, adapter.diffusers_class, None)
+        if pipeline_class is None or not callable(getattr(pipeline_class, "from_pretrained", None)):
+            raise RuntimeError(f"Diffusers does not expose the reviewed {adapter.diffusers_class} runtime class.")
 
         common = {
             "torch_dtype": dtype,
@@ -1689,7 +1859,28 @@ class LoadPipeline(WanVACELoadPipeline):
 
         self.progress(-1, phase="loading", message=f"Loading {adapter.pipeline_class} MotionAdapter")
         motion_adapter = MotionAdapter.from_pretrained(motion_repo, **motion_kwargs)
-        if adapter.pipeline_class == "AnimateDiffPipeline":
+        if conditioning_artifact is not None:
+            conditioning_repo, conditioning_revision = conditioning_artifact
+            conditioning_class = getattr(diffusers, str(adapter.conditioning_component_class), None)
+            if conditioning_class is None or not callable(getattr(conditioning_class, "from_pretrained", None)):
+                raise RuntimeError(
+                    f"Diffusers does not expose the reviewed {adapter.conditioning_component_class} runtime class."
+                )
+            controlnet_kwargs = {
+                "torch_dtype": dtype,
+                "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+                "revision": conditioning_revision,
+                "local_files_only": local_files_only(conditioning_repo),
+                "use_safetensors": True,
+            }
+            if cache_dir:
+                controlnet_kwargs["cache_dir"] = cache_dir
+            self.progress(-1, phase="loading", message=f"Loading {adapter.pipeline_class} ControlNet")
+            base_kwargs[str(adapter.conditioning_component_parameter)] = conditioning_class.from_pretrained(
+                conditioning_repo,
+                **controlnet_kwargs,
+            )
+        if adapter.pipeline_class != "AnimateLCMPipeline":
             scheduler_kwargs = {
                 "subfolder": "scheduler",
                 "revision": base_revision,
@@ -1705,7 +1896,7 @@ class LoadPipeline(WanVACELoadPipeline):
             base_kwargs["scheduler"] = scheduler
 
         self.progress(-1, phase="loading", message=f"Loading {adapter.pipeline_class} SD1.5 base")
-        pipeline = AnimateDiffPipeline.from_pretrained(
+        pipeline = pipeline_class.from_pretrained(
             model_id,
             motion_adapter=motion_adapter,
             **base_kwargs,
@@ -1782,8 +1973,12 @@ class LoadPipeline(WanVACELoadPipeline):
         return pipeline
 
     def _load_cogvideox(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
-        from diffusers import CogVideoXPipeline
+        import diffusers
         from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        pipeline_class = getattr(diffusers, adapter.diffusers_class, None)
+        if pipeline_class is None or not callable(getattr(pipeline_class, "from_pretrained", None)):
+            raise RuntimeError(f"Diffusers does not expose the reviewed {adapter.diffusers_class} runtime class.")
 
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
@@ -1814,7 +2009,7 @@ class LoadPipeline(WanVACELoadPipeline):
 
         logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
         self.progress(-1, phase="loading", message="Loading CogVideoX-2B")
-        pipeline = CogVideoXPipeline.from_pretrained(model_id, **load_kwargs)
+        pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
         vae = getattr(pipeline, "vae", None)
         enable_tiling = getattr(vae, "enable_tiling", None)
         if not callable(enable_tiling):
@@ -2238,6 +2433,12 @@ class Generate(WanVACEGenerate):
             "fieldOptions": {"noValidation": True},
             "onChange": "update_adapter_modes",
         },
+        "control_video": {
+            "label": "Control Video",
+            "display": "input",
+            "type": "video",
+            "required": False,
+        },
         "frame_rate": {"label": "Frame rate", "type": "int", "default": 25, "min": 1, "max": 60},
         "strength": {
             "label": "Condition strength",
@@ -2315,6 +2516,24 @@ class Generate(WanVACEGenerate):
             "display": "textarea",
             "type": "text",
             "default": "",
+        },
+        "pag_scale": {
+            "label": "PAG Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 3.0,
+            "min": 0,
+            "max": 20,
+            "step": 0.1,
+        },
+        "pag_adaptive_scale": {
+            "label": "PAG Adaptive Scale",
+            "display": "slider",
+            "type": "float",
+            "default": 0.0,
+            "min": 0,
+            "max": 20,
+            "step": 0.1,
         },
     }
 
@@ -2528,12 +2747,8 @@ class Generate(WanVACEGenerate):
         mode: str,
         kwargs: dict[str, Any],
     ):
-        if mode != "text_to_video":
-            raise ValueError(f"{adapter.pipeline_class} supports text_to_video generation only.")
         expected_motion_repo = (
-            ANIMATELCM_MOTION_REPO
-            if adapter.pipeline_class == "AnimateLCMPipeline"
-            else ANIMATEDIFF_MOTION_REPO
+            ANIMATELCM_MOTION_REPO if adapter.pipeline_class == "AnimateLCMPipeline" else ANIMATEDIFF_MOTION_REPO
         )
         expected_motion_revision = (
             ANIMATELCM_MOTION_REVISION
@@ -2547,17 +2762,41 @@ class Generate(WanVACEGenerate):
             or getattr(pipeline, "_modiff_video_motion_adapter_revision", None) != expected_motion_revision
         ):
             raise ValueError(f"The connected {adapter.pipeline_class} does not match its reviewed artifact assembly.")
+        conditioning_artifact = _require_animatediff_controlnet_artifact(adapter)
+        if conditioning_artifact is not None:
+            conditioning_repo, conditioning_revision = conditioning_artifact
+            if (
+                getattr(pipeline, "_modiff_video_conditioning_component_class", None)
+                != adapter.conditioning_component_class
+                or getattr(pipeline, "_modiff_video_conditioning_repo", None) != conditioning_repo
+                or getattr(pipeline, "_modiff_video_conditioning_revision", None) != conditioning_revision
+            ):
+                raise ValueError(
+                    f"The connected {adapter.pipeline_class} does not match its reviewed ControlNet assembly."
+                )
+
+        source_video = ensure_video_list(kwargs.get("video"), "source video")
+        control_video = ensure_video_list(kwargs.get("control_video"), "control video")
+        uses_source_video = mode in {"video_to_video", "control_video_to_video"}
+        uses_control_video = mode in {"control_to_video", "control_video_to_video"}
+        if uses_source_video and source_video is None:
+            raise ValueError(f"{adapter.pipeline_class} {mode} requires a source video.")
+        if not uses_source_video and source_video is not None:
+            raise ValueError(f"{adapter.pipeline_class} {mode} does not accept source video input.")
+        if uses_control_video and control_video is None:
+            raise ValueError(f"{adapter.pipeline_class} {mode} requires a control video.")
+        if not uses_control_video and control_video is not None:
+            raise ValueError(f"{adapter.pipeline_class} {mode} does not accept control video input.")
         for field, label in (
-            ("video", "source video"),
             ("mask", "mask"),
             ("pose_video", "pose video"),
             ("face_video", "face video"),
             ("background_video", "background video"),
         ):
             if ensure_video_list(kwargs.get(field), label) is not None:
-                raise ValueError(f"{adapter.pipeline_class} text_to_video does not accept {label} input.")
+                raise ValueError(f"{adapter.pipeline_class} {mode} does not accept {label} input.")
         if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
-            raise ValueError(f"{adapter.pipeline_class} text_to_video does not accept image conditioning.")
+            raise ValueError(f"{adapter.pipeline_class} {mode} does not accept image conditioning.")
 
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         if not isinstance(prompt, str):
@@ -2595,6 +2834,27 @@ class Generate(WanVACEGenerate):
             minimum=8,
             maximum=16,
         )
+        source_sizes = _validate_media_sequence(
+            source_video,
+            field_name="source video",
+            uniform_spatial_size=True,
+            media_family=adapter.pipeline_class,
+        )
+        control_sizes = _validate_media_sequence(
+            control_video,
+            field_name="control video",
+            uniform_spatial_size=True,
+            media_family=adapter.pipeline_class,
+        )
+        for frames, label in ((source_video, "source video"), (control_video, "control video")):
+            if frames is not None and len(frames) != num_frames:
+                raise ValueError(
+                    f"{adapter.pipeline_class} {label} contains {len(frames)} frames; expected {num_frames}."
+                )
+        if source_sizes and control_sizes and source_sizes[0] != control_sizes[0]:
+            raise ValueError(
+                f"{adapter.pipeline_class} source and control videos must have matching spatial dimensions."
+            )
         max_steps = 8 if adapter.pipeline_class == "AnimateLCMPipeline" else 25
         default_steps = 6 if adapter.pipeline_class == "AnimateLCMPipeline" else 25
         steps = _bounded_short_video_int(
@@ -2615,31 +2875,92 @@ class Generate(WanVACEGenerate):
             minimum=0.0,
             maximum=max_guidance,
         )
+        strength = None
+        if uses_source_video:
+            strength = _bounded_short_video_float(
+                kwargs.get("strength"),
+                family=adapter.pipeline_class,
+                default=0.8,
+                label="strength",
+                minimum=0.0,
+                maximum=1.0,
+            )
+        conditioning_scale = None
+        if uses_control_video:
+            conditioning_scale = _bounded_short_video_float(
+                kwargs.get("conditioning_scale"),
+                family=adapter.pipeline_class,
+                default=1.0,
+                label="conditioning scale",
+                minimum=0.0,
+                maximum=2.0,
+            )
+        pag_scale = None
+        pag_adaptive_scale = None
+        if adapter.pipeline_class == "AnimateDiffPAGPipeline":
+            pag_scale = _bounded_short_video_float(
+                kwargs.get("pag_scale"),
+                family=adapter.pipeline_class,
+                default=3.0,
+                label="PAG scale",
+                minimum=0.0,
+                maximum=20.0,
+            )
+            pag_adaptive_scale = _bounded_short_video_float(
+                kwargs.get("pag_adaptive_scale"),
+                family=adapter.pipeline_class,
+                default=0.0,
+                label="PAG adaptive scale",
+                minimum=0.0,
+                maximum=20.0,
+            )
 
         import torch
 
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        call_kwargs = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "height": height,
+            "width": width,
+            "num_inference_steps": steps,
+            "guidance_scale": guidance,
+            "num_videos_per_prompt": 1,
+            "generator": generator,
+            "output_type": output_type,
+            "return_dict": True,
+            "cross_attention_kwargs": parse_json_object(
+                kwargs.get("attention_kwargs_json"),
+                "attention kwargs",
+            ),
+            "decode_chunk_size": 16,
+            "callback_on_step_end": self.pipe_callback,
+            "callback_on_step_end_tensor_inputs": callback_tensor_inputs(
+                kwargs.get("callback_on_step_end_tensor_inputs")
+            ),
+        }
+        if uses_source_video:
+            call_kwargs.update(
+                video=source_video,
+                strength=strength,
+                enforce_inference_steps=False,
+            )
+        else:
+            call_kwargs["num_frames"] = num_frames
+        if uses_control_video:
+            call_kwargs.update(
+                conditioning_frames=control_video,
+                controlnet_conditioning_scale=conditioning_scale,
+            )
+        if adapter.pipeline_class == "AnimateDiffPAGPipeline":
+            call_kwargs.update(
+                pag_scale=pag_scale,
+                pag_adaptive_scale=pag_adaptive_scale,
+            )
         self._active_pipeline = pipeline
         try:
-            result = pipeline(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                height=height,
-                width=width,
-                num_frames=num_frames,
-                num_inference_steps=steps,
-                guidance_scale=guidance,
-                num_videos_per_prompt=1,
-                generator=generator,
-                output_type=output_type,
-                return_dict=True,
-                decode_chunk_size=16,
-                callback_on_step_end=self.pipe_callback,
-                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
-                    kwargs.get("callback_on_step_end_tensor_inputs")
-                ),
-            )
+            result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
         frames = getattr(result, "frames", result)
@@ -2785,24 +3106,28 @@ class Generate(WanVACEGenerate):
         mode: str,
         kwargs: dict[str, Any],
     ):
-        if mode != "text_to_video":
-            raise ValueError("CogVideoX-2B supports text_to_video generation only.")
         if (
             getattr(pipeline, "_modiff_video_repo", None) != COGVIDEOX_2B_REPO
             or getattr(pipeline, "_modiff_video_revision", None) != COGVIDEOX_2B_REVISION
         ):
             raise ValueError("The connected CogVideoX-2B pipeline does not match the reviewed artifact.")
+        source_video = ensure_video_list(kwargs.get("video"), "source video")
+        if mode == "video_to_video":
+            if source_video is None:
+                raise ValueError("CogVideoX-2B video_to_video requires a source video.")
+        elif source_video is not None:
+            raise ValueError("CogVideoX-2B text_to_video does not accept source video input.")
         for field, label in (
-            ("video", "source video"),
+            ("control_video", "control video"),
             ("mask", "mask"),
             ("pose_video", "pose video"),
             ("face_video", "face video"),
             ("background_video", "background video"),
         ):
             if ensure_video_list(kwargs.get(field), label) is not None:
-                raise ValueError(f"CogVideoX-2B text_to_video does not accept {label} input.")
+                raise ValueError(f"CogVideoX-2B {mode} does not accept {label} input.")
         if ensure_reference_images(kwargs.get("reference_images")) is not None or kwargs.get("last_image") is not None:
-            raise ValueError("CogVideoX-2B text_to_video does not accept image conditioning.")
+            raise ValueError(f"CogVideoX-2B {mode} does not accept image conditioning.")
 
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         if not isinstance(prompt, str):
@@ -2842,6 +3167,14 @@ class Generate(WanVACEGenerate):
         )
         if (num_frames - 1) % 4:
             raise ValueError("CogVideoX-2B frame count must be 4k+1 within the admitted 9 through 25 range.")
+        _validate_media_sequence(
+            source_video,
+            field_name="source video",
+            uniform_spatial_size=True,
+            media_family="CogVideoX-2B",
+        )
+        if source_video is not None and len(source_video) != num_frames:
+            raise ValueError(f"CogVideoX-2B source video contains {len(source_video)} frames; expected {num_frames}.")
         steps = _bounded_short_video_int(
             kwargs.get("num_inference_steps"),
             family="CogVideoX-2B",
@@ -2866,33 +3199,47 @@ class Generate(WanVACEGenerate):
             minimum=1,
             maximum=226,
         )
+        strength = None
+        if mode == "video_to_video":
+            strength = _bounded_short_video_float(
+                kwargs.get("strength"),
+                family="CogVideoX-2B",
+                default=0.8,
+                label="strength",
+                minimum=0.0,
+                maximum=1.0,
+            )
 
         import torch
 
         device = getattr(pipeline, "_execution_device", None) or "cpu"
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        call_kwargs = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "height": height,
+            "width": width,
+            "num_inference_steps": steps,
+            "guidance_scale": guidance,
+            "use_dynamic_cfg": False,
+            "num_videos_per_prompt": 1,
+            "generator": generator,
+            "output_type": output_type,
+            "return_dict": True,
+            "attention_kwargs": parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
+            "callback_on_step_end": self.pipe_callback,
+            "callback_on_step_end_tensor_inputs": callback_tensor_inputs(
+                kwargs.get("callback_on_step_end_tensor_inputs")
+            ),
+            "max_sequence_length": max_sequence_length,
+        }
+        if mode == "video_to_video":
+            call_kwargs.update(video=source_video, strength=strength)
+        else:
+            call_kwargs["num_frames"] = num_frames
         self._active_pipeline = pipeline
         try:
-            result = pipeline(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                height=height,
-                width=width,
-                num_frames=num_frames,
-                num_inference_steps=steps,
-                guidance_scale=guidance,
-                use_dynamic_cfg=False,
-                num_videos_per_prompt=1,
-                generator=generator,
-                output_type=output_type,
-                return_dict=True,
-                attention_kwargs=parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
-                callback_on_step_end=self.pipe_callback,
-                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
-                    kwargs.get("callback_on_step_end_tensor_inputs")
-                ),
-                max_sequence_length=max_sequence_length,
-            )
+            result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
         frames = getattr(result, "frames", result)
