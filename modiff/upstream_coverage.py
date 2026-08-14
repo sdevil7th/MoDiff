@@ -152,8 +152,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "CogView4ControlPipeline",
         "Flux2KleinKVPipeline",
         "Flux2Pipeline",
-        "FluxControlImg2ImgPipeline",
-        "FluxControlInpaintPipeline",
         "FluxControlNetImg2ImgPipeline",
         "FluxControlNetInpaintPipeline",
         "FluxControlNetPipeline",
@@ -174,18 +172,10 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "StableDiffusion3PAGImg2ImgPipeline",
         "StableDiffusion3PAGPipeline",
         "StableDiffusionAdapterPipeline",
-        "StableDiffusionControlNetImg2ImgPipeline",
-        "StableDiffusionControlNetInpaintPipeline",
-        "StableDiffusionControlNetPAGInpaintPipeline",
-        "StableDiffusionControlNetPAGPipeline",
         "StableDiffusionDepth2ImgPipeline",
         "StableDiffusionImageVariationPipeline",
         "StableDiffusionInstructPix2PixPipeline",
         "StableDiffusionLatentUpscalePipeline",
-        "StableDiffusionXLControlNetImg2ImgPipeline",
-        "StableDiffusionXLControlNetInpaintPipeline",
-        "StableDiffusionXLControlNetPAGImg2ImgPipeline",
-        "StableDiffusionXLControlNetPAGPipeline",
         "StableDiffusionXLControlNetUnionImg2ImgPipeline",
         "StableDiffusionXLControlNetUnionInpaintPipeline",
         "StableDiffusionXLControlNetUnionPipeline",
@@ -212,14 +202,6 @@ _REVIEWED_VIDEO_DEPRECATED_PIPELINES = frozenset(
 # reusable base checkpoint is not enough to admit a distinct conditioning,
 # scheduler, component, or output contract.
 _REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES = {
-    "AnimateDiffControlNetPipeline": (
-        "The class requires conditioning frames and a ControlNet component, while the admitted AnimateDiff "
-        "workflow is prompt-only and has no exact combined artifact assembly or action contract."
-    ),
-    "AnimateDiffPAGPipeline": (
-        "The class adds PAG layer selection and PAG scale semantics that the admitted AnimateDiff adapter does "
-        "not expose; reuse of its base and motion weights is not feature equivalence."
-    ),
     "AnimateDiffSDXLPipeline": (
         "The class requires an SDXL dual-text-encoder and compatible motion-adapter assembly, not the admitted "
         "SD1.5 AnimateDiff artifact contract."
@@ -228,14 +210,6 @@ _REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES = {
         "The class requires a SparseControlNetModel, sparse frame indices, and an immutable sparse-control "
         "artifact selection that MoDiff has not admitted."
     ),
-    "AnimateDiffVideoToVideoControlNetPipeline": (
-        "The class combines source-video denoising with ControlNet conditioning and independent strengths; "
-        "MoDiff has no exact combined handler, field contract, or workflow."
-    ),
-    "AnimateDiffVideoToVideoPipeline": (
-        "The prompt-only AnimateDiff action deliberately rejects source video; this class still needs an exact "
-        "video-to-video handler, artifact assembly receipt, and canonical workflow before admission."
-    ),
     "CogVideoXFunControlPipeline": (
         "The class requires a CogVideoX-Fun control-video artifact and control contract; the admitted CogVideoX-2B "
         "selection and action are text-to-video only."
@@ -243,10 +217,6 @@ _REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES = {
     "CogVideoXImageToVideoPipeline": (
         "The admitted CogVideoX-2B artifact is text-to-video only and does not establish an image-conditioned "
         "transformer selection or image-to-video action contract."
-    ),
-    "CogVideoXVideoToVideoPipeline": (
-        "The admitted CogVideoX-2B artifact is text-to-video only and does not establish a video-conditioned "
-        "transformer selection or video-to-video action contract."
     ),
     "HunyuanSkyreelsImageToVideoPipeline": (
         "This SkyReels-specific Hunyuan image-to-video path has no exact immutable artifact, component recipe, "
