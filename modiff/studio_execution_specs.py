@@ -228,7 +228,19 @@ SDXL_INSTRUCT_PIX2PIX_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 SDXL_CONTROLNET_CANNY_REPO = "diffusers/controlnet-canny-sdxl-1.0"
+SDXL_CONTROLNET_CANNY_FP16_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.fp16.safetensors",
+]
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
+SDXL_T2I_ADAPTER_CANNY_FP16_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.fp16.safetensors",
+]
 HUNYUAN_DIT_DISTILLED_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"
 HUNYUAN_DIT_DISTILLED_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -253,6 +265,12 @@ HUNYUAN_DIT_DISTILLED_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 HUNYUAN_DIT_CONTROLNET_CANNY_REPO = "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"
+HUNYUAN_DIT_CONTROLNET_CANNY_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.safetensors",
+]
 SD15_BASE_REPO = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 SD15_SHARED_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -278,6 +296,12 @@ SD15_SHARED_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 SD15_CONTROLNET_CANNY_REPO = "lllyasviel/control_v11p_sd15_canny"
+SD15_CONTROLNET_CANNY_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.safetensors",
+]
 SANA_REPO = "Efficient-Large-Model/Sana_600M_1024px_diffusers"
 SANA_600M_FP16_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -1199,7 +1223,20 @@ STABLE_VIDEO_DIFFUSION_FP16_FILES = [
     "vae/diffusion_pytorch_model.fp16.safetensors",
 ]
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
+ANIMATEDIFF_MOTION_FP16_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.fp16.safetensors",
+]
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
+ANIMATELCM_MOTION_FP16_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.fp16.safetensors",
+    "AnimateLCM_sd15_t2v_lora.safetensors",
+]
 COGVIDEOX_2B_REPO = "zai-org/CogVideoX-2b"
 COGVIDEOX_2B_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -1295,6 +1332,12 @@ SANA_VIDEO_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
+QWEN_CONTROLNET_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "diffusion_pytorch_model.safetensors",
+]
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 QWEN_IMAGE_2512_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -1521,6 +1564,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(ANIMATEDIFF_MOTION_REPO),
             "kind": "adapter",
             "requiredForModes": ["text_to_video"],
+            "downloadFiles": ANIMATEDIFF_MOTION_FP16_FILES,
             "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe.",
         },
     ),
@@ -1532,6 +1576,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(ANIMATELCM_MOTION_REPO),
             "kind": "adapter",
             "requiredForModes": ["text_to_video"],
+            "downloadFiles": ANIMATELCM_MOTION_FP16_FILES,
             "description": "Exact fp16 safetensors motion module and named safetensors LoRA for the LCM recipe.",
         },
     ),
@@ -1543,6 +1588,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(SDXL_T2I_ADAPTER_CANNY_REPO),
             "kind": "t2i_adapter",
             "requiredForModes": ["control_image"],
+            "downloadFiles": SDXL_T2I_ADAPTER_CANNY_FP16_FILES,
             "description": "Required by the generic SDXL Canny T2I-Adapter workflow.",
         },
     ),
@@ -1554,6 +1600,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
             "kind": "controlnet",
             "requiredForModes": ["control_image"],
+            "downloadFiles": SDXL_CONTROLNET_CANNY_FP16_FILES,
             "description": "Required by the generic SDXL Canny ControlNet workflow.",
         },
     ),
@@ -1565,6 +1612,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(HUNYUAN_DIT_CONTROLNET_CANNY_REPO),
             "kind": "controlnet",
             "requiredForModes": ["control_image"],
+            "downloadFiles": HUNYUAN_DIT_CONTROLNET_CANNY_FILES,
             "description": "Exact safetensors Canny component for the reviewed Hunyuan-DiT v1.2 distilled recipe.",
         },
     ),
@@ -1576,6 +1624,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(SD15_CONTROLNET_CANNY_REPO),
             "kind": "controlnet",
             "requiredForModes": ["control_image"],
+            "downloadFiles": SD15_CONTROLNET_CANNY_FILES,
             "description": "Required by the generic SD1.5 Canny ControlNet workflow.",
         },
     ),
@@ -1587,6 +1636,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(QWEN_CONTROLNET_REPO),
             "kind": "controlnet",
             "requiredForModes": ["control_image"],
+            "downloadFiles": QWEN_CONTROLNET_FILES,
             "description": "Required for Qwen Image Control image workflows.",
         },
     ),

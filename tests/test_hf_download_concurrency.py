@@ -501,6 +501,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 33,
                 "transformer/diffusion_pytorch_model.bin",
             ),
+            "InstantX/Qwen-Image-ControlNet-Union": (
+                "b13036f066d6dee7c20513e263d3d673055e9de8",
+                4,
+                "controlnet_qwenimage.py",
+            ),
             "jdopensource/JoyAI-Image-Edit-Diffusers": (
                 "4b41fb25d961f37668750178ccbb380da326201c",
                 38,
@@ -545,6 +550,21 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
                 21,
                 "v1-5-pruned.safetensors",
+            ),
+            "lllyasviel/control_v11p_sd15_canny": (
+                "115a470d547982438f70198e353a921996e2e819",
+                4,
+                "diffusion_pytorch_model.bin",
+            ),
+            "guoyww/animatediff-motion-adapter-v1-5-2": (
+                "6167b88ffe39b4441fdf2113e77b99a6f56b7906",
+                4,
+                "diffusion_pytorch_model.safetensors",
+            ),
+            "wangfuyun/AnimateLCM": (
+                "3d4d00fc113225e1040f4d3bec504b6ec750c10c",
+                5,
+                "AnimateLCM_sd15_t2v.ckpt",
             ),
             "black-forest-labs/FLUX.1-schnell": (
                 "741f7c3ce8b383c54771c7003378a50191e9efe9",
@@ -601,6 +621,16 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 21,
                 "sd_xl_base_1.0.safetensors",
             ),
+            "TencentARC/t2i-adapter-canny-sdxl-1.0": (
+                "2d7244ba45ded9129cfbf8e96a4befb7f6094210",
+                4,
+                "diffusion_pytorch_model.safetensors",
+            ),
+            "diffusers/controlnet-canny-sdxl-1.0": (
+                "eb115a19a10d14909256db740ed109532ab1483c",
+                4,
+                "diffusion_pytorch_model.fp16.bin",
+            ),
             "stabilityai/sdxl-turbo": (
                 "71153311d3dbb46851df1931d3ca6e939de83304",
                 21,
@@ -625,6 +655,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
                 20,
                 "pytorch_model.bin",
+            ),
+            "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny": (
+                "b2d21391ebcf78939344cfec84891932f9d53aa0",
+                4,
+                "canny.jpg",
             ),
             "Alpha-VLLM/Lumina-Next-SFT-diffusers": (
                 "0ee5ec90043acf5cb41fe96274af36eb7fad8d95",
