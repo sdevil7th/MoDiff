@@ -1399,6 +1399,7 @@ class WebServer:
                 web.delete("/hf_cache/{hash}", self.hf_cache_delete),
                 web.get("/hf_hub", self.hf_hub),
                 web.get("/hf_download/plan", self.hf_download_plan),
+                web.get("/hf_download/status", self.hf_download_status),
                 web.post("/hf_download", self.hf_download),
                 web.get("/template_gallery/status", self.template_gallery_status),
                 web.get("/template_gallery/plan", self.template_gallery_plan),
@@ -13254,6 +13255,85 @@ class WebServer:
             }
         )
 
+    @staticmethod
+    def _update_hf_download_progress(download_repo_id, entry, **updates):
+        previous = entry.get("progress")
+        if not isinstance(previous, dict):
+            previous = {}
+        snapshot = {
+            **previous,
+            "type": "hf_download_progress",
+            "repo_id": download_repo_id,
+            "task_id": entry["task_id"],
+            "download_id": entry["task_id"],
+            "started_at": entry.get("started_at"),
+            "updated_at": time.time(),
+            **updates,
+        }
+        entry["progress"] = snapshot
+        return snapshot
+
+    def _hf_download_status_snapshots(self):
+        snapshots = []
+        for repo_id, entry in self.hf_download_tasks.items():
+            progress = entry.get("progress")
+            if not isinstance(progress, dict):
+                progress = {
+                    "type": "hf_download_progress",
+                    "repo_id": repo_id,
+                    "task_id": entry.get("task_id"),
+                    "download_id": entry.get("task_id"),
+                    "status": "queued",
+                    "phase": "queued",
+                    "progress": 0,
+                    "started_at": entry.get("started_at"),
+                    "updated_at": entry.get("started_at"),
+                }
+            snapshot = dict(progress)
+            snapshot["revision"] = entry.get("revision")
+            snapshot["repair"] = bool(entry.get("repair"))
+            snapshot["requested_file_count"] = len(entry.get("requested_files") or [])
+            reserved_bytes = entry.get("reserved_bytes")
+            if isinstance(reserved_bytes, int) and reserved_bytes >= 0:
+                snapshot["reserved_bytes"] = reserved_bytes
+                if snapshot.get("remaining_bytes") is None:
+                    snapshot["remaining_bytes"] = reserved_bytes
+            plan = entry.get("download_plan")
+            if isinstance(plan, dict):
+                plan_fields = {
+                    "total_bytes": "totalBytes",
+                    "completed_bytes": "completedBytes",
+                    "total_file_count": "totalFileCount",
+                    "size_known": "sizeKnown",
+                    "cache_dir": "cacheRoot",
+                }
+                for target, source in plan_fields.items():
+                    if snapshot.get(target) is None and plan.get(source) is not None:
+                        snapshot[target] = plan[source]
+            snapshots.append(snapshot)
+        return sorted(
+            snapshots,
+            key=lambda snapshot: (
+                float(snapshot.get("started_at") or 0),
+                str(snapshot.get("repo_id") or ""),
+            ),
+        )
+
+    async def hf_download_status(self, request):
+        downloads = self._hf_download_status_snapshots()
+        return web.json_response(
+            {
+                "error": False,
+                "schemaVersion": 1,
+                "downloads": downloads,
+                "activeCount": len(downloads),
+                "queuedReservationBytes": sum(
+                    int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values()
+                ),
+                "templateGalleryReservationBytes": self.template_gallery_reserved_bytes,
+            }
+        )
+
     async def _reserve_hf_download_space(self, repo_id, entry):
         async with self.download_reservation_lock:
             try:
@@ -13328,24 +13408,20 @@ class WebServer:
             if "status" not in message:
                 message["status"] = "downloading" if progress_value is None or progress_value < 1 else "complete"
 
+            message = self._update_hf_download_progress(repo_id, entry, **message)
+
             for download_sid in list(entry.get("sids", [])):
                 self.queue_message(message, download_sid)
 
+        queued_message = self._update_hf_download_progress(
+            repo_id,
+            entry,
+            progress=0,
+            status="queued",
+            phase="queued",
+        )
         for download_sid in list(entry.get("sids", [])):
-            self.queue_message(
-                {
-                    "type": "hf_download_progress",
-                    "repo_id": repo_id,
-                    "task_id": task_id,
-                    "download_id": task_id,
-                    "progress": 0,
-                    "status": "queued",
-                    "phase": "queued",
-                    "started_at": entry.get("started_at"),
-                    "updated_at": time.time(),
-                },
-                download_sid,
-            )
+            self.queue_message(queued_message, download_sid)
 
         reservation_failure = await self._reserve_hf_download_space(repo_id, entry)
         if reservation_failure is not None:
@@ -13357,41 +13433,28 @@ class WebServer:
             entry["reserved_bytes"] = 0
 
     async def _run_reserved_hf_download(self, repo_id, entry, progress_cb):
-        task_id = entry["task_id"]
         async with self.hf_download_semaphore:
+            planning_message = self._update_hf_download_progress(
+                repo_id,
+                entry,
+                progress=0,
+                status="planning",
+                phase="planning",
+            )
             for download_sid in list(entry.get("sids", [])):
-                self.queue_message(
-                    {
-                        "type": "hf_download_progress",
-                        "repo_id": repo_id,
-                        "task_id": task_id,
-                        "download_id": task_id,
-                        "progress": 0,
-                        "status": "planning",
-                        "phase": "planning",
-                        "started_at": entry.get("started_at"),
-                        "updated_at": time.time(),
-                    },
-                    download_sid,
-                )
+                self.queue_message(planning_message, download_sid)
 
             if self.serialize_model_io and self.model_io_lock.locked():
+                waiting_message = self._update_hf_download_progress(
+                    repo_id,
+                    entry,
+                    progress=0,
+                    status="queued",
+                    phase="waiting_for_model_io",
+                    message="Waiting for active generation or model I/O to finish safely.",
+                )
                 for download_sid in list(entry.get("sids", [])):
-                    self.queue_message(
-                        {
-                            "type": "hf_download_progress",
-                            "repo_id": repo_id,
-                            "task_id": task_id,
-                            "download_id": task_id,
-                            "progress": 0,
-                            "status": "queued",
-                            "phase": "waiting_for_model_io",
-                            "message": "Waiting for active generation or model I/O to finish safely.",
-                            "started_at": entry.get("started_at"),
-                            "updated_at": time.time(),
-                        },
-                        download_sid,
-                    )
+                    self.queue_message(waiting_message, download_sid)
             result = await self._run_executor_callback(
                 partial(
                     download_hub_model,
@@ -13649,6 +13712,7 @@ class WebServer:
                 "cachedNodes": list(self.node_cache.keys()),
                 "queued": queued_tasks,
                 "current": current_task,
+                "downloads": self._hf_download_status_snapshots(),
                 # Keep the welcome contract aligned with /queue: workflow graphs
                 # remain available lazily through /runs/{task_id}, but are not
                 # disclosed or retransmitted in the initial handshake.

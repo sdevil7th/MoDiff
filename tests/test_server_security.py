@@ -432,6 +432,27 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
                 "workflow_snapshot": {"nodes": [{"prompt": "private prompt"}]},
             }
         ]
+        self.server.hf_download_tasks = {
+            "unit/model": {
+                "task_id": "download-task",
+                "started_at": 1.0,
+                "revision": "a" * 40,
+                "requested_files": ["weights/model.safetensors"],
+                "reserved_bytes": 25,
+                "progress": {
+                    "type": "hf_download_progress",
+                    "repo_id": "unit/model",
+                    "task_id": "download-task",
+                    "download_id": "download-task",
+                    "status": "downloading",
+                    "phase": "downloading",
+                    "progress": 0.75,
+                    "remaining_bytes": 25,
+                    "started_at": 1.0,
+                    "updated_at": 2.0,
+                },
+            }
+        }
         websocket = EmptyWebSocket()
 
         with patch("modiff.server.web.WebSocketResponse", return_value=websocket):
@@ -442,6 +463,8 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(websocket.messages[0]["type"], "welcome")
         self.assertNotIn("workflow_snapshot", websocket.messages[0]["recent"][0])
         self.assertTrue(websocket.messages[0]["recent"][0]["has_workflow_snapshot"])
+        self.assertEqual(websocket.messages[0]["downloads"][0]["repo_id"], "unit/model")
+        self.assertNotIn("requested_files", websocket.messages[0]["downloads"][0])
 
     async def test_websocket_without_origin_requires_a_loopback_native_client(self):
         local_websocket = EmptyWebSocket()

@@ -153,6 +153,63 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(payload["repair_required"])
         download.assert_not_called()
 
+    async def test_app_status_exposes_active_downloads_without_file_paths(self):
+        server = WebServer(modules={})
+        server.hf_download_tasks = {
+            "unit/later": {
+                "task_id": "task-later",
+                "started_at": 20.0,
+                "revision": "b" * 40,
+                "repair": True,
+                "requested_files": ["model.safetensors"],
+                "reserved_bytes": 80,
+                "progress": {
+                    "type": "hf_download_progress",
+                    "repo_id": "unit/later",
+                    "task_id": "task-later",
+                    "download_id": "task-later",
+                    "status": "downloading",
+                    "phase": "downloading",
+                    "progress": 0.2,
+                    "remaining_bytes": 80,
+                    "started_at": 20.0,
+                    "updated_at": 21.0,
+                },
+            },
+            "unit/first": {
+                "task_id": "task-first",
+                "started_at": 10.0,
+                "revision": "a" * 40,
+                "repair": False,
+                "requested_files": ["config.json", "weights/model.safetensors"],
+                "reserved_bytes": 40,
+                "download_plan": {
+                    "totalBytes": 100,
+                    "completedBytes": 60,
+                    "totalFileCount": 2,
+                    "sizeKnown": True,
+                    "cacheRoot": "/app-cache",
+                },
+            },
+        }
+        server.template_gallery_reserved_bytes = 7
+
+        response = await server.hf_download_status(FakeRequest())
+        payload = json.loads(response.text)
+
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["activeCount"], 2)
+        self.assertEqual(payload["queuedReservationBytes"], 120)
+        self.assertEqual(payload["templateGalleryReservationBytes"], 7)
+        self.assertEqual([item["repo_id"] for item in payload["downloads"]], ["unit/first", "unit/later"])
+        first = payload["downloads"][0]
+        self.assertEqual(first["status"], "queued")
+        self.assertEqual(first["revision"], "a" * 40)
+        self.assertEqual(first["requested_file_count"], 2)
+        self.assertEqual(first["remaining_bytes"], 40)
+        self.assertEqual(first["total_bytes"], 100)
+        self.assertNotIn("requested_files", first)
+
     async def test_shared_memory_runtime_serializes_graph_and_download_model_io(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
