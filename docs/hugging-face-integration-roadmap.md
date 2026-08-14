@@ -5486,6 +5486,26 @@ Priority: last. Hardware and assets: dedicated remote qualification only.
   pass. A fresh exact app plan reported zero remaining bytes, with
   382,775,398,400 free bytes, 302,075,919,129 queued reservation bytes, and the
   68,719,476,736-byte safety reserve intact, so no POST or deletion occurred.
+- [x] **P6.71 Bound FLUX.2 Klein component download and loader serialization:**
+  backend `80f7369` binds
+  `black-forest-labs/FLUX.2-klein-4B@e7b7dc27f91deacad38e78976d1f2b499d76a294`
+  to the exact 21-file / 15,980,152,900-byte Diffusers component surface used
+  by its text, edit, multi-reference, inpaint, and outpaint routes. The
+  selection retains the text encoder, transformer, VAE, tokenizer, scheduler,
+  configs, model index, license, card, and attribute receipts while excluding
+  the duplicate 7,751,105,712-byte native checkpoint and 8,748,835 bytes of
+  demo images from the 23,740,007,447-byte repository tree. Both generic Klein
+  loaders now explicitly require safe serialization.
+
+  App plan and POST regressions bind the capability-derived allowlist; the
+  focused FLUX artifact regression requires the exact component safetensors,
+  both loader flags, and complete native-checkpoint/demo exclusion. The
+  capability, app, FLUX, and loader matrix passes 213 tests, three
+  optional-runtime skips, and 875 subtests; pinned Ruff E9/F, 66-package
+  compatibility, and diff checks pass. A fresh exact app plan reported zero
+  remaining bytes, with 379,585,880,064 free bytes, 295,904,744,282 queued
+  reservation bytes, and the 68,719,476,736-byte safety reserve intact, so no
+  POST or deletion occurred.
 - [ ] Evaluate large image/cascaded families and DiffusionGemma only on hardware
   with sufficient RAM, VRAM, and disk.
   - [x] **DiffusionGemma immutable source/artifact review:** backend `42b609e`
@@ -6754,4 +6774,5 @@ Add references only after the corresponding evidence exists.
 | P6.68 Bounded unconditional-image app downloads and loader serialization | `42fa625` | Not required | Exact immutable app plans and prior local tiny smokes only; remote quality/output review and physical macOS remain pending | Not required | Exact six-file safetensors selections for shared DDPM/DDIM CIFAR-10 and ImageNet64 consistency routes exclude 1.33 GB of legacy pickle plus repository code/demo surfaces and make all three loader serialization requirements explicit. Only 15,704 receipt bytes remained; fresh fitting plans preceded two concurrent app-only repairs, with no deletion. |
 | P6.69 Bounded LCM DreamShaper app download and loader serialization | `08c34f4` | Not required | Exact immutable app plan and prior local tiny smoke only; remote quality/output review and physical macOS remain pending | Not required | One exact 17-file / 5,482,979,343-byte safetensors component selection excludes 7,710,367,026 bytes of duplicate single-file, ONNX, repository-code, and demo surfaces and makes the generic loader's safe-serialization requirement explicit. Only 5,070 receipt bytes remained; a fresh fitting plan preceded the app-only completion request, with no deletion. |
 | P6.70 Bounded Sana 0.6B fp16 app download selection | `982c1a3` | Not required | Exact immutable app plan only; remote real-weight execution/output review and physical macOS remain pending | Not required | One exact 17-file / 7,700,017,758-byte fp16 Diffusers selection matches the loader variant and excludes 8,844,837,635 logical bytes of default/full-precision aliases. The selected files are already complete in the preserved cache, so no POST or deletion occurred. |
+| P6.71 Bounded FLUX.2 Klein component download and loader serialization | `80f7369` | Not required | Exact immutable app plan and prior local live smokes only; remote output review and physical macOS remain pending | Not required | One exact 21-file / 15,980,152,900-byte component selection excludes the 7,751,105,712-byte native duplicate and demo images while making both generic Klein loaders safetensors-only. The selected files are already complete in the preserved cache, so no POST or deletion occurred. |
 | P6 remaining | Pending | Pending | Remote pending | Pending | LTX-2.5 gated artifact/live qualification, other heavy families, and long-form workflow qualification remain open as independent segments. Kandinsky5 Video artifact/source evaluation is complete in backend `08e2550`, with corrected recipe evidence and remote execution still pending. |
