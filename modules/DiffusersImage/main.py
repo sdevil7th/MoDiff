@@ -368,6 +368,8 @@ IMAGE_PIPELINE_ADAPTERS = {
         "StableDiffusionXLPipeline",
         frozenset({"text_to_image"}),
         SDXL_BASE_REPO,
+        safe_serialization_required=True,
+        weight_variant="fp16",
     ),
     "StableDiffusionXLTurboPipeline": ImagePipelineAdapter(
         "StableDiffusionXLTurboPipeline",
@@ -766,12 +768,16 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"edit_image"}),
         SDXL_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLImg2ImgPipeline"),
+        safe_serialization_required=True,
+        weight_variant="fp16",
     ),
     "StableDiffusionXLInpaintPipeline": ImagePipelineAdapter(
         "StableDiffusionXLInpaintPipeline",
         frozenset({"inpaint", "outpaint"}),
         SDXL_BASE_REPO,
         artifact_pipeline_classes=("StableDiffusionXLPipeline", "StableDiffusionXLInpaintPipeline"),
+        safe_serialization_required=True,
+        weight_variant="fp16",
     ),
     "StableDiffusionPipeline": ImagePipelineAdapter(
         "StableDiffusionPipeline",

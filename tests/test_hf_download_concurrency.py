@@ -536,6 +536,21 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 17,
                 "transformer/diffusion_pytorch_model.safetensors",
             ),
+            "stabilityai/stable-diffusion-xl-base-1.0": (
+                "462165984030d82259a11f4367a4eed129e94a7b",
+                21,
+                "sd_xl_base_1.0.safetensors",
+            ),
+            "stabilityai/sdxl-turbo": (
+                "71153311d3dbb46851df1931d3ca6e939de83304",
+                21,
+                "sd_xl_turbo_1.0_fp16.safetensors",
+            ),
+            "diffusers/sdxl-instructpix2pix-768": (
+                "06653d47f8d22f2c2205a5884d6a24c5e76d2ca7",
+                20,
+                "validation_images/step_9900_val_img_3.png",
+            ),
             "SimianLuo/LCM_Dreamshaper_v7": (
                 "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
                 17,
