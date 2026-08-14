@@ -481,6 +481,8 @@ from modiff.optional_runtime_execution import (
     optional_runtime_requirement_for_execution,
 )
 from modiff.studio_execution_specs import (
+    FLUX_FILL_DIFFUSERS_FILES,
+    FLUX_KONTEXT_DIFFUSERS_FILES,
     assert_studio_execution_graph,
     studio_capability_definitions,
     studio_execution_spec_for_pair,
@@ -1079,6 +1081,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "FLUX.1-Kontext-dev",
         "family": "FLUX Image",
         "defaultRepo": "black-forest-labs/FLUX.1-Kontext-dev",
+        "downloadFiles": FLUX_KONTEXT_DIFFUSERS_FILES,
         "alternateArtifact": "black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
@@ -1113,6 +1116,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "FLUX.1-Fill-dev",
         "family": "FLUX Image",
         "defaultRepo": "black-forest-labs/FLUX.1-Fill-dev",
+        "downloadFiles": FLUX_FILL_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},

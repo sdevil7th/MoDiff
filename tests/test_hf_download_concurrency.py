@@ -401,6 +401,26 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 26,
                 "flux1-krea-dev.safetensors",
             ),
+            "black-forest-labs/FLUX.1-Depth-dev": (
+                "fb5e9b1bae41b8c8adcea4ea2a87b74dd298f07a",
+                28,
+                "flux1-depth-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Canny-dev": (
+                "27c3d8bdc17509b47cf4fd9ba25ab1c7508a69a2",
+                28,
+                "flux1-canny-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Fill-dev": (
+                "358293da0354175698b67ec8299acf928313a78a",
+                26,
+                "flux1-fill-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Kontext-dev": (
+                "24e9dedc4ef646698dc8eb4e18ae2cec3c9fea0d",
+                26,
+                "flux1-kontext-dev.safetensors",
+            ),
             "black-forest-labs/FLUX.2-klein-4B": (
                 "e7b7dc27f91deacad38e78976d1f2b499d76a294",
                 21,

@@ -106,11 +106,43 @@ FLUX_KREA_DIFFUSERS_FILES = [
 ]
 FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
+FLUX_CONTROL_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE.md",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "text_encoder_2/config.json",
+    "text_encoder_2/model-00001-of-00004.safetensors",
+    "text_encoder_2/model-00002-of-00004.safetensors",
+    "text_encoder_2/model-00003-of-00004.safetensors",
+    "text_encoder_2/model-00004-of-00004.safetensors",
+    "text_encoder_2/model.safetensors.index.json",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "tokenizer_2/special_tokens_map.json",
+    "tokenizer_2/spiece.model",
+    "tokenizer_2/tokenizer.json",
+    "tokenizer_2/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 FLUX_CANNY_VERIFIED_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX_KONTEXT_REPO = "black-forest-labs/FLUX.1-Kontext-dev"
+FLUX_KONTEXT_DIFFUSERS_FILES = list(FLUX_DEV_DIFFUSERS_FILES)
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
+FLUX_FILL_DIFFUSERS_FILES = list(FLUX_DEV_DIFFUSERS_FILES)
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 FLUX2_KLEIN_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -2318,6 +2350,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 low_vram_steps=20,
                 execution_status="expert_only",
             ),
+            "downloadFiles": FLUX_CONTROL_DIFFUSERS_FILES,
             "supportsImageInput": True,
             "supportsControlImage": True,
             "modes": ["control_image"],
@@ -2407,6 +2440,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 low_vram_steps=20,
                 execution_status="expert_only",
             ),
+            "downloadFiles": FLUX_CONTROL_DIFFUSERS_FILES,
             "artifactCandidates": [
                 FLUX_CANNY_REPO,
                 FLUX_CANNY_VERIFIED_REPAIR_REPO,
