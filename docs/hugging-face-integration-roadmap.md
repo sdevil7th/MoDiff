@@ -3439,6 +3439,12 @@ Priority: after Phase 0. Hardware: CPU and tiny fixtures. Assets: none.
 - [x] DynamicBlock has no Mellon filename, schema, option, or fallback.
 - [x] No assets are generated.
 
+Fresh 2026-08-14 source revalidation passed the custom identity,
+DynamicBlock security, contract-only registry, pinned-upstream contract,
+workflow-discovery, and workflow-truth suites (`121 passed`, `24 skipped`,
+`222 subtests passed`). The run used no weights, media, network artifacts, or
+generated assets.
+
 ## Phase 2 — Templates for already implemented execution paths
 
 Priority: first user-visible expansion. Hardware: contract tests locally; live
