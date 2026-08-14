@@ -745,6 +745,36 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertFalse(sdxl_pag["fieldParams"]["pag_scale"]["hidden"])
         self.assertFalse(sdxl_pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
+        for pipeline_name in (
+            "HunyuanDiTPAGPipeline",
+            "PixArtSigmaPAGPipeline",
+            "SanaPAGPipeline",
+        ):
+            with self.subTest(pag_text_to_image=pipeline_name):
+                contract = image_pipeline_contract(
+                    IMAGE_PIPELINE_ADAPTERS[pipeline_name], "text_to_image"
+                )
+                for field in (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ):
+                    self.assertFalse(contract["fieldParams"][field]["hidden"])
+                self.assertEqual(contract["actions"], {"Generate": ["text_to_image"]})
+        hunyuan_pag = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["HunyuanDiTPAGPipeline"], "text_to_image"
+        )
+        self.assertTrue(hunyuan_pag["fieldParams"]["max_sequence_length"]["hidden"])
+        for pipeline_name in ("PixArtSigmaPAGPipeline", "SanaPAGPipeline"):
+            with self.subTest(pag_prompt_length=pipeline_name):
+                contract = image_pipeline_contract(
+                    IMAGE_PIPELINE_ADAPTERS[pipeline_name], "text_to_image"
+                )
+                self.assertFalse(contract["fieldParams"]["max_sequence_length"]["hidden"])
+                self.assertEqual(contract["fieldParams"]["max_sequence_length"]["max"], 300)
         sana = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["SanaPipeline"], "text_to_image")
         self.assertFalse(sana["fieldParams"]["negative_prompt"]["hidden"])
         self.assertFalse(sana["fieldParams"]["max_sequence_length"]["hidden"])
@@ -857,6 +887,265 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             with self.subTest(fields=fields), self.assertRaisesRegex(ValueError, "unique reviewed"):
                 ImageModeFieldContract(fields)
 
+    def test_pag_text_to_image_adapters_bind_exact_reviewed_sources_and_bounds(self):
+        expected = {
+            "HunyuanDiTPAGPipeline": {
+                "repo": HUNYUAN_DIT_DISTILLED_REPO,
+                "revision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+                "artifact_classes": ("HunyuanDiTPipeline",),
+                "max_steps": 25,
+                "output_bounds": (1024, 1024, 32, 1024 * 1024),
+                "max_sequence_length": 256,
+                "variant": None,
+                "component_dtypes": (),
+                "visible_fields": (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ),
+            },
+            "PixArtSigmaPAGPipeline": {
+                "repo": PIXART_SIGMA_REPO,
+                "revision": "e102b3591cc82e97071b8b4cb90d834d0c487207",
+                "artifact_classes": ("PixArtSigmaPipeline",),
+                "max_steps": 50,
+                "output_bounds": (16, 2048, 16, 2048 * 2048),
+                "max_sequence_length": 300,
+                "variant": None,
+                "component_dtypes": (),
+                "visible_fields": (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "max_sequence_length",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ),
+            },
+            "SanaPAGPipeline": {
+                "repo": SANA_REPO,
+                "revision": "28f3af7689de15f3883d5863059a2fca0aa9b829",
+                "artifact_classes": ("SanaPipeline",),
+                "max_steps": 100,
+                "output_bounds": (16, 2048, 16, 2048 * 2048),
+                "max_sequence_length": 300,
+                "variant": "fp16",
+                "component_dtypes": (("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+                "visible_fields": (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "max_sequence_length",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ),
+            },
+        }
+        for pipeline_name, contract in expected.items():
+            with self.subTest(pipeline=pipeline_name):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                self.assertEqual(adapter.default_repo, contract["repo"])
+                self.assertEqual(catalog_revision(adapter.default_repo), contract["revision"])
+                self.assertEqual(adapter.model_filter_classes, contract["artifact_classes"])
+                self.assertEqual(adapter.load_pipeline_class, pipeline_name)
+                self.assertEqual(adapter.allowed_runtime_classes, (pipeline_name,))
+                self.assertEqual(adapter.mode_options, ("text_to_image",))
+                self.assertTrue(adapter.safe_serialization_required)
+                self.assertEqual(adapter.max_inference_steps, contract["max_steps"])
+                self.assertEqual(
+                    (
+                        adapter.min_output_side,
+                        adapter.max_output_side,
+                        adapter.output_side_step,
+                        adapter.max_output_pixels,
+                    ),
+                    contract["output_bounds"],
+                )
+                self.assertEqual(adapter.max_sequence_length, contract["max_sequence_length"])
+                self.assertEqual(adapter.weight_variant, contract["variant"])
+                self.assertEqual(adapter.component_dtype_overrides, contract["component_dtypes"])
+                self.assertEqual(
+                    IMAGE_MODE_FIELD_CONTRACTS[pipeline_name]["text_to_image"].visible_fields,
+                    contract["visible_fields"],
+                )
+
+    def test_pag_text_to_image_generation_passes_only_each_reviewed_call_surface(self):
+        received = {}
+
+        class HunyuanDiTPAGPipeline:
+            _execution_device = "cpu"
+
+            def __call__(
+                self,
+                *,
+                prompt,
+                height,
+                width,
+                num_inference_steps,
+                guidance_scale,
+                negative_prompt,
+                generator,
+                output_type,
+                return_dict,
+                pag_scale,
+                pag_adaptive_scale,
+            ):
+                call_values = dict(locals())
+                call_values.pop("received", None)
+                received[type(self).__name__] = call_values
+                return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+        class PixArtSigmaPAGPipeline:
+            _execution_device = "cpu"
+
+            def __call__(
+                self,
+                *,
+                prompt,
+                negative_prompt,
+                num_inference_steps,
+                guidance_scale,
+                height,
+                width,
+                generator,
+                output_type,
+                return_dict,
+                max_sequence_length,
+                pag_scale,
+                pag_adaptive_scale,
+            ):
+                call_values = dict(locals())
+                call_values.pop("received", None)
+                received[type(self).__name__] = call_values
+                return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+        class SanaPAGPipeline(PixArtSigmaPAGPipeline):
+            pass
+
+        pipelines = {
+            "HunyuanDiTPAGPipeline": HunyuanDiTPAGPipeline(),
+            "PixArtSigmaPAGPipeline": PixArtSigmaPAGPipeline(),
+            "SanaPAGPipeline": SanaPAGPipeline(),
+        }
+        expected_keys = {
+            "HunyuanDiTPAGPipeline": {
+                "self",
+                "prompt",
+                "height",
+                "width",
+                "num_inference_steps",
+                "guidance_scale",
+                "negative_prompt",
+                "generator",
+                "output_type",
+                "return_dict",
+                "pag_scale",
+                "pag_adaptive_scale",
+            },
+            "PixArtSigmaPAGPipeline": {
+                "self",
+                "prompt",
+                "negative_prompt",
+                "num_inference_steps",
+                "guidance_scale",
+                "height",
+                "width",
+                "generator",
+                "output_type",
+                "return_dict",
+                "max_sequence_length",
+                "pag_scale",
+                "pag_adaptive_scale",
+            },
+            "SanaPAGPipeline": {
+                "self",
+                "prompt",
+                "negative_prompt",
+                "num_inference_steps",
+                "guidance_scale",
+                "height",
+                "width",
+                "generator",
+                "output_type",
+                "return_dict",
+                "max_sequence_length",
+                "pag_scale",
+                "pag_adaptive_scale",
+            },
+        }
+        with patch("modules.DiffusersImage.main.add_progress_callback"):
+            for pipeline_name, pipeline in pipelines.items():
+                with self.subTest(pipeline=pipeline_name):
+                    tag_test_image_pipeline(pipeline, pipeline_name, "text_to_image")
+                    adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                    result = Generate(f"{pipeline_name}-surface-probe").execute(
+                        pipeline=pipeline,
+                        prompt="render the reviewed PAG fixture",
+                        negative_prompt="artifact",
+                        width=max(1024, adapter.min_output_side),
+                        height=max(1024, adapter.min_output_side),
+                        num_inference_steps=min(20, adapter.max_inference_steps),
+                        guidance_scale=4.5,
+                        max_sequence_length=adapter.max_sequence_length,
+                        pag_scale=3.0,
+                        pag_adaptive_scale=0.25,
+                        output_type="pil",
+                    )
+                    self.assertEqual(set(received[pipeline_name]), expected_keys[pipeline_name])
+                    self.assertEqual(received[pipeline_name]["pag_scale"], 3.0)
+                    self.assertEqual(received[pipeline_name]["pag_adaptive_scale"], 0.25)
+                    self.assertEqual((result["width_out"], result["height_out"]), (16, 16))
+        self.assertNotIn("max_sequence_length", received["HunyuanDiTPAGPipeline"])
+
+    def test_pag_text_to_image_family_bounds_fail_before_inference(self):
+        calls = []
+        pipelines = {}
+        for pipeline_name in (
+            "HunyuanDiTPAGPipeline",
+            "PixArtSigmaPAGPipeline",
+            "SanaPAGPipeline",
+        ):
+            pipeline_type = type(
+                pipeline_name,
+                (),
+                {"__call__": lambda _self, **_kwargs: calls.append(True)},
+            )
+            pipelines[pipeline_name] = tag_test_image_pipeline(
+                pipeline_type(), pipeline_name, "text_to_image"
+            )
+
+        invalid = (
+            ("HunyuanDiTPAGPipeline", {"width": 992}, "between 1024 and 1024"),
+            ("HunyuanDiTPAGPipeline", {"num_inference_steps": 26}, "between 1 and 25"),
+            ("HunyuanDiTPAGPipeline", {"max_sequence_length": 257}, "between 1 and 256"),
+            ("PixArtSigmaPAGPipeline", {"num_inference_steps": 51}, "between 1 and 50"),
+            ("PixArtSigmaPAGPipeline", {"max_sequence_length": 301}, "between 1 and 300"),
+            ("SanaPAGPipeline", {"num_inference_steps": 101}, "between 1 and 100"),
+            ("SanaPAGPipeline", {"max_sequence_length": 301}, "between 1 and 300"),
+        )
+        for pipeline_name, values, message in invalid:
+            with self.subTest(pipeline=pipeline_name, values=values):
+                request = {
+                    "pipeline": pipelines[pipeline_name],
+                    "prompt": "render the reviewed PAG fixture",
+                    "width": 1024,
+                    "height": 1024,
+                    "num_inference_steps": 20,
+                    "guidance_scale": 4.5,
+                    "max_sequence_length": 256,
+                    "pag_scale": 3.0,
+                    "pag_adaptive_scale": 0.0,
+                    **values,
+                }
+                with self.assertRaisesRegex(ValueError, message):
+                    Generate(f"{pipeline_name}-bounds-probe").execute(**request)
+        self.assertEqual(calls, [])
+
     @requires_transformers
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
@@ -902,6 +1191,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image"},
             ),
             "HunyuanDiTPipeline": ({"text_to_image"}, HUNYUAN_DIT_DISTILLED_REPO, {"prompt"}),
+            "HunyuanDiTPAGPipeline": (
+                {"text_to_image"},
+                HUNYUAN_DIT_DISTILLED_REPO,
+                {"prompt", "pag_scale", "pag_adaptive_scale"},
+            ),
             "HunyuanDiTControlNetPipeline": (
                 {"control_image"},
                 HUNYUAN_DIT_DISTILLED_REPO,
@@ -924,6 +1218,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image", "mask_image"},
             ),
             "SanaPipeline": ({"text_to_image"}, SANA_REPO, {"prompt"}),
+            "SanaPAGPipeline": (
+                {"text_to_image"},
+                SANA_REPO,
+                {"prompt", "pag_scale", "pag_adaptive_scale"},
+            ),
             "SanaSprintPipeline": ({"text_to_image"}, SANA_SPRINT_REPO, {"prompt"}),
             "SanaSprintImg2ImgPipeline": (
                 {"edit_image"},
@@ -931,6 +1230,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"prompt", "image"},
             ),
             "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
+            "PixArtSigmaPAGPipeline": (
+                {"text_to_image"},
+                PIXART_SIGMA_REPO,
+                {"prompt", "pag_scale", "pag_adaptive_scale"},
+            ),
             "Kandinsky3Pipeline": ({"text_to_image"}, KANDINSKY3_REPO, {"prompt"}),
             "Kandinsky3Img2ImgPipeline": (
                 {"edit_image"},
@@ -1069,6 +1373,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
             ("HunyuanDiTPipeline", "text_to_image", Generate, {}),
+            ("HunyuanDiTPAGPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLPAGPipeline", "text_to_image", Generate, {}),
             ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             (
@@ -1078,9 +1383,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"image": image, "mask_image": mask},
             ),
             ("SanaPipeline", "text_to_image", Generate, {}),
+            ("SanaPAGPipeline", "text_to_image", Generate, {}),
             ("SanaSprintPipeline", "text_to_image", Generate, {}),
             ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
+            ("PixArtSigmaPAGPipeline", "text_to_image", Generate, {}),
             ("Kandinsky3Pipeline", "text_to_image", Generate, {}),
             ("Kandinsky3Img2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("OmniGenPipeline", "text_to_image", Generate, {}),
@@ -2095,6 +2402,95 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertEqual(loaded["kwargs"]["variant"], "fp16")
                 self.assertNotIn("trust_remote_code", loaded["kwargs"])
                 self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
+
+    def test_pag_text_to_image_loads_only_reviewed_pinned_safetensors(self):
+        loads = []
+
+        class PrecisionComponent:
+            def __init__(self):
+                self.to_calls = []
+
+            def to(self, dtype):
+                self.to_calls.append(dtype)
+                return self
+
+        class ReviewedPAGPipeline:
+            def __init__(self):
+                self.text_encoder = PrecisionComponent()
+                self.vae = PrecisionComponent()
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                pipeline = cls()
+                loads.append((repo, kwargs, pipeline))
+                return pipeline
+
+        cases = (
+            (
+                "HunyuanDiTPAGPipeline",
+                HUNYUAN_DIT_DISTILLED_REPO,
+                None,
+                (),
+            ),
+            (
+                "PixArtSigmaPAGPipeline",
+                PIXART_SIGMA_REPO,
+                None,
+                (),
+            ),
+            (
+                "SanaPAGPipeline",
+                SANA_REPO,
+                "fp16",
+                (("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+            ),
+        )
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=ReviewedPAGPipeline,
+            ) as resolve_pipeline,
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            for pipeline_name, repo, variant, component_dtypes in cases:
+                with self.subTest(pipeline=pipeline_name):
+                    node = LoadPipeline(f"{pipeline_name}-load-probe")
+                    node.progress = lambda *args, **kwargs: None
+                    node.mm_add = lambda *args, **kwargs: None
+                    result = node.execute(
+                        model_id=repo,
+                        pipeline_class=pipeline_name,
+                        mode="text_to_image",
+                        revision=catalog_revision(repo),
+                        dtype="float16",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+
+                    loaded_repo, load_kwargs, pipeline = loads[-1]
+                    self.assertEqual(loaded_repo, repo)
+                    self.assertEqual(load_kwargs["revision"], catalog_revision(repo))
+                    self.assertEqual(load_kwargs["torch_dtype"], "float16")
+                    self.assertTrue(load_kwargs["use_safetensors"])
+                    self.assertNotIn("trust_remote_code", load_kwargs)
+                    if variant is None:
+                        self.assertNotIn("variant", load_kwargs)
+                    else:
+                        self.assertEqual(load_kwargs["variant"], variant)
+                    for component_name, component_dtype in component_dtypes:
+                        self.assertEqual(getattr(pipeline, component_name).to_calls, [component_dtype])
+                    self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
+                    self.assertEqual(result["pipeline"]._modiff_image_repo, repo)
+                    self.assertEqual(
+                        result["pipeline"]._modiff_image_revision,
+                        catalog_revision(repo),
+                    )
+
+        self.assertEqual(
+            [call.args[0] for call in resolve_pipeline.call_args_list],
+            [pipeline_name for pipeline_name, _repo, _variant, _components in cases],
+        )
 
     def test_sana_loads_the_reviewed_mixed_precision_safetensors_variant(self):
         loaded = {}

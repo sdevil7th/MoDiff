@@ -712,6 +712,24 @@ CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
         ("inpaint",),
     ),
+    (
+        "HunyuanDiTPAGPipeline",
+        "image",
+        "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
+        ("text_to_image",),
+    ),
+    (
+        "PixArtSigmaPAGPipeline",
+        "image",
+        "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+        ("text_to_image",),
+    ),
+    (
+        "SanaPAGPipeline",
+        "image",
+        "Efficient-Large-Model/Sana_600M_1024px_diffusers",
+        ("text_to_image",),
+    ),
     ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
     (
         "FluxKontextInpaintPipeline",

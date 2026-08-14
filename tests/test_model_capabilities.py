@@ -24,7 +24,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 36)
+        self.assertEqual(len(payload["experimentalCapabilities"]), 39)
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
@@ -80,6 +80,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                     capability["revisionCandidates"],
                     ["451f4fe16113bff5a5d2269ed5ad43b0592e9a14"],
                 )
+        for pipeline_class, revision in (
+            ("HunyuanDiTPAGPipeline", "ba991d1546d8c50936c4c16398ed0a87b9b99fb1"),
+            ("PixArtSigmaPAGPipeline", "e102b3591cc82e97071b8b4cb90d834d0c487207"),
+            ("SanaPAGPipeline", "28f3af7689de15f3883d5863059a2fca0aa9b829"),
+        ):
+            with self.subTest(pag_text_to_image=pipeline_class):
+                capability = experimental[pipeline_class]
+                self.assertEqual(capability["runnableModes"], ["text_to_image"])
+                self.assertEqual(capability["inputContracts"], {})
+                self.assertEqual(capability["revisionCandidates"], [revision])
+                self.assertEqual(capability["qualificationStatus"], "contract_only")
+                self.assertFalse(capability["autoEligible"])
+                self.assertFalse(capability["templateEligible"])
+                self.assertFalse(capability["galleryEligible"])
         self.assertEqual(
             experimental["ZImageModularPipeline"]["backendPath"],
             "modules.ModularDiffusers.ModelsLoader",

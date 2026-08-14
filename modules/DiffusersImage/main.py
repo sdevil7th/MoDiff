@@ -417,6 +417,19 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_output_pixels=1024 * 1024,
         max_sequence_length=256,
     ),
+    "HunyuanDiTPAGPipeline": ImagePipelineAdapter(
+        "HunyuanDiTPAGPipeline",
+        frozenset({"text_to_image"}),
+        HUNYUAN_DIT_DISTILLED_REPO,
+        artifact_pipeline_classes=("HunyuanDiTPipeline",),
+        safe_serialization_required=True,
+        max_inference_steps=25,
+        min_output_side=1024,
+        max_output_side=1024,
+        output_side_step=32,
+        max_output_pixels=1024 * 1024,
+        max_sequence_length=256,
+    ),
     "HunyuanDiTControlNetPipeline": ImagePipelineAdapter(
         "HunyuanDiTControlNetPipeline",
         frozenset({"control_image"}),
@@ -483,6 +496,16 @@ IMAGE_PIPELINE_ADAPTERS = {
         component_dtype_overrides=(("text_encoder", "bfloat16"), ("vae", "bfloat16")),
         max_sequence_length=300,
     ),
+    "SanaPAGPipeline": ImagePipelineAdapter(
+        "SanaPAGPipeline",
+        frozenset({"text_to_image"}),
+        SANA_REPO,
+        artifact_pipeline_classes=("SanaPipeline",),
+        safe_serialization_required=True,
+        weight_variant="fp16",
+        component_dtype_overrides=(("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+        max_sequence_length=300,
+    ),
     "SanaSprintPipeline": ImagePipelineAdapter(
         "SanaSprintPipeline",
         frozenset({"text_to_image"}),
@@ -504,6 +527,15 @@ IMAGE_PIPELINE_ADAPTERS = {
         "PixArtSigmaPipeline",
         frozenset({"text_to_image"}),
         PIXART_SIGMA_REPO,
+        safe_serialization_required=True,
+        max_inference_steps=50,
+        max_sequence_length=300,
+    ),
+    "PixArtSigmaPAGPipeline": ImagePipelineAdapter(
+        "PixArtSigmaPAGPipeline",
+        frozenset({"text_to_image"}),
+        PIXART_SIGMA_REPO,
+        artifact_pipeline_classes=("PixArtSigmaPipeline",),
         safe_serialization_required=True,
         max_inference_steps=50,
         max_sequence_length=300,
@@ -1142,6 +1174,13 @@ IMAGE_MODE_FIELD_CONTRACTS = {
             "negative_prompt", "width", "height", "guidance_scale", "max_sequence_length"
         ),
     },
+    "HunyuanDiTPAGPipeline": {
+        # The reviewed PAG call fixes its two encoder lengths internally and
+        # does not accept max_sequence_length on the generation surface.
+        "text_to_image": _image_field_contract(
+            "negative_prompt", "width", "height", "guidance_scale", "pag_scale", "pag_adaptive_scale"
+        ),
+    },
     "HunyuanDiTControlNetPipeline": {
         "control_image": _image_field_contract(
             "negative_prompt", "width", "height", "guidance_scale", "conditioning_scale"
@@ -1177,6 +1216,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "SanaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
+    "SanaPAGPipeline": {
+        "text_to_image": _image_field_contract(
+            *_NEGATIVE_SIZE_GUIDANCE_SEQUENCE, "pag_scale", "pag_adaptive_scale"
+        ),
+    },
     "SanaSprintPipeline": {
         "text_to_image": _image_field_contract("width", "height", "guidance_scale", "max_sequence_length"),
     },
@@ -1185,6 +1229,11 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "PixArtSigmaPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
+    },
+    "PixArtSigmaPAGPipeline": {
+        "text_to_image": _image_field_contract(
+            *_NEGATIVE_SIZE_GUIDANCE_SEQUENCE, "pag_scale", "pag_adaptive_scale"
+        ),
     },
     "Kandinsky3Pipeline": {
         "text_to_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale"),
