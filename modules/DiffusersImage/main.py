@@ -798,6 +798,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         "LatentConsistencyModelPipeline",
         frozenset({"text_to_image"}),
         LCM_DREAMSHAPER_REPO,
+        safe_serialization_required=True,
     ),
     "StableDiffusionPAGPipeline": ImagePipelineAdapter(
         "StableDiffusionPAGPipeline",

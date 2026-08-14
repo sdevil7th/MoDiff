@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "SimianLuo/LCM_Dreamshaper_v7": (
+                "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
+                17,
+                "LCM_Dreamshaper_v7_4k.safetensors",
+            ),
             "google/ddpm-cifar10-32": (
                 "267b167dc01f0e4e61923ea244e8b988f84deb80",
                 6,

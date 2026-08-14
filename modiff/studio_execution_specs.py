@@ -204,6 +204,25 @@ JOYIMAGE_EDIT_PLUS_REPO = "jdopensource/JoyAI-Image-Edit-Plus-Diffusers"
 DREAMLITE_BASE_REPO = "carlofkl/DreamLite-base"
 DREAMLITE_MOBILE_REPO = "carlofkl/DreamLite-mobile"
 LCM_DREAMSHAPER_REPO = "SimianLuo/LCM_Dreamshaper_v7"
+LCM_DREAMSHAPER_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "model_index.json",
+    "safety_checker/config.json",
+    "safety_checker/model.safetensors",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 MARIGOLD_DEPTH_LCM_REPO = "prs-eth/marigold-depth-lcm-v1-0"
 MARIGOLD_DEPTH_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -7945,6 +7964,7 @@ _LCM_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": LCM_DREAMSHAPER_REPO,
+    "downloadFiles": LCM_DREAMSHAPER_DIFFUSERS_FILES,
     "artifactLabel": "Diffusers safetensors repo",
     "defaultDtype": "float32",
     "defaultSize": {"width": 512, "height": 512, "aspectRatio": "1:1"},
