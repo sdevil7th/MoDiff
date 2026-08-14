@@ -573,19 +573,24 @@ Uploads are written under configured data subdirectories and share the configure
   reserves that remaining size across the active queue, and preserves at least
   64 GiB free on the cache volume. An unknown plan fails with HTTP 503 and a
   plan that does not fit fails with HTTP 507; neither path deletes older models
-  or starts a snapshot download. The app runs at most two ordinary snapshot
-  transfers concurrently. A repair waits for both slots to drain and blocks
-  new transfers while it temporarily disables process-global Xet behavior;
-  ordinary downloads no longer serialize behind one another.
+  or starts a snapshot download. App-owned model and Gallery snapshot payloads
+  use the standard Hub HTTP path so request timeouts and retries remain bounded
+  while completed cache blobs stay intact. The app runs at most two of those
+  transfers in total. Ordinary downloads may share that window; a model repair
+  waits for active payload transfers to drain and blocks new ones while it
+  validates and may replace an invalid target partial. The process-global Hub
+  transport setting is restored to its exact prior value after each shared or
+  exclusive window drains.
 - `GET /template_gallery/status` verifies an existing local Gallery against the
   app's immutable Dataset identity. `GET /template_gallery/plan` obtains and
   validates the pinned manifest, returns exact download/staging reservations,
   includes active model-download reservations, and preserves the same 64 GiB
   safety margin. `POST /template_gallery/install` accepts only `{}`, repeats
-  that plan immediately before downloading, joins concurrent requests, hashes
-  every staged file, and atomically promotes the verified tree. It never
-  deletes model-cache entries. Restart the backend after active downloads
-  finish so a newly installed `/template-gallery/*` static tree is registered.
+  that plan immediately before downloading, joins concurrent requests, shares
+  the app's two-transfer limit, hashes every staged file, and atomically
+  promotes the verified tree. It never deletes model-cache entries. Restart the
+  backend after active downloads finish so a newly installed
+  `/template-gallery/*` static tree is registered.
 - `DELETE /hf_cache/{hash}` deletes selected cached model revisions.
 - `POST /custom_modules/install` accepts a Git URL or local directory, places it under `custom/`, and refreshes the live registry. Imported custom code has the backend process's permissions.
 - Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but repository Python and standalone component loading with remote code are rejected before upstream construction. Custom Modular pipeline and Dynamic Block execution is limited to an exact cached 40-character Hub commit whose canonical `modular_model_index.json` resolves to MoDiff-reviewed installed Diffusers pipeline/block exports and pinned official Diffusers or Transformers components. MoDiff revalidates the repository identity immediately before copying the reviewed metadata into a private content-addressed snapshot. Local mutable repositories remain preview-only, and neither a preview nor a persisted checksum grants repository-code authorization.

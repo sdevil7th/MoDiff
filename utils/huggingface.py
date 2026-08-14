@@ -83,19 +83,23 @@ HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES = 64 * 1024**3
 
 
 class _HFDownloadModeGate:
-    """Share normal downloads while keeping process-global Xet repair mode exclusive."""
+    """Share bounded HTTP downloads while keeping cache repair exclusive."""
 
     def __init__(self):
         self._condition = threading.Condition()
         self._normal_downloads = 0
+        self._normal_previous_disable_xet = None
         self._repair_active = False
         self._repair_waiters = 0
 
     @contextmanager
-    def normal(self):
+    def normal(self, hf_constants):
         with self._condition:
             while self._repair_active or self._repair_waiters:
                 self._condition.wait()
+            if self._normal_downloads == 0:
+                self._normal_previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
+                hf_constants.HF_HUB_DISABLE_XET = True
             self._normal_downloads += 1
         try:
             yield
@@ -103,27 +107,55 @@ class _HFDownloadModeGate:
             with self._condition:
                 self._normal_downloads -= 1
                 if self._normal_downloads == 0:
+                    hf_constants.HF_HUB_DISABLE_XET = self._normal_previous_disable_xet
+                    self._normal_previous_disable_xet = None
                     self._condition.notify_all()
 
     @contextmanager
-    def repair(self):
+    def repair(self, hf_constants):
         with self._condition:
             self._repair_waiters += 1
             try:
                 while self._repair_active or self._normal_downloads:
                     self._condition.wait()
                 self._repair_active = True
+                previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
+                hf_constants.HF_HUB_DISABLE_XET = True
             finally:
                 self._repair_waiters -= 1
         try:
             yield
         finally:
             with self._condition:
+                hf_constants.HF_HUB_DISABLE_XET = previous_disable_xet
                 self._repair_active = False
                 self._condition.notify_all()
 
 
 _HF_DOWNLOAD_MODE_GATE = _HFDownloadModeGate()
+
+
+@contextmanager
+def app_hub_download_mode(*, repair: bool = False):
+    """Use bounded standard HTTP for app-owned Hub snapshots.
+
+    Native Xet reconstruction has no app-visible overall stall boundary. The
+    standard Hub HTTP path retains per-request timeouts and retries while
+    preserving completed cache blobs. Its process-global selection is restored
+    exactly after the shared transfer window drains. Repair remains exclusive
+    because it validates and may replace target partial files before resuming
+    the snapshot.
+    """
+
+    from huggingface_hub import constants as hf_constants
+
+    mode = (
+        _HF_DOWNLOAD_MODE_GATE.repair(hf_constants)
+        if repair
+        else _HF_DOWNLOAD_MODE_GATE.normal(hf_constants)
+    )
+    with mode:
+        yield
 
 
 def _path_looks_like_hf_cache_root(path_obj: Path):
@@ -1550,7 +1582,7 @@ def download_hub_model(
     allow_patterns: list[str] | tuple[str, ...] | None = None,
     revision: str | None = None,
 ):
-    from huggingface_hub import constants as hf_constants, snapshot_download
+    from huggingface_hub import snapshot_download
 
     cache_dir = CONFIG.hf['cache_dir']
     token = CONFIG.hf['token']
@@ -1642,63 +1674,50 @@ def download_hub_model(
 
     try:
         emit('planning', 0.0)
-        if repair:
-            _prepare_snapshot_repair(model_id, cache_dir, plan)
-        emit('downloading', 0.0)
-        if progress_cb:
-            monitor_thread = threading.Thread(target=monitor_download, daemon=True)
-            monitor_thread.start()
-        # huggingface_hub exposes Xet disabling only as process-global state.
-        # Ordinary downloads may share the app's bounded transfer slots, but a
-        # repair must wait for all of them and block new ones while it changes
-        # that global mode.
-        download_mode = _HF_DOWNLOAD_MODE_GATE.repair() if repair else _HF_DOWNLOAD_MODE_GATE.normal()
-        with download_mode:
-            previous_disable_xet = None
+        # All app-owned model transfers use the bounded standard Hub HTTP path.
+        # Normal downloads share the server's transfer window, while repair is
+        # exclusive because it validates and may replace partial target files.
+        with app_hub_download_mode(repair=repair):
             if repair:
-                previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
-                # A repair must not repeat a wedged Xet reconstruction session.
-                # Standard Hub HTTP resumes immutable blobs with bounded request
-                # retries and leaves every already-valid cache blob untouched.
-                hf_constants.HF_HUB_DISABLE_XET = True
-            try:
-                attempts = 3 if repair else 1
-                for attempt in range(attempts):
-                    try:
-                        download_kwargs = {
-                            'repo_id': model_id,
-                            'cache_dir': cache_dir,
-                            'token': token,
-                            'force_download': False,
-                            'revision': revision,
-                        }
-                        if requested_files:
-                            download_kwargs['allow_patterns'] = requested_files
-                        downloaded_snapshot = snapshot_download(
-                            **download_kwargs,
-                        )
-                        if isinstance(downloaded_snapshot, (str, os.PathLike)):
-                            # Carry the authoritative path returned by the Hub into
-                            # every post-download validation step. This also covers
-                            # branch/tag revisions whose local snapshot directory is
-                            # named after the resolved commit rather than the ref.
-                            plan['snapshot_path'] = str(downloaded_snapshot)
-                        break
-                    except Exception as error:
-                        if attempt + 1 >= attempts or not _retryable_download_error(error):
-                            if repair and repair_source_repo_id:
-                                emit('repairing_from_verified_source', None, str(error))
-                                repaired = _repair_from_verified_source(
-                                    model_id, repair_source_repo_id, cache_dir, plan
-                                )
-                                if repaired:
-                                    break
-                            raise
-                        emit('retrying', None, str(error))
-                        time.sleep(2 ** attempt)
-            finally:
-                if repair:
-                    hf_constants.HF_HUB_DISABLE_XET = previous_disable_xet
+                _prepare_snapshot_repair(model_id, cache_dir, plan)
+            emit('downloading', 0.0)
+            if progress_cb:
+                monitor_thread = threading.Thread(target=monitor_download, daemon=True)
+                monitor_thread.start()
+            attempts = 3 if repair else 1
+            for attempt in range(attempts):
+                try:
+                    download_kwargs = {
+                        'repo_id': model_id,
+                        'cache_dir': cache_dir,
+                        'token': token,
+                        'force_download': False,
+                        'revision': revision,
+                    }
+                    if requested_files:
+                        download_kwargs['allow_patterns'] = requested_files
+                    downloaded_snapshot = snapshot_download(
+                        **download_kwargs,
+                    )
+                    if isinstance(downloaded_snapshot, (str, os.PathLike)):
+                        # Carry the authoritative path returned by the Hub into
+                        # every post-download validation step. This also covers
+                        # branch/tag revisions whose local snapshot directory is
+                        # named after the resolved commit rather than the ref.
+                        plan['snapshot_path'] = str(downloaded_snapshot)
+                    break
+                except Exception as error:
+                    if attempt + 1 >= attempts or not _retryable_download_error(error):
+                        if repair and repair_source_repo_id:
+                            emit('repairing_from_verified_source', None, str(error))
+                            repaired = _repair_from_verified_source(
+                                model_id, repair_source_repo_id, cache_dir, plan
+                            )
+                            if repaired:
+                                break
+                        raise
+                    emit('retrying', None, str(error))
+                    time.sleep(2 ** attempt)
         _cleanup_redundant_incomplete_files(model_id, cache_dir)
         stop_event.set()
         if monitor_thread:

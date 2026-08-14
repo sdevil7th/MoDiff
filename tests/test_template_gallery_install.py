@@ -152,19 +152,30 @@ class TemplateGalleryInstallTests(unittest.TestCase):
         self.assertFalse(cache.exists(), "A read-only install plan must not create the cache directory.")
 
     def test_install_stages_and_verifies_before_atomic_promotion(self):
+        from huggingface_hub import constants as hf_constants
+
         snapshot = self._write_snapshot()
         gallery = self.root / "web/template-gallery"
         receipt = self.root / "data/template-gallery-install.v1.json"
-        result = install_template_gallery(
-            self.source,
-            self.manifest,
-            gallery,
-            cache_root=self.root / "cache",
-            receipt_path=receipt,
-            download_snapshot=lambda **_kwargs: str(snapshot),
-        )
+        xet_modes = []
+
+        def download_snapshot(**_kwargs):
+            xet_modes.append(hf_constants.HF_HUB_DISABLE_XET)
+            return str(snapshot)
+
+        with patch.object(hf_constants, "HF_HUB_DISABLE_XET", False):
+            result = install_template_gallery(
+                self.source,
+                self.manifest,
+                gallery,
+                cache_root=self.root / "cache",
+                receipt_path=receipt,
+                download_snapshot=download_snapshot,
+            )
+            self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
 
         self.assertTrue(result["complete"])
+        self.assertEqual(xet_modes, [True])
         self.assertTrue(result["restartRequired"])
         self.assertEqual(result["assetCount"], 2)
         self.assertEqual(json.loads(receipt.read_text())["assetSetId"], self.source["assetSetId"])

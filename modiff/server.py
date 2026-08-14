@@ -13078,15 +13078,16 @@ class WebServer:
                 if plan["installed"]:
                     return {"complete": True, "alreadyInstalled": True, "plan": plan}
                 self.template_gallery_reserved_bytes = int(plan["reservationBytes"])
-            result = await asyncio.to_thread(
-                partial(
-                    install_template_gallery,
-                    source,
-                    manifest,
-                    TEMPLATE_GALLERY_ROOT,
-                    receipt_path=Path(self.data_dir) / "template-gallery-install.v1.json",
+            async with self.hf_download_semaphore:
+                result = await asyncio.to_thread(
+                    partial(
+                        install_template_gallery,
+                        source,
+                        manifest,
+                        TEMPLATE_GALLERY_ROOT,
+                        receipt_path=Path(self.data_dir) / "template-gallery-install.v1.json",
+                    )
                 )
-            )
             return {"complete": True, "alreadyInstalled": False, "plan": plan, "result": result}
         except TemplateGalleryError as error:
             return {

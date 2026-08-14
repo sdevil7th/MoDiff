@@ -16,7 +16,7 @@ from huggingface_hub.constants import HUGGINGFACE_HUB_CACHE
 from huggingface_hub.utils import validate_repo_id
 
 from modiff.config import CONFIG
-from utils.huggingface import HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES
+from utils.huggingface import HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES, app_hub_download_mode
 
 
 TEMPLATE_GALLERY_SOURCE_PATH = Path("web/assets/template-asset-source.v1.json")
@@ -405,16 +405,17 @@ def install_template_gallery(
 ) -> dict[str, Any]:
     cache = Path(cache_root or configured_template_gallery_cache_root())
     try:
-        snapshot = Path(
-            download_snapshot(
-                repo_id=source["repoId"],
-                repo_type="dataset",
-                revision=source["revision"],
-                token=False,
-                cache_dir=str(cache),
-                allow_patterns=[record["path"] for record in manifest["assets"]],
+        with app_hub_download_mode():
+            snapshot = Path(
+                download_snapshot(
+                    repo_id=source["repoId"],
+                    repo_type="dataset",
+                    revision=source["revision"],
+                    token=False,
+                    cache_dir=str(cache),
+                    allow_patterns=[record["path"] for record in manifest["assets"]],
+                )
             )
-        )
     except Exception as error:
         raise TemplateGalleryError(
             "template_gallery_download_unavailable",

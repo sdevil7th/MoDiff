@@ -97,6 +97,40 @@ class TemplateGalleryServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(first_response.text)["result"]["assetCount"], 2)
         self.assertIsNone(self.server.template_gallery_install_task)
 
+    async def test_gallery_transfer_uses_the_shared_app_download_semaphore(self):
+        plan = {
+            "sizeKnown": True,
+            "fitsWithQueue": True,
+            "installed": False,
+            "reservationBytes": 500,
+        }
+        self.server.hf_download_semaphore = asyncio.Semaphore(1)
+        await self.server.hf_download_semaphore.acquire()
+        with (
+            patch(
+                "modiff.server.plan_template_gallery_install",
+                return_value=({"repoId": "unit/gallery"}, {"assets": []}, plan),
+            ) as build_plan,
+            patch(
+                "modiff.server.install_template_gallery",
+                return_value={"complete": True, "assetCount": 0},
+            ) as install,
+        ):
+            task = asyncio.create_task(self.server._run_template_gallery_install())
+            try:
+                for _attempt in range(20):
+                    if build_plan.called:
+                        break
+                    await asyncio.sleep(0.01)
+                self.assertTrue(build_plan.called)
+                self.assertFalse(install.called)
+            finally:
+                self.server.hf_download_semaphore.release()
+            result = await task
+
+        self.assertTrue(result["complete"])
+        install.assert_called_once()
+
     async def test_install_request_rejects_unrecognized_mutation_options(self):
         self.server._run_template_gallery_install = AsyncMock()
         response = await self.server.template_gallery_install(JsonRequest({"replace": True}))

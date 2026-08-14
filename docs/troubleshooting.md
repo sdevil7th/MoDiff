@@ -134,7 +134,14 @@ For supported Intel graphics on x86-64 Linux or Windows, install or repair the p
 - Set `[huggingface] cache_dir`, `HF_HOME`, or `HF_HUB_CACHE` to a writable volume with sufficient free space. A configured `cache_dir` is exported as `HF_HUB_CACHE` by the backend.
 - Avoid pointing multiple applications at partially compatible cache layouts unless you understand how snapshots and revisions are resolved.
 
-Download progress is derived partly from cache materialization and may remain indeterminate or jump during Xet-backed transfers. Completion requires the backend's validation result, not merely network inactivity or a `100%` UI estimate.
+Current app-owned model and Gallery snapshot payloads use standard Hub HTTP,
+which retains bounded per-request timeouts and retries while preserving already
+completed cache blobs. Progress is still derived partly from cache
+materialization and may remain indeterminate or jump. Completion requires the
+backend's validation result, not merely network inactivity or a `100%` UI
+estimate. A worker already running during an app update keeps its original
+download behavior until it is restarted; do not interrupt an active transfer
+solely to switch transports.
 
 ## A workflow runs out of memory
 
