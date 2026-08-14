@@ -386,6 +386,16 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "jdopensource/JoyAI-Image-Edit-Diffusers": (
+                "4b41fb25d961f37668750178ccbb380da326201c",
+                38,
+                "test_images/output1_predicted.png",
+            ),
+            "jdopensource/JoyAI-Image-Edit-Plus-Diffusers": (
+                "c2686460c7b64d8aa11bc4d0da423fb316b33f9e",
+                29,
+                "inference.py",
+            ),
             "Wan-AI/Wan2.1-T2V-1.3B-Diffusers": (
                 "0fad780a534b6463e45facd96134c9f345acfa5b",
                 21,
