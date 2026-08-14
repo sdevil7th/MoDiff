@@ -6,6 +6,7 @@ from modiff.studio_execution_specs import (
     ALLEGRO_DIFFUSERS_FILES,
     COGVIDEOX_2B_DIFFUSERS_FILES,
     LATTE_DIFFUSERS_FILES,
+    LTX_VIDEO_DIFFUSERS_FILES,
     MOCHI_DIFFUSERS_FILES,
     SANA_VIDEO_DIFFUSERS_FILES,
     STABLE_VIDEO_DIFFUSION_FP16_FILES,
@@ -31,6 +32,13 @@ class VideoDownloadSelectionTests(unittest.TestCase):
         self.assertFalse(
             any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
         )
+
+    def test_long_ltx_route_reuses_the_bounded_ltx_selection(self):
+        capability = studio_capability_definitions()[
+            "LTXI2VLongMultiPromptPipeline"
+        ]
+
+        self.assertEqual(capability["downloadFiles"], LTX_VIDEO_DIFFUSERS_FILES)
 
     def test_stable_video_selection_matches_loader_variant_and_excludes_duplicates(self):
         selected = set(STABLE_VIDEO_DIFFUSION_FP16_FILES)

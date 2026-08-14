@@ -484,6 +484,7 @@ from modiff.studio_execution_specs import (
     ACE_STEP_DIFFUSERS_FILES,
     FLUX_FILL_DIFFUSERS_FILES,
     FLUX_KONTEXT_DIFFUSERS_FILES,
+    LTX_VIDEO_DIFFUSERS_FILES,
     QWEN_IMAGE_2512_DIFFUSERS_FILES,
     QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES,
     QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
@@ -583,36 +584,6 @@ RUNTIME_DEVICE_MAPS = {
     "cpu",
     "manual",
 }
-
-# The official 0.9.8 13B repository duplicates pipeline components under a
-# nested VAE tree and includes large preview media. A full snapshot is about
-# 93 GB; the root Diffusers pipeline needs only these component files. This
-# allow-list is published as capability metadata and automatically applied by
-# every app Model Manager entry point.
-LTX_VIDEO_DIFFUSERS_FILES = [
-    "model_index.json",
-    "scheduler/scheduler_config.json",
-    "text_encoder/config.json",
-    "text_encoder/model-00001-of-00004.safetensors",
-    "text_encoder/model-00002-of-00004.safetensors",
-    "text_encoder/model-00003-of-00004.safetensors",
-    "text_encoder/model-00004-of-00004.safetensors",
-    "text_encoder/model.safetensors.index.json",
-    "tokenizer/added_tokens.json",
-    "tokenizer/special_tokens_map.json",
-    "tokenizer/spiece.model",
-    "tokenizer/tokenizer_config.json",
-    "transformer/config.json",
-    "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model.safetensors.index.json",
-    "vae/config.json",
-    "vae/diffusion_pytorch_model.safetensors",
-]
 
 DIRECT_OFFLOAD_SUPPORT = {
     "default": OFFLOAD_MODE_MODEL_CPU,

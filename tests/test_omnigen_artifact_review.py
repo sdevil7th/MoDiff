@@ -8,7 +8,7 @@ from PIL import Image
 
 from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES, TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
-from modiff.studio_execution_specs import studio_capability_definitions
+from modiff.studio_execution_specs import OMNIGEN_DIFFUSERS_FILES, studio_capability_definitions
 from modules.DiffusersImage.main import (
     IMAGE_PIPELINE_ADAPTERS,
     prepare_reference_images,
@@ -62,6 +62,18 @@ class OmniGenArtifactReviewTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), repository["weightInventorySha256"])
         self.assertTrue(all(item["path"].endswith(".safetensors") for item in files))
         self.assertTrue(all(SHA256.fullmatch(item["sha256"]) for item in files))
+
+    def test_download_selection_seals_the_component_only_snapshot(self):
+        selected = set(OMNIGEN_DIFFUSERS_FILES)
+        capability = studio_capability_definitions()["OmniGenPipeline"]
+
+        self.assertEqual(capability["downloadFiles"], OMNIGEN_DIFFUSERS_FILES)
+        self.assertEqual(len(selected), 11)
+        self.assertIn("transformer/diffusion_pytorch_model.safetensors", selected)
+        self.assertIn("vae/diffusion_pytorch_model.safetensors", selected)
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
 
     def test_backend_owns_multimodal_placeholders_and_generation_bounds(self):
         adapter = IMAGE_PIPELINE_ADAPTERS["OmniGenPipeline"]

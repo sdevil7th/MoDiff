@@ -566,6 +566,16 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 20,
                 "pytorch_model.bin",
             ),
+            "Alpha-VLLM/Lumina-Next-SFT-diffusers": (
+                "0ee5ec90043acf5cb41fe96274af36eb7fad8d95",
+                16,
+                "consolidated.00-of-01.pth",
+            ),
+            "Shitao/OmniGen-v1-diffusers": (
+                "016e2f61d12a98303f6bbdf122687694d7984268",
+                11,
+                "pytorch_model.bin",
+            ),
             "SimianLuo/LCM_Dreamshaper_v7": (
                 "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
                 17,

@@ -361,8 +361,39 @@ KANDINSKY3_FP16_DIFFUSERS_FILES = [
 LONGCAT_IMAGE_REPO = "meituan-longcat/LongCat-Image"
 LONGCAT_IMAGE_EDIT_REPO = "meituan-longcat/LongCat-Image-Edit"
 LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
+LUMINA_NEXT_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 LUMINA2_REPO = "Alpha-VLLM/Lumina-Image-2.0"
 OMNIGEN_REPO = "Shitao/OmniGen-v1-diffusers"
+OMNIGEN_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 OVIS_IMAGE_REPO = "ATH-MaaS/Ovis-Image-7B"
 PRX_REPO = "Photoroom/prx-512-t2i-sft"
 PRX_DIFFUSERS_FILES = [
@@ -890,6 +921,30 @@ WAN_VACE_1_3B_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 LTX_VIDEO_REPO = "Lightricks/LTX-Video-0.9.8-13B-distilled"
+LTX_VIDEO_DIFFUSERS_FILES = [
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00004.safetensors",
+    "text_encoder/model-00002-of-00004.safetensors",
+    "text_encoder/model-00003-of-00004.safetensors",
+    "text_encoder/model-00004-of-00004.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 ACE_STEP_DIFFUSERS_FILES = [
@@ -5218,6 +5273,8 @@ def _planning_video_capability(
     repo: str,
     modes: tuple[str, ...],
     input_contracts: dict[str, dict[str, list[str]]] | None = None,
+    *,
+    download_files: list[str] | None = None,
 ) -> dict[str, Any]:
     return {
         "modelType": model_type,
@@ -5228,6 +5285,7 @@ def _planning_video_capability(
         "qualificationStatus": "graph-qualified-execution-pending",
         "qualifiedModes": [],
         "defaultRepo": repo,
+        **({"downloadFiles": download_files} if download_files else {}),
         "artifactLabel": "Diffusers video repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 768, "height": 512, "aspectRatio": "custom"},
@@ -5818,6 +5876,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _planning_video_capability(
                 "LTXI2VLongMultiPromptPipeline", "LTX long-prompt I2V", "LTX Video", LTX_VIDEO_REPO,
                 ("image_to_video",), {"image_to_video": {"requiredImages": ["referenceImages"]}},
+                download_files=LTX_VIDEO_DIFFUSERS_FILES,
             ),
             "roles": _I2V_GRAPH_ROLES,
             "edges": _I2V_GRAPH_EDGES,
@@ -7493,6 +7552,7 @@ _LUMINA_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": LUMINA_REPO,
+    "downloadFiles": LUMINA_NEXT_DIFFUSERS_FILES,
     "artifactLabel": "Apache-2.0-declared bfloat16 Diffusers safetensors repo",
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -7613,6 +7673,7 @@ _OMNIGEN_CAPABILITY = {
     "qualificationStatus": "graph-qualified-execution-pending",
     "qualifiedModes": [],
     "defaultRepo": OMNIGEN_REPO,
+    "downloadFiles": OMNIGEN_DIFFUSERS_FILES,
     "artifactLabel": "MIT bfloat16 Diffusers safetensors repo",
     "defaultDtype": "bfloat16",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},

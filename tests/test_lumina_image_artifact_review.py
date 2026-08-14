@@ -9,7 +9,11 @@ from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
 )
-from modiff.studio_execution_specs import LUMINA2_DIFFUSERS_FILES, studio_capability_definitions
+from modiff.studio_execution_specs import (
+    LUMINA_NEXT_DIFFUSERS_FILES,
+    LUMINA2_DIFFUSERS_FILES,
+    studio_capability_definitions,
+)
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
 
 
@@ -74,6 +78,22 @@ class LuminaImageArtifactReviewTests(unittest.TestCase):
         self.assertTrue(all(not path.endswith(".pth") for path in LUMINA2_DIFFUSERS_FILES))
         capabilities = {item["modelType"]: item for item in studio_capability_definitions().values()}
         self.assertEqual(capabilities["Lumina2Pipeline"]["downloadFiles"], LUMINA2_DIFFUSERS_FILES)
+
+    def test_lumina_next_download_selection_seals_the_safe_snapshot(self):
+        capabilities = studio_capability_definitions()
+        selected = set(LUMINA_NEXT_DIFFUSERS_FILES)
+
+        self.assertEqual(len(selected), 16)
+        self.assertEqual(
+            capabilities["LuminaPipeline"]["downloadFiles"],
+            LUMINA_NEXT_DIFFUSERS_FILES,
+        )
+        self.assertIn("text_encoder/model.safetensors.index.json", selected)
+        self.assertIn("transformer/diffusion_pytorch_model.safetensors", selected)
+        self.assertIn("vae/diffusion_pytorch_model.safetensors", selected)
+        self.assertFalse(
+            any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected)
+        )
 
     def test_backend_owned_generation_bounds_and_fixed_recipe_are_exact(self):
         lumina = IMAGE_PIPELINE_ADAPTERS["LuminaPipeline"]
