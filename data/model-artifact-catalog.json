@@ -513,6 +513,13 @@
       "artifacts": []
     },
     {
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "baseRepo": "deepseek-community/Janus-Pro-1B",
+      "baseRevision": "1655280bb75959cc1cb85529a2a8b26e7016072e",
+      "baseLicense": "deepseek-model-license-v1.0",
+      "artifacts": []
+    },
+    {
       "modelType": "HuggingFaceSpeechRecognitionModel",
       "baseRepo": "openai/whisper-tiny",
       "baseRevision": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
