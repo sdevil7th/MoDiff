@@ -817,6 +817,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"text_to_image"}),
         FLUX_SCHNELL_REPO,
         compatible_repos=frozenset({FLUX_DEV_REPO, FLUX_DEV_FP8_REPO, FLUX_KREA_REPO}),
+        safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
     ),
     "Flux2KleinPipeline": ImagePipelineAdapter(
@@ -839,6 +840,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_DEV_REPO,
         compatible_repos=frozenset({FLUX_DEV_FP8_REPO}),
         artifact_pipeline_classes=("FluxPipeline", "FluxImg2ImgPipeline"),
+        safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
     ),
     "FluxInpaintPipeline": ImagePipelineAdapter(
@@ -847,6 +849,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_DEV_REPO,
         compatible_repos=frozenset({FLUX_DEV_FP8_REPO}),
         artifact_pipeline_classes=("FluxPipeline", "FluxInpaintPipeline"),
+        safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
     ),
     "FluxFillPipeline": ImagePipelineAdapter("FluxFillPipeline", frozenset({"inpaint", "outpaint"}), FLUX_FILL_REPO),
