@@ -343,18 +343,25 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({QWEN_IMAGE_2512_PREQUANTIZED_REPO}),
         guidance_parameter="true_cfg_scale",
     ),
-    "ZImagePipeline": ImagePipelineAdapter("ZImagePipeline", frozenset({"text_to_image"}), Z_IMAGE_REPO),
+    "ZImagePipeline": ImagePipelineAdapter(
+        "ZImagePipeline",
+        frozenset({"text_to_image"}),
+        Z_IMAGE_REPO,
+        safe_serialization_required=True,
+    ),
     "ZImageImg2ImgPipeline": ImagePipelineAdapter(
         "ZImageImg2ImgPipeline",
         frozenset({"edit_image"}),
         Z_IMAGE_REPO,
         artifact_pipeline_classes=("ZImagePipeline", "ZImageImg2ImgPipeline"),
+        safe_serialization_required=True,
     ),
     "ZImageInpaintPipeline": ImagePipelineAdapter(
         "ZImageInpaintPipeline",
         frozenset({"inpaint", "outpaint"}),
         Z_IMAGE_REPO,
         artifact_pipeline_classes=("ZImagePipeline", "ZImageInpaintPipeline"),
+        safe_serialization_required=True,
     ),
     "StableDiffusionXLPipeline": ImagePipelineAdapter(
         "StableDiffusionXLPipeline",

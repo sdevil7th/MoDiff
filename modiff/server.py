@@ -483,6 +483,7 @@ from modiff.optional_runtime_execution import (
 from modiff.studio_execution_specs import (
     FLUX_FILL_DIFFUSERS_FILES,
     FLUX_KONTEXT_DIFFUSERS_FILES,
+    Z_IMAGE_DIFFUSERS_FILES,
     assert_studio_execution_graph,
     studio_capability_definitions,
     studio_execution_spec_for_pair,
@@ -679,6 +680,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Z-Image-Turbo",
         "family": "Z-Image",
         "defaultRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "downloadFiles": Z_IMAGE_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},

@@ -592,6 +592,29 @@ SANA_VIDEO_REPO = "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
 QWEN_CONTROLNET_REPO = "InstantX/Qwen-Image-ControlNet-Union"
 QWEN_IMAGE_2512_REPO = "Qwen/Qwen-Image-2512"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
+Z_IMAGE_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/generation_config.json",
+    "text_encoder/model-00001-of-00003.safetensors",
+    "text_encoder/model-00002-of-00003.safetensors",
+    "text_encoder/model-00003-of-00003.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/merges.txt",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 DDPM_CIFAR10_REPO = "google/ddpm-cifar10-32"
 DDPM_CIFAR10_DIFFUSERS_FILES = [
     ".gitattributes",

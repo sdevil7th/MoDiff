@@ -386,6 +386,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
         cases = {
+            "Tongyi-MAI/Z-Image-Turbo": (
+                "f332072aa78be7aecdf3ee76d5c247082da564a6",
+                21,
+                "assets/Z-Image-Gallery.pdf",
+            ),
             "stable-diffusion-v1-5/stable-diffusion-v1-5": (
                 "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
                 21,
