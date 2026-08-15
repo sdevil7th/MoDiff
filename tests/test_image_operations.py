@@ -308,6 +308,9 @@ class ImageOperationTests(unittest.TestCase):
             ),
         }
         self.assertEqual(set(results), set(ProcessImage.params["operation"]["options"]))
+        for mode, result in results.items():
+            with self.subTest(output_contract=mode):
+                self.assertEqual(set(result), {"output"})
         self.assertEqual(results["image_crop"]["output"].size, (4, 3))
         self.assertEqual(results["image_upscale"]["output"].size, (4, 3))
         self.assertEqual(results["image_stitch"]["output"].size, (16, 12))

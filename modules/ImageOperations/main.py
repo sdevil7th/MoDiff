@@ -787,13 +787,14 @@ class ProcessImage(NodeBase):
                 resampling=kwargs.get("resize_resampling", "lanczos"),
             )
         if operation == "image_stitch":
-            return StitchImages().execute(
+            result = StitchImages().execute(
                 image=image,
                 columns=kwargs.get("stitch_columns", 2),
                 spacing=kwargs.get("stitch_spacing", 0),
                 background=kwargs.get("stitch_background", "white"),
                 match_size=kwargs.get("stitch_match_size", True),
             )
+            return {"output": result["output"]}
         if operation == "image_tile":
             result = TileImage().execute(
                 image=image,
