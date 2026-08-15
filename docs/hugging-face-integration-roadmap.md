@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Forty-five of those 138 candidates now also have exact pinned graph-source
+Fifty of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -6996,6 +6996,10 @@ Klein 4B generation. The SDXL refiner concept retains the admitted base but
 requires a new refiner stage/artifact, while the graph named “revision prompts”
 is source-proven unCLIP image conditioning and therefore needs a new bounded
 `reference_to_image` task plus CLIP-Vision input.
+Five remaining LTX reviews separate a 2.3 reference-LoRA assembly, identify the
+2.3 IA2V graph as a new `image_audio_to_video` task, and retain three LTX-2
+camera/squish/distillation concepts as same-generation candidates gated on
+their LoRAs and latent upscalers.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7110,7 +7114,8 @@ adds the six Wan source decisions and three new camera-task requirements.
 `9230b11` adds five Qwen generation/control decisions and two source-proven
 workflow-family corrections. `dd5591e` adds six exact image-generation and
 depth-task decisions. `ac7c320` adds the remaining FLUX.2 family decisions and
-the two SDXL refiner/unCLIP task distinctions.
+the two SDXL refiner/unCLIP task distinctions. `0a48984` adds the five remaining
+LTX family and image-audio conditioning decisions.
 
 The following separate gates do remain external:
 
