@@ -844,6 +844,134 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
+    "comfy-research:template:template_ltx2_3_ic_lora_ingredients": {
+        "assetPath": "templates/template_ltx2_3_ic_lora_ingredients.json",
+        "assetSha256": "7d4dec964ab81ba4e0dd171b91842044ff486a0ca832d0a6bec0153a5c76fa74",
+        "gitBlobOid": "3d7c046be2bc55ba54e53087c3289a711f70fc6f",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2.3-fp8", "artifact": "ltx-2.3-22b-distilled-fp8.safetensors"},
+            {
+                "repository": "Comfy-Org/ltx-2.3",
+                "artifact": "ltx-2.3-22b-ic-lora-ingredients-0.9.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/ltx-2",
+                "artifact": "gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_3_reference_lora_assembly_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_ltx2_3_ia2v": {
+        "assetPath": "templates/video_ltx2_3_ia2v.json",
+        "assetSha256": "7823a703f472d9c5e6f82c462235ff89a0fa14752ec1fd947c4422cf53e47685",
+        "gitBlobOid": "ed24f8c177844139466ee55d63e9aba4dae7749d",
+        "reviewedTaskMode": "image_audio_to_video",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2.3-fp8", "artifact": "ltx-2.3-22b-dev-fp8.safetensors"},
+            {
+                "repository": "Comfy-Org/ltx-2.3",
+                "artifact": "ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2.3",
+                "artifact": "ltx-2.3-spatial-upscaler-x2-1.1.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/ltx-2",
+                "artifact": "gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "ltx_2_3_image_audio_conditioning_requires_new_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_audio_video_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_ltx2_i2v_distilled": {
+        "assetPath": "templates/video_ltx2_i2v_distilled.json",
+        "assetSha256": "054a4f1029f04fbe391eb6a66eb1c65baa29daf2bbf5930c7031b4ee0f642781",
+        "gitBlobOid": "d7635abc038557428bd4e9c8ed4b0c5fa22d6047",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2", "artifact": "ltx-2-19b-distilled.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2-19b-LoRA-Camera-Control-Dolly-Left",
+                "artifact": "ltx-2-19b-lora-camera-control-dolly-left.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2",
+                "artifact": "ltx-2-spatial-upscaler-x2-1.0.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_requires_auxiliary_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_camera_lora_and_latent_upscaler_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:video_ltx2_i2v_lora": {
+        "assetPath": "templates/video_ltx2_i2v_lora.json",
+        "assetSha256": "f53787bcd98d09f74a66ed42248e384986095d855d82509da59bf5e390453f69",
+        "gitBlobOid": "0339c0e5959cf699c573f05481738d4bde95474f",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2", "artifact": "ltx-2-19b-dev.safetensors"},
+            {"repository": "Lightricks/LTX-2", "artifact": "ltx-2-19b-distilled-lora-384.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2",
+                "artifact": "ltx-2-spatial-upscaler-x2-1.0.safetensors",
+            },
+            {"repository": "Comfy-Org/ltx-2", "artifact": "ltx2-squish.safetensors"},
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_requires_auxiliary_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_distilled_squish_loras_and_latent_upscaler_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:video_ltx2_t2v_distilled": {
+        "assetPath": "templates/video_ltx2_t2v_distilled.json",
+        "assetSha256": "90d55eab58cb969f19f45d874304fc0d1b51cd79875bbdc21d5a6b1372114c7f",
+        "gitBlobOid": "890dd2b04308f2db59be5b2e24946e14387273eb",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2", "artifact": "ltx-2-19b-distilled.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2-19b-LoRA-Camera-Control-Dolly-Left",
+                "artifact": "ltx-2-19b-lora-camera-control-dolly-left.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2",
+                "artifact": "ltx-2-spatial-upscaler-x2-1.0.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_requires_auxiliary_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:text_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_camera_lora_and_latent_upscaler_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+    },
     "comfy-research:template:image_to_video_wan": {
         "assetPath": "templates/image_to_video_wan.json",
         "assetSha256": "12930b58377d52e9581ad25b1c24bff93fddb693bd9066b9fdd93cafda59182f",

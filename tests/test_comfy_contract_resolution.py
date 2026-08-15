@@ -55,26 +55,26 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 23,
-                "existing_task_boundary_model_admission_required": 90,
-                "new_task_boundary_required": 25,
+                "existing_family_workflow_candidate": 21,
+                "existing_task_boundary_model_admission_required": 91,
+                "new_task_boundary_required": 26,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 113)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 112)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 26)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 87)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 45)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 86)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 50)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 4,
-                "different_model_generation_requires_admission": 32,
+                "different_model_generation_and_new_task_required": 5,
+                "different_model_generation_requires_admission": 33,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 4,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
-                "same_upstream_generation_requires_auxiliary_admission": 3,
+                "same_upstream_generation_requires_auxiliary_admission": 6,
             },
         )
 
@@ -94,6 +94,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "edit_video": 2,
             "first_last_frame_to_video": 7,
             "image_to_3d": 7,
+            "image_audio_to_video": 1,
             "reference_to_image": 1,
             "remove_background": 1,
         }
@@ -208,7 +209,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_forty_five_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_fifty_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -253,10 +254,15 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "sdxl_revision_text_prompts",
                 "template_qwen_image_edit_2511_systms_action",
                 "template_qwen_Image_2512_360_lora",
+                "template_ltx2_3_ic_lora_ingredients",
                 "video_ltx2_3_i2v",
+                "video_ltx2_3_ia2v",
                 "video_ltx2_3_t2v",
                 "video_ltx2_5_i2v",
                 "video_ltx2_5_t2v",
+                "video_ltx2_i2v_distilled",
+                "video_ltx2_i2v_lora",
+                "video_ltx2_t2v_distilled",
                 "video_wan2.1_alpha_t2v_14B",
                 "video_wan2.1_fun_camera_v1.1_1.3B",
                 "video_wan2.1_fun_camera_v1.1_14B",
@@ -326,6 +332,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "video_ltx2_3_t2v",
             "video_ltx2_5_i2v",
             "video_ltx2_5_t2v",
+            "template_ltx2_3_ic_lora_ingredients",
             "video_wan2.1_alpha_t2v_14B",
             "video_wan2_2_14B_fun_control",
         ):
@@ -444,6 +451,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(revision["selectedCandidateMode"], "reference_to_image")
         self.assertEqual(revision["resolutionState"], "new_task_boundary_required")
         self.assertIsNone(revision["recommendedWorkflow"])
+
+        ltx_ia2v = reviewed["video_ltx2_3_ia2v"]
+        self.assertEqual(ltx_ia2v["sourceReview"]["catalogSelectedCandidateMode"], "image_to_video")
+        self.assertEqual(ltx_ia2v["selectedCandidateMode"], "image_audio_to_video")
+        self.assertEqual(ltx_ia2v["resolutionState"], "new_task_boundary_required")
+        self.assertIsNone(ltx_ia2v["recommendedWorkflow"])
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
