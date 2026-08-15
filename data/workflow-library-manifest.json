@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T09:18:14.826Z",
+  "generatedAt": "2026-08-15T09:44:23.991Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 175,
-  "supportedPairCount": 187,
+  "supportedCanonicalPairCount": 178,
+  "supportedPairCount": 190,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -846,6 +846,37 @@
       "graphHash": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17"
     },
     {
+      "id": "BuiltinVideoOperation:video_reverse",
+      "modelType": "BuiltinVideoOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "video_reverse",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ],
+        "note": "Requires one local source video within the explicit reverse pixel-frame memory budget."
+      },
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-video-operations:reverse:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-video-operation/video-reverse.json",
+      "graphHash": "223094c5d8b02c6bc1a6546cf1dae4064941040c1961bdcc48df3ac1997502ee"
+    },
+    {
       "id": "BuiltinVideoOperation:video_stitch",
       "modelType": "BuiltinVideoOperation",
       "modelFamily": "Built-in Media",
@@ -878,6 +909,71 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-video-operation/video-stitch.json",
       "graphHash": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9"
+    },
+    {
+      "id": "BuiltinVideoOperation:video_tile",
+      "modelType": "BuiltinVideoOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "video_tile",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "referenceVideos"
+        ],
+        "minimumCounts": {
+          "referenceVideos": 2
+        },
+        "note": "Requires two to sixteen local source videos and produces a bounded synchronized tile wall."
+      },
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-video-operations:tile:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-video-operation/video-tile.json",
+      "graphHash": "7dfca3c41f53b54990caae80b0cc17b104871fae79a208726908152a59707736"
+    },
+    {
+      "id": "BuiltinVideoOperation:video_trim",
+      "modelType": "BuiltinVideoOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "video_trim",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ],
+        "note": "Requires one local source video and applies a finite trim range through app-owned FFmpeg."
+      },
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-video-operations:trim:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-video-operation/video-trim.json",
+      "graphHash": "8c5fc8e0a79919665524936390ff9d0d235bb8b3368ced2ce3ebca8837e326eb"
     },
     {
       "id": "ChromaImg2ImgPipeline:edit_image",
