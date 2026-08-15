@@ -65,12 +65,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 104)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 74)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 101)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 106)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
                 "different_model_generation_and_new_task_required": 26,
-                "different_model_generation_requires_admission": 56,
+                "different_model_generation_requires_admission": 61,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 8,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -215,7 +215,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_one_hundred_one_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_one_hundred_six_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -238,6 +238,11 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_flux2_klein_9b_kv_image_edit",
                 "image_flux2_text_to_image",
                 "image_flux2_text_to_image_9b",
+                "hidream_e1_1",
+                "hidream_e1_full",
+                "hidream_i1_dev",
+                "hidream_i1_fast",
+                "hidream_i1_full",
                 "image_ernie_image",
                 "image_kandinsky5_t2i",
                 "image_lotus_depth_v1_1",
@@ -373,6 +378,11 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_flux2_klein_9b_kv_image_edit",
             "image_flux2_text_to_image",
             "image_flux2_text_to_image_9b",
+            "hidream_e1_1",
+            "hidream_e1_full",
+            "hidream_i1_dev",
+            "hidream_i1_fast",
+            "hidream_i1_full",
             "image_ernie_image",
             "image_kandinsky5_t2i",
             "image_lotus_depth_v1_1",
