@@ -408,13 +408,13 @@
             "value": "none"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "model_id"
+              "origin": "pipeline_class"
             },
             "type": "image_diffusion_pipeline"
           },

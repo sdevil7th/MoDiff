@@ -136,24 +136,24 @@
           "device": {
             "default": "cpu:0",
             "label": "Device",
-            "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cpu:0",
-                "schemaVersion": 1,
-                "value": "cpu:0"
-              },
-              {
+            "options": {
+              "cpu": {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
                 "label": "cpu",
                 "schemaVersion": 1,
                 "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
               }
-            ],
+            },
             "type": "string",
             "value": "cuda:0"
           },

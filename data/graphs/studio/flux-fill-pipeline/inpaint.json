@@ -479,7 +479,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -915,7 +915,7 @@
             "value": "group_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -2643,7 +2643,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/flux_fill_inpaint.reference_image_1_CoaxHD.webp"
+              "@data/images/flux_fill_inpaint.reference_image_1.webp"
             ]
           },
           "height": {
@@ -2754,7 +2754,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "@data/images/flux_fill_inpaint.mask_image_pnjwId.png"
+            "value": "@data/images/flux_fill_inpaint.mask_image.png"
           },
           "height": {
             "display": "output",

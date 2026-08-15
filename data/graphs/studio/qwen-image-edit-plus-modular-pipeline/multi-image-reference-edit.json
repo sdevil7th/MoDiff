@@ -355,7 +355,7 @@
             "type": "modular_route_state"
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -482,7 +482,7 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -577,7 +577,7 @@
             }
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -663,8 +663,8 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/qwen_product_ad_composite.reference_image_1_UnQTFT.webp",
-              "@data/images/qwen_product_ad_composite.reference_image_2_5ZfiAP.webp"
+              "@data/images/qwen_product_ad_composite.reference_image_1.webp",
+              "@data/images/qwen_product_ad_composite.reference_image_2.webp"
             ]
           },
           "height": {
@@ -1044,7 +1044,7 @@
             "value": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9"
           },
           "scheduler": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
@@ -1055,7 +1055,7 @@
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
@@ -1079,7 +1079,7 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
@@ -1096,7 +1096,7 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
@@ -1268,7 +1268,7 @@
             "value": "Create one premium magazine advertisement by combining the two supplied references. Input 1 defines the restrained editorial grid, generous warm-white margins and disciplined typography hierarchy. Input 2 defines the immutable ASTERMIST lavender sleep-spray bottle. Build a believable bedside ritual context: place exactly one ASTERMIST bottle at normal cosmetic scale on a honed limestone nightstand beside one folded linen eye mask and a small dried-lavender stem. A softly blurred bed and dawn window belong to the same quiet room; every object rests on the same physical surface with coherent perspective, contact shadows and window light. Preserve the bottle’s pale-lavender glass, liquid level, dip tube, satin-silver atomizer, clear cap and rectangular label. Keep both exact label lines readable: “ASTERMIST” and “LAVENDER SLEEP SPRAY”. Do not enlarge it into architecture, a sculpture or a surreal monument. Use Input 1 only for layout discipline. Add exactly one clean headline in the upper negative space: “NIGHT RITUAL”. Include no other campaign copy. Use black editorial type, warm stone, muted lavender and natural blue dawn light with realistic glass refraction and premium photographic grain. The output must read as one real-location commercial photograph, not a pasted packshot or fantasy composite: matching scale, lens, light direction, color spill, focus falloff and surface contact, with no collage edge, halo, floating product, unrelated scenery or arbitrary object replacement."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

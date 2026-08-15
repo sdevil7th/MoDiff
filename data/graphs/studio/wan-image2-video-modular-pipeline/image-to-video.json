@@ -1211,7 +1211,7 @@
             "value": "bfloat16"
           },
           "image_encoder": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Image Encoder",
@@ -1365,7 +1365,7 @@
             "value": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7"
           },
           "scheduler": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
@@ -1376,7 +1376,7 @@
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
@@ -1400,7 +1400,7 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
@@ -1417,7 +1417,7 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",

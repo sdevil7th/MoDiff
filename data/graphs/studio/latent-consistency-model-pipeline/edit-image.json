@@ -461,7 +461,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -896,7 +896,7 @@
             "value": "none"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",

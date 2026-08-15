@@ -1457,7 +1457,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -1511,7 +1511,7 @@
             "type": "text"
           },
           "reference_images": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -1887,7 +1887,7 @@
             "value": "sequential_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",

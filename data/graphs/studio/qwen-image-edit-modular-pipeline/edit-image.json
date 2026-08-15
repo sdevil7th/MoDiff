@@ -333,7 +333,7 @@
             "type": "modular_route_state"
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -460,7 +460,7 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -568,7 +568,7 @@
             }
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -654,7 +654,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/qwen_character_angles.reference_image_1_m3Jwtp.webp"
+              "@data/images/qwen_character_angles.reference_image_1.webp"
             ]
           },
           "height": {
@@ -938,7 +938,7 @@
             "value": "ac7f9318f633fc4b5778c59367c8128225f1e3de"
           },
           "scheduler": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
@@ -949,7 +949,7 @@
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
@@ -973,7 +973,7 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
@@ -990,7 +990,7 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
@@ -1162,7 +1162,7 @@
             "value": "Create a 2x2 character turnaround contact sheet from the source character image. Preserve the character identity, face shape, hair, outfit materials, color palette, age, body proportions, and core silhouette. Render four clean views in one image: front close portrait, three-quarter view, low-angle hero view, and wide full-body view. Keep lighting, background style, and rendering quality consistent across all four panels. Do not change the character into a different person. No labels, no panel borders, no captions."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

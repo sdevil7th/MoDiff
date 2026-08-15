@@ -202,7 +202,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "19ecb0bf800f9cd579eed5905dd042a1ab6032fb6c041e588e0d00a5fc1d3478",
+    "positionHash": "df53b82dea58361a6b6cf130f2a1c972dda2400ea833a1b3e85cab36033b4e52",
     "verticalGap": 72
   },
   "nodes": [
@@ -1099,7 +1099,7 @@
       "id": "node-03",
       "position": {
         "x": 0,
-        "y": 1468
+        "y": 1094
       },
       "type": "custom"
     },
@@ -1375,7 +1375,7 @@
       "id": "node-06",
       "position": {
         "x": 0,
-        "y": 1094
+        "y": 1468
       },
       "type": "custom"
     },
@@ -1583,7 +1583,7 @@
             "value": ""
           },
           "background_video": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -1632,7 +1632,7 @@
             "value": 0.8
           },
           "face_video": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -1747,7 +1747,7 @@
             "type": "tensor"
           },
           "mask": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -1881,7 +1881,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -1892,7 +1892,7 @@
             "type": "video_diffusion_pipeline"
           },
           "pose_video": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -1936,7 +1936,7 @@
             "type": "text"
           },
           "reference_images": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -2315,13 +2315,13 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "pipeline_class"
+              "origin": "model_id"
             },
             "type": "video_diffusion_pipeline"
           },

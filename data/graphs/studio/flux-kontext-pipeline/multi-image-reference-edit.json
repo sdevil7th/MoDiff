@@ -466,7 +466,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -902,7 +902,7 @@
             "value": "group_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -2630,8 +2630,8 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/flux_kontext_multi_reference.reference_image_1_Z0Oyzr.webp",
-              "@data/images/flux_kontext_multi_reference.reference_image_2__edN0J.webp"
+              "@data/images/flux_kontext_multi_reference.reference_image_1.webp",
+              "@data/images/flux_kontext_multi_reference.reference_image_2.webp"
             ]
           },
           "height": {

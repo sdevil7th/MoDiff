@@ -470,7 +470,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -907,7 +907,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -2635,7 +2635,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/flux2_klein_edit.reference_image_1_WsJE-k.png"
+              "@data/images/flux2_klein_edit.reference_image_1.png"
             ]
           },
           "height": {

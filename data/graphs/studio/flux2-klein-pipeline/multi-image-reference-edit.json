@@ -470,7 +470,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -907,13 +907,13 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "pipeline_class"
+              "origin": "mode"
             },
             "type": "image_diffusion_pipeline"
           },
@@ -2635,8 +2635,8 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/flux2_klein_multi_reference.reference_image_1_KOckqC.webp",
-              "@data/images/flux2_klein_multi_reference.reference_image_2_mEKBr5.webp"
+              "@data/images/flux2_klein_multi_reference.reference_image_1.webp",
+              "@data/images/flux2_klein_multi_reference.reference_image_2.webp"
             ]
           },
           "height": {

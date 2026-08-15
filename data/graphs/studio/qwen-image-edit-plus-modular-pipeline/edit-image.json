@@ -355,7 +355,7 @@
             "type": "modular_route_state"
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -482,7 +482,7 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -577,7 +577,7 @@
             }
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -663,7 +663,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/character_edit.reference_image_1_AThj8d.webp"
+              "@data/images/character_edit.reference_image_1.webp"
             ]
           },
           "height": {
@@ -1043,7 +1043,7 @@
             "value": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9"
           },
           "scheduler": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
@@ -1054,7 +1054,7 @@
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
@@ -1078,7 +1078,7 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
@@ -1095,7 +1095,7 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
@@ -1267,7 +1267,7 @@
             "value": "Restyle only the source singer into a realistic coastal field-recording presenter while preserving her exact face shape, age, warm skin tone, gaze direction, hairstyle and copper streak, hand positions, microphone, pose, crop, camera perspective, and the complete rocky-coast background. Replace the silver jacket with one tailored rust-brown waxed-canvas field jacket: matte weathered fabric, dark navy wool collar, reinforced shoulder panels, two believable brass snaps, and one narrow slate-blue scarf tucked naturally inside the collar. Keep the garment correctly fitted around both shoulders, elbows, wrists, and microphone grip. Treat every non-clothing region as structurally locked. Keep the distant ship as a comparably small, soft, out-of-focus silhouette in the same upper-left distance; preserve the horizon, water highlights, rocks, amber practical lights, hair flyaways, face, hands, microphone, cable, crop, focus, and original warm late-afternoon illumination. The result must remain a documentary photograph, not science fiction, fashion illustration, or animation."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

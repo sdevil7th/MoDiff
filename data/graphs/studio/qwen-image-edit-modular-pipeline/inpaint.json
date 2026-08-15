@@ -479,7 +479,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -917,7 +917,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -2645,7 +2645,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/qwen_inpaint_object_replace.reference_image_1_ZmHOJ4.webp"
+              "@data/images/qwen_inpaint_object_replace.reference_image_1.webp"
             ]
           },
           "height": {
@@ -2756,7 +2756,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "@data/images/qwen_inpaint_object_replace.mask_image_OR3R5N.png"
+            "value": "@data/images/qwen_inpaint_object_replace.mask_image.png"
           },
           "height": {
             "display": "output",

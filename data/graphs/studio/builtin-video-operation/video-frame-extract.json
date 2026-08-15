@@ -26,7 +26,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "69260aa9725758f94676a06867fa8d198fe1f3b2e981d083fba800a23e63d9d2",
+    "positionHash": "0b76160c76b51d92f54d6815038d635a549d15bccc2f95af56e1fec9c0fdcfd6",
     "verticalGap": 72
   },
   "nodes": [
@@ -120,7 +120,7 @@
       "id": "node-01",
       "position": {
         "x": 440,
-        "y": 84
+        "y": 173
       },
       "type": "custom"
     },
@@ -138,6 +138,51 @@
         ],
         "module": "modules.Video",
         "params": {
+          "background": {
+            "default": "black",
+            "label": "Tile Background",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "black",
+                "schemaVersion": 1,
+                "value": "black"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "white",
+                "schemaVersion": 1,
+                "value": "white"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "gray",
+                "schemaVersion": 1,
+                "value": "gray"
+              }
+            ],
+            "type": "string"
+          },
+          "columns": {
+            "default": 2,
+            "label": "Tile Columns",
+            "max": 4,
+            "min": 1,
+            "type": "int"
+          },
+          "end_seconds": {
+            "default": 0,
+            "label": "Trim End (0 = end)",
+            "max": 86400,
+            "min": 0,
+            "type": "float"
+          },
           "every_n": {
             "default": 16,
             "label": "Every N Frames",
@@ -152,6 +197,13 @@
             "min": 1,
             "type": "float"
           },
+          "gap": {
+            "default": 0,
+            "label": "Tile Gap",
+            "max": 256,
+            "min": 0,
+            "type": "int"
+          },
           "images": {
             "display": "output",
             "isConnected": true,
@@ -162,6 +214,14 @@
             "default": "0,-1",
             "label": "Frame Indices",
             "type": "string"
+          },
+          "interpolation_fps": {
+            "default": 60,
+            "label": "Interpolation FPS",
+            "max": 120,
+            "min": 1,
+            "step": 0.01,
+            "type": "float"
           },
           "operation": {
             "default": "video_frame_extract",
@@ -179,9 +239,41 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "frame_interpolation",
+                "schemaVersion": 1,
+                "value": "frame_interpolation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "video_stitch",
                 "schemaVersion": 1,
                 "value": "video_stitch"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_trim",
+                "schemaVersion": 1,
+                "value": "video_trim"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_reverse",
+                "schemaVersion": 1,
+                "value": "video_reverse"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_tile",
+                "schemaVersion": 1,
+                "value": "video_tile"
               }
             ],
             "type": "string",
@@ -255,6 +347,36 @@
             ],
             "type": "string"
           },
+          "start_seconds": {
+            "default": 0,
+            "label": "Trim Start",
+            "max": 86400,
+            "min": 0,
+            "type": "float"
+          },
+          "sync": {
+            "default": "longest_hold",
+            "label": "Tile Length",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "shortest",
+                "schemaVersion": 1,
+                "value": "shortest"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "longest_hold",
+                "schemaVersion": 1,
+                "value": "longest_hold"
+              }
+            ],
+            "type": "string"
+          },
           "timecodes": {
             "default": "0",
             "label": "Times (seconds)",
@@ -277,7 +399,7 @@
           "video": {
             "display": "output",
             "isConnected": false,
-            "label": "Stitched Video",
+            "label": "Processed Video",
             "type": "video"
           },
           "videos": {

@@ -18,7 +18,7 @@
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-04",
+      "target": "node-03",
       "targetHandle": "image",
       "type": "default"
     },
@@ -43,34 +43,12 @@
       "target": "node-01",
       "targetHandle": "image",
       "type": "default"
-    },
-    {
-      "className": "category-image",
-      "data": {
-        "connectionType": "image"
-      },
-      "edgeType": "default",
-      "id": "edge-03",
-      "markerEnd": {
-        "color": "#60A5FA",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-03",
-      "sourceHandle": "image",
-      "style": {
-        "stroke": "#60A5FA"
-      },
-      "target": "node-01",
-      "targetHandle": "mask",
-      "type": "default"
     }
   ],
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "206ebc6100be84a0e4ea772f569a39e28e0e99b1f659889cd5b4076d0f5da35b",
+    "positionHash": "1b263ebc71716538e0aa98b77d0b4294cc9fffd7d60a363983e677265949c28f",
     "verticalGap": 72
   },
   "nodes": [
@@ -300,7 +278,7 @@
           },
           "mask": {
             "display": "input",
-            "isConnected": true,
+            "isConnected": false,
             "label": "Mask",
             "type": "image"
           },
@@ -374,7 +352,7 @@
               }
             ],
             "type": "string",
-            "value": "mask_composite"
+            "value": "image_stitch"
           },
           "output": {
             "display": "output",
@@ -608,7 +586,7 @@
       "id": "node-01",
       "position": {
         "x": 440,
-        "y": 28
+        "y": 0
       },
       "type": "custom"
     },
@@ -718,117 +696,7 @@
       "id": "node-02",
       "position": {
         "x": 0,
-        "y": 0
-      },
-      "type": "custom"
-    },
-    {
-      "data": {
-        "action": "Load",
-        "cache": false,
-        "category": "image",
-        "description": "Load an image from a file",
-        "label": "Load Image",
-        "memory": [
-          0,
-          0,
-          0
-        ],
-        "module": "modules.Image",
-        "params": {
-          "alpha_channel": {
-            "default": "ignore",
-            "label": "Alpha Channel",
-            "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "ignore",
-                "schemaVersion": 1,
-                "value": "ignore"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "add alpha",
-                "schemaVersion": 1,
-                "value": "add alpha"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "remove alpha",
-                "schemaVersion": 1,
-                "value": "remove alpha"
-              }
-            ],
-            "type": "string",
-            "value": "remove alpha"
-          },
-          "file": {
-            "display": "filebrowser",
-            "fieldOptions": {
-              "fileTypes": [
-                "image"
-              ],
-              "multiple": true
-            },
-            "label": false,
-            "type": "str",
-            "value": ""
-          },
-          "height": {
-            "display": "output",
-            "isConnected": false,
-            "type": "int"
-          },
-          "image": {
-            "display": "output",
-            "isConnected": true,
-            "label": "Image",
-            "type": "image"
-          },
-          "label": {
-            "display": "ui_label",
-            "value": "Load Image"
-          },
-          "mask": {
-            "display": "output",
-            "isConnected": false,
-            "label": "Alpha mask",
-            "type": "image"
-          },
-          "source_hash": {
-            "display": "output",
-            "isConnected": false,
-            "label": "Source hash",
-            "type": "str"
-          },
-          "width": {
-            "display": "output",
-            "isConnected": false,
-            "type": "int"
-          }
-        },
-        "resizable": true,
-        "skipParamsCheck": false,
-        "studioOwned": true,
-        "studioRole": "loadMask",
-        "style": {},
-        "time": [
-          0,
-          0,
-          0
-        ],
-        "type": "custom"
-      },
-      "id": "node-03",
-      "position": {
-        "x": 0,
-        "y": 374
+        "y": 159
       },
       "type": "custom"
     },
@@ -919,10 +787,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-04",
+      "id": "node-03",
       "position": {
         "x": 880,
-        "y": 201
+        "y": 173
       },
       "type": "custom"
     }

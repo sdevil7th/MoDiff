@@ -342,7 +342,7 @@
             "type": "diffusers_auto_model"
           },
           "controlnet_bundle": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Controlnet",
@@ -799,7 +799,7 @@
             "type": "modular_route_state"
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -956,7 +956,7 @@
             "value": 0.8
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -1050,7 +1050,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "@data/images/qwen_control_image_layout.control_image_kGSqGH.png"
+            "value": "@data/images/qwen_control_image_layout.control_image.png"
           },
           "height": {
             "display": "output",
@@ -1333,7 +1333,7 @@
             "value": "25468b98e3276ca6700de15c6628e51b7de54a26"
           },
           "scheduler": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
@@ -1344,7 +1344,7 @@
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
@@ -1368,7 +1368,7 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
@@ -1385,7 +1385,7 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
@@ -1551,7 +1551,7 @@
             "value": "Packaging objective: turn the supplied control image into an orthographic premium folding-carton design proof for the fictional expedition notebook brand \"NORTHSTAR FIELD NOTES\". Control contract: preserve every outer flap, central and side-panel proportion, fold boundary, main front label rectangle, lower specification modules, circular feature marks, and yellow footer bars from the control image. Directly below the main label, retain two separate outlined specification boxes in their original positions: one small box on the left containing exactly one circular mark, and one wide box on the right containing exactly three circular marks. Keep all four marks inside those two front-panel boxes, never on the side panels. Keep the layout straight-on and centered; do not fold, rotate, crop, merge, relocate, or invent panels. Front-panel copy: set the exact readable brand \"NORTHSTAR FIELD NOTES\" in a compact black grotesk, with the smaller line \"EXPEDITION SERIES 04\". Use the lower modules for short technical copy and icons only; the side panels may carry restrained grid lines and small vertical product information. Material and finish: warm-white FSC paperboard, fine uncoated fiber, crisp black keylines, muted mustard-yellow technical badges, shallow blind emboss on the brand block, precise print registration, subtle scored fold channels, and physically plausible paper thickness along the outer cut edge. Presentation: neutral warm-gray proofing table, orthographic 90-degree camera, even D50 studio light with gentle relief shadows only at score lines, clean prepress/editorial art direction, generous clear space, and sharp readable print detail across the full board."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

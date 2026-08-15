@@ -134,6 +134,58 @@
             "min": 1,
             "type": "int"
           },
+          "composite_invert_mask": {
+            "default": false,
+            "label": "Invert Composite Mask",
+            "type": "bool"
+          },
+          "composite_mask_channel": {
+            "default": "luminance",
+            "label": "Composite Mask Channel",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "luminance",
+                "schemaVersion": 1,
+                "value": "luminance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "alpha",
+                "schemaVersion": 1,
+                "value": "alpha"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "red",
+                "schemaVersion": 1,
+                "value": "red"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "green",
+                "schemaVersion": 1,
+                "value": "green"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "blue",
+                "schemaVersion": 1,
+                "value": "blue"
+              }
+            ],
+            "type": "string"
+          },
           "contrast": {
             "default": 1,
             "label": "Contrast",
@@ -224,6 +276,12 @@
             "label": "Image",
             "type": "image"
           },
+          "mask": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Mask",
+            "type": "image"
+          },
           "operation": {
             "default": "image_adjustment",
             "label": "Operation",
@@ -256,6 +314,22 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "image_upscale",
+                "schemaVersion": 1,
+                "value": "image_upscale"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_stitch",
+                "schemaVersion": 1,
+                "value": "image_stitch"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "image_tile",
                 "schemaVersion": 1,
                 "value": "image_tile"
@@ -267,6 +341,14 @@
                 "label": "image_channels",
                 "schemaVersion": 1,
                 "value": "image_channels"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "mask_composite",
+                "schemaVersion": 1,
+                "value": "mask_composite"
               }
             ],
             "type": "string",
@@ -284,6 +366,90 @@
             "label": "Built-in Contract",
             "type": "string",
             "value": "BuiltinImageOperationV1"
+          },
+          "resize_fit_mode": {
+            "default": "contain",
+            "label": "Resize Fit",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "stretch",
+                "schemaVersion": 1,
+                "value": "stretch"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "contain",
+                "schemaVersion": 1,
+                "value": "contain"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cover",
+                "schemaVersion": 1,
+                "value": "cover"
+              }
+            ],
+            "type": "string"
+          },
+          "resize_height": {
+            "default": 1024,
+            "label": "Resize Height",
+            "max": 8192,
+            "min": 1,
+            "type": "int"
+          },
+          "resize_resampling": {
+            "default": "lanczos",
+            "label": "Resize Interpolation",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "nearest",
+                "schemaVersion": 1,
+                "value": "nearest"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bilinear",
+                "schemaVersion": 1,
+                "value": "bilinear"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bicubic",
+                "schemaVersion": 1,
+                "value": "bicubic"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "lanczos",
+                "schemaVersion": 1,
+                "value": "lanczos"
+              }
+            ],
+            "type": "string"
+          },
+          "resize_width": {
+            "default": 1024,
+            "label": "Resize Width",
+            "max": 8192,
+            "min": 1,
+            "type": "int"
           },
           "rows": {
             "default": 2,
@@ -310,6 +476,56 @@
             "max": 4,
             "min": 0,
             "type": "float"
+          },
+          "stitch_background": {
+            "default": "white",
+            "label": "Stitch Background",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "white",
+                "schemaVersion": 1,
+                "value": "white"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "black",
+                "schemaVersion": 1,
+                "value": "black"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "transparent",
+                "schemaVersion": 1,
+                "value": "transparent"
+              }
+            ],
+            "type": "string"
+          },
+          "stitch_columns": {
+            "default": 2,
+            "label": "Stitch Columns",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "stitch_match_size": {
+            "default": true,
+            "label": "Match Stitch Cells",
+            "type": "bool"
+          },
+          "stitch_spacing": {
+            "default": 0,
+            "label": "Stitch Spacing",
+            "max": 1024,
+            "min": 0,
+            "type": "int"
           },
           "temperature": {
             "default": 0,

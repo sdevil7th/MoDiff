@@ -283,7 +283,7 @@
             "type": "latents"
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -407,7 +407,7 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
@@ -532,7 +532,7 @@
             }
           },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
@@ -618,7 +618,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "@data/images/qwen_layered_portrait.reference_image_1_VZqABV.webp"
+              "@data/images/qwen_layered_portrait.reference_image_1.webp"
             ]
           },
           "height": {
@@ -902,7 +902,7 @@
             "value": "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf"
           },
           "scheduler": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
@@ -913,7 +913,7 @@
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
@@ -937,7 +937,7 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
@@ -954,7 +954,7 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
@@ -1182,7 +1182,7 @@
             "value": 640
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",

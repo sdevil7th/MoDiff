@@ -1427,7 +1427,7 @@
             "value": 1
           },
           "control_video": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -1694,7 +1694,7 @@
             "type": "float"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -2128,7 +2128,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",

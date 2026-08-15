@@ -540,7 +540,7 @@
             "type": "int"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Pipeline",
@@ -1037,7 +1037,7 @@
           },
           "mode": {
             "default": "text_to_audio",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -1049,7 +1049,7 @@
             "value": "text_to_audio"
           },
           "model_id": {
-            "disabled": true,
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
@@ -1122,7 +1122,7 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Pipeline",
@@ -1134,7 +1134,7 @@
           },
           "pipeline_class": {
             "default": "AceStepPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
