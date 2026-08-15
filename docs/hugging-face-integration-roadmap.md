@@ -6950,8 +6950,15 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. No
-Comfy graph, node package, model, or media asset was copied.
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Four
+of those 138 candidates now also have exact pinned graph-source dependency
+reviews, performed read-only without importing, executing, or copying their
+graphs, nodes, or prompts. The two Stable Audio 3 records and the original
+Qwen-Image-plus-Lightning record resolve only to existing task boundaries and
+still require distinct model-generation admissions; the Chroma record remains
+a same-family candidate because its FP8 repackaged component partition is not
+the admitted Diffusers checkpoint. No Comfy graph, node package, prompt, model,
+or media asset was copied or downloaded.
 
 Historical Gallery evidence discovery preserves all 70 approved examples. The
 current release audit finds 26 records whose retained evidence remains current
@@ -7051,7 +7058,9 @@ that failure before supervised replacement if third-party code does not return.
 The restarted live app returned the malformed-receipt canary as HTTP 400 and
 completed a 60-second-budget normal graph, while the 149-test queue, loop,
 supervisor, security, and model-I/O matrix passed with one expected skip after
-updating the affected test doubles.
+updating the affected test doubles. `6796b74` seals the first four exact pinned
+Comfy graph-source dependency reviews while retaining fail-closed model,
+execution, rights, and asset claims.
 
 The following separate gates do remain external:
 
