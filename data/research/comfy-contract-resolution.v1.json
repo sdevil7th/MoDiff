@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:f522cf0e3f316625dd2e86a064e4e48fe24e4666f68acf1c96aae5c5e301cfab",
+  "contentHash": "sha256:9a1349aa6d1accaa53457e4a153add02ce29e098ae1eeea4cb75b884b789d1ee",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -2387,8 +2387,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_anima_lllite_inpaint_is_not_chroma1_hd",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -2414,7 +2415,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 12,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:ChromaInpaintPipeline:inpaint",
@@ -2465,6 +2466,47 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "inpaint",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_3_06b_base.safetensors",
+            "repository": "circlestone-labs/Anima"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "circlestone-labs/Anima"
+          },
+          {
+            "artifact": "anima-base-v1.0.safetensors",
+            "repository": "circlestone-labs/Anima"
+          },
+          {
+            "artifact": "anima-lllite-inpainting-v2.safetensors",
+            "repository": "Comfy-Org/Anima-LLLite"
+          },
+          {
+            "artifact": "anima-turbo-lora-v0.2.safetensors",
+            "repository": "circlestone-labs/Anima-Official-LoRAs"
+          }
+        ],
+        "assetPath": "templates/image_anima_lllite_image_inpainting.json",
+        "assetSha256": "b08730d127942d490222dfe1d7ae7746e7f951d9957cc988ceab83f31576cd5b",
+        "catalogRecommendedWorkflowId": "ChromaInpaintPipeline:inpaint",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaInpaintPipeline:inpaint",
+          "reasonCode": "anima_lllite_inpaint_is_not_chroma1_hd",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "0fef38f42235bf9a6133f502a3f9611a8a4fdd3e",
+        "importsGraph": false,
+        "reviewedWorkflowId": "ChromaInpaintPipeline:inpaint",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Anima Lllite: Image Inpainting"
     },
     {
@@ -13983,14 +14025,15 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_vace_14b_inpaint_partition_causvid_and_sam3_not_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "family_match_requires_exact_checkpoint_and_variant_review"
       ],
       "candidateOutputMediaKinds": [
-        "image"
+        "video"
       ],
       "catalogId": "video_wan_vace_inpainting",
       "catalogModelLabels": [
@@ -14008,75 +14051,96 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan_vace_inpainting",
-      "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 12,
+      "currentFamilyOptionCount": 1,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaInpaintPipeline:inpaint",
-        "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
-        "modelFamily": "Chroma",
-        "modelType": "ChromaInpaintPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
+        "modelFamily": "Wan Video",
+        "modelType": "WanVACEPipeline",
+        "publicTemplateIds": [
+          "wan_vace_masked_object_replace"
+        ],
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
-          "modelFamily": "Chroma",
-          "modelType": "ChromaInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Flux2KleinInpaintPipeline:inpaint",
-          "modelFamily": "FLUX Image",
-          "modelType": "Flux2KleinInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "QwenImageEditModularPipeline:inpaint",
-          "modelFamily": "Qwen Image",
-          "modelType": "QwenImageEditModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
-          "canonicalWorkflowId": "StableDiffusionPAGPipeline:inpaint",
-          "modelFamily": "Stable Diffusion 1.x",
-          "modelType": "StableDiffusionPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:inpaint",
-          "modelFamily": "Stable Diffusion XL",
-          "modelType": "StableDiffusionXLPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "ZImageInpaintPipeline:inpaint",
-          "modelFamily": "Z-Image",
-          "modelType": "ZImageInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
+          "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
+          "modelFamily": "Wan Video",
+          "modelType": "WanVACEPipeline",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "inpaint",
+      "resolutionState": "existing_family_workflow_candidate",
+      "selectedCandidateMode": "video_inpaint",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "sam3.1_multiplex_fp16.safetensors",
+            "repository": "Comfy-Org/sam3.1"
+          }
+        ],
+        "assetPath": "templates/video_wan_vace_inpainting.json",
+        "assetSha256": "5c9ac91a991904294522cefe558da1230e77cc34968e9d1e1796bd234e9da42f",
+        "catalogOutputMediaKinds": [
+          "image"
+        ],
+        "catalogRecommendedWorkflowId": "WanVACEPipeline:video_inpaint",
+        "catalogSelectedCandidateMode": "inpaint",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+          "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+          "currentWorkflowId": "WanVACEPipeline:video_inpaint",
+          "reasonCode": "wan_vace_14b_inpaint_partition_causvid_and_sam3_not_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4af6c58919482553498d0e9f5bc7b5985030b914",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video"
+        ],
+        "reviewedTaskMode": "video_inpaint",
+        "reviewedWorkflowId": "WanVACEPipeline:video_inpaint",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 VACE Inpainting"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_vace_14b_outpaint_partition_and_causvid_lora_not_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "family_match_requires_exact_checkpoint_and_variant_review"
       ],
       "candidateOutputMediaKinds": [
-        "image"
+        "video"
       ],
       "catalogId": "video_wan_vace_outpainting",
       "catalogModelLabels": [
@@ -14094,50 +14158,79 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan_vace_outpainting",
-      "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 6,
+      "currentFamilyOptionCount": 1,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaInpaintPipeline:outpaint",
-        "canonicalWorkflowId": "ChromaInpaintPipeline:outpaint",
-        "modelFamily": "Chroma",
-        "modelType": "ChromaInpaintPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "WanVACEPipeline:video_outpaint",
+        "modelFamily": "Wan Video",
+        "modelType": "WanVACEPipeline",
+        "publicTemplateIds": [
+          "wan_vace_outpaint_reframe"
+        ],
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "ChromaInpaintPipeline:outpaint",
-          "modelFamily": "Chroma",
-          "modelType": "ChromaInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Flux2KleinInpaintPipeline:outpaint",
-          "modelFamily": "FLUX Image",
-          "modelType": "Flux2KleinInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "QwenImageEditModularPipeline:outpaint",
-          "modelFamily": "Qwen Image",
-          "modelType": "QwenImageEditModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
-          "canonicalWorkflowId": "ZImageInpaintPipeline:outpaint",
-          "modelFamily": "Z-Image",
-          "modelType": "ZImageInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
+          "canonicalWorkflowId": "WanVACEPipeline:video_outpaint",
+          "modelFamily": "Wan Video",
+          "modelType": "WanVACEPipeline",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "outpaint",
+      "resolutionState": "existing_family_workflow_candidate",
+      "selectedCandidateMode": "video_outpaint",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan_vace_outpainting.json",
+        "assetSha256": "e811347b7fbccbae767192e1b3aa50312c1ad04df4090c9b3250788afe6e1ccc",
+        "catalogOutputMediaKinds": [
+          "image"
+        ],
+        "catalogRecommendedWorkflowId": "WanVACEPipeline:video_outpaint",
+        "catalogSelectedCandidateMode": "outpaint",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+          "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+          "currentWorkflowId": "WanVACEPipeline:video_outpaint",
+          "reasonCode": "wan_vace_14b_outpaint_partition_and_causvid_lora_not_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "e8a1a0c220c574452999eac37931c8450a301f23",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video"
+        ],
+        "reviewedTaskMode": "video_outpaint",
+        "reviewedWorkflowId": "WanVACEPipeline:video_outpaint",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 VACE Outpainting"
     },
     {
@@ -14362,15 +14455,16 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_fun_inp_graph_is_first_last_frame_generation_not_image_inpaint",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "image"
+        "video"
       ],
       "catalogId": "wan2.1_fun_inp",
       "catalogModelLabels": [
@@ -14389,61 +14483,60 @@
       },
       "contractId": "comfy-research:template:wan2.1_fun_inp",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 12,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaInpaintPipeline:inpaint",
-        "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
-        "modelFamily": "Chroma",
-        "modelType": "ChromaInpaintPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
-          "modelFamily": "Chroma",
-          "modelType": "ChromaInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Flux2KleinInpaintPipeline:inpaint",
-          "modelFamily": "FLUX Image",
-          "modelType": "Flux2KleinInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "QwenImageEditModularPipeline:inpaint",
-          "modelFamily": "Qwen Image",
-          "modelType": "QwenImageEditModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
-          "canonicalWorkflowId": "StableDiffusionPAGPipeline:inpaint",
-          "modelFamily": "Stable Diffusion 1.x",
-          "modelType": "StableDiffusionPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:inpaint",
-          "modelFamily": "Stable Diffusion XL",
-          "modelType": "StableDiffusionXLPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "ZImageInpaintPipeline:inpaint",
-          "modelFamily": "Z-Image",
-          "modelType": "ZImageInpaintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "inpaint",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "first_last_frame_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_fun_inp_1.3B_bf16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/wan2.1_fun_inp.json",
+        "assetSha256": "fcaa86b3cd82e7a0bb808949f8a1756fc2d3525a8e71f26f80651c4373c16579",
+        "catalogOutputMediaKinds": [
+          "image"
+        ],
+        "catalogSelectedCandidateMode": "inpaint",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan_fun_inp_graph_is_first_last_frame_generation_not_image_inpaint",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "2284a9fbb8be3b513b7af01d1b48d7ac8ce6c83b",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video"
+        ],
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.1 Inpainting"
     }
   ],
@@ -14488,7 +14581,7 @@
       "edit_audio": 1,
       "edit_image": 22,
       "edit_video": 2,
-      "first_last_frame_to_video": 8,
+      "first_last_frame_to_video": 9,
       "frame_interpolation": 1,
       "image_audio_to_text": 1,
       "image_audio_to_video": 1,
@@ -14497,10 +14590,9 @@
       "image_to_video": 10,
       "image_to_video_with_audio": 1,
       "image_upscale": 3,
-      "inpaint": 4,
+      "inpaint": 2,
       "layer_decomposition": 1,
       "motion_track_to_video": 1,
-      "outpaint": 1,
       "reference_to_image": 1,
       "reference_to_video": 2,
       "reference_to_video_with_audio": 1,
@@ -14510,26 +14602,28 @@
       "text_to_image": 33,
       "text_to_video": 11,
       "text_to_video_with_audio": 1,
+      "video_inpaint": 1,
+      "video_outpaint": 1,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 79,
+    "pinnedSourceReviewCount": 83,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 15,
-      "different_model_generation_requires_admission": 47,
+      "different_model_generation_and_new_task_required": 16,
+      "different_model_generation_requires_admission": 48,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
-      "same_upstream_generation_different_partition_and_auxiliary": 6,
+      "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 78,
-    "recordsWithPublicTemplateOption": 28,
-    "recordsWithRecommendedWorkflow": 106,
+    "recordsWithHiddenAuthoringSpecOption": 75,
+    "recordsWithPublicTemplateOption": 30,
+    "recordsWithRecommendedWorkflow": 105,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 16,
-      "existing_task_boundary_model_admission_required": 90,
-      "new_task_boundary_required": 32
+      "existing_family_workflow_candidate": 18,
+      "existing_task_boundary_model_admission_required": 87,
+      "new_task_boundary_required": 33
     },
     "sourceProposalCount": 138
   }

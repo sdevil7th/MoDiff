@@ -55,24 +55,24 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 16,
-                "existing_task_boundary_model_admission_required": 90,
-                "new_task_boundary_required": 32,
+                "existing_family_workflow_candidate": 18,
+                "existing_task_boundary_model_admission_required": 87,
+                "new_task_boundary_required": 33,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 106)
-        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 28)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 78)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 79)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 105)
+        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 75)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 83)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 15,
-                "different_model_generation_requires_admission": 47,
+                "different_model_generation_and_new_task_required": 16,
+                "different_model_generation_requires_admission": 48,
                 "same_upstream_family_different_default_partition": 1,
-                "same_upstream_generation_different_partition_and_auxiliary": 6,
+                "same_upstream_generation_different_partition_and_auxiliary": 8,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
                 "same_upstream_generation_requires_auxiliary_admission": 9,
             },
@@ -92,7 +92,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "camera_to_video": 3,
             "edit_audio": 1,
             "edit_video": 2,
-            "first_last_frame_to_video": 8,
+            "first_last_frame_to_video": 9,
             "image_to_3d": 7,
             "image_audio_to_video": 1,
             "image_audio_to_text": 1,
@@ -214,7 +214,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_seventy_nine_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_eighty_three_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -229,6 +229,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "audio_minimax_music_3",
                 "audio_stable_audio_3_medium",
                 "audio_stable_audio_3_medium_base",
+                "image_anima_lllite_image_inpainting",
                 "image_chroma1_radiance_text_to_image",
                 "image_chroma_text_to_image",
                 "image_flux2_klein_image_edit_9b_base",
@@ -291,11 +292,14 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "video_wan_vace_14B_ref2v",
                 "video_wan_vace_14B_t2v",
                 "video_wan_vace_14B_v2v",
+                "video_wan_vace_inpainting",
+                "video_wan_vace_outpainting",
                 "video_wan21_scail2_character_replacement",
                 "video_wan21_scail2_character_replacement_int8",
                 "video_wan_dancer",
                 "video_wanmove_480p",
                 "wan2.1_fun_control",
+                "wan2.1_fun_inp",
                 "utility_birefnet_remove_background",
                 "utility_pid_latent_upscale_dit",
                 "utility_seedvr2_3b_int8_upscale_image",
@@ -343,6 +347,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "video_wan21_scail2_character_replacement_int8",
             "audio_stable_audio_3_medium",
             "audio_stable_audio_3_medium_base",
+            "image_anima_lllite_image_inpainting",
             "image_chroma1_radiance_text_to_image",
             "image_flux2_klein_image_edit_9b_base",
             "image_flux2_klein_image_edit_9b_distilled",
@@ -574,6 +579,23 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertEqual(row["sourceReview"]["reviewedOutputMediaKinds"], ["video", "audio"])
             self.assertEqual(row["resolutionState"], "new_task_boundary_required")
             self.assertIsNone(row["recommendedWorkflow"])
+
+        vace_video_modes = {
+            "video_wan_vace_inpainting": "video_inpaint",
+            "video_wan_vace_outpainting": "video_outpaint",
+        }
+        for catalog_id, mode in vace_video_modes.items():
+            row = reviewed[catalog_id]
+            self.assertEqual(row["candidateOutputMediaKinds"], ["video"])
+            self.assertEqual(row["sourceReview"]["catalogOutputMediaKinds"], ["image"])
+            self.assertEqual(row["selectedCandidateMode"], mode)
+            self.assertEqual(row["recommendedWorkflow"]["canonicalWorkflowId"], f"WanVACEPipeline:{mode}")
+
+        fun_inp = reviewed["wan2.1_fun_inp"]
+        self.assertEqual(fun_inp["sourceReview"]["catalogSelectedCandidateMode"], "inpaint")
+        self.assertEqual(fun_inp["selectedCandidateMode"], "first_last_frame_to_video")
+        self.assertEqual(fun_inp["candidateOutputMediaKinds"], ["video"])
+        self.assertEqual(fun_inp["resolutionState"], "new_task_boundary_required")
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
