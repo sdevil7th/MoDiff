@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:3c84579a13710f72eb5b7ea1e807a4b19bf1ed0de424d1a22d307d582771d1f7",
+  "contentHash": "sha256:d702fdd20b40d7feb1547acdccd8d74b4718f8dfd387fea9b288e29e4b6d0d84",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -4360,6 +4360,48 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc",
+      "graphPath": "studio/spandrel-video-upscale/video-upscale.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "video_upscale",
+      "modelType": "SpandrelVideoUpscale",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "SpandrelVideoUpscaleV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "nateraw/real-esrgan"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source video of at most 1,200 frames and streams it through the exact x2 upscaler.",
+        "requiredVideos": [
+          "sourceVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -6148,30 +6190,30 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:015ea53b84f0c8b04e79c332eb7e24a51ba8970cd3b31993e371288afed22b3a",
+      "contentHash": "sha256:5809f0c1430d196cd164e8d4f1df19ff788181640d7211fa94c245d660c67d9b",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:5196289f53844bee7c8fed181eebfcb3ca3b8c280d55ab3c8440bebe9f85833e"
+      "sha256": "sha256:071a670ef7b3c523767587237e422500a457475219f2ff268991558499d722b2"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:7a4b697e8d3027124b5e882a02b336e86d4c76eedd0e5e6775605b4b97d710d8"
+      "sha256": "sha256:a6d90e8505e3933157f8986e9f974465d144e2add188c196d524f5e668788a89"
     }
   },
   "summary": {
-    "candidateContractCount": 135,
-    "canonicalWorkflowCount": 186,
+    "candidateContractCount": 136,
+    "canonicalWorkflowCount": 187,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 83,
+    "contractsRequiringInputExamples": 84,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 3,
       "image": 98,
       "json": 6,
-      "video": 28
+      "video": 29
     },
     "publicTemplateCount": 77
   }

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T08:41:41.278Z",
+  "generatedAt": "2026-08-15T09:18:14.826Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 174,
-  "supportedPairCount": 186,
+  "supportedCanonicalPairCount": 175,
+  "supportedPairCount": 187,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -4426,6 +4426,37 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
       "graphHash": "06d256b7ac16029e1a3bb8aa90c0515f338b5c0af6e79afe2c843875a3c51e74"
+    },
+    {
+      "id": "SpandrelVideoUpscale:video_upscale",
+      "modelType": "SpandrelVideoUpscale",
+      "modelFamily": "Real-ESRGAN",
+      "mode": "video_upscale",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "nateraw/real-esrgan"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ],
+        "note": "Requires one local source video of at most 1,200 frames and streams it through the exact x2 upscaler."
+      },
+      "pipelineClasses": [
+        "SpandrelVideoUpscaleV1"
+      ],
+      "sourceTemplateId": "task-template:real-esrgan-x2-video-upscale:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/spandrel-video-upscale/video-upscale.json",
+      "graphHash": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc"
     },
     {
       "id": "StableAudioPipeline:text_to_audio",

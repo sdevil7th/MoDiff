@@ -51,17 +51,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 135,
+                "authoringSpecCount": 136,
                 "promptDraftedCount": 120,
-                "promptNotApplicableCount": 15,
-                "canonicalDefaultsCapturedCount": 135,
-                "inputSelectionPendingCount": 83,
-                "rightsReviewPendingCount": 135,
-                "generationPendingCount": 135,
+                "promptNotApplicableCount": 16,
+                "canonicalDefaultsCapturedCount": 136,
+                "inputSelectionPendingCount": 84,
+                "rightsReviewPendingCount": 136,
+                "generationPendingCount": 136,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 52,
-                    "draft_complete_input_selection_pending": 83,
+                    "draft_complete_input_selection_pending": 84,
                 },
             },
         )
@@ -98,6 +98,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             "mask_composite",
             "video_frame_extract",
             "video_stitch",
+            "video_upscale",
             "speech_to_text",
             "speech_translation",
             "unconditional_image",
@@ -174,6 +175,35 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
         self.assertGreater(captured_count, 900)
+
+    def test_video_upscale_authoring_stays_input_and_execution_pending(self):
+        specification = next(
+            row
+            for row in self.ledger["specifications"]
+            if row["canonicalWorkflowId"] == "SpandrelVideoUpscale:video_upscale"
+        )
+        self.assertEqual(specification["promptPlan"]["status"], "not_applicable")
+        self.assertIsNone(specification["promptPlan"]["prompt"])
+        self.assertEqual(
+            specification["inputPlan"]["items"],
+            [
+                {
+                    "field": "sourceVideo",
+                    "mediaKind": "video",
+                    "minimumCount": 1,
+                    "rightsState": "review_required",
+                    "selectionState": "pending_original_or_licensed_asset",
+                    "technicalRequirements": [
+                        "decodable_video",
+                        "matches_exact_workflow_input_contract",
+                        "contains_no_unreviewed_brand_or_personal_data",
+                    ],
+                }
+            ],
+        )
+        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["nateraw/real-esrgan"])
+        self.assertEqual(specification["assetState"], "not_generated")
+        self.assertFalse(specification["claims"]["workflowExecuted"])
 
     def test_rights_generation_quality_and_publication_claims_remain_closed(self):
         self.assertEqual(

@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:9353350464cb91a78316e3cfe2896afe79812e6ce703b0e136f3b8f31ff2e65d",
+  "contentHash": "sha256:ae2880ca2a09bb6271ebdbc92b65229cec25c76251440dd2171f08918f9bfa76",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -4878,8 +4878,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "video_upscale_gan_x4",
       "catalogModelLabels": [],
@@ -4897,18 +4896,32 @@
       },
       "contractId": "comfy-research:blueprint:video_upscale_gan_x4",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_video_upscale",
       "inferredMode": "video_upscale",
       "presentationMediaHints": [
         "video"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:SpandrelVideoUpscale:video_upscale",
+        "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
+        "modelFamily": "Real-ESRGAN",
+        "modelType": "SpandrelVideoUpscale",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
+          "modelFamily": "Real-ESRGAN",
+          "modelType": "SpandrelVideoUpscale",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Video Upscale(GAN x4)"
     },
     {
@@ -7412,18 +7425,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:17e69a1799e1e83acadf106220f80f638725e0ec8c216f57b983b9395eb689f5",
+      "contentHash": "sha256:3a4ff61ce78b74921b18e7b0c7bb10c26250a5c9194b6a9265e81ce711736006",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:863cbb01109aa254428c228714466b2ce53cdf983371f542107e274da3c1c9b9"
+      "sha256": "sha256:372d9003b5fd3f5ba121d8866eef8ed6989add32de808dae04f8280d4589c381"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:015ea53b84f0c8b04e79c332eb7e24a51ba8970cd3b31993e371288afed22b3a",
+      "contentHash": "sha256:5809f0c1430d196cd164e8d4f1df19ff788181640d7211fa94c245d660c67d9b",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:5196289f53844bee7c8fed181eebfcb3ca3b8c280d55ab3c8440bebe9f85833e"
+      "sha256": "sha256:071a670ef7b3c523767587237e422500a457475219f2ff268991558499d722b2"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:7a4b697e8d3027124b5e882a02b336e86d4c76eedd0e5e6775605b4b97d710d8"
+      "sha256": "sha256:a6d90e8505e3933157f8986e9f974465d144e2add188c196d524f5e668788a89"
     }
   },
   "summary": {
@@ -7475,22 +7488,22 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 58,
+    "recordsWithHiddenAuthoringSpecOption": 59,
     "recordsWithInferredTask": 115,
     "recordsWithPublicTemplateOption": 26,
-    "recordsWithRecommendedWorkflow": 84,
+    "recordsWithRecommendedWorkflow": 85,
     "resolutionCount": 116,
     "resolutionStateCounts": {
-      "explicit_new_task_candidate": 31,
+      "explicit_new_task_candidate": 30,
       "explicit_task_and_family_candidate": 25,
-      "explicit_task_candidate": 59,
+      "explicit_task_candidate": 60,
       "source_review_required": 1
     },
     "sourceUndeterminedCount": 116,
     "taskBoundaryStateCounts": {
       "existing_family_workflow_candidate": 25,
-      "existing_task_boundary_model_admission_required": 59,
-      "new_task_boundary_required": 31,
+      "existing_task_boundary_model_admission_required": 60,
+      "new_task_boundary_required": 30,
       "task_undetermined": 1
     }
   }

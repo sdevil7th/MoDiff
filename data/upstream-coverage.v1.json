@@ -1649,6 +1649,17 @@
       "status": "executable"
     },
     {
+      "graphHash": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc",
+      "graphPath": "studio/spandrel-video-upscale/video-upscale.json",
+      "id": "SpandrelVideoUpscale:video_upscale",
+      "mode": "video_upscale",
+      "modelType": "SpandrelVideoUpscale",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "0a583350a1b97f08098c6b8fee9b0925b97bade0187ad87066a004583234d852",
       "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
       "id": "StableAudioPipeline:text_to_audio",
@@ -2183,7 +2194,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:015ea53b84f0c8b04e79c332eb7e24a51ba8970cd3b31993e371288afed22b3a",
+  "contentHash": "sha256:5809f0c1430d196cd164e8d4f1df19ff788181640d7211fa94c245d660c67d9b",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7919,9 +7930,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 186,
+    "canonicalWorkflowCount": 187,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 135,
+    "canonicalWorkflowsWithoutPublicTemplates": 136,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7954,7 +7965,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 186,
+      "executable": 187,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

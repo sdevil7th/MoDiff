@@ -1,0 +1,299 @@
+{
+  "edges": [
+    {
+      "className": "category-video",
+      "data": {
+        "connectionType": "video"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#06B6D4",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "video_out",
+      "style": {
+        "stroke": "#06B6D4"
+      },
+      "target": "node-01",
+      "targetHandle": "video",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "d5ccb8f0f6cd7f542a5917017c61f197331e2f4bea74984f81f14da6b85a0277",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Export",
+        "cache": false,
+        "category": "Video",
+        "description": "Save/Re-encode a video",
+        "label": "Export Video",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Video",
+        "params": {
+          "file": {
+            "display": "output",
+            "isConnected": false,
+            "type": "video"
+          },
+          "filename": {
+            "default": "{PATH:videos}/MoDiff_{HASH:6}.mp4",
+            "label": "File",
+            "type": "str"
+          },
+          "fps": {
+            "default": 24,
+            "label": "FPS",
+            "max": 240,
+            "min": 1,
+            "step": 0.01,
+            "type": "float",
+            "value": 16
+          },
+          "frames": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          },
+          "height": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          },
+          "preview": {
+            "dataSource": "file",
+            "display": "ui_video",
+            "type": "url"
+          },
+          "quality": {
+            "default": 5,
+            "display": "slider",
+            "max": 10,
+            "min": 1,
+            "type": "int"
+          },
+          "video": {
+            "display": "input",
+            "isConnected": true,
+            "type": [
+              "video",
+              "str",
+              "image"
+            ]
+          },
+          "width": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "videoExport",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 440,
+        "y": 56
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "UpscaleVideo",
+        "cache": false,
+        "category": "Video",
+        "description": "Stream a retained video through one exact, app-managed Spandrel model.",
+        "label": "Video.Upscale",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Video",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "label": "Device",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              }
+            ],
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "fps": {
+            "default": 24,
+            "label": "Output FPS",
+            "max": 120,
+            "min": 1,
+            "type": "float",
+            "value": 16
+          },
+          "frames": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          },
+          "height": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          },
+          "model_id": {
+            "default": {
+              "byteSize": 67061725,
+              "license": "bsd-3-clause",
+              "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+              "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+              "source": "hub",
+              "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth"
+            },
+            "display": "modelselect",
+            "fieldOptions": {
+              "filter": {
+                "hub": {},
+                "local": {
+                  "id": "^upscalers/"
+                }
+              },
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Upscaler",
+            "type": "string"
+          },
+          "operation": {
+            "default": "video_upscale",
+            "hidden": true,
+            "label": "Operation",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_upscale",
+                "schemaVersion": 1,
+                "value": "video_upscale"
+              }
+            ],
+            "type": "string",
+            "value": "video_upscale"
+          },
+          "pipeline_class": {
+            "default": "SpandrelVideoUpscaleV1",
+            "hidden": true,
+            "label": "Upscale Contract",
+            "type": "string",
+            "value": "SpandrelVideoUpscaleV1"
+          },
+          "preview": {
+            "dataSource": "video_out",
+            "display": "ui_video",
+            "type": "url"
+          },
+          "tile_overlap": {
+            "default": 32,
+            "label": "Tile Overlap",
+            "max": 256,
+            "min": 0,
+            "step": 8,
+            "type": "int"
+          },
+          "tile_size": {
+            "default": 256,
+            "label": "Tile Size",
+            "max": 2048,
+            "min": 64,
+            "step": 32,
+            "type": "int"
+          },
+          "video": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "video"
+              ],
+              "multiple": false
+            },
+            "label": "Source Video",
+            "type": "str",
+            "value": ""
+          },
+          "video_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Upscaled Video",
+            "type": "video"
+          },
+          "width": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "videoUpscaler",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

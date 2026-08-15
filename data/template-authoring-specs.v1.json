@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:17e69a1799e1e83acadf106220f80f638725e0ec8c216f57b983b9395eb689f5",
+  "contentHash": "sha256:3a4ff61ce78b74921b18e7b0c7bb10c26250a5c9194b6a9265e81ce711736006",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:3c84579a13710f72eb5b7ea1e807a4b19bf1ed0de424d1a22d307d582771d1f7",
+      "contentHash": "sha256:d702fdd20b40d7feb1547acdccd8d74b4718f8dfd387fea9b288e29e4b6d0d84",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:175bf0143a06abe3e4af05e3ffbb8583afcd1e099a9c66f0ecd4a87c5c4fe527"
+      "sha256": "sha256:2d04d46b04d62ac21563e563b61f8c4c5cd00a071fc3bd0a09f3c65a04ff17ad"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:7a4b697e8d3027124b5e882a02b336e86d4c76eedd0e5e6775605b4b97d710d8"
+      "sha256": "sha256:a6d90e8505e3933157f8986e9f974465d144e2add188c196d524f5e668788a89"
     }
   },
   "specifications": [
@@ -14120,6 +14120,115 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
+          "nateraw/real-esrgan"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/spandrel-video-upscale/video-upscale.json",
+        "sha256": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc"
+      },
+      "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 16
+          },
+          {
+            "parameter": "fps",
+            "role": "videoUpscaler",
+            "value": 16
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:SpandrelVideoUpscale:video_upscale",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceVideo",
+            "mediaKind": "video",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "video_upscale",
+      "modelFamily": "Real-ESRGAN",
+      "modelType": "SpandrelVideoUpscale",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Real-ESRGAN video upscale workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Real-ESRGAN — Video Upscale [SpandrelVideoUpscale]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
           "stabilityai/stable-audio-open-1.0"
         ]
       },
@@ -19963,16 +20072,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 135,
+    "authoringSpecCount": 136,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 52,
-      "draft_complete_input_selection_pending": 83
+      "draft_complete_input_selection_pending": 84
     },
-    "canonicalDefaultsCapturedCount": 135,
-    "generationPendingCount": 135,
-    "inputSelectionPendingCount": 83,
+    "canonicalDefaultsCapturedCount": 136,
+    "generationPendingCount": 136,
+    "inputSelectionPendingCount": 84,
     "promptDraftedCount": 120,
-    "promptNotApplicableCount": 15,
-    "rightsReviewPendingCount": 135
+    "promptNotApplicableCount": 16,
+    "rightsReviewPendingCount": 136
   }
 }

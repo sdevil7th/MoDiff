@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 58,
+                "recordsWithHiddenAuthoringSpecOption": 59,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 84,
+                "recordsWithRecommendedWorkflow": 85,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 31,
+                    "explicit_new_task_candidate": 30,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 59,
+                    "explicit_task_candidate": 60,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 59,
-                    "new_task_boundary_required": 31,
+                    "existing_task_boundary_model_admission_required": 60,
+                    "new_task_boundary_required": 30,
                     "task_undetermined": 1,
                 },
             },
@@ -193,6 +193,18 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
             row["recommendedWorkflow"]["canonicalWorkflowId"],
             "BuiltinImageOperation:image_upscale",
         )
+
+    def test_video_upscale_blueprint_reuses_only_the_reviewed_task_boundary(self):
+        row = next(row for row in self.ledger["resolutions"] if row["catalogId"] == "video_upscale_gan_x4")
+        self.assertEqual(row["inferredMode"], "video_upscale")
+        self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+        self.assertEqual(row["taskBoundaryState"], "existing_task_boundary_model_admission_required")
+        self.assertEqual(
+            row["recommendedWorkflow"]["canonicalWorkflowId"],
+            "SpandrelVideoUpscale:video_upscale",
+        )
+        self.assertFalse(row["claims"]["exactModelSupported"])
+        self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
 
     def test_explicit_mask_composite_metadata_reuses_the_bounded_install_free_task(self):
         row = next(
