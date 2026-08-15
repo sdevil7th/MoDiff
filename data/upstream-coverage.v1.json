@@ -275,10 +275,43 @@
       "status": "executable"
     },
     {
+      "graphHash": "223094c5d8b02c6bc1a6546cf1dae4064941040c1961bdcc48df3ac1997502ee",
+      "graphPath": "studio/builtin-video-operation/video-reverse.json",
+      "id": "BuiltinVideoOperation:video_reverse",
+      "mode": "video_reverse",
+      "modelType": "BuiltinVideoOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9",
       "graphPath": "studio/builtin-video-operation/video-stitch.json",
       "id": "BuiltinVideoOperation:video_stitch",
       "mode": "video_stitch",
+      "modelType": "BuiltinVideoOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "7dfca3c41f53b54990caae80b0cc17b104871fae79a208726908152a59707736",
+      "graphPath": "studio/builtin-video-operation/video-tile.json",
+      "id": "BuiltinVideoOperation:video_tile",
+      "mode": "video_tile",
+      "modelType": "BuiltinVideoOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "8c5fc8e0a79919665524936390ff9d0d235bb8b3368ced2ce3ebca8837e326eb",
+      "graphPath": "studio/builtin-video-operation/video-trim.json",
+      "id": "BuiltinVideoOperation:video_trim",
+      "mode": "video_trim",
       "modelType": "BuiltinVideoOperation",
       "publicTemplateIds": [],
       "qualificationStatus": "graph-qualified-execution-pending",
@@ -2194,7 +2227,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:5809f0c1430d196cd164e8d4f1df19ff788181640d7211fa94c245d660c67d9b",
+  "contentHash": "sha256:7775ce689d14ffa9b9dd1628d905be336d3120a9177d294637d42edc98c4f674",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7930,9 +7963,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 187,
+    "canonicalWorkflowCount": 190,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 136,
+    "canonicalWorkflowsWithoutPublicTemplates": 139,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7965,7 +7998,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 187,
+      "executable": 190,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

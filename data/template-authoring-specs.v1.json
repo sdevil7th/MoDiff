@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:3a4ff61ce78b74921b18e7b0c7bb10c26250a5c9194b6a9265e81ce711736006",
+  "contentHash": "sha256:1042ad843b1d65ce5f78ffd21df71a9a192c89b923410df188956d6ef421ef2c",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:d702fdd20b40d7feb1547acdccd8d74b4718f8dfd387fea9b288e29e4b6d0d84",
+      "contentHash": "sha256:29263085dd4cf94d6170ee56565253bcee53f7f845e9162a6751b4e63fab2641",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:2d04d46b04d62ac21563e563b61f8c4c5cd00a071fc3bd0a09f3c65a04ff17ad"
+      "sha256": "sha256:7a635beb2dcc9eea2458f52cebbc8af4a90f8fca20c950386973c564b5a31e0a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:a6d90e8505e3933157f8986e9f974465d144e2add188c196d524f5e668788a89"
+      "sha256": "sha256:99537c6c61e5673254f79e7457e91f6fabc89c86a59624293a0fe182321129c6"
     }
   },
   "specifications": [
@@ -2455,6 +2455,110 @@
       "assets": [],
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
+        "path": "studio/builtin-video-operation/video-reverse.json",
+        "sha256": "223094c5d8b02c6bc1a6546cf1dae4064941040c1961bdcc48df3ac1997502ee"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:video_reverse",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 16
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "223094c5d8b02c6bc1a6546cf1dae4064941040c1961bdcc48df3ac1997502ee",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinVideoOperation:video_reverse",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceVideo",
+            "mediaKind": "video",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "video_reverse",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinVideoOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Built-in Media video reverse workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Video Reverse [BuiltinVideoOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/video-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-stitch.json",
         "sha256": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9"
       },
@@ -2546,6 +2650,214 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "Built-in Media — Video Stitch [BuiltinVideoOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/video-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-video-operation/video-tile.json",
+        "sha256": "7dfca3c41f53b54990caae80b0cc17b104871fae79a208726908152a59707736"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:video_tile",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 16
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "7dfca3c41f53b54990caae80b0cc17b104871fae79a208726908152a59707736",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinVideoOperation:video_tile",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceVideos",
+            "mediaKind": "video",
+            "minimumCount": 2,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "video_tile",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinVideoOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Built-in Media video tile workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Video Tile [BuiltinVideoOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/video-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-video-operation/video-trim.json",
+        "sha256": "8c5fc8e0a79919665524936390ff9d0d235bb8b3368ced2ce3ebca8837e326eb"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:video_trim",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 16
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "8c5fc8e0a79919665524936390ff9d0d235bb8b3368ced2ce3ebca8837e326eb",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinVideoOperation:video_trim",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceVideo",
+            "mediaKind": "video",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "video_trim",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinVideoOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Built-in Media video trim workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Video Trim [BuiltinVideoOperation]"
     },
     {
       "artifactPlan": {
@@ -20072,16 +20384,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 136,
+    "authoringSpecCount": 139,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 52,
-      "draft_complete_input_selection_pending": 84
+      "draft_complete_input_selection_pending": 87
     },
-    "canonicalDefaultsCapturedCount": 136,
-    "generationPendingCount": 136,
-    "inputSelectionPendingCount": 84,
+    "canonicalDefaultsCapturedCount": 139,
+    "generationPendingCount": 139,
+    "inputSelectionPendingCount": 87,
     "promptDraftedCount": 120,
-    "promptNotApplicableCount": 16,
-    "rightsReviewPendingCount": 136
+    "promptNotApplicableCount": 19,
+    "rightsReviewPendingCount": 139
   }
 }
