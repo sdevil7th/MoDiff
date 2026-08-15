@@ -1829,6 +1829,80 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "new_task_boundary_required",
         "mappingMeaning": "source_reviewed_new_remove_background_task_and_model_generation_required",
     },
+    "comfy-research:template:llm_gemma4_text_gen": {
+        "assetPath": "templates/llm_gemma4_text_gen.json",
+        "assetSha256": "a9673276612a885bc2898ef7cf2faea50fb78d75f5ee328620aa484b85b47469",
+        "gitBlobOid": "27589bbb387986f1279ac306053b3064e44cfc0f",
+        "reviewedTaskMode": "image_audio_to_text",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/gemma-4", "artifact": "gemma4_e4b_it_fp8_scaled.safetensors"}
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "gemma4_graph_requires_combined_image_audio_conditioned_text_task",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_audio_text_task_and_model_generation_required",
+    },
+    "comfy-research:template:llm_qwen3_5_text_gen": {
+        "assetPath": "templates/llm_qwen3_5_text_gen.json",
+        "assetSha256": "8555d9f50e335ce9d2b4ea69b7531be3249c76062dfa272aa9eb933d736664e3",
+        "gitBlobOid": "4cd72528d24bfb698bfe47d0edaa48a01cd6ad7e",
+        "reviewedTaskMode": "image_to_text",
+        "reviewedWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Qwen3.5", "artifact": "qwen3.5_4b_bf16.safetensors"}
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+            "currentRepository": "HuggingFaceTB/SmolVLM-256M-Instruct",
+            "currentRevision": "7e3e67edbbed1bf9888184d9df282b700a323964",
+            "reasonCode": "qwen3_5_vision_language_generation_is_not_smolvlm",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:llm_qwen3_text_gen": {
+        "assetPath": "templates/llm_qwen3_text_gen.json",
+        "assetSha256": "b09690ecd1504aa292d3ade8b49bf0052e49b6cab8430b8bfbe960a5a7f6d02f",
+        "gitBlobOid": "afe00a0e4f7523ac23e5f31f390c6280bf2af843",
+        "reviewedWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/flux2-klein", "artifact": "qwen_3_4b.safetensors"}
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+            "currentRepository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+            "currentRevision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+            "reasonCode": "qwen3_4b_generation_is_not_smollm2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:llm_qwen3vl_text_gen": {
+        "assetPath": "templates/llm_qwen3vl_text_gen.json",
+        "assetSha256": "bed74ae16694e3887532824dfd2c58b7228afa0e43d45f8d93326506ab82ad97",
+        "gitBlobOid": "e175bf1e88bfdb54ca00d226d276a481999a0e39",
+        "reviewedTaskMode": "image_to_text",
+        "reviewedWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Qwen3-VL", "artifact": "qwen3vl_4b_fp8_scaled.safetensors"}
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+            "currentRepository": "HuggingFaceTB/SmolVLM-256M-Instruct",
+            "currentRevision": "7e3e67edbbed1bf9888184d9df282b700a323964",
+            "reasonCode": "qwen3vl_generation_is_not_smolvlm",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
 }
 _BOUNDARY = {
     "researchOnly": True,

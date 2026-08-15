@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:a1c224d6fb253406de53f56a57129db016bee78ae4c2b4cc179b63a6b0082b51",
+  "contentHash": "sha256:8b4d5d95b391996efdcae756f8deb4a07301ea5fa531c5efb513648453b0eafc",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -8003,11 +8003,13 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_gemma4_graph_requires_combined_image_audio_conditioned_text_task",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "text"
@@ -8028,41 +8030,47 @@
       },
       "contractId": "comfy-research:template:llm_gemma4_text_gen",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 2,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_new_image_audio_text_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
-        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-        "modelFamily": "Janus",
-        "modelType": "HuggingFaceAnyToAnyModel",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-          "modelFamily": "Janus",
-          "modelType": "HuggingFaceAnyToAnyModel",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-          "modelFamily": "SmolLM",
-          "modelType": "HuggingFaceTextGenerationModel",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "text_generation",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "image_audio_to_text",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "gemma4_e4b_it_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/gemma-4"
+          }
+        ],
+        "assetPath": "templates/llm_gemma4_text_gen.json",
+        "assetSha256": "a9673276612a885bc2898ef7cf2faea50fb78d75f5ee328620aa484b85b47469",
+        "catalogSelectedCandidateMode": "text_generation",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "gemma4_graph_requires_combined_image_audio_conditioned_text_task",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "27589bbb387986f1279ac306053b3064e44cfc0f",
+        "importsGraph": false,
+        "reviewedTaskMode": "image_audio_to_text",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Gemma4: Text Generation"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen3_5_vision_language_generation_is_not_smolvlm",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -8088,39 +8096,67 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
-        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-        "modelFamily": "Janus",
-        "modelType": "HuggingFaceAnyToAnyModel",
+        "authoringSpecId": "template-authoring:HuggingFaceImageTextToTextModel:image_to_text",
+        "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+        "modelFamily": "SmolVLM",
+        "modelType": "HuggingFaceImageTextToTextModel",
         "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-          "modelFamily": "Janus",
-          "modelType": "HuggingFaceAnyToAnyModel",
+          "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+          "modelFamily": "SmolVLM",
+          "modelType": "HuggingFaceImageTextToTextModel",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-          "modelFamily": "SmolLM",
-          "modelType": "HuggingFaceTextGenerationModel",
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "text_generation",
+      "selectedCandidateMode": "image_to_text",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen3.5_4b_bf16.safetensors",
+            "repository": "Comfy-Org/Qwen3.5"
+          }
+        ],
+        "assetPath": "templates/llm_qwen3_5_text_gen.json",
+        "assetSha256": "8555d9f50e335ce9d2b4ea69b7531be3249c76062dfa272aa9eb933d736664e3",
+        "catalogRecommendedWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
+        "catalogSelectedCandidateMode": "text_generation",
+        "comparison": {
+          "currentRepository": "HuggingFaceTB/SmolVLM-256M-Instruct",
+          "currentRevision": "7e3e67edbbed1bf9888184d9df282b700a323964",
+          "currentWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+          "reasonCode": "qwen3_5_vision_language_generation_is_not_smolvlm",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4cd72528d24bfb698bfe47d0edaa48a01cd6ad7e",
+        "importsGraph": false,
+        "reviewedTaskMode": "image_to_text",
+        "reviewedWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen3.5: Text Generation"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen3_4b_generation_is_not_smollm2",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -8146,39 +8182,65 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
-        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-        "modelFamily": "Janus",
-        "modelType": "HuggingFaceAnyToAnyModel",
+        "authoringSpecId": "template-authoring:HuggingFaceTextGenerationModel:text_generation",
+        "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+        "modelFamily": "SmolLM",
+        "modelType": "HuggingFaceTextGenerationModel",
         "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-          "modelFamily": "Janus",
-          "modelType": "HuggingFaceAnyToAnyModel",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
           "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
           "modelFamily": "SmolLM",
           "modelType": "HuggingFaceTextGenerationModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_generation",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_3_4b.safetensors",
+            "repository": "Comfy-Org/flux2-klein"
+          }
+        ],
+        "assetPath": "templates/llm_qwen3_text_gen.json",
+        "assetSha256": "b09690ecd1504aa292d3ade8b49bf0052e49b6cab8430b8bfbe960a5a7f6d02f",
+        "catalogRecommendedWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+        "comparison": {
+          "currentRepository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+          "currentRevision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+          "currentWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+          "reasonCode": "qwen3_4b_generation_is_not_smollm2",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "afe00a0e4f7523ac23e5f31f390c6280bf2af843",
+        "importsGraph": false,
+        "reviewedWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen3.0: Text Generation"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen3vl_generation_is_not_smolvlm",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -8204,33 +8266,60 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
-        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-        "modelFamily": "Janus",
-        "modelType": "HuggingFaceAnyToAnyModel",
+        "authoringSpecId": "template-authoring:HuggingFaceImageTextToTextModel:image_to_text",
+        "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+        "modelFamily": "SmolVLM",
+        "modelType": "HuggingFaceImageTextToTextModel",
         "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
-          "modelFamily": "Janus",
-          "modelType": "HuggingFaceAnyToAnyModel",
+          "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+          "modelFamily": "SmolVLM",
+          "modelType": "HuggingFaceImageTextToTextModel",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-          "modelFamily": "SmolLM",
-          "modelType": "HuggingFaceTextGenerationModel",
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "text_generation",
+      "selectedCandidateMode": "image_to_text",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen3vl_4b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen3-VL"
+          }
+        ],
+        "assetPath": "templates/llm_qwen3vl_text_gen.json",
+        "assetSha256": "bed74ae16694e3887532824dfd2c58b7228afa0e43d45f8d93326506ab82ad97",
+        "catalogRecommendedWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
+        "catalogSelectedCandidateMode": "text_generation",
+        "comparison": {
+          "currentRepository": "HuggingFaceTB/SmolVLM-256M-Instruct",
+          "currentRevision": "7e3e67edbbed1bf9888184d9df282b700a323964",
+          "currentWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+          "reasonCode": "qwen3vl_generation_is_not_smolvlm",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "e175bf1e88bfdb54ca00d226d276a481999a0e39",
+        "importsGraph": false,
+        "reviewedTaskMode": "image_to_text",
+        "reviewedWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen3-VL: Text Generation"
     },
     {
@@ -14101,8 +14190,10 @@
       "edit_video": 2,
       "first_last_frame_to_video": 8,
       "frame_interpolation": 1,
+      "image_audio_to_text": 1,
       "image_audio_to_video": 1,
       "image_to_3d": 7,
+      "image_to_text": 2,
       "image_to_video": 11,
       "image_upscale": 3,
       "inpaint": 4,
@@ -14112,30 +14203,30 @@
       "reference_to_image": 1,
       "reference_to_video": 3,
       "remove_background": 1,
-      "text_generation": 4,
+      "text_generation": 1,
       "text_to_audio": 5,
       "text_to_image": 33,
       "text_to_video": 12,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 66,
+    "pinnedSourceReviewCount": 70,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 8,
-      "different_model_generation_requires_admission": 41,
+      "different_model_generation_and_new_task_required": 9,
+      "different_model_generation_requires_admission": 44,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 6,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 82,
+    "recordsWithHiddenAuthoringSpecOption": 81,
     "recordsWithPublicTemplateOption": 28,
-    "recordsWithRecommendedWorkflow": 110,
+    "recordsWithRecommendedWorkflow": 109,
     "resolutionCount": 138,
     "resolutionStateCounts": {
       "existing_family_workflow_candidate": 16,
-      "existing_task_boundary_model_admission_required": 94,
-      "new_task_boundary_required": 28
+      "existing_task_boundary_model_admission_required": 93,
+      "new_task_boundary_required": 29
     },
     "sourceProposalCount": 138
   }

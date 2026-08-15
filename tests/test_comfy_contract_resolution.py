@@ -56,21 +56,21 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.ledger["summary"]["resolutionStateCounts"],
             {
                 "existing_family_workflow_candidate": 16,
-                "existing_task_boundary_model_admission_required": 94,
-                "new_task_boundary_required": 28,
+                "existing_task_boundary_model_admission_required": 93,
+                "new_task_boundary_required": 29,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 110)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 109)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 28)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 82)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 66)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 81)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 70)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 8,
-                "different_model_generation_requires_admission": 41,
+                "different_model_generation_and_new_task_required": 9,
+                "different_model_generation_requires_admission": 44,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 6,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -95,6 +95,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "first_last_frame_to_video": 8,
             "image_to_3d": 7,
             "image_audio_to_video": 1,
+            "image_audio_to_text": 1,
             "motion_track_to_video": 1,
             "reference_to_image": 1,
             "remove_background": 1,
@@ -166,7 +167,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
 
     def test_text_outputs_reuse_the_bounded_json_generation_boundary(self):
         rows = [row for row in self.ledger["resolutions"] if row["selectedCandidateMode"] == "text_generation"]
-        self.assertEqual(len(rows), 4)
+        self.assertEqual(len(rows), 1)
         for row in rows:
             with self.subTest(contract=row["contractId"]):
                 self.assertEqual(
@@ -210,7 +211,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_sixty_six_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_seventy_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -249,6 +250,10 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_z_image",
                 "image_z_image_int8",
                 "image_to_video_wan",
+                "llm_gemma4_text_gen",
+                "llm_qwen3_5_text_gen",
+                "llm_qwen3_text_gen",
+                "llm_qwen3vl_text_gen",
                 "ltxv_image_to_video",
                 "ltxv_text_to_video",
                 "sdxl_refiner_prompt_example",
@@ -360,6 +365,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "utility_seedvr2_3b_int8_upscale_video",
             "utility_seedvr2_7b_int8_upscale_image",
             "utility_video_frame_interpolation",
+            "llm_qwen3_5_text_gen",
+            "llm_qwen3_text_gen",
+            "llm_qwen3vl_text_gen",
         ):
             self.assertEqual(
                 reviewed[catalog_id]["resolutionState"],
@@ -522,6 +530,21 @@ class ComfyContractResolutionTests(unittest.TestCase):
         birefnet = reviewed["utility_birefnet_remove_background"]
         self.assertEqual(birefnet["resolutionState"], "new_task_boundary_required")
         self.assertIsNone(birefnet["recommendedWorkflow"])
+
+        gemma4 = reviewed["llm_gemma4_text_gen"]
+        self.assertEqual(gemma4["sourceReview"]["catalogSelectedCandidateMode"], "text_generation")
+        self.assertEqual(gemma4["selectedCandidateMode"], "image_audio_to_text")
+        self.assertEqual(gemma4["resolutionState"], "new_task_boundary_required")
+        self.assertIsNone(gemma4["recommendedWorkflow"])
+
+        for catalog_id in ("llm_qwen3_5_text_gen", "llm_qwen3vl_text_gen"):
+            row = reviewed[catalog_id]
+            self.assertEqual(row["sourceReview"]["catalogSelectedCandidateMode"], "text_generation")
+            self.assertEqual(row["selectedCandidateMode"], "image_to_text")
+            self.assertEqual(
+                row["recommendedWorkflow"]["canonicalWorkflowId"],
+                "HuggingFaceImageTextToTextModel:image_to_text",
+            )
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
