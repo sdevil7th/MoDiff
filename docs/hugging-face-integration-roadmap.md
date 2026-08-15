@@ -6950,12 +6950,12 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Forty
-of those 138 candidates now also have exact pinned graph-source dependency
-reviews, performed read-only without importing, executing, or copying their
-graphs, nodes, or prompts. The two Stable Audio 3 records and the original
-Qwen-Image-plus-Lightning record resolve only to existing task boundaries and
-still require distinct model-generation admissions; the Chroma record remains
+the 138 proposed new MoDiff contracts are deliberately not yet authored.
+Forty-five of those 138 candidates now also have exact pinned graph-source
+dependency reviews, performed read-only without importing, executing, or
+copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
+original Qwen-Image-plus-Lightning record resolve only to existing task
+boundaries and still require distinct model-generation admissions; the Chroma record remains
 a same-family candidate because its FP8 repackaged component partition is not
 the admitted Diffusers checkpoint. The second review tranche likewise keeps
 Chroma1 Radiance, Z-Image Base/Base-Int8, and both FLUX.2 Klein 9B generations
@@ -6991,6 +6991,11 @@ from Kandinsky 3, and OmniGen 2 from OmniGen v1. They also correct Lotus from a
 text-to-image match to the generic depth-estimation boundary and map the
 NetaYume fine-tune to Lumina 2 rather than OmniGen, without admitting either
 checkpoint.
+Three more FLUX.2 reviews keep 9B KV/base and FLUX.2 Dev outside the admitted
+Klein 4B generation. The SDXL refiner concept retains the admitted base but
+requires a new refiner stage/artifact, while the graph named “revision prompts”
+is source-proven unCLIP image conditioning and therefore needs a new bounded
+`reference_to_image` task plus CLIP-Vision input.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7104,7 +7109,8 @@ dependency decisions and keeps audio editing explicitly unauthored. `dfe18ec`
 adds the six Wan source decisions and three new camera-task requirements.
 `9230b11` adds five Qwen generation/control decisions and two source-proven
 workflow-family corrections. `dd5591e` adds six exact image-generation and
-depth-task decisions.
+depth-task decisions. `ac7c320` adds the remaining FLUX.2 family decisions and
+the two SDXL refiner/unCLIP task distinctions.
 
 The following separate gates do remain external:
 
