@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Fifty-five of those 138 candidates now also have exact pinned graph-source
+Sixty of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7007,6 +7007,11 @@ map Wan 2.2 Fun Control to the generic `control_video_to_video` boundary without
 equating its model. WanMove is source-proven to require a new bounded
 `motion_track_to_video` task and its distinct motion/step-distillation model
 assembly.
+The remaining five Wan family reviews correct Fun Inpaint to a first/last-frame
+generation task, VACE Ref2V to reference-conditioned video, and both VACE V2V
+and Wan 2.1 Fun Control to control-video tasks. The VACE 14B graphs retain their
+distinct 14B component partition and CausVid LoRA gates; none inherits support
+or qualification from the admitted 1.3B VACE checkpoint.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7124,6 +7129,8 @@ depth-task decisions. `ac7c320` adds the remaining FLUX.2 family decisions and
 the two SDXL refiner/unCLIP task distinctions. `0a48984` adds the five remaining
 LTX family and image-audio conditioning decisions. `a81bd03` adds the two Qwen
 multiple-angle, causal-forcing, Wan Fun Control, and WanMove decisions.
+`e6205d1` finishes the five Wan/VACE family source reviews and their task
+corrections.
 
 The following separate gates do remain external:
 
