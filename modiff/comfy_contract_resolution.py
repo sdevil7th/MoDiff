@@ -978,6 +978,143 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
+    "comfy-research:template:image_ernie_image": {
+        "assetPath": "templates/image_ernie_image.json",
+        "assetSha256": "d75ba44837ed432a5acf4f4eeb6a6f688b55827f8f2cfb7a464e09a8bf67be2c",
+        "gitBlobOid": "4b841c64cd1742dced75614e4b51747ee13adcaf",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/ERNIE-Image", "artifact": "ernie-image.safetensors"},
+            {"repository": "Comfy-Org/ERNIE-Image", "artifact": "ministral-3-3b.safetensors"},
+            {"repository": "Comfy-Org/ERNIE-Image", "artifact": "flux2-vae.safetensors"},
+            {
+                "repository": "Comfy-Org/ERNIE-Image",
+                "artifact": "ernie-image-prompt-enhancer.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "ErnieImagePipeline:text_to_image",
+            "currentRepository": "baidu/ERNIE-Image-Turbo",
+            "currentRevision": "bc68c81e2a1730a394d5fc9fae70713dee940140",
+            "reasonCode": "ernie_image_is_not_ernie_image_turbo",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_kandinsky5_t2i": {
+        "assetPath": "templates/image_kandinsky5_t2i.json",
+        "assetSha256": "1cf174899cbe087c2dc4c187e938b877c4a8a1cac28305c2279f6d35cc1b4be4",
+        "gitBlobOid": "f1f9521c422b35c991902d6e61335fecf024579f",
+        "artifactDependencies": [
+            {
+                "repository": "kandinskylab/Kandinsky-5.0-T2I-Lite",
+                "artifact": "kandinsky5lite_t2i.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {"repository": "comfyanonymous/flux_text_encoders", "artifact": "clip_l.safetensors"},
+            {"repository": "Comfy-Org/z_image_turbo", "artifact": "ae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Kandinsky3Pipeline:text_to_image",
+            "currentRepository": "kandinsky-community/kandinsky-3",
+            "currentRevision": "bf79e6c219da8a94abb50235fdc4567eb8fb4632",
+            "reasonCode": "kandinsky_5_lite_is_not_kandinsky_3",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_lotus_depth_v1_1": {
+        "assetPath": "templates/image_lotus_depth_v1_1.json",
+        "assetSha256": "829014bad41d91b27783e2f5a1eec98e9ffefc6a04a3096f17c9d14219c22493",
+        "gitBlobOid": "46b550b2a8f006edb5592465051b5ea88ff1d192",
+        "reviewedTaskMode": "depth_estimation",
+        "reviewedWorkflowId": "MarigoldDepthPipeline:depth_estimation",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/lotus", "artifact": "lotus-depth-d-v1-1.safetensors"},
+            {
+                "repository": "stabilityai/sd-vae-ft-mse-original",
+                "artifact": "vae-ft-mse-840000-ema-pruned.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "MarigoldDepthPipeline:depth_estimation",
+            "currentRepository": "prs-eth/marigold-depth-lcm-v1-0",
+            "currentRevision": "04a73502f7fd8fc5e59947b9df3b2266d71d6849",
+            "reasonCode": "lotus_depth_is_not_marigold_depth_lcm",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_netayume_lumina_t2i": {
+        "assetPath": "templates/image_netayume_lumina_t2i.json",
+        "assetSha256": "c9ed8360e179a3d68e110ced68b8b1db74e6f8a4261652b8eeda30c753bab676",
+        "gitBlobOid": "8d7426f8ca3ada611df2b785ff1cac952a06aa1b",
+        "reviewedWorkflowId": "Lumina2Pipeline:text_to_image",
+        "artifactDependencies": [
+            {
+                "repository": "duongve/NetaYume-Lumina-Image-2.0",
+                "artifact": "NetaYumev35_pretrained_all_in_one.safetensors",
+            }
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Lumina2Pipeline:text_to_image",
+            "currentRepository": "Alpha-VLLM/Lumina-Image-2.0",
+            "currentRevision": "53504abd8178b30685b6c4c7a4cd181ff78b73e9",
+            "reasonCode": "netayume_lumina_finetune_is_not_lumina_image_2_base",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_omnigen2_t2i": {
+        "assetPath": "templates/image_omnigen2_t2i.json",
+        "assetSha256": "d0ccb8ea4d207288e0efa7ef929c3cedc24f8bb3bf7de1827e584d7d3b6d7bbc",
+        "gitBlobOid": "4b4df6632653eef2f4e192e7e988e82d20ccee9f",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Omnigen2_ComfyUI_repackaged", "artifact": "omnigen2_fp16.safetensors"},
+            {
+                "repository": "Comfy-Org/Omnigen2_ComfyUI_repackaged",
+                "artifact": "qwen_2.5_vl_fp16.safetensors",
+            },
+            {"repository": "Comfy-Org/Lumina_Image_2.0_Repackaged", "artifact": "ae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "OmniGenPipeline:text_to_image",
+            "currentRepository": "Shitao/OmniGen-v1-diffusers",
+            "currentRevision": "016e2f61d12a98303f6bbdf122687694d7984268",
+            "reasonCode": "omnigen2_is_not_omnigen_v1",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_omnigen2_image_edit": {
+        "assetPath": "templates/image_omnigen2_image_edit.json",
+        "assetSha256": "3a63f64bf3b58ad8fa761e4606d7d5ca1e6efd42fc1df57afe9e3e6d075ca593",
+        "gitBlobOid": "c14f55f4797cf66a0980a5dedf51919f91865942",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Omnigen2_ComfyUI_repackaged", "artifact": "omnigen2_fp16.safetensors"},
+            {
+                "repository": "Comfy-Org/Omnigen2_ComfyUI_repackaged",
+                "artifact": "qwen_2.5_vl_fp16.safetensors",
+            },
+            {"repository": "Comfy-Org/Lumina_Image_2.0_Repackaged", "artifact": "ae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "OmniGenPipeline:edit_image",
+            "currentRepository": "Shitao/OmniGen-v1-diffusers",
+            "currentRevision": "016e2f61d12a98303f6bbdf122687694d7984268",
+            "reasonCode": "omnigen2_is_not_omnigen_v1",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:image_z_image": {
         "assetPath": "templates/image_z_image.json",
         "assetSha256": "f7b3ceb43a3688e17cc5bce67d1beafe833a674b4e4a257c626a6243b3ebedc2",
@@ -1218,12 +1355,12 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
                 label=f"{contract_id} reviewed workflow id",
             )
             reviewed_workflow = next(
-                (workflow for workflow in options if workflow["id"] == reviewed_workflow_id),
+                (workflow for workflow in task_options if workflow["id"] == reviewed_workflow_id),
                 None,
             )
             if reviewed_workflow is None:
                 raise ComfyContractResolutionError(
-                    f"Pinned Comfy source review workflow is not a current task/family option for {contract_id}."
+                    f"Pinned Comfy source review workflow is not a current task option for {contract_id}."
                 )
             catalog_recommended_id = representatives[0]["canonicalWorkflowId"] if representatives else None
             pinned_source_review["catalogRecommendedWorkflowId"] = catalog_recommended_id

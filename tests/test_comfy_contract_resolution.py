@@ -55,8 +55,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 33,
-                "existing_task_boundary_model_admission_required": 81,
+                "existing_family_workflow_candidate": 27,
+                "existing_task_boundary_model_admission_required": 87,
                 "new_task_boundary_required": 24,
             },
         )
@@ -65,12 +65,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 114)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 26)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 88)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 34)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 40)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
                 "different_model_generation_and_new_task_required": 4,
-                "different_model_generation_requires_admission": 23,
+                "different_model_generation_requires_admission": 29,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 4,
                 "same_upstream_generation_requires_auxiliary_admission": 2,
@@ -206,7 +206,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_thirty_four_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_forty_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -224,6 +224,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_chroma_text_to_image",
                 "image_flux2_klein_image_edit_9b_base",
                 "image_flux2_klein_image_edit_9b_distilled",
+                "image_ernie_image",
+                "image_kandinsky5_t2i",
+                "image_lotus_depth_v1_1",
+                "image_netayume_lumina_t2i",
+                "image_omnigen2_image_edit",
+                "image_omnigen2_t2i",
                 "image-qwen_image_edit_2511_lora_inflation",
                 "image_qwen_image",
                 "image_qwen_image_2512_with_2steps_lora",
@@ -290,6 +296,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_chroma1_radiance_text_to_image",
             "image_flux2_klein_image_edit_9b_base",
             "image_flux2_klein_image_edit_9b_distilled",
+            "image_ernie_image",
+            "image_kandinsky5_t2i",
+            "image_lotus_depth_v1_1",
+            "image_netayume_lumina_t2i",
+            "image_omnigen2_image_edit",
+            "image_omnigen2_t2i",
             "image_qwen_image_layered_control",
             "image_qwen_image_union_control_lora",
             "image_qwen_image_controlnet_patch",
@@ -404,6 +416,15 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(qwen_patch["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
         self.assertEqual(qwen_patch["selectedCandidateMode"], "control_image")
         self.assertEqual(qwen_patch["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:control_image")
+
+        lotus = reviewed["image_lotus_depth_v1_1"]
+        self.assertEqual(lotus["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
+        self.assertEqual(lotus["selectedCandidateMode"], "depth_estimation")
+        self.assertEqual(lotus["recommendedWorkflow"]["canonicalWorkflowId"], "MarigoldDepthPipeline:depth_estimation")
+
+        netayume = reviewed["image_netayume_lumina_t2i"]
+        self.assertEqual(netayume["sourceReview"]["catalogRecommendedWorkflowId"], "OmniGenPipeline:text_to_image")
+        self.assertEqual(netayume["recommendedWorkflow"]["canonicalWorkflowId"], "Lumina2Pipeline:text_to_image")
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
