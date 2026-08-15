@@ -6950,7 +6950,7 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Fourteen
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Twenty
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
@@ -6968,7 +6968,10 @@ FP8-plus-Lightning graph as a non-equivalent same-generation partition, and
 separates Qwen Layered Control from the admitted Layered model. It also corrects
 the Qwen Union Control record from text-to-image to the existing control-image
 boundary, but does not equate its original-Qwen/DiffSynth assembly with MoDiff's
-2512/InstantX Union assembly.
+2512/InstantX Union assembly. Six LTX reviews retain the current text/image-to-
+video task boundaries but separate the old 0.9/0.9.5 checkpoints and the 2.3 or
+2.5 22B component assemblies from MoDiff's admitted
+`Lightricks/LTX-2@47da56e2ad66ce4125a9922b4a8826bf407f9d0a` partition.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7076,6 +7079,8 @@ decisions plus the two source-proven Klein task corrections, while retaining
 fail-closed model, execution, rights, and asset claims throughout. `40adea2`
 then seals five Qwen source decisions, including exact workflow-generation and
 task-boundary corrections without claiming auxiliary or checkpoint admission.
+`5af255a` adds six LTX generation decisions without weakening model, component,
+license, execution, or asset gates.
 
 The following separate gates do remain external:
 
