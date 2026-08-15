@@ -279,6 +279,10 @@ class DiffusersExecutionProfile:
                 "modules.Video",
                 "ProcessVideo",
             ),
+            "spandrel-video-upscale": (
+                "modules.Video",
+                "UpscaleVideo",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(

@@ -54,6 +54,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.Video",
                 "ProcessVideo",
             ),
+            "spandrel-video-upscale": (
+                "modules.Video",
+                "UpscaleVideo",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -175,6 +179,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "HuggingFaceAnyToAnyModel",
             "BuiltinImageOperation",
             "BuiltinVideoOperation",
+            "SpandrelVideoUpscale",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

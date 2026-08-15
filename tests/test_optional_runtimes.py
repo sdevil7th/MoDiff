@@ -118,9 +118,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             profile["specDigest"],
             f"sha256:{hashlib.sha256(canonical_spec).hexdigest()}",
         )
-        self.assertTrue(
-            all(package["publisher"] == "Hugging Face" for package in profile["packages"])
-        )
+        self.assertTrue(all(package["publisher"] == "Hugging Face" for package in profile["packages"]))
         self.assertEqual(
             [package["projectUrl"] for package in profile["packages"]],
             [
@@ -128,15 +126,11 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                 "https://github.com/huggingface/peft",
             ],
         )
-        self.assertTrue(
-            all(package["license"] == "Apache-2.0" for package in profile["packages"])
-        )
+        self.assertTrue(all(package["license"] == "Apache-2.0" for package in profile["packages"]))
         self.assertTrue(
             all(package["distributionUrl"].startswith("https://pypi.org/project/") for package in profile["packages"])
         )
-        self.assertTrue(
-            all(package["status"] == "present_unqualified" for package in profile["packages"])
-        )
+        self.assertTrue(all(package["status"] == "present_unqualified" for package in profile["packages"]))
         self.assertIn("StableAudioPipeline", profile["requiredDiffusersSymbols"])
         self.assertIn("ErnieImagePipeline", profile["requiredDiffusersSymbols"])
         self.assertIn("GlmImagePipeline", profile["requiredDiffusersSymbols"])
@@ -163,9 +157,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             }.issubset(profile["requiredDiffusersSymbols"])
         )
         self.assertTrue(
-            {"QwenImageControlNetPipeline", "QwenImageLayeredPipeline"}.issubset(
-                profile["pipelineAdapterSymbols"]
-            )
+            {"QwenImageControlNetPipeline", "QwenImageLayeredPipeline"}.issubset(profile["pipelineAdapterSymbols"])
         )
         self.assertNotIn("StableAudioPipeline", profile["pipelineAdapterSymbols"])
         self.assertNotIn("GlmImagePipeline", profile["pipelineAdapterSymbols"])
@@ -194,10 +186,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             version_resolver=_version_resolver({"transformers": "4.49.0"}),
         )[0]
         self.assertEqual(missing_and_wrong["status"], "missing")
-        package_status = {
-            package["distribution"]: package["status"]
-            for package in missing_and_wrong["packages"]
-        }
+        package_status = {package["distribution"]: package["status"] for package in missing_and_wrong["packages"]}
         self.assertEqual(
             package_status,
             {"transformers": "wrong_version", "peft": "missing"},
@@ -205,17 +194,13 @@ class OptionalRuntimeContractTests(unittest.TestCase):
 
         wrong_version = public_optional_runtime_profiles(
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
-            version_resolver=_version_resolver(
-                {"transformers": "5.14.1", "peft": "0.19.0"}
-            ),
+            version_resolver=_version_resolver({"transformers": "5.14.1", "peft": "0.19.0"}),
         )[0]
         self.assertEqual(wrong_version["status"], "wrong_version")
 
         present = public_optional_runtime_profiles(
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
-            version_resolver=_version_resolver(
-                {"transformers": "5.14.1", "peft": "0.20.0"}
-            ),
+            version_resolver=_version_resolver({"transformers": "5.14.1", "peft": "0.20.0"}),
         )[0]
         self.assertEqual(present["status"], "present_unqualified")
 
@@ -223,15 +208,9 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         hostile_version = "9." + ("x" * 500) + "\nprivate-path"
         profile = public_optional_runtime_profiles(
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
-            version_resolver=_version_resolver(
-                {"transformers": hostile_version, "peft": "0.20.0"}
-            ),
+            version_resolver=_version_resolver({"transformers": hostile_version, "peft": "0.20.0"}),
         )[0]
-        transformers = next(
-            package
-            for package in profile["packages"]
-            if package["distribution"] == "transformers"
-        )
+        transformers = next(package for package in profile["packages"] if package["distribution"] == "transformers")
         self.assertEqual(transformers["status"], "wrong_version")
         self.assertLessEqual(len(transformers["installedVersion"]), 128)
         self.assertNotIn("\n", transformers["installedVersion"])
@@ -247,11 +226,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
             version_resolver=unreadable_metadata,
         )[0]
-        transformers = next(
-            package
-            for package in profile["packages"]
-            if package["distribution"] == "transformers"
-        )
+        transformers = next(package for package in profile["packages"] if package["distribution"] == "transformers")
         self.assertEqual(profile["status"], "wrong_version")
         self.assertEqual(transformers["status"], "wrong_version")
         self.assertEqual(transformers["metadataState"], "unreadable")
@@ -284,6 +259,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                         {
                             "builtin-image-operations:direct",
                             "builtin-video-operations:direct",
+                            "real-esrgan-x2-video-upscale:direct",
                         },
                     )
                     self.assertEqual(profile.optional_runtime_profiles, ())
@@ -344,16 +320,10 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             "ZImageModularPipeline",
             "text_to_image",
         )[0]
-        transformers_version = OPTIONAL_RUNTIME_PROFILES[
-            host_profile_id
-        ].packages[0].version
+        transformers_version = OPTIONAL_RUNTIME_PROFILES[host_profile_id].packages[0].version
         observations = {
-            "present_unqualified": _version_resolver(
-                {"transformers": transformers_version, "peft": "0.20.0"}
-            ),
-            "wrong_version": _version_resolver(
-                {"transformers": transformers_version, "peft": "0.19.0"}
-            ),
+            "present_unqualified": _version_resolver({"transformers": transformers_version, "peft": "0.20.0"}),
+            "wrong_version": _version_resolver({"transformers": transformers_version, "peft": "0.19.0"}),
             "missing": _version_resolver({}),
         }
         outcomes = {}
@@ -390,7 +360,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         )
 
     def test_cold_clean_base_registry_discovery_does_not_load_optional_packages(self):
-        script = r'''
+        script = r"""
 import builtins
 import importlib.util
 import sys
@@ -418,7 +388,7 @@ assert not any(
     name.split(".", 1)[0] in __OPTIONAL_IMPORTS__
     for name in sys.modules
 ), attempts
-'''.replace("__OPTIONAL_IMPORTS__", repr(OPTIONAL_STAGE_IMPORTS))
+""".replace("__OPTIONAL_IMPORTS__", repr(OPTIONAL_STAGE_IMPORTS))
         environment = os.environ.copy()
         environment.update(
             {
@@ -445,9 +415,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             "ZImageModularPipeline",
             "text_to_image",
         )[0]
-        host_target = OPTIONAL_RUNTIME_PROFILES[
-            host_profile_id
-        ].contract_for_target()
+        host_target = OPTIONAL_RUNTIME_PROFILES[host_profile_id].contract_for_target()
         with tempfile.TemporaryDirectory() as temp_dir:
             data_dir = Path(temp_dir)
             graph_dir = data_dir / "graphs" / "studio"
@@ -540,9 +508,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
                     local_models=[],
                     data_dir=temp_dir,
                 )
-                capabilities_response = await server.model_capabilities(
-                    type("Request", (), {"query": {}})()
-                )
+                capabilities_response = await server.model_capabilities(type("Request", (), {"query": {}})())
                 listgraphs_response = await server.listgraphs(object())
                 template_open_response = await server.fileGet(
                     type(
@@ -574,9 +540,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(template_open_response.status, 200)
             optional_runtime_catalog = json.loads(optional_runtime_response.text)
             selected_catalog_profile = next(
-                profile
-                for profile in optional_runtime_catalog["profiles"]
-                if profile["id"] == host_profile_id
+                profile for profile in optional_runtime_catalog["profiles"] if profile["id"] == host_profile_id
             )
             self.assertEqual(
                 selected_catalog_profile["contractState"],
@@ -589,10 +553,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
 
             capabilities = json.loads(capabilities_response.text)
             self.assertEqual(
-                {
-                    profile["id"]
-                    for profile in capabilities["optionalRuntimeProfiles"]
-                },
+                {profile["id"] for profile in capabilities["optionalRuntimeProfiles"]},
                 {
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,

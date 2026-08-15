@@ -5,16 +5,32 @@ from pathlib import Path
 import logging
 import math
 from utils.paths import parse_filename
+from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST
 
-logger = logging.getLogger('modiff')
+logger = logging.getLogger("modiff")
 
 VIDEO_OPERATION_MODES = ("video_frame_extract", "video_stitch")
 VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
+VIDEO_UPSCALE_MODE = "video_upscale"
+VIDEO_UPSCALE_PIPELINE_CLASS = "SpandrelVideoUpscaleV1"
+VIDEO_UPSCALE_MODEL_SELECTION = {
+    "source": "hub",
+    "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
+    "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+    "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+    "byteSize": 67_061_725,
+    "license": "bsd-3-clause",
+}
+VIDEO_DEVICE_OPTIONS = tuple(DEVICE_LIST.keys())
 MAX_VIDEO_OPERATION_INPUTS = 16
 MAX_VIDEO_OPERATION_FRAMES_PER_INPUT = 14_400
 MAX_VIDEO_OPERATION_TOTAL_FRAMES = 57_600
 MAX_VIDEO_OPERATION_PIXELS = 16_777_216
 MAX_EXTRACTED_FRAMES = 64
+MAX_VIDEO_UPSCALE_FRAMES = 1_200
+MAX_VIDEO_UPSCALE_INPUT_PIXELS = 4_194_304
+MAX_VIDEO_UPSCALE_OUTPUT_PIXELS = 16_777_216
+
 
 class Load(NodeBase):
     """
@@ -30,7 +46,7 @@ class Load(NodeBase):
             "display": "output",
             "type": "video",
         },
-        'label': {
+        "label": {
             "display": "ui_label",
             "value": "Load Video",
         },
@@ -43,16 +59,17 @@ class Load(NodeBase):
                 "multiple": False,
             },
         },
-        "filename": { "label": "File Name", "display": "output", "type": "str" },
-        "width": { "display": "output", "type": "int" },
-        "height": { "display": "output", "type": "int" },
-        "frames": { "display": "output", "type": "int" },
-        "fps": { "label": "FPS", "display": "output", "type": "float" },
+        "filename": {"label": "File Name", "display": "output", "type": "str"},
+        "width": {"display": "output", "type": "int"},
+        "height": {"display": "output", "type": "int"},
+        "frames": {"display": "output", "type": "int"},
+        "fps": {"label": "FPS", "display": "output", "type": "float"},
     }
 
     def execute(self, **kwargs):
         import imageio
         from PIL import Image
+
         file_value = kwargs["file"]
         file_value = file_value[0] if isinstance(file_value, list) and file_value else file_value
         if not file_value:
@@ -64,12 +81,12 @@ class Load(NodeBase):
             raise ValueError("Load Video needs an existing video file.")
 
         images = []
-        reader = imageio.get_reader(str(file), 'ffmpeg')
+        reader = imageio.get_reader(str(file), "ffmpeg")
         meta = reader.get_meta_data()
-        width = meta.get('size', (0,0))[0]
-        height = meta.get('size', (0,0))[1]
+        width = meta.get("size", (0, 0))[0]
+        height = meta.get("size", (0, 0))[1]
         frames = reader.count_frames()
-        fps = meta.get('fps', 0)
+        fps = meta.get("fps", 0)
 
         for frame in reader:
             images.append(Image.fromarray(frame))
@@ -84,28 +101,30 @@ class Load(NodeBase):
             "fps": fps,
         }
 
+
 class Export(NodeBase):
     """
     Save/Re-encode a video
     """
+
     label = "Export Video"
     category = "Video"
     resizable = True
     params = {
-        "video": { "type": ["video", "str", "image"], "display": "input" },
+        "video": {"type": ["video", "str", "image"], "display": "input"},
         "filename": {
             "label": "File",
             "type": "str",
             "default": "{PATH:videos}/MoDiff_{HASH:6}.mp4",
         },
-        #"codec": { "type": "str", "options": ["libx264", "vp9"], "default": "libx264" },
-        "quality": { "display": "slider", "type": "int", "min": 1, "max": 10, "default": 5 },
-        "fps": { "label": "FPS", "type": "float", "default": 24, "min": 1, "max": 240, "step": 0.01 },
-        "preview": { "display": "ui_video", "type": "url", "dataSource": "file" },
-        "file": { "type": "video", "display": "output" },
-        "width": { "display": "output", "type": "int" },
-        "height": { "display": "output", "type": "int" },
-        "frames": { "display": "output", "type": "int" },
+        # "codec": { "type": "str", "options": ["libx264", "vp9"], "default": "libx264" },
+        "quality": {"display": "slider", "type": "int", "min": 1, "max": 10, "default": 5},
+        "fps": {"label": "FPS", "type": "float", "default": 24, "min": 1, "max": 240, "step": 0.01},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "file": {"type": "video", "display": "output"},
+        "width": {"display": "output", "type": "int"},
+        "height": {"display": "output", "type": "int"},
+        "frames": {"display": "output", "type": "int"},
     }
 
     def execute(self, **kwargs):
@@ -174,16 +193,17 @@ class Export(NodeBase):
             if isinstance(video_data, str):
                 reader = imageio.get_reader(str(resolve_runtime_input_path(video_data)))
                 meta = reader.get_meta_data()
-                width, height = meta.get('size', (0, 0))
+                width, height = meta.get("size", (0, 0))
                 try:
                     frame_count = reader.count_frames()
                 except Exception:
                     frame_count = 0
-                writer = imageio.get_writer(parsed_filename,
-                                            fps=fps,
-                                            quality=quality,
-                                            codec='libx264',
-                                            )
+                writer = imageio.get_writer(
+                    parsed_filename,
+                    fps=fps,
+                    quality=quality,
+                    codec="libx264",
+                )
                 for frame in reader:
                     writer.append_data(frame)
                 reader.close()
@@ -192,11 +212,12 @@ class Export(NodeBase):
             elif isinstance(video_data, list):
                 width, height, frame_count = frames_shape(video_data)
 
-                writer = imageio.get_writer(parsed_filename,
-                                            fps=fps,
-                                            quality=quality,
-                                            codec='libx264',
-                                            )
+                writer = imageio.get_writer(
+                    parsed_filename,
+                    fps=fps,
+                    quality=quality,
+                    codec="libx264",
+                )
                 for frame in video_data:
                     writer.append_data(frame_to_array(frame))
                 writer.close()
@@ -206,6 +227,7 @@ class Export(NodeBase):
 
             else:
                 import torch
+
                 if isinstance(video_data, torch.Tensor):
                     return save_video(tensor_to_frames(video_data))
 
@@ -217,7 +239,7 @@ class Export(NodeBase):
             for item in video:
                 file, width, height, frames = save_video(item)
                 files.append(file)
-            return { "file": files, "width": width, "height": height, "frames": frames }
+            return {"file": files, "width": width, "height": height, "frames": frames}
 
         file, width, height, frames = save_video(video)
 
@@ -233,6 +255,7 @@ def _pil_frames(value):
     """Normalize any supported in-memory video value to RGB PIL frames."""
     import numpy as np
     from PIL import Image
+
     try:
         import torch
     except ImportError:  # pragma: no cover - torch is part of the runtime
@@ -244,6 +267,7 @@ def _pil_frames(value):
         value = value.get("path") or value.get("file")
     if isinstance(value, str):
         import imageio
+
         reader = imageio.get_reader(str(resolve_runtime_input_path(value)), "ffmpeg")
         try:
             return [Image.fromarray(frame).convert("RGB") for frame in reader]
@@ -340,7 +364,12 @@ class TemporalCleanPlate(NodeBase):
         "video": {"label": "Video", "display": "input", "type": ["video", "str"]},
         "start_index": {"label": "Clean Start Frame", "type": "int", "default": 0, "min": -100000},
         "end_index": {"label": "Clean End Frame", "type": "int", "default": -1, "min": -100000},
-        "easing": {"label": "Interpolation", "type": "string", "options": ["smoothstep", "linear"], "default": "smoothstep"},
+        "easing": {
+            "label": "Interpolation",
+            "type": "string",
+            "options": ["smoothstep", "linear"],
+            "default": "smoothstep",
+        },
         "output": {"label": "Plate Video", "display": "output", "type": "video"},
         "frames": {"label": "Frames", "display": "output", "type": "int"},
     }
@@ -433,13 +462,50 @@ class Compose(NodeBase):
     params = {
         # Keep these explicit: MoDiff's static AST registry intentionally does
         # not execute dict comprehensions while discovering node contracts.
-        "clip_1": {"label": "Clip 1", "display": "input", "type": ["video_collection", "video", "str"], "required": True},
-        "clip_2": {"label": "Clip 2", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
-        "clip_3": {"label": "Clip 3", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
-        "clip_4": {"label": "Clip 4", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
-        "clip_5": {"label": "Clip 5", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
-        "clip_6": {"label": "Clip 6", "display": "input", "type": ["video_collection", "video", "str"], "required": False},
-        "transition_seconds": {"label": "Crossfade", "type": "float", "default": 0.35, "min": 0, "max": 2, "step": 0.05},
+        "clip_1": {
+            "label": "Clip 1",
+            "display": "input",
+            "type": ["video_collection", "video", "str"],
+            "required": True,
+        },
+        "clip_2": {
+            "label": "Clip 2",
+            "display": "input",
+            "type": ["video_collection", "video", "str"],
+            "required": False,
+        },
+        "clip_3": {
+            "label": "Clip 3",
+            "display": "input",
+            "type": ["video_collection", "video", "str"],
+            "required": False,
+        },
+        "clip_4": {
+            "label": "Clip 4",
+            "display": "input",
+            "type": ["video_collection", "video", "str"],
+            "required": False,
+        },
+        "clip_5": {
+            "label": "Clip 5",
+            "display": "input",
+            "type": ["video_collection", "video", "str"],
+            "required": False,
+        },
+        "clip_6": {
+            "label": "Clip 6",
+            "display": "input",
+            "type": ["video_collection", "video", "str"],
+            "required": False,
+        },
+        "transition_seconds": {
+            "label": "Crossfade",
+            "type": "float",
+            "default": 0.35,
+            "min": 0,
+            "max": 2,
+            "step": 0.05,
+        },
         "fps": {"label": "FPS", "type": "float", "default": 16, "min": 1, "max": 120, "step": 0.01},
         "video": {"display": "output", "type": "video"},
         "frames": {"display": "output", "type": "int"},
@@ -448,6 +514,7 @@ class Compose(NodeBase):
 
     def execute(self, **kwargs):
         from PIL import Image
+
         clips = []
         for index in range(1, 7):
             value = kwargs.get(f"clip_{index}")
@@ -461,7 +528,13 @@ class Compose(NodeBase):
         fps = float(kwargs.get("fps") or 16)
         fade_frames = max(0, int(round(float(kwargs.get("transition_seconds") or 0) * fps)))
         target_size = clips[0][0].size
-        clips = [[frame.resize(target_size, Image.Resampling.LANCZOS) if frame.size != target_size else frame for frame in clip] for clip in clips]
+        clips = [
+            [
+                frame.resize(target_size, Image.Resampling.LANCZOS) if frame.size != target_size else frame
+                for frame in clip
+            ]
+            for clip in clips
+        ]
         output = list(clips[0])
         for clip in clips[1:]:
             overlap = min(fade_frames, len(output), len(clip))
@@ -492,6 +565,7 @@ class LyricOverlay(NodeBase):
     @staticmethod
     def _timeline(text):
         import re
+
         entries = []
         for line in str(text or "").splitlines():
             match = re.match(r"\s*\[(\d+):(\d+(?:\.\d+)?)\]\s*(.+?)\s*$", line)
@@ -501,6 +575,7 @@ class LyricOverlay(NodeBase):
 
     def execute(self, **kwargs):
         from PIL import ImageDraw, ImageFont
+
         frames = _pil_frames(kwargs.get("video"))
         timeline = self._timeline(kwargs.get("lrc"))
         if not frames or not timeline:
@@ -581,8 +656,24 @@ class ExportWithAudio(NodeBase):
         finally:
             writer.close()
         subprocess.run(
-            [get_ffmpeg_exe(), "-y", "-v", "error", "-i", str(silent_path), "-i", str(audio_path),
-             "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-shortest", str(destination)],
+            [
+                get_ffmpeg_exe(),
+                "-y",
+                "-v",
+                "error",
+                "-i",
+                str(silent_path),
+                "-i",
+                str(audio_path),
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "256k",
+                "-shortest",
+                str(destination),
+            ],
             check=True,
         )
         silent_path.unlink(missing_ok=True)
@@ -751,7 +842,7 @@ class Trim(NodeBase):
         end = int(round(end_value * scale)) if end_value > 0 else len(frames)
         if end < start:
             raise ValueError("Trim Video end must not be before start.")
-        output = frames[start:min(end, len(frames))]
+        output = frames[start : min(end, len(frames))]
         return {"output": output, "frames": len(output), "duration_seconds": len(output) / fps}
 
 
@@ -787,7 +878,12 @@ class StackTile(NodeBase):
     params = {
         "videos": {"label": "Videos", "display": "input", "type": ["video_collection", "collection"]},
         "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1},
-        "sync": {"label": "Length", "type": "string", "options": ["shortest", "longest_hold"], "default": "longest_hold"},
+        "sync": {
+            "label": "Length",
+            "type": "string",
+            "options": ["shortest", "longest_hold"],
+            "default": "longest_hold",
+        },
         "gap": {"label": "Gap", "type": "int", "default": 0, "min": 0},
         "background": {"label": "Background", "type": "string", "default": "black"},
         "output": {"label": "Video", "display": "output", "type": "video"},
@@ -920,7 +1016,12 @@ class KeyframeChain(NodeBase):
     category = "Video"
     params = {
         "clips": {"label": "Generated Clips", "display": "input", "type": ["video_collection", "collection"]},
-        "boundary": {"label": "Boundary", "type": "string", "options": ["keep", "drop_duplicate", "crossfade"], "default": "drop_duplicate"},
+        "boundary": {
+            "label": "Boundary",
+            "type": "string",
+            "options": ["keep", "drop_duplicate", "crossfade"],
+            "default": "drop_duplicate",
+        },
         "crossfade_seconds": {"label": "Crossfade", "type": "float", "default": 0.2, "min": 0},
         "fps": {"label": "FPS", "type": "float", "default": 16, "min": 0.01},
         "output": {"label": "Video", "display": "output", "type": "video"},
@@ -983,11 +1084,22 @@ class ExportAsset(NodeBase):
             quality = int(kwargs.get("quality") or 8)
             run_ffmpeg(
                 [
-                    "-i", source["path"],
-                    "-map", "0:v:0", "-map", "0:a?",
-                    "-vf", f"fps={fps}",
-                    "-c:v", "libx264", "-crf", str(max(12, 32 - quality * 2)),
-                    "-c:a", "aac", "-movflags", "+faststart",
+                    "-i",
+                    source["path"],
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "0:a?",
+                    "-vf",
+                    f"fps={fps}",
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    str(max(12, 32 - quality * 2)),
+                    "-c:a",
+                    "aac",
+                    "-movflags",
+                    "+faststart",
                 ],
                 destination,
             )
@@ -1106,8 +1218,20 @@ class TrimAsset(NodeBase):
         if end:
             args += ["-to", str(end)]
         args += [
-            "-i", source["path"], "-map", "0:v:0", "-map", "0:a?",
-            "-c:v", "libx264", "-crf", "18", "-c:a", "aac", "-movflags", "+faststart",
+            "-i",
+            source["path"],
+            "-map",
+            "0:v:0",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-crf",
+            "18",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
         ]
         run_ffmpeg(args, destination)
         return _derived_asset_result(destination, asset_id, [source], "trim", pin=bool(kwargs.get("pin")))
@@ -1137,17 +1261,24 @@ class ConcatenateAssets(NodeBase):
         width, height = int(first["width"]), int(first["height"])
         fps = float(first["fps"] or 16)
         transition = max(0.0, float(kwargs.get("transition_seconds") or 0))
-        filters = [_video_filter(source, index, width=width, height=height, fps=fps) + f"[v{index}]" for index, source in enumerate(sources)]
+        filters = [
+            _video_filter(source, index, width=width, height=height, fps=fps) + f"[v{index}]"
+            for index, source in enumerate(sources)
+        ]
         if len(sources) == 1:
             filters.append("[v0]null[outv]")
         elif transition <= 0:
-            filters.append("".join(f"[v{index}]" for index in range(len(sources))) + f"concat=n={len(sources)}:v=1:a=0[outv]")
+            filters.append(
+                "".join(f"[v{index}]" for index in range(len(sources))) + f"concat=n={len(sources)}:v=1:a=0[outv]"
+            )
         else:
             previous = "v0"
             elapsed = float(first["duration_seconds"])
             fps_text = f"{fps:.12g}"
             for index, source in enumerate(sources[1:], 1):
-                usable = min(transition, max(0.001, elapsed - 1 / fps), max(0.001, float(source["duration_seconds"]) - 1 / fps))
+                usable = min(
+                    transition, max(0.001, elapsed - 1 / fps), max(0.001, float(source["duration_seconds"]) - 1 / fps)
+                )
                 output = "outv" if index == len(sources) - 1 else f"x{index}"
                 raw_output = f"raw_{output}"
                 offset = max(0.0, elapsed - usable)
@@ -1158,9 +1289,7 @@ class ConcatenateAssets(NodeBase):
                 # xfade output. Reassert it before feeding that link into the
                 # next xfade; otherwise a chain of three or more clips fails
                 # with `current rate of 1/0 is invalid`.
-                filters.append(
-                    f"[{raw_output}]settb=expr=1/{fps_text},setpts=PTS-STARTPTS,fps={fps_text}[{output}]"
-                )
+                filters.append(f"[{raw_output}]settb=expr=1/{fps_text},setpts=PTS-STARTPTS,fps={fps_text}[{output}]")
                 previous = output
                 elapsed += float(source["duration_seconds"]) - usable
         asset_id, destination = allocate_video_path(task_id=current_task_id())
@@ -1168,8 +1297,19 @@ class ConcatenateAssets(NodeBase):
         run_ffmpeg(
             inputs
             + [
-                "-filter_complex", ";".join(filters), "-map", "[outv]",
-                "-r", str(fps), "-an", "-c:v", "libx264", "-crf", "18", "-movflags", "+faststart",
+                "-filter_complex",
+                ";".join(filters),
+                "-map",
+                "[outv]",
+                "-r",
+                str(fps),
+                "-an",
+                "-c:v",
+                "libx264",
+                "-crf",
+                "18",
+                "-movflags",
+                "+faststart",
             ],
             destination,
         )
@@ -1201,9 +1341,7 @@ def _bounded_video_operation_assets(value, *, minimum):
             )
         total_frames += frame_count
     if total_frames > MAX_VIDEO_OPERATION_TOTAL_FRAMES:
-        raise ValueError(
-            f"Built-in video inputs exceed the {MAX_VIDEO_OPERATION_TOTAL_FRAMES}-frame execution limit."
-        )
+        raise ValueError(f"Built-in video inputs exceed the {MAX_VIDEO_OPERATION_TOTAL_FRAMES}-frame execution limit.")
     return assets
 
 
@@ -1276,15 +1414,12 @@ class ProcessVideo(NodeBase):
                     raise ValueError("Frame selection text accepts at most 4096 characters.")
                 values = _parse_numbers(raw, cast=int if selection_mode == "indices" else float)
                 if len(values) > MAX_EXTRACTED_FRAMES or any(
-                    isinstance(value, float) and (not math.isfinite(value) or value < 0)
-                    for value in values
+                    isinstance(value, float) and (not math.isfinite(value) or value < 0) for value in values
                 ):
                     raise ValueError(f"Frame selection accepts at most {MAX_EXTRACTED_FRAMES} finite values.")
             every_n = int(kwargs.get("every_n") or 16)
             if not 1 <= every_n <= MAX_VIDEO_OPERATION_FRAMES_PER_INPUT:
-                raise ValueError(
-                    f"Frame interval must be between 1 and {MAX_VIDEO_OPERATION_FRAMES_PER_INPUT}."
-                )
+                raise ValueError(f"Frame interval must be between 1 and {MAX_VIDEO_OPERATION_FRAMES_PER_INPUT}.")
             result = FrameExtract().execute(
                 video=assets[0],
                 mode=selection_mode,
@@ -1316,6 +1451,175 @@ class ProcessVideo(NodeBase):
         }
 
 
+class UpscaleVideo(NodeBase):
+    """Stream a retained video through one exact, app-managed Spandrel model."""
+
+    label = "Upscale Video"
+    category = "Video"
+    resizable = True
+    params = {
+        "video": {
+            "label": "Source Video",
+            "display": "filebrowser",
+            "type": "str",
+            "fieldOptions": {"fileTypes": ["video"], "multiple": False},
+        },
+        "pipeline_class": {
+            "label": "Upscale Contract",
+            "type": "string",
+            "default": VIDEO_UPSCALE_PIPELINE_CLASS,
+            "hidden": True,
+        },
+        "operation": {
+            "label": "Operation",
+            "type": "string",
+            "options": [VIDEO_UPSCALE_MODE],
+            "default": VIDEO_UPSCALE_MODE,
+            "hidden": True,
+        },
+        "model_id": {
+            "label": "Upscaler",
+            "display": "modelselect",
+            "type": "string",
+            "default": VIDEO_UPSCALE_MODEL_SELECTION,
+            "fieldOptions": {
+                "noValidation": True,
+                "sources": ["hub", "local"],
+                "filter": {"hub": {}, "local": {"id": r"^upscalers/"}},
+            },
+        },
+        "tile_size": {
+            "label": "Tile Size",
+            "type": "int",
+            "default": 256,
+            "min": 64,
+            "max": 2048,
+            "step": 32,
+        },
+        "tile_overlap": {
+            "label": "Tile Overlap",
+            "type": "int",
+            "default": 32,
+            "min": 0,
+            "max": 256,
+            "step": 8,
+        },
+        "device": {
+            "label": "Device",
+            "type": "string",
+            "default": DEFAULT_DEVICE,
+            "options": VIDEO_DEVICE_OPTIONS,
+        },
+        "fps": {"label": "Output FPS", "type": "float", "default": 24, "min": 1, "max": 120},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "video_out": {"label": "Upscaled Video", "display": "output", "type": "video"},
+        "width": {"display": "output", "type": "int"},
+        "height": {"display": "output", "type": "int"},
+        "frames": {"display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        import imageio
+        import numpy as np
+        from PIL import Image
+        from modiff.media_assets import allocate_video_path, current_task_id
+        from modules.Spandrel.main import Upscaler
+
+        if kwargs.get("pipeline_class", VIDEO_UPSCALE_PIPELINE_CLASS) != VIDEO_UPSCALE_PIPELINE_CLASS:
+            raise ValueError("Upscale Video received an unsupported pipeline contract identity.")
+        if kwargs.get("operation", VIDEO_UPSCALE_MODE) != VIDEO_UPSCALE_MODE:
+            raise ValueError("Upscale Video received an unsupported operation.")
+        assets = _bounded_video_operation_assets(kwargs.get("video"), minimum=1)
+        if len(assets) != 1:
+            raise ValueError("Video upscaling requires exactly one input video.")
+        source = assets[0]
+        frame_count = int(source["frame_count"])
+        width = int(source["width"])
+        height = int(source["height"])
+        if frame_count > MAX_VIDEO_UPSCALE_FRAMES:
+            raise ValueError(f"Video upscaling accepts at most {MAX_VIDEO_UPSCALE_FRAMES} source frames.")
+        if width * height > MAX_VIDEO_UPSCALE_INPUT_PIXELS:
+            raise ValueError(
+                f"Video upscaling accepts at most {MAX_VIDEO_UPSCALE_INPUT_PIXELS} source pixels per frame."
+            )
+        tile_size = int(kwargs.get("tile_size") or 256)
+        tile_overlap = int(kwargs.get("tile_overlap") or 0)
+        if not 64 <= tile_size <= 2048:
+            raise ValueError("Video upscale tile size must be between 64 and 2048 pixels.")
+        if not 0 <= tile_overlap <= min(256, tile_size // 2):
+            raise ValueError("Video upscale tile overlap exceeds the bounded tile contract.")
+        output_fps = float(kwargs.get("fps") or 24)
+        if not math.isfinite(output_fps) or not 1 <= output_fps <= 120:
+            raise ValueError("Video upscale output FPS must be between 1 and 120.")
+
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        reader = imageio.get_reader(source["path"], "ffmpeg")
+        writer = None
+        upscaler = Upscaler(self.node_id)
+        decoded_frames = 0
+        output_width = output_height = 0
+        try:
+            for raw_frame in reader:
+                if decoded_frames >= frame_count or decoded_frames >= MAX_VIDEO_UPSCALE_FRAMES:
+                    raise ValueError("Decoded video frames exceed the reviewed source metadata bound.")
+                result = upscaler.execute(
+                    image=Image.fromarray(raw_frame).convert("RGB"),
+                    model_id=kwargs.get("model_id", VIDEO_UPSCALE_MODEL_SELECTION),
+                    downscale=1.0,
+                    tile_size=tile_size,
+                    tile_overlap=tile_overlap,
+                    device=kwargs.get("device") or DEFAULT_DEVICE,
+                ).get("output")
+                if not isinstance(result, list) or len(result) != 1 or not isinstance(result[0], Image.Image):
+                    raise ValueError("The selected video upscaler returned an invalid frame batch.")
+                frame = result[0].convert("RGB")
+                if decoded_frames == 0:
+                    output_width, output_height = frame.size
+                    if (
+                        output_width <= width
+                        or output_height <= height
+                        or output_width * output_height > MAX_VIDEO_UPSCALE_OUTPUT_PIXELS
+                    ):
+                        raise ValueError("The selected video upscaler returned an invalid output scale.")
+                    writer = imageio.get_writer(
+                        destination,
+                        fps=output_fps,
+                        quality=8,
+                        codec="libx264",
+                    )
+                elif frame.size != (output_width, output_height):
+                    raise ValueError("The selected video upscaler returned inconsistent frame dimensions.")
+                writer.append_data(np.asarray(frame))
+                decoded_frames += 1
+                self.progress(
+                    min(99, decoded_frames / frame_count * 100),
+                    phase="upscaling",
+                    message=f"Upscaled frame {decoded_frames}/{frame_count}",
+                )
+        except Exception:
+            if writer is not None:
+                writer.close()
+                writer = None
+            destination.unlink(missing_ok=True)
+            raise
+        finally:
+            reader.close()
+            if writer is not None:
+                writer.close()
+        if decoded_frames != frame_count:
+            destination.unlink(missing_ok=True)
+            raise ValueError("Decoded video frame count does not match the reviewed source metadata.")
+        result = _derived_asset_result(destination, asset_id, [source], "spandrel-video-upscale")
+        self.progress(100, phase="upscaling", message=f"Upscaled {decoded_frames} frames")
+        return {
+            "video_out": result["file"],
+            "width": output_width,
+            "height": output_height,
+            "frames": decoded_frames,
+            "fps": output_fps,
+        }
+
+
 class StackTileAssets(NodeBase):
     """Build a synchronized retained-video wall without Python frame materialization."""
 
@@ -1324,7 +1628,12 @@ class StackTileAssets(NodeBase):
     params = {
         "videos": {"label": "Videos", "display": "input", "type": ["video_asset_collection", "collection"]},
         "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1},
-        "sync": {"label": "Length", "type": "string", "options": ["shortest", "longest_hold"], "default": "longest_hold"},
+        "sync": {
+            "label": "Length",
+            "type": "string",
+            "options": ["shortest", "longest_hold"],
+            "default": "longest_hold",
+        },
         "gap": {"label": "Gap", "type": "int", "default": 0, "min": 0},
         "background": {"label": "Background", "type": "string", "default": "black"},
         "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
@@ -1348,17 +1657,36 @@ class StackTileAssets(NodeBase):
         filters = []
         for index, source in enumerate(sources):
             hold = output_duration - float(source["duration_seconds"]) if kwargs.get("sync") != "shortest" else None
-            filters.append(_video_filter(source, index, width=width, height=height, fps=fps, duration=hold) + f"[v{index}]")
-        layout = "|".join(f"{index % columns * (width + gap)}_{index // columns * (height + gap)}" for index in range(len(sources)))
-        filters.append("".join(f"[v{index}]" for index in range(len(sources))) + f"xstack=inputs={len(sources)}:layout={layout}:fill={kwargs.get('background') or 'black'}[outv]")
+            filters.append(
+                _video_filter(source, index, width=width, height=height, fps=fps, duration=hold) + f"[v{index}]"
+            )
+        layout = "|".join(
+            f"{index % columns * (width + gap)}_{index // columns * (height + gap)}" for index in range(len(sources))
+        )
+        filters.append(
+            "".join(f"[v{index}]" for index in range(len(sources)))
+            + f"xstack=inputs={len(sources)}:layout={layout}:fill={kwargs.get('background') or 'black'}[outv]"
+        )
         asset_id, destination = allocate_video_path(task_id=current_task_id())
         inputs = [part for source in sources for part in ("-i", source["path"])]
         run_ffmpeg(
             inputs
             + [
-                "-filter_complex", ";".join(filters), "-map", "[outv]",
-                "-r", str(fps), "-t", str(output_duration),
-                "-an", "-c:v", "libx264", "-crf", "18", "-movflags", "+faststart",
+                "-filter_complex",
+                ";".join(filters),
+                "-map",
+                "[outv]",
+                "-r",
+                str(fps),
+                "-t",
+                str(output_duration),
+                "-an",
+                "-c:v",
+                "libx264",
+                "-crf",
+                "18",
+                "-movflags",
+                "+faststart",
             ],
             destination,
         )
@@ -1385,7 +1713,22 @@ class ReverseAsset(NodeBase):
 
         source = _file_asset_collection(kwargs.get("video"))[0]
         asset_id, destination = allocate_video_path(task_id=current_task_id())
-        run_ffmpeg(["-i", source["path"], "-vf", "reverse", "-an", "-c:v", "libx264", "-crf", "18", "-movflags", "+faststart"], destination)
+        run_ffmpeg(
+            [
+                "-i",
+                source["path"],
+                "-vf",
+                "reverse",
+                "-an",
+                "-c:v",
+                "libx264",
+                "-crf",
+                "18",
+                "-movflags",
+                "+faststart",
+            ],
+            destination,
+        )
         return _derived_asset_result(destination, asset_id, [source], "reverse", pin=bool(kwargs.get("pin")))
 
 
@@ -1424,7 +1767,12 @@ class MuxAudioAsset(NodeBase):
     params = {
         "video": {"label": "Video", "display": "input", "type": ["video_asset", "str"]},
         "audio": {"label": "Audio", "display": "input", "type": ["audio", "str"]},
-        "fit": {"label": "Duration", "type": "string", "options": ["match_video", "shortest"], "default": "match_video"},
+        "fit": {
+            "label": "Duration",
+            "type": "string",
+            "options": ["match_video", "shortest"],
+            "default": "match_video",
+        },
         "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
         "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
         "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
@@ -1463,8 +1811,20 @@ class MuxAudioAsset(NodeBase):
 
         asset_id, destination = allocate_video_path(task_id=current_task_id())
         args = [
-            "-i", source["path"], "-i", str(audio_path),
-            "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k",
+            "-i",
+            source["path"],
+            "-i",
+            str(audio_path),
+            "-map",
+            "0:v:0",
+            "-map",
+            "1:a:0",
+            "-c:v",
+            "copy",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "256k",
         ]
         if kwargs.get("fit") == "shortest":
             args.append("-shortest")
@@ -1485,7 +1845,12 @@ class CleanupAssets(NodeBase):
     label = "Clean Temporary Media"
     category = "Video"
     params = {
-        "scope": {"label": "Scope", "type": "string", "options": ["current_run", "older_than", "all_unpinned"], "default": "current_run"},
+        "scope": {
+            "label": "Scope",
+            "type": "string",
+            "options": ["current_run", "older_than", "all_unpinned"],
+            "default": "current_run",
+        },
         "older_than_hours": {"label": "Older Than Hours", "type": "float", "default": 24, "min": 0},
         "report": {"label": "Cleanup Report", "display": "output", "type": "string"},
         "removed_count": {"label": "Removed", "display": "output", "type": "int"},
@@ -1501,6 +1866,7 @@ class CleanupAssets(NodeBase):
         if scope == "current_run":
             try:
                 from modiff.server import server
+
                 task_id = (server.current_task or {}).get("task_id")
             except Exception:
                 task_id = None

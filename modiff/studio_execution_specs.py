@@ -12153,8 +12153,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:frame-extract:v1"] =
         ("preview", "modules.Image.Preview", 260, -80),
     ),
     "edges": (("videoOperation", "images", "preview", "image"),),
-    "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS
-    + (("videoOperation", "videos", "sourceVideo"),),
+    "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS + (("videoOperation", "videos", "sourceVideo"),),
 }
 STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:stitch:v1"] = {
     "modelType": "BuiltinVideoOperation",
@@ -12169,6 +12168,114 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:stitch:v1"] = {
     "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS
     + (
         ("videoOperation", "videos", "referenceVideos"),
+        ("videoExport", "fps", "fps"),
+    ),
+}
+
+_SPANDREL_VIDEO_UPSCALE_MODEL_TYPE = "SpandrelVideoUpscale"
+_SPANDREL_VIDEO_UPSCALE_MODE = "video_upscale"
+_SPANDREL_VIDEO_UPSCALE_PIPELINE_CLASS = "SpandrelVideoUpscaleV1"
+_SPANDREL_VIDEO_UPSCALE_REPO = "nateraw/real-esrgan"
+_SPANDREL_VIDEO_UPSCALE_REVISION = require_catalog_revision(_SPANDREL_VIDEO_UPSCALE_REPO)
+_SPANDREL_VIDEO_UPSCALE_FILES = ("RealESRGAN_x2plus.pth",)
+_SPANDREL_VIDEO_UPSCALE_PROFILE = {
+    "id": "real-esrgan-x2-video-upscale:direct",
+    "model_type": _SPANDREL_VIDEO_UPSCALE_MODEL_TYPE,
+    "modes": (_SPANDREL_VIDEO_UPSCALE_MODE,),
+    "loader_module": "modules.Video",
+    "loader_action": "UpscaleVideo",
+    "execution_path": "spandrel-video-upscale",
+    "pipeline_class": _SPANDREL_VIDEO_UPSCALE_PIPELINE_CLASS,
+    "default_repo": _SPANDREL_VIDEO_UPSCALE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": 2048,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "optional_runtime_profiles": (),
+    "optional_runtime_delivery": "base",
+    "optional_runtime_platform_deliveries": (),
+    "compatible_repos": (),
+}
+_SPANDREL_VIDEO_UPSCALE_CAPABILITY = {
+    "modelType": _SPANDREL_VIDEO_UPSCALE_MODEL_TYPE,
+    "label": "Real-ESRGAN x2 Video Upscale",
+    "displayName": "Real-ESRGAN x2 Video Upscale",
+    "family": "Real-ESRGAN",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": _SPANDREL_VIDEO_UPSCALE_REPO,
+    "downloadFiles": list(_SPANDREL_VIDEO_UPSCALE_FILES),
+    "artifactLabel": "Reviewed BSD-3-Clause Real-ESRGAN x2 Spandrel weight",
+    "artifactKind": "spandrel_upscaler",
+    "artifactInstallRequired": True,
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 1920, "height": 1080, "aspectRatio": "source"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "video",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 1920,
+        "height": 1080,
+    },
+    "modes": [_SPANDREL_VIDEO_UPSCALE_MODE],
+    "executionStatus": "expert_only",
+    "revisionCandidates": [_SPANDREL_VIDEO_UPSCALE_REVISION],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "modeRequirements": {
+        _SPANDREL_VIDEO_UPSCALE_MODE: {
+            "requiredVideos": ["sourceVideo"],
+            "note": "Requires one local source video of at most 1,200 frames and streams it through the exact x2 upscaler.",
+        }
+    },
+    "notes": [
+        "The action processes one frame at a time and caps both input and output pixels.",
+        "The exact single-file model is rehashed from the app-managed cache before execution.",
+        "Audio is not preserved; Gallery and Auto remain disabled pending an exact live receipt and quality review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["real-esrgan-x2-video-upscale:v1"] = {
+    "modelType": _SPANDREL_VIDEO_UPSCALE_MODEL_TYPE,
+    "mode": _SPANDREL_VIDEO_UPSCALE_MODE,
+    "profile": _SPANDREL_VIDEO_UPSCALE_PROFILE,
+    "capability": _SPANDREL_VIDEO_UPSCALE_CAPABILITY,
+    "roles": (
+        ("videoUpscaler", "modules.Video.UpscaleVideo", -220, -80),
+        ("videoExport", "modules.Video.Export", 300, -80),
+    ),
+    "edges": (("videoUpscaler", "video_out", "videoExport", "video"),),
+    "bindings": (
+        ("videoUpscaler", "video", "sourceVideo"),
+        ("videoUpscaler", "pipeline_class", "pipelineClass"),
+        ("videoUpscaler", "operation", "mode"),
+        ("videoUpscaler", "device", "device"),
+        ("videoUpscaler", "fps", "fps"),
         ("videoExport", "fps", "fps"),
     ),
 }

@@ -19,7 +19,7 @@ _MEDIA_FIELDS = {
     "lastImage": ("image", ("loadLastImage",)),
     "maskImage": ("image", ("loadMask",)),
     "controlImage": ("image", ("loadControlImage", "loadImage")),
-    "sourceVideo": ("video", ("loadVideo", "videoOperation")),
+    "sourceVideo": ("video", ("loadVideo", "videoOperation", "videoUpscaler")),
     "referenceVideos": ("video", ("videoOperation",)),
     "maskVideo": ("video", ("loadMaskVideo",)),
     "controlVideo": ("video", ("loadControlVideo",)),
@@ -74,10 +74,7 @@ def _required_media(input_contract: Any, specification: Mapping[str, Any]) -> li
     seen = set()
     minimum_counts = input_contract.get("minimumCounts", {})
     if not isinstance(minimum_counts, Mapping) or any(
-        not isinstance(field, str)
-        or not isinstance(count, int)
-        or isinstance(count, bool)
-        or not 1 <= count <= 64
+        not isinstance(field, str) or not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= 64
         for field, count in minimum_counts.items()
     ):
         raise TaskTemplateContractError("Task-template minimumCounts must map media fields to integers from 1 to 64.")
@@ -114,19 +111,13 @@ def _output_contract(specification: Mapping[str, Any], media_kind: str) -> dict[
     if expected_node_keys is None or not isinstance(roles, (list, tuple)) or not isinstance(edges, (list, tuple)):
         raise TaskTemplateContractError("Task-template output contract is invalid.")
     outgoing = {edge[0] for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4}
-    sinks = [
-        item
-        for item in roles
-        if isinstance(item, (list, tuple)) and len(item) == 4 and item[0] not in outgoing
-    ]
+    sinks = [item for item in roles if isinstance(item, (list, tuple)) and len(item) == 4 and item[0] not in outgoing]
     if len(sinks) != 1 or sinks[0][1] not in expected_node_keys:
         raise TaskTemplateContractError(
             f"Task-template {media_kind!r} graph must end at exactly one reviewed output node."
         )
     role = sinks[0][0]
-    incoming = [
-        edge for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4 and edge[2] == role
-    ]
+    incoming = [edge for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4 and edge[2] == role]
     media_inputs = [edge for edge in incoming if edge[3] == _OUTPUT_INPUT_HANDLES[media_kind]]
     if len(media_inputs) != 1:
         raise TaskTemplateContractError("Task-template output node must have exactly one reviewed media input edge.")
@@ -179,10 +170,9 @@ def build_task_template_contracts(
         ids.add(contract_id)
 
         profiles = capability.get("executionProfiles")
-        matches = [
-            profile
-            for profile in profiles if isinstance(profile, Mapping)
-        ] if isinstance(profiles, list) else []
+        matches = (
+            [profile for profile in profiles if isinstance(profile, Mapping)] if isinstance(profiles, list) else []
+        )
         matches = [profile for profile in matches if profile.get("id") == specification.get("executionProfileId")]
         if len(matches) != 1:
             raise TaskTemplateContractError("Task-template execution profile is missing or ambiguous.")
@@ -222,10 +212,7 @@ def build_task_template_contracts(
         ):
             raise TaskTemplateContractError("Task-template mode output contracts are invalid.")
         media_kind = (
-            mode_output_kinds.get(mode)
-            or capability.get("mediaKind")
-            or capability.get("outputKind")
-            or "image"
+            mode_output_kinds.get(mode) or capability.get("mediaKind") or capability.get("outputKind") or "image"
         )
         input_contracts = capability.get("inputContracts") or capability.get("modeRequirements") or {}
         if not isinstance(input_contracts, Mapping):
@@ -339,7 +326,4 @@ def validate_task_template_graph(
 
 
 def contracts_by_pair(contracts: Iterable[Mapping[str, Any]]) -> dict[tuple[str, str], dict[str, Any]]:
-    return {
-        (str(contract["modelType"]), str(contract["mode"])): deepcopy(dict(contract))
-        for contract in contracts
-    }
+    return {(str(contract["modelType"]), str(contract["mode"])): deepcopy(dict(contract)) for contract in contracts}

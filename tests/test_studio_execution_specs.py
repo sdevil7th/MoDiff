@@ -372,6 +372,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("BuiltinImageOperation", "mask_composite"),
                 ("BuiltinVideoOperation", "video_frame_extract"),
                 ("BuiltinVideoOperation", "video_stitch"),
+                ("SpandrelVideoUpscale", "video_upscale"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
