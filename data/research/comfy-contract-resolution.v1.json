@@ -13,14 +13,14 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:8fb400153a466ea3a4d8eac825c03f8c830126ef472c08ded894e77e913d0342",
+  "contentHash": "sha256:84dcdbbe78a4a5db89b5e03841852312d5228520790fca505e4229d0cf899ddd",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan3d_v21_requires_bounded_image_to_mesh_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -48,20 +48,43 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuan_3d_v2.1.safetensors",
+            "repository": "Comfy-Org/hunyuan3D_2.1_repackaged"
+          }
+        ],
+        "assetPath": "templates/3d_hunyuan3d-v2.1.json",
+        "assetSha256": "da13275369b31a6586f8238837f13f7166bdf5b8f0b109440c790453d6d8d1ac",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "hunyuan3d_v21_requires_bounded_image_to_mesh_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "bba98b3ca376d003fdcc87a24ea7ba083bc394c0",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "HY 3D 2.1"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan3d_v2_requires_bounded_image_to_mesh_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -89,20 +112,43 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuan3d-dit-v2_fp16.safetensors",
+            "repository": "Comfy-Org/hunyuan3D_2.0_repackaged"
+          }
+        ],
+        "assetPath": "templates/3d_hunyuan3d_image_to_model.json",
+        "assetSha256": "82d52b65205b8b6d12b1111bdbae6943db3c61cea0f4f7cba5ccd8c9aba9dd10",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "hunyuan3d_v2_requires_bounded_image_to_mesh_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c9c581b6ed245cc0fb150c7a7e684c33fcd54abb",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "HY 3D 2.0"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan3d_multiview_requires_bounded_multiview_to_mesh_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -130,20 +176,43 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuan3d-dit-v2-mv_fp16.safetensors",
+            "repository": "Comfy-Org/hunyuan3D_2.0_repackaged"
+          }
+        ],
+        "assetPath": "templates/3d_hunyuan3d_multiview_to_model.json",
+        "assetSha256": "edb1f3b00c56130b9fe87aab82c0eb8b041bc2df2c0c3ab7ae5de2c80848743b",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "hunyuan3d_multiview_requires_bounded_multiview_to_mesh_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "02b80eb2374a5c36a07ef382296a25ee99f46de7",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "HY 3D 2.0 MV"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan3d_multiview_turbo_requires_bounded_multiview_to_mesh_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -171,19 +240,43 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuan3d-dit-v2-mv-turbo_fp16.safetensors",
+            "repository": "Comfy-Org/hunyuan3D_2.0_repackaged"
+          }
+        ],
+        "assetPath": "templates/3d_hunyuan3d_multiview_to_model_turbo.json",
+        "assetSha256": "5a0aad5c7c2dbb06d939920967221e340e9027590d4b859ee475b7ff14d0d246",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "hunyuan3d_multiview_turbo_requires_bounded_multiview_to_mesh_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "9bbc51947f221f3d25bab3fd4a7891f4b4e4a804",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "HY 3D 2.0 MV Turbo"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_moge_panorama_requires_bounded_panorama_to_mesh_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -210,19 +303,43 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "moge_2_vitl_normal_fp16.safetensors",
+            "repository": "Comfy-Org/MoGe"
+          }
+        ],
+        "assetPath": "templates/3d_moge_panorama_to_mesh.json",
+        "assetSha256": "4164b944d55c8b3d6f405a4d4ff126f2b5842a857232a792a19ca16ab6c1f765",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "moge_panorama_requires_bounded_panorama_to_mesh_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "ed2734ce26404eaf1aca99f4a4c12ec43501b039",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Moge: Panorama to Mesh"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_moge_perspective_requires_bounded_perspective_to_mesh_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -249,19 +366,43 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "moge_2_vitl_normal_fp16.safetensors",
+            "repository": "Comfy-Org/MoGe"
+          }
+        ],
+        "assetPath": "templates/3d_moge_perspective_to_mesh.json",
+        "assetSha256": "83e2d30406443d68e833be57944e51be34ba17c331b4910babdcd17fb9665d85",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "moge_perspective_requires_bounded_perspective_to_mesh_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "80b6c432154b6e50b76b7ba60f19867942e33fe8",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "MoGe: Perspective Geometry Estimation"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_triposplat_requires_bounded_gaussian_splat_and_mesh_task_and_models",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -288,13 +429,52 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "image_to_3d",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "triposplat_fp16.safetensors",
+            "repository": "VAST-AI/TripoSplat"
+          },
+          {
+            "artifact": "triposplat_vae_decoder_fp16.safetensors",
+            "repository": "VAST-AI/TripoSplat"
+          },
+          {
+            "artifact": "dino_v3_vit_h.safetensors",
+            "repository": "VAST-AI/TripoSplat"
+          },
+          {
+            "artifact": "flux2-vae.safetensors",
+            "repository": "VAST-AI/TripoSplat"
+          },
+          {
+            "artifact": "birefnet.safetensors",
+            "repository": "Comfy-Org/BiRefNet"
+          }
+        ],
+        "assetPath": "templates/3d_triposplat_image_to_gaussian_splat.json",
+        "assetSha256": "409e4735ef39ada5d93f6ad79153abe07bd0a3f643175eef46c37b626d729e0e",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "triposplat_requires_bounded_gaussian_splat_and_mesh_task_and_models",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "cf3209db5a698107be323f3ff4ae571f5f6c3b18",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "TripoSplat: Image to Gaussian Splat"
     },
     {
@@ -11027,11 +11207,13 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
-        "exact_catalog_checkpoint_and_component_compatibility_not_proven",
-        "model_artifact_and_input_output_rights_review_required",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
+        "exact_builtin_node_behavior_and_output_contract_not_proven",
+        "source_review_image_stitch_requires_bounded_multi_image_layout_task",
+        "input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -11052,110 +11234,55 @@
       },
       "contractId": "comfy-research:template:utility_image_stitch",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 25,
-      "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "currentTaskBoundaryOptionCount": 0,
+      "exactCatalogModelReproductionRequiresAdmission": false,
+      "mappingMeaning": "source_reviewed_model_free_image_stitch_task_required",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
-        "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
-        "modelFamily": "Chroma",
-        "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
-          "modelFamily": "Chroma",
-          "modelType": "ChromaImg2ImgPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "DreamLiteMobilePipeline:edit_image",
-          "modelFamily": "DreamLite",
-          "modelType": "DreamLiteMobilePipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
-          "modelFamily": "FLUX Image",
-          "modelType": "Flux2KleinPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
-          "canonicalWorkflowId": "JoyImageEditPipeline:edit_image",
-          "modelFamily": "JoyAI Image",
-          "modelType": "JoyImageEditPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Kandinsky3Pipeline:edit_image",
-          "modelFamily": "Kandinsky",
-          "modelType": "Kandinsky3Pipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
-          "modelFamily": "Latent Consistency Models",
-          "modelType": "LatentConsistencyModelPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LongCatImageEditPipeline:edit_image",
-          "modelFamily": "LongCat Image",
-          "modelType": "LongCatImageEditPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "OmniGenPipeline:edit_image",
-          "modelFamily": "OmniGen",
-          "modelType": "OmniGenPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
-          "modelFamily": "Qwen Image",
-          "modelType": "QwenImageEditModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
-          "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
-          "modelFamily": "Sana",
-          "modelType": "SanaSprintPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "StableDiffusionPAGPipeline:edit_image",
-          "modelFamily": "Stable Diffusion 1.x",
-          "modelType": "StableDiffusionPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
-          "modelFamily": "Stable Diffusion XL",
-          "modelType": "StableDiffusionXLInstructPix2PixPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "ZImageModularPipeline:edit_image",
-          "modelFamily": "Z-Image",
-          "modelType": "ZImageModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "edit_image",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "image_stitch",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ImageStitch core node",
+            "repository": "Comfy-Org/ComfyUI"
+          },
+          {
+            "artifact": "image resize contract",
+            "repository": "Comfy-Org/ComfyUI"
+          }
+        ],
+        "assetPath": "templates/utility_image_stitch.json",
+        "assetSha256": "d00b088bdba0d456b008b59f65643fc6cb1d3f825a242b6ef7d696897cd521c4",
+        "catalogSelectedCandidateMode": "edit_image",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "image_stitch_requires_bounded_multi_image_layout_task",
+          "state": "model_free_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "bdb26ba2aaeca8fa08e0e10ee48a052c4f07fa4d",
+        "importsGraph": false,
+        "modelFree": true,
+        "reviewedTaskMode": "image_stitch",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Image Stitch  2x2 Grid "
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
-        "exact_catalog_checkpoint_and_component_compatibility_not_proven",
-        "model_artifact_and_input_output_rights_review_required",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
+        "exact_builtin_node_behavior_and_output_contract_not_proven",
+        "source_review_comfy_lanczos_scale_requires_builtin_algorithm_parity_review",
+        "input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "builtin_operation_contract_and_algorithm_parity_review_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -11177,8 +11304,8 @@
       "contractId": "comfy-research:template:utility_interpolation_image_upscale",
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
-      "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "exactCatalogModelReproductionRequiresAdmission": false,
+      "mappingMeaning": "source_reviewed_model_free_task_candidate_algorithm_parity_not_proven",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
@@ -11196,9 +11323,35 @@
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
+      "resolutionState": "existing_task_boundary_builtin_operation_review_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ImageScaleBy Lanczos core node",
+            "repository": "Comfy-Org/ComfyUI"
+          }
+        ],
+        "assetPath": "templates/utility_interpolation_image_upscale.json",
+        "assetSha256": "65493061d970f172dfc43aec7fd407f920f7232f7a4ffe3cd3a5f521f28278c5",
+        "catalogRecommendedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": "BuiltinImageOperation:image_upscale",
+          "reasonCode": "comfy_lanczos_scale_requires_builtin_algorithm_parity_review",
+          "state": "model_free_builtin_operation_contract_review_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "55eac8ad01f1e82733423721f918a6f3373cc077",
+        "importsGraph": false,
+        "modelFree": true,
+        "reviewedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Image Upscale: Traditional Interpolation"
     },
     {
@@ -16235,13 +16388,14 @@
       "control_video_to_video": 2,
       "depth_estimation": 1,
       "edit_audio": 1,
-      "edit_image": 21,
+      "edit_image": 20,
       "edit_video": 2,
       "first_last_frame_to_video": 6,
       "first_last_frame_to_video_with_audio": 3,
       "frame_interpolation": 1,
       "image_audio_to_text": 1,
       "image_audio_to_video": 2,
+      "image_stitch": 1,
       "image_to_3d": 7,
       "image_to_text": 2,
       "image_to_video": 10,
@@ -16264,23 +16418,26 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 129,
+    "pinnedSourceReviewCount": 138,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 26,
+      "different_model_generation_and_new_task_required": 33,
       "different_model_generation_requires_admission": 84,
+      "model_free_builtin_operation_contract_review_required": 1,
+      "model_free_new_task_required": 1,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 74,
+    "recordsWithHiddenAuthoringSpecOption": 73,
     "recordsWithPublicTemplateOption": 30,
-    "recordsWithRecommendedWorkflow": 104,
+    "recordsWithRecommendedWorkflow": 103,
     "resolutionCount": 138,
     "resolutionStateCounts": {
       "existing_family_workflow_candidate": 18,
-      "existing_task_boundary_model_admission_required": 86,
-      "new_task_boundary_required": 34
+      "existing_task_boundary_builtin_operation_review_required": 1,
+      "existing_task_boundary_model_admission_required": 84,
+      "new_task_boundary_required": 35
     },
     "sourceProposalCount": 138
   }

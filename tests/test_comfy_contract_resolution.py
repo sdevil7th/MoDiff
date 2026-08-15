@@ -56,21 +56,24 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.ledger["summary"]["resolutionStateCounts"],
             {
                 "existing_family_workflow_candidate": 18,
-                "existing_task_boundary_model_admission_required": 86,
-                "new_task_boundary_required": 34,
+                "existing_task_boundary_builtin_operation_review_required": 1,
+                "existing_task_boundary_model_admission_required": 84,
+                "new_task_boundary_required": 35,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 104)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 103)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 74)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 129)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 73)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 138)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 26,
+                "different_model_generation_and_new_task_required": 33,
                 "different_model_generation_requires_admission": 84,
+                "model_free_builtin_operation_contract_review_required": 1,
+                "model_free_new_task_required": 1,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 8,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -97,6 +100,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_to_3d": 7,
             "image_audio_to_video": 2,
             "image_audio_to_text": 1,
+            "image_stitch": 1,
             "image_to_video_with_audio": 1,
             "motion_track_to_video": 1,
             "reference_to_image": 1,
@@ -142,10 +146,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(len(rows), 3)
         for row in rows:
             with self.subTest(contract=row["contractId"]):
-                self.assertEqual(
-                    row["resolutionState"],
-                    "existing_task_boundary_model_admission_required",
+                expected_state = (
+                    "existing_task_boundary_builtin_operation_review_required"
+                    if row["catalogId"] == "utility_interpolation_image_upscale"
+                    else "existing_task_boundary_model_admission_required"
                 )
+                self.assertEqual(row["resolutionState"], expected_state)
                 self.assertEqual(row["currentTaskBoundaryOptionCount"], 1)
                 self.assertEqual(
                     row["recommendedWorkflow"]["canonicalWorkflowId"],
@@ -215,7 +221,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_one_hundred_twenty_nine_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_all_one_hundred_thirty_eight_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -224,6 +230,13 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             set(reviewed),
             {
+                "3d_hunyuan3d-v2.1",
+                "3d_hunyuan3d_image_to_model",
+                "3d_hunyuan3d_multiview_to_model",
+                "3d_hunyuan3d_multiview_to_model_turbo",
+                "3d_moge_panorama_to_mesh",
+                "3d_moge_perspective_to_mesh",
+                "3d_triposplat_image_to_gaussian_splat",
                 "audio_ace_step_1_m2m_editing",
                 "audio_ace_step_1_t2a_instrumentals",
                 "audio_ace_step_1_t2a_song",
@@ -348,6 +361,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "wan2.1_flf2v_720_f16",
                 "wan2.1_fun_inp",
                 "utility_birefnet_remove_background",
+                "utility_image_stitch",
+                "utility_interpolation_image_upscale",
                 "utility_pid_latent_upscale_dit",
                 "utility_seedvr2_3b_int8_upscale_image",
                 "utility_seedvr2_3b_int8_upscale_video",
@@ -655,6 +670,29 @@ class ComfyContractResolutionTests(unittest.TestCase):
         birefnet = reviewed["utility_birefnet_remove_background"]
         self.assertEqual(birefnet["resolutionState"], "new_task_boundary_required")
         self.assertIsNone(birefnet["recommendedWorkflow"])
+
+        stitch = reviewed["utility_image_stitch"]
+        self.assertEqual(stitch["sourceReview"]["catalogSelectedCandidateMode"], "edit_image")
+        self.assertEqual(stitch["selectedCandidateMode"], "image_stitch")
+        self.assertEqual(stitch["resolutionState"], "new_task_boundary_required")
+        self.assertFalse(stitch["exactCatalogModelReproductionRequiresAdmission"])
+        self.assertIsNone(stitch["recommendedWorkflow"])
+        self.assertNotIn("model_artifact_and_input_output_rights_review_required", stitch["blockers"])
+
+        scale = reviewed["utility_interpolation_image_upscale"]
+        self.assertEqual(
+            scale["resolutionState"],
+            "existing_task_boundary_builtin_operation_review_required",
+        )
+        self.assertFalse(scale["exactCatalogModelReproductionRequiresAdmission"])
+        self.assertEqual(
+            scale["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinImageOperation:image_upscale",
+        )
+        self.assertIn(
+            "builtin_operation_contract_and_algorithm_parity_review_required",
+            scale["blockers"],
+        )
 
         gemma4 = reviewed["llm_gemma4_text_gen"]
         self.assertEqual(gemma4["sourceReview"]["catalogSelectedCandidateMode"], "text_generation")

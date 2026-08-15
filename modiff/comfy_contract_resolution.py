@@ -3178,6 +3178,168 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
+    "comfy-research:template:utility_image_stitch": {
+        "assetPath": "templates/utility_image_stitch.json",
+        "assetSha256": "d00b088bdba0d456b008b59f65643fc6cb1d3f825a242b6ef7d696897cd521c4",
+        "gitBlobOid": "bdb26ba2aaeca8fa08e0e10ee48a052c4f07fa4d",
+        "reviewedTaskMode": "image_stitch",
+        "modelFree": True,
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/ComfyUI", "artifact": "ImageStitch core node"},
+            {"repository": "Comfy-Org/ComfyUI", "artifact": "image resize contract"},
+        ],
+        "comparison": {
+            "state": "model_free_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "image_stitch_requires_bounded_multi_image_layout_task",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_model_free_image_stitch_task_required",
+    },
+    "comfy-research:template:utility_interpolation_image_upscale": {
+        "assetPath": "templates/utility_interpolation_image_upscale.json",
+        "assetSha256": "65493061d970f172dfc43aec7fd407f920f7232f7a4ffe3cd3a5f521f28278c5",
+        "gitBlobOid": "55eac8ad01f1e82733423721f918a6f3373cc077",
+        "reviewedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "modelFree": True,
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/ComfyUI", "artifact": "ImageScaleBy Lanczos core node"},
+        ],
+        "comparison": {
+            "state": "model_free_builtin_operation_contract_review_required",
+            "currentWorkflowId": "BuiltinImageOperation:image_upscale",
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "comfy_lanczos_scale_requires_builtin_algorithm_parity_review",
+        },
+        "resolutionState": "existing_task_boundary_builtin_operation_review_required",
+        "mappingMeaning": "source_reviewed_model_free_task_candidate_algorithm_parity_not_proven",
+    },
+    "comfy-research:template:3d_hunyuan3d-v2.1": {
+        "assetPath": "templates/3d_hunyuan3d-v2.1.json",
+        "assetSha256": "da13275369b31a6586f8238837f13f7166bdf5b8f0b109440c790453d6d8d1ac",
+        "gitBlobOid": "bba98b3ca376d003fdcc87a24ea7ba083bc394c0",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/hunyuan3D_2.1_repackaged", "artifact": "hunyuan_3d_v2.1.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "hunyuan3d_v21_requires_bounded_image_to_mesh_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
+    "comfy-research:template:3d_hunyuan3d_image_to_model": {
+        "assetPath": "templates/3d_hunyuan3d_image_to_model.json",
+        "assetSha256": "82d52b65205b8b6d12b1111bdbae6943db3c61cea0f4f7cba5ccd8c9aba9dd10",
+        "gitBlobOid": "c9c581b6ed245cc0fb150c7a7e684c33fcd54abb",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/hunyuan3D_2.0_repackaged", "artifact": "hunyuan3d-dit-v2_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "hunyuan3d_v2_requires_bounded_image_to_mesh_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
+    "comfy-research:template:3d_hunyuan3d_multiview_to_model": {
+        "assetPath": "templates/3d_hunyuan3d_multiview_to_model.json",
+        "assetSha256": "edb1f3b00c56130b9fe87aab82c0eb8b041bc2df2c0c3ab7ae5de2c80848743b",
+        "gitBlobOid": "02b80eb2374a5c36a07ef382296a25ee99f46de7",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/hunyuan3D_2.0_repackaged", "artifact": "hunyuan3d-dit-v2-mv_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "hunyuan3d_multiview_requires_bounded_multiview_to_mesh_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
+    "comfy-research:template:3d_hunyuan3d_multiview_to_model_turbo": {
+        "assetPath": "templates/3d_hunyuan3d_multiview_to_model_turbo.json",
+        "assetSha256": "5a0aad5c7c2dbb06d939920967221e340e9027590d4b859ee475b7ff14d0d246",
+        "gitBlobOid": "9bbc51947f221f3d25bab3fd4a7891f4b4e4a804",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/hunyuan3D_2.0_repackaged", "artifact": "hunyuan3d-dit-v2-mv-turbo_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "hunyuan3d_multiview_turbo_requires_bounded_multiview_to_mesh_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
+    "comfy-research:template:3d_moge_panorama_to_mesh": {
+        "assetPath": "templates/3d_moge_panorama_to_mesh.json",
+        "assetSha256": "4164b944d55c8b3d6f405a4d4ff126f2b5842a857232a792a19ca16ab6c1f765",
+        "gitBlobOid": "ed2734ce26404eaf1aca99f4a4c12ec43501b039",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/MoGe", "artifact": "moge_2_vitl_normal_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "moge_panorama_requires_bounded_panorama_to_mesh_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
+    "comfy-research:template:3d_moge_perspective_to_mesh": {
+        "assetPath": "templates/3d_moge_perspective_to_mesh.json",
+        "assetSha256": "83e2d30406443d68e833be57944e51be34ba17c331b4910babdcd17fb9665d85",
+        "gitBlobOid": "80b6c432154b6e50b76b7ba60f19867942e33fe8",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/MoGe", "artifact": "moge_2_vitl_normal_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "moge_perspective_requires_bounded_perspective_to_mesh_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
+    "comfy-research:template:3d_triposplat_image_to_gaussian_splat": {
+        "assetPath": "templates/3d_triposplat_image_to_gaussian_splat.json",
+        "assetSha256": "409e4735ef39ada5d93f6ad79153abe07bd0a3f643175eef46c37b626d729e0e",
+        "gitBlobOid": "cf3209db5a698107be323f3ff4ae571f5f6c3b18",
+        "artifactDependencies": [
+            {"repository": "VAST-AI/TripoSplat", "artifact": "triposplat_fp16.safetensors"},
+            {"repository": "VAST-AI/TripoSplat", "artifact": "triposplat_vae_decoder_fp16.safetensors"},
+            {"repository": "VAST-AI/TripoSplat", "artifact": "dino_v3_vit_h.safetensors"},
+            {"repository": "VAST-AI/TripoSplat", "artifact": "flux2-vae.safetensors"},
+            {"repository": "Comfy-Org/BiRefNet", "artifact": "birefnet.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "triposplat_requires_bounded_gaussian_splat_and_mesh_task_and_models",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_to_3d_task_and_model_generation_required",
+    },
 }
 _BOUNDARY = {
     "researchOnly": True,
@@ -3423,13 +3585,22 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
             pinned_source_review["executesGraph"] = False
             resolution_state = pinned_source_review.pop("resolutionState")
             mapping_meaning = pinned_source_review.pop("mappingMeaning")
-            blockers = [
-                "pinned_source_dependencies_reviewed_without_import_or_execution",
-                "exact_catalog_checkpoint_and_component_compatibility_not_proven",
-                f"source_review_{comparison['reasonCode']}",
-                "model_artifact_and_input_output_rights_review_required",
-                "execution_and_asset_quality_not_proven",
-            ]
+            if pinned_source_review.get("modelFree") is True:
+                blockers = [
+                    "pinned_source_dependencies_reviewed_without_import_or_execution",
+                    "exact_builtin_node_behavior_and_output_contract_not_proven",
+                    f"source_review_{comparison['reasonCode']}",
+                    "input_output_rights_review_required",
+                    "execution_and_asset_quality_not_proven",
+                ]
+            else:
+                blockers = [
+                    "pinned_source_dependencies_reviewed_without_import_or_execution",
+                    "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+                    f"source_review_{comparison['reasonCode']}",
+                    "model_artifact_and_input_output_rights_review_required",
+                    "execution_and_asset_quality_not_proven",
+                ]
         else:
             blockers = [
                 "catalog_metadata_is_semantic_evidence_only",
@@ -3451,6 +3622,8 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
                 resolved_catalog_families.add(reviewed_family)
         if resolution_state == "existing_task_boundary_model_admission_required":
             blockers.append("exact_catalog_model_or_variant_admission_required")
+        elif resolution_state == "existing_task_boundary_builtin_operation_review_required":
+            blockers.append("builtin_operation_contract_and_algorithm_parity_review_required")
         elif resolution_state == "new_task_boundary_required":
             blockers.extend(
                 [
@@ -3485,7 +3658,9 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
                     if recommended is not None
                     else None
                 ),
-                "exactCatalogModelReproductionRequiresAdmission": True,
+                "exactCatalogModelReproductionRequiresAdmission": not bool(
+                    pinned_source_review and pinned_source_review.get("modelFree") is True
+                ),
                 "blockers": blockers,
                 "claims": {
                     "comfyGraphImported": False,
