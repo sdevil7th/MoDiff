@@ -11,7 +11,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:c2c87bd1cd57569764fbf903b9f3543c7d8f0ee6f171625b4ca732df09464759",
+  "contentHash": "sha256:343f75b4c3d0dfee87ef4f99306e9a82adc59a07558d5d25c3eeb12dd1fad828",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -6955,8 +6955,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "text"
@@ -6977,13 +6976,33 @@
       },
       "contractId": "comfy-research:template:llm_gemma4_text_gen",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
+        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+        "modelFamily": "Janus",
+        "modelType": "HuggingFaceAnyToAnyModel",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+          "modelFamily": "SmolLM",
+          "modelType": "HuggingFaceTextGenerationModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_generation",
       "sourceKind": "template",
       "title": "Gemma4: Text Generation"
@@ -6994,8 +7013,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "text"
@@ -7016,13 +7034,33 @@
       },
       "contractId": "comfy-research:template:llm_qwen3_5_text_gen",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
+        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+        "modelFamily": "Janus",
+        "modelType": "HuggingFaceAnyToAnyModel",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+          "modelFamily": "SmolLM",
+          "modelType": "HuggingFaceTextGenerationModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_generation",
       "sourceKind": "template",
       "title": "Qwen3.5: Text Generation"
@@ -7033,8 +7071,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "text"
@@ -7055,13 +7092,33 @@
       },
       "contractId": "comfy-research:template:llm_qwen3_text_gen",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
+        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+        "modelFamily": "Janus",
+        "modelType": "HuggingFaceAnyToAnyModel",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+          "modelFamily": "SmolLM",
+          "modelType": "HuggingFaceTextGenerationModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_generation",
       "sourceKind": "template",
       "title": "Qwen3.0: Text Generation"
@@ -7072,8 +7129,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "text"
@@ -7094,13 +7150,33 @@
       },
       "contractId": "comfy-research:template:llm_qwen3vl_text_gen",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
+        "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+        "modelFamily": "Janus",
+        "modelType": "HuggingFaceAnyToAnyModel",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
+          "modelFamily": "SmolLM",
+          "modelType": "HuggingFaceTextGenerationModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_generation",
       "sourceKind": "template",
       "title": "Qwen3-VL: Text Generation"
@@ -11490,14 +11566,14 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "recordsWithHiddenAuthoringSpecOption": 82,
+    "recordsWithHiddenAuthoringSpecOption": 86,
     "recordsWithPublicTemplateOption": 25,
-    "recordsWithRecommendedWorkflow": 107,
+    "recordsWithRecommendedWorkflow": 111,
     "resolutionCount": 138,
     "resolutionStateCounts": {
       "existing_family_workflow_candidate": 57,
-      "existing_task_boundary_model_admission_required": 50,
-      "new_task_boundary_required": 31
+      "existing_task_boundary_model_admission_required": 54,
+      "new_task_boundary_required": 27
     },
     "sourceProposalCount": 138
   }

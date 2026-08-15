@@ -59,7 +59,7 @@ _LABEL_TO_FAMILIES = {
     "wan2.2": {"Wan Video"},
     "z-image": {"Z-Image"},
 }
-_MEDIA_KIND_ALIASES = {"three_d": "video"}
+_MEDIA_KIND_ALIASES = {"text": "json", "three_d": "video"}
 _BOUNDARY = {
     "researchOnly": True,
     "importsComfyGraphs": False,
