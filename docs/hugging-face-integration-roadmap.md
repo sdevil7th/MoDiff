@@ -6950,7 +6950,7 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Twenty-nine
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Thirty-four
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
@@ -6981,6 +6981,11 @@ Camera graphs as a new camera-motion task, and map Fun Control to the existing
 generic `control_video_to_video` boundary without equating it to AnimateDiff.
 Their 2.1/2.2 repackaged model, VAE, LoRA, and control assemblies remain separate
 admission work rather than inherited support.
+Five further Qwen reviews recover two 2512 LoRA concepts from an incorrect
+AuraFlow fallback and map them to the admitted Qwen generation while retaining
+partition/LoRA gates. The original-Qwen Canny patch and InstantX inpainting
+assembly reuse existing control/inpaint boundaries without inheriting 2512
+support, and the 2509 Relight concept remains an unadmitted auxiliary variant.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7092,6 +7097,8 @@ task-boundary corrections without claiming auxiliary or checkpoint admission.
 license, execution, or asset gates. `c756949` adds the three exact ACE-Step v1
 dependency decisions and keeps audio editing explicitly unauthored. `dfe18ec`
 adds the six Wan source decisions and three new camera-task requirements.
+`9230b11` adds five Qwen generation/control decisions and two source-proven
+workflow-family corrections.
 
 The following separate gates do remain external:
 
