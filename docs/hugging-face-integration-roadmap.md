@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Eighty-three of those 138 candidates now also have exact pinned graph-source
+Ninety of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7034,6 +7034,11 @@ Two VACE reviews correct image-labelled records to video inpaint/outpaint and
 reuse the admitted VACE task boundaries while retaining the 14B, CausVid, and
 SAM3 gates. Wan Fun `inp` is source-corrected to first/last-frame generation,
 whereas Anima LLLite remains a distinct image-inpaint model/patch admission.
+Seven endpoint-conditioned video reviews retain four Wan first/last-frame
+model generations behind the unauthored video-only task. The three LTX 2.3/2.5
+graphs also decode synchronized audio, so they are corrected to the separate
+`first_last_frame_to_video_with_audio` task and retain their exact checkpoint,
+text-encoder, VAE, and optional transition-LoRA gates.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7157,7 +7162,8 @@ utility-model decisions. `9d62715` adds the four causal and multimodal text
 decisions. `80f86fd` adds MiniMax Music 3 and corrects all three H3 output/task
 contracts to video plus audio. `04c0445` adds the three Wan audio-driven video
 and two SCAIL-2 character-replacement decisions. `f7bf0b1` adds the four VACE,
-Wan Fun, and Anima inpaint/media decisions.
+Wan Fun, and Anima inpaint/media decisions. `24efba9` adds all seven endpoint-
+conditioned Wan/LTX decisions and preserves the LTX audio output contract.
 
 The following separate gates do remain external:
 
