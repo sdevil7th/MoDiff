@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-One hundred six of those 138 candidates now also have exact pinned graph-source
+One hundred thirteen of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7052,6 +7052,13 @@ Five HiDream reviews retain E1 edit and I1 dev/fast/full generation behind the
 existing image task boundaries while requiring their distinct transformer and
 shared four-encoder/VAE assembly. No HiDream variant inherits Chroma or
 AuraFlow support.
+Seven Capybara, Anima, and Boogu image reviews retain their edit or
+text-to-image task boundaries while requiring distinct model-generation
+admissions. Capybara combines its transformer with Qwen, ByT5, HunyuanVideo
+VAE, and SigCLIP components; Anima combines its base or preview transformer
+with Qwen and Qwen-Image VAE components; Boogu uses separate FP8, INT8, or
+Turbo transformer partitions with HiDream VAE and Qwen3-VL encoding. None of
+those assemblies inherits support from the nearest Chroma or AuraFlow route.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7180,7 +7187,8 @@ conditioned Wan/LTX decisions and preserves the LTX audio output contract.
 `b433ff8` adds the five classic Hunyuan, HunyuanVideo 1.5, and Kandinsky 5
 video-generation decisions. `b091868` adds the six Capybara, Bernini, HuMo,
 and SDXL-to-SVD composite decisions. `5f60154` adds the five HiDream E1/I1
-variant decisions.
+variant decisions. `b8a884a` adds the seven Capybara, Anima, and Boogu image
+model decisions.
 
 The following separate gates do remain external:
 
