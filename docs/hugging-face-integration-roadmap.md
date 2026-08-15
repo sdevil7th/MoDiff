@@ -6903,18 +6903,18 @@ was too broad. It applied only to the finite slices already enumerated in those
 phases, not to the wider goal of classifying and covering every current
 Diffusers/Transformers semantic and researching a complete template catalog.
 
-The generic task/media architecture now has 185 exact backend execution-spec
+The generic task/media architecture now has 186 exact backend execution-spec
 and task-planning pairs. It covers generic image, video, audio, unconditional,
 perception, 3D, speech, bounded causal-text, image/video-to-text, and
 model-specific bounded AnyToAny actions; model identities and artifacts remain
 separate from those task boundaries. The regenerated canonical library contains
-197 unique, deterministic, independently verified graph files: the 185 base
-pairs plus 12 retained variants. All 197 are executable at source/graph level.
+198 unique, deterministic, independently verified graph files: the 186 base
+pairs plus 12 retained variants. All 198 are executable at source/graph level.
 
 The 77 public templates pass their structural contracts and cover 51 canonical
-workflows. Every one of the other 146 workflows has an exact Gallery-hidden,
-zero-asset candidate contract: 98 image, 33 video, nine JSON, and six audio;
-91 require reviewed input examples before promotion. These are authoring
+workflows. Every one of the other 147 workflows has an exact Gallery-hidden,
+zero-asset candidate contract: 99 image, 33 video, nine JSON, and six audio;
+92 require reviewed input examples before promotion. These are authoring
 contracts, not generated assets or public Gallery claims.
 
 The generated full-coverage ledger classifies every one of the 327 exported
@@ -6947,10 +6947,16 @@ The official Comfy research foundation pins
 93 blueprints, and records conservative semantic evidence without importing or
 executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 308 records: 217 templates and 91 blueprints. It contains 54 existing-MoDiff
-mapping candidates (39 templates and 15 blueprints), 138
-`new_contract_not_authored` candidates, and 116 `contract_undetermined`
-records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored.
+mapping candidates (39 templates and 15 blueprints), 138 source-review
+proposals originally recorded as `new_contract_not_authored`, and 116
+`contract_undetermined` records. The later exact source-resolution ledger maps
+104 of those 138 proposals to current MoDiff workflows. Eighteen are same-family
+candidates, 84 reuse a task boundary but require a distinct model admission,
+two are model-free built-in operations awaiting algorithm-parity review, and
+34 still require a new bounded task boundary. The image-stitch proposal is now
+the first of those model-free task gaps implemented as an original hidden MoDiff
+workflow; it remains ungenerated and is not claimed equivalent to the Comfy
+graph.
 All 138 of those candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
@@ -7069,9 +7075,11 @@ Blur graph is source-corrected from image editing to control-image generation;
 it does not inherit SD1.5 Canny support.
 The two model-free utility reviews separate a four-input image-stitch task from
 the catalog's generic edit label and identify the purported interpolation
-upscale as a built-in two-times Lanczos resize. The former still needs a
-bounded multi-image layout contract; the latter needs exact algorithm/output
-parity review rather than a model artifact admission. Seven final 3D reviews
+upscale as a built-in two-times Lanczos resize. MoDiff now has its own bounded
+2-to-64-input stitch contract and canonical workflow, while exact Comfy
+algorithm/output parity, input rights, execution, and quality remain pending;
+the resize record likewise needs exact algorithm/output parity review rather
+than a model artifact admission. Seven final 3D reviews
 retain Hunyuan3D 2.0/2.1, MoGe panorama/perspective mesh conversion, and
 TripoSplat image-to-splat/mesh generation behind the unauthored bounded
 `image_to_3d` boundary with their exact model and export dependencies.
@@ -7089,7 +7097,7 @@ graph and prompt locks, model revision, node contract, and receipt; regenerate
 only changed or unmatched cases plus representative canaries.
 
 The regenerated release report is correctly blocked rather than empty: 66 of
-77 templates and 186 of 197 workflows lack complete release evidence, and none
+77 templates and 187 of 198 workflows lack complete release evidence, and none
 of the 51 advertised resource recipes has a measured physical qualification
 receipt on this host. Source completeness, prior visual approval, asset
 authoring, and physical release qualification remain separate claims.
@@ -7141,8 +7149,8 @@ App-only model provisioning completed exact SmolLM2, SmolVLM, and Janus
 selections totaling 4,951,475,788 bytes without deleting an older model. The
 separate pending campaign still contains ten exact selections totaling
 408,762,812,498 bytes (408.763 GB). The latest 2026-08-15 live filesystem
-snapshot reports 69,025,632,256 free bytes against the app's
-68,719,476,736-byte reserve, leaving only 306,155,520 bytes before queue and
+snapshot reports 68,909,105,152 free bytes against the app's
+68,719,476,736-byte reserve, leaving only 189,628,416 bytes before queue and
 staging accounting; the app download queue is idle and no pending selection
 currently fits. Stable Video
 and Stable Audio additionally remain access-gated after prior HTTP 403 results
@@ -7208,6 +7216,13 @@ model decisions. `620dc9a` adds the sixteen ChronoEdit, FireRed, Ideogram 4,
 Krea 2, Lens, Mage-Flow, NewBie, PixelDiT, and SD3.5 decisions. `45e1d72`
 closes the remaining model-free utility and seven 3D source reviews, so every
 one of the 138 proposed contracts has pinned graph-source evidence.
+Backend `d827762`, client `1067a90`, and backend `411eff2` then implement and
+canonically generate the original bounded image-stitch task. Client `07f98db`
+and `355f847` make the 198-workflow generator resilient to transient Chromium
+launches and normalize backend collision suffixes plus connected-field UI
+state without changing execution values or topology. Backend `3275f22` reseals
+upstream coverage, all 147 hidden candidate/authoring contracts, and the Comfy
+resolution ledger against that exact graph library.
 
 The following separate gates do remain external:
 
