@@ -61,6 +61,16 @@ _LABEL_TO_FAMILIES = {
     "z-image": {"Z-Image"},
 }
 _MEDIA_KIND_ALIASES = {"text": "json", "three_d": "video"}
+_SEMANTIC_TASK_BOUNDARIES = {
+    # The canonical Wan FLF graph predates the research-mode vocabulary and
+    # is published as image_to_video.  Its exact input contract makes the
+    # narrower task unambiguous: both an opening image and lastImage are
+    # required.  Do not alias ordinary I2V graphs that only accept one image.
+    "first_last_frame_to_video": {
+        "canonicalModes": frozenset({"image_to_video"}),
+        "requiredImages": frozenset({"referenceImages", "lastImage"}),
+    },
+}
 _PINNED_SOURCE_REVIEW_REVISION = "d9e66019b85da231b7c936ad9cb7ff08cec16557"
 _PINNED_SOURCE_REVIEWS = {
     "comfy-research:template:audio_ace_step_1_m2m_editing": {
@@ -1351,6 +1361,7 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "47a669db3795ec2f06b99f00c579c3e214530cb16bb67a2a08b5428af784fb79",
         "gitBlobOid": "15161f3c41adfb40228a50da6c0238ab5c649b7b",
         "reviewedTaskMode": "first_last_frame_to_video",
+        "reviewedWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "artifactDependencies": [
             {
                 "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
@@ -1363,14 +1374,14 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_vae.safetensors"},
         ],
         "comparison": {
-            "state": "different_model_generation_and_new_task_required",
-            "currentWorkflowId": None,
-            "currentRepository": None,
-            "currentRevision": None,
-            "reasonCode": "wan_fun_inpaint_graph_is_first_last_frame_generation_not_video_inpaint",
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            "currentRevision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            "reasonCode": "wan_fun_5b_partition_is_not_admitted_wan2_1_flf2v",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
     "comfy-research:template:video_wan_vace_14B_ref2v": {
         "assetPath": "templates/video_wan_vace_14B_ref2v.json",
@@ -2214,6 +2225,7 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "fcaa86b3cd82e7a0bb808949f8a1756fc2d3525a8e71f26f80651c4373c16579",
         "gitBlobOid": "2284a9fbb8be3b513b7af01d1b48d7ac8ce6c83b",
         "reviewedTaskMode": "first_last_frame_to_video",
+        "reviewedWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "reviewedOutputMediaKinds": ["video"],
         "artifactDependencies": [
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_fun_inp_1.3B_bf16.safetensors"},
@@ -2225,14 +2237,14 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
         ],
         "comparison": {
-            "state": "different_model_generation_and_new_task_required",
-            "currentWorkflowId": None,
-            "currentRepository": None,
-            "currentRevision": None,
-            "reasonCode": "wan_fun_inp_graph_is_first_last_frame_generation_not_image_inpaint",
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            "currentRevision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            "reasonCode": "wan_fun_1_3b_partition_is_not_admitted_wan2_1_flf2v",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
     "comfy-research:template:image_anima_lllite_image_inpainting": {
         "assetPath": "templates/image_anima_lllite_image_inpainting.json",
@@ -2330,6 +2342,8 @@ _PINNED_SOURCE_REVIEWS = {
         "assetPath": "templates/video_wan2_2_14B_flf2v.json",
         "assetSha256": "9fb579e07caff9081c14a4c0e3b983e210aa7d976f83f1c2758d2ad6ed949fdf",
         "gitBlobOid": "ad344b8f7dc1c5058ae480149f6082583611430a",
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "reviewedWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "artifactDependencies": [
             {
                 "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
@@ -2346,19 +2360,21 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan_2.1_vae.safetensors"},
         ],
         "comparison": {
-            "state": "different_model_generation_and_new_task_required",
-            "currentWorkflowId": None,
-            "currentRepository": None,
-            "currentRevision": None,
-            "reasonCode": "wan2_2_first_last_frame_requires_new_task_and_dual_transformer_generation",
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            "currentRevision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            "reasonCode": "wan2_2_dual_transformer_partition_is_not_admitted_wan2_1_flf2v",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
     "comfy-research:template:video_wan2_2_14B_fun_inpaint": {
         "assetPath": "templates/video_wan2_2_14B_fun_inpaint.json",
         "assetSha256": "d8d100d3425760a314ad4fe620d019b0b8b59e921a3ab925e393e965e297dff2",
         "gitBlobOid": "6f3150b108ed3ae4914639d32e98ddd811e5b3d9",
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "reviewedWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "artifactDependencies": [
             {
                 "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
@@ -2383,19 +2399,21 @@ _PINNED_SOURCE_REVIEWS = {
             },
         ],
         "comparison": {
-            "state": "different_model_generation_and_new_task_required",
-            "currentWorkflowId": None,
-            "currentRepository": None,
-            "currentRevision": None,
-            "reasonCode": "wan2_2_fun_first_last_frame_requires_new_task_model_and_loras",
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            "currentRevision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            "reasonCode": "wan2_2_fun_partition_and_loras_are_not_admitted_wan2_1_flf2v",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
     "comfy-research:template:video_wan_vace_flf2v": {
         "assetPath": "templates/video_wan_vace_flf2v.json",
         "assetSha256": "a3e93893792803f7118a444dab365badab954d8304a7956bd6a79226dfa11a4f",
         "gitBlobOid": "78dd5feaafe02c47173ba34428f69bbac2058ce2",
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "reviewedWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "artifactDependencies": [
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_vace_14B_fp16.safetensors"},
             {
@@ -2409,19 +2427,21 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
         ],
         "comparison": {
-            "state": "different_model_generation_and_new_task_required",
-            "currentWorkflowId": None,
-            "currentRepository": None,
-            "currentRevision": None,
-            "reasonCode": "wan_vace_first_last_frame_requires_new_task_14b_partition_and_lora",
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            "currentRevision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            "reasonCode": "wan_vace_14b_partition_and_lora_are_not_admitted_wan2_1_flf2v",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
     "comfy-research:template:wan2.1_flf2v_720_f16": {
         "assetPath": "templates/wan2.1_flf2v_720_f16.json",
         "assetSha256": "389c551b8f1523ec2998b96bd6d3a4395deb7b3060906f3f74cf6d5cb88ec30f",
         "gitBlobOid": "666c9839ced86dd7690560f98f5bc622deb51d8d",
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "reviewedWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "artifactDependencies": [
             {
                 "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
@@ -2435,14 +2455,14 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
         ],
         "comparison": {
-            "state": "different_model_generation_and_new_task_required",
-            "currentWorkflowId": None,
-            "currentRepository": None,
-            "currentRevision": None,
-            "reasonCode": "wan2_1_first_last_frame_requires_new_task_and_model_generation",
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
+            "currentRevision": "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+            "reasonCode": "comfy_wan2_1_flf2v_partition_is_not_admitted_diffusers_flf2v",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
     "comfy-research:template:video_hunyuan_video_1.5_720p_i2v": {
         "assetPath": "templates/video_hunyuan_video_1.5_720p_i2v.json",
@@ -3582,6 +3602,23 @@ def _catalog_families(labels: list[str]) -> set[str]:
     return families
 
 
+def _matches_task_boundary(workflow: Mapping[str, Any], mode: str) -> bool:
+    semantic = _SEMANTIC_TASK_BOUNDARIES.get(mode)
+    if semantic is None:
+        return workflow["mode"] == mode
+    if workflow["mode"] not in semantic["canonicalModes"]:
+        return False
+    required_inputs = workflow.get("requiredInputs")
+    if not isinstance(required_inputs, Mapping):
+        return False
+    required_images = required_inputs.get("requiredImages")
+    return (
+        isinstance(required_images, list)
+        and all(isinstance(value, str) and value for value in required_images)
+        and frozenset(required_images) == semantic["requiredImages"]
+    )
+
+
 def _representative_options(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
     by_family: dict[str, Mapping[str, Any]] = {}
     for row in rows:
@@ -3679,7 +3716,7 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
         task_options = [
             workflow
             for workflow in workflows
-            if workflow["mode"] == mode and workflow["mediaKind"] in normalized_output_kinds
+            if _matches_task_boundary(workflow, mode) and workflow["mediaKind"] in normalized_output_kinds
         ]
         catalog_families = _catalog_families(labels)
         family_options = [workflow for workflow in task_options if workflow["modelFamily"] in catalog_families]

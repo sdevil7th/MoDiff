@@ -6950,12 +6950,13 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138 source-review
 proposals originally recorded as `new_contract_not_authored`, and 116
 `contract_undetermined` records. The later exact source-resolution ledger maps
-104 of those 138 proposals to current MoDiff workflows. Eighteen are same-family
-candidates, 84 reuse a task boundary but require a distinct model admission,
+110 of those 138 proposals to current MoDiff workflows. Eighteen are same-family
+candidates, 90 reuse a task boundary but require a distinct model admission,
 two are model-free built-in operations awaiting algorithm-parity review, and
-34 still require a new bounded task boundary. The image-stitch proposal is now
+28 still require a new bounded task boundary. The image-stitch proposal is now
 the first of those model-free task gaps implemented as an original hidden MoDiff
-workflow; it remains ungenerated and is not claimed equivalent to the Comfy
+workflow. Its local technical candidate has been generated but remains pending
+human quality and rights review, and it is not claimed equivalent to the Comfy
 graph.
 All 138 of those candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
@@ -7013,11 +7014,14 @@ map Wan 2.2 Fun Control to the generic `control_video_to_video` boundary without
 equating its model. WanMove is source-proven to require a new bounded
 `motion_track_to_video` task and its distinct motion/step-distillation model
 assembly.
-The remaining five Wan family reviews correct Fun Inpaint to a first/last-frame
-generation task, VACE Ref2V to reference-conditioned video, and both VACE V2V
-and Wan 2.1 Fun Control to control-video tasks. The VACE 14B graphs retain their
-distinct 14B component partition and CausVid LoRA gates; none inherits support
-or qualification from the admitted 1.3B VACE checkpoint.
+The remaining five Wan family reviews correct Fun Inpaint to first/last-frame
+generation, VACE Ref2V to reference-conditioned video, and both VACE V2V and
+Wan 2.1 Fun Control to control-video tasks. Fun Inpaint can reuse the exact
+two-endpoint task boundary already sealed by
+`WanImage2VideoModularPipeline:image_to_video`; its 5B model remains a distinct
+admission. The VACE 14B graphs retain their separate component partition and
+CausVid LoRA gates; none inherits support or qualification from the admitted
+1.3B VACE checkpoint.
 Six utility-model reviews retain FILM interpolation, SeedVR2 image/video
 upscaling, and BiRefNet background removal as distinct artifact or task
 admissions. The PixelDiT graph is source-corrected from image upscaling to
@@ -7038,11 +7042,13 @@ as separate model/patch/audio-encoder admissions behind the unauthored
 VAE dependency gates; they are not Wan Animate support claims.
 Two VACE reviews correct image-labelled records to video inpaint/outpaint and
 reuse the admitted VACE task boundaries while retaining the 14B, CausVid, and
-SAM3 gates. Wan Fun `inp` is source-corrected to first/last-frame generation,
-whereas Anima LLLite remains a distinct image-inpaint model/patch admission.
-Seven endpoint-conditioned video reviews retain four Wan first/last-frame
-model generations behind the unauthored video-only task. The three LTX 2.3/2.5
-graphs also decode synchronized audio, so they are corrected to the separate
+SAM3 gates. Wan Fun `inp` is source-corrected to first/last-frame generation
+and reuses only the existing two-endpoint task contract, whereas Anima LLLite
+remains a distinct image-inpaint model/patch admission. Seven endpoint-
+conditioned video reviews retain four Wan first/last-frame model generations
+behind distinct model admissions while reusing the current canonical FLF task
+boundary. The three LTX 2.3/2.5 graphs also decode synchronized audio, so they
+are corrected to the separate
 `first_last_frame_to_video_with_audio` task and retain their exact checkpoint,
 text-encoder, VAE, and optional transition-LoRA gates.
 Five further video reviews retain classic Hunyuan Video, HunyuanVideo 1.5
