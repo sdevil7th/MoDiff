@@ -11,7 +11,10 @@ from pathlib import Path
 import diffusers
 from diffusers.modular_pipelines.modular_pipeline import PipelineState
 
-from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+from modiff.modular_contract_only_registry import (
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
+    CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
+)
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION, PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import (
     MODULAR_WORKFLOW_SNAPSHOT,
@@ -30,6 +33,11 @@ _GENERIC_TASK_ALIASES = {
     "img2img": "image_to_image",
     "text2video": "text_to_video",
     "video2video": "video_to_video",
+}
+
+_EQUIVALENT_TASK_ALIASES = {
+    "Wan22ModularPipeline": {"default": "text_to_video"},
+    "Wan22Image2VideoModularPipeline": {"default": "image_to_video"},
 }
 
 
@@ -76,6 +84,27 @@ def generate() -> dict:
                 for workflow in workflow_map
                 if workflow in _GENERIC_TASK_ALIASES
             } | aliases
+        contracts.append(
+            build_modular_workflow_contract(
+                pipeline,
+                aliases=aliases,
+                pipeline_state_factory=PipelineState,
+            )
+        )
+    for pipeline_class_name in CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS:
+        pipeline_class = getattr(diffusers, pipeline_class_name)
+        pipeline = pipeline_class()
+        workflow_map = getattr(pipeline.blocks, "_workflow_map", None)
+        aliases = (
+            {
+                workflow: _GENERIC_TASK_ALIASES[workflow]
+                for workflow in workflow_map
+                if workflow in _GENERIC_TASK_ALIASES
+            }
+            if isinstance(workflow_map, Mapping)
+            else {}
+        )
+        aliases.update(_EQUIVALENT_TASK_ALIASES.get(pipeline_class_name, {}))
         contracts.append(
             build_modular_workflow_contract(
                 pipeline,

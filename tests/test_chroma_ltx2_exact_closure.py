@@ -340,7 +340,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         )
 
     def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
-        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 174)
+        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 175)
         capabilities = studio_capability_definitions()
         cases = {
             ("ChromaImg2ImgPipeline", "edit_image"): (

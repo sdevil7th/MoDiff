@@ -1860,6 +1860,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     expected_keys.add("max_input_image_size")
                 if adapter.conditioning_scale_parameter is not None:
                     expected_keys.add(adapter.conditioning_scale_parameter)
+                    for parameter in ("control_guidance_start", "control_guidance_end"):
+                        if parameter in upstream_parameters:
+                            expected_keys.add(parameter)
 
                 with patch("modules.DiffusersImage.main.add_progress_callback"):
                     action_class(f"signature-{pipeline_name}").execute(**values)
@@ -1872,6 +1875,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     )
                 else:
                     self.assertNotIn("guidance_scale", received)
+                if adapter.conditioning_scale_parameter is not None:
+                    if "control_guidance_start" in upstream_parameters:
+                        self.assertEqual(received["control_guidance_start"], 0.0)
+                    if "control_guidance_end" in upstream_parameters:
+                        self.assertEqual(received["control_guidance_end"], 1.0)
                 if "negative_prompt" in upstream_parameters:
                     self.assertEqual(received["negative_prompt"], "artifact")
 
