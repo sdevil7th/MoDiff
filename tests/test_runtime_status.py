@@ -449,6 +449,119 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(timer.daemon)
         timer.start.assert_called_once_with()
 
+    def test_graph_runtime_deadline_uses_remaining_task_budget(self):
+        handle = SimpleNamespace(cancel=Mock())
+        loop = SimpleNamespace(call_later=Mock(return_value=handle))
+        self.server.loop = loop
+        self.server.current_task = {
+            "task_id": "deadline-task",
+            "name": "Graph execution",
+            "started_at": 95.0,
+        }
+
+        with patch("modiff.server.time.time", return_value=100.0):
+            scheduled = self.server._schedule_task_runtime_deadline(
+                "deadline-task",
+                {"maxRuntimeSeconds": 60},
+            )
+
+        self.assertIs(scheduled, handle)
+        loop.call_later.assert_called_once_with(
+            55.0,
+            self.server._task_runtime_deadline_reached,
+            "deadline-task",
+            60,
+        )
+
+    def test_graph_runtime_deadline_interrupts_active_model_and_schedules_restart(self):
+        pipeline = SimpleNamespace(_interrupt=False)
+        node = SimpleNamespace(_interrupt=False, _active_pipeline=pipeline)
+        self.server.node_cache = {"active-node": node}
+        self.server.current_task = {
+            "task_id": "deadline-task",
+            "name": "Graph execution",
+            "sid": "session",
+            "started_at": 1.0,
+            "progress": 42,
+            "current_node": "active-node",
+            "current_node_name": "modules.DiffusersVideo.Generate",
+            "runtimeHints": {"maxRuntimeSeconds": 60},
+        }
+        failure = {
+            "message": "deadline",
+            "category": "execution",
+            "error_code": "runtime_deadline_exceeded",
+            "recovery_hint": "use accelerator",
+        }
+
+        with (
+            patch.object(self.server, "_exception_payload", return_value=failure),
+            patch.object(self.server, "_persist_supervisor_queue_state") as persist,
+            patch.object(self.server, "queue_message") as queue_message,
+            patch.object(
+                self.server,
+                "_schedule_forced_restart_if_still_running",
+                return_value=2000,
+            ) as schedule_restart,
+        ):
+            self.server._task_runtime_deadline_reached("deadline-task", 60)
+
+        self.assertTrue(self.server.interrupt_flag)
+        self.assertTrue(self.server.current_task["interrupt_requested"])
+        self.assertEqual(self.server.current_task["interrupt_reason"], "runtime_deadline")
+        self.assertEqual(self.server.current_task["runtime_deadline_seconds"], 60)
+        self.assertEqual(self.server.current_task["runtime_deadline_failure"], failure)
+        self.assertEqual(self.server.current_task["phase"], "stopping")
+        self.assertTrue(node._interrupt)
+        self.assertTrue(pipeline._interrupt)
+        persist.assert_called_once_with(force=True)
+        schedule_restart.assert_called_once_with("deadline-task")
+        progress = queue_message.call_args.args[0]
+        self.assertEqual(progress["type"], "task_progress")
+        self.assertEqual(progress["error_code"], "runtime_deadline_exceeded")
+
+    def test_forced_restart_persists_runtime_deadline_as_failed(self):
+        failure = {
+            "message": "Graph execution reached its configured 60 second runtime limit.",
+            "exception_type": "TimeoutError",
+            "category": "execution",
+            "error_code": "runtime_deadline_exceeded",
+            "recovery_hint": "Use a qualified accelerator.",
+            "oom": False,
+        }
+        self.server.current_task = {
+            "task_id": "deadline-task",
+            "name": "Graph execution",
+            "sid": "session",
+            "started_at": 1.0,
+            "progress": 42,
+            "interrupt_requested": True,
+            "interrupt_reason": "runtime_deadline",
+            "runtime_deadline_failure": failure,
+            "runtimeHints": {"maxRuntimeSeconds": 60},
+        }
+
+        with (
+            patch.object(self.server, "queue_message") as queue_message,
+            patch.object(self.server, "_persist_supervisor_queue_state") as persist,
+            patch.object(self.server, "_mark_studio_preview_run_terminal") as preview_terminal,
+            patch("modiff.server.time.sleep"),
+            patch("modiff.server.os._exit", side_effect=SystemExit) as process_exit,
+            self.assertRaises(SystemExit),
+        ):
+            self.server._force_restart_if_task_is_active("deadline-task")
+
+        entry = self.server.recent_tasks[0]
+        self.assertEqual(entry["task_id"], "deadline-task")
+        self.assertEqual(entry["status"], "failed")
+        self.assertEqual(entry["error_code"], "runtime_deadline_exceeded")
+        preview_terminal.assert_called_once_with("deadline-task", "failed")
+        persist.assert_called_once_with(force=True)
+        message = queue_message.call_args.args[0]
+        self.assertEqual(message["type"], "task_failed")
+        self.assertTrue(message["backend_restart"])
+        process_exit.assert_called_once()
+
     def test_queue_snapshots_include_workflow_navigation_without_repeating_it_in_progress_identity(self):
         workflow_snapshot = {"nodes": [{"id": "loader"}], "edges": []}
         runtime_hints = self.server._coerce_runtime_hints(
@@ -600,7 +713,9 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     async def test_cancelled_run_releases_runtime_before_the_queue_advances(self):
         events = []
 
-        async def run_callback(_callback, *, serialize_model_io=False):
+        async def run_callback(_callback, *, serialize_model_io=False, on_start=None):
+            if on_start is not None:
+                on_start()
             if "first" not in events:
                 events.append("first")
                 self.server.current_task["interrupt_requested"] = True

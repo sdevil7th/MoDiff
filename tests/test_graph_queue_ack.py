@@ -79,9 +79,11 @@ class GraphQueueAcknowledgementTests(unittest.IsolatedAsyncioTestCase):
         executor_started = asyncio.Event()
         started_at = server.loop.time()
 
-        async def fake_run_executor(callback, *, serialize_model_io=False):
+        async def fake_run_executor(callback, *, serialize_model_io=False, on_start=None):
             self.assertTrue(serialize_model_io)
             self.assertGreaterEqual(server.loop.time() - started_at, 0.04)
+            if on_start is not None:
+                on_start()
             executor_started.set()
             return callback()
 

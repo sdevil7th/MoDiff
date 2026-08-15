@@ -2060,6 +2060,7 @@ class WebServer:
                         self.current_task.update(self._initial_graph_execution_state(args))
                         self.current_task["_phase_started_at"] = time.time()
                         self.current_task["phase_timings"] = {}
+                    runtime_deadline_handle = None
                     self._persist_supervisor_queue_state(force=True)
                     task_list, current_task = self._get_queue()
                     self.queue_message(
@@ -2107,11 +2108,28 @@ class WebServer:
                                     "message": self.current_task["message"],
                                 }
                             )
+                        def arm_runtime_deadline():
+                            nonlocal runtime_deadline_handle
+                            runtime_deadline_handle = self._schedule_task_runtime_deadline(
+                                task_id,
+                                runtime_hints,
+                            )
+
                         result = await self._run_executor_callback(
                             callback,
                             serialize_model_io=serialize_model_io,
+                            on_start=arm_runtime_deadline,
                         )
 
+                        interrupt_reason = (
+                            self.current_task.get("interrupt_reason")
+                            if self.current_task
+                            else None
+                        )
+                        if interrupt_reason == "runtime_deadline":
+                            raise self._task_runtime_deadline_error(
+                                self.current_task.get("runtime_deadline_seconds")
+                            )
                         if self.current_task and self.current_task.get("interrupt_requested"):
                             terminal_status = "cancelled"
                         if future and terminal_status == "completed":
@@ -2119,25 +2137,41 @@ class WebServer:
                         elif future and terminal_status == "cancelled":
                             future.set_exception(asyncio.CancelledError("Execution interrupted by the user."))
                     except Exception as e:
-                        interrupted_by_user = bool(self.current_task and self.current_task.get("interrupt_requested"))
+                        interrupt_reason = (
+                            self.current_task.get("interrupt_reason")
+                            if self.current_task
+                            else None
+                        )
+                        failure = (
+                            self._task_runtime_deadline_error(
+                                self.current_task.get("runtime_deadline_seconds")
+                            )
+                            if interrupt_reason == "runtime_deadline"
+                            else e
+                        )
+                        interrupted_by_user = bool(
+                            self.current_task
+                            and self.current_task.get("interrupt_requested")
+                            and interrupt_reason != "runtime_deadline"
+                        )
                         terminal_status = "cancelled" if interrupted_by_user else "failed"
                         if interrupted_by_user:
                             if future:
                                 future.set_exception(asyncio.CancelledError("Execution interrupted by the user."))
                             continue
-                        traceback_text = getattr(e, "modiff_traceback", None) or traceback.format_exc()
+                        traceback_text = getattr(failure, "modiff_traceback", None) or traceback.format_exc()
                         logger.error(f"Error occurred in {traceback_text}")
                         task_list, _ = self._get_queue()
                         failure_payload = self._exception_payload(
-                            e,
+                            failure,
                             task_id=task_id,
                             sid=self.current_task["sid"] if self.current_task else None,
-                            node_id=getattr(e, "modiff_node_id", None),
-                            node_name=getattr(e, "modiff_node_name", None),
+                            node_id=getattr(failure, "modiff_node_id", None),
+                            node_name=getattr(failure, "modiff_node_name", None),
                             traceback_text=traceback_text,
                         )
                         self._record_auto_resource_failure(
-                            e,
+                            failure,
                             {
                                 "category": failure_payload.get("category"),
                                 "error_code": failure_payload.get("error_code"),
@@ -2146,8 +2180,10 @@ class WebServer:
                             },
                         )
                         if future:
-                            future.set_exception(e)
+                            future.set_exception(failure)
                     finally:
+                        if runtime_deadline_handle is not None:
+                            runtime_deadline_handle.cancel()
                         runtime_cleanup = None
                         if terminal_status in {"cancelled", "failed"}:
                             # A failed or cancelled graph must not leave model,
@@ -2219,10 +2255,14 @@ class WebServer:
         finally:
             logger.debug("Main worker shutting down")
 
-    async def _run_executor_callback(self, callback, *, serialize_model_io=False):
+    async def _run_executor_callback(self, callback, *, serialize_model_io=False, on_start=None):
         if serialize_model_io and self.serialize_model_io:
             async with self.model_io_lock:
+                if on_start is not None:
+                    on_start()
                 return await self.loop.run_in_executor(None, callback)
+        if on_start is not None:
+            on_start()
         return await self.loop.run_in_executor(None, callback)
 
     async def _background_worker(self):
@@ -9289,6 +9329,87 @@ class WebServer:
             )
             return
 
+    @staticmethod
+    def _task_runtime_deadline_error(runtime_limit):
+        try:
+            normalized_limit = max(1, int(runtime_limit))
+        except (TypeError, ValueError):
+            normalized_limit = 1
+        error = TimeoutError(
+            f"Graph execution reached its configured {normalized_limit} second runtime limit."
+        )
+        setattr(error, "modiff_error_code", "runtime_deadline_exceeded")
+        setattr(error, "modiff_category", "execution")
+        setattr(
+            error,
+            "modiff_recovery_hint",
+            "Use a qualified accelerator or select a smaller bounded recipe before retrying.",
+        )
+        return error
+
+    def _schedule_task_runtime_deadline(self, task_id, runtime_hints):
+        if not self.current_task or self.current_task.get("name") != "Graph execution":
+            return None
+        runtime_limit = runtime_hints.get("maxRuntimeSeconds") if isinstance(runtime_hints, dict) else None
+        if not isinstance(runtime_limit, (int, float)) or isinstance(runtime_limit, bool) or runtime_limit <= 0:
+            return None
+        started_at = self.current_task.get("started_at")
+        elapsed = max(0.0, time.time() - float(started_at)) if isinstance(started_at, (int, float)) else 0.0
+        delay = max(0.0, float(runtime_limit) - elapsed)
+        return self.loop.call_later(
+            delay,
+            self._task_runtime_deadline_reached,
+            task_id,
+            int(runtime_limit),
+        )
+
+    def _task_runtime_deadline_reached(self, task_id, runtime_limit):
+        current = self.current_task if isinstance(self.current_task, dict) else {}
+        if current.get("task_id") != task_id or current.get("interrupt_requested"):
+            return
+        error = self._task_runtime_deadline_error(runtime_limit)
+        failure_payload = self._exception_payload(
+            error,
+            task_id=task_id,
+            sid=current.get("sid"),
+            node_id=current.get("current_node"),
+            node_name=current.get("current_node_name"),
+            traceback_text=None,
+        )
+        self.interrupt_flag = True
+        current.update(
+            {
+                "interrupt_requested": True,
+                "interrupt_reason": "runtime_deadline",
+                "runtime_deadline_seconds": int(runtime_limit),
+                "runtime_deadline_failure": failure_payload,
+                "updated_at": time.time(),
+                "phase": "stopping",
+                "message": str(error),
+            }
+        )
+        for node in self.node_cache.values():
+            node._interrupt = True
+            active_pipeline = getattr(node, "_active_pipeline", None)
+            if active_pipeline is not None and hasattr(active_pipeline, "_interrupt"):
+                active_pipeline._interrupt = True
+        self._persist_supervisor_queue_state(force=True)
+        self.queue_message(
+            {
+                "type": "task_progress",
+                "task_id": task_id,
+                **self._current_run_identity_payload(),
+                "status": "running",
+                "phase": "stopping",
+                "progress": current.get("progress", 0),
+                "message": str(error),
+                "category": failure_payload["category"],
+                "error_code": failure_payload["error_code"],
+                "recovery_hint": failure_payload["recovery_hint"],
+            }
+        )
+        self._schedule_forced_restart_if_still_running(task_id)
+
     async def stop_execution(self, request):
         # check if there is a current task or any queued task
         if not self.current_task and not self.queued_tasks:
@@ -9401,19 +9522,47 @@ class WebServer:
         current = self.current_task if isinstance(self.current_task, dict) else {}
         if current.get("task_id") != task_id or not current.get("interrupt_requested"):
             return
+        deadline_failure = (
+            current.get("runtime_deadline_failure")
+            if current.get("interrupt_reason") == "runtime_deadline"
+            else None
+        )
+        if isinstance(deadline_failure, dict):
+            terminal_entry = self._record_terminal_task(
+                "failed",
+                error_payload=deadline_failure,
+            )
+            self._mark_studio_preview_run_terminal(task_id, "failed")
+            self._persist_supervisor_queue_state(force=True)
+            self.queue_message(
+                {
+                    "type": "task_failed",
+                    "task_id": task_id,
+                    **self._current_run_identity_payload(),
+                    "status": "failed",
+                    "completed_at": (
+                        terminal_entry.get("completed_at")
+                        if terminal_entry
+                        else time.time()
+                    ),
+                    "backend_restart": True,
+                    **deadline_failure,
+                }
+            )
+        else:
+            self.queue_message(
+                {
+                    "type": "task_cancelled",
+                    "task_id": task_id,
+                    **self._current_run_identity_payload(),
+                    "status": "cancelled",
+                    "message": "The backend worker is restarting to finish cancellation and release RAM/VRAM.",
+                    "backend_restart": True,
+                }
+            )
         logger.error(
             "Task %s did not honor cancellation; replacing the supervised backend worker to release runtime memory.",
             task_id,
-        )
-        self.queue_message(
-            {
-                "type": "task_cancelled",
-                "task_id": task_id,
-                **self._current_run_identity_payload(),
-                "status": "cancelled",
-                "message": "The backend worker is restarting to finish cancellation and release RAM/VRAM.",
-                "backend_restart": True,
-            }
         )
         # Give the event-loop queue one brief opportunity to flush the terminal
         # notification. The supervisor immediately replaces this process; the

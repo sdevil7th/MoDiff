@@ -256,17 +256,24 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         server.loop = asyncio.get_running_loop()
         server.serialize_model_io = True
         called = []
+        started = []
 
         await server.model_io_lock.acquire()
         pending = asyncio.create_task(
-            server._run_executor_callback(lambda: called.append(True), serialize_model_io=True)
+            server._run_executor_callback(
+                lambda: called.append(True),
+                serialize_model_io=True,
+                on_start=lambda: started.append(True),
+            )
         )
         await asyncio.sleep(0.02)
         self.assertFalse(called)
+        self.assertFalse(started)
         self.assertFalse(pending.done())
 
         server.model_io_lock.release()
         await pending
+        self.assertTrue(started)
         self.assertTrue(called)
 
     async def test_discrete_runtime_keeps_model_io_concurrent(self):
