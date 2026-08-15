@@ -343,6 +343,173 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_family_workflow_candidate",
         "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
     },
+    "comfy-research:template:image_qwen_image_2512_with_2steps_lora": {
+        "assetPath": "templates/image_qwen_image_2512_with_2steps_lora.json",
+        "assetSha256": "42e3926b69286c0ab57a6c9c3065e2b884e8890e8dce9003414de63f1a3dee5e",
+        "gitBlobOid": "c4214781ab66852199b88bbfe98e5f564004b4fa",
+        "reviewedWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_image_2512_fp8_e4m3fn.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "Wuli-art/Qwen-Image-2512-Turbo-LoRA-2-Steps",
+                "artifact": "Wuli-Qwen-Image-2512-Turbo-LoRA-2steps-V1.0-bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_different_partition_and_auxiliary",
+            "currentWorkflowId": "QwenImageModularPipeline:text_to_image",
+            "currentRepository": "Qwen/Qwen-Image-2512",
+            "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+            "reasonCode": "qwen_2512_fp8_repack_and_two_step_lora_not_exactly_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:template_qwen_Image_2512_360_lora": {
+        "assetPath": "templates/template_qwen_Image_2512_360_lora.json",
+        "assetSha256": "a2c3de32eeacd75b329b26caa86178b60b9285dd6dcf684318ba5ff761f75e6f",
+        "gitBlobOid": "80e423a1f68544e703c6211a8b1796268b946fe4",
+        "reviewedWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_image_2512_fp8_e4m3fn.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "lightx2v/Qwen-Image-2512-Lightning",
+                "artifact": "Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors",
+            },
+            {
+                "repository": "ProGamerGov/qwen-360-diffusion",
+                "artifact": "qwen-360-diffusion-2512-int8-bf16-v2.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_different_partition_and_auxiliary",
+            "currentWorkflowId": "QwenImageModularPipeline:text_to_image",
+            "currentRepository": "Qwen/Qwen-Image-2512",
+            "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+            "reasonCode": "qwen_2512_fp8_repack_lightning_and_360_lora_not_exactly_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:image_qwen_image_controlnet_patch": {
+        "assetPath": "templates/image_qwen_image_controlnet_patch.json",
+        "assetSha256": "99394439a187e9675749df2a975d9069051ca9264e137b28d944acbcd212277e",
+        "gitBlobOid": "84f811d25740c0f979f655120b6b277ef7379662",
+        "reviewedTaskMode": "control_image",
+        "reviewedWorkflowId": "QwenImageModularPipeline:control_image",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_image_fp8_e4m3fn.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "lightx2v/Qwen-Image-Lightning",
+                "artifact": "Qwen-Image-Lightning-4steps-V1.0.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image-DiffSynth-ControlNets",
+                "artifact": "qwen_image_canny_diffsynth_controlnet.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "QwenImageModularPipeline:control_image",
+            "currentRepository": "Qwen/Qwen-Image-2512",
+            "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+            "currentAuxiliaryRepositories": ["InstantX/Qwen-Image-ControlNet-Union"],
+            "reasonCode": "original_qwen_image_diffsynth_patch_is_not_qwen_2512_instantx_union",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_qwen_image_instantx_inpainting_controlnet": {
+        "assetPath": "templates/image_qwen_image_instantx_inpainting_controlnet.json",
+        "assetSha256": "7fdb06c966d36180feeeca406e618de254808c2948180837f1fe34e2f57abca7",
+        "gitBlobOid": "128234800aee77e5659c47c811785b974b146b71",
+        "reviewedWorkflowId": "QwenImageModularPipeline:inpaint",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_image_fp8_e4m3fn.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "Comfy-Org/Qwen-Image-InstantX-ControlNets",
+                "artifact": "Qwen-Image-InstantX-ControlNet-Inpainting.safetensors",
+            },
+            {
+                "repository": "lightx2v/Qwen-Image-Lightning",
+                "artifact": "Qwen-Image-Lightning-4steps-V1.0.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "QwenImageModularPipeline:inpaint",
+            "currentRepository": "Qwen/Qwen-Image-2512",
+            "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+            "reasonCode": "original_qwen_image_inpainting_controlnet_is_not_qwen_2512_inpaint",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_qwen_image_edit_2509_relight": {
+        "assetPath": "templates/image_qwen_image_edit_2509_relight.json",
+        "assetSha256": "1aa6672afaf7a9e07abed0288b3053a24cc80ca0868e297f575105214b8167f3",
+        "gitBlobOid": "66b9818073500e7cbf670d6e4ebfa12ccf8a2449",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI",
+                "artifact": "qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+            },
+            {
+                "repository": "lightx2v/Qwen-Image-Lightning",
+                "artifact": "Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI",
+                "artifact": "Qwen-Image-Edit-2509-Relight.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_different_partition_and_auxiliary",
+            "currentWorkflowId": "QwenImageEditModularPipeline:edit_image",
+            "currentRepository": "Qwen/Qwen-Image-Edit",
+            "currentRevision": "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+            "reasonCode": "qwen_edit_2509_fp8_lightning_and_relight_not_exactly_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+    },
     "comfy-research:template:image_qwen_image_layered_control": {
         "assetPath": "templates/image_qwen_image_layered_control.json",
         "assetSha256": "87f5727f23e67c766364544ee31900736e12c2ab7d9fbca47c498c46526ecc89",
@@ -1100,6 +1267,16 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
             ]
             if source_review.get("state") == "required":
                 blockers.insert(0, "catalog_entry_source_review_required")
+        resolved_catalog_families = set(catalog_families)
+        if pinned_source_review is not None and resolution_state == "existing_family_workflow_candidate":
+            if recommended is None:
+                raise ComfyContractResolutionError(
+                    f"Pinned Comfy family review has no current workflow recommendation for {contract_id}."
+                )
+            reviewed_family = recommended["modelFamily"]
+            if reviewed_family not in resolved_catalog_families:
+                pinned_source_review["catalogRecognizedMoDiffFamilies"] = sorted(catalog_families)
+                resolved_catalog_families.add(reviewed_family)
         if resolution_state == "existing_task_boundary_model_admission_required":
             blockers.append("exact_catalog_model_or_variant_admission_required")
         elif resolution_state == "new_task_boundary_required":
@@ -1120,7 +1297,7 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
                 "selectedCandidateMode": mode,
                 "candidateOutputMediaKinds": deepcopy(output_kinds),
                 "catalogModelLabels": deepcopy(labels),
-                "recognizedMoDiffFamilies": sorted(catalog_families),
+                "recognizedMoDiffFamilies": sorted(resolved_catalog_families),
                 "resolutionState": resolution_state,
                 "mappingMeaning": mapping_meaning,
                 **({"sourceReview": pinned_source_review} if pinned_source_review is not None else {}),

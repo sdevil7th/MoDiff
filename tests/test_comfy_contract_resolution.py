@@ -63,16 +63,16 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 114)
-        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 89)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 29)
+        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 26)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 88)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 34)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
                 "different_model_generation_and_new_task_required": 4,
-                "different_model_generation_requires_admission": 21,
+                "different_model_generation_requires_admission": 23,
                 "same_upstream_family_different_default_partition": 1,
-                "same_upstream_generation_different_partition_and_auxiliary": 1,
+                "same_upstream_generation_different_partition_and_auxiliary": 4,
                 "same_upstream_generation_requires_auxiliary_admission": 2,
             },
         )
@@ -206,7 +206,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_twenty_nine_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_thirty_four_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -226,7 +226,11 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_flux2_klein_image_edit_9b_distilled",
                 "image-qwen_image_edit_2511_lora_inflation",
                 "image_qwen_image",
+                "image_qwen_image_2512_with_2steps_lora",
+                "image_qwen_image_controlnet_patch",
                 "image_qwen_image_edit_2509",
+                "image_qwen_image_edit_2509_relight",
+                "image_qwen_image_instantx_inpainting_controlnet",
                 "image_qwen_image_layered_control",
                 "image_qwen_image_union_control_lora",
                 "image_z_image",
@@ -235,6 +239,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "ltxv_image_to_video",
                 "ltxv_text_to_video",
                 "template_qwen_image_edit_2511_systms_action",
+                "template_qwen_Image_2512_360_lora",
                 "video_ltx2_3_i2v",
                 "video_ltx2_3_t2v",
                 "video_ltx2_5_i2v",
@@ -287,6 +292,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_flux2_klein_image_edit_9b_distilled",
             "image_qwen_image_layered_control",
             "image_qwen_image_union_control_lora",
+            "image_qwen_image_controlnet_patch",
+            "image_qwen_image_instantx_inpainting_controlnet",
             "image_qwen_image",
             "image_z_image",
             "image_z_image_int8",
@@ -382,6 +389,21 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertEqual(row["selectedCandidateMode"], "camera_to_video")
             self.assertEqual(row["resolutionState"], "new_task_boundary_required")
             self.assertIsNone(row["recommendedWorkflow"])
+
+        for catalog_id in (
+            "image_qwen_image_2512_with_2steps_lora",
+            "template_qwen_Image_2512_360_lora",
+        ):
+            row = reviewed[catalog_id]
+            self.assertEqual(row["sourceReview"]["catalogRecommendedWorkflowId"], "AuraFlowPipeline:text_to_image")
+            self.assertEqual(row["sourceReview"]["catalogRecognizedMoDiffFamilies"], [])
+            self.assertEqual(row["sourceReview"]["reviewedWorkflowId"], "QwenImageModularPipeline:text_to_image")
+            self.assertEqual(row["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:text_to_image")
+
+        qwen_patch = reviewed["image_qwen_image_controlnet_patch"]
+        self.assertEqual(qwen_patch["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
+        self.assertEqual(qwen_patch["selectedCandidateMode"], "control_image")
+        self.assertEqual(qwen_patch["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:control_image")
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(

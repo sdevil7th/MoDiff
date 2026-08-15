@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:b2887a5513cd348f7005e62dc2575f21653e4b948a99cae5a94d8ec24ab00e6f",
+  "contentHash": "sha256:b80ff7332540adba50fb5a155a6b5f2067d4c05f044dea1d25313bd0239ceb08",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -6565,11 +6565,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen_2512_fp8_repack_and_two_step_lora_not_exactly_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "family_match_requires_exact_checkpoint_and_variant_review"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -6592,17 +6593,34 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
-      "recognizedMoDiffFamilies": [],
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+      "recognizedMoDiffFamilies": [
+        "Qwen Image"
+      ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
-        "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
-        "modelFamily": "AuraFlow",
-        "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "modelFamily": "Qwen Image",
+        "modelType": "QwenImageModularPipeline",
+        "publicTemplateIds": [
+          "high_quality",
+          "qwen_low_vram_poster_layout",
+          "qwen_low_vram_product_concept",
+          "qwen_low_vram_text_rendering",
+          "qwen_poster_logo_text",
+          "qwen_product_mockup",
+          "qwen_text_rendering",
+          "qwen_upscale_finish"
+        ],
+        "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "modelFamily": "Qwen Image",
+          "modelType": "QwenImageModularPipeline",
+          "qualificationStatus": "graph-qualified"
+        },
         {
           "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
           "modelFamily": "AuraFlow",
@@ -6730,12 +6748,6 @@
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
-          "modelFamily": "Qwen Image",
-          "modelType": "QwenImageModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
           "canonicalWorkflowId": "SanaPAGPipeline:text_to_image",
           "modelFamily": "Sana",
           "modelType": "SanaPAGPipeline",
@@ -6760,19 +6772,57 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
+      "resolutionState": "existing_family_workflow_candidate",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_image_2512_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "Wuli-Qwen-Image-2512-Turbo-LoRA-2steps-V1.0-bf16.safetensors",
+            "repository": "Wuli-art/Qwen-Image-2512-Turbo-LoRA-2-Steps"
+          }
+        ],
+        "assetPath": "templates/image_qwen_image_2512_with_2steps_lora.json",
+        "assetSha256": "42e3926b69286c0ab57a6c9c3065e2b884e8890e8dce9003414de63f1a3dee5e",
+        "catalogRecognizedMoDiffFamilies": [],
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "Qwen/Qwen-Image-2512",
+          "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+          "currentWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "reasonCode": "qwen_2512_fp8_repack_and_two_step_lora_not_exactly_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c4214781ab66852199b88bbfe98e5f564004b4fa",
+        "importsGraph": false,
+        "reviewedWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen-Image 2512 Turbo"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_original_qwen_image_diffsynth_patch_is_not_qwen_2512_instantx_union",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -6792,41 +6842,87 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:image_qwen_image_controlnet_patch",
-      "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 2,
+      "currentTaskBoundaryOptionCount": 10,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Qwen Image"
       ],
       "recommendedWorkflow": {
         "authoringSpecId": null,
-        "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "canonicalWorkflowId": "QwenImageModularPipeline:control_image",
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageModularPipeline",
         "publicTemplateIds": [
-          "high_quality",
-          "qwen_low_vram_poster_layout",
-          "qwen_low_vram_product_concept",
-          "qwen_low_vram_text_rendering",
-          "qwen_poster_logo_text",
-          "qwen_product_mockup",
-          "qwen_text_rendering",
-          "qwen_upscale_finish"
+          "qwen_control_image_layout",
+          "qwen_packaging_dieline"
         ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "canonicalWorkflowId": "QwenImageModularPipeline:control_image",
           "modelFamily": "Qwen Image",
           "modelType": "QwenImageModularPipeline",
           "qualificationStatus": "graph-qualified"
+        },
+        {
+          "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
+          "modelFamily": "Qwen Image",
+          "modelType": "QwenImageControlNetPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "text_to_image",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "control_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_image_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "Qwen-Image-Lightning-4steps-V1.0.safetensors",
+            "repository": "lightx2v/Qwen-Image-Lightning"
+          },
+          {
+            "artifact": "qwen_image_canny_diffsynth_controlnet.safetensors",
+            "repository": "Comfy-Org/Qwen-Image-DiffSynth-ControlNets"
+          }
+        ],
+        "assetPath": "templates/image_qwen_image_controlnet_patch.json",
+        "assetSha256": "99394439a187e9675749df2a975d9069051ca9264e137b28d944acbcd212277e",
+        "catalogRecommendedWorkflowId": "QwenImageControlNetPipeline:control_image",
+        "catalogSelectedCandidateMode": "text_to_image",
+        "comparison": {
+          "currentAuxiliaryRepositories": [
+            "InstantX/Qwen-Image-ControlNet-Union"
+          ],
+          "currentRepository": "Qwen/Qwen-Image-2512",
+          "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+          "currentWorkflowId": "QwenImageModularPipeline:control_image",
+          "reasonCode": "original_qwen_image_diffsynth_patch_is_not_qwen_2512_instantx_union",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "84f811d25740c0f979f655120b6b277ef7379662",
+        "importsGraph": false,
+        "reviewedTaskMode": "control_image",
+        "reviewedWorkflowId": "QwenImageModularPipeline:control_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen-Image ControlNet Model Patch"
     },
     {
@@ -6925,9 +7021,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen_edit_2509_fp8_lightning_and_relight_not_exactly_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "family_match_requires_exact_checkpoint_and_variant_review"
@@ -6953,7 +7049,7 @@
       "currentFamilyOptionCount": 5,
       "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
         "Qwen Image"
       ],
@@ -6980,16 +7076,55 @@
       "resolutionState": "existing_family_workflow_candidate",
       "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI"
+          },
+          {
+            "artifact": "Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors",
+            "repository": "lightx2v/Qwen-Image-Lightning"
+          },
+          {
+            "artifact": "Qwen-Image-Edit-2509-Relight.safetensors",
+            "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI"
+          }
+        ],
+        "assetPath": "templates/image_qwen_image_edit_2509_relight.json",
+        "assetSha256": "1aa6672afaf7a9e07abed0288b3053a24cc80ca0868e297f575105214b8167f3",
+        "comparison": {
+          "currentRepository": "Qwen/Qwen-Image-Edit",
+          "currentRevision": "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+          "currentWorkflowId": "QwenImageEditModularPipeline:edit_image",
+          "reasonCode": "qwen_edit_2509_fp8_lightning_and_relight_not_exactly_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "66b9818073500e7cbf670d6e4ebfa12ccf8a2449",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Image Relight"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_original_qwen_image_inpainting_controlnet_is_not_qwen_2512_inpaint",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -7012,22 +7147,25 @@
       "currentFamilyOptionCount": 2,
       "currentTaskBoundaryOptionCount": 12,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Qwen Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
-        "canonicalWorkflowId": "QwenImageEditModularPipeline:inpaint",
+        "authoringSpecId": "template-authoring:QwenImageModularPipeline:inpaint",
+        "canonicalWorkflowId": "QwenImageModularPipeline:inpaint",
         "modelFamily": "Qwen Image",
-        "modelType": "QwenImageEditModularPipeline",
-        "publicTemplateIds": [
-          "qwen_inpaint_mask_draft",
-          "qwen_inpaint_object_replace"
-        ],
+        "modelType": "QwenImageModularPipeline",
+        "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "QwenImageModularPipeline:inpaint",
+          "modelFamily": "Qwen Image",
+          "modelType": "QwenImageModularPipeline",
+          "qualificationStatus": "graph-qualified"
+        },
         {
           "canonicalWorkflowId": "QwenImageEditModularPipeline:inpaint",
           "modelFamily": "Qwen Image",
@@ -7035,9 +7173,50 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "inpaint",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_image_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "Qwen-Image-InstantX-ControlNet-Inpainting.safetensors",
+            "repository": "Comfy-Org/Qwen-Image-InstantX-ControlNets"
+          },
+          {
+            "artifact": "Qwen-Image-Lightning-4steps-V1.0.safetensors",
+            "repository": "lightx2v/Qwen-Image-Lightning"
+          }
+        ],
+        "assetPath": "templates/image_qwen_image_instantx_inpainting_controlnet.json",
+        "assetSha256": "7fdb06c966d36180feeeca406e618de254808c2948180837f1fe34e2f57abca7",
+        "catalogRecommendedWorkflowId": "QwenImageEditModularPipeline:inpaint",
+        "comparison": {
+          "currentRepository": "Qwen/Qwen-Image-2512",
+          "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+          "currentWorkflowId": "QwenImageModularPipeline:inpaint",
+          "reasonCode": "original_qwen_image_inpainting_controlnet_is_not_qwen_2512_inpaint",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "128234800aee77e5659c47c811785b974b146b71",
+        "importsGraph": false,
+        "reviewedWorkflowId": "QwenImageModularPipeline:inpaint",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen-Image InstantX Inpainting ControlNet"
     },
     {
@@ -8457,11 +8636,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen_2512_fp8_repack_lightning_and_360_lora_not_exactly_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "family_match_requires_exact_checkpoint_and_variant_review"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -8484,17 +8664,34 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
-      "recognizedMoDiffFamilies": [],
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+      "recognizedMoDiffFamilies": [
+        "Qwen Image"
+      ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
-        "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
-        "modelFamily": "AuraFlow",
-        "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "modelFamily": "Qwen Image",
+        "modelType": "QwenImageModularPipeline",
+        "publicTemplateIds": [
+          "high_quality",
+          "qwen_low_vram_poster_layout",
+          "qwen_low_vram_product_concept",
+          "qwen_low_vram_text_rendering",
+          "qwen_poster_logo_text",
+          "qwen_product_mockup",
+          "qwen_text_rendering",
+          "qwen_upscale_finish"
+        ],
+        "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "modelFamily": "Qwen Image",
+          "modelType": "QwenImageModularPipeline",
+          "qualificationStatus": "graph-qualified"
+        },
         {
           "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
           "modelFamily": "AuraFlow",
@@ -8622,12 +8819,6 @@
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
-          "modelFamily": "Qwen Image",
-          "modelType": "QwenImageModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
           "canonicalWorkflowId": "SanaPAGPipeline:text_to_image",
           "modelFamily": "Sana",
           "modelType": "SanaPAGPipeline",
@@ -8652,9 +8843,51 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
+      "resolutionState": "existing_family_workflow_candidate",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_image_2512_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors",
+            "repository": "lightx2v/Qwen-Image-2512-Lightning"
+          },
+          {
+            "artifact": "qwen-360-diffusion-2512-int8-bf16-v2.safetensors",
+            "repository": "ProGamerGov/qwen-360-diffusion"
+          }
+        ],
+        "assetPath": "templates/template_qwen_Image_2512_360_lora.json",
+        "assetSha256": "a2c3de32eeacd75b329b26caa86178b60b9285dd6dcf684318ba5ff761f75e6f",
+        "catalogRecognizedMoDiffFamilies": [],
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "Qwen/Qwen-Image-2512",
+          "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+          "currentWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "reasonCode": "qwen_2512_fp8_repack_lightning_and_360_lora_not_exactly_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "80e423a1f68544e703c6211a8b1796268b946fe4",
+        "importsGraph": false,
+        "reviewedWorkflowId": "QwenImageModularPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen Image 2512: 360 Panorama Image"
     },
     {
@@ -12634,7 +12867,7 @@
       "audio_to_video": 3,
       "camera_to_video": 3,
       "character_replace": 2,
-      "control_image": 1,
+      "control_image": 2,
       "control_video_to_video": 1,
       "edit_audio": 1,
       "edit_image": 22,
@@ -12651,22 +12884,22 @@
       "remove_background": 1,
       "text_generation": 4,
       "text_to_audio": 5,
-      "text_to_image": 35,
+      "text_to_image": 34,
       "text_to_video": 14,
       "video_to_video": 2,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 29,
+    "pinnedSourceReviewCount": 34,
     "pinnedSourceReviewDecisionCounts": {
       "different_model_generation_and_new_task_required": 4,
-      "different_model_generation_requires_admission": 21,
+      "different_model_generation_requires_admission": 23,
       "same_upstream_family_different_default_partition": 1,
-      "same_upstream_generation_different_partition_and_auxiliary": 1,
+      "same_upstream_generation_different_partition_and_auxiliary": 4,
       "same_upstream_generation_requires_auxiliary_admission": 2
     },
-    "recordsWithHiddenAuthoringSpecOption": 89,
-    "recordsWithPublicTemplateOption": 25,
+    "recordsWithHiddenAuthoringSpecOption": 88,
+    "recordsWithPublicTemplateOption": 26,
     "recordsWithRecommendedWorkflow": 114,
     "resolutionCount": 138,
     "resolutionStateCounts": {
