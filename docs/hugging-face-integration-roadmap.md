@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-One hundred twenty-nine of those 138 candidates now also have exact pinned graph-source
+All 138 of those candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7067,6 +7067,14 @@ actually loads the base INT8 transformer, so the ledger records the connected
 artifact instead of inferring a Turbo checkpoint from its title. The SD3.5
 Blur graph is source-corrected from image editing to control-image generation;
 it does not inherit SD1.5 Canny support.
+The two model-free utility reviews separate a four-input image-stitch task from
+the catalog's generic edit label and identify the purported interpolation
+upscale as a built-in two-times Lanczos resize. The former still needs a
+bounded multi-image layout contract; the latter needs exact algorithm/output
+parity review rather than a model artifact admission. Seven final 3D reviews
+retain Hunyuan3D 2.0/2.1, MoGe panorama/perspective mesh conversion, and
+TripoSplat image-to-splat/mesh generation behind the unauthored bounded
+`image_to_3d` boundary with their exact model and export dependencies.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7197,7 +7205,9 @@ video-generation decisions. `b091868` adds the six Capybara, Bernini, HuMo,
 and SDXL-to-SVD composite decisions. `5f60154` adds the five HiDream E1/I1
 variant decisions. `b8a884a` adds the seven Capybara, Anima, and Boogu image
 model decisions. `620dc9a` adds the sixteen ChronoEdit, FireRed, Ideogram 4,
-Krea 2, Lens, Mage-Flow, NewBie, PixelDiT, and SD3.5 decisions.
+Krea 2, Lens, Mage-Flow, NewBie, PixelDiT, and SD3.5 decisions. `45e1d72`
+closes the remaining model-free utility and seven 3D source reviews, so every
+one of the 138 proposed contracts has pinned graph-source evidence.
 
 The following separate gates do remain external:
 
