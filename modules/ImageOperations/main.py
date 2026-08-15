@@ -6,7 +6,7 @@ import math
 import random
 from typing import Any
 
-from PIL import Image, ImageChops, ImageEnhance, ImageFilter
+from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageOps
 
 from modiff.NodeBase import NodeBase
 
@@ -25,10 +25,13 @@ FILTER_OPERATIONS = (
     "chromatic_aberration",
 )
 IMAGE_CHANNELS = ("red", "green", "blue", "alpha", "luminance")
+RESIZE_FIT_MODES = ("stretch", "contain", "cover")
+RESIZE_RESAMPLING = ("nearest", "bilinear", "bicubic", "lanczos")
 IMAGE_OPERATION_MODES = (
     "image_adjustment",
     "image_filter",
     "image_crop",
+    "image_resize",
     "image_tile",
     "image_channels",
 )
@@ -352,6 +355,73 @@ class CropImage(NodeBase):
         }
 
 
+class ResizeImage(NodeBase):
+    """Resize images with one bounded traditional interpolation contract."""
+
+    label = "Resize Image"
+    category = "Image Operations"
+    params = {
+        "image": {"label": "Image", "display": "input", "type": "image"},
+        "width": {"label": "Target Width", "type": "int", "default": 1024, "min": 1, "max": 8192},
+        "height": {"label": "Target Height", "type": "int", "default": 1024, "min": 1, "max": 8192},
+        "fit_mode": {
+            "label": "Fit",
+            "type": "string",
+            "options": RESIZE_FIT_MODES,
+            "default": "contain",
+        },
+        "resampling": {
+            "label": "Interpolation",
+            "type": "string",
+            "options": RESIZE_RESAMPLING,
+            "default": "lanczos",
+        },
+        "output": {"label": "Resized Image", "display": "output", "type": "image"},
+    }
+
+    def execute(self, **kwargs):
+        images, singular = _images(kwargs.get("image"))
+        dimensions = {}
+        for name in ("width", "height"):
+            try:
+                value = int(kwargs.get(name, 1024))
+            except (TypeError, ValueError) as error:
+                raise ValueError(f"Resize {name} must be an integer.") from error
+            if not 1 <= value <= 8192:
+                raise ValueError(f"Resize {name} must be between 1 and 8192.")
+            dimensions[name] = value
+        target = (dimensions["width"], dimensions["height"])
+        target_pixels = target[0] * target[1]
+        if target_pixels > MAX_IMAGE_PIXELS:
+            raise ValueError(f"Resize output must contain at most {MAX_IMAGE_PIXELS} pixels.")
+        if target_pixels * len(images) > MAX_TOTAL_PIXELS:
+            raise ValueError(f"Resize outputs exceed the {MAX_TOTAL_PIXELS}-pixel execution limit.")
+
+        fit_mode = str(kwargs.get("fit_mode") or "contain")
+        if fit_mode not in RESIZE_FIT_MODES:
+            raise ValueError(f"Unsupported resize fit mode {fit_mode!r}.")
+        resampling = str(kwargs.get("resampling") or "lanczos")
+        if resampling not in RESIZE_RESAMPLING:
+            raise ValueError(f"Unsupported resize interpolation {resampling!r}.")
+        method = {
+            "nearest": Image.Resampling.NEAREST,
+            "bilinear": Image.Resampling.BILINEAR,
+            "bicubic": Image.Resampling.BICUBIC,
+            "lanczos": Image.Resampling.LANCZOS,
+        }[resampling]
+
+        output = []
+        for source in images:
+            if fit_mode == "stretch":
+                resized = source.resize(target, resample=method)
+            elif fit_mode == "contain":
+                resized = ImageOps.contain(source, target, method=method)
+            else:
+                resized = ImageOps.fit(source, target, method=method, centering=(0.5, 0.5))
+            output.append(resized)
+        return {"output": _collapse(output, singular)}
+
+
 class TileImage(NodeBase):
     """Split one image into a bounded row-major grid without losing pixels."""
 
@@ -488,6 +558,20 @@ class ProcessImage(NodeBase):
         "y": {"label": "Crop Top", "type": "int", "default": 0, "min": 0, "max": 32767},
         "width": {"label": "Crop Width", "type": "int", "default": 0, "min": 0, "max": 32768},
         "height": {"label": "Crop Height", "type": "int", "default": 0, "min": 0, "max": 32768},
+        "resize_width": {"label": "Resize Width", "type": "int", "default": 1024, "min": 1, "max": 8192},
+        "resize_height": {"label": "Resize Height", "type": "int", "default": 1024, "min": 1, "max": 8192},
+        "resize_fit_mode": {
+            "label": "Resize Fit",
+            "type": "string",
+            "options": RESIZE_FIT_MODES,
+            "default": "contain",
+        },
+        "resize_resampling": {
+            "label": "Resize Interpolation",
+            "type": "string",
+            "options": RESIZE_RESAMPLING,
+            "default": "lanczos",
+        },
         "rows": {"label": "Tile Rows", "type": "int", "default": 2, "min": 1, "max": 8},
         "columns": {"label": "Tile Columns", "type": "int", "default": 2, "min": 1, "max": 8},
         "channel": {
@@ -537,6 +621,14 @@ class ProcessImage(NodeBase):
                 height=kwargs.get("height", 0),
             )
             return {"output": result["output"]}
+        if operation == "image_resize":
+            return ResizeImage().execute(
+                image=image,
+                width=kwargs.get("resize_width", 1024),
+                height=kwargs.get("resize_height", 1024),
+                fit_mode=kwargs.get("resize_fit_mode", "contain"),
+                resampling=kwargs.get("resize_resampling", "lanczos"),
+            )
         if operation == "image_tile":
             result = TileImage().execute(
                 image=image,

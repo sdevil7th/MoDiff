@@ -11,6 +11,7 @@ from modules.ImageOperations.main import (
     FilterImage,
     ImageChannels,
     ProcessImage,
+    ResizeImage,
     TileImage,
 )
 
@@ -111,6 +112,58 @@ class ImageOperationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "cannot exceed"):
             TileImage().execute(image=Image.new("RGB", (2, 2)), rows=3, columns=1)
 
+    def test_resize_supports_bounded_traditional_interpolation_and_fit_modes(self):
+        source = Image.new("RGBA", (8, 4), (20, 40, 60, 71))
+        node = ResizeImage()
+        contain = node.execute(
+            image=source,
+            width=6,
+            height=6,
+            fit_mode="contain",
+            resampling="lanczos",
+        )["output"]
+        cover = node.execute(
+            image=source,
+            width=6,
+            height=6,
+            fit_mode="cover",
+            resampling="bicubic",
+        )["output"]
+        stretch = node.execute(
+            image=source,
+            width=6,
+            height=6,
+            fit_mode="stretch",
+            resampling="nearest",
+        )["output"]
+
+        self.assertEqual(contain.size, (6, 3))
+        self.assertEqual(cover.size, (6, 6))
+        self.assertEqual(stretch.size, (6, 6))
+        self.assertEqual(contain.getchannel("A").getextrema(), (71, 71))
+        self.assertEqual(
+            contain.tobytes(),
+            node.execute(
+                image=source,
+                width=6,
+                height=6,
+                fit_mode="contain",
+                resampling="lanczos",
+            )["output"].tobytes(),
+        )
+
+        with self.assertRaisesRegex(ValueError, "fit mode"):
+            node.execute(image=source, width=6, height=6, fit_mode="plugin")
+        with self.assertRaisesRegex(ValueError, "interpolation"):
+            node.execute(image=source, width=6, height=6, resampling="ai")
+        with self.assertRaisesRegex(ValueError, "at most"):
+            node.execute(
+                image=source,
+                width=8192,
+                height=8192,
+                fit_mode="stretch",
+            )
+
     def test_channels_have_exact_values_and_alpha_defaults_to_opaque(self):
         rgba = Image.new("RGBA", (2, 1), (10, 20, 30, 40))
         result = ImageChannels().execute(image=rgba, channel="green")
@@ -149,6 +202,14 @@ class ImageOperationTests(unittest.TestCase):
                 width=4,
                 height=3,
             ),
+            "image_resize": node.execute(
+                image=source,
+                operation="image_resize",
+                resize_width=4,
+                resize_height=4,
+                resize_fit_mode="contain",
+                resize_resampling="bilinear",
+            ),
             "image_tile": node.execute(
                 image=source,
                 operation="image_tile",
@@ -163,6 +224,7 @@ class ImageOperationTests(unittest.TestCase):
         }
         self.assertEqual(set(results), set(ProcessImage.params["operation"]["options"]))
         self.assertEqual(results["image_crop"]["output"].size, (4, 3))
+        self.assertEqual(results["image_resize"]["output"].size, (4, 3))
         self.assertEqual(len(results["image_tile"]["output"]), 4)
         self.assertEqual(results["image_channels"]["output"].mode, "L")
 
@@ -179,7 +241,7 @@ class ImageOperationTests(unittest.TestCase):
                 pipeline_class=IMAGE_OPERATION_PIPELINE_CLASS,
             )
 
-    def test_registry_exposes_only_the_six_generic_operations(self):
+    def test_registry_exposes_only_the_seven_generic_operations(self):
         from modules import MODULE_MAP
 
         self.assertEqual(
@@ -188,6 +250,7 @@ class ImageOperationTests(unittest.TestCase):
                 "AdjustImage",
                 "FilterImage",
                 "CropImage",
+                "ResizeImage",
                 "TileImage",
                 "ImageChannels",
                 "ProcessImage",
