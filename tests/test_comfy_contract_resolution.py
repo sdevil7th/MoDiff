@@ -55,8 +55,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 57,
-                "existing_task_boundary_model_admission_required": 60,
+                "existing_family_workflow_candidate": 54,
+                "existing_task_boundary_model_admission_required": 63,
                 "new_task_boundary_required": 21,
             },
         )
@@ -65,6 +65,14 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 117)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 92)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 4)
+        self.assertEqual(
+            self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
+            {
+                "different_model_generation_requires_admission": 3,
+                "same_upstream_family_different_default_partition": 1,
+            },
+        )
 
     def test_resolutions_are_exactly_the_unwritten_comfy_proposals(self):
         expected = {
@@ -194,6 +202,59 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
+    def test_pinned_source_reviews_resolve_four_exact_dependency_surfaces_without_copying_graphs(self):
+        reviewed = {
+            row["catalogId"]: row
+            for row in self.ledger["resolutions"]
+            if row.get("sourceReview") is not None
+        }
+        self.assertEqual(
+            set(reviewed),
+            {
+                "audio_stable_audio_3_medium",
+                "audio_stable_audio_3_medium_base",
+                "image_chroma_text_to_image",
+                "image_qwen_image",
+            },
+        )
+        for catalog_id, row in reviewed.items():
+            with self.subTest(catalog=catalog_id):
+                source_review = row["sourceReview"]
+                self.assertEqual(source_review["state"], "complete")
+                self.assertEqual(
+                    source_review["sourceRevision"],
+                    self.comfy["source"]["revision"],
+                )
+                self.assertRegex(source_review["assetPath"], r"^templates/[A-Za-z0-9_.-]+\.json$")
+                self.assertRegex(source_review["assetSha256"], r"^[0-9a-f]{64}$")
+                self.assertRegex(source_review["gitBlobOid"], r"^[0-9a-f]{40}$")
+                self.assertTrue(source_review["artifactDependencies"])
+                self.assertFalse(source_review["importsGraph"])
+                self.assertFalse(source_review["copiesNodesOrPrompts"])
+                self.assertFalse(source_review["executesGraph"])
+                self.assertFalse(row["claims"]["exactCatalogCheckpointSupported"])
+                self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
+                self.assertIn(
+                    "pinned_source_dependencies_reviewed_without_import_or_execution",
+                    row["blockers"],
+                )
+                self.assertNotIn("catalog_entry_source_review_required", row["blockers"])
+                self.assertNotIn("catalog_metadata_is_semantic_evidence_only", row["blockers"])
+
+        self.assertEqual(
+            reviewed["image_chroma_text_to_image"]["resolutionState"],
+            "existing_family_workflow_candidate",
+        )
+        for catalog_id in (
+            "audio_stable_audio_3_medium",
+            "audio_stable_audio_3_medium_base",
+            "image_qwen_image",
+        ):
+            self.assertEqual(
+                reviewed[catalog_id]["resolutionState"],
+                "existing_task_boundary_model_admission_required",
+            )
+
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
             self.ledger["boundary"],
@@ -201,13 +262,15 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "researchOnly": True,
                 "importsComfyGraphs": False,
                 "executesComfyNodes": False,
+                "copiesComfyNodes": False,
                 "copiesComfyPrompts": False,
+                "opensPinnedComfyGraphsForSourceReview": True,
                 "downloadsModelsOrMedia": False,
                 "claimsExactCatalogCheckpointCompatibility": False,
                 "claimsMoDiffWorkflowSupportFromCatalogMetadata": False,
                 "publishesTemplates": False,
                 "generatesAssets": False,
-                "maximumClaim": "semantic_task_boundary_resolution",
+                "maximumClaim": "pinned_source_dependency_and_semantic_task_resolution",
             },
         )
         forbidden_keys = {"edges", "graph", "links", "nodes", "prompt", "workflow"}

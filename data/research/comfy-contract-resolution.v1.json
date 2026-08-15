@@ -2,16 +2,18 @@
   "boundary": {
     "claimsExactCatalogCheckpointCompatibility": false,
     "claimsMoDiffWorkflowSupportFromCatalogMetadata": false,
+    "copiesComfyNodes": false,
     "copiesComfyPrompts": false,
     "downloadsModelsOrMedia": false,
     "executesComfyNodes": false,
     "generatesAssets": false,
     "importsComfyGraphs": false,
-    "maximumClaim": "semantic_task_boundary_resolution",
+    "maximumClaim": "pinned_source_dependency_and_semantic_task_resolution",
+    "opensPinnedComfyGraphsForSourceReview": true,
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:f5a1ca70bf78bffcc14649f1300b7e4c43cf676c664dcd2d2bb6b7ddef11ad0e",
+  "contentHash": "sha256:6ff28d78e222a3c16ca51e6c370b7eea756621c4410f79ecb4dffcf34d18d4a8",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -854,11 +856,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_stable_audio_3_is_not_stable_audio_open_1",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "audio"
@@ -881,7 +884,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 4,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Stable Audio"
       ],
@@ -901,18 +904,50 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "stable_audio_3_medium.safetensors",
+            "repository": "Comfy-Org/stable-audio-3"
+          },
+          {
+            "artifact": "t5gemma_b_b_ul2.safetensors",
+            "repository": "Comfy-Org/stable-audio-3"
+          },
+          {
+            "artifact": "qwen3.5_2b_bf16.safetensors",
+            "repository": "Comfy-Org/Qwen3.5"
+          }
+        ],
+        "assetPath": "templates/audio_stable_audio_3_medium.json",
+        "assetSha256": "04e86880c18c2959a24c7fe6ad5d6d65dbf83bab68d823340f4976fd791f3b64",
+        "comparison": {
+          "currentRepository": "stabilityai/stable-audio-open-1.0",
+          "currentRevision": "f21265c1e2710b3bd2386596943f0007f55f802e",
+          "currentWorkflowId": "StableAudioPipeline:text_to_audio",
+          "reasonCode": "stable_audio_3_is_not_stable_audio_open_1",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c9cc1983e174c38b53c625c616853dd9a1dc3a12",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Stable Audio 3.0 Medium"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_stable_audio_3_is_not_stable_audio_open_1",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "audio"
@@ -935,7 +970,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 4,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Stable Audio"
       ],
@@ -955,9 +990,40 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "stable_audio_3_medium_base.safetensors",
+            "repository": "Comfy-Org/stable-audio-3"
+          },
+          {
+            "artifact": "t5gemma_b_b_ul2.safetensors",
+            "repository": "Comfy-Org/stable-audio-3"
+          },
+          {
+            "artifact": "qwen3.5_2b_bf16.safetensors",
+            "repository": "Comfy-Org/Qwen3.5"
+          }
+        ],
+        "assetPath": "templates/audio_stable_audio_3_medium_base.json",
+        "assetSha256": "7bfc1d24c61424f137d40c394d4fe5f4225228c46d508352a2fc06d650a33378",
+        "comparison": {
+          "currentRepository": "stabilityai/stable-audio-open-1.0",
+          "currentRevision": "f21265c1e2710b3bd2386596943f0007f55f802e",
+          "currentWorkflowId": "StableAudioPipeline:text_to_audio",
+          "reasonCode": "stable_audio_3_is_not_stable_audio_open_1",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "245b29a3d7d804bcec79eb3d3bbd81ffda2fb30d",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Stable Audio 3.0 Medium Base"
     },
     {
@@ -2960,8 +3026,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_comfy_default_fp8_repack_is_not_the_admitted_diffusers_partition",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "family_match_requires_exact_checkpoint_and_variant_review"
@@ -2988,7 +3055,7 @@
       "currentFamilyOptionCount": 5,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_family_candidate_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
         "Chroma",
         "FLUX Image"
@@ -3018,6 +3085,37 @@
       "resolutionState": "existing_family_workflow_candidate",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "Chroma1-HD-fp8mixed.safetensors",
+            "repository": "Comfy-Org/Chroma1-HD_repackaged"
+          },
+          {
+            "artifact": "ae.safetensors",
+            "repository": "Comfy-Org/Lumina_Image_2.0_Repackaged"
+          },
+          {
+            "artifact": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "comfyanonymous/flux_text_encoders"
+          }
+        ],
+        "assetPath": "templates/image_chroma_text_to_image.json",
+        "assetSha256": "7fd2bbee72b1d32aa437433ed95d69d8676b41177d3db6880f8ece6f5421ccbc",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaPipeline:text_to_image",
+          "reasonCode": "comfy_default_fp8_repack_is_not_the_admitted_diffusers_partition",
+          "state": "same_upstream_family_different_default_partition"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "1b9525f95e3b80c3e6b07835bd869854aba1d182",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Chroma: Text to Image"
     },
     {
@@ -6151,11 +6249,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_qwen_image_original_plus_lightning_is_not_qwen_image_2512",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -6178,7 +6277,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Qwen Image"
       ],
@@ -6207,9 +6306,44 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "qwen_image_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Qwen-Image_ComfyUI"
+          },
+          {
+            "artifact": "Qwen-Image-Lightning-8steps-V1.0.safetensors",
+            "repository": "lightx2v/Qwen-Image-Lightning"
+          }
+        ],
+        "assetPath": "templates/image_qwen_image.json",
+        "assetSha256": "0f1dfed53e4d37d47a3c5fe93516c342b3b5b5961b8fbc169c2fffd53ae59349",
+        "comparison": {
+          "currentRepository": "Qwen/Qwen-Image-2512",
+          "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+          "currentWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "reasonCode": "qwen_image_original_plus_lightning_is_not_qwen_image_2512",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "2a8e9aee5c43a30e95274b2a59dbbc10a218a083",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Qwen-Image: Text to Image"
     },
     {
@@ -11644,13 +11778,18 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
+    "pinnedSourceReviewCount": 4,
+    "pinnedSourceReviewDecisionCounts": {
+      "different_model_generation_requires_admission": 3,
+      "same_upstream_family_different_default_partition": 1
+    },
     "recordsWithHiddenAuthoringSpecOption": 92,
     "recordsWithPublicTemplateOption": 25,
     "recordsWithRecommendedWorkflow": 117,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 57,
-      "existing_task_boundary_model_admission_required": 60,
+      "existing_family_workflow_candidate": 54,
+      "existing_task_boundary_model_admission_required": 63,
       "new_task_boundary_required": 21
     },
     "sourceProposalCount": 138

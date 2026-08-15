@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from modiff.comfy_template_research import PINNED_COMFY_WORKFLOW_TEMPLATES_REVISION
 from modiff.comfy_research_contracts import validate_comfy_research_contract_ledger
 from modiff.template_authoring_specs import load_template_authoring_spec_ledger
 
@@ -60,17 +61,99 @@ _LABEL_TO_FAMILIES = {
     "z-image": {"Z-Image"},
 }
 _MEDIA_KIND_ALIASES = {"text": "json", "three_d": "video"}
+_PINNED_SOURCE_REVIEW_REVISION = "d9e66019b85da231b7c936ad9cb7ff08cec16557"
+_PINNED_SOURCE_REVIEWS = {
+    "comfy-research:template:audio_stable_audio_3_medium": {
+        "assetPath": "templates/audio_stable_audio_3_medium.json",
+        "assetSha256": "04e86880c18c2959a24c7fe6ad5d6d65dbf83bab68d823340f4976fd791f3b64",
+        "gitBlobOid": "c9cc1983e174c38b53c625c616853dd9a1dc3a12",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/stable-audio-3", "artifact": "stable_audio_3_medium.safetensors"},
+            {"repository": "Comfy-Org/stable-audio-3", "artifact": "t5gemma_b_b_ul2.safetensors"},
+            {"repository": "Comfy-Org/Qwen3.5", "artifact": "qwen3.5_2b_bf16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "StableAudioPipeline:text_to_audio",
+            "currentRepository": "stabilityai/stable-audio-open-1.0",
+            "currentRevision": "f21265c1e2710b3bd2386596943f0007f55f802e",
+            "reasonCode": "stable_audio_3_is_not_stable_audio_open_1",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:audio_stable_audio_3_medium_base": {
+        "assetPath": "templates/audio_stable_audio_3_medium_base.json",
+        "assetSha256": "7bfc1d24c61424f137d40c394d4fe5f4225228c46d508352a2fc06d650a33378",
+        "gitBlobOid": "245b29a3d7d804bcec79eb3d3bbd81ffda2fb30d",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/stable-audio-3", "artifact": "stable_audio_3_medium_base.safetensors"},
+            {"repository": "Comfy-Org/stable-audio-3", "artifact": "t5gemma_b_b_ul2.safetensors"},
+            {"repository": "Comfy-Org/Qwen3.5", "artifact": "qwen3.5_2b_bf16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "StableAudioPipeline:text_to_audio",
+            "currentRepository": "stabilityai/stable-audio-open-1.0",
+            "currentRevision": "f21265c1e2710b3bd2386596943f0007f55f802e",
+            "reasonCode": "stable_audio_3_is_not_stable_audio_open_1",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_chroma_text_to_image": {
+        "assetPath": "templates/image_chroma_text_to_image.json",
+        "assetSha256": "7fd2bbee72b1d32aa437433ed95d69d8676b41177d3db6880f8ece6f5421ccbc",
+        "gitBlobOid": "1b9525f95e3b80c3e6b07835bd869854aba1d182",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Chroma1-HD_repackaged", "artifact": "Chroma1-HD-fp8mixed.safetensors"},
+            {"repository": "Comfy-Org/Lumina_Image_2.0_Repackaged", "artifact": "ae.safetensors"},
+            {"repository": "comfyanonymous/flux_text_encoders", "artifact": "t5xxl_fp8_e4m3fn_scaled.safetensors"},
+        ],
+        "comparison": {
+            "state": "same_upstream_family_different_default_partition",
+            "currentWorkflowId": "ChromaPipeline:text_to_image",
+            "currentRepository": "lodestones/Chroma1-HD",
+            "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+            "reasonCode": "comfy_default_fp8_repack_is_not_the_admitted_diffusers_partition",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:image_qwen_image": {
+        "assetPath": "templates/image_qwen_image.json",
+        "assetSha256": "0f1dfed53e4d37d47a3c5fe93516c342b3b5b5961b8fbc169c2fffd53ae59349",
+        "gitBlobOid": "2a8e9aee5c43a30e95274b2a59dbbc10a218a083",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_fp8_e4m3fn.safetensors"},
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {"repository": "lightx2v/Qwen-Image-Lightning", "artifact": "Qwen-Image-Lightning-8steps-V1.0.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "QwenImageModularPipeline:text_to_image",
+            "currentRepository": "Qwen/Qwen-Image-2512",
+            "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+            "reasonCode": "qwen_image_original_plus_lightning_is_not_qwen_image_2512",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+}
 _BOUNDARY = {
     "researchOnly": True,
     "importsComfyGraphs": False,
     "executesComfyNodes": False,
+    "copiesComfyNodes": False,
     "copiesComfyPrompts": False,
+    "opensPinnedComfyGraphsForSourceReview": True,
     "downloadsModelsOrMedia": False,
     "claimsExactCatalogCheckpointCompatibility": False,
     "claimsMoDiffWorkflowSupportFromCatalogMetadata": False,
     "publishesTemplates": False,
     "generatesAssets": False,
-    "maximumClaim": "semantic_task_boundary_resolution",
+    "maximumClaim": "pinned_source_dependency_and_semantic_task_resolution",
 }
 
 
@@ -173,6 +256,10 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
     """Build an exhaustive resolution for all unresolved Comfy proposals."""
 
     root = root.resolve(strict=True)
+    if _PINNED_SOURCE_REVIEW_REVISION != PINNED_COMFY_WORKFLOW_TEMPLATES_REVISION:
+        raise ComfyContractResolutionError(
+            "Pinned Comfy graph-source reviews must be repeated for the current catalog revision."
+        )
     comfy, comfy_sha = _read_json(root, _COMFY_CONTRACT_PATH, label="Comfy research contracts")
     comfy_catalog, comfy_catalog_sha = _read_json(root, _COMFY_CATALOG_PATH, label="Comfy research catalog")
     manifest, manifest_sha = _read_json(root, _WORKFLOW_MANIFEST_PATH, label="workflow manifest")
@@ -243,14 +330,36 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
         representatives = _representative_options(options)
         recommended = representatives[0] if representatives else None
         recommended_id = recommended["canonicalWorkflowId"] if recommended else None
-        blockers = [
-            "catalog_metadata_is_semantic_evidence_only",
-            "exact_catalog_checkpoint_and_component_compatibility_not_proven",
-            "model_artifact_and_input_output_rights_review_required",
-            "execution_and_asset_quality_not_proven",
-        ]
-        if source_review.get("state") == "required":
-            blockers.insert(0, "catalog_entry_source_review_required")
+        pinned_source_review = deepcopy(_PINNED_SOURCE_REVIEWS.get(contract_id))
+        if pinned_source_review is not None:
+            comparison = pinned_source_review["comparison"]
+            if comparison["currentWorkflowId"] != recommended_id:
+                raise ComfyContractResolutionError(
+                    f"Pinned Comfy source review recommendation drifted for {contract_id}."
+                )
+            pinned_source_review["state"] = "complete"
+            pinned_source_review["sourceRevision"] = _PINNED_SOURCE_REVIEW_REVISION
+            pinned_source_review["importsGraph"] = False
+            pinned_source_review["copiesNodesOrPrompts"] = False
+            pinned_source_review["executesGraph"] = False
+            resolution_state = pinned_source_review.pop("resolutionState")
+            mapping_meaning = pinned_source_review.pop("mappingMeaning")
+            blockers = [
+                "pinned_source_dependencies_reviewed_without_import_or_execution",
+                "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+                f"source_review_{comparison['reasonCode']}",
+                "model_artifact_and_input_output_rights_review_required",
+                "execution_and_asset_quality_not_proven",
+            ]
+        else:
+            blockers = [
+                "catalog_metadata_is_semantic_evidence_only",
+                "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+                "model_artifact_and_input_output_rights_review_required",
+                "execution_and_asset_quality_not_proven",
+            ]
+            if source_review.get("state") == "required":
+                blockers.insert(0, "catalog_entry_source_review_required")
         if resolution_state == "existing_task_boundary_model_admission_required":
             blockers.append("exact_catalog_model_or_variant_admission_required")
         elif resolution_state == "new_task_boundary_required":
@@ -274,6 +383,7 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
                 "recognizedMoDiffFamilies": sorted(catalog_families),
                 "resolutionState": resolution_state,
                 "mappingMeaning": mapping_meaning,
+                **({"sourceReview": pinned_source_review} if pinned_source_review is not None else {}),
                 "currentTaskBoundaryOptionCount": len(task_options),
                 "currentFamilyOptionCount": len(family_options),
                 "representativeWorkflowOptions": representatives,
@@ -348,6 +458,16 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
             "exactCatalogCheckpointSupportClaims": 0,
             "newWorkflowClaims": 0,
             "assetClaims": 0,
+            "pinnedSourceReviewCount": sum(item.get("sourceReview") is not None for item in resolutions),
+            "pinnedSourceReviewDecisionCounts": dict(
+                sorted(
+                    Counter(
+                        item["sourceReview"]["comparison"]["state"]
+                        for item in resolutions
+                        if item.get("sourceReview") is not None
+                    ).items()
+                )
+            ),
         },
         "resolutions": resolutions,
     }
