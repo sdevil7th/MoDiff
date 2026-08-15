@@ -39,6 +39,7 @@ from modiff.server import WebServer
 EXECUTION_PROFILE_ID = "z-image:auto"
 OPTIONAL_PROFILE_ID = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
 BUILTIN_IMAGE_PROFILE_ID = "builtin-image-operations:direct"
+BUILTIN_AUDIO_PROFILE_ID = "builtin-audio-operations:direct"
 BUILTIN_VIDEO_PROFILE_ID = "builtin-video-operations:direct"
 SPANDREL_VIDEO_UPSCALE_PROFILE_ID = "real-esrgan-x2-video-upscale:direct"
 
@@ -171,6 +172,7 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     self.assertIn(
                         profile.id,
                         {
+                            BUILTIN_AUDIO_PROFILE_ID,
                             BUILTIN_IMAGE_PROFILE_ID,
                             BUILTIN_VIDEO_PROFILE_ID,
                             SPANDREL_VIDEO_UPSCALE_PROFILE_ID,
