@@ -263,6 +263,85 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
+    "comfy-research:template:image_flux2_klein_9b_kv_image_edit": {
+        "assetPath": "templates/image_flux2_klein_9b_kv_image_edit.json",
+        "assetSha256": "8971a174ac2387a4cdda19ee1102ebc560e4cac75783f6162467c38eb07a499f",
+        "gitBlobOid": "5a67a1cce4b06a69f97c20eaa56a800f9cf2cd18",
+        "artifactDependencies": [
+            {
+                "repository": "black-forest-labs/FLUX.2-klein-9b-kv-fp8",
+                "artifact": "flux-2-klein-9b-kv-fp8.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/flux2-klein-9B",
+                "artifact": "qwen_3_8b_fp8mixed.safetensors",
+            },
+            {"repository": "Comfy-Org/flux2-dev", "artifact": "flux2-vae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Flux2KleinPipeline:edit_image",
+            "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+            "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            "reasonCode": "flux2_klein_9b_kv_is_not_flux2_klein_4b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_flux2_text_to_image": {
+        "assetPath": "templates/image_flux2_text_to_image.json",
+        "assetSha256": "440a33ed8079a602c420910afc0cf860e4d3ed4114f5df10399a80b9237b48fa",
+        "gitBlobOid": "bb7d4e5be6f379834e7c6ee563dd58687fc78dad",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/flux2-dev", "artifact": "flux2_dev_fp8mixed.safetensors"},
+            {
+                "repository": "Comfy-Org/flux2-dev",
+                "artifact": "mistral_3_small_flux2_bf16.safetensors",
+            },
+            {
+                "repository": "black-forest-labs/FLUX.2-small-decoder",
+                "artifact": "full_encoder_small_decoder.safetensors",
+            },
+            {"repository": "ByteZSzn/Flux.2-Turbo-ComfyUI", "artifact": "Flux_2-Turbo-LoRA_comfyui.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Flux2KleinPipeline:text_to_image",
+            "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+            "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            "reasonCode": "flux2_dev_turbo_lora_is_not_flux2_klein_4b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_flux2_text_to_image_9b": {
+        "assetPath": "templates/image_flux2_text_to_image_9b.json",
+        "assetSha256": "81f534c8761fffb34030d8e09de51b96a3dd7d0ebf0505104444568cd0360c62",
+        "gitBlobOid": "6700b1f5c1a1ff8169df6b8b40b6f441dbe43486",
+        "artifactDependencies": [
+            {
+                "repository": "black-forest-labs/FLUX.2-klein-base-9b-fp8",
+                "artifact": "flux-2-klein-base-9b-fp8.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/flux2-klein-9B",
+                "artifact": "qwen_3_8b_fp8mixed.safetensors",
+            },
+            {
+                "repository": "black-forest-labs/FLUX.2-small-decoder",
+                "artifact": "full_encoder_small_decoder.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Flux2KleinPipeline:text_to_image",
+            "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+            "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            "reasonCode": "flux2_klein_base_9b_is_not_flux2_klein_4b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:image-qwen_image_edit_2511_lora_inflation": {
         "assetPath": "templates/image-qwen_image_edit_2511_lora_inflation.json",
         "assetSha256": "08173d2a252b5491c370fb609fa2cccfcf46f837829535b0f7a121ce00ba2e75",
@@ -1114,6 +1193,53 @@ _PINNED_SOURCE_REVIEWS = {
         },
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:sdxl_refiner_prompt_example": {
+        "assetPath": "templates/sdxl_refiner_prompt_example.json",
+        "assetSha256": "c376af45ad93aeb52326d51d73f2d218c85423e36eec05a498edda50b769e4fb",
+        "gitBlobOid": "88dceaf20deea2bad07352daf72e0ac445300b84",
+        "reviewedWorkflowId": "StableDiffusionXLPipeline:text_to_image",
+        "artifactDependencies": [
+            {
+                "repository": "stabilityai/stable-diffusion-xl-base-1.0",
+                "artifact": "sd_xl_base_1.0.safetensors",
+            },
+            {
+                "repository": "stabilityai/stable-diffusion-xl-refiner-1.0",
+                "artifact": "sd_xl_refiner_1.0.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_requires_auxiliary_admission",
+            "currentWorkflowId": "StableDiffusionXLPipeline:text_to_image",
+            "currentRepository": "stabilityai/stable-diffusion-xl-base-1.0",
+            "currentRevision": "462165984030d82259a11f4367a4eed129e94a7b",
+            "reasonCode": "sdxl_refiner_stage_and_artifact_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:sdxl_revision_text_prompts": {
+        "assetPath": "templates/sdxl_revision_text_prompts.json",
+        "assetSha256": "4f48ce57fc864689e9de3d7575394cd4eed7973fb49dec43827dbf45cc5216b1",
+        "gitBlobOid": "383ee14ed5cb7a468f0b4b44406594958cb24013",
+        "reviewedTaskMode": "reference_to_image",
+        "artifactDependencies": [
+            {
+                "repository": "stabilityai/stable-diffusion-xl-base-1.0",
+                "artifact": "sd_xl_base_1.0.safetensors",
+            },
+            {"repository": "comfyanonymous/clip_vision_g", "artifact": "clip_vision_g.safetensors"},
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_and_new_task_auxiliary_required",
+            "currentWorkflowId": None,
+            "currentRepository": "stabilityai/stable-diffusion-xl-base-1.0",
+            "currentRevision": "462165984030d82259a11f4367a4eed129e94a7b",
+            "reasonCode": "sdxl_unclip_revision_requires_reference_image_task_and_clip_vision",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_reference_image_task_and_auxiliary_required",
     },
     "comfy-research:template:image_z_image": {
         "assetPath": "templates/image_z_image.json",
