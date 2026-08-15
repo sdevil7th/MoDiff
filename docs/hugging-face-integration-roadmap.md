@@ -6950,7 +6950,7 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Twenty
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Twenty-three
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
@@ -6972,6 +6972,10 @@ boundary, but does not equate its original-Qwen/DiffSynth assembly with MoDiff's
 video task boundaries but separate the old 0.9/0.9.5 checkpoints and the 2.3 or
 2.5 22B component assemblies from MoDiff's admitted
 `Lightricks/LTX-2@47da56e2ad66ce4125a9922b4a8826bf407f9d0a` partition.
+Three ACE-Step reviews separate the pinned v1 3.5B checkpoint from MoDiff's
+admitted v1.5 XL Turbo generation: song and instrumental generation can reuse
+the text-to-audio boundary after a model admission, while music-to-music still
+needs a new bounded audio-edit contract as well.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7080,7 +7084,8 @@ fail-closed model, execution, rights, and asset claims throughout. `40adea2`
 then seals five Qwen source decisions, including exact workflow-generation and
 task-boundary corrections without claiming auxiliary or checkpoint admission.
 `5af255a` adds six LTX generation decisions without weakening model, component,
-license, execution, or asset gates.
+license, execution, or asset gates. `c756949` adds the three exact ACE-Step v1
+dependency decisions and keeps audio editing explicitly unauthored.
 
 The following separate gates do remain external:
 
