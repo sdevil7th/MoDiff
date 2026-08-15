@@ -7223,6 +7223,17 @@ launches and normalize backend collision suffixes plus connected-field UI
 state without changing execution values or topology. Backend `3275f22` reseals
 upstream coverage, all 147 hidden candidate/authoring contracts, and the Comfy
 resolution ledger against that exact graph library.
+The first app execution of that stitch graph then found a real generic-facade
+output mismatch: `StitchImages` returns diagnostic `rows` and `count` fields,
+while `ProcessImage` declares only its stable `output`. Backend `8eb958e` now
+normalizes that internal result to the declared facade contract and locks every
+generic image-operation result to exactly one output key. The app-only retry
+completed on CPU in 0.0404 seconds at 438,063,104 bytes process RSS and saved
+the ignored technical candidate
+`data/images/campaign-image-stitch-v1.png` (1,040 by 592 RGB PNG, 81,600 bytes,
+SHA-256 `6df5aba74e28bdb8bb00a702ef35485b8d59c6327644c9cb298dd1f205289b22`).
+Its separate receipt remains pending human quality and rights review; it is not
+a Gallery, publication, or release-eligibility claim.
 
 The following separate gates do remain external:
 
