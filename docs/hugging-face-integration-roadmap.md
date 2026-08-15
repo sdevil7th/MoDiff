@@ -6950,7 +6950,7 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Nine
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Fourteen
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
@@ -6962,6 +6962,13 @@ Chroma1 Radiance, Z-Image Base/Base-Int8, and both FLUX.2 Klein 9B generations
 outside the currently admitted Chroma1-HD, Z-Image-Turbo, and FLUX.2 Klein 4B
 partitions. Pinned graph structure also corrects both Klein 9B records from the
 catalog's text-to-image tag to the existing generic image-edit task boundary.
+The Qwen tranche maps two 2511 LoRA graphs to the already admitted Edit-Plus
+generation while retaining explicit auxiliary-artifact gates, retains the 2509
+FP8-plus-Lightning graph as a non-equivalent same-generation partition, and
+separates Qwen Layered Control from the admitted Layered model. It also corrects
+the Qwen Union Control record from text-to-image to the existing control-image
+boundary, but does not equate its original-Qwen/DiffSynth assembly with MoDiff's
+2512/InstantX Union assembly.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7066,7 +7073,9 @@ supervisor, security, and model-I/O matrix passed with one expected skip after
 updating the affected test doubles. `6796b74` seals the first four exact pinned
 Comfy graph-source dependency reviews, and `f80f83e` adds five model-partition
 decisions plus the two source-proven Klein task corrections, while retaining
-fail-closed model, execution, rights, and asset claims throughout.
+fail-closed model, execution, rights, and asset claims throughout. `40adea2`
+then seals five Qwen source decisions, including exact workflow-generation and
+task-boundary corrections without claiming auxiliary or checkpoint admission.
 
 The following separate gates do remain external:
 
