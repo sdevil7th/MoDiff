@@ -7043,7 +7043,15 @@ than the current generated-data head. The subsequent live campaign fixes are
 (LongCat VAE slicing/tiling exclusions), and `accef77` (the regenerated LongCat
 graph and all bound coverage, candidate, authoring, and Comfy ledgers).
 `4f53667` makes malformed submitted runtime receipts fail as bounded HTTP 400
-admission errors rather than uncaught HTTP 500 responses.
+admission errors rather than uncaught HTTP 500 responses. `4b65aea` then turns
+every admitted graph `maxRuntimeSeconds` budget into an automatic worker
+deadline: it waits safely behind app-managed model I/O, requests cooperative
+node/pipeline interruption, records `runtime_deadline_exceeded`, and persists
+that failure before supervised replacement if third-party code does not return.
+The restarted live app returned the malformed-receipt canary as HTTP 400 and
+completed a 60-second-budget normal graph, while the 149-test queue, loop,
+supervisor, security, and model-I/O matrix passed with one expected skip after
+updating the affected test doubles.
 
 The following separate gates do remain external:
 
