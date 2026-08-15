@@ -56,21 +56,21 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.ledger["summary"]["resolutionStateCounts"],
             {
                 "existing_family_workflow_candidate": 16,
-                "existing_task_boundary_model_admission_required": 93,
-                "new_task_boundary_required": 29,
+                "existing_task_boundary_model_admission_required": 90,
+                "new_task_boundary_required": 32,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 109)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 106)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 28)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 81)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 70)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 78)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 74)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 9,
-                "different_model_generation_requires_admission": 44,
+                "different_model_generation_and_new_task_required": 12,
+                "different_model_generation_requires_admission": 45,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 6,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -96,9 +96,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_to_3d": 7,
             "image_audio_to_video": 1,
             "image_audio_to_text": 1,
+            "image_to_video_with_audio": 1,
             "motion_track_to_video": 1,
             "reference_to_image": 1,
+            "reference_to_video_with_audio": 1,
             "remove_background": 1,
+            "text_to_video_with_audio": 1,
         }
         actual = {}
         for resolution in self.ledger["resolutions"]:
@@ -211,7 +214,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_seventy_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_seventy_four_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -223,6 +226,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "audio_ace_step_1_m2m_editing",
                 "audio_ace_step_1_t2a_instrumentals",
                 "audio_ace_step_1_t2a_song",
+                "audio_minimax_music_3",
                 "audio_stable_audio_3_medium",
                 "audio_stable_audio_3_medium_base",
                 "image_chroma1_radiance_text_to_image",
@@ -272,6 +276,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "video_ltx2_i2v_distilled",
                 "video_ltx2_i2v_lora",
                 "video_ltx2_t2v_distilled",
+                "video_minimax_h3_i2v",
+                "video_minimax_h3_r2v",
+                "video_minimax_h3_t2v",
                 "video_wan2.1_alpha_t2v_14B",
                 "video_wan2.1_fun_camera_v1.1_1.3B",
                 "video_wan2.1_fun_camera_v1.1_14B",
@@ -326,6 +333,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
         for catalog_id in (
             "audio_ace_step_1_t2a_instrumentals",
             "audio_ace_step_1_t2a_song",
+            "audio_minimax_music_3",
             "audio_stable_audio_3_medium",
             "audio_stable_audio_3_medium_base",
             "image_chroma1_radiance_text_to_image",
@@ -545,6 +553,20 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 row["recommendedWorkflow"]["canonicalWorkflowId"],
                 "HuggingFaceImageTextToTextModel:image_to_text",
             )
+
+        minimax_h3_modes = {
+            "video_minimax_h3_r2v": "reference_to_video_with_audio",
+            "video_minimax_h3_i2v": "image_to_video_with_audio",
+            "video_minimax_h3_t2v": "text_to_video_with_audio",
+        }
+        for catalog_id, mode in minimax_h3_modes.items():
+            row = reviewed[catalog_id]
+            self.assertEqual(row["selectedCandidateMode"], mode)
+            self.assertEqual(row["candidateOutputMediaKinds"], ["video", "audio"])
+            self.assertEqual(row["sourceReview"]["catalogOutputMediaKinds"], ["video"])
+            self.assertEqual(row["sourceReview"]["reviewedOutputMediaKinds"], ["video", "audio"])
+            self.assertEqual(row["resolutionState"], "new_task_boundary_required")
+            self.assertIsNone(row["recommendedWorkflow"])
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(

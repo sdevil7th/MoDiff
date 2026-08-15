@@ -1903,6 +1903,113 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
+    "comfy-research:template:audio_minimax_music_3": {
+        "assetPath": "templates/audio_minimax_music_3.json",
+        "assetSha256": "0322153265b3e785961511b7849f6659f46a8fa7e8cb66976e5279ff1774b228",
+        "gitBlobOid": "acd3f160d3171a832d064e364c43fcf704316e92",
+        "reviewedWorkflowId": "AceStepAudioPipeline:text_to_audio",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/MiniMax-Music-3", "artifact": "minimax_music3_dit_fp16.safetensors"},
+            {
+                "repository": "Comfy-Org/MiniMax-Music-3",
+                "artifact": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+            },
+            {"repository": "Comfy-Org/MiniMax-Music-3", "artifact": "minimax_music3_dav.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "AceStepAudioPipeline:text_to_audio",
+            "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+            "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+            "reasonCode": "minimax_music3_is_not_ace_step",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_minimax_h3_r2v": {
+        "assetPath": "templates/video_minimax_h3_r2v.json",
+        "assetSha256": "edd1e3e2ac0cee2ac28337b311cc9b7c6984cb83ac3558a2fda8f8cacbbf2da7",
+        "gitBlobOid": "90d4012e1f83f7102f9ab0f30e28a435f5e03b18",
+        "reviewedTaskMode": "reference_to_video_with_audio",
+        "reviewedOutputMediaKinds": ["video", "audio"],
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/MiniMax-H3", "artifact": "minimax_h3_video_vae_fp16.safetensors"},
+            {"repository": "Comfy-Org/MiniMax-H3", "artifact": "minimax_h3_audio_vae_fp32.safetensors"},
+            {
+                "repository": "Comfy-Org/MiniMax-H3",
+                "artifact": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/MiniMax-H3",
+                "artifact": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "minimax_h3_reference_generation_requires_synchronized_video_audio_task",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_reference_video_audio_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_minimax_h3_i2v": {
+        "assetPath": "templates/video_minimax_h3_i2v.json",
+        "assetSha256": "bb71aecdd3c0b62e56eafe03acb14d1cfeabec7072eaed9cbdf473c2aaf73009",
+        "gitBlobOid": "65b7b1cc627fd892d50468041430706260ad81a0",
+        "reviewedTaskMode": "image_to_video_with_audio",
+        "reviewedOutputMediaKinds": ["video", "audio"],
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/MiniMax-H3", "artifact": "minimax_h3_video_vae_fp16.safetensors"},
+            {"repository": "Comfy-Org/MiniMax-H3", "artifact": "minimax_h3_audio_vae_fp32.safetensors"},
+            {
+                "repository": "Comfy-Org/MiniMax-H3",
+                "artifact": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/MiniMax-H3",
+                "artifact": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "minimax_h3_image_generation_requires_synchronized_video_audio_task",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_image_video_audio_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_minimax_h3_t2v": {
+        "assetPath": "templates/video_minimax_h3_t2v.json",
+        "assetSha256": "31ab33fdb053a7834cc866bd7aa08b887518fc656e4a796c89779c6b5e1786e6",
+        "gitBlobOid": "2502a910c45e08c55b37dd5d422efef6e1877304",
+        "reviewedTaskMode": "text_to_video_with_audio",
+        "reviewedOutputMediaKinds": ["video", "audio"],
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/MiniMax-H3", "artifact": "minimax_h3_video_vae_fp16.safetensors"},
+            {"repository": "Comfy-Org/MiniMax-H3", "artifact": "minimax_h3_audio_vae_fp32.safetensors"},
+            {
+                "repository": "Comfy-Org/MiniMax-H3",
+                "artifact": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/MiniMax-H3",
+                "artifact": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "minimax_h3_text_generation_requires_synchronized_video_audio_task",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_text_video_audio_task_and_model_generation_required",
+    },
 }
 _BOUNDARY = {
     "researchOnly": True,
@@ -2076,6 +2183,16 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
             not isinstance(value, str) or not value for value in output_kinds
         ):
             raise ComfyContractResolutionError(f"Comfy output media evidence is invalid for {contract_id}.")
+        if pinned_source_review is not None and pinned_source_review.get("reviewedOutputMediaKinds") is not None:
+            reviewed_output_kinds = pinned_source_review.get("reviewedOutputMediaKinds")
+            if not isinstance(reviewed_output_kinds, list) or not reviewed_output_kinds or any(
+                not isinstance(value, str) or not value for value in reviewed_output_kinds
+            ):
+                raise ComfyContractResolutionError(
+                    f"Pinned Comfy source review output media kinds are invalid for {contract_id}."
+                )
+            pinned_source_review["catalogOutputMediaKinds"] = deepcopy(output_kinds)
+            output_kinds = reviewed_output_kinds
         if not isinstance(labels, list) or any(not isinstance(value, str) or not value for value in labels):
             raise ComfyContractResolutionError(f"Comfy model evidence is invalid for {contract_id}.")
         normalized_output_kinds = {_MEDIA_KIND_ALIASES.get(value, value) for value in output_kinds}

@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:8b4d5d95b391996efdcae756f8deb4a07301ea5fa531c5efb513648453b0eafc",
+  "contentHash": "sha256:d9703c4f94eaab0d116f06e5bfb5f322b8de9fb354ddd0940a2a11104253d79d",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -852,8 +852,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_minimax_music3_is_not_ace_step",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -879,7 +880,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 4,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": null,
@@ -921,6 +922,39 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "minimax_music3_dit_fp16.safetensors",
+            "repository": "Comfy-Org/MiniMax-Music-3"
+          },
+          {
+            "artifact": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+            "repository": "Comfy-Org/MiniMax-Music-3"
+          },
+          {
+            "artifact": "minimax_music3_dav.safetensors",
+            "repository": "Comfy-Org/MiniMax-Music-3"
+          }
+        ],
+        "assetPath": "templates/audio_minimax_music_3.json",
+        "assetSha256": "0322153265b3e785961511b7849f6659f46a8fa7e8cb66976e5279ff1774b228",
+        "catalogRecommendedWorkflowId": "AceStepAudioPipeline:text_to_audio",
+        "comparison": {
+          "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+          "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+          "currentWorkflowId": "AceStepAudioPipeline:text_to_audio",
+          "reasonCode": "minimax_music3_is_not_ace_step",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "acd3f160d3171a832d064e364c43fcf704316e92",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AceStepAudioPipeline:text_to_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "MiniMax Music 3: Text to Music"
     },
     {
@@ -12192,14 +12226,17 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_minimax_h3_image_generation_requires_synchronized_video_audio_task",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "video"
+        "video",
+        "audio"
       ],
       "catalogId": "video_minimax_h3_i2v",
       "catalogModelLabels": [
@@ -12217,59 +12254,74 @@
       },
       "contractId": "comfy-research:template:video_minimax_h3_i2v",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 8,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_new_image_video_audio_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
-        "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
-        "modelFamily": "LTX Video",
-        "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
-          "modelFamily": "LTX Video",
-          "modelType": "LTX2ConditionPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "SanaImageToVideoPipeline:image_to_video",
-          "modelFamily": "SANA Video",
-          "modelType": "SanaImageToVideoPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "StableVideoDiffusionPipeline:image_to_video",
-          "modelFamily": "Stable Video Diffusion",
-          "modelType": "StableVideoDiffusionPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "HunyuanVideoFramepackPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "image_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "image_to_video_with_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "minimax_h3_video_vae_fp16.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "minimax_h3_audio_vae_fp32.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          }
+        ],
+        "assetPath": "templates/video_minimax_h3_i2v.json",
+        "assetSha256": "bb71aecdd3c0b62e56eafe03acb14d1cfeabec7072eaed9cbdf473c2aaf73009",
+        "catalogOutputMediaKinds": [
+          "video"
+        ],
+        "catalogSelectedCandidateMode": "image_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "minimax_h3_image_generation_requires_synchronized_video_audio_task",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "65b7b1cc627fd892d50468041430706260ad81a0",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video",
+          "audio"
+        ],
+        "reviewedTaskMode": "image_to_video_with_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "MiniMax H3: Image to Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_minimax_h3_reference_generation_requires_synchronized_video_audio_task",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "video"
+        "video",
+        "audio"
       ],
       "catalogId": "video_minimax_h3_r2v",
       "catalogModelLabels": [
@@ -12287,41 +12339,74 @@
       },
       "contractId": "comfy-research:template:video_minimax_h3_r2v",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 2,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_new_reference_video_audio_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
-        "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
-        "modelFamily": "LTX Video",
-        "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
-          "modelFamily": "LTX Video",
-          "modelType": "LTX2ConditionPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "reference_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "reference_to_video_with_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "minimax_h3_video_vae_fp16.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "minimax_h3_audio_vae_fp32.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          }
+        ],
+        "assetPath": "templates/video_minimax_h3_r2v.json",
+        "assetSha256": "edd1e3e2ac0cee2ac28337b311cc9b7c6984cb83ac3558a2fda8f8cacbbf2da7",
+        "catalogOutputMediaKinds": [
+          "video"
+        ],
+        "catalogSelectedCandidateMode": "reference_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "minimax_h3_reference_generation_requires_synchronized_video_audio_task",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "90d4012e1f83f7102f9ab0f30e28a435f5e03b18",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video",
+          "audio"
+        ],
+        "reviewedTaskMode": "reference_to_video_with_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "MiniMax H3: Reference to Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_minimax_h3_text_generation_requires_synchronized_video_audio_task",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "video"
+        "video",
+        "audio"
       ],
       "catalogId": "video_minimax_h3_t2v",
       "catalogModelLabels": [
@@ -12339,71 +12424,59 @@
       },
       "contractId": "comfy-research:template:video_minimax_h3_t2v",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 15,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_new_text_video_audio_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
-        "canonicalWorkflowId": "AllegroPipeline:text_to_video",
-        "modelFamily": "Allegro",
-        "modelType": "AllegroPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "AllegroPipeline:text_to_video",
-          "modelFamily": "Allegro",
-          "modelType": "AllegroPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "AnimateDiffPAGPipeline:text_to_video",
-          "modelFamily": "AnimateDiff",
-          "modelType": "AnimateDiffPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "CogVideoXPipeline:text_to_video",
-          "modelFamily": "CogVideoX",
-          "modelType": "CogVideoXPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
-          "modelFamily": "LTX Video",
-          "modelType": "LTX2ConditionPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LattePipeline:text_to_video",
-          "modelFamily": "Latte",
-          "modelType": "LattePipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "MochiPipeline:text_to_video",
-          "modelFamily": "Mochi",
-          "modelType": "MochiPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "SanaVideoPipeline:text_to_video",
-          "modelFamily": "SANA Video",
-          "modelType": "SanaVideoPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "Wan22Pipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "text_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "text_to_video_with_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "minimax_h3_video_vae_fp16.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "minimax_h3_audio_vae_fp32.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          },
+          {
+            "artifact": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "repository": "Comfy-Org/MiniMax-H3"
+          }
+        ],
+        "assetPath": "templates/video_minimax_h3_t2v.json",
+        "assetSha256": "31ab33fdb053a7834cc866bd7aa08b887518fc656e4a796c89779c6b5e1786e6",
+        "catalogOutputMediaKinds": [
+          "video"
+        ],
+        "catalogSelectedCandidateMode": "text_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "minimax_h3_text_generation_requires_synchronized_video_audio_task",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "2502a910c45e08c55b37dd5d422efef6e1877304",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video",
+          "audio"
+        ],
+        "reviewedTaskMode": "text_to_video_with_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "MiniMax H3: Text to Video"
     },
     {
@@ -14194,39 +14267,42 @@
       "image_audio_to_video": 1,
       "image_to_3d": 7,
       "image_to_text": 2,
-      "image_to_video": 11,
+      "image_to_video": 10,
+      "image_to_video_with_audio": 1,
       "image_upscale": 3,
       "inpaint": 4,
       "layer_decomposition": 1,
       "motion_track_to_video": 1,
       "outpaint": 1,
       "reference_to_image": 1,
-      "reference_to_video": 3,
+      "reference_to_video": 2,
+      "reference_to_video_with_audio": 1,
       "remove_background": 1,
       "text_generation": 1,
       "text_to_audio": 5,
       "text_to_image": 33,
-      "text_to_video": 12,
+      "text_to_video": 11,
+      "text_to_video_with_audio": 1,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 70,
+    "pinnedSourceReviewCount": 74,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 9,
-      "different_model_generation_requires_admission": 44,
+      "different_model_generation_and_new_task_required": 12,
+      "different_model_generation_requires_admission": 45,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 6,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 81,
+    "recordsWithHiddenAuthoringSpecOption": 78,
     "recordsWithPublicTemplateOption": 28,
-    "recordsWithRecommendedWorkflow": 109,
+    "recordsWithRecommendedWorkflow": 106,
     "resolutionCount": 138,
     "resolutionStateCounts": {
       "existing_family_workflow_candidate": 16,
-      "existing_task_boundary_model_admission_required": 93,
-      "new_task_boundary_required": 29
+      "existing_task_boundary_model_admission_required": 90,
+      "new_task_boundary_required": 32
     },
     "sourceProposalCount": 138
   }
