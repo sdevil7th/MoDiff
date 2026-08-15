@@ -48,7 +48,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "bd7144d71ce4da0fb594e72f1ea12fc7b67a2afecfefcf85a639971c1673a1c8",
+    "positionHash": "dbed74a4593f089118f042d95bb1acd6f3ca7a542a8657e6ac7d3d3e5d6b0cd2",
     "verticalGap": 72
   },
   "nodes": [
@@ -294,6 +294,12 @@
               "value": "deepseek-community/Janus-Pro-1B"
             }
           },
+          "pipeline_class": {
+            "default": "JanusForConditionalGeneration",
+            "hidden": true,
+            "label": "Execution Class",
+            "type": "string"
+          },
           "receipt": {
             "display": "output",
             "isConnected": false,
@@ -322,7 +328,7 @@
       "id": "node-02",
       "position": {
         "x": 0,
-        "y": 126
+        "y": 112
       },
       "type": "custom"
     },

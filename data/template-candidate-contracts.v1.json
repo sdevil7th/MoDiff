@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:5b9ca28c5f621f88c3426fc43f0d63408ee77b3cc991623a9747e8543e254b9b",
+  "contentHash": "sha256:24932c55107c05f4a29a19cf4bbf3615f4a15d3bca005bfd1d566af24fffbdb7",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -2452,7 +2452,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "59bc0f75074aba755956db1e79e3e10025ed6b0ca518c93f66983f191a6766b2",
+      "graphHash": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add",
       "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2494,7 +2494,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "34f660b34415d0308c8895586a58951088c7a71228420140c52ad2c03e2f75e6",
+      "graphHash": "40bb3856f257b0383ed9d37a611f4172b9aab65be45bfc4a522082c113250bec",
       "graphPath": "studio/hugging-face-any-to-any-model/text-generation.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2533,7 +2533,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a8234d64116084dcbd27502671fd8fbde7ff7a6427225d05cbe3c12f0db5ec28",
+      "graphHash": "845fb08f10968ea806325b448e1c41fba709c8515dbb665acdbdc56f88198a4f",
       "graphPath": "studio/hugging-face-any-to-any-model/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2572,7 +2572,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b5bba23122aedea527887590b4955cef16116c26e00f8cf489a301dab19dc3bd",
+      "graphHash": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0",
       "graphPath": "studio/hugging-face-image-text-to-text-model/image-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2698,7 +2698,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0245bf6e0720c40add856eeff791d4129b28a8f9da8a601d4ce17785a0a03953",
+      "graphHash": "37308672398e110f79c43c6dade31ccab5e4901491a844c8767e5c9ed286bc96",
       "graphPath": "studio/hugging-face-text-generation-model/text-generation.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -6600,13 +6600,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:90794712fab5b492a1b6899e01c4870e442f5cd988f1975f64eb7288673d9046",
+      "contentHash": "sha256:4d0e2b191cf1c3840c2b8ebf01e2f7a8c1ef93897c37fe9ba768375938d3da71",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:9eff29b0066d9248ef97f9b7383fff5fa301b928044836a6de33333a02145021"
+      "sha256": "sha256:e2d61e57f1f652ff69e550f027f2077f3cf47f163eb7149a967cb2d23f385e7a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:bab03873ecd434fb3a7fe9b11795d5495d84eb09d4ff2b73e157840dd4b35b95"
+      "sha256": "sha256:02b4f2aa7f1763ccfa88448f9b4d84a8d1d2f101223892897c947d90658fb711"
     }
   },
   "summary": {

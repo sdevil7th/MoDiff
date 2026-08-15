@@ -48,7 +48,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "d18ffa25c886eea3029fff68d0f88b159787ae116d3ea50327f73a5d9f50849f",
+    "positionHash": "38033088009d3a8a7d26428686b2af3932066ef1f2b034cfdbb3bc40781ab451",
     "verticalGap": 72
   },
   "nodes": [
@@ -143,6 +143,11 @@
             "max": 1,
             "min": 0.01,
             "type": "float"
+          },
+          "use_chat_template": {
+            "default": true,
+            "label": "Use Chat Template",
+            "type": "boolean"
           }
         },
         "resizable": true,
@@ -257,6 +262,12 @@
               "value": "HuggingFaceTB/SmolLM2-135M-Instruct"
             }
           },
+          "pipeline_class": {
+            "default": "AutoModelForCausalLM",
+            "hidden": true,
+            "label": "Execution Class",
+            "type": "string"
+          },
           "receipt": {
             "display": "output",
             "isConnected": false,
@@ -336,7 +347,7 @@
       "id": "node-03",
       "position": {
         "x": 880,
-        "y": 126
+        "y": 140
       },
       "type": "custom"
     }

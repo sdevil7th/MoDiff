@@ -70,7 +70,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "daa3f82f3ae839b44cfd3108ab5449d1163c77d5c8a78d4b5b5a531827c2c820",
+    "positionHash": "c4b8e117e54df50d95461cede84686ef837ab68cf7ea7e872c55b6e7f2f9cfb8",
     "verticalGap": 72
   },
   "nodes": [
@@ -180,7 +180,7 @@
       "id": "node-01",
       "position": {
         "x": 0,
-        "y": 318
+        "y": 346
       },
       "type": "custom"
     },
@@ -311,7 +311,7 @@
       "id": "node-02",
       "position": {
         "x": 440,
-        "y": 61
+        "y": 75
       },
       "type": "custom"
     },
@@ -408,6 +408,12 @@
               "value": "HuggingFaceTB/SmolVLM-256M-Instruct"
             }
           },
+          "pipeline_class": {
+            "default": "AutoModelForImageTextToText",
+            "hidden": true,
+            "label": "Execution Class",
+            "type": "string"
+          },
           "receipt": {
             "display": "output",
             "isConnected": false,
@@ -487,7 +493,7 @@
       "id": "node-04",
       "position": {
         "x": 880,
-        "y": 229
+        "y": 243
       },
       "type": "custom"
     }
