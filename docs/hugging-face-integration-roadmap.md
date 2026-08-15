@@ -6969,26 +6969,51 @@ of the 51 advertised resource recipes has a measured physical qualification
 receipt on this host. Source completeness, prior visual approval, asset
 authoring, and physical release qualification remain separate claims.
 
-A separate ignored local technical-review receipt now captures 21 completed app
-workflows and 25 byte-hashed outputs: all 19 model-free built-in image, audio,
-video, and JSON candidate workflows plus the generic SmolLM2 text-generation
-and SmolVLM image-to-text workflows. It records three audio, 12 image, five
-video, and five JSON outputs. Every receipt remains explicitly pending human
-quality and rights review, with Gallery approval, publication, and release
-eligibility false. The SmolLM2 run also exposed and fixed a real generic-node
-gap: causal text generation now optionally applies a bounded tokenizer chat
-template before tokenization. The rerun follows the instruction checkpoint's
-chat format but its 135M output is still a weak/truncated technical candidate,
-not an approved example. SmolVLM produced a bounded description of the local
-procedural test frame and is likewise pending review.
+A separate ignored local technical-review receipt now captures 37 completed app
+workflows and 41 byte-hashed outputs. It includes all 19 model-free built-in
+image, audio, video, and JSON candidates; generic SmolLM2 text generation and
+SmolVLM image-to-text; and 16 real-model workflow canaries: SD1.5 text, edit,
+and Canny ControlNet; LCM text and edit; DreamLite Mobile text and edit; SD1.5
+PAG; Sana Sprint text; Marigold depth; LongCat AudioDiT; Shap-E; Consistency,
+DDIM, and DDPM unconditional generation; and SDXL Turbo. The media partition is
+four audio, 26 image, six video, and five JSON outputs. Every receipt remains
+explicitly pending human quality and rights review, with Gallery approval,
+publication, and release eligibility false.
+
+The SmolLM2 run exposed and fixed a real generic-node gap: causal text
+generation now optionally applies a bounded tokenizer chat template before
+tokenization. The rerun follows the instruction checkpoint's chat format but
+its 135M output is still a weak/truncated technical candidate, not an approved
+example. SmolVLM produced a bounded description of the local procedural test
+frame and is likewise pending review. The later image batch contains several
+strong review candidates, but visual inspection here is still not human
+approval: notably the SD1.5 PAG reading room, SDXL Turbo portrait, LCM and
+DreamLite Mobile reading-room edits, DreamLite Mobile text output, Sana Sprint
+botanical sheet, and SD1.5 control/edit samples. LongCat's 4.95-second 24 kHz
+WAV is format- and signal-validated but has not received listening-based human
+review. The 64 px Shap-E orbit is deliberately a low-resolution technical
+preview rather than a Gallery-quality asset.
+
+The same live campaign preserved negative evidence instead of manufacturing
+receipts. LongCat's advertised VAE slicing and tiling paths both failed in the
+exact upstream VAE and were disabled before the successful rerun. A 64-step,
+256 px Shap-E CPU orbit completed its diffusion prior but its non-cooperative
+renderer exceeded the declared 30-minute ceiling; the app forcibly replaced
+the supervised worker and no output was retained. A bounded 32-step, 64 px
+retry completed in 382.86 seconds. DreamLite Mobile edit failed with bfloat16
+on CPU because the upstream timestep embedding remained Float; the same exact
+graph and weights completed in float32 in about 24 seconds. A Sana Sprint edit
+that materially changed the requested scene was retained only as a local
+negative output and was not added to the receipt ledger.
 
 App-only model provisioning completed exact SmolLM2, SmolVLM, and Janus
 selections totaling 4,951,475,788 bytes without deleting an older model. The
 separate pending campaign still contains ten exact selections totaling
 408,762,812,498 bytes (408.763 GB). The latest 2026-08-15 live filesystem
-snapshot reports 69,387,288,576 free bytes against the app's
-68,719,476,736-byte reserve, leaving only 667,811,840 bytes before queue and
-staging accounting; no pending selection currently fits. Stable Video
+snapshot reports 69,025,632,256 free bytes against the app's
+68,719,476,736-byte reserve, leaving only 306,155,520 bytes before queue and
+staging accounting; the app download queue is idle and no pending selection
+currently fits. Stable Video
 and Stable Audio additionally remain access-gated after prior HTTP 403 results
 with no configured token. No direct download or reserve-bypassing submission is
 permitted.
@@ -7007,7 +7032,10 @@ The post-closeout loader and review follow-ups are backend `01dbe05` (exact
 generic loader identities), `02c31c9` (bounded causal-text chat templates), and
 `0214e53` (the resulting 197-workflow graph and derived-ledger reseal). The
 older `b2d57ac`/`5e2aae9` references above remain historical milestones rather
-than the current generated-data head.
+than the current generated-data head. The subsequent live campaign fixes are
+`47e5fb1` (mode-aware exact loader-profile resolution), `b98250a` and `da37883`
+(LongCat VAE slicing/tiling exclusions), and `accef77` (the regenerated LongCat
+graph and all bound coverage, candidate, authoring, and Comfy ledgers).
 
 The following separate gates do remain external:
 
