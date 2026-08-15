@@ -120,6 +120,89 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_family_workflow_candidate",
         "mappingMeaning": "source_reviewed_family_candidate_exact_checkpoint_not_proven",
     },
+    "comfy-research:template:image_chroma1_radiance_text_to_image": {
+        "assetPath": "templates/image_chroma1_radiance_text_to_image.json",
+        "assetSha256": "8141af643b4dcaf8edd21faa92be84cd472fa689d0f228b842339baf2ee5e880",
+        "gitBlobOid": "23773eaea7e90edc29e0680d4335039eb3ba72fc",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Chroma1-Radiance_Repackaged",
+                "artifact": "chroma-radiance-x0.safetensors",
+            },
+            {
+                "repository": "comfyanonymous/flux_text_encoders",
+                "artifact": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+        ],
+        "sourceRuntimeComponents": [{"component": "vae", "implementation": "pixel_space"}],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "ChromaPipeline:text_to_image",
+            "currentRepository": "lodestones/Chroma1-HD",
+            "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+            "reasonCode": "chroma1_radiance_is_not_chroma1_hd",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_flux2_klein_image_edit_9b_base": {
+        "assetPath": "templates/image_flux2_klein_image_edit_9b_base.json",
+        "assetSha256": "b5b6e389b6892cf739dba45a76fdadb48611c38505c1c3829bae75d783df229b",
+        "gitBlobOid": "82401997a8d24d174fe4a65d8392eba9f87d8024",
+        "reviewedTaskMode": "edit_image",
+        "artifactDependencies": [
+            {
+                "repository": "black-forest-labs/FLUX.2-klein-base-9b-fp8",
+                "artifact": "flux-2-klein-base-9b-fp8.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/flux2-klein-9B",
+                "artifact": "qwen_3_8b_fp8mixed.safetensors",
+            },
+            {
+                "repository": "black-forest-labs/FLUX.2-small-decoder",
+                "artifact": "full_encoder_small_decoder.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Flux2KleinPipeline:edit_image",
+            "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+            "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            "reasonCode": "flux2_klein_base_9b_is_not_flux2_klein_4b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_flux2_klein_image_edit_9b_distilled": {
+        "assetPath": "templates/image_flux2_klein_image_edit_9b_distilled.json",
+        "assetSha256": "4e4285c1a5cba3df9cf022073425ec9585c418a8cb0b7570f936110105763599",
+        "gitBlobOid": "5d74c3e059b73215ed2a2b2fb54a691ab286645b",
+        "reviewedTaskMode": "edit_image",
+        "artifactDependencies": [
+            {
+                "repository": "black-forest-labs/FLUX.2-klein-9b-fp8",
+                "artifact": "flux-2-klein-9b-fp8.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/flux2-klein-9B",
+                "artifact": "qwen_3_8b_fp8mixed.safetensors",
+            },
+            {
+                "repository": "black-forest-labs/FLUX.2-small-decoder",
+                "artifact": "full_encoder_small_decoder.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "Flux2KleinPipeline:edit_image",
+            "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+            "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            "reasonCode": "flux2_klein_distilled_9b_is_not_flux2_klein_4b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:image_qwen_image": {
         "assetPath": "templates/image_qwen_image.json",
         "assetSha256": "0f1dfed53e4d37d47a3c5fe93516c342b3b5b5961b8fbc169c2fffd53ae59349",
@@ -136,6 +219,44 @@ _PINNED_SOURCE_REVIEWS = {
             "currentRepository": "Qwen/Qwen-Image-2512",
             "currentRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
             "reasonCode": "qwen_image_original_plus_lightning_is_not_qwen_image_2512",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_z_image": {
+        "assetPath": "templates/image_z_image.json",
+        "assetSha256": "f7b3ceb43a3688e17cc5bce67d1beafe833a674b4e4a257c626a6243b3ebedc2",
+        "gitBlobOid": "97cfc42585f59bbe43139e2fea4c5a6530240592",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/z_image", "artifact": "z_image_bf16.safetensors"},
+            {"repository": "Comfy-Org/z_image_turbo", "artifact": "qwen_3_4b.safetensors"},
+            {"repository": "Comfy-Org/z_image_turbo", "artifact": "ae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "ZImageModularPipeline:text_to_image",
+            "currentRepository": "Tongyi-MAI/Z-Image-Turbo",
+            "currentRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+            "reasonCode": "z_image_base_is_not_z_image_turbo",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:image_z_image_int8": {
+        "assetPath": "templates/image_z_image_int8.json",
+        "assetSha256": "7e80aff2a7aecc61602bcf1f8a83afa30a5c714559547295f9917444d3ea222c",
+        "gitBlobOid": "2dd3f57d9d01e83b10caa16cddba37d356d50e23",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/z_image", "artifact": "z_image_int8_convrot.safetensors"},
+            {"repository": "Comfy-Org/z_image_turbo", "artifact": "qwen_3_4b.safetensors"},
+            {"repository": "Comfy-Org/z_image_turbo", "artifact": "ae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "ZImageModularPipeline:text_to_image",
+            "currentRepository": "Tongyi-MAI/Z-Image-Turbo",
+            "currentRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+            "reasonCode": "z_image_base_int8_is_not_z_image_turbo",
         },
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
@@ -298,7 +419,15 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
             not isinstance(value, Mapping) for value in (task_evidence, media_evidence, model_evidence, source_review)
         ):
             raise ComfyContractResolutionError(f"Comfy research evidence is incomplete for {contract_id}.")
-        mode = _string(task_evidence.get("selectedCandidateMode"), label=f"{contract_id} selected mode")
+        catalog_mode = _string(task_evidence.get("selectedCandidateMode"), label=f"{contract_id} selected mode")
+        pinned_source_review = deepcopy(_PINNED_SOURCE_REVIEWS.get(contract_id))
+        mode = catalog_mode
+        if pinned_source_review is not None and pinned_source_review.get("reviewedTaskMode") is not None:
+            mode = _string(
+                pinned_source_review.get("reviewedTaskMode"),
+                label=f"{contract_id} reviewed task mode",
+            )
+            pinned_source_review["catalogSelectedCandidateMode"] = catalog_mode
         output_kinds = media_evidence.get("candidateOutputMediaKinds")
         labels = model_evidence.get("catalogModelLabels")
         if not isinstance(output_kinds, list) or any(
@@ -330,7 +459,6 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
         representatives = _representative_options(options)
         recommended = representatives[0] if representatives else None
         recommended_id = recommended["canonicalWorkflowId"] if recommended else None
-        pinned_source_review = deepcopy(_PINNED_SOURCE_REVIEWS.get(contract_id))
         if pinned_source_review is not None:
             comparison = pinned_source_review["comparison"]
             if comparison["currentWorkflowId"] != recommended_id:

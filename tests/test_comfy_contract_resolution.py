@@ -55,8 +55,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 54,
-                "existing_task_boundary_model_admission_required": 63,
+                "existing_family_workflow_candidate": 49,
+                "existing_task_boundary_model_admission_required": 68,
                 "new_task_boundary_required": 21,
             },
         )
@@ -65,11 +65,11 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 117)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 92)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 4)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 9)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_requires_admission": 3,
+                "different_model_generation_requires_admission": 8,
                 "same_upstream_family_different_default_partition": 1,
             },
         )
@@ -202,7 +202,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_four_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_nine_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -213,8 +213,13 @@ class ComfyContractResolutionTests(unittest.TestCase):
             {
                 "audio_stable_audio_3_medium",
                 "audio_stable_audio_3_medium_base",
+                "image_chroma1_radiance_text_to_image",
                 "image_chroma_text_to_image",
+                "image_flux2_klein_image_edit_9b_base",
+                "image_flux2_klein_image_edit_9b_distilled",
                 "image_qwen_image",
+                "image_z_image",
+                "image_z_image_int8",
             },
         )
         for catalog_id, row in reviewed.items():
@@ -229,6 +234,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 self.assertRegex(source_review["assetSha256"], r"^[0-9a-f]{64}$")
                 self.assertRegex(source_review["gitBlobOid"], r"^[0-9a-f]{40}$")
                 self.assertTrue(source_review["artifactDependencies"])
+                for dependency in source_review["artifactDependencies"]:
+                    self.assertRegex(dependency["repository"], r"^[^/]+/[^/]+$")
+                    self.assertRegex(dependency["artifact"], r"^[^/]+$")
                 self.assertFalse(source_review["importsGraph"])
                 self.assertFalse(source_review["copiesNodesOrPrompts"])
                 self.assertFalse(source_review["executesGraph"])
@@ -248,12 +256,27 @@ class ComfyContractResolutionTests(unittest.TestCase):
         for catalog_id in (
             "audio_stable_audio_3_medium",
             "audio_stable_audio_3_medium_base",
+            "image_chroma1_radiance_text_to_image",
+            "image_flux2_klein_image_edit_9b_base",
+            "image_flux2_klein_image_edit_9b_distilled",
             "image_qwen_image",
+            "image_z_image",
+            "image_z_image_int8",
         ):
             self.assertEqual(
                 reviewed[catalog_id]["resolutionState"],
                 "existing_task_boundary_model_admission_required",
             )
+
+        for catalog_id in (
+            "image_flux2_klein_image_edit_9b_base",
+            "image_flux2_klein_image_edit_9b_distilled",
+        ):
+            row = reviewed[catalog_id]
+            self.assertEqual(row["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
+            self.assertEqual(row["sourceReview"]["reviewedTaskMode"], "edit_image")
+            self.assertEqual(row["selectedCandidateMode"], "edit_image")
+            self.assertEqual(row["recommendedWorkflow"]["canonicalWorkflowId"], "Flux2KleinPipeline:edit_image")
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(

@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:6ff28d78e222a3c16ca51e6c370b7eea756621c4410f79ecb4dffcf34d18d4a8",
+  "contentHash": "sha256:8fb9d37f7c23fc126a5745b19bba4b7e88a7c4451d2db1f16e2fc7b3a7d78953",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -2972,11 +2972,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_chroma1_radiance_is_not_chroma1_hd",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -2999,7 +3000,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Chroma"
       ],
@@ -3019,9 +3020,42 @@
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "chroma-radiance-x0.safetensors",
+            "repository": "Comfy-Org/Chroma1-Radiance_Repackaged"
+          },
+          {
+            "artifact": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "comfyanonymous/flux_text_encoders"
+          }
+        ],
+        "assetPath": "templates/image_chroma1_radiance_text_to_image.json",
+        "assetSha256": "8141af643b4dcaf8edd21faa92be84cd472fa689d0f228b842339baf2ee5e880",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaPipeline:text_to_image",
+          "reasonCode": "chroma1_radiance_is_not_chroma1_hd",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "23773eaea7e90edc29e0680d4335039eb3ba72fc",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "sourceRuntimeComponents": [
+          {
+            "component": "vae",
+            "implementation": "pixel_space"
+          }
+        ],
+        "state": "complete"
+      },
       "title": "Chroma1 Radiance Text to Image"
     },
     {
@@ -3482,11 +3516,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_flux2_klein_base_9b_is_not_flux2_klein_4b",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -3508,42 +3543,76 @@
       },
       "contractId": "comfy-research:template:image_flux2_klein_image_edit_9b_base",
       "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "FLUX Image"
       ],
       "recommendedWorkflow": {
         "authoringSpecId": null,
-        "canonicalWorkflowId": "Flux2KleinPipeline:text_to_image",
+        "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
         "modelFamily": "FLUX Image",
         "modelType": "Flux2KleinPipeline",
         "publicTemplateIds": [
-          "flux2_klein_text_to_image"
+          "flux2_klein_edit"
         ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "Flux2KleinPipeline:text_to_image",
+          "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
           "modelFamily": "FLUX Image",
           "modelType": "Flux2KleinPipeline",
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "text_to_image",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "flux-2-klein-base-9b-fp8.safetensors",
+            "repository": "black-forest-labs/FLUX.2-klein-base-9b-fp8"
+          },
+          {
+            "artifact": "qwen_3_8b_fp8mixed.safetensors",
+            "repository": "Comfy-Org/flux2-klein-9B"
+          },
+          {
+            "artifact": "full_encoder_small_decoder.safetensors",
+            "repository": "black-forest-labs/FLUX.2-small-decoder"
+          }
+        ],
+        "assetPath": "templates/image_flux2_klein_image_edit_9b_base.json",
+        "assetSha256": "b5b6e389b6892cf739dba45a76fdadb48611c38505c1c3829bae75d783df229b",
+        "catalogSelectedCandidateMode": "text_to_image",
+        "comparison": {
+          "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+          "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+          "currentWorkflowId": "Flux2KleinPipeline:edit_image",
+          "reasonCode": "flux2_klein_base_9b_is_not_flux2_klein_4b",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "82401997a8d24d174fe4a65d8392eba9f87d8024",
+        "importsGraph": false,
+        "reviewedTaskMode": "edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Flux.2 [Klein] 9B: Image Edit"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_flux2_klein_distilled_9b_is_not_flux2_klein_4b",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -3565,33 +3634,66 @@
       },
       "contractId": "comfy-research:template:image_flux2_klein_image_edit_9b_distilled",
       "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "FLUX Image"
       ],
       "recommendedWorkflow": {
         "authoringSpecId": null,
-        "canonicalWorkflowId": "Flux2KleinPipeline:text_to_image",
+        "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
         "modelFamily": "FLUX Image",
         "modelType": "Flux2KleinPipeline",
         "publicTemplateIds": [
-          "flux2_klein_text_to_image"
+          "flux2_klein_edit"
         ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "Flux2KleinPipeline:text_to_image",
+          "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
           "modelFamily": "FLUX Image",
           "modelType": "Flux2KleinPipeline",
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "text_to_image",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "flux-2-klein-9b-fp8.safetensors",
+            "repository": "black-forest-labs/FLUX.2-klein-9b-fp8"
+          },
+          {
+            "artifact": "qwen_3_8b_fp8mixed.safetensors",
+            "repository": "Comfy-Org/flux2-klein-9B"
+          },
+          {
+            "artifact": "full_encoder_small_decoder.safetensors",
+            "repository": "black-forest-labs/FLUX.2-small-decoder"
+          }
+        ],
+        "assetPath": "templates/image_flux2_klein_image_edit_9b_distilled.json",
+        "assetSha256": "4e4285c1a5cba3df9cf022073425ec9585c418a8cb0b7570f936110105763599",
+        "catalogSelectedCandidateMode": "text_to_image",
+        "comparison": {
+          "currentRepository": "black-forest-labs/FLUX.2-klein-4B",
+          "currentRevision": "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+          "currentWorkflowId": "Flux2KleinPipeline:edit_image",
+          "reasonCode": "flux2_klein_distilled_9b_is_not_flux2_klein_4b",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "5d74c3e059b73215ed2a2b2fb54a691ab286645b",
+        "importsGraph": false,
+        "reviewedTaskMode": "edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Flux.2 [Klein] 9B Distilled: Image Edit"
     },
     {
@@ -6965,11 +7067,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_z_image_base_is_not_z_image_turbo",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -6992,7 +7095,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Z-Image"
       ],
@@ -7018,18 +7121,50 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "z_image_bf16.safetensors",
+            "repository": "Comfy-Org/z_image"
+          },
+          {
+            "artifact": "qwen_3_4b.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          },
+          {
+            "artifact": "ae.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          }
+        ],
+        "assetPath": "templates/image_z_image.json",
+        "assetSha256": "f7b3ceb43a3688e17cc5bce67d1beafe833a674b4e4a257c626a6243b3ebedc2",
+        "comparison": {
+          "currentRepository": "Tongyi-MAI/Z-Image-Turbo",
+          "currentRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "currentWorkflowId": "ZImageModularPipeline:text_to_image",
+          "reasonCode": "z_image_base_is_not_z_image_turbo",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "97cfc42585f59bbe43139e2fea4c5a6530240592",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Z-Image: Text to Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_z_image_base_int8_is_not_z_image_turbo",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -7052,7 +7187,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Z-Image"
       ],
@@ -7078,9 +7213,40 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "z_image_int8_convrot.safetensors",
+            "repository": "Comfy-Org/z_image"
+          },
+          {
+            "artifact": "qwen_3_4b.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          },
+          {
+            "artifact": "ae.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          }
+        ],
+        "assetPath": "templates/image_z_image_int8.json",
+        "assetSha256": "7e80aff2a7aecc61602bcf1f8a83afa30a5c714559547295f9917444d3ea222c",
+        "comparison": {
+          "currentRepository": "Tongyi-MAI/Z-Image-Turbo",
+          "currentRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "currentWorkflowId": "ZImageModularPipeline:text_to_image",
+          "reasonCode": "z_image_base_int8_is_not_z_image_turbo",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "2dd3f57d9d01e83b10caa16cddba37d356d50e23",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Z-Image Int8: Text to Image"
     },
     {
@@ -11758,7 +11924,7 @@
       "audio_to_video": 3,
       "character_replace": 2,
       "edit_audio": 1,
-      "edit_image": 20,
+      "edit_image": 22,
       "edit_video": 2,
       "first_last_frame_to_video": 7,
       "frame_interpolation": 1,
@@ -11772,15 +11938,15 @@
       "remove_background": 1,
       "text_generation": 4,
       "text_to_audio": 5,
-      "text_to_image": 38,
+      "text_to_image": 36,
       "text_to_video": 15,
       "video_to_video": 4,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 4,
+    "pinnedSourceReviewCount": 9,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_requires_admission": 3,
+      "different_model_generation_requires_admission": 8,
       "same_upstream_family_different_default_partition": 1
     },
     "recordsWithHiddenAuthoringSpecOption": 92,
@@ -11788,8 +11954,8 @@
     "recordsWithRecommendedWorkflow": 117,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 54,
-      "existing_task_boundary_model_admission_required": 63,
+      "existing_family_workflow_candidate": 49,
+      "existing_task_boundary_model_admission_required": 68,
       "new_task_boundary_required": 21
     },
     "sourceProposalCount": 138
