@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-One hundred one of those 138 candidates now also have exact pinned graph-source
+One hundred six of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7048,6 +7048,10 @@ existing task boundaries, while both model families still need new bounded
 video-edit tasks. HuMo is corrected from plain T2V to
 `image_audio_to_video`, and the SDXL-to-SVD composition remains a distinct
 two-stage text-to-video admission rather than Allegro support.
+Five HiDream reviews retain E1 edit and I1 dev/fast/full generation behind the
+existing image task boundaries while requiring their distinct transformer and
+shared four-encoder/VAE assembly. No HiDream variant inherits Chroma or
+AuraFlow support.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7175,7 +7179,8 @@ Wan Fun, and Anima inpaint/media decisions. `24efba9` adds all seven endpoint-
 conditioned Wan/LTX decisions and preserves the LTX audio output contract.
 `b433ff8` adds the five classic Hunyuan, HunyuanVideo 1.5, and Kandinsky 5
 video-generation decisions. `b091868` adds the six Capybara, Bernini, HuMo,
-and SDXL-to-SVD composite decisions.
+and SDXL-to-SVD composite decisions. `5f60154` adds the five HiDream E1/I1
+variant decisions.
 
 The following separate gates do remain external:
 
