@@ -13,6 +13,7 @@ from unittest.mock import patch
 from modiff.auto_resource import build_auto_resource_plan
 from modiff.diffusers_profiles import (
     DIFFUSERS_EXECUTION_PROFILES,
+    OPTIONAL_RUNTIME_DELIVERY_BASE,
     optional_runtime_profile_ids_for_execution,
     public_execution_profiles,
 )
@@ -277,6 +278,29 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES)
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
+                if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
+                    self.assertEqual(profile.id, "builtin-image-operations:direct")
+                    self.assertEqual(profile.optional_runtime_profiles, ())
+                    for mode in profile.modes:
+                        self.assertEqual(
+                            optional_runtime_profile_ids_for_execution(
+                                profile.model_type,
+                                mode,
+                                platform_name="linux",
+                                machine="x86_64",
+                            ),
+                            (),
+                        )
+                        self.assertEqual(
+                            optional_runtime_profile_ids_for_execution(
+                                profile.model_type,
+                                mode,
+                                platform_name="windows",
+                                machine="AMD64",
+                            ),
+                            (),
+                        )
+                    continue
                 self.assertEqual(profile.optional_runtime_profiles, expected)
                 for mode in profile.modes:
                     self.assertIn(

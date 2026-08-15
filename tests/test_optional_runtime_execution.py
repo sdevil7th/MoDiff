@@ -38,6 +38,7 @@ from modiff.server import WebServer
 
 EXECUTION_PROFILE_ID = "z-image:auto"
 OPTIONAL_PROFILE_ID = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+BUILTIN_IMAGE_PROFILE_ID = "builtin-image-operations:direct"
 
 
 class JsonRequest:
@@ -164,6 +165,33 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES)
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
+                if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
+                    self.assertEqual(profile.id, BUILTIN_IMAGE_PROFILE_ID)
+                    self.assertEqual(profile.optional_runtime_profiles, ())
+                    self.assertEqual(profile.optional_runtime_platform_deliveries, ())
+                    requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
+                    self.assertEqual(set(requirement), expected_keys)
+                    self.assertEqual(requirement["delivery"], "base")
+                    self.assertFalse(requirement["requiredNow"])
+                    self.assertEqual(requirement["profileIds"], [])
+                    self.assertEqual(requirement["state"], "base_satisfied")
+                    self.assertEqual(requirement["reason"], "no_optional_runtime_required")
+                    self.assertEqual(requirement["executionProfileIds"], [profile.id])
+                    for platform_name, machine in (
+                        ("linux", "x86_64"),
+                        ("windows", "x86_64"),
+                        ("linux", "arm64"),
+                        ("windows", "arm64"),
+                        ("macos", "x86_64"),
+                        ("macos", "arm64"),
+                    ):
+                        targeted = declarative_requirement(
+                            (profile,),
+                            platform_name=platform_name,
+                            machine=machine,
+                        )
+                        self.assertEqual(targeted, requirement)
+                    continue
                 self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
                 self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
                 requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
