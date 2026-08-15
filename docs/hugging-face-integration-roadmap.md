@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-One hundred thirteen of those 138 candidates now also have exact pinned graph-source
+One hundred twenty-nine of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7059,6 +7059,14 @@ VAE, and SigCLIP components; Anima combines its base or preview transformer
 with Qwen and Qwen-Image VAE components; Boogu uses separate FP8, INT8, or
 Turbo transformer partitions with HiDream VAE and Qwen3-VL encoding. None of
 those assemblies inherits support from the nearest Chroma or AuraFlow route.
+Sixteen further image reviews retain the ChronoEdit, FireRed, Ideogram 4,
+Krea 2, Lens, Mage-Flow, NewBie, PixelDiT, and Stable Diffusion 3.5
+generations behind existing generic task boundaries while requiring their
+exact model/component admissions. The pinned Mage-Flow Turbo T2I graph
+actually loads the base INT8 transformer, so the ledger records the connected
+artifact instead of inferring a Turbo checkpoint from its title. The SD3.5
+Blur graph is source-corrected from image editing to control-image generation;
+it does not inherit SD1.5 Canny support.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7188,7 +7196,8 @@ conditioned Wan/LTX decisions and preserves the LTX audio output contract.
 video-generation decisions. `b091868` adds the six Capybara, Bernini, HuMo,
 and SDXL-to-SVD composite decisions. `5f60154` adds the five HiDream E1/I1
 variant decisions. `b8a884a` adds the seven Capybara, Anima, and Boogu image
-model decisions.
+model decisions. `620dc9a` adds the sixteen ChronoEdit, FireRed, Ideogram 4,
+Krea 2, Lens, Mage-Flow, NewBie, PixelDiT, and SD3.5 decisions.
 
 The following separate gates do remain external:
 
