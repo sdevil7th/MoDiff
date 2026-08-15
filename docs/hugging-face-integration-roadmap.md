@@ -6950,7 +6950,7 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Twenty-three
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Twenty-nine
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
@@ -6976,6 +6976,11 @@ Three ACE-Step reviews separate the pinned v1 3.5B checkpoint from MoDiff's
 admitted v1.5 XL Turbo generation: song and instrumental generation can reuse
 the text-to-audio boundary after a model admission, while music-to-music still
 needs a new bounded audio-edit contract as well.
+Six Wan reviews correct the old 2.1 image-to-video record, identify three Fun
+Camera graphs as a new camera-motion task, and map Fun Control to the existing
+generic `control_video_to_video` boundary without equating it to AnimateDiff.
+Their 2.1/2.2 repackaged model, VAE, LoRA, and control assemblies remain separate
+admission work rather than inherited support.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7085,7 +7090,8 @@ then seals five Qwen source decisions, including exact workflow-generation and
 task-boundary corrections without claiming auxiliary or checkpoint admission.
 `5af255a` adds six LTX generation decisions without weakening model, component,
 license, execution, or asset gates. `c756949` adds the three exact ACE-Step v1
-dependency decisions and keeps audio editing explicitly unauthored.
+dependency decisions and keeps audio editing explicitly unauthored. `dfe18ec`
+adds the six Wan source decisions and three new camera-task requirements.
 
 The following separate gates do remain external:
 
