@@ -382,6 +382,162 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_family_workflow_candidate",
         "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
     },
+    "comfy-research:template:ltxv_image_to_video": {
+        "assetPath": "templates/ltxv_image_to_video.json",
+        "assetSha256": "96bf9ddbbf4591af29df2b707933c2ea25d9c3a406296ade0fbe1ae91d43b0d0",
+        "gitBlobOid": "261c4a1720cef505ace7f6f1150ed55c5f04f2d4",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-Video", "artifact": "ltx-video-2b-v0.9.5.safetensors"},
+            {"repository": "comfyanonymous/flux_text_encoders", "artifact": "t5xxl_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_video_0_9_5_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:ltxv_text_to_video": {
+        "assetPath": "templates/ltxv_text_to_video.json",
+        "assetSha256": "8bbd5219ec8351fc55da8e8c8cfadcd687e0e6b28edebc49473c9c26ec156392",
+        "gitBlobOid": "f82d2e921c9af597e51df82b525313cdcbd54e98",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-Video", "artifact": "ltx-video-2b-v0.9.safetensors"},
+            {"repository": "comfyanonymous/flux_text_encoders", "artifact": "t5xxl_fp16.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:text_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_video_0_9_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_ltx2_3_i2v": {
+        "assetPath": "templates/video_ltx2_3_i2v.json",
+        "assetSha256": "91dd8e44926fd37f6d9307789484370fa333582b14e53ed771d63ed805379ee4",
+        "gitBlobOid": "549f9861e62fa21d931640bad4156a1cbce08a9c",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2.3-fp8", "artifact": "ltx-2.3-22b-dev-fp8.safetensors"},
+            {
+                "repository": "Comfy-Org/ltx-2.3",
+                "artifact": "ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2.3",
+                "artifact": "ltx-2.3-spatial-upscaler-x2-1.1.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/ltx-2",
+                "artifact": "gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_3_22b_assembly_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_ltx2_3_t2v": {
+        "assetPath": "templates/video_ltx2_3_t2v.json",
+        "assetSha256": "75b10f3ee48c1fe00c7fb21b24c0c247b133e5ee34676144de4b652ac7dcbe7f",
+        "gitBlobOid": "7e3895f18a7dc7ff5005f995469db9ccc2779077",
+        "artifactDependencies": [
+            {"repository": "Lightricks/LTX-2.3-fp8", "artifact": "ltx-2.3-22b-dev-fp8.safetensors"},
+            {
+                "repository": "Comfy-Org/ltx-2.3",
+                "artifact": "ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2.3",
+                "artifact": "ltx-2.3-spatial-upscaler-x2-1.1.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/ltx-2",
+                "artifact": "gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:text_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_3_22b_assembly_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_ltx2_5_i2v": {
+        "assetPath": "templates/video_ltx2_5_i2v.json",
+        "assetSha256": "bcd3239835e8e5bf287a664954c253c67cd31147a4a4193ef5975525e246a7a0",
+        "gitBlobOid": "355653e7cb940543c3ad91b08ae32cf05c0d33ab",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/gemma-4", "artifact": "gemma4_e2b_it_bf16.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+            },
+            {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-video-vae-bf16.safetensors"},
+            {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-audio-vae-bf16.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_5_22b_assembly_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_ltx2_5_t2v": {
+        "assetPath": "templates/video_ltx2_5_t2v.json",
+        "assetSha256": "b8ab11a3cb349bf6dccd9ad09307213e0088d833d1867270d23e1f794bab6a9d",
+        "gitBlobOid": "60683c9f3cd9c708581e1fb2e2030d987d540634",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/gemma-4", "artifact": "gemma4_e2b_it_bf16.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+            },
+            {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-video-vae-bf16.safetensors"},
+            {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-audio-vae-bf16.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+            },
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:text_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "ltx_2_5_22b_assembly_is_not_ltx_2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:image_z_image": {
         "assetPath": "templates/image_z_image.json",
         "assetSha256": "f7b3ceb43a3688e17cc5bce67d1beafe833a674b4e4a257c626a6243b3ebedc2",

@@ -55,8 +55,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 47,
-                "existing_task_boundary_model_admission_required": 70,
+                "existing_family_workflow_candidate": 41,
+                "existing_task_boundary_model_admission_required": 76,
                 "new_task_boundary_required": 21,
             },
         )
@@ -65,11 +65,11 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 117)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 92)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 14)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 20)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_requires_admission": 10,
+                "different_model_generation_requires_admission": 16,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 1,
                 "same_upstream_generation_requires_auxiliary_admission": 2,
@@ -204,7 +204,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_fourteen_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_twenty_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -226,7 +226,13 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_qwen_image_union_control_lora",
                 "image_z_image",
                 "image_z_image_int8",
+                "ltxv_image_to_video",
+                "ltxv_text_to_video",
                 "template_qwen_image_edit_2511_systms_action",
+                "video_ltx2_3_i2v",
+                "video_ltx2_3_t2v",
+                "video_ltx2_5_i2v",
+                "video_ltx2_5_t2v",
             },
         )
         for catalog_id, row in reviewed.items():
@@ -271,6 +277,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_qwen_image",
             "image_z_image",
             "image_z_image_int8",
+            "ltxv_image_to_video",
+            "ltxv_text_to_video",
+            "video_ltx2_3_i2v",
+            "video_ltx2_3_t2v",
+            "video_ltx2_5_i2v",
+            "video_ltx2_5_t2v",
         ):
             self.assertEqual(
                 reviewed[catalog_id]["resolutionState"],
@@ -306,6 +318,19 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 row["sourceReview"]["reviewedWorkflowId"],
                 "QwenImageEditPlusModularPipeline:edit_image",
             )
+
+        for catalog_id in (
+            "ltxv_image_to_video",
+            "ltxv_text_to_video",
+            "video_ltx2_3_i2v",
+            "video_ltx2_3_t2v",
+            "video_ltx2_5_i2v",
+            "video_ltx2_5_t2v",
+        ):
+            comparison = reviewed[catalog_id]["sourceReview"]["comparison"]
+            self.assertEqual(comparison["currentRepository"], "Lightricks/LTX-2")
+            self.assertEqual(comparison["currentRevision"], "47da56e2ad66ce4125a9922b4a8826bf407f9d0a")
+            self.assertEqual(comparison["state"], "different_model_generation_requires_admission")
             self.assertEqual(
                 row["recommendedWorkflow"]["canonicalWorkflowId"],
                 "QwenImageEditPlusModularPipeline:edit_image",
