@@ -65,12 +65,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 104)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 74)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 106)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 113)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
                 "different_model_generation_and_new_task_required": 26,
-                "different_model_generation_requires_admission": 61,
+                "different_model_generation_requires_admission": 68,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 8,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -215,7 +215,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_one_hundred_six_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_one_hundred_thirteen_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -231,6 +231,13 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "audio_stable_audio_3_medium",
                 "audio_stable_audio_3_medium_base",
                 "image_anima_lllite_image_inpainting",
+                "image_anima_base_v1",
+                "image_anima_preview",
+                "Image_capybara_v0_1_image_edit",
+                "Image_capybara_v0_1_text_to_image",
+                "image_boogu_image_0_1_edit",
+                "image_boogu_image_0_1_edit_int8",
+                "image_boogu_image_0_1_turbo_t2i",
                 "image_chroma1_radiance_text_to_image",
                 "image_chroma_text_to_image",
                 "image_flux2_klein_image_edit_9b_base",
@@ -372,6 +379,13 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "audio_stable_audio_3_medium",
             "audio_stable_audio_3_medium_base",
             "image_anima_lllite_image_inpainting",
+            "image_anima_base_v1",
+            "image_anima_preview",
+            "Image_capybara_v0_1_image_edit",
+            "Image_capybara_v0_1_text_to_image",
+            "image_boogu_image_0_1_edit",
+            "image_boogu_image_0_1_edit_int8",
+            "image_boogu_image_0_1_turbo_t2i",
             "image_chroma1_radiance_text_to_image",
             "image_flux2_klein_image_edit_9b_base",
             "image_flux2_klein_image_edit_9b_distilled",
