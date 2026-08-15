@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Fifty of those 138 candidates now also have exact pinned graph-source
+Fifty-five of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7000,6 +7000,13 @@ Five remaining LTX reviews separate a 2.3 reference-LoRA assembly, identify the
 2.3 IA2V graph as a new `image_audio_to_video` task, and retain three LTX-2
 camera/squish/distillation concepts as same-generation candidates gated on
 their LoRAs and latent upscalers.
+Five motion and angle reviews retain both Qwen multiple-angle concepts as
+same-generation candidates gated on their exact LoRA and Lightning assemblies,
+separate causal-forcing framewise I2V from the admitted Wan generation, and
+map Wan 2.2 Fun Control to the generic `control_video_to_video` boundary without
+equating its model. WanMove is source-proven to require a new bounded
+`motion_track_to_video` task and its distinct motion/step-distillation model
+assembly.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7115,7 +7122,8 @@ adds the six Wan source decisions and three new camera-task requirements.
 workflow-family corrections. `dd5591e` adds six exact image-generation and
 depth-task decisions. `ac7c320` adds the remaining FLUX.2 family decisions and
 the two SDXL refiner/unCLIP task distinctions. `0a48984` adds the five remaining
-LTX family and image-audio conditioning decisions.
+LTX family and image-audio conditioning decisions. `a81bd03` adds the two Qwen
+multiple-angle, causal-forcing, Wan Fun Control, and WanMove decisions.
 
 The following separate gates do remain external:
 
