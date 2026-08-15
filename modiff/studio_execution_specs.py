@@ -12178,7 +12178,7 @@ for _builtin_audio_mode, _builtin_audio_spec_name in (
         else _BUILTIN_AUDIO_OPERATION_BINDINGS,
     }
 
-_BUILTIN_DATA_OPERATION_MODES = ("text_select", "data_conversion")
+_BUILTIN_DATA_OPERATION_MODES = ("text_select", "data_conversion", "graph_utility")
 _BUILTIN_DATA_OPERATION_PIPELINE_CLASS = "BuiltinDataOperationV1"
 _BUILTIN_DATA_OPERATION_REPO = "builtin://modiff/data-operations/v1"
 _BUILTIN_DATA_OPERATION_PROFILE = {
@@ -12271,6 +12271,7 @@ _BUILTIN_DATA_OPERATION_BINDINGS = (
 for _builtin_data_mode, _builtin_data_spec_name in (
     ("text_select", "text-select"),
     ("data_conversion", "data-conversion"),
+    ("graph_utility", "value-switch"),
 ):
     STUDIO_EXECUTION_SPEC_DEFINITIONS[f"builtin-data-operations:{_builtin_data_spec_name}:v1"] = {
         "modelType": "BuiltinDataOperation",

@@ -14,7 +14,7 @@ class FakeRequest:
 
 
 class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
-    MODES = ("text_select", "data_conversion")
+    MODES = ("text_select", "data_conversion", "graph_utility")
 
     def test_specs_use_one_model_neutral_base_runtime_profile(self):
         specs = validate_studio_execution_specs(module_registry.MODULE_MAP)
@@ -22,6 +22,7 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
         expected_hashes = {
             "text_select": "studio-spec-v1-d4bc64df",
             "data_conversion": "studio-spec-v1-ccd283e9",
+            "graph_utility": "studio-spec-v1-53bf8e76",
         }
         for mode in self.MODES:
             with self.subTest(mode=mode):
@@ -56,6 +57,7 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
         expected_hashes = {
             "text_select": "task-template-v1-1eefb6b7",
             "data_conversion": "task-template-v1-72539bcc",
+            "graph_utility": "task-template-v1-ace6ea4b",
         }
         for mode in self.MODES:
             with self.subTest(mode=mode):

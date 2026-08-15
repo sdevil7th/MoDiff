@@ -175,6 +175,7 @@ _MODE_PROMPTS = {
     "outpaint": "Extend the supplied image beyond its original frame with a seamless continuation of perspective, lighting, architecture or landscape, texture, and depth; do not duplicate the central subject.",
     "reference_to_video": "Create a coherent short cinematic shot guided by the supplied reference, preserving its subject identity, visual language, palette, and spatial relationships while adding natural motion.",
     "text_generation": "Write a concise production brief for a 20-second documentary shot about a community repairing a storm-damaged footbridge. Include setting, subject action, camera plan, sound cues, and a clear ending in five short bullet points.",
+    "graph_utility": "Primary branch: the repaired footbridge is ready for the morning crossing.",
     "text_select": "Wide establishing shot at dawn\nClose detail of hands fitting the replacement plank\nMedium shot of neighbors testing the repaired footbridge\nQuiet final view as the river passes beneath the completed span",
     "text_to_3d": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview.",
     "video_to_video": "Restyle the supplied video as a restrained cinematic documentary while preserving timing, camera motion, subject identity, scene layout, and temporal continuity.",

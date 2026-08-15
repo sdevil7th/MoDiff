@@ -118,6 +118,12 @@ class ProcessText(NodeBase):
     resizable = True
     params = {
         "source": {"label": "Source", "type": "string", "display": "textarea", "default": ""},
+        "alternate_source": {
+            "label": "Alternate Source",
+            "type": "string",
+            "display": "textarea",
+            "default": "No alternate branch was selected.",
+        },
         "pipeline_class": {
             "label": "Contract",
             "type": "string",
@@ -127,7 +133,11 @@ class ProcessText(NodeBase):
         "operation": {
             "label": "Operation",
             "type": "string",
-            "options": {"text_select": "Select Line", "data_conversion": "Convert Data"},
+            "options": {
+                "text_select": "Select Line",
+                "data_conversion": "Convert Data",
+                "graph_utility": "Select Text Branch",
+            },
             "default": "text_select",
         },
         "index": {"label": "Line Index", "type": "int", "default": 0, "min": -100_000, "max": 100_000},
@@ -151,6 +161,7 @@ class ProcessText(NodeBase):
             },
             "default": "json",
         },
+        "condition": {"label": "Select Source", "type": "bool", "default": True},
         "output": {"label": "Output", "display": "output", "type": "any"},
         "selected_index": {"label": "Selected Index", "display": "output", "type": "int"},
         "item_count": {"label": "Item Count", "display": "output", "type": "int"},
@@ -166,6 +177,16 @@ class ProcessText(NodeBase):
                 "output": _convert_text(source, kwargs.get("target_type", "json")),
                 "selected_index": -1,
                 "item_count": 1,
+            }
+        if operation == "graph_utility":
+            alternate_source = _bounded_text(kwargs.get("alternate_source", ""))
+            condition = kwargs.get("condition", True)
+            if not isinstance(condition, bool):
+                raise ValueError("Text branch selection requires a boolean condition.")
+            return {
+                "output": source if condition else alternate_source,
+                "selected_index": 0 if condition else 1,
+                "item_count": 2,
             }
         if operation != "text_select":
             raise ValueError("Unsupported built-in data operation.")

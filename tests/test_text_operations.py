@@ -21,6 +21,8 @@ class BuiltinDataOperationTests(unittest.TestCase):
             "ignore_empty_lines": False,
             "strip_line": True,
             "target_type": "json",
+            "alternate_source": "alternate",
+            "condition": True,
         }
         values.update(kwargs)
         return self.node.execute(**values)
@@ -68,6 +70,20 @@ class BuiltinDataOperationTests(unittest.TestCase):
             self.execute(source="x" * (MAX_DATA_OPERATION_TEXT_BYTES + 1))
         with self.assertRaisesRegex(ValueError, "Unsupported built-in data-operation contract"):
             self.execute(pipeline_class="MutableContract")
+
+    def test_selects_one_of_two_bounded_text_values_without_copying_or_coercion(self):
+        self.assertEqual(
+            self.execute(operation="graph_utility", source="primary", alternate_source="fallback", condition=True),
+            {"output": "primary", "selected_index": 0, "item_count": 2},
+        )
+        self.assertEqual(
+            self.execute(operation="graph_utility", source="primary", alternate_source="fallback", condition=False),
+            {"output": "fallback", "selected_index": 1, "item_count": 2},
+        )
+        with self.assertRaisesRegex(ValueError, "boolean condition"):
+            self.execute(operation="graph_utility", condition=1)
+        with self.assertRaisesRegex(ValueError, "1 MiB"):
+            self.execute(operation="graph_utility", alternate_source="x" * (MAX_DATA_OPERATION_TEXT_BYTES + 1))
 
 
 if __name__ == "__main__":
