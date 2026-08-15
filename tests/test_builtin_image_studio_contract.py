@@ -80,6 +80,11 @@ class BuiltinImageStudioContractTests(unittest.IsolatedAsyncioTestCase):
             "minimumCounts": {"referenceImages": 2},
             "note": "Requires two same-size local source images and one same-size mask; no model or network access is used.",
         }
+        expected_input_contracts["image_stitch"] = {
+            "requiredImages": ["referenceImages"],
+            "minimumCounts": {"referenceImages": 2},
+            "note": "Requires two to 64 local source images; no model or network access is used.",
+        }
         self.assertEqual(capability["inputContracts"], expected_input_contracts)
         self.assertFalse(capability["autoEligible"])
         self.assertTrue(capability["templateEligible"])
@@ -97,6 +102,10 @@ class BuiltinImageStudioContractTests(unittest.IsolatedAsyncioTestCase):
                     expected_media = [
                         {"kind": "image", "field": "referenceImages", "minimumCount": 2},
                         {"kind": "image", "field": "maskImage", "minimumCount": 1},
+                    ]
+                elif mode == "image_stitch":
+                    expected_media = [
+                        {"kind": "image", "field": "referenceImages", "minimumCount": 2},
                     ]
                 self.assertEqual(contract["requiredMedia"], expected_media)
                 self.assertEqual(contract["loaderRole"], "imageOperation")

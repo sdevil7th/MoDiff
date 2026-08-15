@@ -28,11 +28,13 @@ IMAGE_CHANNELS = ["red", "green", "blue", "alpha", "luminance"]
 MASK_CHANNELS = ["luminance", "alpha", "red", "green", "blue"]
 RESIZE_FIT_MODES = ["stretch", "contain", "cover"]
 RESIZE_RESAMPLING = ["nearest", "bilinear", "bicubic", "lanczos"]
+STITCH_BACKGROUNDS = ["white", "black", "transparent"]
 IMAGE_OPERATION_MODES = [
     "image_adjustment",
     "image_filter",
     "image_crop",
     "image_upscale",
+    "image_stitch",
     "image_tile",
     "image_channels",
     "mask_composite",
@@ -479,6 +481,86 @@ class TileImage(NodeBase):
         return {"tiles": tiles, "count": len(tiles), "layout": layout}
 
 
+class StitchImages(NodeBase):
+    """Join a bounded image collection into a deterministic row-major grid."""
+
+    label = "Stitch Images"
+    category = "Image Operations"
+    params = {
+        "image": {"label": "Images", "display": "input", "type": "image"},
+        "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1, "max": 8},
+        "spacing": {"label": "Spacing", "type": "int", "default": 0, "min": 0, "max": 1024},
+        "background": {
+            "label": "Background",
+            "type": "string",
+            "options": STITCH_BACKGROUNDS,
+            "default": "white",
+        },
+        "match_size": {"label": "Match Cell Size", "type": "bool", "default": True},
+        "output": {"label": "Stitched Image", "display": "output", "type": "image"},
+        "rows": {"label": "Rows", "display": "output", "type": "int"},
+        "count": {"label": "Image Count", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        images, singular = _images(kwargs.get("image"), name="images")
+        if singular or len(images) < 2:
+            raise ValueError("Stitch Images requires between 2 and 64 source images.")
+        try:
+            columns = int(kwargs.get("columns", 2))
+            spacing = int(kwargs.get("spacing", 0))
+        except (TypeError, ValueError) as error:
+            raise ValueError("Stitch columns and spacing must be integers.") from error
+        if not 1 <= columns <= 8:
+            raise ValueError("Stitch columns must be between 1 and 8.")
+        if not 0 <= spacing <= 1024:
+            raise ValueError("Stitch spacing must be between 0 and 1024 pixels.")
+        rows = math.ceil(len(images) / columns)
+        if rows > 8:
+            raise ValueError("Stitch layout must use at most 8 rows.")
+
+        background = str(kwargs.get("background") or "white")
+        if background not in STITCH_BACKGROUNDS:
+            raise ValueError(f"Unsupported stitch background {background!r}.")
+        match_size = bool(kwargs.get("match_size", True))
+        if match_size:
+            cell_width = max(image.width for image in images)
+            cell_height = max(image.height for image in images)
+        else:
+            sizes = {image.size for image in images}
+            if len(sizes) != 1:
+                raise ValueError("Stitch inputs must share dimensions when match_size is disabled.")
+            cell_width, cell_height = next(iter(sizes))
+
+        output_width = columns * cell_width + (columns - 1) * spacing
+        output_height = rows * cell_height + (rows - 1) * spacing
+        output_pixels = output_width * output_height
+        if output_width > 8192 or output_height > 8192 or output_pixels > MAX_TOTAL_PIXELS:
+            raise ValueError("Stitch output exceeds the 8192-side or total-pixel execution limit.")
+
+        preserve_alpha = background == "transparent" or any("A" in image.getbands() for image in images)
+        mode = "RGBA" if preserve_alpha else "RGB"
+        fill = {
+            "white": (255, 255, 255, 255) if preserve_alpha else (255, 255, 255),
+            "black": (0, 0, 0, 255) if preserve_alpha else (0, 0, 0),
+            "transparent": (0, 0, 0, 0),
+        }[background]
+        output = Image.new(mode, (output_width, output_height), fill)
+        for index, source in enumerate(images):
+            image = source.convert(mode)
+            if match_size and image.size != (cell_width, cell_height):
+                image = ImageOps.contain(image, (cell_width, cell_height), method=Image.Resampling.LANCZOS)
+            column = index % columns
+            row = index // columns
+            x = column * (cell_width + spacing) + (cell_width - image.width) // 2
+            y = row * (cell_height + spacing) + (cell_height - image.height) // 2
+            if mode == "RGBA":
+                output.alpha_composite(image, (x, y))
+            else:
+                output.paste(image, (x, y))
+        return {"output": output, "rows": rows, "count": len(images)}
+
+
 class ImageChannels(NodeBase):
     """Extract one channel as a grayscale image while exposing all channels."""
 
@@ -550,7 +632,10 @@ class MaskComposite(NodeBase):
         mask_image = masks[0]
         if len({background_image.size, foreground_image.size, mask_image.size}) != 1:
             raise ValueError("Mask Composite background, foreground, and mask dimensions must match.")
-        if sum(image.width * image.height for image in (background_image, foreground_image, mask_image)) > MAX_TOTAL_PIXELS:
+        if (
+            sum(image.width * image.height for image in (background_image, foreground_image, mask_image))
+            > MAX_TOTAL_PIXELS
+        ):
             raise ValueError(f"Mask Composite inputs exceed the {MAX_TOTAL_PIXELS}-pixel execution limit.")
 
         channel = str(kwargs.get("mask_channel") or "luminance")
@@ -628,6 +713,15 @@ class ProcessImage(NodeBase):
             "options": RESIZE_RESAMPLING,
             "default": "lanczos",
         },
+        "stitch_columns": {"label": "Stitch Columns", "type": "int", "default": 2, "min": 1, "max": 8},
+        "stitch_spacing": {"label": "Stitch Spacing", "type": "int", "default": 0, "min": 0, "max": 1024},
+        "stitch_background": {
+            "label": "Stitch Background",
+            "type": "string",
+            "options": STITCH_BACKGROUNDS,
+            "default": "white",
+        },
+        "stitch_match_size": {"label": "Match Stitch Cells", "type": "bool", "default": True},
         "rows": {"label": "Tile Rows", "type": "int", "default": 2, "min": 1, "max": 8},
         "columns": {"label": "Tile Columns", "type": "int", "default": 2, "min": 1, "max": 8},
         "channel": {
@@ -691,6 +785,14 @@ class ProcessImage(NodeBase):
                 height=kwargs.get("resize_height", 1024),
                 fit_mode=kwargs.get("resize_fit_mode", "contain"),
                 resampling=kwargs.get("resize_resampling", "lanczos"),
+            )
+        if operation == "image_stitch":
+            return StitchImages().execute(
+                image=image,
+                columns=kwargs.get("stitch_columns", 2),
+                spacing=kwargs.get("stitch_spacing", 0),
+                background=kwargs.get("stitch_background", "white"),
+                match_size=kwargs.get("stitch_match_size", True),
             )
         if operation == "image_tile":
             result = TileImage().execute(

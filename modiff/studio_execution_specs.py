@@ -11906,6 +11906,7 @@ _BUILTIN_IMAGE_OPERATION_MODES = (
     "image_filter",
     "image_crop",
     "image_upscale",
+    "image_stitch",
     "image_tile",
     "image_channels",
     "mask_composite",
@@ -11990,6 +11991,12 @@ _BUILTIN_IMAGE_OPERATION_CAPABILITY = {
                 "note": "Requires two same-size local source images and one same-size mask; no model or network access is used.",
             }
             if mode == "mask_composite"
+            else {
+                "requiredImages": ["referenceImages"],
+                "minimumCounts": {"referenceImages": 2},
+                "note": "Requires two to 64 local source images; no model or network access is used.",
+            }
+            if mode == "image_stitch"
             else {
                 "requiredImages": ["referenceImages"],
                 "note": "Requires one local source image; no model or network access is used.",

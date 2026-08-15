@@ -13,6 +13,7 @@ from modules.ImageOperations.main import (
     MaskComposite,
     ProcessImage,
     ResizeImage,
+    StitchImages,
     TileImage,
 )
 
@@ -112,6 +113,48 @@ class ImageOperationTests(unittest.TestCase):
             TileImage().execute(image=[source, source], rows=2, columns=2)
         with self.assertRaisesRegex(ValueError, "cannot exceed"):
             TileImage().execute(image=Image.new("RGB", (2, 2)), rows=3, columns=1)
+
+    def test_stitch_is_bounded_row_major_and_preserves_alpha(self):
+        images = [
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)),
+            Image.new("RGBA", (1, 2), (0, 255, 0, 128)),
+            Image.new("RGBA", (2, 1), (0, 0, 255, 255)),
+            Image.new("RGBA", (2, 2), (255, 255, 0, 255)),
+        ]
+        result = StitchImages().execute(
+            image=images,
+            columns=2,
+            spacing=1,
+            background="transparent",
+            match_size=True,
+        )
+
+        output = result["output"]
+        self.assertEqual((result["rows"], result["count"]), (2, 4))
+        self.assertEqual(output.size, (5, 5))
+        self.assertEqual(output.mode, "RGBA")
+        self.assertEqual(output.getpixel((0, 0)), (255, 0, 0, 255))
+        self.assertEqual(output.getpixel((2, 0)), (0, 0, 0, 0))
+        self.assertEqual(output.getpixel((3, 0)), (0, 255, 0, 128))
+        self.assertEqual(
+            output.tobytes(),
+            StitchImages()
+            .execute(
+                image=images,
+                columns=2,
+                spacing=1,
+                background="transparent",
+                match_size=True,
+            )["output"]
+            .tobytes(),
+        )
+
+        with self.assertRaisesRegex(ValueError, "between 2 and 64"):
+            StitchImages().execute(image=images[0])
+        with self.assertRaisesRegex(ValueError, "share dimensions"):
+            StitchImages().execute(image=images, match_size=False)
+        with self.assertRaisesRegex(ValueError, "background"):
+            StitchImages().execute(image=images, background="external")
 
     def test_resize_supports_bounded_traditional_interpolation_and_fit_modes(self):
         source = Image.new("RGBA", (8, 4), (20, 40, 60, 71))
@@ -242,6 +285,11 @@ class ImageOperationTests(unittest.TestCase):
                 resize_fit_mode="contain",
                 resize_resampling="bilinear",
             ),
+            "image_stitch": node.execute(
+                image=[source, source, source, source],
+                operation="image_stitch",
+                stitch_columns=2,
+            ),
             "image_tile": node.execute(
                 image=source,
                 operation="image_tile",
@@ -262,6 +310,7 @@ class ImageOperationTests(unittest.TestCase):
         self.assertEqual(set(results), set(ProcessImage.params["operation"]["options"]))
         self.assertEqual(results["image_crop"]["output"].size, (4, 3))
         self.assertEqual(results["image_upscale"]["output"].size, (4, 3))
+        self.assertEqual(results["image_stitch"]["output"].size, (16, 12))
         self.assertEqual(len(results["image_tile"]["output"]), 4)
         self.assertEqual(results["image_channels"]["output"].mode, "L")
         self.assertEqual(results["mask_composite"]["output"].getpixel((0, 0)), (200, 40, 20, 255))
@@ -279,7 +328,7 @@ class ImageOperationTests(unittest.TestCase):
                 pipeline_class=IMAGE_OPERATION_PIPELINE_CLASS,
             )
 
-    def test_registry_exposes_only_the_eight_generic_operations(self):
+    def test_registry_exposes_only_the_nine_generic_operations(self):
         from modules import MODULE_MAP
 
         self.assertEqual(
@@ -289,6 +338,7 @@ class ImageOperationTests(unittest.TestCase):
                 "FilterImage",
                 "CropImage",
                 "ResizeImage",
+                "StitchImages",
                 "TileImage",
                 "ImageChannels",
                 "MaskComposite",

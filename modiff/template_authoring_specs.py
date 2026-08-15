@@ -41,6 +41,7 @@ _NO_PROMPT_MODES = {
     "image_crop",
     "image_filter",
     "image_upscale",
+    "image_stitch",
     "image_tile",
     "mask_composite",
     "frame_interpolation",

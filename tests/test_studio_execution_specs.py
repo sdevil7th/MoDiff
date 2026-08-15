@@ -367,6 +367,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("BuiltinImageOperation", "image_filter"),
                 ("BuiltinImageOperation", "image_crop"),
                 ("BuiltinImageOperation", "image_upscale"),
+                ("BuiltinImageOperation", "image_stitch"),
                 ("BuiltinImageOperation", "image_tile"),
                 ("BuiltinImageOperation", "image_channels"),
                 ("BuiltinImageOperation", "mask_composite"),
