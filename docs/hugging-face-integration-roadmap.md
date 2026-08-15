@@ -6950,7 +6950,7 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Thirty-four
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Forty
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
@@ -6986,6 +6986,11 @@ AuraFlow fallback and map them to the admitted Qwen generation while retaining
 partition/LoRA gates. The original-Qwen Canny patch and InstantX inpainting
 assembly reuse existing control/inpaint boundaries without inheriting 2512
 support, and the 2509 Relight concept remains an unadmitted auxiliary variant.
+Six additional image reviews separate ERNIE Image from ERNIE Turbo, Kandinsky 5
+from Kandinsky 3, and OmniGen 2 from OmniGen v1. They also correct Lotus from a
+text-to-image match to the generic depth-estimation boundary and map the
+NetaYume fine-tune to Lumina 2 rather than OmniGen, without admitting either
+checkpoint.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7098,7 +7103,8 @@ license, execution, or asset gates. `c756949` adds the three exact ACE-Step v1
 dependency decisions and keeps audio editing explicitly unauthored. `dfe18ec`
 adds the six Wan source decisions and three new camera-task requirements.
 `9230b11` adds five Qwen generation/control decisions and two source-proven
-workflow-family corrections.
+workflow-family corrections. `dd5591e` adds six exact image-generation and
+depth-task decisions.
 
 The following separate gates do remain external:
 
