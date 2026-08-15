@@ -379,6 +379,7 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
         result = GenerateText("generate-text-test").execute(
             model=loaded["model"],
             prompt="  Tell me something  ",
+            use_chat_template=False,
             max_new_tokens=4,
             min_new_tokens=1,
             do_sample=False,
@@ -399,6 +400,42 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
         self.assertEqual(result["result"]["generatedTokens"], 1)
         self.assertEqual(result["result"]["finishReason"], "stop")
         self.assertTrue(_receipt_digest_is_valid(result["result"]["modelReceipt"]))
+
+    def test_text_generation_applies_a_bounded_chat_template(self):
+        loaded, _runtime, tokenizer, _model = _load_text_handle()
+        tokenizer.apply_chat_template.return_value = "<chat> Tell me something"
+
+        result = GenerateText("generate-chat-text-test").execute(
+            model=loaded["model"],
+            prompt="  Tell me something  ",
+            use_chat_template=True,
+            max_new_tokens=4,
+        )
+
+        self.assertEqual(
+            tokenizer.apply_chat_template.call_args.args[0],
+            [{"role": "user", "content": "Tell me something"}],
+        )
+        self.assertEqual(
+            tokenizer.apply_chat_template.call_args.kwargs,
+            {"tokenize": False, "add_generation_prompt": True},
+        )
+        tokenizer.assert_called_once_with("<chat> Tell me something", return_tensors="pt", truncation=False)
+        self.assertEqual(result["text"], "answer")
+
+    def test_text_generation_rejects_missing_or_excessive_chat_templates(self):
+        loaded, _runtime, tokenizer, _model = _load_text_handle()
+        tokenizer.apply_chat_template = None
+        with self.assertRaisesRegex(ValueError, "no chat template"):
+            GenerateText("missing-text-chat-template").execute(model=loaded["model"], prompt="hello")
+
+        loaded, _runtime, tokenizer, _model = _load_text_handle()
+        tokenizer.apply_chat_template.return_value = "rendered prompt"
+        with (
+            patch("modules.HuggingFaceTransformers.main.MAX_RENDERED_PROMPT_CHARACTERS", 5),
+            self.assertRaisesRegex(ValueError, "bounded text size"),
+        ):
+            GenerateText("large-text-chat-template").execute(model=loaded["model"], prompt="hello")
 
     def test_sampling_controls_are_exact_and_invalid_controls_fail(self):
         controls = _generation_controls(
@@ -431,29 +468,34 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
         tampered["receipt"] = copy.deepcopy(tampered["receipt"])
         tampered["receipt"]["security"]["trustRemoteCode"] = True
         with self.assertRaisesRegex(ValueError, "has been modified"):
-            GenerateText("tampered-receipt").execute(model=tampered, prompt="hello")
+            GenerateText("tampered-receipt").execute(model=tampered, prompt="hello", use_chat_template=False)
         extra = {**loaded["model"], "unexpected": True}
         with self.assertRaisesRegex(ValueError, "intact"):
-            GenerateText("extra-handle-field").execute(model=extra, prompt="hello")
+            GenerateText("extra-handle-field").execute(model=extra, prompt="hello", use_chat_template=False)
         with self.assertRaisesRegex(ValueError, "wrong.*handle type"):
             GenerateImageVideoText("wrong-handle").execute(
                 model=loaded["model"], prompt="hello", images=np.zeros((2, 2, 3), dtype=np.uint8)
             )
         with self.assertRaisesRegex(ValueError, "must not be empty"):
-            GenerateText("empty-prompt").execute(model=loaded["model"], prompt="   ")
+            GenerateText("empty-prompt").execute(model=loaded["model"], prompt="   ", use_chat_template=False)
         with self.assertRaisesRegex(ValueError, "bounded text size"):
-            GenerateText("large-prompt").execute(model=loaded["model"], prompt="x" * 65_537)
+            GenerateText("large-prompt").execute(model=loaded["model"], prompt="x" * 65_537, use_chat_template=False)
 
         oversized, _runtime, _tokenizer, _model = _load_text_handle(input_ids=torch.ones((1, 4), dtype=torch.long))
         with patch("modules.HuggingFaceTransformers.main.MAX_INPUT_TOKENS", 3):
             with self.assertRaisesRegex(RuntimeError, "input token limit"):
-                GenerateText("large-input").execute(model=oversized["model"], prompt="hello")
+                GenerateText("large-input").execute(model=oversized["model"], prompt="hello", use_chat_template=False)
         wrong_prefix, _runtime, _tokenizer, _model = _load_text_handle(output_ids=torch.tensor([[9, 9, 3]]))
         with self.assertRaisesRegex(RuntimeError, "preserve the input token prefix"):
-            GenerateText("wrong-prefix").execute(model=wrong_prefix["model"], prompt="hello")
+            GenerateText("wrong-prefix").execute(model=wrong_prefix["model"], prompt="hello", use_chat_template=False)
         too_many, _runtime, _tokenizer, _model = _load_text_handle(output_ids=torch.tensor([[1, 2, 3, 4]]))
         with self.assertRaisesRegex(RuntimeError, "exceeded max_new_tokens"):
-            GenerateText("too-many-output-tokens").execute(model=too_many["model"], prompt="hello", max_new_tokens=1)
+            GenerateText("too-many-output-tokens").execute(
+                model=too_many["model"],
+                prompt="hello",
+                use_chat_template=False,
+                max_new_tokens=1,
+            )
 
     def test_batch_validation_rejects_malformed_and_excessive_preprocessor_outputs(self):
         for batch, message in (

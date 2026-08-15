@@ -889,6 +889,27 @@ def _multimodal_prompt(
     )
 
 
+def _text_prompt(tokenizer: Any, *, prompt: str, use_chat_template: bool) -> str:
+    if not use_chat_template:
+        return prompt
+    template = getattr(tokenizer, "apply_chat_template", None)
+    if not callable(template):
+        raise ValueError(
+            "This tokenizer has no chat template; disable use_chat_template for its native prompt format."
+        )
+    rendered = template(
+        [{"role": "user", "content": prompt}],
+        tokenize=False,
+        add_generation_prompt=True,
+    )
+    return _bounded_string(
+        rendered,
+        field="rendered prompt",
+        maximum_characters=MAX_RENDERED_PROMPT_CHARACTERS,
+        maximum_bytes=MAX_PROMPT_UTF8_BYTES * 2,
+    )
+
+
 def _normalized_optional_images(value: Any) -> tuple[list[Any], int]:
     values = _media_items(value, field="images", maximum=MAX_IMAGES) if value is not None else []
     images: list[Any] = []
@@ -1062,6 +1083,7 @@ class GenerateText(NodeBase):
     params = {
         "model": {"label": "Model", "display": "input", "type": "transformers_causal_lm"},
         "prompt": {"label": "Prompt", "type": "text", "default": ""},
+        "use_chat_template": {"label": "Use Chat Template", "type": "boolean", "default": True},
         "max_new_tokens": {"label": "Max New Tokens", "type": "int", "default": 256, "min": 1, "max": 2048},
         "min_new_tokens": {"label": "Min New Tokens", "type": "int", "default": 0, "min": 0, "max": 2048},
         "do_sample": {"label": "Sample", "type": "boolean", "default": False},
@@ -1085,8 +1107,10 @@ class GenerateText(NodeBase):
 
         model, tokenizer, receipt = _validated_handle(kwargs.get("model"), task="text-generation")
         prompt = _bounded_string(kwargs.get("prompt"), field="prompt")
+        use_chat_template = _bounded_bool(kwargs.get("use_chat_template"), field="use_chat_template", default=True)
+        rendered = _text_prompt(tokenizer, prompt=prompt, use_chat_template=use_chat_template)
         controls = _generation_controls(kwargs)
-        encoded = tokenizer(prompt, return_tensors="pt", truncation=False)
+        encoded = tokenizer(rendered, return_tensors="pt", truncation=False)
         device = receipt["runtime"]["device"]
         batch = _batch_to_device(encoded, device=device)
         input_ids = batch["input_ids"]
