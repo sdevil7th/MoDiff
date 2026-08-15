@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:9a1349aa6d1accaa53457e4a153add02ce29e098ae1eeea4cb75b884b789d1ee",
+  "contentHash": "sha256:cb20164a239260fc1c7e7355c6f105991f5b38b92eff0f6ccfdf8204b3e13dab",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -9143,15 +9143,17 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ltx2_3_style_transition_requires_first_last_frame_video_audio_task_and_lora",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
         "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "video"
+        "video",
+        "audio"
       ],
       "catalogId": "template_ltx2_3_style_transition",
       "catalogModelLabels": [
@@ -9171,15 +9173,55 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_audio_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "LTX Video"
       ],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
-      "selectedCandidateMode": "first_last_frame_to_video",
+      "selectedCandidateMode": "first_last_frame_to_video_with_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ltx-2.3-22b-distilled-fp8.safetensors",
+            "repository": "Lightricks/LTX-2.3-fp8"
+          },
+          {
+            "artifact": "gemma_3_12B_it_fp4_mixed.safetensors",
+            "repository": "Comfy-Org/ltx-2"
+          },
+          {
+            "artifact": "ltx2.3-transition.safetensors",
+            "repository": "valiantcat/LTX-2.3-Transition-LORA"
+          }
+        ],
+        "assetPath": "templates/template_ltx2_3_style_transition.json",
+        "assetSha256": "f62e95e49f0c12cea01a6b9e40d53038fdd0cea13bd37620b67954b91e88aaeb",
+        "catalogOutputMediaKinds": [
+          "video"
+        ],
+        "catalogSelectedCandidateMode": "first_last_frame_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "ltx2_3_style_transition_requires_first_last_frame_video_audio_task_and_lora",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "020f494959a49fb0ddf6c84fd3827461452bbc0a",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video",
+          "audio"
+        ],
+        "reviewedTaskMode": "first_last_frame_to_video_with_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "LTX-2.3 Style Transition "
     },
     {
@@ -11465,15 +11507,17 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ltx2_3_first_last_frame_requires_synchronized_video_audio_task",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
         "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "video"
+        "video",
+        "audio"
       ],
       "catalogId": "video_ltx2_3_flf2v",
       "catalogModelLabels": [
@@ -11493,15 +11537,51 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_audio_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "LTX Video"
       ],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
-      "selectedCandidateMode": "first_last_frame_to_video",
+      "selectedCandidateMode": "first_last_frame_to_video_with_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ltx-2.3-22b-distilled-fp8.safetensors",
+            "repository": "Lightricks/LTX-2.3-fp8"
+          },
+          {
+            "artifact": "gemma_3_12B_it_fp4_mixed.safetensors",
+            "repository": "Comfy-Org/ltx-2"
+          }
+        ],
+        "assetPath": "templates/video_ltx2_3_flf2v.json",
+        "assetSha256": "168bc2584ef117133e76341f04e001aab2641b72b75d81b66b5c0b66e56c24a5",
+        "catalogOutputMediaKinds": [
+          "video"
+        ],
+        "catalogSelectedCandidateMode": "first_last_frame_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "ltx2_3_first_last_frame_requires_synchronized_video_audio_task",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "377ebd149ed9659a11d3828e922127ab10d55b04",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video",
+          "audio"
+        ],
+        "reviewedTaskMode": "first_last_frame_to_video_with_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "LTX-2.3: FLF2V"
     },
     {
@@ -11767,15 +11847,17 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ltx2_5_first_last_frame_requires_synchronized_video_audio_task",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
         "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
-        "video"
+        "video",
+        "audio"
       ],
       "catalogId": "video_ltx2_5_flf2v",
       "catalogModelLabels": [
@@ -11795,15 +11877,63 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_audio_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "LTX Video"
       ],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
-      "selectedCandidateMode": "first_last_frame_to_video",
+      "selectedCandidateMode": "first_last_frame_to_video_with_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+            "repository": "Lightricks/LTX-2.5"
+          },
+          {
+            "artifact": "ltx-2.5-video-vae-bf16.safetensors",
+            "repository": "Lightricks/LTX-2.5"
+          },
+          {
+            "artifact": "ltx-2.5-audio-vae-bf16.safetensors",
+            "repository": "Lightricks/LTX-2.5"
+          },
+          {
+            "artifact": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+            "repository": "Lightricks/LTX-2.5"
+          },
+          {
+            "artifact": "gemma4_e2b_it_bf16.safetensors",
+            "repository": "Comfy-Org/gemma-4"
+          }
+        ],
+        "assetPath": "templates/video_ltx2_5_flf2v.json",
+        "assetSha256": "8730ff8e5d014f7922e61a29f5a5417c3e64ce4fa00d6d066397b766e49c751f",
+        "catalogOutputMediaKinds": [
+          "video"
+        ],
+        "catalogSelectedCandidateMode": "first_last_frame_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "ltx2_5_first_last_frame_requires_synchronized_video_audio_task",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "7d6c2f0a84040baae602e8f7feb22074e236a4da",
+        "importsGraph": false,
+        "reviewedOutputMediaKinds": [
+          "video",
+          "audio"
+        ],
+        "reviewedTaskMode": "first_last_frame_to_video_with_audio",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "LTX-2.5: FLF2V"
     },
     {
@@ -13075,9 +13205,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_2_first_last_frame_requires_new_task_and_dual_transformer_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -13105,7 +13235,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -13114,6 +13244,41 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "first_last_frame_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2_2_14B_flf2v.json",
+        "assetSha256": "9fb579e07caff9081c14a4c0e3b983e210aa7d976f83f1c2758d2ad6ed949fdf",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan2_2_first_last_frame_requires_new_task_and_dual_transformer_generation",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "ad344b8f7dc1c5058ae480149f6082583611430a",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.2 14B First-Last Frame to Video"
     },
     {
@@ -13312,9 +13477,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_2_fun_first_last_frame_requires_new_task_model_and_loras",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -13342,7 +13507,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -13351,6 +13516,49 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "first_last_frame_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_fun_inpaint_high_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_fun_inpaint_low_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2_2_14B_fun_inpaint.json",
+        "assetSha256": "d8d100d3425760a314ad4fe620d019b0b8b59e921a3ab925e393e965e297dff2",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan2_2_fun_first_last_frame_requires_new_task_model_and_loras",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "6f3150b108ed3ae4914639d32e98ddd811e5b3d9",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.2 14B Fun Inp"
     },
     {
@@ -13983,8 +14191,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_vace_first_last_frame_requires_new_task_14b_partition_and_lora",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -14012,7 +14221,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -14021,6 +14230,41 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "first_last_frame_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan_vace_flf2v.json",
+        "assetSha256": "a3e93893792803f7118a444dab365badab954d8304a7956bd6a79226dfa11a4f",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan_vace_first_last_frame_requires_new_task_14b_partition_and_lora",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "78dd5feaafe02c47173ba34428f69bbac2058ce2",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 VACE First-Last Frame"
     },
     {
@@ -14315,9 +14559,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_1_first_last_frame_requires_new_task_and_model_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -14345,7 +14589,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -14354,6 +14598,41 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "first_last_frame_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_flf2v_720p_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/wan2.1_flf2v_720_f16.json",
+        "assetSha256": "389c551b8f1523ec2998b96bd6d3a4395deb7b3060906f3f74cf6d5cb88ec30f",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan2_1_first_last_frame_requires_new_task_and_model_generation",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "666c9839ced86dd7690560f98f5bc622deb51d8d",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.1 FLF2V 720p F16"
     },
     {
@@ -14581,7 +14860,8 @@
       "edit_audio": 1,
       "edit_image": 22,
       "edit_video": 2,
-      "first_last_frame_to_video": 9,
+      "first_last_frame_to_video": 6,
+      "first_last_frame_to_video_with_audio": 3,
       "frame_interpolation": 1,
       "image_audio_to_text": 1,
       "image_audio_to_video": 1,
@@ -14607,9 +14887,9 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 83,
+    "pinnedSourceReviewCount": 90,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 16,
+      "different_model_generation_and_new_task_required": 23,
       "different_model_generation_requires_admission": 48,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,

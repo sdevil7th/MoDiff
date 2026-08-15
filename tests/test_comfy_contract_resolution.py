@@ -65,11 +65,11 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 105)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 75)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 83)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 90)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 16,
+                "different_model_generation_and_new_task_required": 23,
                 "different_model_generation_requires_admission": 48,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 8,
@@ -92,7 +92,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "camera_to_video": 3,
             "edit_audio": 1,
             "edit_video": 2,
-            "first_last_frame_to_video": 9,
+            "first_last_frame_to_video": 6,
+            "first_last_frame_to_video_with_audio": 3,
             "image_to_3d": 7,
             "image_audio_to_video": 1,
             "image_audio_to_text": 1,
@@ -214,7 +215,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_eighty_three_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_ninety_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -266,13 +267,16 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "template_qwen_image_edit_2511_systms_action",
                 "template_qwen_Image_2512_360_lora",
                 "template_ltx2_3_ic_lora_ingredients",
+                "template_ltx2_3_style_transition",
                 "templates-1_click_multiple_character_angles-v1.0",
                 "templates-1_click_multiple_scene_angles-v1.0",
                 "video_causal_forcing_i2v",
                 "video_ltx2_3_i2v",
+                "video_ltx2_3_flf2v",
                 "video_ltx2_3_ia2v",
                 "video_ltx2_3_t2v",
                 "video_ltx2_5_i2v",
+                "video_ltx2_5_flf2v",
                 "video_ltx2_5_t2v",
                 "video_ltx2_i2v_distilled",
                 "video_ltx2_i2v_lora",
@@ -285,8 +289,10 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "video_wan2.1_fun_camera_v1.1_1.3B",
                 "video_wan2.1_fun_camera_v1.1_14B",
                 "video_wan2_2_14B_s2v",
+                "video_wan2_2_14B_flf2v",
                 "video_wan2_2_14B_fun_camera",
                 "video_wan2_2_14B_fun_control",
+                "video_wan2_2_14B_fun_inpaint",
                 "video_wan2_2_5B_fun_control",
                 "video_wan2_2_5B_fun_inpaint",
                 "video_wan_vace_14B_ref2v",
@@ -294,11 +300,13 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "video_wan_vace_14B_v2v",
                 "video_wan_vace_inpainting",
                 "video_wan_vace_outpainting",
+                "video_wan_vace_flf2v",
                 "video_wan21_scail2_character_replacement",
                 "video_wan21_scail2_character_replacement_int8",
                 "video_wan_dancer",
                 "video_wanmove_480p",
                 "wan2.1_fun_control",
+                "wan2.1_flf2v_720_f16",
                 "wan2.1_fun_inp",
                 "utility_birefnet_remove_background",
                 "utility_pid_latent_upscale_dit",
@@ -596,6 +604,18 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(fun_inp["selectedCandidateMode"], "first_last_frame_to_video")
         self.assertEqual(fun_inp["candidateOutputMediaKinds"], ["video"])
         self.assertEqual(fun_inp["resolutionState"], "new_task_boundary_required")
+
+        for catalog_id in (
+            "template_ltx2_3_style_transition",
+            "video_ltx2_3_flf2v",
+            "video_ltx2_5_flf2v",
+        ):
+            row = reviewed[catalog_id]
+            self.assertEqual(row["sourceReview"]["catalogSelectedCandidateMode"], "first_last_frame_to_video")
+            self.assertEqual(row["selectedCandidateMode"], "first_last_frame_to_video_with_audio")
+            self.assertEqual(row["sourceReview"]["catalogOutputMediaKinds"], ["video"])
+            self.assertEqual(row["candidateOutputMediaKinds"], ["video", "audio"])
+            self.assertEqual(row["resolutionState"], "new_task_boundary_required")
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
