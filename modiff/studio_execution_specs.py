@@ -3298,7 +3298,7 @@ _LONGCAT_AUDIO_DIT_GRAPH_BINDINGS = tuple(
         role,
         param,
         "false"
-        if role == "diffusersRecipe" and param == "vae_slicing"
+        if role == "diffusersRecipe" and param in {"vae_slicing", "vae_tiling"}
         else "sampleRate24000"
         if param == "sample_rate"
         else source,
