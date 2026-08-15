@@ -55,8 +55,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 49,
-                "existing_task_boundary_model_admission_required": 68,
+                "existing_family_workflow_candidate": 47,
+                "existing_task_boundary_model_admission_required": 70,
                 "new_task_boundary_required": 21,
             },
         )
@@ -65,12 +65,14 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 117)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 92)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 9)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 14)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_requires_admission": 8,
+                "different_model_generation_requires_admission": 10,
                 "same_upstream_family_different_default_partition": 1,
+                "same_upstream_generation_different_partition_and_auxiliary": 1,
+                "same_upstream_generation_requires_auxiliary_admission": 2,
             },
         )
 
@@ -202,7 +204,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_nine_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_fourteen_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -217,9 +219,14 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_chroma_text_to_image",
                 "image_flux2_klein_image_edit_9b_base",
                 "image_flux2_klein_image_edit_9b_distilled",
+                "image-qwen_image_edit_2511_lora_inflation",
                 "image_qwen_image",
+                "image_qwen_image_edit_2509",
+                "image_qwen_image_layered_control",
+                "image_qwen_image_union_control_lora",
                 "image_z_image",
                 "image_z_image_int8",
+                "template_qwen_image_edit_2511_systms_action",
             },
         )
         for catalog_id, row in reviewed.items():
@@ -259,6 +266,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_chroma1_radiance_text_to_image",
             "image_flux2_klein_image_edit_9b_base",
             "image_flux2_klein_image_edit_9b_distilled",
+            "image_qwen_image_layered_control",
+            "image_qwen_image_union_control_lora",
             "image_qwen_image",
             "image_z_image",
             "image_z_image_int8",
@@ -277,6 +286,30 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertEqual(row["sourceReview"]["reviewedTaskMode"], "edit_image")
             self.assertEqual(row["selectedCandidateMode"], "edit_image")
             self.assertEqual(row["recommendedWorkflow"]["canonicalWorkflowId"], "Flux2KleinPipeline:edit_image")
+
+        union = reviewed["image_qwen_image_union_control_lora"]
+        self.assertEqual(union["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
+        self.assertEqual(union["sourceReview"]["reviewedTaskMode"], "control_image")
+        self.assertEqual(union["selectedCandidateMode"], "control_image")
+        self.assertEqual(union["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:control_image")
+
+        for catalog_id in (
+            "image-qwen_image_edit_2511_lora_inflation",
+            "template_qwen_image_edit_2511_systms_action",
+        ):
+            row = reviewed[catalog_id]
+            self.assertEqual(
+                row["sourceReview"]["catalogRecommendedWorkflowId"],
+                "QwenImageEditModularPipeline:edit_image",
+            )
+            self.assertEqual(
+                row["sourceReview"]["reviewedWorkflowId"],
+                "QwenImageEditPlusModularPipeline:edit_image",
+            )
+            self.assertEqual(
+                row["recommendedWorkflow"]["canonicalWorkflowId"],
+                "QwenImageEditPlusModularPipeline:edit_image",
+            )
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
