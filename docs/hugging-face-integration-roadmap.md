@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Sixty of those 138 candidates now also have exact pinned graph-source
+Sixty-six of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7012,6 +7012,10 @@ generation task, VACE Ref2V to reference-conditioned video, and both VACE V2V
 and Wan 2.1 Fun Control to control-video tasks. The VACE 14B graphs retain their
 distinct 14B component partition and CausVid LoRA gates; none inherits support
 or qualification from the admitted 1.3B VACE checkpoint.
+Six utility-model reviews retain FILM interpolation, SeedVR2 image/video
+upscaling, and BiRefNet background removal as distinct artifact or task
+admissions. The PixelDiT graph is source-corrected from image upscaling to
+Z-Image text generation followed by an unadmitted PixelDiT enlargement stage.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7130,7 +7134,8 @@ the two SDXL refiner/unCLIP task distinctions. `0a48984` adds the five remaining
 LTX family and image-audio conditioning decisions. `a81bd03` adds the two Qwen
 multiple-angle, causal-forcing, Wan Fun Control, and WanMove decisions.
 `e6205d1` finishes the five Wan/VACE family source reviews and their task
-corrections.
+corrections. `527709b` adds the six FILM, SeedVR2, PixelDiT, and BiRefNet
+utility-model decisions.
 
 The following separate gates do remain external:
 
