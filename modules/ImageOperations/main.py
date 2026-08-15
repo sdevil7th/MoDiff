@@ -25,6 +25,14 @@ FILTER_OPERATIONS = (
     "chromatic_aberration",
 )
 IMAGE_CHANNELS = ("red", "green", "blue", "alpha", "luminance")
+IMAGE_OPERATION_MODES = (
+    "image_adjustment",
+    "image_filter",
+    "image_crop",
+    "image_tile",
+    "image_channels",
+)
+IMAGE_OPERATION_PIPELINE_CLASS = "BuiltinImageOperationV1"
 
 
 def _bounded_number(
@@ -437,4 +445,108 @@ class ImageChannels(NodeBase):
             values["luminance"].append(image.convert("L"))
         return {name: _collapse(channel_images, singular) for name, channel_images in values.items()} | {
             "output": _collapse(values[channel], singular)
+        }
+
+
+class ProcessImage(NodeBase):
+    """Dispatch one reviewed built-in image task through a stable generic facade."""
+
+    label = "Process Image"
+    category = "Image Operations"
+    resizable = True
+    params = {
+        "image": {"label": "Image", "display": "input", "type": "image"},
+        "pipeline_class": {
+            "label": "Built-in Contract",
+            "type": "string",
+            "default": IMAGE_OPERATION_PIPELINE_CLASS,
+            "hidden": True,
+        },
+        "operation": {
+            "label": "Operation",
+            "type": "string",
+            "options": IMAGE_OPERATION_MODES,
+            "default": "image_adjustment",
+        },
+        "brightness": {"label": "Brightness", "type": "float", "default": 1.0, "min": 0.0, "max": 4.0},
+        "contrast": {"label": "Contrast", "type": "float", "default": 1.0, "min": 0.0, "max": 4.0},
+        "saturation": {"label": "Saturation", "type": "float", "default": 1.0, "min": 0.0, "max": 4.0},
+        "sharpness": {"label": "Sharpness", "type": "float", "default": 1.0, "min": 0.0, "max": 4.0},
+        "gamma": {"label": "Gamma", "type": "float", "default": 1.0, "min": 0.1, "max": 4.0},
+        "temperature": {"label": "Temperature", "type": "float", "default": 0.0, "min": -1.0, "max": 1.0},
+        "tint": {"label": "Tint", "type": "float", "default": 0.0, "min": -1.0, "max": 1.0},
+        "filter_operation": {
+            "label": "Filter",
+            "type": "string",
+            "options": FILTER_OPERATIONS,
+            "default": "gaussian_blur",
+        },
+        "amount": {"label": "Filter Amount", "type": "float", "default": 1.0, "min": 0.0, "max": 32.0},
+        "threshold": {"label": "Filter Threshold", "type": "int", "default": 3, "min": 0, "max": 255},
+        "seed": {"label": "Filter Seed", "type": "int", "default": 0},
+        "x": {"label": "Crop Left", "type": "int", "default": 0, "min": 0, "max": 32767},
+        "y": {"label": "Crop Top", "type": "int", "default": 0, "min": 0, "max": 32767},
+        "width": {"label": "Crop Width", "type": "int", "default": 0, "min": 0, "max": 32768},
+        "height": {"label": "Crop Height", "type": "int", "default": 0, "min": 0, "max": 32768},
+        "rows": {"label": "Tile Rows", "type": "int", "default": 2, "min": 1, "max": 8},
+        "columns": {"label": "Tile Columns", "type": "int", "default": 2, "min": 1, "max": 8},
+        "channel": {
+            "label": "Channel",
+            "type": "string",
+            "options": IMAGE_CHANNELS,
+            "default": "luminance",
+        },
+        "output": {"label": "Processed Image", "display": "output", "type": "image"},
+    }
+
+    def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", IMAGE_OPERATION_PIPELINE_CLASS) != IMAGE_OPERATION_PIPELINE_CLASS:
+            raise ValueError("Process Image received an unsupported built-in contract identity.")
+        operation = str(kwargs.get("operation") or "image_adjustment")
+        if operation not in IMAGE_OPERATION_MODES:
+            raise ValueError(f"Unsupported built-in image operation {operation!r}.")
+        image = kwargs.get("image")
+        if operation == "image_adjustment":
+            fields = (
+                "brightness",
+                "contrast",
+                "saturation",
+                "sharpness",
+                "gamma",
+                "temperature",
+                "tint",
+            )
+            return AdjustImage().execute(
+                image=image,
+                **{field: kwargs[field] for field in fields if field in kwargs},
+            )
+        if operation == "image_filter":
+            return FilterImage().execute(
+                image=image,
+                operation=kwargs.get("filter_operation", "gaussian_blur"),
+                amount=kwargs.get("amount", 1.0),
+                threshold=kwargs.get("threshold", 3),
+                seed=kwargs.get("seed", 0),
+            )
+        if operation == "image_crop":
+            result = CropImage().execute(
+                image=image,
+                x=kwargs.get("x", 0),
+                y=kwargs.get("y", 0),
+                width=kwargs.get("width", 0),
+                height=kwargs.get("height", 0),
+            )
+            return {"output": result["output"]}
+        if operation == "image_tile":
+            result = TileImage().execute(
+                image=image,
+                rows=kwargs.get("rows", 2),
+                columns=kwargs.get("columns", 2),
+            )
+            return {"output": result["tiles"]}
+        return {
+            "output": ImageChannels().execute(
+                image=image,
+                channel=kwargs.get("channel", "luminance"),
+            )["output"]
         }

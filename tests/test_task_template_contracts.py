@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 165)
+        self.assertEqual(len(self.contracts), 170)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -65,16 +65,8 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                     [
                         contract["loaderRole"],
                         f"{contract['loaderModule']}.{contract['loaderAction']}",
-                        next(
-                            role[2]
-                            for role in specification["roles"]
-                            if role[0] == contract["loaderRole"]
-                        ),
-                        next(
-                            role[3]
-                            for role in specification["roles"]
-                            if role[0] == contract["loaderRole"]
-                        ),
+                        next(role[2] for role in specification["roles"] if role[0] == contract["loaderRole"]),
+                        next(role[3] for role in specification["roles"] if role[0] == contract["loaderRole"]),
                     ],
                     specification["roles"],
                 )
@@ -321,13 +313,9 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("AceStepAudioPipeline", "audio_continuation"): [("audio", "sourceAudio")],
             ("MarigoldDepthPipeline", "depth_estimation"): [("image", "referenceImages")],
             ("HuggingFaceTextGenerationModel", "text_generation"): [],
-            ("HuggingFaceImageTextToTextModel", "image_to_text"): [
-                ("image", "referenceImages")
-            ],
+            ("HuggingFaceImageTextToTextModel", "image_to_text"): [("image", "referenceImages")],
             ("HuggingFaceAnyToAnyModel", "text_generation"): [],
-            ("HuggingFaceAnyToAnyModel", "image_to_text"): [
-                ("image", "referenceImages")
-            ],
+            ("HuggingFaceAnyToAnyModel", "image_to_text"): [("image", "referenceImages")],
             ("HuggingFaceAnyToAnyModel", "text_to_image"): [],
             ("HuggingFaceSpeechRecognitionModel", "speech_to_text"): [("audio", "sourceAudio")],
             ("HuggingFaceSpeechRecognitionModel", "speech_translation"): [("audio", "sourceAudio")],
@@ -465,7 +453,9 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
         graph = json.loads((GRAPH_ROOT / workflow["graphPath"]).read_text(encoding="utf-8"))
 
         loader_tamper = deepcopy(graph)
-        loader = next(node for node in loader_tamper["nodes"] if node["data"].get("studioRole") == "diffusersImagePipeline")
+        loader = next(
+            node for node in loader_tamper["nodes"] if node["data"].get("studioRole") == "diffusersImagePipeline"
+        )
         loader["data"]["params"]["model_id"]["value"] = {
             "source": "hub",
             "value": "attacker/repository",

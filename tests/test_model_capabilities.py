@@ -174,7 +174,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 165)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 170)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -289,9 +289,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(sdxl["autoEligible"])
         self.assertFalse(sdxl["galleryEligible"])
         self.assertNotIn("StableDiffusionXLPipeline", experimental)
-        sdxl_edit = next(
-            item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "edit_image"
-        )
+        sdxl_edit = next(item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "edit_image")
         self.assertEqual(sdxl["studioExecutionSpecModes"], ["edit_image", "inpaint", "text_to_image"])
         self.assertEqual(
             sdxl["pipelineClasses"],
@@ -303,11 +301,9 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(sdxl_edit["pipelineClass"], "StableDiffusionXLImg2ImgPipeline")
         self.assertEqual(
-            next(
-                profile
-                for profile in sdxl["executionProfiles"]
-                if profile["id"] == "sdxl-base:img2img-direct"
-            )["modes"],
+            next(profile for profile in sdxl["executionProfiles"] if profile["id"] == "sdxl-base:img2img-direct")[
+                "modes"
+            ],
             ["edit_image"],
         )
         self.assertEqual(
@@ -643,16 +639,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(dreamlite_mobile["autoEligible"])
         self.assertFalse(dreamlite_mobile["galleryEligible"])
         self.assertNotIn("DreamLiteMobilePipeline", experimental)
-        sdxl_inpaint = next(
-            item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint"
-        )
+        sdxl_inpaint = next(item for item in sdxl["studioExecutionSpecs"] if item["mode"] == "inpaint")
         self.assertEqual(sdxl_inpaint["pipelineClass"], "StableDiffusionXLInpaintPipeline")
         self.assertEqual(
-            next(
-                profile
-                for profile in sdxl["executionProfiles"]
-                if profile["id"] == "sdxl-base:inpaint-direct"
-            )["modes"],
+            next(profile for profile in sdxl["executionProfiles"] if profile["id"] == "sdxl-base:inpaint-direct")[
+                "modes"
+            ],
             ["inpaint"],
         )
         self.assertEqual(
@@ -728,17 +720,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             flux_dev["pipelineClasses"],
             ["FluxImg2ImgPipeline", "FluxInpaintPipeline", "FluxPipeline"],
         )
-        flux_dev_edit = next(
-            item for item in flux_dev["studioExecutionSpecs"] if item["mode"] == "edit_image"
-        )
+        flux_dev_edit = next(item for item in flux_dev["studioExecutionSpecs"] if item["mode"] == "edit_image")
         self.assertEqual(flux_dev_edit["pipelineClass"], "FluxImg2ImgPipeline")
         self.assertEqual(
             flux_dev["modeRequirements"]["edit_image"]["requiredImages"],
             ["referenceImages"],
         )
-        flux_dev_inpaint = next(
-            item for item in flux_dev["studioExecutionSpecs"] if item["mode"] == "inpaint"
-        )
+        flux_dev_inpaint = next(item for item in flux_dev["studioExecutionSpecs"] if item["mode"] == "inpaint")
         self.assertEqual(flux_dev_inpaint["pipelineClass"], "FluxInpaintPipeline")
         self.assertEqual(
             flux_dev["modeRequirements"]["inpaint"]["requiredImages"],
@@ -764,9 +752,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
 
         redux_specs = by_model["FluxReduxPipeline"]["studioExecutionSpecs"]
         redux_spec = next(item for item in redux_specs if item["mode"] == "edit_image")
-        redux_multi_spec = next(
-            item for item in redux_specs if item["mode"] == "multi_image_reference_edit"
-        )
+        redux_multi_spec = next(item for item in redux_specs if item["mode"] == "multi_image_reference_edit")
         self.assertEqual(
             by_model["FluxReduxPipeline"]["modes"],
             ["edit_image", "multi_image_reference_edit"],
@@ -775,9 +761,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(redux_multi_spec["pipelineClass"], "FluxReduxPipeline")
         self.assertNotEqual(redux_multi_spec["contentHash"], redux_spec["contentHash"])
         self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
-        redux_requirement = by_model["FluxReduxPipeline"]["modeRequirements"]["edit_image"][
-            "modelRequirements"
-        ][0]
+        redux_requirement = by_model["FluxReduxPipeline"]["modeRequirements"]["edit_image"]["modelRequirements"][0]
         self.assertEqual(redux_requirement["repo"], "black-forest-labs/FLUX.1-dev")
         self.assertEqual(
             redux_requirement["revision"],
@@ -788,9 +772,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             redux_requirement,
         )
         self.assertEqual(
-            by_model["FluxReduxPipeline"]["modeRequirements"]["multi_image_reference_edit"][
-                "modelRequirements"
-            ][0],
+            by_model["FluxReduxPipeline"]["modeRequirements"]["multi_image_reference_edit"]["modelRequirements"][0],
             redux_requirement,
         )
 
@@ -900,7 +882,9 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         qwen_text_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "text_to_image")
         qwen_edit_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "edit_image")
         qwen_inpaint_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "inpaint")
-        qwen_control_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "control_image")
+        qwen_control_spec = next(
+            item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "control_image"
+        )
         self.assertEqual(qwen_text_spec["id"], "qwen-image-2512:text-to-image:v1")
         self.assertEqual(qwen_text_spec["pipelineClass"], "QwenImagePipeline")
         self.assertEqual(qwen_edit_spec["id"], "qwen-image-2512:edit-image:v1")
@@ -971,7 +955,9 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             profile for profile in wan_video["executionProfiles"] if profile["id"] == "wan-video-to-video:direct"
         )
         self.assertEqual(wan_v2v["modes"], ["video_to_video", "video_color_edit"])
-        wan_t2v = next(profile for profile in wan_video["executionProfiles"] if profile["id"] == "wan-text-to-video:direct")
+        wan_t2v = next(
+            profile for profile in wan_video["executionProfiles"] if profile["id"] == "wan-text-to-video:direct"
+        )
         self.assertEqual(wan_t2v["modes"], ["text_to_video"])
         self.assertEqual(
             wan_video["studioExecutionSpecModes"],
@@ -1223,13 +1209,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         published = {
             item["modelType"]: item
             for item in payload["experimentalCapabilities"]
-            if item.get("qualificationStatus") == "contract_only"
-            and item.get("executionKind") == "standard"
+            if item.get("qualificationStatus") == "contract_only" and item.get("executionKind") == "standard"
         }
 
-        profiled_classes = {
-            profile.pipeline_class for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        }
+        profiled_classes = {profile.pipeline_class for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         adapters_by_media = {
             "image": IMAGE_PIPELINE_ADAPTERS,
             "video": VIDEO_PIPELINE_ADAPTERS,
@@ -1242,26 +1225,17 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             if pipeline_class not in profiled_classes
         }
         declared_classes = {
-            pipeline_class
-            for pipeline_class, _media_kind, _repo, _modes in CONTRACT_ONLY_DIFFUSERS_PIPELINES
+            pipeline_class for pipeline_class, _media_kind, _repo, _modes in CONTRACT_ONLY_DIFFUSERS_PIPELINES
         }
         self.assertEqual(declared_classes, expected_classes)
         self.assertEqual(set(published), expected_classes)
         self.assertTrue(expected_classes.isdisjoint(AUTO_MODEL_REQUIREMENTS))
-        self.assertTrue(
-            expected_classes.isdisjoint(
-                capability["modelType"] for capability in payload["capabilities"]
-            )
-        )
+        self.assertTrue(expected_classes.isdisjoint(capability["modelType"] for capability in payload["capabilities"]))
 
         for pipeline_class, media_kind, repository, declared_modes in CONTRACT_ONLY_DIFFUSERS_PIPELINES:
             with self.subTest(pipeline_class=pipeline_class):
                 adapter = adapters_by_media[media_kind][pipeline_class]
-                adapter_modes = (
-                    adapter.mode_options
-                    if media_kind == "image"
-                    else adapter.modes
-                )
+                adapter_modes = adapter.mode_options if media_kind == "image" else adapter.modes
                 capability = published[pipeline_class]
                 self.assertEqual(tuple(declared_modes), tuple(adapter_modes))
                 self.assertEqual(repository, adapter.default_repo)

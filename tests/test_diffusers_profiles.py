@@ -46,6 +46,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.HuggingFaceTransformers",
                 "LoadAnyToAnyModel",
             ),
+            "builtin-image-operation": (
+                "modules.ImageOperations",
+                "ProcessImage",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -165,6 +169,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "HuggingFaceTextGenerationModel",
             "HuggingFaceImageTextToTextModel",
             "HuggingFaceAnyToAnyModel",
+            "BuiltinImageOperation",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)
@@ -328,7 +333,13 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "qwen-image-edit-plus:direct",
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
-            expected = ("bnb_4bit",) if profile_id in qwen_ids else flux_modes if profile.model_type.startswith("Flux") else ()
+            expected = (
+                ("bnb_4bit",)
+                if profile_id in qwen_ids
+                else flux_modes
+                if profile.model_type.startswith("Flux")
+                else ()
+            )
             with self.subTest(profile=profile_id):
                 self.assertEqual(profile.expert_quantization_modes, expected)
                 self.assertEqual(
@@ -424,9 +435,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "modules.DiffusersAudio.LoadPipeline": AUDIO_PIPELINE_ADAPTERS,
         }
         direct_profiles = [
-            profile
-            for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-            if profile.backend_path in registries
+            profile for profile in DIFFUSERS_EXECUTION_PROFILES.values() if profile.backend_path in registries
         ]
         self.assertTrue(direct_profiles)
 

@@ -3,12 +3,14 @@ import unittest
 from PIL import Image
 
 from modules.ImageOperations.main import (
-    MAX_IMAGE_COUNT,
     FILTER_OPERATIONS,
+    IMAGE_OPERATION_PIPELINE_CLASS,
+    MAX_IMAGE_COUNT,
     AdjustImage,
     CropImage,
     FilterImage,
     ImageChannels,
+    ProcessImage,
     TileImage,
 )
 
@@ -129,12 +131,67 @@ class ImageOperationTests(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "must be a PIL image"):
             FilterImage().execute(image=[source, object()])
 
-    def test_registry_exposes_only_the_five_generic_operations(self):
+    def test_generic_facade_dispatches_every_reviewed_mode_and_locks_identity(self):
+        source = Image.new("RGBA", (8, 6), (40, 80, 120, 99))
+        node = ProcessImage()
+        results = {
+            "image_adjustment": node.execute(image=source, operation="image_adjustment"),
+            "image_filter": node.execute(
+                image=source,
+                operation="image_filter",
+                filter_operation="unsharp_mask",
+            ),
+            "image_crop": node.execute(
+                image=source,
+                operation="image_crop",
+                x=1,
+                y=1,
+                width=4,
+                height=3,
+            ),
+            "image_tile": node.execute(
+                image=source,
+                operation="image_tile",
+                rows=2,
+                columns=2,
+            ),
+            "image_channels": node.execute(
+                image=source,
+                operation="image_channels",
+                channel="red",
+            ),
+        }
+        self.assertEqual(set(results), set(ProcessImage.params["operation"]["options"]))
+        self.assertEqual(results["image_crop"]["output"].size, (4, 3))
+        self.assertEqual(len(results["image_tile"]["output"]), 4)
+        self.assertEqual(results["image_channels"]["output"].mode, "L")
+
+        with self.assertRaisesRegex(ValueError, "contract identity"):
+            node.execute(
+                image=source,
+                operation="image_adjustment",
+                pipeline_class="MutableImageOperation",
+            )
+        with self.assertRaisesRegex(ValueError, "Unsupported built-in"):
+            node.execute(
+                image=source,
+                operation="external_plugin",
+                pipeline_class=IMAGE_OPERATION_PIPELINE_CLASS,
+            )
+
+    def test_registry_exposes_only_the_six_generic_operations(self):
         from modules import MODULE_MAP
 
         self.assertEqual(
             set(MODULE_MAP["modules.ImageOperations"]),
-            {"AdjustImage", "FilterImage", "CropImage", "TileImage", "ImageChannels"},
+            {
+                "AdjustImage",
+                "FilterImage",
+                "CropImage",
+                "TileImage",
+                "ImageChannels",
+                "ProcessImage",
+            },
         )
         for definition in MODULE_MAP["modules.ImageOperations"].values():
             self.assertEqual(definition["category"], "Image Operations")

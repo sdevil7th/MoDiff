@@ -55,9 +55,7 @@ VERIFIED_REPAIR_SOURCES = {
 OPTIONAL_RUNTIME_REQUIREMENT_SCHEMA_VERSION = 1
 OPTIONAL_RUNTIME_DELIVERY_BASE = "base"
 OPTIONAL_RUNTIME_DELIVERY_OVERLAY = "optional_overlay"
-OPTIONAL_RUNTIME_DELIVERIES = frozenset(
-    {OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY}
-)
+OPTIONAL_RUNTIME_DELIVERIES = frozenset({OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY})
 OPTIONAL_RUNTIME_PLATFORM_CONTRACTS = (
     (
         "linux",
@@ -210,9 +208,7 @@ class ExpertMpsPolicy:
 
 
 MPS_UNQUALIFIED_POLICY = ExpertMpsPolicy(1, "unqualified", "open_setup")
-MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY = ExpertMpsPolicy(
-    1, "unqualified", "switch_to_z_image"
-)
+MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY = ExpertMpsPolicy(1, "unqualified", "switch_to_z_image")
 MPS_EXPERIMENTAL_POLICY = ExpertMpsPolicy(1, "experimental", "open_setup")
 
 
@@ -242,9 +238,7 @@ class DiffusersExecutionProfile:
     # delivery. Linux/Windows x86-64 use the qualified overlay; unqualified
     # architectures remain explicitly base-delivered.
     optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
-    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = (
-        OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
-    )
+    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
     compatible_repos: tuple[str, ...] = ()
     expert_quantization_modes: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
@@ -277,11 +271,14 @@ class DiffusersExecutionProfile:
                 "modules.HuggingFaceTransformers",
                 "LoadAnyToAnyModel",
             ),
+            "builtin-image-operation": (
+                "modules.ImageOperations",
+                "ProcessImage",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(
-                f"Diffusers execution profile {self.id!r} has unsupported execution path "
-                f"{self.execution_path!r}."
+                f"Diffusers execution profile {self.id!r} has unsupported execution path {self.execution_path!r}."
             )
         if (self.loader_module, self.loader_action) != expected_loader:
             raise ValueError(
@@ -295,10 +292,9 @@ class DiffusersExecutionProfile:
             "quanto_float8",
             "torchao_float8",
         }
-        if (
-            len(set(self.expert_quantization_modes)) != len(self.expert_quantization_modes)
-            or not set(self.expert_quantization_modes).issubset(reviewed_quantization_modes)
-        ):
+        if len(set(self.expert_quantization_modes)) != len(self.expert_quantization_modes) or not set(
+            self.expert_quantization_modes
+        ).issubset(reviewed_quantization_modes):
             raise ValueError(f"Diffusers execution profile {self.id!r} has invalid Expert quantization modes.")
         targets = tuple(
             (platform_name, machine)
@@ -310,9 +306,7 @@ class DiffusersExecutionProfile:
             or len(targets) != len(self.optional_runtime_platform_deliveries)
             or len(set(targets)) != len(targets)
         ):
-            raise ValueError(
-                f"Diffusers execution profile {self.id!r} has invalid optional-runtime delivery targets."
-            )
+            raise ValueError(f"Diffusers execution profile {self.id!r} has invalid optional-runtime delivery targets.")
 
     @property
     def backend_path(self) -> str:
@@ -375,9 +369,7 @@ class DiffusersExecutionProfile:
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
         public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target()
-        public["optional_runtime_profiles"] = list(
-            self.optional_runtime_profile_ids_for_target()
-        )
+        public["optional_runtime_profiles"] = list(self.optional_runtime_profile_ids_for_target())
         public["optional_runtime_platform_deliveries"] = [
             {"platform": platform_name, "machine": machine, "delivery": delivery}
             for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
@@ -429,7 +421,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=(),
         default_quantized_components=(),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=None,
         max_low_memory_steps=None,
@@ -448,7 +445,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=(),
         default_quantized_components=(),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=None,
         max_low_memory_steps=None,
@@ -467,7 +469,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=(),
         default_quantized_components=(),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
         max_low_memory_side=1024,
         max_low_memory_steps=8,
@@ -509,7 +516,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=28,
@@ -551,7 +563,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=24,
@@ -569,7 +586,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=24,
@@ -587,7 +609,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=30,
@@ -814,8 +841,7 @@ def _contract_only_pipeline_capability(
 
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
-    _contract_only_pipeline_capability(*contract)
-    for contract in CONTRACT_ONLY_DIFFUSERS_PIPELINES
+    _contract_only_pipeline_capability(*contract) for contract in CONTRACT_ONLY_DIFFUSERS_PIPELINES
 )
 
 
@@ -842,8 +868,7 @@ def _contract_only_modular_capability(specification) -> dict:
 
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
-    _contract_only_modular_capability(specification)
-    for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+    _contract_only_modular_capability(specification) for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 )
 
 
@@ -868,10 +893,7 @@ def optional_runtime_requirement_for_profiles(
     execution_profile_ids: list[str] = []
     base_profile_with_optional_ids = False
     for profile in selected:
-        if (
-            isinstance(profile.id, str)
-            and _EXECUTION_PROFILE_ID_PATTERN.fullmatch(profile.id)
-        ):
+        if isinstance(profile.id, str) and _EXECUTION_PROFILE_ID_PATTERN.fullmatch(profile.id):
             if profile.id in execution_profile_ids:
                 invalid_profile_ids = True
             else:
@@ -954,8 +976,7 @@ def execution_profiles_for_execution(
     return tuple(
         profile
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if profile.model_type == normalized_model_type
-        and (not normalized_mode or normalized_mode in profile.modes)
+        if profile.model_type == normalized_model_type and (not normalized_mode or normalized_mode in profile.modes)
     )
 
 
@@ -965,9 +986,7 @@ def optional_runtime_requirement_for_execution(
 ) -> dict:
     """Return declarative optional-runtime delivery for one exact pair."""
 
-    return optional_runtime_requirement_for_profiles(
-        execution_profiles_for_execution(model_type, mode)
-    )
+    return optional_runtime_requirement_for_profiles(execution_profiles_for_execution(model_type, mode))
 
 
 def resolve_execution_profiles_for_loader(
@@ -986,9 +1005,7 @@ def resolve_execution_profiles_for_loader(
 
     backend_path = f"{str(module or '').strip()}.{str(action or '').strip()}"
     backend_profiles = tuple(
-        profile
-        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if profile.backend_path == backend_path
+        profile for profile in DIFFUSERS_EXECUTION_PROFILES.values() if profile.backend_path == backend_path
     )
     if not backend_profiles:
         return (), None
@@ -1004,11 +1021,7 @@ def resolve_execution_profiles_for_loader(
     matching = tuple(
         profile
         for profile in backend_profiles
-        if (
-            profile.model_type == identity
-            if action == "ModelsLoader"
-            else profile.pipeline_class == identity
-        )
+        if (profile.model_type == identity if action == "ModelsLoader" else profile.pipeline_class == identity)
     )
     if not matching:
         return backend_profiles, "loader_selection_unregistered"
@@ -1034,8 +1047,7 @@ def resolve_execution_profiles_for_loader(
         repository_matches = tuple(
             profile
             for profile in matching
-            if repository
-            in {profile.default_repo, profile.fallback_repo, *profile.compatible_repos}
+            if repository in {profile.default_repo, profile.fallback_repo, *profile.compatible_repos}
         )
         if len(repository_matches) == 1:
             return repository_matches, None
@@ -1076,12 +1088,8 @@ def public_experimental_pipelines(
             backend_path = None
             qualification_status = "invalid_contract"
         elif execution_profiles:
-            runnable_modes = list(
-                dict.fromkeys(mode for profile in execution_profiles for mode in profile["modes"])
-            )
-            pipeline_classes = list(
-                dict.fromkeys(profile["pipeline_class"] for profile in execution_profiles)
-            )
+            runnable_modes = list(dict.fromkeys(mode for profile in execution_profiles for mode in profile["modes"]))
+            pipeline_classes = list(dict.fromkeys(profile["pipeline_class"] for profile in execution_profiles))
             backend_paths = {profile["backend_path"] for profile in execution_profiles}
             backend_path = next(iter(backend_paths)) if len(backend_paths) == 1 else None
             qualification_status = pipeline.get("qualificationStatus", "unqualified")
@@ -1119,9 +1127,7 @@ def public_experimental_pipelines(
                 catalog_resolver=optional_runtime_catalog_resolver,
             )
         else:
-            optional_runtime_requirement = optional_runtime_requirement_for_profiles(
-                selected_profile_contracts
-            )
+            optional_runtime_requirement = optional_runtime_requirement_for_profiles(selected_profile_contracts)
 
         public_pipelines.append(
             {
@@ -1148,16 +1154,8 @@ def public_experimental_pipelines(
                 ),
                 "qualificationStatus": qualification_status,
                 "optionalRuntimeProfileIds": optional_runtime_profile_ids,
-                "optionalRuntimeProfiles": public_optional_runtime_profiles(
-                    optional_runtime_profile_ids
-                ),
-                **(
-                    {
-                        "optionalRuntimeRequirement": optional_runtime_requirement
-                    }
-                    if execution_profiles
-                    else {}
-                ),
+                "optionalRuntimeProfiles": public_optional_runtime_profiles(optional_runtime_profile_ids),
+                **({"optionalRuntimeRequirement": optional_runtime_requirement} if execution_profiles else {}),
             }
         )
     return public_pipelines

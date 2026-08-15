@@ -417,9 +417,7 @@ LONGCAT_IMAGE_DIFFUSERS_FILES = [
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
 ]
-LONGCAT_IMAGE_EDIT_DIFFUSERS_FILES = sorted(
-    [*LONGCAT_IMAGE_DIFFUSERS_FILES, "text_encoder/preprocessor_config.json"]
-)
+LONGCAT_IMAGE_EDIT_DIFFUSERS_FILES = sorted([*LONGCAT_IMAGE_DIFFUSERS_FILES, "text_encoder/preprocessor_config.json"])
 LUMINA_REPO = "Alpha-VLLM/Lumina-Next-SFT-diffusers"
 LUMINA_NEXT_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -1584,8 +1582,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "requiredForModes": ["image_to_video"],
             "downloadFiles": FRAMEPACK_BASE_COMPONENT_FILES,
             "description": (
-                "Exact safetensors scheduler, encoders, tokenizers, and VAE composed with the "
-                "FramePack transformer."
+                "Exact safetensors scheduler, encoders, tokenizers, and VAE composed with the FramePack transformer."
             ),
         },
         {
@@ -1597,8 +1594,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "requiredForModes": ["image_to_video"],
             "downloadFiles": FRAMEPACK_VISION_COMPONENT_FILES,
             "description": (
-                "Exact SigLIP image processor and safetensors vision encoder used by FramePack "
-                "conditioning."
+                "Exact SigLIP image processor and safetensors vision encoder used by FramePack conditioning."
             ),
         },
     ),
@@ -1715,9 +1711,7 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageControlNetPipeline", "control_i
         **deepcopy(requirement),
         "description": "Required by the generic standard Diffusers Qwen control-image workflow.",
     }
-    for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
-        ("QwenImageModularPipeline", "control_image")
-    ]
+    for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageModularPipeline", "control_image")]
 )
 
 for _animatediff_model_type, _animatediff_mode, _uses_controlnet in (
@@ -1735,13 +1729,10 @@ for _animatediff_model_type, _animatediff_mode, _uses_controlnet in (
             **deepcopy(_requirement),
             "requiredForModes": [_animatediff_mode],
             "description": (
-                f"Required by the generic {_animatediff_model_type} "
-                f"{_animatediff_mode.replace('_', ' ')} workflow."
+                f"Required by the generic {_animatediff_model_type} {_animatediff_mode.replace('_', ' ')} workflow."
             ),
         }
-        for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
-            ("AnimateDiffPipeline", "text_to_video")
-        ]
+        for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("AnimateDiffPipeline", "text_to_video")]
     ]
     if _uses_controlnet:
         _animatediff_requirements.extend(
@@ -1753,13 +1744,11 @@ for _animatediff_model_type, _animatediff_mode, _uses_controlnet in (
                     f"{_animatediff_mode.replace('_', ' ')} workflow."
                 ),
             }
-            for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
-                ("StableDiffusionPipeline", "control_image")
-            ]
+            for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionPipeline", "control_image")]
         )
-    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
-        (_animatediff_model_type, _animatediff_mode)
-    ] = tuple(_animatediff_requirements)
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[(_animatediff_model_type, _animatediff_mode)] = tuple(
+        _animatediff_requirements
+    )
 
 for _control_model_type, _source_model_type, _control_modes in (
     (
@@ -1789,13 +1778,10 @@ for _control_model_type, _source_model_type, _control_modes in (
                 **deepcopy(_requirement),
                 "requiredForModes": [_control_mode],
                 "description": (
-                    f"Required by the generic {_control_model_type} "
-                    f"{_control_mode.replace('_', ' ')} workflow."
+                    f"Required by the generic {_control_model_type} {_control_mode.replace('_', ' ')} workflow."
                 ),
             }
-            for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
-                (_source_model_type, "control_image")
-            ]
+            for _requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[(_source_model_type, "control_image")]
         )
 
 
@@ -1808,6 +1794,7 @@ def studio_model_dependencies_for_pair(model_type: str, mode: str) -> list[dict[
         {key: requirement[key] for key in ("id", "kind", "repo", "revision")}
         for requirement in studio_model_requirements_for_pair(model_type, mode)
     ]
+
 
 _GIB = 1024**3
 _HIGH_MEMORY_FULL_RESIDENCY = {
@@ -1873,22 +1860,16 @@ _GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageGenerate", "output_type", "outputType"),
     ("diffusersImageGenerate", "max_sequence_length", "maxSequenceLength"),
 )
-_SDXL_GRAPH_BINDINGS = _GRAPH_BINDINGS + (
-    ("diffusersImagePipeline", "revision", "defaultRevision"),
-)
+_SDXL_GRAPH_BINDINGS = _GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),)
 _PAG_GRAPH_BINDINGS = _SDXL_GRAPH_BINDINGS + (
     ("diffusersImageGenerate", "pag_scale", "pagScale"),
     ("diffusersImageGenerate", "pag_adaptive_scale", "pagAdaptiveScale"),
 )
 _PAG_TEXT_TO_IMAGE_BINDINGS = tuple(
-    item
-    for item in _PAG_GRAPH_BINDINGS
-    if item[:2] != ("diffusersImageGenerate", "strength")
+    item for item in _PAG_GRAPH_BINDINGS if item[:2] != ("diffusersImageGenerate", "strength")
 )
 _HUNYUAN_PAG_GRAPH_BINDINGS = tuple(
-    item
-    for item in _PAG_TEXT_TO_IMAGE_BINDINGS
-    if item[:2] != ("diffusersImageGenerate", "max_sequence_length")
+    item for item in _PAG_TEXT_TO_IMAGE_BINDINGS if item[:2] != ("diffusersImageGenerate", "max_sequence_length")
 )
 _PERCEPTION_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -2119,9 +2100,7 @@ _MODULAR_EDIT_GRAPH_BINDINGS = (
     ("denoise", "num_inference_steps", "steps"),
     ("denoise", "guidance_scale", "guidanceScale"),
 )
-_MODULAR_LAYERED_GRAPH_EDGES = tuple(
-    edge for edge in _MODULAR_EDIT_GRAPH_EDGES if edge[1] != "route_state_out"
-)
+_MODULAR_LAYERED_GRAPH_EDGES = tuple(edge for edge in _MODULAR_EDIT_GRAPH_EDGES if edge[1] != "route_state_out")
 _MODULAR_LAYERED_GRAPH_BINDINGS = (
     ("models", "model_type", "pipelineClass"),
     ("models", "repo_id", "artifact"),
@@ -2272,9 +2251,7 @@ _PAG_CONDITIONED_CONTROL_GRAPH_BINDINGS = _CONDITIONED_CONTROL_GRAPH_BINDINGS + 
     ("diffusersImageControl", "pag_adaptive_scale", "pagAdaptiveScale"),
 )
 _QWEN_DIRECT_CONTROL_GRAPH_BINDINGS = tuple(
-    item
-    for item in _CONTROL_GRAPH_BINDINGS
-    if item[:2] != ("diffusersImageControl", "strength")
+    item for item in _CONTROL_GRAPH_BINDINGS if item[:2] != ("diffusersImageControl", "strength")
 ) + (
     ("diffusersImagePipeline", "revision", "defaultRevision"),
     ("diffusersImagePipeline", "conditioning_kind", "kind"),
@@ -2492,9 +2469,7 @@ _QWEN_DIRECT_EDIT_GRAPH_BINDINGS = tuple(
         ("diffusersImageEdit", "reference_strength"),
     }
 ) + (("diffusersImagePipeline", "revision", "defaultRevision"),)
-_SDXL_EDIT_GRAPH_BINDINGS = _EDIT_GRAPH_BINDINGS + (
-    ("diffusersImagePipeline", "revision", "defaultRevision"),
-)
+_SDXL_EDIT_GRAPH_BINDINGS = _EDIT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),)
 _PAG_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
     ("diffusersImageEdit", "pag_scale", "pagScale"),
     ("diffusersImageEdit", "pag_adaptive_scale", "pagAdaptiveScale"),
@@ -2622,9 +2597,7 @@ _INPAINT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageInpaint", "output_type", "outputType"),
     ("diffusersImageInpaint", "max_sequence_length", "maxSequenceLength"),
 )
-_SDXL_INPAINT_GRAPH_BINDINGS = _INPAINT_GRAPH_BINDINGS + (
-    ("diffusersImagePipeline", "revision", "defaultRevision"),
-)
+_SDXL_INPAINT_GRAPH_BINDINGS = _INPAINT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),)
 _PAG_INPAINT_GRAPH_BINDINGS = _SDXL_INPAINT_GRAPH_BINDINGS + (
     ("diffusersImageInpaint", "pag_scale", "pagScale"),
     ("diffusersImageInpaint", "pag_adaptive_scale", "pagAdaptiveScale"),
@@ -2695,9 +2668,7 @@ _OUTPAINT_GRAPH_EDGES = (
     ("outpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"),
     ("diffusersImageInpaint", "images", "preview", "image"),
 )
-_OUTPAINT_GRAPH_BINDINGS = tuple(
-    item for item in _INPAINT_GRAPH_BINDINGS if item[0] != "loadMask"
-) + (
+_OUTPAINT_GRAPH_BINDINGS = tuple(item for item in _INPAINT_GRAPH_BINDINGS if item[0] != "loadMask") + (
     ("outpaintCanvas", "width", "width"),
     ("outpaintCanvas", "height", "height"),
     ("outpaintCanvas", "left", "outpaintLeft"),
@@ -2713,10 +2684,10 @@ _OUTPAINT_GRAPH_BINDINGS = tuple(
 def _direct_inpaint_bindings(*, outpaint: bool, unsupported_params: frozenset[str]) -> tuple:
     bindings = _OUTPAINT_GRAPH_BINDINGS if outpaint else _INPAINT_GRAPH_BINDINGS
     return tuple(
-        item
-        for item in bindings
-        if item[0] != "diffusersImageInpaint" or item[1] not in unsupported_params
+        item for item in bindings if item[0] != "diffusersImageInpaint" or item[1] not in unsupported_params
     ) + (("diffusersImagePipeline", "revision", "defaultRevision"),)
+
+
 _VIDEO_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
     ("diffusersRecipe", "modules.DiffusersRuntime.DiffusersExecutionRecipe", -900, -80),
@@ -2777,12 +2748,8 @@ _WAN_VACE_GRAPH_BINDINGS = tuple(
     (role, param, "wanVaceRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
     for role, param, source in _VIDEO_GRAPH_BINDINGS
 )
-_I2V_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
-    ("loadImage", "modules.Image.Load", -520, 300),
-)
-_I2V_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (
-    ("loadImage", "image", "wanGenerate", "reference_images"),
-)
+_I2V_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (("loadImage", "modules.Image.Load", -520, 300),)
+_I2V_GRAPH_EDGES = _VIDEO_GRAPH_EDGES + (("loadImage", "image", "wanGenerate", "reference_images"),)
 _I2V_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -2833,7 +2800,9 @@ _VACE_INPAINT_GRAPH_BINDINGS = tuple(
     ("alignMaskVideo", "grow_pixels", "inpaintMaskGrow96"),
 )
 _VACE_OUTPAINT_GRAPH_BINDINGS = tuple(
-    (role, param, "outpaintMaskGrow0") if role == "alignMaskVideo" and param == "grow_pixels" else (role, param, source)
+    (role, param, "outpaintMaskGrow0")
+    if role == "alignMaskVideo" and param == "grow_pixels"
+    else (role, param, source)
     for role, param, source in _VACE_INPAINT_GRAPH_BINDINGS
 )
 _VACE_CONTROL_GRAPH_ROLES = _VIDEO_GRAPH_ROLES + (
@@ -2943,14 +2912,16 @@ _STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS = tuple(
         role,
         param,
         "empty"
-        if (role, param) in {
+        if (role, param)
+        in {
             ("diffusersQuantization", "components"),
             ("diffusersRecipe", "attention_components"),
         }
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
         else "false"
-        if (role, param) in {
+        if (role, param)
+        in {
             ("diffusersRecipe", "regional_compile"),
             ("diffusersRecipe", "denoiser_cache"),
             ("diffusersRecipe", "layerwise_casting"),
@@ -3029,12 +3000,8 @@ _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS = (
         "videoCannyHighThreshold200",
     ),
 )
-_ANIMATEDIFF_CONTROL_GRAPH_BINDINGS = (
-    _ANIMATEDIFF_DIRECT_GRAPH_BINDINGS + _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS
-)
-_ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS = (
-    _ANIMATEDIFF_V2V_GRAPH_BINDINGS + _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS
-)
+_ANIMATEDIFF_CONTROL_GRAPH_BINDINGS = _ANIMATEDIFF_DIRECT_GRAPH_BINDINGS + _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS
+_ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS = _ANIMATEDIFF_V2V_GRAPH_BINDINGS + _ANIMATEDIFF_CONTROL_INPUT_GRAPH_BINDINGS
 _COGVIDEOX_GRAPH_BINDINGS = tuple(
     (
         role,
@@ -3335,11 +3302,7 @@ _AUDIO_LDM2_GRAPH_BINDINGS = tuple(
     (
         role,
         param,
-        "sampleRate16000"
-        if param == "sample_rate"
-        else "numWaveforms3"
-        if param == "num_waveforms"
-        else source,
+        "sampleRate16000" if param == "sample_rate" else "numWaveforms3" if param == "num_waveforms" else source,
     )
     for role, param, source in _STABLE_AUDIO_GRAPH_BINDINGS
 )
@@ -3903,9 +3866,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             ),
             "downloadFiles": FLUX_DEV_DIFFUSERS_FILES,
             "notes": ["Auto prefers the FP8 artifact on 16 GB CUDA when available."],
-            "revisionCandidates": [
-                require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline")
-            ],
+            "revisionCandidates": [require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline")],
             "supportsImageInput": True,
             "supportsMask": True,
             "modes": ["text_to_image", "edit_image", "inpaint"],
@@ -3917,7 +3878,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 "inpaint": {
                     "requiredImages": ["referenceImages", "maskImage"],
                     "note": "Requires one source image and one mask image for inpainting.",
-                }
+                },
             },
         },
         "autoRequirements": {
@@ -4388,14 +4349,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "supportsImageInput": True,
             "supportsMultiImage": True,
             "modes": ["edit_image", "multi_image_reference_edit"],
-            "additionalRequirements": studio_model_requirements_for_pair(
-                "FluxReduxPipeline", "edit_image"
-            ),
+            "additionalRequirements": studio_model_requirements_for_pair("FluxReduxPipeline", "edit_image"),
             "modeRequirements": {
                 "edit_image": {
-                    "modelRequirements": studio_model_requirements_for_pair(
-                        "FluxReduxPipeline", "edit_image"
-                    ),
+                    "modelRequirements": studio_model_requirements_for_pair("FluxReduxPipeline", "edit_image"),
                     "requiredImages": ["referenceImages"],
                     "note": "Requires reference images plus the reviewed FLUX.1-dev base pipeline.",
                 },
@@ -4405,7 +4362,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                     ),
                     "requiredImages": ["referenceImages"],
                     "note": "Requires multiple reference images plus the reviewed FLUX.1-dev base pipeline.",
-                }
+                },
             },
         },
         "autoRequirements": {
@@ -5627,8 +5584,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS
-        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+        "bindings": _EDIT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "qwen-image-2512:text-to-image:v1": {
         "modelType": "QwenImageModularPipeline",
@@ -5697,8 +5653,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS
-        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+        "bindings": _EDIT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "qwen-image-2512:inpaint:v1": {
         "modelType": "QwenImageModularPipeline",
@@ -5734,8 +5689,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _INPAINT_GRAPH_ROLES,
         "edges": _INPAINT_GRAPH_EDGES,
-        "bindings": _INPAINT_GRAPH_BINDINGS
-        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+        "bindings": _INPAINT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "qwen-image-edit:edit-image:v1": {
         "modelType": "QwenImageEditModularPipeline",
@@ -6273,8 +6227,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         ),
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS
-        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+        "bindings": _EDIT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "flux-dev:inpaint:v1": {
         "modelType": "FluxDevPipeline",
@@ -6299,8 +6252,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         ),
         "roles": _INPAINT_GRAPH_ROLES,
         "edges": _INPAINT_GRAPH_EDGES,
-        "bindings": _INPAINT_GRAPH_BINDINGS
-        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+        "bindings": _INPAINT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "sdxl-base:text-to-image:v1": {
         "modelType": "StableDiffusionXLPipeline",
@@ -6512,17 +6464,13 @@ def _planning_video_capability(
         "recommendedSteps": 30,
         "recommendedGuidance": 3.0,
         "guidanceLabel": "Guidance",
-        "supportsImageInput": any(
-            contract.get("requiredImages") for contract in (input_contracts or {}).values()
-        ),
+        "supportsImageInput": any(contract.get("requiredImages") for contract in (input_contracts or {}).values()),
         "supportsMask": False,
         "supportsMultiImage": False,
         "supportsControlImage": False,
         "supportsLayers": False,
         "supportsLora": False,
-        "supportsVideoInput": any(
-            contract.get("requiredVideos") for contract in (input_contracts or {}).values()
-        ),
+        "supportsVideoInput": any(contract.get("requiredVideos") for contract in (input_contracts or {}).values()),
         "supportsVideoMask": False,
         "outputKind": "video",
         "recommendedFrames": 81,
@@ -6961,12 +6909,14 @@ def _sana_video_capability(*, image_conditioned: bool) -> dict[str, Any]:
     model_type = "SanaImageToVideoPipeline" if image_conditioned else "SanaVideoPipeline"
     mode = "image_to_video" if image_conditioned else "text_to_video"
     label = "SANA-Video 2B 480p I2V" if image_conditioned else "SANA-Video 2B 480p"
-    requirements = {
-        "requiredImages": ["referenceImages"],
-        "note": "Requires exactly one opening image and preserves it as the first latent frame.",
-    } if image_conditioned else {
-        "note": "Uses the native text-only recipe with a backend-owned motion-score suffix of 30."
-    }
+    requirements = (
+        {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one opening image and preserves it as the first latent frame.",
+        }
+        if image_conditioned
+        else {"note": "Uses the native text-only recipe with a backend-owned motion-score suffix of 30."}
+    )
     return {
         "modelType": model_type,
         "label": label,
@@ -7198,7 +7148,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "character_animate",
             "profile": _P2_VIDEO_PROFILES["animate"],
             "capability": _planning_video_capability(
-                "WanAnimatePipeline", "Wan 2.2 Animate", "Wan Video", WAN_ANIMATE_REPO, _WAN_ANIMATE_MODES,
+                "WanAnimatePipeline",
+                "Wan 2.2 Animate",
+                "Wan Video",
+                WAN_ANIMATE_REPO,
+                _WAN_ANIMATE_MODES,
                 _WAN_ANIMATE_INPUTS,
             ),
             "roles": _WAN_ANIMATE_GRAPH_ROLES,
@@ -7218,8 +7172,12 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "image_to_video",
             "profile": _P2_VIDEO_PROFILES["ltx-long"],
             "capability": _planning_video_capability(
-                "LTXI2VLongMultiPromptPipeline", "LTX long-prompt I2V", "LTX Video", LTX_VIDEO_REPO,
-                ("image_to_video",), {"image_to_video": {"requiredImages": ["referenceImages"]}},
+                "LTXI2VLongMultiPromptPipeline",
+                "LTX long-prompt I2V",
+                "LTX Video",
+                LTX_VIDEO_REPO,
+                ("image_to_video",),
+                {"image_to_video": {"requiredImages": ["referenceImages"]}},
                 download_files=LTX_VIDEO_DIFFUSERS_FILES,
             ),
             "roles": _I2V_GRAPH_ROLES,
@@ -7231,7 +7189,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "text_to_video",
             "profile": _P2_VIDEO_PROFILES["ltx2"],
             "capability": _planning_video_capability(
-                "LTX2ConditionPipeline", "LTX-2 video and audio", "LTX Video", LTX2_REPO, _LTX2_MODES,
+                "LTX2ConditionPipeline",
+                "LTX-2 video and audio",
+                "LTX Video",
+                LTX2_REPO,
+                _LTX2_MODES,
                 _LTX2_INPUTS,
             ),
             "roles": _LTX2_GRAPH_ROLES,
@@ -7389,9 +7351,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
         "animatediff-controlnet-video-to-video:control-video-to-video:v1": {
             "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
             "mode": "control_video_to_video",
-            "profile": _P2_VIDEO_PROFILES[
-                "animatediff-controlnet-video-to-video"
-            ],
+            "profile": _P2_VIDEO_PROFILES["animatediff-controlnet-video-to-video"],
             "capability": _animatediff_extended_capability(
                 "AnimateDiffVideoToVideoControlNetPipeline",
                 "control_video_to_video",
@@ -7479,7 +7439,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "mode": "image_to_video",
             "profile": _P2_VIDEO_PROFILES["wan-flf"],
             "capability": _planning_video_capability(
-                "WanImage2VideoModularPipeline", "Wan first/last-frame video", "Wan Video", WAN_FLF_REPO,
+                "WanImage2VideoModularPipeline",
+                "Wan first/last-frame video",
+                "Wan Video",
+                WAN_FLF_REPO,
                 ("image_to_video",),
                 {"image_to_video": {"requiredImages": ["referenceImages", "lastImage"]}},
                 download_files=WAN_FLF_14B_DIFFUSERS_FILES,
@@ -7779,9 +7742,7 @@ _SD15_CONTROLNET_CAPABILITY.update(
         "modeRequirements": {
             **_SD15_CONTROLNET_CAPABILITY["modeRequirements"],
             "control_image": {
-                "modelRequirements": studio_model_requirements_for_pair(
-                    "StableDiffusionPipeline", "control_image"
-                ),
+                "modelRequirements": studio_model_requirements_for_pair("StableDiffusionPipeline", "control_image"),
                 "requiredImages": ["controlImage"],
                 "note": "Requires one control image and the immutable Canny ControlNet component.",
             },
@@ -7793,9 +7754,7 @@ _SD15_CONTROLNET_CAPABILITY.update(
                 "note": "Requires one source image, one control image, and the immutable Canny ControlNet component.",
             },
             "control_inpaint": {
-                "modelRequirements": studio_model_requirements_for_pair(
-                    "StableDiffusionPipeline", "control_inpaint"
-                ),
+                "modelRequirements": studio_model_requirements_for_pair("StableDiffusionPipeline", "control_inpaint"),
                 "requiredImages": ["referenceImages", "maskImage", "controlImage"],
                 "note": (
                     "Requires one source image, one mask, one control image, "
@@ -7811,9 +7770,7 @@ _SD15_CONTROLNET_CAPABILITY.update(
     }
 )
 for _sd15_spec_id, *_unused in _P3_SD15_DEFINITIONS:
-    STUDIO_EXECUTION_SPEC_DEFINITIONS[_sd15_spec_id]["capability"] = deepcopy(
-        _SD15_CONTROLNET_CAPABILITY
-    )
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[_sd15_spec_id]["capability"] = deepcopy(_SD15_CONTROLNET_CAPABILITY)
 _SD15_CONTROLNET_PROFILE = _sd15_profile(
     "sd15-controlnet-canny:direct",
     "control_image",
@@ -7920,9 +7877,7 @@ _SDXL_TURBO_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(SDXL_TURBO_REPO, model_type="StableDiffusionXLTurboPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(SDXL_TURBO_REPO, model_type="StableDiffusionXLTurboPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -8098,9 +8053,7 @@ _SDXL_CONTROLNET_CAPABILITY = {
         },
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLControlNetPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLControlNetPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -8231,9 +8184,7 @@ _HUNYUAN_DIT_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(HUNYUAN_DIT_DISTILLED_REPO, model_type="HunyuanDiTPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(HUNYUAN_DIT_DISTILLED_REPO, model_type="HunyuanDiTPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -8329,9 +8280,7 @@ _HUNYUAN_DIT_CONTROLNET_CAPABILITY = {
     "modes": ["control_image"],
     "modeRequirements": {
         "control_image": {
-            "modelRequirements": studio_model_requirements_for_pair(
-                "HunyuanDiTControlNetPipeline", "control_image"
-            ),
+            "modelRequirements": studio_model_requirements_for_pair("HunyuanDiTControlNetPipeline", "control_image"),
             "requiredImages": ["controlImage"],
             "note": "Requires one source image for the canonical Canny preprocessor and exact v1.2 ControlNet.",
         },
@@ -8430,9 +8379,7 @@ _SDXL_T2I_ADAPTER_CAPABILITY = {
         },
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLAdapterPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLAdapterPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -8541,9 +8488,7 @@ _SDXL_PAG_CAPABILITY = {
             "note": "Requires one source image and one mask image for PAG inpainting.",
         },
         "control_image": {
-            "modelRequirements": studio_model_requirements_for_pair(
-                "StableDiffusionXLPAGPipeline", "control_image"
-            ),
+            "modelRequirements": studio_model_requirements_for_pair("StableDiffusionXLPAGPipeline", "control_image"),
             "requiredImages": ["controlImage"],
             "note": "Requires one control image and the immutable SDXL Canny ControlNet component.",
         },
@@ -8556,9 +8501,7 @@ _SDXL_PAG_CAPABILITY = {
         },
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLPAGPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO, model_type="StableDiffusionXLPAGPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -8818,9 +8761,7 @@ _SANA_SPRINT_CAPABILITY = {
         },
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(SANA_SPRINT_REPO, model_type="SanaSprintPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(SANA_SPRINT_REPO, model_type="SanaSprintPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -8917,9 +8858,7 @@ _PIXART_SIGMA_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(PIXART_SIGMA_REPO, model_type="PixArtSigmaPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(PIXART_SIGMA_REPO, model_type="PixArtSigmaPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -9032,9 +8971,7 @@ _KANDINSKY3_CAPABILITY = {
     "modes": ["text_to_image", "edit_image"],
     "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(KANDINSKY3_REPO, model_type="Kandinsky3Pipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(KANDINSKY3_REPO, model_type="Kandinsky3Pipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -9131,9 +9068,7 @@ _LONGCAT_IMAGE_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(LONGCAT_IMAGE_REPO, model_type="LongCatImagePipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(LONGCAT_IMAGE_REPO, model_type="LongCatImagePipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -9177,9 +9112,7 @@ _LONGCAT_IMAGE_EDIT_CAPABILITY = {
             "note": "Requires one source image between 1:4 and 4:1 aspect ratio; output is normalized to an approximately one-megapixel bucket.",
         }
     },
-    "revisionCandidates": [
-        require_catalog_revision(LONGCAT_IMAGE_EDIT_REPO, model_type="LongCatImageEditPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(LONGCAT_IMAGE_EDIT_REPO, model_type="LongCatImageEditPipeline")],
     "notes": [
         "The immutable public edit snapshot shares the exact text encoder and VAE identities with the generation model and replaces only the safetensors transformer.",
         "MoDiff accepts exactly one at-most-1,048,576-pixel source between 1:4 and 4:1 aspect ratio; the package derives an approximately one-megapixel output and runs at most 50 steps.",
@@ -9650,9 +9583,7 @@ _NUCLEUS_IMAGE_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(NUCLEUS_IMAGE_REPO, model_type="NucleusMoEImagePipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(NUCLEUS_IMAGE_REPO, model_type="NucleusMoEImagePipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -9737,9 +9668,7 @@ _AURAFLOW_V03_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(AURAFLOW_V03_REPO, model_type="AuraFlowPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(AURAFLOW_V03_REPO, model_type="AuraFlowPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -9821,9 +9750,7 @@ _CHROMA1_HD_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(CHROMA1_HD_REPO, model_type="ChromaPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(CHROMA1_HD_REPO, model_type="ChromaPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -9906,9 +9833,7 @@ _COGVIEW3_PLUS_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(COGVIEW3_PLUS_REPO, model_type="CogView3PlusPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(COGVIEW3_PLUS_REPO, model_type="CogView3PlusPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -10073,9 +9998,7 @@ _ERNIE_IMAGE_TURBO_CAPABILITY = {
     "modes": ["text_to_image"],
     "modeRequirements": {},
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(ERNIE_IMAGE_TURBO_REPO, model_type="ErnieImagePipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(ERNIE_IMAGE_TURBO_REPO, model_type="ErnieImagePipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -10244,9 +10167,7 @@ _JOYIMAGE_EDIT_CAPABILITY = {
         }
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(JOYIMAGE_EDIT_REPO, model_type="JoyImageEditPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(JOYIMAGE_EDIT_REPO, model_type="JoyImageEditPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -10347,9 +10268,7 @@ _JOYIMAGE_EDIT_PLUS_CAPABILITY = {
         },
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(JOYIMAGE_EDIT_PLUS_REPO, model_type="JoyImageEditPlusPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(JOYIMAGE_EDIT_PLUS_REPO, model_type="JoyImageEditPlusPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -10442,9 +10361,7 @@ _DREAMLITE_BASE_CAPABILITY = {
         },
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(DREAMLITE_BASE_REPO, model_type="DreamLitePipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(DREAMLITE_BASE_REPO, model_type="DreamLitePipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -10753,20 +10670,15 @@ _PAG_CAPABILITY = {
             "note": "Requires one source image and one mask image for PAG inpainting.",
         },
         "control_image": {
-            "modelRequirements": studio_model_requirements_for_pair(
-                "StableDiffusionPAGPipeline", "control_image"
-            ),
+            "modelRequirements": studio_model_requirements_for_pair("StableDiffusionPAGPipeline", "control_image"),
             "requiredImages": ["controlImage"],
             "note": "Requires one control image and the immutable Canny ControlNet component.",
         },
         "control_inpaint": {
-            "modelRequirements": studio_model_requirements_for_pair(
-                "StableDiffusionPAGPipeline", "control_inpaint"
-            ),
+            "modelRequirements": studio_model_requirements_for_pair("StableDiffusionPAGPipeline", "control_inpaint"),
             "requiredImages": ["referenceImages", "maskImage", "controlImage"],
             "note": (
-                "Requires one source image, one mask, one control image, "
-                "and the immutable Canny ControlNet component."
+                "Requires one source image, one mask, one control image, and the immutable Canny ControlNet component."
             ),
         },
     },
@@ -10919,9 +10831,7 @@ _MARIGOLD_DEPTH_CAPABILITY = {
         }
     },
     "executionStatus": "expert_only",
-    "revisionCandidates": [
-        require_catalog_revision(MARIGOLD_DEPTH_LCM_REPO, model_type="MarigoldDepthPipeline")
-    ],
+    "revisionCandidates": [require_catalog_revision(MARIGOLD_DEPTH_LCM_REPO, model_type="MarigoldDepthPipeline")],
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
@@ -11358,9 +11268,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = 
 }
 for _flux_combined_spec_id, _flux_combined_definition in _FLUX_COMBINED_CONTROL_DEFINITIONS.items():
     _flux_control_family = _flux_combined_spec_id.split(":", 1)[0]
-    _flux_control_base = STUDIO_EXECUTION_SPEC_DEFINITIONS[
-        f"{_flux_control_family}:control-image:v1"
-    ]
+    _flux_control_base = STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_flux_control_family}:control-image:v1"]
     _flux_combined_definition["capability"] = _flux_control_base["capability"]
     _flux_combined_definition["autoRequirements"] = _flux_control_base["autoRequirements"]
     STUDIO_EXECUTION_SPEC_DEFINITIONS[_flux_combined_spec_id] = _flux_combined_definition
@@ -11875,9 +11783,7 @@ _LTX2_STANDARD_DIRECT_CAPABILITY = {
 }
 
 _CHROMA_IMG2IMG_DIRECT_BINDINGS = tuple(
-    item
-    for item in _SDXL_EDIT_GRAPH_BINDINGS
-    if item[:2] != ("diffusersImageEdit", "reference_strength")
+    item for item in _SDXL_EDIT_GRAPH_BINDINGS if item[:2] != ("diffusersImageEdit", "reference_strength")
 )
 
 _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS = {
@@ -11940,9 +11846,7 @@ for (
     ),
 ):
     for _inpaint_mode in ("inpaint", "outpaint"):
-        _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS[
-            f"{_inpaint_prefix}:{_inpaint_mode}:v1"
-        ] = {
+        _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS[f"{_inpaint_prefix}:{_inpaint_mode}:v1"] = {
             "modelType": _inpaint_model_type,
             "mode": _inpaint_mode,
             "profile": _inpaint_profile,
@@ -11965,23 +11869,13 @@ _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS["chroma1-hd-img2img:edit-image:v1"]
     "bindings": _CHROMA_IMG2IMG_DIRECT_BINDINGS,
 }
 for _chroma_inpaint_mode in ("inpaint", "outpaint"):
-    _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS[
-        f"chroma1-hd-inpaint:{_chroma_inpaint_mode}:v1"
-    ] = {
+    _STANDARD_DIRECT_IMAGE_PROMOTION_DEFINITIONS[f"chroma1-hd-inpaint:{_chroma_inpaint_mode}:v1"] = {
         "modelType": "ChromaInpaintPipeline",
         "mode": _chroma_inpaint_mode,
         "profile": _CHROMA1_HD_INPAINT_DIRECT_PROFILE,
         "capability": _CHROMA1_HD_INPAINT_DIRECT_CAPABILITY,
-        "roles": (
-            _INPAINT_GRAPH_ROLES
-            if _chroma_inpaint_mode == "inpaint"
-            else _OUTPAINT_GRAPH_ROLES
-        ),
-        "edges": (
-            _INPAINT_GRAPH_EDGES
-            if _chroma_inpaint_mode == "inpaint"
-            else _OUTPAINT_GRAPH_EDGES
-        ),
+        "roles": (_INPAINT_GRAPH_ROLES if _chroma_inpaint_mode == "inpaint" else _OUTPAINT_GRAPH_ROLES),
+        "edges": (_INPAINT_GRAPH_EDGES if _chroma_inpaint_mode == "inpaint" else _OUTPAINT_GRAPH_EDGES),
         "bindings": _direct_inpaint_bindings(
             outpaint=_chroma_inpaint_mode == "outpaint",
             unsupported_params=frozenset({"reference_strength"}),
@@ -11998,6 +11892,124 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["ltx2-standard:text-to-video:v1"] = {
     "edges": _LTX2_GRAPH_EDGES,
     "bindings": _LTX2_GRAPH_BINDINGS,
 }
+
+_BUILTIN_IMAGE_OPERATION_MODES = (
+    "image_adjustment",
+    "image_filter",
+    "image_crop",
+    "image_tile",
+    "image_channels",
+)
+_BUILTIN_IMAGE_OPERATION_PIPELINE_CLASS = "BuiltinImageOperationV1"
+_BUILTIN_IMAGE_OPERATION_REPO = "builtin://modiff/image-operations/v1"
+_BUILTIN_IMAGE_OPERATION_PROFILE = {
+    "id": "builtin-image-operations:direct",
+    "model_type": "BuiltinImageOperation",
+    "modes": _BUILTIN_IMAGE_OPERATION_MODES,
+    "loader_module": "modules.ImageOperations",
+    "loader_action": "ProcessImage",
+    "execution_path": "builtin-image-operation",
+    "pipeline_class": _BUILTIN_IMAGE_OPERATION_PIPELINE_CLASS,
+    "default_repo": _BUILTIN_IMAGE_OPERATION_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": 4096,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "optional_runtime_profiles": (),
+    "optional_runtime_delivery": "base",
+    "optional_runtime_platform_deliveries": (),
+    "compatible_repos": (),
+}
+_BUILTIN_IMAGE_OPERATION_CAPABILITY = {
+    "modelType": "BuiltinImageOperation",
+    "label": "Built-in Image Operations",
+    "displayName": "Built-in Image Operations",
+    "family": "Built-in Media",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": _BUILTIN_IMAGE_OPERATION_REPO,
+    "artifactLabel": "Versioned MoDiff built-in operation contract",
+    "artifactKind": "builtin",
+    "artifactInstallRequired": False,
+    "downloadFiles": [],
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "source"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": True,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 1024,
+        "height": 1024,
+    },
+    "modes": list(_BUILTIN_IMAGE_OPERATION_MODES),
+    "executionStatus": "supported",
+    "revisionCandidates": [],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "inputContracts": {
+        mode: {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one local source image; no model or network access is used.",
+        }
+        for mode in _BUILTIN_IMAGE_OPERATION_MODES
+    },
+    "notes": [
+        "Runs deterministic bounded Pillow operations in the base MoDiff process.",
+        "No model artifact, optional runtime, accelerator, download, or remote code is required.",
+        "Gallery publication remains disabled pending authored examples and human review.",
+    ],
+}
+_BUILTIN_IMAGE_OPERATION_ROLES = (
+    ("loadImage", "modules.Image.Load", -620, -80),
+    ("imageOperation", "modules.ImageOperations.ProcessImage", -160, -80),
+    ("preview", "modules.Image.Preview", 300, -80),
+)
+_BUILTIN_IMAGE_OPERATION_EDGES = (
+    ("loadImage", "image", "imageOperation", "image"),
+    ("imageOperation", "output", "preview", "image"),
+)
+_BUILTIN_IMAGE_OPERATION_BINDINGS = (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageOperation", "pipeline_class", "pipelineClass"),
+    ("imageOperation", "operation", "mode"),
+)
+for _builtin_image_mode in _BUILTIN_IMAGE_OPERATION_MODES:
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"builtin-image-operations:{_builtin_image_mode.replace('_', '-')}:v1"] = {
+        "modelType": "BuiltinImageOperation",
+        "mode": _builtin_image_mode,
+        "profile": _BUILTIN_IMAGE_OPERATION_PROFILE,
+        "capability": _BUILTIN_IMAGE_OPERATION_CAPABILITY,
+        "roles": _BUILTIN_IMAGE_OPERATION_ROLES,
+        "edges": _BUILTIN_IMAGE_OPERATION_EDGES,
+        "bindings": _BUILTIN_IMAGE_OPERATION_BINDINGS,
+    }
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",
@@ -12161,7 +12173,9 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
         profile_id = public["executionProfileId"]
         profile = definition["profile"]
         if pair in pairs or (profile_id in profiles and profiles[profile_id] != profile):
-            raise ValueError("Studio execution specifications must have unique pairs and consistent execution profiles.")
+            raise ValueError(
+                "Studio execution specifications must have unique pairs and consistent execution profiles."
+            )
         pairs.add(pair)
         profiles[profile_id] = profile
 
@@ -12205,11 +12219,7 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
                 or source_param.get("display") != "output"
                 or not isinstance(target_param, dict)
                 or target_param.get("display") != "input"
-                or not (
-                    source_types & target_types
-                    or "any" in source_types
-                    or "any" in target_types
-                )
+                or not (source_types & target_types or "any" in source_types or "any" in target_types)
             ):
                 raise ValueError("Studio execution specification references an incompatible handle.")
             adjacency[source_role].add(target_role)
@@ -12258,11 +12268,7 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
         return
     receipt = runtime_hints.get("studioExecutionSpec")
     candidate = runtime_hints.get("autoResourcePlan")
-    candidate_contract = (
-        candidate.get("studioExecutionSpecContract")
-        if isinstance(candidate, dict)
-        else None
-    )
+    candidate_contract = candidate.get("studioExecutionSpecContract") if isinstance(candidate, dict) else None
     if receipt is None:
         if candidate_contract is not None:
             raise RuntimeError(
@@ -12300,12 +12306,7 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
     paths = graph.get("paths")
     if not isinstance(nodes, dict) or not isinstance(paths, list):
         raise RuntimeError("Studio execution specification graph is invalid. Rebuild the managed graph.")
-    executable_ids = {
-        str(node_id)
-        for path in paths
-        if isinstance(path, list)
-        for node_id in path
-    }
+    executable_ids = {str(node_id) for path in paths if isinstance(path, list) for node_id in path}
     for role, node_key, _x, _y in spec["roles"]:
         node_id = node_ids.get(role)
         node = nodes.get(node_id) if isinstance(node_id, str) else None

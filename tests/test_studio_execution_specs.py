@@ -363,6 +363,11 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("ChromaInpaintPipeline", "inpaint"),
                 ("ChromaInpaintPipeline", "outpaint"),
                 ("LTX2Pipeline", "text_to_video"),
+                ("BuiltinImageOperation", "image_adjustment"),
+                ("BuiltinImageOperation", "image_filter"),
+                ("BuiltinImageOperation", "image_crop"),
+                ("BuiltinImageOperation", "image_tile"),
+                ("BuiltinImageOperation", "image_channels"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -1087,10 +1092,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(AUTO_MODEL_REQUIREMENTS[requirements_key], definition["autoRequirements"])
 
     def test_combined_control_specs_are_exact_generic_graphs_with_immutable_profiles(self):
-        specs = {
-            item["id"]: item
-            for item in validate_studio_execution_specs(module_registry.MODULE_MAP)
-        }
+        specs = {item["id"]: item for item in validate_studio_execution_specs(module_registry.MODULE_MAP)}
         expected = {
             "sd15-pag-controlnet-canny:control-image:v1": (
                 "StableDiffusionPAGPipeline",
@@ -1215,9 +1217,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                     studio_execution_spec_for_pair(model_type, mode)["id"],
                     spec_id,
                 )
-                self.assertFalse(
-                    DIFFUSERS_EXECUTION_PROFILES[profile_id].live_proof
-                )
+                self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[profile_id].live_proof)
                 if auxiliary:
                     self.assertIn("controlPreprocessor", roles)
                     self.assertIn(
@@ -1898,9 +1898,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
 
     def test_standard_qwen_pairs_are_separate_expert_only_generic_graphs(self):
         modular_control = studio_execution_spec_for_pair("QwenImageModularPipeline", "control_image")
-        modular_layered = studio_execution_spec_for_pair(
-            "QwenImageLayeredModularPipeline", "layer_decomposition"
-        )
+        modular_layered = studio_execution_spec_for_pair("QwenImageLayeredModularPipeline", "layer_decomposition")
         direct_control = studio_execution_spec_for_pair("QwenImageControlNetPipeline", "control_image")
         direct_layered = studio_execution_spec_for_pair("QwenImageLayeredPipeline", "layer_decomposition")
 
