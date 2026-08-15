@@ -9561,6 +9561,17 @@ class WebServer:
             )
             self.queue_message(starting_progress)
 
+        # Workflow node ids are document-local. A later graph may legitimately
+        # reuse the same id for a different module/action, so never dispatch
+        # through a cached instance whose executable identity no longer
+        # matches the current graph.
+        cached_node = self.node_cache.get(id)
+        if cached_node is not None and (
+            getattr(cached_node, "module_name", None) != module
+            or getattr(cached_node, "class_name", None) != action
+        ):
+            self.node_cache.pop(id, None)
+
         # if the node is not in the cache, initialize it
         if id not in self.node_cache:
             reused_node_id = self._adopt_reusable_loader_node(id, module, action)

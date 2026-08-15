@@ -173,6 +173,60 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
             server.execute_node("generate", graph_node, "test", quiet=True)
             self.assertEqual(consumer.execution_count, 2)
 
+    def test_execute_node_replaces_a_document_local_id_with_the_current_action(self):
+        from modiff.server import WebServer
+
+        class PriorAction(NodeBase):
+            def execute(self, value):
+                return {"result": f"prior:{value}"}
+
+        class CurrentAction(NodeBase):
+            def execute(self, value):
+                return {"result": f"current:{value}"}
+
+        module_name = ".".join(CurrentAction.__module__.split(".")[:-1])
+        definition = {
+            module_name: {
+                "PriorAction": {
+                    "params": {
+                        "value": {"type": "string", "default": ""},
+                        "result": {"type": "string", "display": "output"},
+                    }
+                },
+                "CurrentAction": {
+                    "params": {
+                        "value": {"type": "string", "default": ""},
+                        "result": {"type": "string", "display": "output"},
+                    }
+                },
+            }
+        }
+        graph_node = {
+            "module": module_name,
+            "action": "CurrentAction",
+            "params": {"value": {"value": "selected"}},
+        }
+
+        with (
+            patch("modiff.NodeBase._module_map", return_value=definition),
+            patch(
+                "modiff.server.import_module",
+                return_value=SimpleNamespace(CurrentAction=CurrentAction),
+            ),
+            patch("modiff.server.assert_optional_runtime_ready"),
+        ):
+            prior = PriorAction("shared-node-id")
+            server = object.__new__(WebServer)
+            server.modules = definition
+            server.node_cache = {"shared-node-id": prior}
+
+            server.execute_node("shared-node-id", graph_node, "test", quiet=True)
+
+        replacement = server.node_cache["shared-node-id"]
+        self.assertIsInstance(replacement, CurrentAction)
+        self.assertIsNot(replacement, prior)
+        self.assertEqual(replacement.output, {"result": "current:selected"})
+
     def test_cache_ignored_semantic_change_reuses_resident_output_and_invalidates_consumer(self):
         from modiff.server import WebServer
 
