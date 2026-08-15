@@ -13,6 +13,7 @@ OUTPUT_NODE_KEYS = {
     ("modules.Audio", "Export"),
     ("modules.Image", "Preview"),
     ("modules.Primitive", "DataViewer"),
+    ("modules.Primitive", "ExportData"),
     ("modules.Video", "Export"),
     ("modules.Video", "ExportWithAudio"),
 }
@@ -587,7 +588,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     in OUTPUT_NODE_KEYS
                     and node_id not in intentional_fallbacks
                 ]
-                self.assertTrue(outputs, "graph has no preview, export, or data-viewer output")
+                self.assertTrue(outputs, "graph has no preview, export, or data output")
 
                 used = set(outputs)
                 pending = list(outputs)

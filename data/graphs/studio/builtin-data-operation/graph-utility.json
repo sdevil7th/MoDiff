@@ -13,12 +13,34 @@
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-01",
+      "source": "node-02",
       "sourceHandle": "output",
       "style": {
         "stroke": "#94A3B8"
       },
-      "target": "node-02",
+      "target": "node-03",
+      "targetHandle": "value",
+      "type": "default"
+    },
+    {
+      "className": "category-string",
+      "data": {
+        "connectionType": "string"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#38BDF8",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#38BDF8"
+      },
+      "target": "node-01",
       "targetHandle": "value",
       "type": "default"
     }
@@ -26,10 +48,95 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "99399f44a068e4d2d03cc2cab23144ccddde2db9fc0d4fb9b0c7539bec05d08a",
+    "positionHash": "5ce30e8d5f9d7de7399a5bb3a7503a958d2e3a088c668e52ab14c32cf81b3b9d",
     "verticalGap": 72
   },
   "nodes": [
+    {
+      "data": {
+        "action": "ExportData",
+        "cache": false,
+        "category": "primitive",
+        "description": "Persist one bounded JSON or text value under the app-owned data root.",
+        "label": "Export Data",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Primitive",
+        "params": {
+          "file": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "str"
+          },
+          "filename": {
+            "default": "{PATH:data}/exports/MoDiff_{HASH:6}.json",
+            "label": "File",
+            "type": "str"
+          },
+          "format": {
+            "default": "json",
+            "label": "Format",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "json",
+                "schemaVersion": 1,
+                "value": "json"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text",
+                "schemaVersion": 1,
+                "value": "text"
+              }
+            ],
+            "type": "string"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Serialized Data",
+            "type": "string"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_text",
+            "label": "Preview"
+          },
+          "value": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Data",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "dataExport",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 880,
+        "y": 98
+      },
+      "type": "custom"
+    },
     {
       "data": {
         "action": "ProcessText",
@@ -228,7 +335,7 @@
         "type": "custom",
         "uiState": {}
       },
-      "id": "node-01",
+      "id": "node-02",
       "position": {
         "x": 0,
         "y": 0
@@ -251,7 +358,7 @@
         "params": {
           "output": {
             "display": "output",
-            "isConnected": false,
+            "isConnected": true,
             "label": "Output",
             "type": "string"
           },
@@ -279,7 +386,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-02",
+      "id": "node-03",
       "position": {
         "x": 440,
         "y": 140

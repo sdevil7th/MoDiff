@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T11:09:29.011Z",
+  "generatedAt": "2026-08-15T11:42:45.886Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 185,
@@ -712,7 +712,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-data-operation/data-conversion.json",
-      "graphHash": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6"
+      "graphHash": "bf950192e257f0cb8e4fa7feb61a66a80f3da16b9825ecb4ff341349b7253c52"
     },
     {
       "id": "BuiltinDataOperation:graph_utility",
@@ -738,7 +738,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-data-operation/graph-utility.json",
-      "graphHash": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475"
+      "graphHash": "e3468c5dab81871976ec37f84a4e9a0ffa827a337d7d6986070b7fbb218c6335"
     },
     {
       "id": "BuiltinDataOperation:text_select",
@@ -764,7 +764,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-data-operation/text-select.json",
-      "graphHash": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66"
+      "graphHash": "02a6554aa75e3e5225205f52f6f9cebad6369db5eb05bdf46d1d2c0734d95c03"
     },
     {
       "id": "BuiltinImageOperation:image_adjustment",
