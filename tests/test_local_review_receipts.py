@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -6,9 +7,11 @@ import unittest
 from modiff.local_review_receipts import (
     build_local_review_ledger,
     canonical_content_hash,
+    graph_execution_semantic_hash,
     loopback_base_url,
     merge_local_review_ledger,
     parse_record,
+    reconcile_local_review_graph_bindings,
     validate_local_review_ledger,
 )
 
@@ -165,6 +168,85 @@ class LocalReviewReceiptTests(unittest.TestCase):
                 existing=existing,
                 records=[parse_record("BuiltinImageOperation:crop|task-other|images/candidate.png")],
                 fetch_run=fetch,
+            )
+
+    def test_graph_reconciliation_requires_exact_execution_semantic_parity(self):
+        old_graph = {
+            "nodes": [
+                {
+                    "id": "load",
+                    "type": "custom",
+                    "data": {
+                        "module": "modules.Image",
+                        "action": "Load",
+                        "studioRole": "loadImage",
+                        "params": {
+                            "file": {"value": ["@data/images/source_a1B2c3.png"]},
+                            "image": {"display": "output", "disabled": False},
+                        },
+                    },
+                }
+            ],
+            "edges": [],
+            "viewport": {"x": 0, "y": 0, "zoom": 1},
+        }
+        current_graph = json.loads(json.dumps(old_graph))
+        current_graph["nodes"][0]["data"]["description"] = "Refreshed descriptive node metadata."
+        current_graph["nodes"][0]["data"]["params"]["file"]["value"] = ["@data/images/source.png"]
+        current_graph["nodes"][0]["data"]["params"]["image"]["disabled"] = True
+        old_bytes = (json.dumps(old_graph, sort_keys=True) + "\n").encode()
+        current_bytes = (json.dumps(current_graph, sort_keys=True) + "\n").encode()
+        old_sha256 = hashlib.sha256(
+            json.dumps(old_graph, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        current_sha256 = hashlib.sha256(
+            json.dumps(current_graph, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        contracts_path = self.root / "data" / "template-candidate-contracts.v1.json"
+        contracts = json.loads(contracts_path.read_text(encoding="utf-8"))
+        contracts["contracts"][0]["graphHash"] = old_sha256
+        contracts_path.write_text(json.dumps(contracts), encoding="utf-8")
+        existing = build_local_review_ledger(
+            root=self.root,
+            records=[parse_record("BuiltinImageOperation:crop|task-image|images/candidate.png")],
+            fetch_run=self._run,
+        )
+        graph_path = self.root / "data" / "graphs" / "studio" / "builtin-image-operation" / "crop.json"
+        graph_path.parent.mkdir(parents=True)
+        graph_path.write_bytes(current_bytes)
+        contracts["contracts"][0]["graphHash"] = current_sha256
+        contracts_path.write_text(json.dumps(contracts), encoding="utf-8")
+
+        reconciled = reconcile_local_review_graph_bindings(
+            root=self.root,
+            existing=existing,
+            source_commit="f" * 40,
+            load_historical_graph=lambda commit, path: old_bytes,
+        )
+
+        receipt = reconciled["receipts"][0]
+        self.assertEqual(receipt["graph"]["sha256"], current_sha256)
+        self.assertEqual(receipt["graphReconciliation"]["previousSha256"], old_sha256)
+        self.assertEqual(
+            receipt["graphReconciliation"]["executionSemanticHash"],
+            graph_execution_semantic_hash(current_graph),
+        )
+        self.assertEqual(validate_local_review_ledger(reconciled, root=self.root), reconciled)
+
+        drifted_graph = json.loads(json.dumps(current_graph))
+        drifted_graph["nodes"][0]["data"]["params"]["file"]["value"] = ["@data/images/other.png"]
+        drifted_bytes = (json.dumps(drifted_graph, sort_keys=True) + "\n").encode()
+        graph_path.write_bytes(drifted_bytes)
+        contracts["contracts"][0]["graphHash"] = hashlib.sha256(
+            json.dumps(drifted_graph, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        contracts_path.write_text(json.dumps(contracts), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "execution semantics changed"):
+            reconcile_local_review_graph_bindings(
+                root=self.root,
+                existing=existing,
+                source_commit="f" * 40,
+                load_historical_graph=lambda commit, path: old_bytes,
             )
 
     def test_record_and_server_boundaries_fail_closed(self):

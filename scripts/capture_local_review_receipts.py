@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import urllib.error
@@ -21,6 +22,7 @@ from modiff.local_review_receipts import (
     loopback_base_url,
     merge_local_review_ledger,
     parse_record,
+    reconcile_local_review_graph_bindings,
     validate_local_review_ledger,
 )
 
@@ -91,6 +93,11 @@ def parse_args(argv=None):
         action="store_true",
         help="Validate the existing ledger and append only newly fetched task receipts.",
     )
+    parser.add_argument(
+        "--reconcile-graphs-from",
+        metavar="GIT_REF",
+        help="Rebind stale graph hashes only after exact execution-semantic comparison with GIT_REF.",
+    )
     parser.add_argument("--validate", action="store_true", help="Validate an existing receipt instead of capturing.")
     return parser.parse_args(argv)
 
@@ -98,9 +105,51 @@ def parse_args(argv=None):
 def main(argv=None) -> int:
     args = parse_args(argv)
     destination = _output_path(args.output)
+    if args.reconcile_graphs_from:
+        if args.record or args.merge or args.validate:
+            raise SystemExit("--reconcile-graphs-from does not accept capture, merge, or validate options.")
+        if not destination.is_file() or destination.is_symlink():
+            raise SystemExit("Graph reconciliation requires an existing regular receipt ledger.")
+        revision = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(ROOT),
+                "rev-parse",
+                "--verify",
+                "--end-of-options",
+                f"{args.reconcile_graphs_from}^{{commit}}",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout.strip()
+
+        def load_historical_graph(commit, graph_path):
+            result = subprocess.run(
+                ["git", "-C", str(ROOT), "show", f"{commit}:data/graphs/{graph_path}"],
+                check=True,
+                capture_output=True,
+                timeout=30,
+            )
+            return result.stdout
+
+        existing = json.loads(destination.read_text(encoding="utf-8"))
+        payload = reconcile_local_review_graph_bindings(
+            root=ROOT,
+            existing=existing,
+            source_commit=revision,
+            load_historical_graph=load_historical_graph,
+        )
+        _write_atomic(destination, payload)
+        print(
+            f"Reconciled {destination}: {payload['summary']['receiptCount']} retained receipts remain pending review."
+        )
+        return 0
     if args.validate:
         if args.record or args.merge:
-            raise SystemExit("--validate does not accept --record or --merge.")
+            raise SystemExit("--validate does not accept capture or merge options.")
         payload = json.loads(destination.read_text(encoding="utf-8"))
         validate_local_review_ledger(payload, root=ROOT)
         print(

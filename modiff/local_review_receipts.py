@@ -19,6 +19,11 @@ MAX_OUTPUTS_PER_RECEIPT = 32
 MAX_OUTPUT_BYTES = 1 << 34
 _WORKFLOW_ID = re.compile(r"^[A-Za-z0-9_.-]+:[a-z0-9_]+$")
 _TASK_ID = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_GIT_COMMIT = re.compile(r"^[0-9a-f]{40}$")
+_APP_DATA_COLLISION_REFERENCE = re.compile(
+    r"^(@data/(?:audio|images|videos)/[^/]+?)_[A-Za-z0-9_-]{6}(\.[A-Za-z0-9]+)$"
+)
 _ALLOWED_OUTPUT_ROOTS = frozenset({"audio", "exports", "images", "videos"})
 _MEDIA_SUFFIXES = {
     ".flac": "audio",
@@ -40,6 +45,81 @@ def canonical_content_hash(document: dict) -> str:
     payload = deepcopy(document)
     payload.pop("contentHash", None)
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def _normalize_execution_value(value):
+    if isinstance(value, str):
+        match = _APP_DATA_COLLISION_REFERENCE.fullmatch(value)
+        return "".join(match.groups()) if match else value
+    if isinstance(value, list):
+        return [_normalize_execution_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _normalize_execution_value(item) for key, item in sorted(value.items())}
+    return value
+
+
+def graph_execution_semantic_hash(graph: dict) -> str:
+    """Hash only fields that can change a canonical graph's exported execution."""
+
+    if (
+        not isinstance(graph, dict)
+        or not isinstance(graph.get("nodes"), list)
+        or not isinstance(graph.get("edges"), list)
+    ):
+        raise ValueError("Canonical review graph must contain node and edge arrays.")
+    nodes = []
+    seen_ids = set()
+    for node in graph["nodes"]:
+        if not isinstance(node, dict) or not isinstance(node.get("id"), str) or node["id"] in seen_ids:
+            raise ValueError("Canonical review graph node identities must be unique strings.")
+        seen_ids.add(node["id"])
+        data = node.get("data")
+        if not isinstance(data, dict):
+            raise ValueError("Canonical review graph nodes must contain data objects.")
+        params = data.get("params")
+        if not isinstance(params, dict):
+            raise ValueError("Canonical review graph nodes must contain parameter objects.")
+        values = {
+            key: _normalize_execution_value(field["value"])
+            for key, field in sorted(params.items())
+            if isinstance(field, dict) and "value" in field
+        }
+        ui_state = data.get("uiState")
+        nodes.append(
+            {
+                "action": data.get("action"),
+                "disabled": bool(ui_state.get("disabled")) if isinstance(ui_state, dict) else False,
+                "id": node["id"],
+                "module": data.get("module"),
+                "parentId": node.get("parentId"),
+                "studioRole": data.get("studioRole"),
+                "type": node.get("type"),
+                "values": values,
+            }
+        )
+    edges = []
+    for edge in graph["edges"]:
+        if not isinstance(edge, dict):
+            raise ValueError("Canonical review graph edges must be objects.")
+        edges.append(
+            {
+                "source": edge.get("source"),
+                "sourceHandle": edge.get("sourceHandle"),
+                "target": edge.get("target"),
+                "targetHandle": edge.get("targetHandle"),
+            }
+        )
+    projection = {
+        "nodes": sorted(nodes, key=lambda item: item["id"]),
+        "edges": sorted(
+            edges,
+            key=lambda item: tuple(
+                str(item.get(key) or "") for key in ("source", "sourceHandle", "target", "targetHandle")
+            ),
+        ),
+    }
+    encoded = json.dumps(projection, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
@@ -110,6 +190,11 @@ def _sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1 << 20), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _canonical_graph_hash(graph: dict) -> str:
+    encoded = json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _output_receipt(data_root: Path, relative_path: str, expected_kind: str) -> dict:
@@ -260,6 +345,74 @@ def build_local_review_ledger(
     return _ledger_document(receipts)
 
 
+def reconcile_local_review_graph_bindings(
+    *,
+    root: Path,
+    existing: dict,
+    source_commit: str,
+    load_historical_graph: Callable[[str, str], bytes],
+) -> dict:
+    """Rebind graph hashes only after exact historical/current execution parity."""
+
+    validate_local_review_ledger(existing)
+    commit = str(source_commit or "").strip().lower()
+    if not _GIT_COMMIT.fullmatch(commit):
+        raise ValueError("Graph reconciliation requires one exact 40-character source commit.")
+    candidates = load_candidate_contracts(root)
+    receipts = deepcopy(existing["receipts"])
+    reconciled = 0
+    for receipt in receipts:
+        workflow_id = receipt.get("workflowId")
+        contract = candidates.get(workflow_id)
+        graph = receipt.get("graph")
+        if not isinstance(contract, dict) or not isinstance(graph, dict):
+            raise ValueError("Graph reconciliation requires current candidate and receipt bindings.")
+        graph_path = contract.get("graphPath")
+        current_sha256 = contract.get("graphHash")
+        previous_sha256 = graph.get("sha256")
+        if graph.get("path") != graph_path or not all(
+            isinstance(value, str) and _SHA256.fullmatch(value) for value in (current_sha256, previous_sha256)
+        ):
+            raise ValueError("Graph reconciliation received an invalid graph path or SHA-256 binding.")
+        current_path = root / "data" / "graphs" / graph_path
+        if current_path.is_symlink() or not current_path.is_file():
+            raise ValueError(f"Current canonical graph is missing or linked: {graph_path}")
+        current_bytes = current_path.read_bytes()
+        try:
+            current_graph = json.loads(current_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError(f"Canonical review graph is not valid UTF-8 JSON: {graph_path}") from error
+        if _canonical_graph_hash(current_graph) != current_sha256:
+            raise ValueError(f"Current canonical graph bytes do not match the candidate ledger: {graph_path}")
+        if previous_sha256 == current_sha256:
+            continue
+        historical_bytes = load_historical_graph(commit, graph_path)
+        try:
+            historical_graph = json.loads(historical_bytes)
+        except (TypeError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError(f"Historical canonical graph is not valid UTF-8 JSON: {graph_path}") from error
+        if _canonical_graph_hash(historical_graph) != previous_sha256:
+            raise ValueError(f"Historical canonical graph bytes do not match the retained receipt: {graph_path}")
+        historical_semantic_hash = graph_execution_semantic_hash(historical_graph)
+        current_semantic_hash = graph_execution_semantic_hash(current_graph)
+        if historical_semantic_hash != current_semantic_hash:
+            raise ValueError(f"Canonical graph execution semantics changed and require a rerun: {workflow_id}")
+        receipt["graph"] = {"path": graph_path, "sha256": current_sha256}
+        receipt["graphReconciliation"] = {
+            "currentSha256": current_sha256,
+            "executionSemanticHash": current_semantic_hash,
+            "previousSha256": previous_sha256,
+            "projectionVersion": 1,
+            "sourceCommit": commit,
+        }
+        reconciled += 1
+    if reconciled == 0:
+        raise ValueError("No stale graph binding required reconciliation.")
+    document = _ledger_document(receipts)
+    validate_local_review_ledger(document, root=root)
+    return document
+
+
 def merge_local_review_ledger(
     *,
     root: Path,
@@ -334,6 +487,32 @@ def validate_local_review_ledger(document: dict, *, root: Path | None = None) ->
                 "sha256": contract.get("graphHash"),
             }:
                 raise ValueError("Local review receipt graph binding is stale.")
+            reconciliation = receipt.get("graphReconciliation")
+            if reconciliation is not None:
+                expected_keys = {
+                    "currentSha256",
+                    "executionSemanticHash",
+                    "previousSha256",
+                    "projectionVersion",
+                    "sourceCommit",
+                }
+                if (
+                    not isinstance(reconciliation, dict)
+                    or set(reconciliation) != expected_keys
+                    or reconciliation.get("projectionVersion") != 1
+                    or reconciliation.get("currentSha256") != contract.get("graphHash")
+                    or not _SHA256.fullmatch(str(reconciliation.get("previousSha256") or ""))
+                    or reconciliation.get("previousSha256") == reconciliation.get("currentSha256")
+                    or not _GIT_COMMIT.fullmatch(str(reconciliation.get("sourceCommit") or ""))
+                ):
+                    raise ValueError("Local review receipt graph reconciliation is malformed.")
+                graph_path = root / "data" / "graphs" / contract["graphPath"]
+                try:
+                    current_graph = json.loads(graph_path.read_text(encoding="utf-8"))
+                except (OSError, UnicodeError, json.JSONDecodeError) as error:
+                    raise ValueError("Local review receipt current graph cannot be inspected.") from error
+                if reconciliation.get("executionSemanticHash") != graph_execution_semantic_hash(current_graph):
+                    raise ValueError("Local review receipt execution-semantic reconciliation is stale.")
             task = receipt.get("task")
             outputs = receipt.get("outputs")
             if (
