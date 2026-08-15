@@ -5379,7 +5379,29 @@ class WebServer:
                 status=409,
             )
 
-        task_id = await self.queue_task(self.execute_graph, (graph,), None, sid, name="Graph execution")
+        try:
+            task_id = await self.queue_task(
+                self.execute_graph,
+                (graph,),
+                None,
+                sid,
+                name="Graph execution",
+            )
+        except RuntimeError as error:
+            if not getattr(error, "modiff_error_code", None):
+                raise
+            classification = self._classify_exception(error)
+            return web.json_response(
+                {
+                    "error": True,
+                    "message": classification["message"],
+                    "category": classification["category"],
+                    "error_code": classification["error_code"],
+                    "recovery_hint": classification["recovery_hint"],
+                    "sid": sid,
+                },
+                status=400,
+            )
         preview_state = self._studio_preview_slots_for_task(task_id)
         return web.json_response(
             {

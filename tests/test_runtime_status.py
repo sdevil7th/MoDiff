@@ -1274,6 +1274,33 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("junk", queued_graph["runtimeHints"]["autoResourcePlan"])
         self.assertNotIn("resourceRetryHistory", queued_graph["runtimeHints"])
 
+    async def test_graph_rejects_malformed_runtime_receipts_without_queueing(self):
+        malformed_dependency = {
+            "repository": "example/model",
+            "revision": "a" * 40,
+            "extra": True,
+        }
+        request = JsonRequest(
+            {
+                "sid": "malformed-runtime-receipt",
+                "nodes": {},
+                "paths": [],
+                "runtimeHints": {"modelDependencies": [malformed_dependency]},
+            }
+        )
+
+        with patch.object(self.server, "_auto_resource_runtime_block", return_value=None):
+            response = await self.server.graph(request)
+        payload = json.loads(response.text)
+
+        self.assertEqual(response.status, 400)
+        self.assertTrue(payload["error"])
+        self.assertEqual(payload["category"], "auto_resource")
+        self.assertEqual(payload["error_code"], "auto_resource_candidate_mismatch")
+        self.assertEqual(payload["sid"], "malformed-runtime-receipt")
+        self.assertEqual(self.server.main_queue.qsize(), 0)
+        self.assertEqual(self.server.task_graphs, {})
+
     def test_auto_retry_candidate_is_bound_to_selected_profile_and_supported_values(self):
         flux = {
             **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
