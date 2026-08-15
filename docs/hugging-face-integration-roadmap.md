@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Ninety of those 138 candidates now also have exact pinned graph-source
+Ninety-five of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7039,6 +7039,10 @@ model generations behind the unauthored video-only task. The three LTX 2.3/2.5
 graphs also decode synchronized audio, so they are corrected to the separate
 `first_last_frame_to_video_with_audio` task and retain their exact checkpoint,
 text-encoder, VAE, and optional transition-LoRA gates.
+Five further video reviews retain classic Hunyuan Video, HunyuanVideo 1.5
+T2V/I2V, and Kandinsky 5 T2V/I2V behind the existing generic video task
+boundaries while requiring their distinct transformer, encoder, vision, and
+VAE admissions. Allegro and LTX2 support is not inherited by those graphs.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7164,6 +7168,8 @@ contracts to video plus audio. `04c0445` adds the three Wan audio-driven video
 and two SCAIL-2 character-replacement decisions. `f7bf0b1` adds the four VACE,
 Wan Fun, and Anima inpaint/media decisions. `24efba9` adds all seven endpoint-
 conditioned Wan/LTX decisions and preserves the LTX audio output contract.
+`b433ff8` adds the five classic Hunyuan, HunyuanVideo 1.5, and Kandinsky 5
+video-generation decisions.
 
 The following separate gates do remain external:
 
