@@ -1017,6 +1017,12 @@ class LoadTextGenerationModel(NodeBase):
     resizable = True
     params = {
         "model": {"label": "Model", "display": "output", "type": "transformers_causal_lm"},
+        "pipeline_class": {
+            "label": "Execution Class",
+            "type": "string",
+            "default": "AutoModelForCausalLM",
+            "hidden": True,
+        },
         "model_id": {
             "label": "Model",
             "display": "modelselect",
@@ -1035,6 +1041,8 @@ class LoadTextGenerationModel(NodeBase):
     }
 
     def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", "AutoModelForCausalLM") != "AutoModelForCausalLM":
+            raise ValueError("Text generation requires the AutoModelForCausalLM execution contract.")
         model, receipt = _load_model(
             selection_value=kwargs.get("model_id"),
             revision_value=kwargs.get("revision"),
@@ -1112,6 +1120,12 @@ class LoadImageTextToTextModel(NodeBase):
     resizable = True
     params = {
         "model": {"label": "Model", "display": "output", "type": "transformers_image_text_to_text"},
+        "pipeline_class": {
+            "label": "Execution Class",
+            "type": "string",
+            "default": "AutoModelForImageTextToText",
+            "hidden": True,
+        },
         "model_id": {
             "label": "Model",
             "display": "modelselect",
@@ -1130,6 +1144,8 @@ class LoadImageTextToTextModel(NodeBase):
     }
 
     def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", "AutoModelForImageTextToText") != "AutoModelForImageTextToText":
+            raise ValueError("Image/video-to-text generation requires the AutoModelForImageTextToText contract.")
         model, receipt = _load_model(
             selection_value=kwargs.get("model_id"),
             revision_value=kwargs.get("revision"),
@@ -1225,6 +1241,12 @@ class LoadAnyToAnyModel(NodeBase):
     resizable = True
     params = {
         "model": {"label": "Model", "display": "output", "type": "transformers_any_to_any"},
+        "pipeline_class": {
+            "label": "Execution Class",
+            "type": "string",
+            "default": "JanusForConditionalGeneration",
+            "hidden": True,
+        },
         "model_id": {
             "label": "Model",
             "display": "modelselect",
@@ -1243,6 +1265,8 @@ class LoadAnyToAnyModel(NodeBase):
     }
 
     def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", "JanusForConditionalGeneration") != "JanusForConditionalGeneration":
+            raise ValueError("Any-to-any generation requires the reviewed Janus execution contract.")
         model, receipt = _load_any_to_any_model(
             selection_value=kwargs.get("model_id"),
             revision_value=kwargs.get("revision"),

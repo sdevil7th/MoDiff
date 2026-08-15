@@ -13,6 +13,7 @@ import numpy as np
 import torch
 from PIL import Image
 
+from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
 from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES, TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
 from modules.HuggingFaceTransformers.main import (
     ANY_TO_ANY_ADAPTER_CONTRACTS,
@@ -200,6 +201,52 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
                 MODULE_MAP["modules.HuggingFaceTransformers"][class_name]["category"],
                 "Hugging Face Transformers",
             )
+
+    def test_generic_loaders_publish_exact_fail_closed_execution_identities(self):
+        cases = (
+            (
+                LoadTextGenerationModel,
+                "LoadTextGenerationModel",
+                "AutoModelForCausalLM",
+                "smollm2-135m-instruct:direct",
+            ),
+            (
+                LoadImageTextToTextModel,
+                "LoadImageTextToTextModel",
+                "AutoModelForImageTextToText",
+                "smolvlm-256m-instruct:direct",
+            ),
+            (LoadAnyToAnyModel, "LoadAnyToAnyModel", "JanusForConditionalGeneration", "janus-pro-1b:direct"),
+        )
+        for loader, action, pipeline_class, profile_id in cases:
+            with self.subTest(action=action):
+                definition = loader.params["pipeline_class"]
+                self.assertTrue(definition["hidden"])
+                self.assertEqual(definition["default"], pipeline_class)
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.HuggingFaceTransformers",
+                    action,
+                    {
+                        "pipeline_class": pipeline_class,
+                        "model_id": {"source": "hub", "value": REPOSITORY},
+                    },
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [profile_id])
+                _profiles, missing_reason = resolve_execution_profiles_for_loader(
+                    "modules.HuggingFaceTransformers",
+                    action,
+                    {"model_id": {"source": "hub", "value": REPOSITORY}},
+                )
+                self.assertEqual(missing_reason, "loader_identity_missing")
+
+        for loader, expected in (
+            (LoadTextGenerationModel, "AutoModelForCausalLM"),
+            (LoadImageTextToTextModel, "AutoModelForImageTextToText"),
+            (LoadAnyToAnyModel, "JanusForConditionalGeneration"),
+        ):
+            with self.subTest(loader=loader.__name__), self.assertRaisesRegex(ValueError, "requires"):
+                loader("wrong-execution-identity").execute(pipeline_class=expected + "Wrong")
 
     def test_optional_runtime_qualifies_both_new_auto_model_symbols(self):
         transformers = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID].packages[0]
