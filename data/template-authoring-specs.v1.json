@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:7263e6e2a95ce032b19d12add106d7966a75819ac3fe7171bb1586674f6877f4",
+  "contentHash": "sha256:b44e93aa3a1fef5d55b1b29d2a6687bbcc5df00d6a2770b4012b68b3eb6843a0",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:248a53b63455c5c1872902fc1acf84fc9142469899fa2cfff9a7690c9651b8ca",
+      "contentHash": "sha256:bdeec44681fcc9b0ef09c02ed2215c8f902d2c08e2ec1ed871510feec98320a4",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:8477640c475232f2ffc5c8b0c7af2758a7357f5f0670ad3f2d9764f50dc40c68"
+      "sha256": "sha256:d5330820604c7809a64d7abb0f4cde87276d91e8acff0f6d7efa58347bbb6d04"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:eb15c0eecf4292de89d2b1f940b8923b9e57036a1854821b82d581f5353c4575"
+      "sha256": "sha256:01706eae3858258a0dc0ee98c70b029eb7e60ae3185b44a5e755fa829581bc51"
     }
   },
   "specifications": [
@@ -2119,6 +2119,110 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "Built-in Media — Image Tile [BuiltinImageOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-upscale.json",
+        "sha256": "5c70e632e46629be806e28846195a9913ec3865e5a4866f8f7f887f61de7d2dc"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "5c70e632e46629be806e28846195a9913ec3865e5a4866f8f7f887f61de7d2dc",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_upscale",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_upscale",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image upscale workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Upscale [BuiltinImageOperation]"
     },
     {
       "artifactPlan": {
@@ -19536,16 +19640,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 131,
+    "authoringSpecCount": 132,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 52,
-      "draft_complete_input_selection_pending": 79
+      "draft_complete_input_selection_pending": 80
     },
-    "canonicalDefaultsCapturedCount": 131,
-    "generationPendingCount": 131,
-    "inputSelectionPendingCount": 79,
+    "canonicalDefaultsCapturedCount": 132,
+    "generationPendingCount": 132,
+    "inputSelectionPendingCount": 80,
     "promptDraftedCount": 120,
-    "promptNotApplicableCount": 11,
-    "rightsReviewPendingCount": 131
+    "promptNotApplicableCount": 12,
+    "rightsReviewPendingCount": 132
   }
 }

@@ -37,6 +37,7 @@ _NO_PROMPT_MODES = {
     "image_channels",
     "image_crop",
     "image_filter",
+    "image_upscale",
     "image_tile",
     "speech_to_text",
     "speech_translation",

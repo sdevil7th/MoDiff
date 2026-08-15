@@ -31,7 +31,7 @@ IMAGE_OPERATION_MODES = (
     "image_adjustment",
     "image_filter",
     "image_crop",
-    "image_resize",
+    "image_upscale",
     "image_tile",
     "image_channels",
 )
@@ -621,7 +621,7 @@ class ProcessImage(NodeBase):
                 height=kwargs.get("height", 0),
             )
             return {"output": result["output"]}
-        if operation == "image_resize":
+        if operation == "image_upscale":
             return ResizeImage().execute(
                 image=image,
                 width=kwargs.get("resize_width", 1024),

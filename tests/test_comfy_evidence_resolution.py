@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 53,
+                "recordsWithHiddenAuthoringSpecOption": 54,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 79,
+                "recordsWithRecommendedWorkflow": 80,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 36,
+                    "explicit_new_task_candidate": 35,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 54,
+                    "explicit_task_candidate": 55,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 54,
-                    "new_task_boundary_required": 36,
+                    "existing_task_boundary_model_admission_required": 55,
+                    "new_task_boundary_required": 35,
                     "task_undetermined": 1,
                 },
             },
@@ -176,6 +176,23 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
             row for row in self.ledger["resolutions"] if row["catalogId"] == "basic_image_color_adjustment"
         )
         self.assertEqual(showcase["inferredMode"], "image_adjustment")
+
+    def test_explicit_upscale_metadata_reuses_the_bounded_install_free_task(self):
+        row = next(
+            row
+            for row in self.ledger["resolutions"]
+            if row["catalogId"] == "image_upscale_z_image_turbo"
+        )
+        self.assertEqual(row["inferredMode"], "image_upscale")
+        self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+        self.assertEqual(
+            row["taskBoundaryState"],
+            "existing_task_boundary_model_admission_required",
+        )
+        self.assertEqual(
+            row["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinImageOperation:image_upscale",
+        )
 
     def test_every_recommendation_is_a_current_public_or_hidden_workflow(self):
         workflow_by_id = {row["id"]: row for row in self.manifest["workflows"]}

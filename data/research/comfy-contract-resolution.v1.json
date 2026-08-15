@@ -11,7 +11,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:b420044a70344fb881630d5d2cb449434b792800775376f24203ac6394567ccc",
+  "contentHash": "sha256:7e6931bc4ce443900385733d85c4705cd783fbb32550c4822a4240e80bb29552",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -8470,8 +8470,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -8492,13 +8491,27 @@
       },
       "contractId": "comfy-research:template:utility_interpolation_image_upscale",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
       "title": "Image Upscale: Traditional Interpolation"
@@ -8509,8 +8522,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -8531,13 +8543,27 @@
       },
       "contractId": "comfy-research:template:utility_pid_latent_upscale_dit",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
       "title": "PiD: Latent Upscale Decode"
@@ -8548,8 +8574,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -8570,13 +8595,27 @@
       },
       "contractId": "comfy-research:template:utility_seedvr2_3b_int8_upscale_image",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
       "title": "SeedVR2 3B Int8: Upscale Image"
@@ -8626,8 +8665,7 @@
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -8648,13 +8686,27 @@
       },
       "contractId": "comfy-research:template:utility_seedvr2_7b_int8_upscale_image",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "new_task_boundary_required",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
       "title": "SeedVR2 7B Int8: Upscale Image"
@@ -11525,18 +11577,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:7263e6e2a95ce032b19d12add106d7966a75819ac3fe7171bb1586674f6877f4",
+      "contentHash": "sha256:b44e93aa3a1fef5d55b1b29d2a6687bbcc5df00d6a2770b4012b68b3eb6843a0",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:1fa1835ef03e35ce5a273b74653e8543214819f0e010befaccbdef20e67dc054"
+      "sha256": "sha256:f06dac10e407ad97938f3c9b47c2b7d94094dec693c0bb26a94041ebeb0ee79f"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:70eee9932dc44a895e7d930edeb6711bdcdc5c6206ede360a4ff1064f115219f",
+      "contentHash": "sha256:17817fbbfc08cc2fbc3ce78806b50656f1f5cd7ea9c82f304b89e29fb97f7527",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:aeaee24e6b2d900eb34a7fe0f618904ebe549fe53a760f274af1397fb57894d4"
+      "sha256": "sha256:153c6618c26d640dd0cf0d472114c796fc0ff8e242e6753090c91c87c662090a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:eb15c0eecf4292de89d2b1f940b8923b9e57036a1854821b82d581f5353c4575"
+      "sha256": "sha256:01706eae3858258a0dc0ee98c70b029eb7e60ae3185b44a5e755fa829581bc51"
     }
   },
   "summary": {
@@ -11566,14 +11618,14 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "recordsWithHiddenAuthoringSpecOption": 86,
+    "recordsWithHiddenAuthoringSpecOption": 90,
     "recordsWithPublicTemplateOption": 25,
-    "recordsWithRecommendedWorkflow": 111,
+    "recordsWithRecommendedWorkflow": 115,
     "resolutionCount": 138,
     "resolutionStateCounts": {
       "existing_family_workflow_candidate": 57,
-      "existing_task_boundary_model_admission_required": 54,
-      "new_task_boundary_required": 27
+      "existing_task_boundary_model_admission_required": 58,
+      "new_task_boundary_required": 23
     },
     "sourceProposalCount": 138
   }

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T07:35:22.661Z",
+  "generatedAt": "2026-08-15T08:03:12.627Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 170,
-  "supportedPairCount": 182,
+  "supportedCanonicalPairCount": 171,
+  "supportedPairCount": 183,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -747,6 +747,37 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-image-operation/image-tile.json",
       "graphHash": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087"
+    },
+    {
+      "id": "BuiltinImageOperation:image_upscale",
+      "modelType": "BuiltinImageOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "image_upscale",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image; no model or network access is used."
+      },
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-image-operations:image-upscale:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-image-operation/image-upscale.json",
+      "graphHash": "5c70e632e46629be806e28846195a9913ec3865e5a4866f8f7f887f61de7d2dc"
     },
     {
       "id": "ChromaImg2ImgPipeline:edit_image",

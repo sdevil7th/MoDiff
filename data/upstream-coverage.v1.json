@@ -242,6 +242,17 @@
       "status": "executable"
     },
     {
+      "graphHash": "5c70e632e46629be806e28846195a9913ec3865e5a4866f8f7f887f61de7d2dc",
+      "graphPath": "studio/builtin-image-operation/image-upscale.json",
+      "id": "BuiltinImageOperation:image_upscale",
+      "mode": "image_upscale",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
       "graphPath": "studio/chroma-img2-img-pipeline/edit-image.json",
       "id": "ChromaImg2ImgPipeline:edit_image",
@@ -2139,7 +2150,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:70eee9932dc44a895e7d930edeb6711bdcdc5c6206ede360a4ff1064f115219f",
+  "contentHash": "sha256:17817fbbfc08cc2fbc3ce78806b50656f1f5cd7ea9c82f304b89e29fb97f7527",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7875,9 +7886,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 182,
+    "canonicalWorkflowCount": 183,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 131,
+    "canonicalWorkflowsWithoutPublicTemplates": 132,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7910,7 +7921,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 182,
+      "executable": 183,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

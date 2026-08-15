@@ -56,15 +56,15 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.ledger["summary"]["resolutionStateCounts"],
             {
                 "existing_family_workflow_candidate": 57,
-                "existing_task_boundary_model_admission_required": 54,
-                "new_task_boundary_required": 27,
+                "existing_task_boundary_model_admission_required": 58,
+                "new_task_boundary_required": 23,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 111)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 115)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 86)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 90)
 
     def test_resolutions_are_exactly_the_unwritten_comfy_proposals(self):
         expected = {
@@ -82,7 +82,6 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "first_last_frame_to_video": 7,
             "frame_interpolation": 1,
             "image_to_3d": 7,
-            "image_upscale": 4,
             "remove_background": 1,
             "video_upscale": 1,
         }
@@ -97,6 +96,25 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertIsNone(resolution["recommendedWorkflow"])
             self.assertIn("new_bounded_modiff_task_contract_required", resolution["blockers"])
         self.assertEqual(actual, expected_mode_counts)
+
+    def test_image_upscale_proposals_reuse_the_bounded_install_free_task(self):
+        rows = [
+            row
+            for row in self.ledger["resolutions"]
+            if row["selectedCandidateMode"] == "image_upscale"
+        ]
+        self.assertEqual(len(rows), 4)
+        for row in rows:
+            with self.subTest(contract=row["contractId"]):
+                self.assertEqual(
+                    row["resolutionState"],
+                    "existing_task_boundary_model_admission_required",
+                )
+                self.assertEqual(row["currentTaskBoundaryOptionCount"], 1)
+                self.assertEqual(
+                    row["recommendedWorkflow"]["canonicalWorkflowId"],
+                    "BuiltinImageOperation:image_upscale",
+                )
 
     def test_text_outputs_reuse_the_bounded_json_generation_boundary(self):
         rows = [row for row in self.ledger["resolutions"] if row["selectedCandidateMode"] == "text_generation"]

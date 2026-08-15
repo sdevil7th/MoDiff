@@ -11897,7 +11897,7 @@ _BUILTIN_IMAGE_OPERATION_MODES = (
     "image_adjustment",
     "image_filter",
     "image_crop",
-    "image_resize",
+    "image_upscale",
     "image_tile",
     "image_channels",
 )

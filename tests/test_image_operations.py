@@ -202,9 +202,9 @@ class ImageOperationTests(unittest.TestCase):
                 width=4,
                 height=3,
             ),
-            "image_resize": node.execute(
+            "image_upscale": node.execute(
                 image=source,
-                operation="image_resize",
+                operation="image_upscale",
                 resize_width=4,
                 resize_height=4,
                 resize_fit_mode="contain",
@@ -224,7 +224,7 @@ class ImageOperationTests(unittest.TestCase):
         }
         self.assertEqual(set(results), set(ProcessImage.params["operation"]["options"]))
         self.assertEqual(results["image_crop"]["output"].size, (4, 3))
-        self.assertEqual(results["image_resize"]["output"].size, (4, 3))
+        self.assertEqual(results["image_upscale"]["output"].size, (4, 3))
         self.assertEqual(len(results["image_tile"]["output"]), 4)
         self.assertEqual(results["image_channels"]["output"].mode, "L")
 
