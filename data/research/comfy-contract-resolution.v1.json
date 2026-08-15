@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:ba974582881cf66330147e721fb2db5e06d423f6f43c0f4627ccc709a36be20c",
+  "contentHash": "sha256:8fb400153a466ea3a4d8eac825c03f8c830126ef472c08ded894e77e913d0342",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -3866,8 +3866,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_chronoedit_wan_video_frame_edit_is_not_chroma_img2img",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -3895,7 +3896,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -3990,6 +3991,47 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "chrono_edit_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "chronoedit_distill_lora.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/image_chrono_edit_14B.json",
+        "assetSha256": "b94f062db60f853fad10cd565cdd49dde387f2da49d0d24624947813f1d661b4",
+        "catalogRecommendedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+          "reasonCode": "chronoedit_wan_video_frame_edit_is_not_chroma_img2img",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "e354fb1ab91240f81458da367216b3ccd544fa03",
+        "importsGraph": false,
+        "reviewedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "ChronoEdit 14B: Image Edit"
     },
     {
@@ -4084,8 +4126,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_firered_image_edit_is_not_chroma_img2img",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -4111,7 +4154,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
@@ -4204,6 +4247,43 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "FireRed-Image-Edit-1.1-transformer.safetensors",
+            "repository": "FireRedTeam/FireRed-Image-Edit-1.1-ComfyUI"
+          },
+          {
+            "artifact": "FireRed-Image-Edit-1.0-Lightning-8steps-v1.0.safetensors",
+            "repository": "FireRedTeam/FireRed-Image-Edit-1.0-ComfyUI"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "FireRedTeam/FireRed-Image-Edit-1.0-ComfyUI"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          }
+        ],
+        "assetPath": "templates/image_firered_image_edit1_1.json",
+        "assetSha256": "d31e091ef80748bd3d41f3cd3cd0970fe3f353acc1aee603f52324dd5d25f23c",
+        "catalogRecommendedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+          "reasonCode": "firered_image_edit_is_not_chroma_img2img",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "19e4e5ea3489a781be917056dd33d07942bd7e09",
+        "importsGraph": false,
+        "reviewedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "FireRed Image Edit 1.1: Image Edit"
     },
     {
@@ -4660,8 +4740,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ideogram4_dual_model_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -4687,7 +4768,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -4858,12 +4939,50 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ideogram4_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Ideogram-4"
+          },
+          {
+            "artifact": "ideogram4_unconditional_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Ideogram-4"
+          },
+          {
+            "artifact": "qwen3vl_8b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen3-VL"
+          },
+          {
+            "artifact": "flux2-vae.safetensors",
+            "repository": "Comfy-Org/flux2-dev"
+          }
+        ],
+        "assetPath": "templates/image_ideogram4_t2i.json",
+        "assetSha256": "87dba0e3002b76990836a1ebbe43e0885175d2bcdbcd41e854d5bcd2209ea2dd",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "ideogram4_dual_model_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "9c016c249246439ccc08ccffbab31d04e54673cb",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Ideogram v4: Text to Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ideogram4_int8_dual_model_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -4889,7 +5008,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -5060,6 +5179,43 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ideogram4_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Ideogram-4"
+          },
+          {
+            "artifact": "ideogram4_unconditional_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Ideogram-4"
+          },
+          {
+            "artifact": "qwen3vl_8b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Qwen3-VL"
+          },
+          {
+            "artifact": "flux2-vae.safetensors",
+            "repository": "Comfy-Org/flux2-dev"
+          }
+        ],
+        "assetPath": "templates/image_ideogram4_t2i_int8.json",
+        "assetSha256": "a85346f5ad1ab07dcaf8bbd99f6618a26dbd46c11fb13128680822fe9dd880c4",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "ideogram4_int8_dual_model_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4e9a71db38bc0c6e09aafba658adb5b06d10c8fa",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Ideogram v4 Int8: Text to Image"
     },
     {
@@ -5154,8 +5310,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_krea2_turbo_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -5181,7 +5338,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -5352,12 +5509,50 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "krea2_turbo_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          },
+          {
+            "artifact": "krea2_darkbrush.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          },
+          {
+            "artifact": "qwen3vl_4b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          }
+        ],
+        "assetPath": "templates/image_krea2_turbo_t2i.json",
+        "assetSha256": "d04b37d8345b1bf6aa247ef182a4454e0221730cf353379af27b20e932e9f11f",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "krea2_turbo_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "74f3d6e07214fc3ded1a31170a5ca5198761339c",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Krea-2: Text to Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_krea2_turbo_int8_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -5383,7 +5578,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -5554,12 +5749,50 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "krea2_turbo_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          },
+          {
+            "artifact": "krea2_darkbrush.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          },
+          {
+            "artifact": "qwen3vl_4b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          },
+          {
+            "artifact": "qwen_image_vae.safetensors",
+            "repository": "Comfy-Org/Krea-2"
+          }
+        ],
+        "assetPath": "templates/image_krea2_turbo_t2i_int8.json",
+        "assetSha256": "6207dcc9849a6e000240783ceabb4d3050bb941f469b85529217ea88002e1b83",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "krea2_turbo_int8_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "59a58337dfa8d5f43b036102b8888bc74ff43531",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Krea-2 Int8: Text to Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_lens_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -5585,7 +5818,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -5756,12 +5989,46 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "lens_bf16.safetensors",
+            "repository": "Comfy-Org/Lens"
+          },
+          {
+            "artifact": "gpt_oss_20b_nvfp4.safetensors",
+            "repository": "Comfy-Org/Lens"
+          },
+          {
+            "artifact": "flux2-vae.safetensors",
+            "repository": "Comfy-Org/Lens"
+          }
+        ],
+        "assetPath": "templates/image_lens_t2i.json",
+        "assetSha256": "4c20b9a5cc65711b79a322dcd858291f2beedd0285648e65e5c9171f3045a49a",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "lens_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "e12d2d791d212cc8aed8ee00d9999d25206a866b",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Lens: Text to Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_lens_turbo_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -5787,7 +6054,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -5958,6 +6225,39 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "lens_turbo_bf16.safetensors",
+            "repository": "Comfy-Org/Lens"
+          },
+          {
+            "artifact": "gpt_oss_20b_nvfp4.safetensors",
+            "repository": "Comfy-Org/Lens"
+          },
+          {
+            "artifact": "flux2-vae.safetensors",
+            "repository": "Comfy-Org/Lens"
+          }
+        ],
+        "assetPath": "templates/image_lens_turbo_t2i.json",
+        "assetSha256": "7d326a952112f62e5ddca2bd2b70afb0fd56aebba115db0d128d37eb4dd0de41",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "lens_turbo_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "604a4ba02cd10dc7d00703cf1975151ee6787c45",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Lens Turbo: Text to Image"
     },
     {
@@ -6049,8 +6349,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_mage_flow_edit_int8_is_not_chroma_img2img",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -6076,7 +6377,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
@@ -6169,12 +6470,46 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "mage_flow_edit_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "qwen3vl_4b_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "mage_flow_vae_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          }
+        ],
+        "assetPath": "templates/image_mage_flow_edit_int8.json",
+        "assetSha256": "5469829111f45490297e19197d0765e4c84abce231dd32252f7c375931f7c9ab",
+        "catalogRecommendedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+          "reasonCode": "mage_flow_edit_int8_is_not_chroma_img2img",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "312fc5be121f9f1923177909358f9cf19feecfbc",
+        "importsGraph": false,
+        "reviewedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Mage-Flow-Edit: Image Edit"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_mage_flow_edit_turbo_int8_is_not_chroma_img2img",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -6200,7 +6535,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
@@ -6293,12 +6628,46 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "mage_flow_edit_turbo_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "qwen3vl_4b_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "mage_flow_vae_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          }
+        ],
+        "assetPath": "templates/image_mage_flow_edit_turbo_int8.json",
+        "assetSha256": "b7b4d0ab9a180578eddd6772439f8baa6b6edfcb226d6c04e577a67291363a2f",
+        "catalogRecommendedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+          "reasonCode": "mage_flow_edit_turbo_int8_is_not_chroma_img2img",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4eb258f83f99f1f0929d9105e06840c21c49e2cf",
+        "importsGraph": false,
+        "reviewedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Mage-Flow-Edit Turbo: Image Edit"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_mage_flow_int8_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -6324,7 +6693,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -6495,12 +6864,46 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "mage_flow_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "qwen3vl_4b_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "mage_flow_vae_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          }
+        ],
+        "assetPath": "templates/image_mage_flow_t2i_int8.json",
+        "assetSha256": "1f8ff2932fa38d7b2b0abca4f97ee71297b60ae4978be7f10130c2929781ba77",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "mage_flow_int8_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "e03ee35484c548078018993e8205972960be9236",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Mage-Flow: Text to Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_catalog_turbo_graph_loads_unadmitted_mage_flow_int8_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -6526,7 +6929,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -6697,6 +7100,39 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "mage_flow_int8_convrot.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "qwen3vl_4b_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          },
+          {
+            "artifact": "mage_flow_vae_bf16.safetensors",
+            "repository": "Comfy-Org/Mage-Flow"
+          }
+        ],
+        "assetPath": "templates/image_mage_flow_turbo_t2i_int8.json",
+        "assetSha256": "80430a53af34d7eeca50e662a921f5dae8f210a617f4d31300177925a0c6cd76",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "catalog_turbo_graph_loads_unadmitted_mage_flow_int8_generation",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "b44d44f2b584a195e093581633c065772332b90b",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Mage-Flow Turbo: Text to Image"
     },
     {
@@ -6787,8 +7223,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_newbie_image_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -6814,7 +7251,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -6985,6 +7422,43 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "NewBie-Image-Exp0.1-bf16.safetensors",
+            "repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged"
+          },
+          {
+            "artifact": "gemma_3_4b_it_bf16.safetensors",
+            "repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged"
+          },
+          {
+            "artifact": "jina_clip_v2_bf16.safetensors",
+            "repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged"
+          },
+          {
+            "artifact": "ae.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          }
+        ],
+        "assetPath": "templates/image_newbieimage_exp0_1-t2i.json",
+        "assetSha256": "111b57ebbc5c06f0b107cfb463d9e726f786d085131dcfbe2caa7f4c030c12fb",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "newbie_image_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "41027ac76726e378efacdbd8ba6d20edd7ad0569",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "NewBie Exp0.1: Anime Generation"
     },
     {
@@ -7161,8 +7635,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_pixeldit_pixel_space_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -7188,7 +7663,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -7359,6 +7834,39 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "pixeldit_1300m_1024px_bf16.safetensors",
+            "repository": "Comfy-Org/PixelDiT"
+          },
+          {
+            "artifact": "gemma_2_2b_it_elm_bf16.safetensors",
+            "repository": "Comfy-Org/PixelDiT"
+          },
+          {
+            "artifact": "pixel_space VAE implementation",
+            "repository": "Comfy-Org/ComfyUI"
+          }
+        ],
+        "assetPath": "templates/image_pixeldit_t2i.json",
+        "assetSha256": "fa7d853f130f517252752b51c2bc1167aaee56847d8ffd338a01a01615eee713",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "pixeldit_pixel_space_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "61d7236d058ddbcf921b544ffdfcf6afe7108cda",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "PixelDiT: Text to Image"
     },
     {
@@ -9085,9 +9593,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_sd35_blur_controlnet_is_not_sd15_canny_controlnet",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -9112,108 +9620,97 @@
       },
       "contractId": "comfy-research:template:sd3.5_large_blur",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 25,
+      "currentTaskBoundaryOptionCount": 10,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
-        "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
-        "modelFamily": "Chroma",
-        "modelType": "ChromaImg2ImgPipeline",
+        "authoringSpecId": "template-authoring:StableDiffusionPipeline:control_image",
+        "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
+        "modelFamily": "Stable Diffusion 1.x",
+        "modelType": "StableDiffusionPipeline",
         "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
-          "modelFamily": "Chroma",
-          "modelType": "ChromaImg2ImgPipeline",
+          "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
+          "modelFamily": "Stable Diffusion 1.x",
+          "modelType": "StableDiffusionPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "DreamLiteMobilePipeline:edit_image",
-          "modelFamily": "DreamLite",
-          "modelType": "DreamLiteMobilePipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
+          "canonicalWorkflowId": "FluxCannyPipeline:control_image",
           "modelFamily": "FLUX Image",
-          "modelType": "Flux2KleinPipeline",
+          "modelType": "FluxCannyPipeline",
           "qualificationStatus": "graph-qualified"
         },
         {
-          "canonicalWorkflowId": "JoyImageEditPipeline:edit_image",
-          "modelFamily": "JoyAI Image",
-          "modelType": "JoyImageEditPipeline",
+          "canonicalWorkflowId": "HunyuanDiTControlNetPipeline:control_image",
+          "modelFamily": "Hunyuan-DiT",
+          "modelType": "HunyuanDiTControlNetPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "Kandinsky3Pipeline:edit_image",
-          "modelFamily": "Kandinsky",
-          "modelType": "Kandinsky3Pipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
-          "modelFamily": "Latent Consistency Models",
-          "modelType": "LatentConsistencyModelPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LongCatImageEditPipeline:edit_image",
-          "modelFamily": "LongCat Image",
-          "modelType": "LongCatImageEditPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "OmniGenPipeline:edit_image",
-          "modelFamily": "OmniGen",
-          "modelType": "OmniGenPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
+          "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
           "modelFamily": "Qwen Image",
-          "modelType": "QwenImageEditModularPipeline",
-          "qualificationStatus": "graph-qualified"
-        },
-        {
-          "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
-          "modelFamily": "Sana",
-          "modelType": "SanaSprintPipeline",
+          "modelType": "QwenImageControlNetPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "StableDiffusionPAGPipeline:edit_image",
+          "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_image",
           "modelFamily": "Stable Diffusion 1.x",
           "modelType": "StableDiffusionPAGPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
-          "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
+          "canonicalWorkflowId": "StableDiffusionXLAdapterPipeline:control_image",
           "modelFamily": "Stable Diffusion XL",
-          "modelType": "StableDiffusionXLInstructPix2PixPipeline",
+          "modelType": "StableDiffusionXLAdapterPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "ZImageModularPipeline:edit_image",
-          "modelFamily": "Z-Image",
-          "modelType": "ZImageModularPipeline",
-          "qualificationStatus": "graph-qualified"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "edit_image",
+      "selectedCandidateMode": "control_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "sd3.5_large_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/stable-diffusion-3.5-fp8"
+          },
+          {
+            "artifact": "sd3.5_large_controlnet_blur.safetensors",
+            "repository": "Comfy-Org/stable-diffusion-3.5-controlnets_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/sd3.5_large_blur.json",
+        "assetSha256": "f239d7ed9e66e8e8f3a10664bed4050e7252ca64d5b81175883a2664d989bb30",
+        "catalogRecommendedWorkflowId": "FluxCannyPipeline:control_image",
+        "catalogSelectedCandidateMode": "edit_image",
+        "comparison": {
+          "currentRepository": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+          "currentRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+          "currentWorkflowId": "StableDiffusionPipeline:control_image",
+          "reasonCode": "sd35_blur_controlnet_is_not_sd15_canny_controlnet",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "f64f7dc0850042f2abcf11424795494f2a286387",
+        "importsGraph": false,
+        "reviewedTaskMode": "control_image",
+        "reviewedWorkflowId": "StableDiffusionPipeline:control_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SD3.5 Large Blur"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_sd35_large_generation_is_not_auraflow",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -9240,7 +9737,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
@@ -9411,6 +9908,31 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "sd3.5_large_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/stable-diffusion-3.5-fp8"
+          }
+        ],
+        "assetPath": "templates/sd3.5_simple_example.json",
+        "assetSha256": "22636f8ea8d35f41ecf92917112e14376bc30ae2c01de0b9553493cf2c176619",
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "comparison": {
+          "currentRepository": "fal/AuraFlow-v0.3",
+          "currentRevision": "2cd8588f04c886002be4571697d84654a50e3af3",
+          "currentWorkflowId": "AuraFlowPipeline:text_to_image",
+          "reasonCode": "sd35_large_generation_is_not_auraflow",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "48b081dfb8be8995718e9e6a1b3e49bb9f7852d1",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SD3.5 Simple"
     },
     {
@@ -15708,12 +16230,12 @@
       "audio_to_video": 3,
       "camera_to_video": 3,
       "character_replace": 2,
-      "control_image": 2,
+      "control_image": 3,
       "control_to_video": 2,
       "control_video_to_video": 2,
       "depth_estimation": 1,
       "edit_audio": 1,
-      "edit_image": 22,
+      "edit_image": 21,
       "edit_video": 2,
       "first_last_frame_to_video": 6,
       "first_last_frame_to_video_with_audio": 3,
@@ -15742,10 +16264,10 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 113,
+    "pinnedSourceReviewCount": 129,
     "pinnedSourceReviewDecisionCounts": {
       "different_model_generation_and_new_task_required": 26,
-      "different_model_generation_requires_admission": 68,
+      "different_model_generation_requires_admission": 84,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 8,

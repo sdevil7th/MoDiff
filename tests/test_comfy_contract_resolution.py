@@ -65,12 +65,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 104)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 74)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 113)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 129)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
                 "different_model_generation_and_new_task_required": 26,
-                "different_model_generation_requires_admission": 68,
+                "different_model_generation_requires_admission": 84,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 8,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -215,7 +215,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_one_hundred_thirteen_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_one_hundred_twenty_nine_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -240,6 +240,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "image_boogu_image_0_1_turbo_t2i",
                 "image_chroma1_radiance_text_to_image",
                 "image_chroma_text_to_image",
+                "image_chrono_edit_14B",
+                "image_firered_image_edit1_1",
                 "image_flux2_klein_image_edit_9b_base",
                 "image_flux2_klein_image_edit_9b_distilled",
                 "image_flux2_klein_9b_kv_image_edit",
@@ -252,10 +254,22 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "hidream_i1_full",
                 "image_ernie_image",
                 "image_kandinsky5_t2i",
+                "image_ideogram4_t2i",
+                "image_ideogram4_t2i_int8",
+                "image_krea2_turbo_t2i",
+                "image_krea2_turbo_t2i_int8",
+                "image_lens_t2i",
+                "image_lens_turbo_t2i",
                 "image_lotus_depth_v1_1",
+                "image_mage_flow_edit_int8",
+                "image_mage_flow_edit_turbo_int8",
+                "image_mage_flow_t2i_int8",
+                "image_mage_flow_turbo_t2i_int8",
                 "image_netayume_lumina_t2i",
+                "image_newbieimage_exp0_1-t2i",
                 "image_omnigen2_image_edit",
                 "image_omnigen2_t2i",
+                "image_pixeldit_t2i",
                 "image-qwen_image_edit_2511_lora_inflation",
                 "image_qwen_image",
                 "image_qwen_image_2512_with_2steps_lora",
@@ -277,6 +291,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "ltxv_text_to_video",
                 "sdxl_refiner_prompt_example",
                 "sdxl_revision_text_prompts",
+                "sd3.5_large_blur",
+                "sd3.5_simple_example",
                 "template_qwen_image_edit_2511_systms_action",
                 "template_qwen_Image_2512_360_lora",
                 "template_ltx2_3_ic_lora_ingredients",
@@ -387,6 +403,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_boogu_image_0_1_edit_int8",
             "image_boogu_image_0_1_turbo_t2i",
             "image_chroma1_radiance_text_to_image",
+            "image_chrono_edit_14B",
+            "image_firered_image_edit1_1",
             "image_flux2_klein_image_edit_9b_base",
             "image_flux2_klein_image_edit_9b_distilled",
             "image_flux2_klein_9b_kv_image_edit",
@@ -399,10 +417,22 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "hidream_i1_full",
             "image_ernie_image",
             "image_kandinsky5_t2i",
+            "image_ideogram4_t2i",
+            "image_ideogram4_t2i_int8",
+            "image_krea2_turbo_t2i",
+            "image_krea2_turbo_t2i_int8",
+            "image_lens_t2i",
+            "image_lens_turbo_t2i",
             "image_lotus_depth_v1_1",
+            "image_mage_flow_edit_int8",
+            "image_mage_flow_edit_turbo_int8",
+            "image_mage_flow_t2i_int8",
+            "image_mage_flow_turbo_t2i_int8",
             "image_netayume_lumina_t2i",
+            "image_newbieimage_exp0_1-t2i",
             "image_omnigen2_image_edit",
             "image_omnigen2_t2i",
+            "image_pixeldit_t2i",
             "image_qwen_image_layered_control",
             "image_qwen_image_union_control_lora",
             "image_qwen_image_controlnet_patch",
@@ -439,6 +469,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "llm_qwen3_5_text_gen",
             "llm_qwen3_text_gen",
             "llm_qwen3vl_text_gen",
+            "sd3.5_large_blur",
+            "sd3.5_simple_example",
         ):
             self.assertEqual(
                 reviewed[catalog_id]["resolutionState"],
@@ -543,6 +575,28 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(lotus["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
         self.assertEqual(lotus["selectedCandidateMode"], "depth_estimation")
         self.assertEqual(lotus["recommendedWorkflow"]["canonicalWorkflowId"], "MarigoldDepthPipeline:depth_estimation")
+
+        sd35_blur = reviewed["sd3.5_large_blur"]
+        self.assertEqual(sd35_blur["sourceReview"]["catalogSelectedCandidateMode"], "edit_image")
+        self.assertEqual(sd35_blur["selectedCandidateMode"], "control_image")
+        self.assertEqual(
+            sd35_blur["recommendedWorkflow"]["canonicalWorkflowId"],
+            "StableDiffusionPipeline:control_image",
+        )
+
+        mage_turbo = reviewed["image_mage_flow_turbo_t2i_int8"]
+        self.assertEqual(
+            [dependency["artifact"] for dependency in mage_turbo["sourceReview"]["artifactDependencies"]],
+            [
+                "mage_flow_int8_convrot.safetensors",
+                "qwen3vl_4b_bf16.safetensors",
+                "mage_flow_vae_bf16.safetensors",
+            ],
+        )
+        self.assertEqual(
+            mage_turbo["sourceReview"]["comparison"]["reasonCode"],
+            "catalog_turbo_graph_loads_unadmitted_mage_flow_int8_generation",
+        )
 
         netayume = reviewed["image_netayume_lumina_t2i"]
         self.assertEqual(netayume["sourceReview"]["catalogRecommendedWorkflowId"], "OmniGenPipeline:text_to_image")
