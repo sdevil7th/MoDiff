@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:19dc9250a6038e0b63017b54884730047261f9361e6adbcf87262d1038cef8f2",
+  "contentHash": "sha256:7263e6e2a95ce032b19d12add106d7966a75819ac3fe7171bb1586674f6877f4",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:ab67d45211bacd0bf228920e8a065f7cd7ea77457645fb12172896e6d2b17032",
+      "contentHash": "sha256:248a53b63455c5c1872902fc1acf84fc9142469899fa2cfff9a7690c9651b8ca",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:64224be4ad17cf2dee961a6839664afca25c38b37651906a6c1ee4a4ea37057a"
+      "sha256": "sha256:8477640c475232f2ffc5c8b0c7af2758a7357f5f0670ad3f2d9764f50dc40c68"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:1ffd2a491c2e78ab7ef7838a75a7624e5faf3fe1876231f046fd4c46e7f3be39"
+      "sha256": "sha256:eb15c0eecf4292de89d2b1f940b8923b9e57036a1854821b82d581f5353c4575"
     }
   },
   "specifications": [
@@ -1599,6 +1599,526 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "AuraFlow — Text To Image [AuraFlowPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-adjustment.json",
+        "sha256": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_adjustment",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_adjustment",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image adjustment workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Adjustment [BuiltinImageOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-channels.json",
+        "sha256": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_channels",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_channels",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_channels",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image channels workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Channels [BuiltinImageOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-crop.json",
+        "sha256": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_crop",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_crop",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image crop workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Crop [BuiltinImageOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-filter.json",
+        "sha256": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_filter",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_filter",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image filter workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Filter [BuiltinImageOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-tile.json",
+        "sha256": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_tile",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_tile",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_tile",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image tile workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Tile [BuiltinImageOperation]"
     },
     {
       "artifactPlan": {
@@ -19016,16 +19536,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 126,
+    "authoringSpecCount": 131,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 52,
-      "draft_complete_input_selection_pending": 74
+      "draft_complete_input_selection_pending": 79
     },
-    "canonicalDefaultsCapturedCount": 126,
-    "generationPendingCount": 126,
-    "inputSelectionPendingCount": 74,
+    "canonicalDefaultsCapturedCount": 131,
+    "generationPendingCount": 131,
+    "inputSelectionPendingCount": 79,
     "promptDraftedCount": 120,
-    "promptNotApplicableCount": 6,
-    "rightsReviewPendingCount": 126
+    "promptNotApplicableCount": 11,
+    "rightsReviewPendingCount": 131
   }
 }

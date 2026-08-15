@@ -51,17 +51,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 126,
+                "authoringSpecCount": 131,
                 "promptDraftedCount": 120,
-                "promptNotApplicableCount": 6,
-                "canonicalDefaultsCapturedCount": 126,
-                "inputSelectionPendingCount": 74,
-                "rightsReviewPendingCount": 126,
-                "generationPendingCount": 126,
+                "promptNotApplicableCount": 11,
+                "canonicalDefaultsCapturedCount": 131,
+                "inputSelectionPendingCount": 79,
+                "rightsReviewPendingCount": 131,
+                "generationPendingCount": 131,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 52,
-                    "draft_complete_input_selection_pending": 74,
+                    "draft_complete_input_selection_pending": 79,
                 },
             },
         )
@@ -89,6 +89,11 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
     def test_prompt_drafts_are_original_bounded_and_mode_complete(self):
         no_prompt_modes = {
             "depth_estimation",
+            "image_adjustment",
+            "image_channels",
+            "image_crop",
+            "image_filter",
+            "image_tile",
             "speech_to_text",
             "speech_translation",
             "unconditional_image",

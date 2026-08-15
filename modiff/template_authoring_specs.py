@@ -33,6 +33,11 @@ _MEDIA_FIELDS = {
 }
 _NO_PROMPT_MODES = {
     "depth_estimation",
+    "image_adjustment",
+    "image_channels",
+    "image_crop",
+    "image_filter",
+    "image_tile",
     "speech_to_text",
     "speech_translation",
     "unconditional_image",
@@ -424,8 +429,15 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
             not isinstance(artifact, str) or not artifact for artifact in required_artifacts
         ):
             raise TemplateAuthoringSpecError(f"Template candidate artifacts are invalid for {workflow_id}.")
+        built_in_artifacts = bool(required_artifacts) and all(
+            artifact.startswith("builtin://") for artifact in required_artifacts
+        )
         generation_blockers = [
-            "exact_model_cache_state_must_be_rechecked",
+            (
+                "builtin_contract_identity_must_match_active_app"
+                if built_in_artifacts
+                else "exact_model_cache_state_must_be_rechecked"
+            ),
             "exact_runtime_execution_receipt_required",
             "resource_recipe_receipt_required",
             "model_and_output_rights_review_required",
@@ -468,7 +480,11 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
                 "artifactPlan": {
                     "requiredArtifacts": deepcopy(required_artifacts),
                     "componentRequirements": _component_requirements(contract.get("requiredInputs")),
-                    "cacheState": "must_be_rechecked_through_app_before_generation",
+                    "cacheState": (
+                        "not_applicable_builtin_contract"
+                        if built_in_artifacts
+                        else "must_be_rechecked_through_app_before_generation"
+                    ),
                 },
                 "rightsPlan": {
                     "status": "review_required",

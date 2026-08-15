@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T23:17:44.931Z",
+  "generatedAt": "2026-08-15T07:35:22.661Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 165,
-  "supportedPairCount": 177,
+  "supportedCanonicalPairCount": 170,
+  "supportedPairCount": 182,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -592,6 +592,161 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
       "graphHash": "947eefe6822b88ca18f15a4a52eb8d5bfc12784fa258a78c8235c624441e9038"
+    },
+    {
+      "id": "BuiltinImageOperation:image_adjustment",
+      "modelType": "BuiltinImageOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "image_adjustment",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image; no model or network access is used."
+      },
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-image-operations:image-adjustment:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-image-operation/image-adjustment.json",
+      "graphHash": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08"
+    },
+    {
+      "id": "BuiltinImageOperation:image_channels",
+      "modelType": "BuiltinImageOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "image_channels",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image; no model or network access is used."
+      },
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-image-operations:image-channels:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-image-operation/image-channels.json",
+      "graphHash": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768"
+    },
+    {
+      "id": "BuiltinImageOperation:image_crop",
+      "modelType": "BuiltinImageOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "image_crop",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image; no model or network access is used."
+      },
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-image-operations:image-crop:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-image-operation/image-crop.json",
+      "graphHash": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c"
+    },
+    {
+      "id": "BuiltinImageOperation:image_filter",
+      "modelType": "BuiltinImageOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "image_filter",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image; no model or network access is used."
+      },
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-image-operations:image-filter:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-image-operation/image-filter.json",
+      "graphHash": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f"
+    },
+    {
+      "id": "BuiltinImageOperation:image_tile",
+      "modelType": "BuiltinImageOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "image_tile",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image; no model or network access is used."
+      },
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-image-operations:image-tile:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-image-operation/image-tile.json",
+      "graphHash": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087"
     },
     {
       "id": "ChromaImg2ImgPipeline:edit_image",

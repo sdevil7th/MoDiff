@@ -1,0 +1,587 @@
+{
+  "edges": [
+    {
+      "className": "category-image",
+      "data": {
+        "connectionType": "image"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#60A5FA",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#60A5FA"
+      },
+      "target": "node-03",
+      "targetHandle": "image",
+      "type": "default"
+    },
+    {
+      "className": "category-image",
+      "data": {
+        "connectionType": "image"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#60A5FA",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "image",
+      "style": {
+        "stroke": "#60A5FA"
+      },
+      "target": "node-01",
+      "targetHandle": "image",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "1b263ebc71716538e0aa98b77d0b4294cc9fffd7d60a363983e677265949c28f",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "ProcessImage",
+        "cache": false,
+        "category": "Image Operations",
+        "description": "Dispatch one reviewed built-in image task through a stable generic facade.",
+        "label": "Image.Process",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ImageOperations",
+        "params": {
+          "amount": {
+            "default": 1,
+            "label": "Filter Amount",
+            "max": 32,
+            "min": 0,
+            "type": "float"
+          },
+          "brightness": {
+            "default": 1,
+            "label": "Brightness",
+            "max": 4,
+            "min": 0,
+            "type": "float"
+          },
+          "channel": {
+            "default": "luminance",
+            "label": "Channel",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "red",
+                "schemaVersion": 1,
+                "value": "red"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "green",
+                "schemaVersion": 1,
+                "value": "green"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "blue",
+                "schemaVersion": 1,
+                "value": "blue"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "alpha",
+                "schemaVersion": 1,
+                "value": "alpha"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "luminance",
+                "schemaVersion": 1,
+                "value": "luminance"
+              }
+            ],
+            "type": "string"
+          },
+          "columns": {
+            "default": 2,
+            "label": "Tile Columns",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "contrast": {
+            "default": 1,
+            "label": "Contrast",
+            "max": 4,
+            "min": 0,
+            "type": "float"
+          },
+          "filter_operation": {
+            "default": "gaussian_blur",
+            "label": "Filter",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "gaussian_blur",
+                "schemaVersion": 1,
+                "value": "gaussian_blur"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "box_blur",
+                "schemaVersion": 1,
+                "value": "box_blur"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "sharpen",
+                "schemaVersion": 1,
+                "value": "sharpen"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "unsharp_mask",
+                "schemaVersion": 1,
+                "value": "unsharp_mask"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "glow",
+                "schemaVersion": 1,
+                "value": "glow"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "film_grain",
+                "schemaVersion": 1,
+                "value": "film_grain"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "chromatic_aberration",
+                "schemaVersion": 1,
+                "value": "chromatic_aberration"
+              }
+            ],
+            "type": "string"
+          },
+          "gamma": {
+            "default": 1,
+            "label": "Gamma",
+            "max": 4,
+            "min": 0.1,
+            "type": "float"
+          },
+          "height": {
+            "default": 0,
+            "label": "Crop Height",
+            "max": 32768,
+            "min": 0,
+            "type": "int"
+          },
+          "image": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Image",
+            "type": "image"
+          },
+          "operation": {
+            "default": "image_adjustment",
+            "label": "Operation",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_adjustment",
+                "schemaVersion": 1,
+                "value": "image_adjustment"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_filter",
+                "schemaVersion": 1,
+                "value": "image_filter"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_crop",
+                "schemaVersion": 1,
+                "value": "image_crop"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_tile",
+                "schemaVersion": 1,
+                "value": "image_tile"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_channels",
+                "schemaVersion": 1,
+                "value": "image_channels"
+              }
+            ],
+            "type": "string",
+            "value": "image_channels"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Processed Image",
+            "type": "image"
+          },
+          "pipeline_class": {
+            "default": "BuiltinImageOperationV1",
+            "hidden": true,
+            "label": "Built-in Contract",
+            "type": "string",
+            "value": "BuiltinImageOperationV1"
+          },
+          "rows": {
+            "default": 2,
+            "label": "Tile Rows",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "saturation": {
+            "default": 1,
+            "label": "Saturation",
+            "max": 4,
+            "min": 0,
+            "type": "float"
+          },
+          "seed": {
+            "default": 0,
+            "label": "Filter Seed",
+            "type": "int"
+          },
+          "sharpness": {
+            "default": 1,
+            "label": "Sharpness",
+            "max": 4,
+            "min": 0,
+            "type": "float"
+          },
+          "temperature": {
+            "default": 0,
+            "label": "Temperature",
+            "max": 1,
+            "min": -1,
+            "type": "float"
+          },
+          "threshold": {
+            "default": 3,
+            "label": "Filter Threshold",
+            "max": 255,
+            "min": 0,
+            "type": "int"
+          },
+          "tint": {
+            "default": 0,
+            "label": "Tint",
+            "max": 1,
+            "min": -1,
+            "type": "float"
+          },
+          "width": {
+            "default": 0,
+            "label": "Crop Width",
+            "max": 32768,
+            "min": 0,
+            "type": "int"
+          },
+          "x": {
+            "default": 0,
+            "label": "Crop Left",
+            "max": 32767,
+            "min": 0,
+            "type": "int"
+          },
+          "y": {
+            "default": 0,
+            "label": "Crop Top",
+            "max": 32767,
+            "min": 0,
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "imageOperation",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-01",
+      "position": {
+        "x": 440,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Load",
+        "cache": false,
+        "category": "image",
+        "description": "Load an image from a file",
+        "label": "Load Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Image",
+        "params": {
+          "alpha_channel": {
+            "default": "ignore",
+            "label": "Alpha Channel",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ignore",
+                "schemaVersion": 1,
+                "value": "ignore"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "add alpha",
+                "schemaVersion": 1,
+                "value": "add alpha"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "remove alpha",
+                "schemaVersion": 1,
+                "value": "remove alpha"
+              }
+            ],
+            "type": "string",
+            "value": "ignore"
+          },
+          "file": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "image"
+              ],
+              "multiple": true
+            },
+            "label": false,
+            "type": "str",
+            "value": []
+          },
+          "height": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          },
+          "image": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Image",
+            "type": "image"
+          },
+          "label": {
+            "display": "ui_label",
+            "value": "Load Image"
+          },
+          "mask": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Alpha mask",
+            "type": "image"
+          },
+          "source_hash": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Source hash",
+            "type": "str"
+          },
+          "width": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "loadImage",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 159
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Preview",
+        "cache": false,
+        "category": "image",
+        "description": "Preview an image",
+        "label": "Preview Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Image",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "hidden": true,
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string"
+          },
+          "export": {
+            "default": "0",
+            "description": "Export the image at the given index. Leave empty to export all images.",
+            "type": "str"
+          },
+          "filtered": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Selected image",
+            "type": "image"
+          },
+          "image": {
+            "display": "input",
+            "isConnected": true,
+            "type": [
+              "image",
+              "latent"
+            ]
+          },
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "All images",
+            "type": "image"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_image",
+            "type": "url"
+          },
+          "vae": {
+            "display": "input",
+            "hidden": true,
+            "isConnected": false,
+            "label": "VAE",
+            "type": "pipeline"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "preview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 880,
+        "y": 173
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

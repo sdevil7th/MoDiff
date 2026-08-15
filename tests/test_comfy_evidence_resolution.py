@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 35,
+                "recordsWithHiddenAuthoringSpecOption": 53,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 61,
+                "recordsWithRecommendedWorkflow": 79,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 54,
+                    "explicit_new_task_candidate": 36,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 36,
+                    "explicit_task_candidate": 54,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 36,
-                    "new_task_boundary_required": 54,
+                    "existing_task_boundary_model_admission_required": 54,
+                    "new_task_boundary_required": 36,
                     "task_undetermined": 1,
                 },
             },
@@ -142,7 +142,7 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
         self.assertIsNone(unresolved[0]["recommendedWorkflow"])
         self.assertIn("task_and_model_evidence_still_insufficient", unresolved[0]["blockers"])
 
-    def test_explicit_image_tools_are_finite_new_task_candidates(self):
+    def test_explicit_image_tools_reuse_bounded_tasks_or_remain_finite_new_candidates(self):
         expected_modes = {
             "image_adjustment": 6,
             "image_channels": 1,
@@ -156,10 +156,21 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
             if row["categoryId"] != "blueprints:default:image-tools":
                 continue
             counts[row["inferredMode"]] = counts.get(row["inferredMode"], 0) + 1
-            self.assertEqual(row["resolutionState"], "explicit_new_task_candidate")
-            self.assertEqual(row["taskBoundaryState"], "new_task_boundary_required")
-            self.assertEqual(row["representativeWorkflowOptions"], [])
-            self.assertIsNone(row["recommendedWorkflow"])
+            if row["inferredMode"] == "remove_background":
+                self.assertEqual(row["resolutionState"], "explicit_new_task_candidate")
+                self.assertEqual(row["taskBoundaryState"], "new_task_boundary_required")
+                self.assertEqual(row["representativeWorkflowOptions"], [])
+                self.assertIsNone(row["recommendedWorkflow"])
+            else:
+                self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+                self.assertEqual(
+                    row["taskBoundaryState"],
+                    "existing_task_boundary_model_admission_required",
+                )
+                self.assertEqual(
+                    row["recommendedWorkflow"]["modelType"],
+                    "BuiltinImageOperation",
+                )
         self.assertEqual(counts, expected_modes)
         showcase = next(
             row for row in self.ledger["resolutions"] if row["catalogId"] == "basic_image_color_adjustment"

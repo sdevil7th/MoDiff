@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:ab67d45211bacd0bf228920e8a065f7cd7ea77457645fb12172896e6d2b17032",
+  "contentHash": "sha256:248a53b63455c5c1872902fc1acf84fc9142469899fa2cfff9a7690c9651b8ca",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -524,6 +524,216 @@
         "fal/AuraFlow-v0.3"
       ],
       "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08",
+      "graphPath": "studio/builtin-image-operation/image-adjustment.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "image_adjustment",
+      "modelType": "BuiltinImageOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source image; no model or network access is used.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_channels",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768",
+      "graphPath": "studio/builtin-image-operation/image-channels.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "image_channels",
+      "modelType": "BuiltinImageOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source image; no model or network access is used.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c",
+      "graphPath": "studio/builtin-image-operation/image-crop.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "image_crop",
+      "modelType": "BuiltinImageOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source image; no model or network access is used.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f",
+      "graphPath": "studio/builtin-image-operation/image-filter.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "image_filter",
+      "modelType": "BuiltinImageOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source image; no model or network access is used.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_tile",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087",
+      "graphPath": "studio/builtin-image-operation/image-tile.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "image_tile",
+      "modelType": "BuiltinImageOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source image; no model or network access is used.",
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -5763,28 +5973,28 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:c6b11b23dd5fc8389e69fd3fd8821c2dbe81bfdce1831bb0343b80b7bebb9f4f",
+      "contentHash": "sha256:70eee9932dc44a895e7d930edeb6711bdcdc5c6206ede360a4ff1064f115219f",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:388b00cdc8ea3f1251884e673f08d8b9957e3cf9a46902053e0038b1b2e0dad0"
+      "sha256": "sha256:aeaee24e6b2d900eb34a7fe0f618904ebe549fe53a760f274af1397fb57894d4"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:1ffd2a491c2e78ab7ef7838a75a7624e5faf3fe1876231f046fd4c46e7f3be39"
+      "sha256": "sha256:eb15c0eecf4292de89d2b1f940b8923b9e57036a1854821b82d581f5353c4575"
     }
   },
   "summary": {
-    "candidateContractCount": 126,
-    "canonicalWorkflowCount": 177,
+    "candidateContractCount": 131,
+    "canonicalWorkflowCount": 182,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 74,
+    "contractsRequiringInputExamples": 79,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 3,
-      "image": 90,
+      "image": 95,
       "json": 6,
       "video": 27
     },

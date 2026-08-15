@@ -187,6 +187,61 @@
       "status": "executable"
     },
     {
+      "graphHash": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08",
+      "graphPath": "studio/builtin-image-operation/image-adjustment.json",
+      "id": "BuiltinImageOperation:image_adjustment",
+      "mode": "image_adjustment",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768",
+      "graphPath": "studio/builtin-image-operation/image-channels.json",
+      "id": "BuiltinImageOperation:image_channels",
+      "mode": "image_channels",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c",
+      "graphPath": "studio/builtin-image-operation/image-crop.json",
+      "id": "BuiltinImageOperation:image_crop",
+      "mode": "image_crop",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f",
+      "graphPath": "studio/builtin-image-operation/image-filter.json",
+      "id": "BuiltinImageOperation:image_filter",
+      "mode": "image_filter",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087",
+      "graphPath": "studio/builtin-image-operation/image-tile.json",
+      "id": "BuiltinImageOperation:image_tile",
+      "mode": "image_tile",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
       "graphPath": "studio/chroma-img2-img-pipeline/edit-image.json",
       "id": "ChromaImg2ImgPipeline:edit_image",
@@ -2084,7 +2139,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:c6b11b23dd5fc8389e69fd3fd8821c2dbe81bfdce1831bb0343b80b7bebb9f4f",
+  "contentHash": "sha256:70eee9932dc44a895e7d930edeb6711bdcdc5c6206ede360a4ff1064f115219f",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7801,7 +7856,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "6b7be75e7d7e385c880a34d675459e24904aa82f5a8f9f3f2a874d125cc10934",
+    "templateBundleSha256": "75f2182a03a7c6f00fdbf47eb4cd0e6a81dd601af2b292ba2231de6aaff245df",
     "transformers": {
       "productionRuntime": {
         "byteSize": 11625234,
@@ -7820,9 +7875,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 177,
+    "canonicalWorkflowCount": 182,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 126,
+    "canonicalWorkflowsWithoutPublicTemplates": 131,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7855,7 +7910,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 177,
+      "executable": 182,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

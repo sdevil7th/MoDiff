@@ -70,12 +70,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 177,
+                "canonicalWorkflowCount": 182,
                 "publicTemplateCount": 77,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "candidateContractCount": 126,
-                "mediaKindCounts": {"audio": 3, "image": 90, "json": 6, "video": 27},
-                "contractsRequiringInputExamples": 74,
+                "candidateContractCount": 131,
+                "mediaKindCounts": {"audio": 3, "image": 95, "json": 6, "video": 27},
+                "contractsRequiringInputExamples": 79,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
@@ -195,9 +195,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
                     )
         for rows in expected.values():
             rows.sort(key=lambda item: (item["recordType"], item["id"]))
-        actual = {
-            row["canonicalWorkflowId"]: row["comfyResearchRecords"] for row in self.ledger["contracts"]
-        }
+        actual = {row["canonicalWorkflowId"]: row["comfyResearchRecords"] for row in self.ledger["contracts"]}
         self.assertEqual(actual, expected)
         self.assertEqual(sum(bool(rows) for rows in actual.values()), 11)
         self.assertEqual(sum(len(rows) for rows in actual.values()), 14)

@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:c1f9ed3d2cf8f705d059afcbf069b8575aa34a2d5a7440c4b2c1eb77d32a0c5d",
+  "contentHash": "sha256:64246c6f15f5e9029c9768e43e725fce376858dc48076632149a8675697b450d",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -133,8 +133,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "brightness_and_contrast",
       "catalogModelLabels": [],
@@ -152,18 +151,32 @@
       },
       "contractId": "comfy-research:blueprint:brightness_and_contrast",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Brightness and Contrast"
     },
     {
@@ -416,8 +429,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "chromatic_aberration",
       "catalogModelLabels": [],
@@ -435,7 +447,7 @@
       },
       "contractId": "comfy-research:blueprint:chromatic_aberration",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
@@ -444,11 +456,25 @@
       "recognizedMoDiffFamilies": [
         "Chroma"
       ],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Chromatic Aberration"
     },
     {
@@ -457,8 +483,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "color_adjustment",
       "catalogModelLabels": [],
@@ -476,18 +501,32 @@
       },
       "contractId": "comfy-research:blueprint:color_adjustment",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Color Adjustment"
     },
     {
@@ -496,8 +535,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "color_balance",
       "catalogModelLabels": [],
@@ -515,18 +553,32 @@
       },
       "contractId": "comfy-research:blueprint:color_balance",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Color Balance"
     },
     {
@@ -535,8 +587,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "color_curves",
       "catalogModelLabels": [],
@@ -554,18 +605,32 @@
       },
       "contractId": "comfy-research:blueprint:color_curves",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Color Curves"
     },
     {
@@ -654,8 +719,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "crop_images_2x2",
       "catalogModelLabels": [],
@@ -673,18 +737,32 @@
       },
       "contractId": "comfy-research:blueprint:crop_images_2x2",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_crop",
       "inferredMode": "image_crop",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_crop",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Crop Images 2x2"
     },
     {
@@ -693,8 +771,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "crop_images_3x3",
       "catalogModelLabels": [],
@@ -712,18 +789,32 @@
       },
       "contractId": "comfy-research:blueprint:crop_images_3x3",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_crop",
       "inferredMode": "image_crop",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_crop",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Crop Images 3x3"
     },
     {
@@ -872,8 +963,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "edge_preserving_blur",
       "catalogModelLabels": [],
@@ -891,18 +981,32 @@
       },
       "contractId": "comfy-research:blueprint:edge_preserving_blur",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Edge-Preserving Blur"
     },
     {
@@ -911,8 +1015,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "film_grain",
       "catalogModelLabels": [],
@@ -930,18 +1033,32 @@
       },
       "contractId": "comfy-research:blueprint:film_grain",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Film Grain"
     },
     {
@@ -1147,8 +1264,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "glow",
       "catalogModelLabels": [],
@@ -1166,18 +1282,32 @@
       },
       "contractId": "comfy-research:blueprint:glow",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Glow"
     },
     {
@@ -1186,8 +1316,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "hue_and_saturation",
       "catalogModelLabels": [],
@@ -1205,18 +1334,32 @@
       },
       "contractId": "comfy-research:blueprint:hue_and_saturation",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Hue and Saturation"
     },
     {
@@ -1225,8 +1368,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "image_blur",
       "catalogModelLabels": [],
@@ -1244,18 +1386,32 @@
       },
       "contractId": "comfy-research:blueprint:image_blur",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Image Blur"
     },
     {
@@ -1264,8 +1420,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "image_channels",
       "catalogModelLabels": [],
@@ -1283,18 +1438,32 @@
       },
       "contractId": "comfy-research:blueprint:image_channels",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_channels",
       "inferredMode": "image_channels",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_channels",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_channels",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_channels",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Image Channels"
     },
     {
@@ -2041,8 +2210,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "image_levels",
       "catalogModelLabels": [],
@@ -2060,18 +2228,32 @@
       },
       "contractId": "comfy-research:blueprint:image_levels",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Image Levels"
     },
     {
@@ -2864,8 +3046,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "sharpen",
       "catalogModelLabels": [],
@@ -2883,18 +3064,32 @@
       },
       "contractId": "comfy-research:blueprint:sharpen",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Sharpen"
     },
     {
@@ -2903,8 +3098,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "split_image_grid_to_tiles",
       "catalogModelLabels": [],
@@ -2922,18 +3116,32 @@
       },
       "contractId": "comfy-research:blueprint:split_image_grid_to_tiles",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_tile",
       "inferredMode": "image_tile",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_tile",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_tile",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_tile",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Split Image Grid to Tiles"
     },
     {
@@ -4239,8 +4447,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "unsharp_mask",
       "catalogModelLabels": [],
@@ -4258,18 +4465,32 @@
       },
       "contractId": "comfy-research:blueprint:unsharp_mask",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_filter",
       "inferredMode": "image_filter",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_filter",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Unsharp Mask"
     },
     {
@@ -4683,8 +4904,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "basic_image_color_adjustment",
       "catalogModelLabels": [
@@ -4704,18 +4924,32 @@
       },
       "contractId": "comfy-research:template:basic_image_color_adjustment",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_image_adjustment",
       "inferredMode": "image_adjustment",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_adjustment",
+        "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinImageOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinImageOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "template",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Color Adjustment Blueprints Showcase"
     },
     {
@@ -7113,18 +7347,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:19dc9250a6038e0b63017b54884730047261f9361e6adbcf87262d1038cef8f2",
+      "contentHash": "sha256:7263e6e2a95ce032b19d12add106d7966a75819ac3fe7171bb1586674f6877f4",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:5427460a9631abd3c568a9a8f5a2b10d067ba039fe23b543ea572d60f81e6529"
+      "sha256": "sha256:1fa1835ef03e35ce5a273b74653e8543214819f0e010befaccbdef20e67dc054"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:c6b11b23dd5fc8389e69fd3fd8821c2dbe81bfdce1831bb0343b80b7bebb9f4f",
+      "contentHash": "sha256:70eee9932dc44a895e7d930edeb6711bdcdc5c6206ede360a4ff1064f115219f",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:388b00cdc8ea3f1251884e673f08d8b9957e3cf9a46902053e0038b1b2e0dad0"
+      "sha256": "sha256:aeaee24e6b2d900eb34a7fe0f618904ebe549fe53a760f274af1397fb57894d4"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:1ffd2a491c2e78ab7ef7838a75a7624e5faf3fe1876231f046fd4c46e7f3be39"
+      "sha256": "sha256:eb15c0eecf4292de89d2b1f940b8923b9e57036a1854821b82d581f5353c4575"
     }
   },
   "summary": {
@@ -7176,22 +7410,22 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 35,
+    "recordsWithHiddenAuthoringSpecOption": 53,
     "recordsWithInferredTask": 115,
     "recordsWithPublicTemplateOption": 26,
-    "recordsWithRecommendedWorkflow": 61,
+    "recordsWithRecommendedWorkflow": 79,
     "resolutionCount": 116,
     "resolutionStateCounts": {
-      "explicit_new_task_candidate": 54,
+      "explicit_new_task_candidate": 36,
       "explicit_task_and_family_candidate": 25,
-      "explicit_task_candidate": 36,
+      "explicit_task_candidate": 54,
       "source_review_required": 1
     },
     "sourceUndeterminedCount": 116,
     "taskBoundaryStateCounts": {
       "existing_family_workflow_candidate": 25,
-      "existing_task_boundary_model_admission_required": 36,
-      "new_task_boundary_required": 54,
+      "existing_task_boundary_model_admission_required": 54,
+      "new_task_boundary_required": 36,
       "task_undetermined": 1
     }
   }

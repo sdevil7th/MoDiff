@@ -68,6 +68,16 @@ class BuiltinImageStudioContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(capability["artifactInstallRequired"])
         self.assertEqual(capability["downloadFiles"], [])
         self.assertEqual(capability["revisionCandidates"], [])
+        self.assertEqual(
+            capability["inputContracts"],
+            {
+                mode: {
+                    "requiredImages": ["referenceImages"],
+                    "note": "Requires one local source image; no model or network access is used.",
+                }
+                for mode in IMAGE_OPERATION_MODES
+            },
+        )
         self.assertFalse(capability["autoEligible"])
         self.assertTrue(capability["templateEligible"])
         self.assertFalse(capability["galleryEligible"])

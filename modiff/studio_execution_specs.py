@@ -11972,7 +11972,7 @@ _BUILTIN_IMAGE_OPERATION_CAPABILITY = {
     "templateEligible": True,
     "galleryEligible": False,
     "liveProof": False,
-    "inputContracts": {
+    "modeRequirements": {
         mode: {
             "requiredImages": ["referenceImages"],
             "note": "Requires one local source image; no model or network access is used.",
