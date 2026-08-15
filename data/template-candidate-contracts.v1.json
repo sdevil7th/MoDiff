@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:42fdbcca1016aecbc76061c668f5effdf916642ec7beac082cdafb6397195035",
+  "contentHash": "sha256:3c84579a13710f72eb5b7ea1e807a4b19bf1ed0de424d1a22d307d582771d1f7",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -820,6 +820,93 @@
         "requiredImages": [
           "referenceImages",
           "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:video_frame_extract",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17",
+      "graphPath": "studio/builtin-video-operation/video-frame-extract.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "video_frame_extract",
+      "modelType": "BuiltinVideoOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source video and extracts at most 64 frames without model or network access.",
+        "requiredVideos": [
+          "sourceVideo"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:video_stitch",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9",
+      "graphPath": "studio/builtin-video-operation/video-stitch.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "video_stitch",
+      "modelType": "BuiltinVideoOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "minimumCounts": {
+          "referenceVideos": 2
+        },
+        "note": "Requires two to sixteen local source videos and uses the app-owned bounded FFmpeg path.",
+        "requiredVideos": [
+          "referenceVideos"
         ]
       },
       "runtimeQualificationStatus": "unqualified"
@@ -6061,30 +6148,30 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:5228b75342d92553a1594ab59a210043e41b60294e544ae4d41458c344cf8e0a",
+      "contentHash": "sha256:015ea53b84f0c8b04e79c332eb7e24a51ba8970cd3b31993e371288afed22b3a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:5ee21ae17df5feb7775eb8b81a30960db44020777186802244295e0a419b5997"
+      "sha256": "sha256:5196289f53844bee7c8fed181eebfcb3ca3b8c280d55ab3c8440bebe9f85833e"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:99f40f629031168ec5ddea445de7736271f1cb1586ffdd8844270400bd87b49d"
+      "sha256": "sha256:7a4b697e8d3027124b5e882a02b336e86d4c76eedd0e5e6775605b4b97d710d8"
     }
   },
   "summary": {
-    "candidateContractCount": 133,
-    "canonicalWorkflowCount": 184,
+    "candidateContractCount": 135,
+    "canonicalWorkflowCount": 186,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 81,
+    "contractsRequiringInputExamples": 83,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 3,
-      "image": 97,
+      "image": 98,
       "json": 6,
-      "video": 27
+      "video": 28
     },
     "publicTemplateCount": 77
   }

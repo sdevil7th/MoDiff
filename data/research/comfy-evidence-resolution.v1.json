@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:597a9516123544049fe278778ab78d260c490afe68e252851df236074a3c8e41",
+  "contentHash": "sha256:9353350464cb91a78316e3cfe2896afe79812e6ce703b0e136f3b8f31ff2e65d",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -1225,8 +1225,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "get_any_video_frame",
       "catalogModelLabels": [],
@@ -1244,18 +1243,32 @@
       },
       "contractId": "comfy-research:blueprint:get_any_video_frame",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_video_frame_extract",
       "inferredMode": "video_frame_extract",
       "presentationMediaHints": [
         "video"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinVideoOperation:video_frame_extract",
+        "canonicalWorkflowId": "BuiltinVideoOperation:video_frame_extract",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinVideoOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinVideoOperation:video_frame_extract",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinVideoOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Get Any Video Frame"
     },
     {
@@ -2744,8 +2757,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "merge_videos",
       "catalogModelLabels": [],
@@ -2763,18 +2775,32 @@
       },
       "contractId": "comfy-research:blueprint:merge_videos",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_video_stitch",
       "inferredMode": "video_stitch",
       "presentationMediaHints": [
         "video"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinVideoOperation:video_stitch",
+        "canonicalWorkflowId": "BuiltinVideoOperation:video_stitch",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinVideoOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinVideoOperation:video_stitch",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinVideoOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Merge Videos"
     },
     {
@@ -4761,8 +4787,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "video_stitch",
       "catalogModelLabels": [],
@@ -4780,18 +4805,32 @@
       },
       "contractId": "comfy-research:blueprint:video_stitch",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_video_stitch",
       "inferredMode": "video_stitch",
       "presentationMediaHints": [
         "video"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinVideoOperation:video_stitch",
+        "canonicalWorkflowId": "BuiltinVideoOperation:video_stitch",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinVideoOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinVideoOperation:video_stitch",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinVideoOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Video Stitch"
     },
     {
@@ -7373,18 +7412,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:5aa4407255d58e7982cfca6d400de9a3ec5b0aaa90e9946c2ba74df3eb7965b3",
+      "contentHash": "sha256:17e69a1799e1e83acadf106220f80f638725e0ec8c216f57b983b9395eb689f5",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:df039c1394dd991b5bd88247f21ff4a0f5b19446979209f22269ad3a0408c0d4"
+      "sha256": "sha256:863cbb01109aa254428c228714466b2ce53cdf983371f542107e274da3c1c9b9"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:5228b75342d92553a1594ab59a210043e41b60294e544ae4d41458c344cf8e0a",
+      "contentHash": "sha256:015ea53b84f0c8b04e79c332eb7e24a51ba8970cd3b31993e371288afed22b3a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:5ee21ae17df5feb7775eb8b81a30960db44020777186802244295e0a419b5997"
+      "sha256": "sha256:5196289f53844bee7c8fed181eebfcb3ca3b8c280d55ab3c8440bebe9f85833e"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:99f40f629031168ec5ddea445de7736271f1cb1586ffdd8844270400bd87b49d"
+      "sha256": "sha256:7a4b697e8d3027124b5e882a02b336e86d4c76eedd0e5e6775605b4b97d710d8"
     }
   },
   "summary": {
@@ -7436,22 +7475,22 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 55,
+    "recordsWithHiddenAuthoringSpecOption": 58,
     "recordsWithInferredTask": 115,
     "recordsWithPublicTemplateOption": 26,
-    "recordsWithRecommendedWorkflow": 81,
+    "recordsWithRecommendedWorkflow": 84,
     "resolutionCount": 116,
     "resolutionStateCounts": {
-      "explicit_new_task_candidate": 34,
+      "explicit_new_task_candidate": 31,
       "explicit_task_and_family_candidate": 25,
-      "explicit_task_candidate": 56,
+      "explicit_task_candidate": 59,
       "source_review_required": 1
     },
     "sourceUndeterminedCount": 116,
     "taskBoundaryStateCounts": {
       "existing_family_workflow_candidate": 25,
-      "existing_task_boundary_model_admission_required": 56,
-      "new_task_boundary_required": 34,
+      "existing_task_boundary_model_admission_required": 59,
+      "new_task_boundary_required": 31,
       "task_undetermined": 1
     }
   }

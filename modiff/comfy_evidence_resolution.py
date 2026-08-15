@@ -302,6 +302,13 @@ def build_comfy_evidence_resolution_ledger(root: Path) -> dict[str, Any]:
         row["canonicalWorkflowId"]: row["id"]
         for row in _records(authoring.get("specifications"), label="template authoring specifications")
     }
+    input_media_by_workflow = {
+        row["canonicalWorkflowId"]: {
+            item["mediaKind"]
+            for item in _records(row.get("inputPlan", {}).get("items"), label="template authoring input items")
+        }
+        for row in _records(authoring.get("specifications"), label="template authoring specifications")
+    }
 
     resolutions = []
     source_rows = [
@@ -331,7 +338,11 @@ def build_comfy_evidence_resolution_ledger(root: Path) -> dict[str, Any]:
             [
                 workflow
                 for workflow in workflows
-                if workflow["mode"] == inferred_mode and workflow["mediaKind"] in normalized_kinds
+                if workflow["mode"] == inferred_mode
+                and (
+                    workflow["mediaKind"] in normalized_kinds
+                    or bool(input_media_by_workflow.get(workflow["id"], set()) & normalized_kinds)
+                )
             ]
             if inferred_mode is not None
             else []

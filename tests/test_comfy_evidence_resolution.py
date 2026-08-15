@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 55,
+                "recordsWithHiddenAuthoringSpecOption": 58,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 81,
+                "recordsWithRecommendedWorkflow": 84,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 34,
+                    "explicit_new_task_candidate": 31,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 56,
+                    "explicit_task_candidate": 59,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 56,
-                    "new_task_boundary_required": 34,
+                    "existing_task_boundary_model_admission_required": 59,
+                    "new_task_boundary_required": 31,
                     "task_undetermined": 1,
                 },
             },
@@ -209,6 +209,19 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
         self.assertEqual(
             row["recommendedWorkflow"]["canonicalWorkflowId"],
             "BuiltinImageOperation:mask_composite",
+        )
+
+    def test_explicit_frame_extraction_metadata_matches_video_input_to_image_output(self):
+        row = next(
+            row
+            for row in self.ledger["resolutions"]
+            if row["catalogId"] == "get_any_video_frame"
+        )
+        self.assertEqual(row["inferredMode"], "video_frame_extract")
+        self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+        self.assertEqual(
+            row["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinVideoOperation:video_frame_extract",
         )
 
     def test_every_recommendation_is_a_current_public_or_hidden_workflow(self):

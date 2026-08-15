@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T08:17:43.927Z",
+  "generatedAt": "2026-08-15T08:41:41.278Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 172,
-  "supportedPairCount": 184,
+  "supportedCanonicalPairCount": 174,
+  "supportedPairCount": 186,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -813,6 +813,71 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-image-operation/mask-composite.json",
       "graphHash": "b3cb792c36111c427b7a901840d2774b1a2e5ce193a538948c7cce7ada710bc8"
+    },
+    {
+      "id": "BuiltinVideoOperation:video_frame_extract",
+      "modelType": "BuiltinVideoOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "video_frame_extract",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ],
+        "note": "Requires one local source video and extracts at most 64 frames without model or network access."
+      },
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-video-operations:frame-extract:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-video-operation/video-frame-extract.json",
+      "graphHash": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17"
+    },
+    {
+      "id": "BuiltinVideoOperation:video_stitch",
+      "modelType": "BuiltinVideoOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "video_stitch",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "referenceVideos"
+        ],
+        "minimumCounts": {
+          "referenceVideos": 2
+        },
+        "note": "Requires two to sixteen local source videos and uses the app-owned bounded FFmpeg path."
+      },
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-video-operations:stitch:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-video-operation/video-stitch.json",
+      "graphHash": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9"
     },
     {
       "id": "ChromaImg2ImgPipeline:edit_image",

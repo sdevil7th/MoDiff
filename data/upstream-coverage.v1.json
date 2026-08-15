@@ -264,6 +264,28 @@
       "status": "executable"
     },
     {
+      "graphHash": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17",
+      "graphPath": "studio/builtin-video-operation/video-frame-extract.json",
+      "id": "BuiltinVideoOperation:video_frame_extract",
+      "mode": "video_frame_extract",
+      "modelType": "BuiltinVideoOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9",
+      "graphPath": "studio/builtin-video-operation/video-stitch.json",
+      "id": "BuiltinVideoOperation:video_stitch",
+      "mode": "video_stitch",
+      "modelType": "BuiltinVideoOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
       "graphPath": "studio/chroma-img2-img-pipeline/edit-image.json",
       "id": "ChromaImg2ImgPipeline:edit_image",
@@ -2161,7 +2183,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:5228b75342d92553a1594ab59a210043e41b60294e544ae4d41458c344cf8e0a",
+  "contentHash": "sha256:015ea53b84f0c8b04e79c332eb7e24a51ba8970cd3b31993e371288afed22b3a",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7897,9 +7919,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 184,
+    "canonicalWorkflowCount": 186,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 133,
+    "canonicalWorkflowsWithoutPublicTemplates": 135,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7932,7 +7954,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 184,
+      "executable": 186,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
