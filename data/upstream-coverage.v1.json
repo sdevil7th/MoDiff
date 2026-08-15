@@ -220,7 +220,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6",
+      "graphHash": "bf950192e257f0cb8e4fa7feb61a66a80f3da16b9825ecb4ff341349b7253c52",
       "graphPath": "studio/builtin-data-operation/data-conversion.json",
       "id": "BuiltinDataOperation:data_conversion",
       "mode": "data_conversion",
@@ -231,7 +231,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475",
+      "graphHash": "e3468c5dab81871976ec37f84a4e9a0ffa827a337d7d6986070b7fbb218c6335",
       "graphPath": "studio/builtin-data-operation/graph-utility.json",
       "id": "BuiltinDataOperation:graph_utility",
       "mode": "graph_utility",
@@ -242,7 +242,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66",
+      "graphHash": "02a6554aa75e3e5225205f52f6f9cebad6369db5eb05bdf46d1d2c0734d95c03",
       "graphPath": "studio/builtin-data-operation/text-select.json",
       "id": "BuiltinDataOperation:text_select",
       "mode": "text_select",
@@ -2304,7 +2304,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:dc1e6b7ee7691b702c84ddf172c264b4d6cce0e8215e13eea0090ea5ba5ecd4a",
+  "contentHash": "sha256:90794712fab5b492a1b6899e01c4870e442f5cd988f1975f64eb7288673d9046",
   "diffusersPipelines": [
     {
       "artifactReviews": [],

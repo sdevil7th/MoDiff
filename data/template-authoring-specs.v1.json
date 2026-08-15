@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:71cea97d6f8b37e53193cbac48f1463af24dbe7fbb15ea66f495ad646ed65d81",
+  "contentHash": "sha256:482695f3b3defce206d9c23d490bab1d544954036abf76fadc0ad179caf2067f",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:f6cfbaa0ddd573c10c1793574f2d0ed806a2298d219e228f23d3707468f995ba",
+      "contentHash": "sha256:5b9ca28c5f621f88c3426fc43f0d63408ee77b3cc991623a9747e8543e254b9b",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:6ee59096ff3cfa14f9982b146397449750990a85bef0fa611c8aa367c01a516a"
+      "sha256": "sha256:7cc6a52e2cbd34411e2283be9d532f3b86d1be846707ad957aab32b97a12b459"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:2616aeaf3571f0990484c61b1277a8d285002a11a2daebd14f049f8ece61ca93"
+      "sha256": "sha256:bab03873ecd434fb3a7fe9b11795d5495d84eb09d4ff2b73e157840dd4b35b95"
     }
   },
   "specifications": [
@@ -1949,7 +1949,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/builtin-data-operation/data-conversion.json",
-        "sha256": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6"
+        "sha256": "bf950192e257f0cb8e4fa7feb61a66a80f3da16b9825ecb4ff341349b7253c52"
       },
       "canonicalWorkflowId": "BuiltinDataOperation:data_conversion",
       "claims": {
@@ -1963,7 +1963,7 @@
       "defaultsPlan": {
         "fields": [],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6",
+        "sourceGraphSha256": "bf950192e257f0cb8e4fa7feb61a66a80f3da16b9825ecb4ff341349b7253c52",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2033,7 +2033,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/builtin-data-operation/graph-utility.json",
-        "sha256": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475"
+        "sha256": "e3468c5dab81871976ec37f84a4e9a0ffa827a337d7d6986070b7fbb218c6335"
       },
       "canonicalWorkflowId": "BuiltinDataOperation:graph_utility",
       "claims": {
@@ -2047,7 +2047,7 @@
       "defaultsPlan": {
         "fields": [],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475",
+        "sourceGraphSha256": "e3468c5dab81871976ec37f84a4e9a0ffa827a337d7d6986070b7fbb218c6335",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2117,7 +2117,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/builtin-data-operation/text-select.json",
-        "sha256": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66"
+        "sha256": "02a6554aa75e3e5225205f52f6f9cebad6369db5eb05bdf46d1d2c0734d95c03"
       },
       "canonicalWorkflowId": "BuiltinDataOperation:text_select",
       "claims": {
@@ -2131,7 +2131,7 @@
       "defaultsPlan": {
         "fields": [],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66",
+        "sourceGraphSha256": "02a6554aa75e3e5225205f52f6f9cebad6369db5eb05bdf46d1d2c0734d95c03",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
