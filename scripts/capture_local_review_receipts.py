@@ -14,6 +14,7 @@ import urllib.request
 from modiff.local_review_receipts import (
     build_local_review_ledger,
     loopback_base_url,
+    merge_local_review_ledger,
     parse_record,
     validate_local_review_ledger,
 )
@@ -82,6 +83,11 @@ def parse_args(argv=None):
         help="Repeat for each completed candidate; OUTPUTS is a comma-separated app-data path list.",
     )
     parser.add_argument("--output", help="JSON receipt path under data/qualification.")
+    parser.add_argument(
+        "--merge",
+        action="store_true",
+        help="Validate the existing ledger and append only newly fetched task receipts.",
+    )
     parser.add_argument("--validate", action="store_true", help="Validate an existing receipt instead of capturing.")
     return parser.parse_args(argv)
 
@@ -90,8 +96,8 @@ def main(argv=None) -> int:
     args = parse_args(argv)
     destination = _output_path(args.output)
     if args.validate:
-        if args.record:
-            raise SystemExit("--validate does not accept --record.")
+        if args.record or args.merge:
+            raise SystemExit("--validate does not accept --record or --merge.")
         payload = json.loads(destination.read_text(encoding="utf-8"))
         validate_local_review_ledger(payload, root=ROOT)
         print(
@@ -103,15 +109,27 @@ def main(argv=None) -> int:
         raise SystemExit("Capture requires at least one --record.")
     server = loopback_base_url(args.server)
     records = [parse_record(value) for value in args.record]
-    payload = build_local_review_ledger(
-        root=ROOT,
-        records=records,
-        fetch_run=lambda task_id: _request_run(server, task_id),
-    )
+
+    def fetch_run(task_id):
+        return _request_run(server, task_id)
+
+    if args.merge:
+        if not destination.is_file() or destination.is_symlink():
+            raise SystemExit("--merge requires an existing regular receipt ledger.")
+        existing = json.loads(destination.read_text(encoding="utf-8"))
+        payload = merge_local_review_ledger(
+            root=ROOT,
+            existing=existing,
+            records=records,
+            fetch_run=fetch_run,
+        )
+    else:
+        payload = build_local_review_ledger(root=ROOT, records=records, fetch_run=fetch_run)
     validate_local_review_ledger(payload, root=ROOT)
     _write_atomic(destination, payload)
     print(
-        f"Wrote {destination}: {payload['summary']['receiptCount']} receipts / "
+        f"{'Merged' if args.merge else 'Wrote'} {destination}: "
+        f"{payload['summary']['receiptCount']} receipts / "
         f"{payload['summary']['outputCount']} outputs pending human review."
     )
     return 0

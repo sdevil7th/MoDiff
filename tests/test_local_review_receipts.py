@@ -7,6 +7,7 @@ from modiff.local_review_receipts import (
     build_local_review_ledger,
     canonical_content_hash,
     loopback_base_url,
+    merge_local_review_ledger,
     parse_record,
     validate_local_review_ledger,
 )
@@ -133,6 +134,38 @@ class LocalReviewReceiptTests(unittest.TestCase):
         (self.root / "data" / "images" / "candidate.png").write_bytes(b"changed")
         with self.assertRaisesRegex(ValueError, "output bytes drifted"):
             validate_local_review_ledger(document, root=self.root)
+
+    def test_merge_validates_retained_receipts_and_fetches_only_new_tasks(self):
+        existing = build_local_review_ledger(
+            root=self.root,
+            records=[parse_record("BuiltinImageOperation:crop|task-image|images/candidate.png")],
+            fetch_run=self._run,
+        )
+        fetched = []
+
+        def fetch(task_id):
+            fetched.append(task_id)
+            return self._run(task_id)
+
+        merged = merge_local_review_ledger(
+            root=self.root,
+            existing=existing,
+            records=[parse_record("BuiltinDataOperation:data_conversion|task-data|exports/candidate.json")],
+            fetch_run=fetch,
+        )
+
+        self.assertEqual(fetched, ["task-data"])
+        self.assertEqual(merged["summary"]["receiptCount"], 2)
+        self.assertEqual(merged["summary"]["outputKindCounts"], {"image": 1, "json": 1})
+        self.assertEqual(validate_local_review_ledger(merged, root=self.root), merged)
+
+        with self.assertRaisesRegex(ValueError, "identities must be unique"):
+            merge_local_review_ledger(
+                root=self.root,
+                existing=existing,
+                records=[parse_record("BuiltinImageOperation:crop|task-other|images/candidate.png")],
+                fetch_run=fetch,
+            )
 
     def test_record_and_server_boundaries_fail_closed(self):
         self.assertEqual(loopback_base_url("http://127.0.0.1:8088/"), "http://127.0.0.1:8088")

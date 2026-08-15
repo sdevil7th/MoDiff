@@ -178,6 +178,33 @@ def _candidate_contract_id(workflow_id: str) -> str:
     return f"template-candidate:{workflow_id}"
 
 
+def _ledger_document(receipts: list[dict]) -> dict:
+    receipts = sorted(deepcopy(receipts), key=lambda item: item["workflowId"])
+    output_kinds = Counter(output["mediaKind"] for item in receipts for output in item["outputs"])
+    document = {
+        "boundary": {
+            "assetsAreLocalIgnoredFiles": True,
+            "doesNotAlterTemplateCandidateAssetState": True,
+            "galleryApprovalClaimed": False,
+            "humanReviewRequired": True,
+            "publicationClaimed": False,
+            "releaseEligibilityClaimed": False,
+            "rightsApprovalClaimed": False,
+        },
+        "captureKind": "local_technical_review_candidate_receipts",
+        "schemaVersion": SCHEMA_VERSION,
+        "receipts": receipts,
+        "summary": {
+            "outputCount": sum(output_kinds.values()),
+            "outputKindCounts": dict(sorted(output_kinds.items())),
+            "pendingHumanReviewCount": len(receipts),
+            "receiptCount": len(receipts),
+        },
+    }
+    document["contentHash"] = canonical_content_hash(document)
+    return document
+
+
 def build_local_review_ledger(
     *,
     root: Path,
@@ -230,29 +257,34 @@ def build_local_review_ledger(
                 "workflowId": workflow_id,
             }
         )
-    receipts.sort(key=lambda item: item["workflowId"])
-    output_kinds = Counter(output["mediaKind"] for item in receipts for output in item["outputs"])
-    document = {
-        "boundary": {
-            "assetsAreLocalIgnoredFiles": True,
-            "doesNotAlterTemplateCandidateAssetState": True,
-            "galleryApprovalClaimed": False,
-            "humanReviewRequired": True,
-            "publicationClaimed": False,
-            "releaseEligibilityClaimed": False,
-            "rightsApprovalClaimed": False,
-        },
-        "captureKind": "local_technical_review_candidate_receipts",
-        "schemaVersion": SCHEMA_VERSION,
-        "receipts": receipts,
-        "summary": {
-            "outputCount": sum(output_kinds.values()),
-            "outputKindCounts": dict(sorted(output_kinds.items())),
-            "pendingHumanReviewCount": len(receipts),
-            "receiptCount": len(receipts),
-        },
-    }
-    document["contentHash"] = canonical_content_hash(document)
+    return _ledger_document(receipts)
+
+
+def merge_local_review_ledger(
+    *,
+    root: Path,
+    existing: dict,
+    records: list[dict],
+    fetch_run: Callable[[str], dict],
+) -> dict:
+    """Append newly fetched receipts after validating all retained local evidence."""
+
+    validate_local_review_ledger(existing, root=root)
+    added = build_local_review_ledger(root=root, records=records, fetch_run=fetch_run)
+    receipts = [*existing["receipts"], *added["receipts"]]
+    if len(receipts) > MAX_RECEIPTS:
+        raise ValueError("Merged local review receipt count exceeds its bounded envelope.")
+    workflow_ids = [item["workflowId"] for item in receipts]
+    task_ids = [item["task"]["taskId"] for item in receipts]
+    output_paths = [output["path"] for item in receipts for output in item["outputs"]]
+    if (
+        len(workflow_ids) != len(set(workflow_ids))
+        or len(task_ids) != len(set(task_ids))
+        or len(output_paths) != len(set(output_paths))
+    ):
+        raise ValueError("Merged local review workflow, task, and output identities must be unique.")
+    document = _ledger_document(receipts)
+    validate_local_review_ledger(document, root=root)
     return document
 
 
