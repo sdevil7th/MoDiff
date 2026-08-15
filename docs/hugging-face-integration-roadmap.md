@@ -6903,18 +6903,18 @@ was too broad. It applied only to the finite slices already enumerated in those
 phases, not to the wider goal of classifying and covering every current
 Diffusers/Transformers semantic and researching a complete template catalog.
 
-The generic task/media architecture now has 165 exact backend execution-spec
+The generic task/media architecture now has 185 exact backend execution-spec
 and task-planning pairs. It covers generic image, video, audio, unconditional,
 perception, 3D, speech, bounded causal-text, image/video-to-text, and
 model-specific bounded AnyToAny actions; model identities and artifacts remain
 separate from those task boundaries. The regenerated canonical library contains
-177 unique, deterministic, independently verified graph files: the 165 base
-pairs plus 12 retained variants. All 177 are executable at source/graph level.
+197 unique, deterministic, independently verified graph files: the 185 base
+pairs plus 12 retained variants. All 197 are executable at source/graph level.
 
 The 77 public templates pass their structural contracts and cover 51 canonical
-workflows. Every one of the other 126 workflows has an exact Gallery-hidden,
-zero-asset candidate contract: 90 image, 27 video, six JSON, and three audio;
-74 require reviewed input examples before promotion. These are authoring
+workflows. Every one of the other 146 workflows has an exact Gallery-hidden,
+zero-asset candidate contract: 98 image, 33 video, nine JSON, and six audio;
+91 require reviewed input examples before promotion. These are authoring
 contracts, not generated assets or public Gallery claims.
 
 The generated full-coverage ledger classifies every one of the 327 exported
@@ -6964,17 +6964,31 @@ graph and prompt locks, model revision, node contract, and receipt; regenerate
 only changed or unmatched cases plus representative canaries.
 
 The regenerated release report is correctly blocked rather than empty: 66 of
-77 templates and 166 of 177 workflows lack complete release evidence, and none
+77 templates and 186 of 197 workflows lack complete release evidence, and none
 of the 51 advertised resource recipes has a measured physical qualification
 receipt on this host. Source completeness, prior visual approval, asset
 authoring, and physical release qualification remain separate claims.
 
+A separate ignored local technical-review receipt now captures 21 completed app
+workflows and 25 byte-hashed outputs: all 19 model-free built-in image, audio,
+video, and JSON candidate workflows plus the generic SmolLM2 text-generation
+and SmolVLM image-to-text workflows. It records three audio, 12 image, five
+video, and five JSON outputs. Every receipt remains explicitly pending human
+quality and rights review, with Gallery approval, publication, and release
+eligibility false. The SmolLM2 run also exposed and fixed a real generic-node
+gap: causal text generation now optionally applies a bounded tokenizer chat
+template before tokenization. The rerun follows the instruction checkpoint's
+chat format but its 135M output is still a weak/truncated technical candidate,
+not an approved example. SmolVLM produced a bounded description of the local
+procedural test frame and is likewise pending review.
+
 App-only model provisioning completed exact SmolLM2, SmolVLM, and Janus
 selections totaling 4,951,475,788 bytes without deleting an older model. The
 separate pending campaign still contains ten exact selections totaling
-408,762,812,498 bytes (408.763 GB). The latest app plan reports
-70,983,499,776 free bytes, a 68,719,476,736-byte reserve, and only
-2,264,023,040 usable bytes; no pending selection currently fits. Stable Video
+408,762,812,498 bytes (408.763 GB). The latest 2026-08-15 live filesystem
+snapshot reports 69,387,288,576 free bytes against the app's
+68,719,476,736-byte reserve, leaving only 667,811,840 bytes before queue and
+staging accounting; no pending selection currently fits. Stable Video
 and Stable Audio additionally remain access-gated after prior HTTP 403 results
 with no configured token. No direct download or reserve-bypassing submission is
 permitted.
@@ -6988,6 +7002,12 @@ and hidden candidate contracts. Client `fdadc34` bridges the final media routes,
 canonical generation crash-bounded, and `f893dd6` preserves per-mode output
 media. Comfy inventory and fail-closed authoring contracts are recorded by
 backend `d9fb0a0` and `832e254`.
+
+The post-closeout loader and review follow-ups are backend `01dbe05` (exact
+generic loader identities), `02c31c9` (bounded causal-text chat templates), and
+`0214e53` (the resulting 197-workflow graph and derived-ledger reseal). The
+older `b2d57ac`/`5e2aae9` references above remain historical milestones rather
+than the current generated-data head.
 
 The following separate gates do remain external:
 
