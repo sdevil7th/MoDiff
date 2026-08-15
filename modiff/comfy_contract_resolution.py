@@ -63,6 +63,66 @@ _LABEL_TO_FAMILIES = {
 _MEDIA_KIND_ALIASES = {"text": "json", "three_d": "video"}
 _PINNED_SOURCE_REVIEW_REVISION = "d9e66019b85da231b7c936ad9cb7ff08cec16557"
 _PINNED_SOURCE_REVIEWS = {
+    "comfy-research:template:audio_ace_step_1_m2m_editing": {
+        "assetPath": "templates/audio_ace_step_1_m2m_editing.json",
+        "assetSha256": "47044f579bf20ff6623615001482205c96250c169e3aec1eda6431823adb4f3d",
+        "gitBlobOid": "1020bf48371ecba2d941ea381a9a0d8d85ce1b50",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/ACE-Step_ComfyUI_repackaged",
+                "artifact": "ace_step_v1_3.5b.safetensors",
+            }
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+            "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+            "reasonCode": "ace_step_v1_music_to_music_is_not_v15_text_to_audio",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_audio_edit_task_and_model_generation_required",
+    },
+    "comfy-research:template:audio_ace_step_1_t2a_instrumentals": {
+        "assetPath": "templates/audio_ace_step_1_t2a_instrumentals.json",
+        "assetSha256": "88acb4f61ca03e04fa9645b84413f91710c0bacd2e174a2faf9072af75187294",
+        "gitBlobOid": "42ed75275069735fae4510219f4b9bc06235dbce",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/ACE-Step_ComfyUI_repackaged",
+                "artifact": "ace_step_v1_3.5b.safetensors",
+            }
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "AceStepAudioPipeline:text_to_audio",
+            "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+            "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+            "reasonCode": "ace_step_v1_3_5b_is_not_acestep_v15_xl_turbo",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:audio_ace_step_1_t2a_song": {
+        "assetPath": "templates/audio_ace_step_1_t2a_song.json",
+        "assetSha256": "be4d2c2f9d07005af00905ce4ae7f376dbc7e904b4d4276951f0d5b4a389adcf",
+        "gitBlobOid": "43626d5e5b17858b023717ae71a65f34f6e77815",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/ACE-Step_ComfyUI_repackaged",
+                "artifact": "ace_step_v1_3.5b.safetensors",
+            }
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "AceStepAudioPipeline:text_to_audio",
+            "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+            "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+            "reasonCode": "ace_step_v1_3_5b_is_not_acestep_v15_xl_turbo",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:audio_stable_audio_3_medium": {
         "assetPath": "templates/audio_stable_audio_3_medium.json",
         "assetSha256": "04e86880c18c2959a24c7fe6ad5d6d65dbf83bab68d823340f4976fd791f3b64",

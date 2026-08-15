@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:f725f6c04aa2fc0200d543bad7e612cdb2601cb0b055e72bef5e1b400896964c",
+  "contentHash": "sha256:a0dcd26405532670d8f55a223e5794d56fecdcd46d9fb83ef06fa74b35072b9a",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -625,9 +625,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ace_step_v1_music_to_music_is_not_v15_text_to_audio",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -654,7 +654,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_audio_edit_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "ACE Audio"
       ],
@@ -663,16 +663,39 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "edit_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ace_step_v1_3.5b.safetensors",
+            "repository": "Comfy-Org/ACE-Step_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/audio_ace_step_1_m2m_editing.json",
+        "assetSha256": "47044f579bf20ff6623615001482205c96250c169e3aec1eda6431823adb4f3d",
+        "comparison": {
+          "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+          "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+          "currentWorkflowId": null,
+          "reasonCode": "ace_step_v1_music_to_music_is_not_v15_text_to_audio",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "1020bf48371ecba2d941ea381a9a0d8d85ce1b50",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "ACE Step v1 M2M Editing"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ace_step_v1_3_5b_is_not_acestep_v15_xl_turbo",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "audio"
@@ -695,7 +718,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 4,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "ACE Audio"
       ],
@@ -718,19 +741,42 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ace_step_v1_3.5b.safetensors",
+            "repository": "Comfy-Org/ACE-Step_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/audio_ace_step_1_t2a_instrumentals.json",
+        "assetSha256": "88acb4f61ca03e04fa9645b84413f91710c0bacd2e174a2faf9072af75187294",
+        "comparison": {
+          "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+          "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+          "currentWorkflowId": "AceStepAudioPipeline:text_to_audio",
+          "reasonCode": "ace_step_v1_3_5b_is_not_acestep_v15_xl_turbo",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "42ed75275069735fae4510219f4b9bc06235dbce",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "ACE-Step v1 Text to Instrumentals Music"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_ace_step_v1_3_5b_is_not_acestep_v15_xl_turbo",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "audio"
@@ -753,7 +799,7 @@
       "currentFamilyOptionCount": 1,
       "currentTaskBoundaryOptionCount": 4,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "ACE Audio"
       ],
@@ -776,9 +822,32 @@
           "qualificationStatus": "graph-qualified"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_audio",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "ace_step_v1_3.5b.safetensors",
+            "repository": "Comfy-Org/ACE-Step_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/audio_ace_step_1_t2a_song.json",
+        "assetSha256": "be4d2c2f9d07005af00905ce4ae7f376dbc7e904b4d4276951f0d5b4a389adcf",
+        "comparison": {
+          "currentRepository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+          "currentRevision": "200ba991ae448051e14b0183157e35c2d27c9fb0",
+          "currentWorkflowId": "AceStepAudioPipeline:text_to_audio",
+          "reasonCode": "ace_step_v1_3_5b_is_not_acestep_v15_xl_turbo",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "43626d5e5b17858b023717ae71a65f34f6e77815",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "ACE Step v1 Text to Song"
     },
     {
@@ -12370,9 +12439,10 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 20,
+    "pinnedSourceReviewCount": 23,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_requires_admission": 16,
+      "different_model_generation_and_new_task_required": 1,
+      "different_model_generation_requires_admission": 18,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 1,
       "same_upstream_generation_requires_auxiliary_admission": 2
@@ -12382,8 +12452,8 @@
     "recordsWithRecommendedWorkflow": 117,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 41,
-      "existing_task_boundary_model_admission_required": 76,
+      "existing_family_workflow_candidate": 39,
+      "existing_task_boundary_model_admission_required": 78,
       "new_task_boundary_required": 21
     },
     "sourceProposalCount": 138

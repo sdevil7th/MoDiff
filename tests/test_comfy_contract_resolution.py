@@ -55,8 +55,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"]["resolutionStateCounts"],
             {
-                "existing_family_workflow_candidate": 41,
-                "existing_task_boundary_model_admission_required": 76,
+                "existing_family_workflow_candidate": 39,
+                "existing_task_boundary_model_admission_required": 78,
                 "new_task_boundary_required": 21,
             },
         )
@@ -65,11 +65,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 117)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 92)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 20)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 23)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_requires_admission": 16,
+                "different_model_generation_and_new_task_required": 1,
+                "different_model_generation_requires_admission": 18,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 1,
                 "same_upstream_generation_requires_auxiliary_admission": 2,
@@ -204,7 +205,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_twenty_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_twenty_three_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -213,6 +214,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(
             set(reviewed),
             {
+                "audio_ace_step_1_m2m_editing",
+                "audio_ace_step_1_t2a_instrumentals",
+                "audio_ace_step_1_t2a_song",
                 "audio_stable_audio_3_medium",
                 "audio_stable_audio_3_medium_base",
                 "image_chroma1_radiance_text_to_image",
@@ -267,6 +271,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "existing_family_workflow_candidate",
         )
         for catalog_id in (
+            "audio_ace_step_1_t2a_instrumentals",
+            "audio_ace_step_1_t2a_song",
             "audio_stable_audio_3_medium",
             "audio_stable_audio_3_medium_base",
             "image_chroma1_radiance_text_to_image",
@@ -318,6 +324,10 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 row["sourceReview"]["reviewedWorkflowId"],
                 "QwenImageEditPlusModularPipeline:edit_image",
             )
+            self.assertEqual(
+                row["recommendedWorkflow"]["canonicalWorkflowId"],
+                "QwenImageEditPlusModularPipeline:edit_image",
+            )
 
         for catalog_id in (
             "ltxv_image_to_video",
@@ -331,10 +341,14 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertEqual(comparison["currentRepository"], "Lightricks/LTX-2")
             self.assertEqual(comparison["currentRevision"], "47da56e2ad66ce4125a9922b4a8826bf407f9d0a")
             self.assertEqual(comparison["state"], "different_model_generation_requires_admission")
-            self.assertEqual(
-                row["recommendedWorkflow"]["canonicalWorkflowId"],
-                "QwenImageEditPlusModularPipeline:edit_image",
-            )
+
+        ace_edit = reviewed["audio_ace_step_1_m2m_editing"]
+        self.assertEqual(ace_edit["resolutionState"], "new_task_boundary_required")
+        self.assertIsNone(ace_edit["recommendedWorkflow"])
+        self.assertEqual(
+            ace_edit["sourceReview"]["comparison"]["state"],
+            "different_model_generation_and_new_task_required",
+        )
 
     def test_execution_publication_asset_and_comfy_copy_boundaries_remain_closed(self):
         self.assertEqual(
