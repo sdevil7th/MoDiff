@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:cb20164a239260fc1c7e7355c6f105991f5b38b92eff0f6ccfdf8204b3e13dab",
+  "contentHash": "sha256:16c7f5530561941492874808c7ee75579342ca2123577f333813e92af4aa4355",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -1985,9 +1985,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan_video_t2v_is_not_allegro",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -2014,7 +2014,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 15,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
@@ -2077,6 +2077,43 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuan_video_t2v_720p_bf16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_repackaged"
+          },
+          {
+            "artifact": "llava_llama3_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_repackaged"
+          },
+          {
+            "artifact": "hunyuan_video_vae_bf16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_repackaged"
+          },
+          {
+            "artifact": "clip_l.safetensors",
+            "repository": "comfyanonymous/flux_text_encoders"
+          }
+        ],
+        "assetPath": "templates/hunyuan_video_text_to_video.json",
+        "assetSha256": "3f221fb9cb178bf4e186410553b918604751deb58f61e03bebbcee64721e8744",
+        "catalogRecommendedWorkflowId": "AllegroPipeline:text_to_video",
+        "comparison": {
+          "currentRepository": "rhymes-ai/Allegro",
+          "currentRevision": "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+          "currentWorkflowId": "AllegroPipeline:text_to_video",
+          "reasonCode": "hunyuan_video_t2v_is_not_allegro",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "5dd529c76047163cbbc3ec976445956f10e867cd",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AllegroPipeline:text_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Hunyuan Video Text to Video"
     },
     {
@@ -11174,9 +11211,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan_video_1_5_i2v_is_not_ltx2",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -11202,7 +11239,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 8,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
@@ -11241,12 +11278,54 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuanvideo1.5_720p_i2v_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "byt5_small_glyphxl_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "hunyuanvideo15_vae_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "sigclip_vision_patch14_384.safetensors",
+            "repository": "Comfy-Org/sigclip_vision_384"
+          }
+        ],
+        "assetPath": "templates/video_hunyuan_video_1.5_720p_i2v.json",
+        "assetSha256": "4f6ab488b60f7b70f6501217c1ed697a366f29c3c36755e87ef76f6023676015",
+        "catalogRecommendedWorkflowId": "LTX2ConditionPipeline:image_to_video",
+        "comparison": {
+          "currentRepository": "Lightricks/LTX-2",
+          "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+          "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+          "reasonCode": "hunyuan_video_1_5_i2v_is_not_ltx2",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c938b5ac9e9f961aa4bbb72677291ec671f953e9",
+        "importsGraph": false,
+        "reviewedWorkflowId": "LTX2ConditionPipeline:image_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Hunyuan Video 1.5 Image to Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_hunyuan_video_1_5_t2v_is_not_allegro",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -11272,7 +11351,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 15,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
@@ -11335,12 +11414,50 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "hunyuanvideo1.5_720p_t2v_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "byt5_small_glyphxl_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "hunyuanvideo15_vae_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_hunyuan_video_1.5_720p_t2v.json",
+        "assetSha256": "b52ab35cd7f5253288d32ca2d18329607a0e5fb265886e234bae7b75deff8cfe",
+        "catalogRecommendedWorkflowId": "AllegroPipeline:text_to_video",
+        "comparison": {
+          "currentRepository": "rhymes-ai/Allegro",
+          "currentRevision": "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+          "currentWorkflowId": "AllegroPipeline:text_to_video",
+          "reasonCode": "hunyuan_video_1_5_t2v_is_not_allegro",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "cf1100a9816e8a1e4ed630a708fe48ba67096ad4",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AllegroPipeline:text_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Hunyuan Video 1.5 Text to Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_kandinsky5_i2v_is_not_ltx2",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -11366,7 +11483,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 8,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Kandinsky"
       ],
@@ -11407,12 +11524,50 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "kandinsky5lite_i2v_5s.safetensors",
+            "repository": "kandinskylab/Kandinsky-5.0-I2V-Lite-5s"
+          },
+          {
+            "artifact": "hunyuan_video_vae_bf16.safetensors",
+            "repository": "Kijai/HunyuanVideo_comfy"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "clip_l.safetensors",
+            "repository": "comfyanonymous/flux_text_encoders"
+          }
+        ],
+        "assetPath": "templates/video_kandinsky5_i2v.json",
+        "assetSha256": "a9207a2ad5742dd6dbe9d161c66cf540c6ff05b246fcac89f5d065761e5f4c65",
+        "catalogRecommendedWorkflowId": "LTX2ConditionPipeline:image_to_video",
+        "comparison": {
+          "currentRepository": "Lightricks/LTX-2",
+          "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+          "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+          "reasonCode": "kandinsky5_i2v_is_not_ltx2",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "84e93537567c9b074af50752d01ea94be1f72b10",
+        "importsGraph": false,
+        "reviewedWorkflowId": "LTX2ConditionPipeline:image_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Kandinsky 5.0 Video Lite Image to Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_kandinsky5_t2v_is_not_allegro",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -11438,7 +11593,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 15,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Kandinsky"
       ],
@@ -11503,6 +11658,43 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "kandinsky5lite_t2v_sft_5s.safetensors",
+            "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s"
+          },
+          {
+            "artifact": "hunyuan_video_vae_bf16.safetensors",
+            "repository": "Kijai/HunyuanVideo_comfy"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "clip_l.safetensors",
+            "repository": "comfyanonymous/flux_text_encoders"
+          }
+        ],
+        "assetPath": "templates/video_kandinsky5_t2v.json",
+        "assetSha256": "ff478d7601c1b27182bbc94e0a914321037ebd9643d3327c5968511f8a6cf9a4",
+        "catalogRecommendedWorkflowId": "AllegroPipeline:text_to_video",
+        "comparison": {
+          "currentRepository": "rhymes-ai/Allegro",
+          "currentRevision": "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+          "currentWorkflowId": "AllegroPipeline:text_to_video",
+          "reasonCode": "kandinsky5_t2v_is_not_allegro",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4ced14c74a9de54f52bb87f2e9a95def26cd85b4",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AllegroPipeline:text_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Kandinsky 5.0 Video Lite Text to Video"
     },
     {
@@ -14887,10 +15079,10 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 90,
+    "pinnedSourceReviewCount": 95,
     "pinnedSourceReviewDecisionCounts": {
       "different_model_generation_and_new_task_required": 23,
-      "different_model_generation_requires_admission": 48,
+      "different_model_generation_requires_admission": 53,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 8,
