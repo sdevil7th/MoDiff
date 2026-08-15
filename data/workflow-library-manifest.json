@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T10:19:48.444Z",
+  "generatedAt": "2026-08-15T10:40:51.629Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 181,
-  "supportedPairCount": 193,
+  "supportedCanonicalPairCount": 183,
+  "supportedPairCount": 195,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -687,6 +687,58 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-audio-operation/audio-trim.json",
       "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a"
+    },
+    {
+      "id": "BuiltinDataOperation:data_conversion",
+      "modelType": "BuiltinDataOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "data_conversion",
+      "mediaKind": "json",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/data-operations/v1"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "BuiltinDataOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-data-operations:data-conversion:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-data-operation/data-conversion.json",
+      "graphHash": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6"
+    },
+    {
+      "id": "BuiltinDataOperation:text_select",
+      "modelType": "BuiltinDataOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "text_select",
+      "mediaKind": "json",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/data-operations/v1"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "BuiltinDataOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-data-operations:text-select:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-data-operation/text-select.json",
+      "graphHash": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66"
     },
     {
       "id": "BuiltinImageOperation:image_adjustment",
