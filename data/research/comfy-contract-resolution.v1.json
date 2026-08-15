@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:5ecab82166bf05d0ec1acdd23d6e03d7fb78339e7639dab3504e7da4879e51df",
+  "contentHash": "sha256:a1c224d6fb253406de53f56a57129db016bee78ae4c2b4cc179b63a6b0082b51",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -9685,8 +9685,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_birefnet_requires_remove_background_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -9713,13 +9714,36 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_remove_background_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "remove_background",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "birefnet.safetensors",
+            "repository": "Comfy-Org/BiRefNet"
+          }
+        ],
+        "assetPath": "templates/utility_birefnet_remove_background.json",
+        "assetSha256": "4b473eae9c4c034fd9526ae5511afb427791626a3500aa04dbd7701f423cb904",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "birefnet_requires_remove_background_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "31c25593f87170ced962316ab8747463b70c1410",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "BiRefNet: Remove Background"
     },
     {
@@ -9900,11 +9924,12 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_pixeldit_latent_upscale_stage_and_artifacts_not_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "family_match_requires_exact_checkpoint_and_variant_review"
       ],
       "candidateOutputMediaKinds": [
         "image"
@@ -9925,35 +9950,238 @@
       },
       "contractId": "comfy-research:template:utility_pid_latent_upscale_dit",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 1,
+      "currentTaskBoundaryOptionCount": 37,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
-      "recognizedMoDiffFamilies": [],
+      "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+      "recognizedMoDiffFamilies": [
+        "Z-Image"
+      ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
-        "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
-        "modelFamily": "Built-in Media",
-        "modelType": "BuiltinImageOperation",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+        "modelFamily": "Z-Image",
+        "modelType": "ZImageModularPipeline",
+        "publicTemplateIds": [
+          "low_vram",
+          "z_image_cinematic_contact_sheet",
+          "z_image_poster",
+          "z_image_product_mockup",
+          "z_image_quick_concept"
+        ],
+        "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
-          "modelFamily": "Built-in Media",
-          "modelType": "BuiltinImageOperation",
+          "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+          "modelFamily": "Z-Image",
+          "modelType": "ZImageModularPipeline",
+          "qualificationStatus": "graph-qualified"
+        },
+        {
+          "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
+          "modelFamily": "AuraFlow",
+          "modelType": "AuraFlowPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "ChromaPipeline:text_to_image",
+          "modelFamily": "Chroma",
+          "modelType": "ChromaPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "CogView3PlusPipeline:text_to_image",
+          "modelFamily": "CogView3",
+          "modelType": "CogView3PlusPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
+          "modelFamily": "CogView4",
+          "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "DreamLiteMobilePipeline:text_to_image",
+          "modelFamily": "DreamLite",
+          "modelType": "DreamLiteMobilePipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
+          "modelFamily": "ERNIE Image",
+          "modelType": "ErnieImagePipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Flux2KleinPipeline:text_to_image",
+          "modelFamily": "FLUX Image",
+          "modelType": "Flux2KleinPipeline",
+          "qualificationStatus": "graph-qualified"
+        },
+        {
+          "canonicalWorkflowId": "GlmImagePipeline:text_to_image",
+          "modelFamily": "GLM-Image",
+          "modelType": "GlmImagePipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HunyuanDiTPAGPipeline:text_to_image",
+          "modelFamily": "Hunyuan-DiT",
+          "modelType": "HunyuanDiTPAGPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_to_image",
+          "modelFamily": "Janus",
+          "modelType": "HuggingFaceAnyToAnyModel",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "JoyImageEditPipeline:text_to_image",
+          "modelFamily": "JoyAI Image",
+          "modelType": "JoyImageEditPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Kandinsky3Pipeline:text_to_image",
+          "modelFamily": "Kandinsky",
+          "modelType": "Kandinsky3Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "LatentConsistencyModelPipeline:text_to_image",
+          "modelFamily": "Latent Consistency Models",
+          "modelType": "LatentConsistencyModelPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "LongCatImagePipeline:text_to_image",
+          "modelFamily": "LongCat Image",
+          "modelType": "LongCatImagePipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "LuminaPipeline:text_to_image",
+          "modelFamily": "Lumina",
+          "modelType": "LuminaPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Lumina2Pipeline:text_to_image",
+          "modelFamily": "Lumina 2.0",
+          "modelType": "Lumina2Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "NucleusMoEImagePipeline:text_to_image",
+          "modelFamily": "Nucleus Image",
+          "modelType": "NucleusMoEImagePipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "OmniGenPipeline:text_to_image",
+          "modelFamily": "OmniGen",
+          "modelType": "OmniGenPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "OvisImagePipeline:text_to_image",
+          "modelFamily": "Ovis Image",
+          "modelType": "OvisImagePipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "PRXPipeline:text_to_image",
+          "modelFamily": "PRX",
+          "modelType": "PRXPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "PixArtSigmaPAGPipeline:text_to_image",
+          "modelFamily": "PixArt",
+          "modelType": "PixArtSigmaPAGPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+          "modelFamily": "Qwen Image",
+          "modelType": "QwenImageModularPipeline",
+          "qualificationStatus": "graph-qualified"
+        },
+        {
+          "canonicalWorkflowId": "SanaPAGPipeline:text_to_image",
+          "modelFamily": "Sana",
+          "modelType": "SanaPAGPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "StableDiffusionPAGPipeline:text_to_image",
+          "modelFamily": "Stable Diffusion 1.x",
+          "modelType": "StableDiffusionPAGPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:text_to_image",
+          "modelFamily": "Stable Diffusion XL",
+          "modelType": "StableDiffusionXLPAGPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "image_upscale",
+      "resolutionState": "existing_family_workflow_candidate",
+      "selectedCandidateMode": "text_to_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "gemma_2_2b_it_elm_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/PixelDiT"
+          },
+          {
+            "artifact": "pid_flux1_1024_to_4096_4step_bf16.safetensors",
+            "repository": "Comfy-Org/PixelDiT"
+          },
+          {
+            "artifact": "qwen_3_4b.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          },
+          {
+            "artifact": "ae.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          },
+          {
+            "artifact": "z_image_turbo_bf16.safetensors",
+            "repository": "Comfy-Org/z_image_turbo"
+          }
+        ],
+        "assetPath": "templates/utility_pid_latent_upscale_dit.json",
+        "assetSha256": "f5e2d5eb5e061e892ebc7491d33776e59aa29bd38506c5562ba06df4afd9513d",
+        "catalogRecognizedMoDiffFamilies": [],
+        "catalogRecommendedWorkflowId": "AuraFlowPipeline:text_to_image",
+        "catalogSelectedCandidateMode": "image_upscale",
+        "comparison": {
+          "currentRepository": "Tongyi-MAI/Z-Image-Turbo",
+          "currentRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",
+          "currentWorkflowId": "ZImageModularPipeline:text_to_image",
+          "reasonCode": "pixeldit_latent_upscale_stage_and_artifacts_not_admitted",
+          "state": "same_upstream_generation_requires_auxiliary_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4d7a20ed232561945e4730f1a7da037ee53ce071",
+        "importsGraph": false,
+        "reviewedTaskMode": "text_to_image",
+        "reviewedWorkflowId": "ZImageModularPipeline:text_to_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "PiD: Latent Upscale Decode"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_seedvr2_3b_image_upscaler_is_not_builtin_interpolation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -9979,7 +10207,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
@@ -10000,12 +10228,42 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "seedvr2_ema_vae_fp16.safetensors",
+            "repository": "Comfy-Org/SeedVR2"
+          },
+          {
+            "artifact": "seedvr2_3b_int8_convrot.safetensors",
+            "repository": "Comfy-Org/SeedVR2"
+          }
+        ],
+        "assetPath": "templates/utility_seedvr2_3b_int8_upscale_image.json",
+        "assetSha256": "3f26fec421168072c44fe008db9654b846def5a2ee8a1b5baa2845709ee5e3a4",
+        "catalogRecommendedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": "BuiltinImageOperation:image_upscale",
+          "reasonCode": "seedvr2_3b_image_upscaler_is_not_builtin_interpolation",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "540d96107bbf469238af38d3c48800b110a83e31",
+        "importsGraph": false,
+        "reviewedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SeedVR2 3B Int8: Upscale Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_seedvr2_video_upscaler_is_not_realesrgan_spandrel",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -10031,7 +10289,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:SpandrelVideoUpscale:video_upscale",
@@ -10052,12 +10310,42 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "video_upscale",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "seedvr2_ema_vae_fp16.safetensors",
+            "repository": "Comfy-Org/SeedVR2"
+          },
+          {
+            "artifact": "seedvr2_3b_int8_convrot.safetensors",
+            "repository": "Comfy-Org/SeedVR2"
+          }
+        ],
+        "assetPath": "templates/utility_seedvr2_3b_int8_upscale_video.json",
+        "assetSha256": "f3ef8ed12f44457f012ed174d2d421e9bfdde1fd5b76dd19d7c5a3d1437156d4",
+        "catalogRecommendedWorkflowId": "SpandrelVideoUpscale:video_upscale",
+        "comparison": {
+          "currentRepository": "nateraw/real-esrgan",
+          "currentRevision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+          "currentWorkflowId": "SpandrelVideoUpscale:video_upscale",
+          "reasonCode": "seedvr2_video_upscaler_is_not_realesrgan_spandrel",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c1404a5cbb86992d2fb7c48b556c9781339674fb",
+        "importsGraph": false,
+        "reviewedWorkflowId": "SpandrelVideoUpscale:video_upscale",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SeedVR2 3B Int8: Upscale Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_seedvr2_7b_image_upscaler_is_not_builtin_interpolation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -10083,7 +10371,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:BuiltinImageOperation:image_upscale",
@@ -10104,12 +10392,42 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_upscale",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "seedvr2_ema_vae_fp16.safetensors",
+            "repository": "Comfy-Org/SeedVR2"
+          },
+          {
+            "artifact": "seedvr2_7b_int8_convrot.safetensors",
+            "repository": "Comfy-Org/SeedVR2"
+          }
+        ],
+        "assetPath": "templates/utility_seedvr2_7b_int8_upscale_image.json",
+        "assetSha256": "36d7072d0a518034be5e3b159107af7d10a3424f5a1618f1f8991530623be309",
+        "catalogRecommendedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": "BuiltinImageOperation:image_upscale",
+          "reasonCode": "seedvr2_7b_image_upscaler_is_not_builtin_interpolation",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4f8920827c0cdee42e6cc5e6a9f22759358dc20c",
+        "importsGraph": false,
+        "reviewedWorkflowId": "BuiltinImageOperation:image_upscale",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SeedVR2 7B Int8: Upscale Image"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_film_network_is_not_the_builtin_frame_interpolation_implementation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -10136,7 +10454,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:BuiltinVideoOperation:frame_interpolation",
@@ -10157,6 +10475,31 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "frame_interpolation",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "film_net_fp16.safetensors",
+            "repository": "Comfy-Org/frame_interpolation"
+          }
+        ],
+        "assetPath": "templates/utility_video_frame_interpolation.json",
+        "assetSha256": "d79bbc9f662c4c40fef1095c10e861a9b25b5fb38a1e62a779d0ef81d7602fc9",
+        "catalogRecommendedWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+          "reasonCode": "film_network_is_not_the_builtin_frame_interpolation_implementation",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "7dfba76f14ce008309cf8940fad2eafcb9ad47dc",
+        "importsGraph": false,
+        "reviewedWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Video Frame Interpolation"
     },
     {
@@ -13761,7 +14104,7 @@
       "image_audio_to_video": 1,
       "image_to_3d": 7,
       "image_to_video": 11,
-      "image_upscale": 4,
+      "image_upscale": 3,
       "inpaint": 4,
       "layer_decomposition": 1,
       "motion_track_to_video": 1,
@@ -13771,27 +14114,27 @@
       "remove_background": 1,
       "text_generation": 4,
       "text_to_audio": 5,
-      "text_to_image": 32,
+      "text_to_image": 33,
       "text_to_video": 12,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 60,
+    "pinnedSourceReviewCount": 66,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 7,
-      "different_model_generation_requires_admission": 37,
+      "different_model_generation_and_new_task_required": 8,
+      "different_model_generation_requires_admission": 41,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 6,
-      "same_upstream_generation_requires_auxiliary_admission": 8
+      "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 83,
-    "recordsWithPublicTemplateOption": 27,
+    "recordsWithHiddenAuthoringSpecOption": 82,
+    "recordsWithPublicTemplateOption": 28,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 15,
-      "existing_task_boundary_model_admission_required": 95,
+      "existing_family_workflow_candidate": 16,
+      "existing_task_boundary_model_admission_required": 94,
       "new_task_boundary_required": 28
     },
     "sourceProposalCount": 138
