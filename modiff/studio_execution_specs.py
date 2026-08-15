@@ -12259,10 +12259,14 @@ _BUILTIN_DATA_OPERATION_CAPABILITY = {
     ],
 }
 _BUILTIN_DATA_OPERATION_ROLES = (
-    ("dataOperation", "modules.Text.ProcessText", -220, -80),
-    ("dataPreview", "modules.Primitive.DataViewer", 260, -80),
+    ("dataOperation", "modules.Text.ProcessText", -300, -80),
+    ("dataPreview", "modules.Primitive.DataViewer", 100, -80),
+    ("dataExport", "modules.Primitive.ExportData", 480, -80),
 )
-_BUILTIN_DATA_OPERATION_EDGES = (("dataOperation", "output", "dataPreview", "value"),)
+_BUILTIN_DATA_OPERATION_EDGES = (
+    ("dataOperation", "output", "dataPreview", "value"),
+    ("dataPreview", "output", "dataExport", "value"),
+)
 _BUILTIN_DATA_OPERATION_BINDINGS = (
     ("dataOperation", "pipeline_class", "pipelineClass"),
     ("dataOperation", "operation", "mode"),

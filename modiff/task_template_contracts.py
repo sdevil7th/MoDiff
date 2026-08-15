@@ -33,7 +33,7 @@ _OUTPUT_NODE_KEYS = {
     "image": ("modules.Image.Preview",),
     "video": ("modules.Video.Export", "modules.Video.ExportWithAudio"),
     "audio": ("modules.Audio.Export",),
-    "json": ("modules.Primitive.DataViewer",),
+    "json": ("modules.Primitive.DataViewer", "modules.Primitive.ExportData"),
 }
 _OUTPUT_INPUT_HANDLES = {"image": "image", "video": "video", "audio": "audio", "json": "value"}
 

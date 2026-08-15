@@ -20,9 +20,9 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
         specs = validate_studio_execution_specs(module_registry.MODULE_MAP)
         pairs = {(item["modelType"], item["mode"]): item for item in specs}
         expected_hashes = {
-            "text_select": "studio-spec-v1-d4bc64df",
-            "data_conversion": "studio-spec-v1-ccd283e9",
-            "graph_utility": "studio-spec-v1-53bf8e76",
+            "text_select": "studio-spec-v1-9c2dc85a",
+            "data_conversion": "studio-spec-v1-3d7fb6e4",
+            "graph_utility": "studio-spec-v1-1e3b8d47",
         }
         for mode in self.MODES:
             with self.subTest(mode=mode):
@@ -33,6 +33,14 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(specification["loaderAction"], "ProcessText")
                 self.assertEqual(specification["executionPath"], "builtin-data-operation")
                 self.assertEqual(specification["pipelineClass"], BUILTIN_DATA_OPERATION_PIPELINE_CLASS)
+                self.assertIn(
+                    ("dataPreview", "output", "dataExport", "value"),
+                    specification["edges"],
+                )
+                self.assertIn(
+                    ("dataExport", "modules.Primitive.ExportData", 480, -80),
+                    specification["roles"],
+                )
                 profiles = execution_profiles_for_execution("BuiltinDataOperation", mode)
                 self.assertEqual(len(profiles), 1)
                 self.assertEqual(profiles[0].id, "builtin-data-operations:direct")
@@ -55,9 +63,9 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
 
         contracts = contracts_by_pair(payload["taskTemplateContracts"])
         expected_hashes = {
-            "text_select": "task-template-v1-1eefb6b7",
-            "data_conversion": "task-template-v1-72539bcc",
-            "graph_utility": "task-template-v1-ace6ea4b",
+            "text_select": "task-template-v1-0316a2ed",
+            "data_conversion": "task-template-v1-62126d8c",
+            "graph_utility": "task-template-v1-b7ba0129",
         }
         for mode in self.MODES:
             with self.subTest(mode=mode):
@@ -65,7 +73,7 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(contract["contentHash"], expected_hashes[mode])
                 self.assertEqual(contract["mediaKind"], "json")
                 self.assertEqual(contract["requiredMedia"], [])
-                self.assertEqual(contract["output"]["nodeKey"], "modules.Primitive.DataViewer")
+                self.assertEqual(contract["output"]["nodeKey"], "modules.Primitive.ExportData")
                 self.assertEqual(contract["output"]["inputHandle"], "value")
 
 

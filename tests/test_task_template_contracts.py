@@ -333,7 +333,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             "image": {"modules.Image.Preview"},
             "video": {"modules.Video.Export", "modules.Video.ExportWithAudio"},
             "audio": {"modules.Audio.Export"},
-            "json": {"modules.Primitive.DataViewer"},
+            "json": {"modules.Primitive.DataViewer", "modules.Primitive.ExportData"},
         }
         for contract in self.contracts:
             with self.subTest(output=contract["id"]):
