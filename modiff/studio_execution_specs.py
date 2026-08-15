@@ -3531,7 +3531,7 @@ _BINDING_SOURCES = frozenset(
         *_THREE_D_GRAPH_BINDINGS,
         *_UNCONDITIONAL_GRAPH_BINDINGS,
     )
-)
+) | {"referenceVideos"}
 
 _MODULAR_EDIT_PLUS_PROFILE = {
     "id": "qwen-edit-plus:modular",
@@ -12047,6 +12047,131 @@ for _builtin_image_mode in _BUILTIN_IMAGE_OPERATION_MODES:
             else _BUILTIN_IMAGE_OPERATION_BINDINGS
         ),
     }
+
+_BUILTIN_VIDEO_OPERATION_MODES = ("video_frame_extract", "video_stitch")
+_BUILTIN_VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
+_BUILTIN_VIDEO_OPERATION_REPO = "builtin://modiff/video-operations/v1"
+_BUILTIN_VIDEO_OPERATION_PROFILE = {
+    "id": "builtin-video-operations:direct",
+    "model_type": "BuiltinVideoOperation",
+    "modes": _BUILTIN_VIDEO_OPERATION_MODES,
+    "loader_module": "modules.Video",
+    "loader_action": "ProcessVideo",
+    "execution_path": "builtin-video-operation",
+    "pipeline_class": _BUILTIN_VIDEO_OPERATION_PIPELINE_CLASS,
+    "default_repo": _BUILTIN_VIDEO_OPERATION_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "optional_runtime_profiles": (),
+    "optional_runtime_delivery": "base",
+    "optional_runtime_platform_deliveries": (),
+    "compatible_repos": (),
+}
+_BUILTIN_VIDEO_OPERATION_CAPABILITY = {
+    "modelType": "BuiltinVideoOperation",
+    "label": "Built-in Video Operations",
+    "displayName": "Built-in Video Operations",
+    "family": "Built-in Media",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": _BUILTIN_VIDEO_OPERATION_REPO,
+    "artifactLabel": "Versioned MoDiff built-in operation contract",
+    "artifactKind": "builtin",
+    "artifactInstallRequired": False,
+    "downloadFiles": [],
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 1024, "height": 576, "aspectRatio": "source"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "video",
+    "modeOutputKinds": {"video_frame_extract": "image", "video_stitch": "video"},
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 1024,
+        "height": 576,
+    },
+    "modes": list(_BUILTIN_VIDEO_OPERATION_MODES),
+    "executionStatus": "supported",
+    "revisionCandidates": [],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "modeRequirements": {
+        "video_frame_extract": {
+            "requiredVideos": ["sourceVideo"],
+            "note": "Requires one local source video and extracts at most 64 frames without model or network access.",
+        },
+        "video_stitch": {
+            "requiredVideos": ["referenceVideos"],
+            "minimumCounts": {"referenceVideos": 2},
+            "note": "Requires two to sixteen local source videos and uses the app-owned bounded FFmpeg path.",
+        },
+    },
+    "notes": [
+        "Runs bounded file-backed video operations in the base MoDiff process.",
+        "No model artifact, optional runtime, accelerator, download, or remote code is required.",
+        "Gallery publication remains disabled pending authored examples and human review.",
+    ],
+}
+_BUILTIN_VIDEO_OPERATION_BINDINGS = (
+    ("videoOperation", "pipeline_class", "pipelineClass"),
+    ("videoOperation", "operation", "mode"),
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:frame-extract:v1"] = {
+    "modelType": "BuiltinVideoOperation",
+    "mode": "video_frame_extract",
+    "profile": _BUILTIN_VIDEO_OPERATION_PROFILE,
+    "capability": _BUILTIN_VIDEO_OPERATION_CAPABILITY,
+    "roles": (
+        ("videoOperation", "modules.Video.ProcessVideo", -220, -80),
+        ("preview", "modules.Image.Preview", 260, -80),
+    ),
+    "edges": (("videoOperation", "images", "preview", "image"),),
+    "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS
+    + (("videoOperation", "videos", "sourceVideo"),),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:stitch:v1"] = {
+    "modelType": "BuiltinVideoOperation",
+    "mode": "video_stitch",
+    "profile": _BUILTIN_VIDEO_OPERATION_PROFILE,
+    "capability": _BUILTIN_VIDEO_OPERATION_CAPABILITY,
+    "roles": (
+        ("videoOperation", "modules.Video.ProcessVideo", -220, -80),
+        ("videoExport", "modules.Video.Export", 260, -80),
+    ),
+    "edges": (("videoOperation", "video", "videoExport", "video"),),
+    "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS
+    + (
+        ("videoOperation", "videos", "referenceVideos"),
+        ("videoExport", "fps", "fps"),
+    ),
+}
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",

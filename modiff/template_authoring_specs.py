@@ -40,6 +40,8 @@ _NO_PROMPT_MODES = {
     "image_upscale",
     "image_tile",
     "mask_composite",
+    "video_frame_extract",
+    "video_stitch",
     "speech_to_text",
     "speech_translation",
     "unconditional_image",

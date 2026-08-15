@@ -3,9 +3,18 @@ from modiff.NodeBase import NodeBase
 from modiff.path_identifiers import resolve_runtime_input_path
 from pathlib import Path
 import logging
+import math
 from utils.paths import parse_filename
 
 logger = logging.getLogger('modiff')
+
+VIDEO_OPERATION_MODES = ("video_frame_extract", "video_stitch")
+VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
+MAX_VIDEO_OPERATION_INPUTS = 16
+MAX_VIDEO_OPERATION_FRAMES_PER_INPUT = 14_400
+MAX_VIDEO_OPERATION_TOTAL_FRAMES = 57_600
+MAX_VIDEO_OPERATION_PIXELS = 16_777_216
+MAX_EXTRACTED_FRAMES = 64
 
 class Load(NodeBase):
     """
@@ -696,6 +705,8 @@ class FrameExtract(NodeBase):
                 normalized.append(index)
         if not normalized:
             raise ValueError("The requested frame selection is outside this video.")
+        if len(normalized) > MAX_EXTRACTED_FRAMES:
+            raise ValueError(f"Extract Video Frames accepts at most {MAX_EXTRACTED_FRAMES} output frames.")
         fps = float(file_asset["fps"] if file_asset and file_asset.get("fps") else kwargs.get("fps") or 16)
         if file_asset:
             import imageio.v2 as imageio
@@ -1163,6 +1174,146 @@ class ConcatenateAssets(NodeBase):
             destination,
         )
         return _derived_asset_result(destination, asset_id, sources, "concatenate", pin=bool(kwargs.get("pin")))
+
+
+def _bounded_video_operation_assets(value, *, minimum):
+    assets = _file_asset_collection(value)
+    if not minimum <= len(assets) <= MAX_VIDEO_OPERATION_INPUTS:
+        raise ValueError(
+            f"Built-in video operations require between {minimum} and {MAX_VIDEO_OPERATION_INPUTS} input videos."
+        )
+    total_frames = 0
+    for index, asset in enumerate(assets, 1):
+        width = int(asset.get("width") or 0)
+        height = int(asset.get("height") or 0)
+        frame_count = int(asset.get("frame_count") or 0)
+        fps = float(asset.get("fps") or 0)
+        if width < 1 or height < 1 or width * height > MAX_VIDEO_OPERATION_PIXELS:
+            raise ValueError(
+                f"Built-in video input {index} must contain between 1 and {MAX_VIDEO_OPERATION_PIXELS} pixels per frame."
+            )
+        if not math.isfinite(fps) or fps <= 0:
+            raise ValueError(f"Built-in video input {index} must declare a positive frame rate.")
+        if not 1 <= frame_count <= MAX_VIDEO_OPERATION_FRAMES_PER_INPUT:
+            raise ValueError(
+                f"Built-in video input {index} must contain between 1 and "
+                f"{MAX_VIDEO_OPERATION_FRAMES_PER_INPUT} frames."
+            )
+        total_frames += frame_count
+    if total_frames > MAX_VIDEO_OPERATION_TOTAL_FRAMES:
+        raise ValueError(
+            f"Built-in video inputs exceed the {MAX_VIDEO_OPERATION_TOTAL_FRAMES}-frame execution limit."
+        )
+    return assets
+
+
+class ProcessVideo(NodeBase):
+    """Dispatch reviewed install-free video tasks through existing bounded nodes."""
+
+    label = "Process Video"
+    category = "Video"
+    resizable = True
+    params = {
+        "videos": {
+            "label": "Videos",
+            "display": "filebrowser",
+            "type": "str",
+            "fieldOptions": {"fileTypes": ["video"], "multiple": True},
+        },
+        "pipeline_class": {
+            "label": "Built-in Contract",
+            "type": "string",
+            "default": VIDEO_OPERATION_PIPELINE_CLASS,
+            "hidden": True,
+        },
+        "operation": {
+            "label": "Operation",
+            "type": "string",
+            "options": VIDEO_OPERATION_MODES,
+            "default": "video_frame_extract",
+        },
+        "selection_mode": {
+            "label": "Frame Selection",
+            "type": "string",
+            "options": ["first", "last", "first_last", "indices", "timecodes", "every_n"],
+            "default": "first_last",
+        },
+        "indices": {"label": "Frame Indices", "type": "string", "default": "0,-1"},
+        "timecodes": {"label": "Times (seconds)", "type": "string", "default": "0"},
+        "every_n": {"label": "Every N Frames", "type": "int", "default": 16, "min": 1, "max": 14400},
+        "fps": {"label": "Output FPS", "type": "float", "default": 24, "min": 1, "max": 120},
+        "transition_seconds": {
+            "label": "Crossfade",
+            "type": "float",
+            "default": 0,
+            "min": 0,
+            "max": 5,
+            "step": 0.05,
+        },
+        "images": {"label": "Extracted Frames", "display": "output", "type": "image"},
+        "video": {"label": "Stitched Video", "display": "output", "type": "video"},
+        "selected_indices": {"label": "Indices", "display": "output", "type": "collection"},
+        "timestamps": {"label": "Timestamps", "display": "output", "type": "collection"},
+    }
+
+    def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", VIDEO_OPERATION_PIPELINE_CLASS) != VIDEO_OPERATION_PIPELINE_CLASS:
+            raise ValueError("Process Video received an unsupported built-in contract identity.")
+        operation = str(kwargs.get("operation") or "video_frame_extract")
+        if operation not in VIDEO_OPERATION_MODES:
+            raise ValueError(f"Unsupported built-in video operation {operation!r}.")
+        if operation == "video_frame_extract":
+            assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=1)
+            if len(assets) != 1:
+                raise ValueError("Video frame extraction requires exactly one input video.")
+            selection_mode = str(kwargs.get("selection_mode") or "first_last")
+            if selection_mode not in FrameExtract.params["mode"]["options"]:
+                raise ValueError(f"Unsupported frame selection mode {selection_mode!r}.")
+            if selection_mode in {"indices", "timecodes"}:
+                field = selection_mode
+                raw = kwargs.get(field)
+                if isinstance(raw, str) and len(raw) > 4096:
+                    raise ValueError("Frame selection text accepts at most 4096 characters.")
+                values = _parse_numbers(raw, cast=int if selection_mode == "indices" else float)
+                if len(values) > MAX_EXTRACTED_FRAMES or any(
+                    isinstance(value, float) and (not math.isfinite(value) or value < 0)
+                    for value in values
+                ):
+                    raise ValueError(f"Frame selection accepts at most {MAX_EXTRACTED_FRAMES} finite values.")
+            every_n = int(kwargs.get("every_n") or 16)
+            if not 1 <= every_n <= MAX_VIDEO_OPERATION_FRAMES_PER_INPUT:
+                raise ValueError(
+                    f"Frame interval must be between 1 and {MAX_VIDEO_OPERATION_FRAMES_PER_INPUT}."
+                )
+            result = FrameExtract().execute(
+                video=assets[0],
+                mode=selection_mode,
+                indices=kwargs.get("indices", "0,-1"),
+                timecodes=kwargs.get("timecodes", "0"),
+                every_n=every_n,
+                fps=assets[0]["fps"],
+            )
+            return {
+                "images": result["frames"],
+                "video": None,
+                "selected_indices": result["selected_indices"],
+                "timestamps": result["timestamps"],
+            }
+        assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
+        transition_seconds = float(kwargs.get("transition_seconds") or 0)
+        if not math.isfinite(transition_seconds) or not 0 <= transition_seconds <= 5:
+            raise ValueError("Video stitch crossfade must be between 0 and 5 seconds.")
+        result = ConcatenateAssets().execute(
+            clips=assets,
+            transition_seconds=transition_seconds,
+            pin=False,
+        )
+        return {
+            "images": None,
+            "video": result["file"],
+            "selected_indices": [],
+            "timestamps": [],
+        }
 
 
 class StackTileAssets(NodeBase):

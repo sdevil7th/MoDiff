@@ -50,6 +50,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.ImageOperations",
                 "ProcessImage",
             ),
+            "builtin-video-operation": (
+                "modules.Video",
+                "ProcessVideo",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -170,6 +174,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "HuggingFaceImageTextToTextModel",
             "HuggingFaceAnyToAnyModel",
             "BuiltinImageOperation",
+            "BuiltinVideoOperation",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

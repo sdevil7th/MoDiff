@@ -275,6 +275,10 @@ class DiffusersExecutionProfile:
                 "modules.ImageOperations",
                 "ProcessImage",
             ),
+            "builtin-video-operation": (
+                "modules.Video",
+                "ProcessVideo",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(

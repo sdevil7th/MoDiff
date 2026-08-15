@@ -39,6 +39,7 @@ from modiff.server import WebServer
 EXECUTION_PROFILE_ID = "z-image:auto"
 OPTIONAL_PROFILE_ID = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
 BUILTIN_IMAGE_PROFILE_ID = "builtin-image-operations:direct"
+BUILTIN_VIDEO_PROFILE_ID = "builtin-video-operations:direct"
 
 
 class JsonRequest:
@@ -166,7 +167,7 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
                 if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
-                    self.assertEqual(profile.id, BUILTIN_IMAGE_PROFILE_ID)
+                    self.assertIn(profile.id, {BUILTIN_IMAGE_PROFILE_ID, BUILTIN_VIDEO_PROFILE_ID})
                     self.assertEqual(profile.optional_runtime_profiles, ())
                     self.assertEqual(profile.optional_runtime_platform_deliveries, ())
                     requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
