@@ -56,24 +56,23 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.ledger["summary"]["resolutionStateCounts"],
             {
                 "existing_family_workflow_candidate": 18,
-                "existing_task_boundary_builtin_operation_review_required": 1,
+                "existing_task_boundary_builtin_operation_review_required": 2,
                 "existing_task_boundary_model_admission_required": 84,
-                "new_task_boundary_required": 35,
+                "new_task_boundary_required": 34,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 103)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 104)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 73)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 74)
         self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 138)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
                 "different_model_generation_and_new_task_required": 33,
                 "different_model_generation_requires_admission": 84,
-                "model_free_builtin_operation_contract_review_required": 1,
-                "model_free_new_task_required": 1,
+                "model_free_builtin_operation_contract_review_required": 2,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 8,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -100,7 +99,6 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "image_to_3d": 7,
             "image_audio_to_video": 2,
             "image_audio_to_text": 1,
-            "image_stitch": 1,
             "image_to_video_with_audio": 1,
             "motion_track_to_video": 1,
             "reference_to_image": 1,
@@ -122,9 +120,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
 
     def test_frame_interpolation_reuses_only_the_bounded_non_model_task_boundary(self):
         row = next(
-            row
-            for row in self.ledger["resolutions"]
-            if row["catalogId"] == "utility_video_frame_interpolation"
+            row for row in self.ledger["resolutions"] if row["catalogId"] == "utility_video_frame_interpolation"
         )
         self.assertEqual(row["selectedCandidateMode"], "frame_interpolation")
         self.assertEqual(row["resolutionState"], "existing_task_boundary_model_admission_required")
@@ -138,11 +134,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
 
     def test_image_upscale_proposals_reuse_the_bounded_install_free_task(self):
-        rows = [
-            row
-            for row in self.ledger["resolutions"]
-            if row["selectedCandidateMode"] == "image_upscale"
-        ]
+        rows = [row for row in self.ledger["resolutions"] if row["selectedCandidateMode"] == "image_upscale"]
         self.assertEqual(len(rows), 3)
         for row in rows:
             with self.subTest(contract=row["contractId"]):
@@ -160,9 +152,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
 
     def test_seedvr_video_upscale_reuses_only_the_task_boundary(self):
         row = next(
-            row
-            for row in self.ledger["resolutions"]
-            if row["catalogId"] == "utility_seedvr2_3b_int8_upscale_video"
+            row for row in self.ledger["resolutions"] if row["catalogId"] == "utility_seedvr2_3b_int8_upscale_video"
         )
         self.assertEqual(row["selectedCandidateMode"], "video_upscale")
         self.assertEqual(row["resolutionState"], "existing_task_boundary_model_admission_required")
@@ -221,12 +211,10 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_all_one_hundred_thirty_eight_exact_dependency_surfaces_without_copying_graphs(self):
-        reviewed = {
-            row["catalogId"]: row
-            for row in self.ledger["resolutions"]
-            if row.get("sourceReview") is not None
-        }
+    def test_pinned_source_reviews_resolve_all_one_hundred_thirty_eight_exact_dependency_surfaces_without_copying_graphs(
+        self,
+    ):
+        reviewed = {row["catalogId"]: row for row in self.ledger["resolutions"] if row.get("sourceReview") is not None}
         self.assertEqual(
             set(reviewed),
             {
@@ -551,7 +539,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
         wan_i2v = reviewed["image_to_video_wan"]
         self.assertEqual(wan_i2v["sourceReview"]["catalogSelectedCandidateMode"], "text_to_video")
         self.assertEqual(wan_i2v["selectedCandidateMode"], "image_to_video")
-        self.assertEqual(wan_i2v["recommendedWorkflow"]["canonicalWorkflowId"], "WanImageToVideoPipeline:image_to_video")
+        self.assertEqual(
+            wan_i2v["recommendedWorkflow"]["canonicalWorkflowId"], "WanImageToVideoPipeline:image_to_video"
+        )
 
         wan_control = reviewed["video_wan2_2_14B_fun_control"]
         self.assertEqual(wan_control["sourceReview"]["catalogSelectedCandidateMode"], "video_to_video")
@@ -579,12 +569,16 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertEqual(row["sourceReview"]["catalogRecommendedWorkflowId"], "AuraFlowPipeline:text_to_image")
             self.assertEqual(row["sourceReview"]["catalogRecognizedMoDiffFamilies"], [])
             self.assertEqual(row["sourceReview"]["reviewedWorkflowId"], "QwenImageModularPipeline:text_to_image")
-            self.assertEqual(row["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:text_to_image")
+            self.assertEqual(
+                row["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:text_to_image"
+            )
 
         qwen_patch = reviewed["image_qwen_image_controlnet_patch"]
         self.assertEqual(qwen_patch["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
         self.assertEqual(qwen_patch["selectedCandidateMode"], "control_image")
-        self.assertEqual(qwen_patch["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:control_image")
+        self.assertEqual(
+            qwen_patch["recommendedWorkflow"]["canonicalWorkflowId"], "QwenImageModularPipeline:control_image"
+        )
 
         lotus = reviewed["image_lotus_depth_v1_1"]
         self.assertEqual(lotus["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
@@ -618,8 +612,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(netayume["recommendedWorkflow"]["canonicalWorkflowId"], "Lumina2Pipeline:text_to_image")
 
         refiner = reviewed["sdxl_refiner_prompt_example"]
-        self.assertEqual(refiner["sourceReview"]["catalogRecommendedWorkflowId"], "StableDiffusionXLPAGPipeline:text_to_image")
-        self.assertEqual(refiner["recommendedWorkflow"]["canonicalWorkflowId"], "StableDiffusionXLPipeline:text_to_image")
+        self.assertEqual(
+            refiner["sourceReview"]["catalogRecommendedWorkflowId"], "StableDiffusionXLPAGPipeline:text_to_image"
+        )
+        self.assertEqual(
+            refiner["recommendedWorkflow"]["canonicalWorkflowId"], "StableDiffusionXLPipeline:text_to_image"
+        )
         revision = reviewed["sdxl_revision_text_prompts"]
         self.assertEqual(revision["sourceReview"]["catalogSelectedCandidateMode"], "text_to_image")
         self.assertEqual(revision["selectedCandidateMode"], "reference_to_image")
@@ -674,9 +672,19 @@ class ComfyContractResolutionTests(unittest.TestCase):
         stitch = reviewed["utility_image_stitch"]
         self.assertEqual(stitch["sourceReview"]["catalogSelectedCandidateMode"], "edit_image")
         self.assertEqual(stitch["selectedCandidateMode"], "image_stitch")
-        self.assertEqual(stitch["resolutionState"], "new_task_boundary_required")
+        self.assertEqual(
+            stitch["resolutionState"],
+            "existing_task_boundary_builtin_operation_review_required",
+        )
         self.assertFalse(stitch["exactCatalogModelReproductionRequiresAdmission"])
-        self.assertIsNone(stitch["recommendedWorkflow"])
+        self.assertEqual(
+            stitch["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinImageOperation:image_stitch",
+        )
+        self.assertIn(
+            "builtin_operation_contract_and_algorithm_parity_review_required",
+            stitch["blockers"],
+        )
         self.assertNotIn("model_artifact_and_input_output_rights_review_required", stitch["blockers"])
 
         scale = reviewed["utility_interpolation_image_upscale"]

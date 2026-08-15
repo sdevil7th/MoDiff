@@ -381,7 +381,10 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_fp8_e4m3fn.safetensors"},
             {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
             {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
-            {"repository": "lightx2v/Qwen-Image-Lightning", "artifact": "Qwen-Image-Lightning-8steps-V1.0.safetensors"},
+            {
+                "repository": "lightx2v/Qwen-Image-Lightning",
+                "artifact": "Qwen-Image-Lightning-8steps-V1.0.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_requires_admission",
@@ -1816,9 +1819,7 @@ _PINNED_SOURCE_REVIEWS = {
         "assetPath": "templates/utility_birefnet_remove_background.json",
         "assetSha256": "4b473eae9c4c034fd9526ae5511afb427791626a3500aa04dbd7701f423cb904",
         "gitBlobOid": "31c25593f87170ced962316ab8747463b70c1410",
-        "artifactDependencies": [
-            {"repository": "Comfy-Org/BiRefNet", "artifact": "birefnet.safetensors"}
-        ],
+        "artifactDependencies": [{"repository": "Comfy-Org/BiRefNet", "artifact": "birefnet.safetensors"}],
         "comparison": {
             "state": "different_model_generation_and_new_task_required",
             "currentWorkflowId": None,
@@ -1853,9 +1854,7 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "4cd72528d24bfb698bfe47d0edaa48a01cd6ad7e",
         "reviewedTaskMode": "image_to_text",
         "reviewedWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
-        "artifactDependencies": [
-            {"repository": "Comfy-Org/Qwen3.5", "artifact": "qwen3.5_4b_bf16.safetensors"}
-        ],
+        "artifactDependencies": [{"repository": "Comfy-Org/Qwen3.5", "artifact": "qwen3.5_4b_bf16.safetensors"}],
         "comparison": {
             "state": "different_model_generation_requires_admission",
             "currentWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
@@ -1871,9 +1870,7 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "b09690ecd1504aa292d3ade8b49bf0052e49b6cab8430b8bfbe960a5a7f6d02f",
         "gitBlobOid": "afe00a0e4f7523ac23e5f31f390c6280bf2af843",
         "reviewedWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-        "artifactDependencies": [
-            {"repository": "Comfy-Org/flux2-klein", "artifact": "qwen_3_4b.safetensors"}
-        ],
+        "artifactDependencies": [{"repository": "Comfy-Org/flux2-klein", "artifact": "qwen_3_4b.safetensors"}],
         "comparison": {
             "state": "different_model_generation_requires_admission",
             "currentWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
@@ -2015,12 +2012,24 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "29daad103b235336af64ea3ec87aa2a5ef1a88ea13d2f24c24c27413b3ade293",
         "gitBlobOid": "add0693ba9cd40026c4e9842a01fd02646fc16e7",
         "artifactDependencies": [
-            {"repository": "Kijai/WanVideo_comfy_fp8_scaled", "artifact": "Wan2_1-I2V-14B-480p_fp8_e4m3fn_scaled_KJ.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy_fp8_scaled",
+                "artifact": "Wan2_1-I2V-14B-480p_fp8_e4m3fn_scaled_KJ.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan2_1_VAE_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_infiniteTalk_multi_fp16.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_infiniteTalk_multi_fp16.safetensors",
+            },
             {"repository": "Kijai/wav2vec2_safetensors", "artifact": "wav2vec2-chinese-base_fp16.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_and_new_task_required",
@@ -2037,11 +2046,23 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "e5e8eda3c0ec86fdeca79c1a8d8648685ccbd200708ec87aa2087b75d98d0a45",
         "gitBlobOid": "e1106394a66ad51011394c48064899f46735cdb3",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_s2v_14B_fp8_scaled.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_s2v_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan_2.1_vae.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wav2vec2_large_english_fp16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wav2vec2_large_english_fp16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_and_new_task_required",
@@ -2060,7 +2081,10 @@ _PINNED_SOURCE_REVIEWS = {
         "artifactDependencies": [
             {"repository": "Comfy-Org/Wan-Dancer", "artifact": "wan2.2_dancer_14b_global_fp8_scaled.safetensors"},
             {"repository": "Comfy-Org/Wan-Dancer", "artifact": "wan2.2_dancer_14b_local_fp8_scaled.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp16.safetensors"},
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan2_1_VAE_bf16.safetensors"},
@@ -2084,9 +2108,15 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/SCAIL-2", "artifact": "wan2.1_14B_SCAIL_2_fp16.safetensors"},
             {"repository": "Comfy-Org/SCAIL-2", "artifact": "wan2.1_SCAIL_2_DPO_lora_bf16.safetensors"},
             {"repository": "Comfy-Org/sam3.1", "artifact": "sam3.1_multiplex_fp16.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan2_1_VAE_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
         ],
         "comparison": {
@@ -2108,9 +2138,15 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/SCAIL-2", "artifact": "wan2.1_14B_SCAIL_2_int8_convrot.safetensors"},
             {"repository": "Comfy-Org/SCAIL-2", "artifact": "wan2.1_SCAIL_2_DPO_lora_bf16.safetensors"},
             {"repository": "Comfy-Org/sam3.1", "artifact": "sam3.1_multiplex_fp16.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan2_1_VAE_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
         ],
         "comparison": {
@@ -2156,7 +2192,10 @@ _PINNED_SOURCE_REVIEWS = {
         "artifactDependencies": [
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_vace_14B_fp16.safetensors"},
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
             {"repository": "Comfy-Org/sam3.1", "artifact": "sam3.1_multiplex_fp16.safetensors"},
         ],
@@ -2178,7 +2217,10 @@ _PINNED_SOURCE_REVIEWS = {
         "reviewedOutputMediaKinds": ["video"],
         "artifactDependencies": [
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_fun_inp_1.3B_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
         ],
@@ -2262,10 +2304,16 @@ _PINNED_SOURCE_REVIEWS = {
         "reviewedTaskMode": "first_last_frame_to_video_with_audio",
         "reviewedOutputMediaKinds": ["video", "audio"],
         "artifactDependencies": [
-            {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+            },
             {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-video-vae-bf16.safetensors"},
             {"repository": "Lightricks/LTX-2.5", "artifact": "ltx-2.5-audio-vae-bf16.safetensors"},
-            {"repository": "Lightricks/LTX-2.5", "artifact": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors"},
+            {
+                "repository": "Lightricks/LTX-2.5",
+                "artifact": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+            },
             {"repository": "Comfy-Org/gemma-4", "artifact": "gemma4_e2b_it_bf16.safetensors"},
         ],
         "comparison": {
@@ -2283,9 +2331,18 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "9fb579e07caff9081c14a4c0e3b983e210aa7d976f83f1c2758d2ad6ed949fdf",
         "gitBlobOid": "ad344b8f7dc1c5058ae480149f6082583611430a",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan_2.1_vae.safetensors"},
         ],
         "comparison": {
@@ -2303,12 +2360,27 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "d8d100d3425760a314ad4fe620d019b0b8b59e921a3ab925e393e965e297dff2",
         "gitBlobOid": "6f3150b108ed3ae4914639d32e98ddd811e5b3d9",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan_2.1_vae.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_fun_inpaint_high_noise_14B_fp8_scaled.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_fun_inpaint_low_noise_14B_fp8_scaled.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_inpaint_high_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_inpaint_low_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_and_new_task_required",
@@ -2326,8 +2398,14 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "78dd5feaafe02c47173ba34428f69bbac2058ce2",
         "artifactDependencies": [
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_vace_14B_fp16.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
         ],
         "comparison": {
@@ -2345,8 +2423,14 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "389c551b8f1523ec2998b96bd6d3a4395deb7b3060906f3f74cf6d5cb88ec30f",
         "gitBlobOid": "666c9839ced86dd7690560f98f5bc622deb51d8d",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan2.1_flf2v_720p_14B_fp16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_flf2v_720p_14B_fp16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
         ],
@@ -2366,8 +2450,14 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "c938b5ac9e9f961aa4bbb72677291ec671f953e9",
         "reviewedWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "hunyuanvideo1.5_720p_i2v_fp16.safetensors"},
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "hunyuanvideo1.5_720p_i2v_fp16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "byt5_small_glyphxl_fp16.safetensors"},
             {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "hunyuanvideo15_vae_fp16.safetensors"},
             {"repository": "Comfy-Org/sigclip_vision_384", "artifact": "sigclip_vision_patch14_384.safetensors"},
@@ -2388,8 +2478,14 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "cf1100a9816e8a1e4ed630a708fe48ba67096ad4",
         "reviewedWorkflowId": "AllegroPipeline:text_to_video",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "hunyuanvideo1.5_720p_t2v_fp16.safetensors"},
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "hunyuanvideo1.5_720p_t2v_fp16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "byt5_small_glyphxl_fp16.safetensors"},
             {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "hunyuanvideo15_vae_fp16.safetensors"},
         ],
@@ -2411,7 +2507,10 @@ _PINNED_SOURCE_REVIEWS = {
         "artifactDependencies": [
             {"repository": "kandinskylab/Kandinsky-5.0-I2V-Lite-5s", "artifact": "kandinsky5lite_i2v_5s.safetensors"},
             {"repository": "Kijai/HunyuanVideo_comfy", "artifact": "hunyuan_video_vae_bf16.safetensors"},
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
             {"repository": "comfyanonymous/flux_text_encoders", "artifact": "clip_l.safetensors"},
         ],
         "comparison": {
@@ -2430,9 +2529,15 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "4ced14c74a9de54f52bb87f2e9a95def26cd85b4",
         "reviewedWorkflowId": "AllegroPipeline:text_to_video",
         "artifactDependencies": [
-            {"repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s", "artifact": "kandinsky5lite_t2v_sft_5s.safetensors"},
+            {
+                "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s",
+                "artifact": "kandinsky5lite_t2v_sft_5s.safetensors",
+            },
             {"repository": "Kijai/HunyuanVideo_comfy", "artifact": "hunyuan_video_vae_bf16.safetensors"},
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
             {"repository": "comfyanonymous/flux_text_encoders", "artifact": "clip_l.safetensors"},
         ],
         "comparison": {
@@ -2517,8 +2622,14 @@ _PINNED_SOURCE_REVIEWS = {
         "artifactDependencies": [
             {"repository": "Comfy-Org/Bernini-R", "artifact": "wan2.2_bernini_r_high_noise_fp8_scaled.safetensors"},
             {"repository": "Comfy-Org/Bernini-R", "artifact": "wan2.2_bernini_r_low_noise_fp8_scaled.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan2_1_VAE_bf16.safetensors"},
         ],
         "comparison": {
@@ -2538,8 +2649,14 @@ _PINNED_SOURCE_REVIEWS = {
         "artifactDependencies": [
             {"repository": "Comfy-Org/Bernini-R", "artifact": "wan2.2_bernini_r_high_noise_fp8_scaled.safetensors"},
             {"repository": "Comfy-Org/Bernini-R", "artifact": "wan2.2_bernini_r_low_noise_fp8_scaled.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Kijai/WanVideo_comfy", "artifact": "Wan2_1_VAE_bf16.safetensors"},
         ],
         "comparison": {
@@ -2579,9 +2696,15 @@ _PINNED_SOURCE_REVIEWS = {
         "artifactDependencies": [
             {"repository": "Comfy-Org/HuMo_ComfyUI", "artifact": "humo_17B_fp8_e4m3fn.safetensors"},
             {"repository": "Comfy-Org/HuMo_ComfyUI", "artifact": "whisper_large_v3_fp16.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan_2.1_vae.safetensors"},
-            {"repository": "Kijai/WanVideo_comfy", "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors"},
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_and_new_task_required",
@@ -2718,7 +2841,10 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/HunyuanImage_2.1_ComfyUI", "artifact": "qwen_2.5_vl_7b.safetensors"},
             {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "byt5_small_glyphxl_fp16.safetensors"},
             {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "hunyuanvideo15_vae_fp16.safetensors"},
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "sigclip_vision_patch14_384.safetensors"},
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "sigclip_vision_patch14_384.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_requires_admission",
@@ -2861,7 +2987,10 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "chrono_edit_14B_fp16.safetensors"},
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "chronoedit_distill_lora.safetensors"},
             {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan_2.1_vae.safetensors"},
-            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
             {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "clip_vision_h.safetensors"},
         ],
         "comparison": {
@@ -2880,10 +3009,19 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "19e4e5ea3489a781be917056dd33d07942bd7e09",
         "reviewedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "artifactDependencies": [
-            {"repository": "FireRedTeam/FireRed-Image-Edit-1.1-ComfyUI", "artifact": "FireRed-Image-Edit-1.1-transformer.safetensors"},
-            {"repository": "FireRedTeam/FireRed-Image-Edit-1.0-ComfyUI", "artifact": "FireRed-Image-Edit-1.0-Lightning-8steps-v1.0.safetensors"},
+            {
+                "repository": "FireRedTeam/FireRed-Image-Edit-1.1-ComfyUI",
+                "artifact": "FireRed-Image-Edit-1.1-transformer.safetensors",
+            },
+            {
+                "repository": "FireRedTeam/FireRed-Image-Edit-1.0-ComfyUI",
+                "artifact": "FireRed-Image-Edit-1.0-Lightning-8steps-v1.0.safetensors",
+            },
             {"repository": "FireRedTeam/FireRed-Image-Edit-1.0-ComfyUI", "artifact": "qwen_image_vae.safetensors"},
-            {"repository": "Comfy-Org/HunyuanVideo_1.5_repackaged", "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors"},
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_requires_admission",
@@ -3105,7 +3243,10 @@ _PINNED_SOURCE_REVIEWS = {
         "gitBlobOid": "41027ac76726e378efacdbd8ba6d20edd7ad0569",
         "reviewedWorkflowId": "AuraFlowPipeline:text_to_image",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged", "artifact": "NewBie-Image-Exp0.1-bf16.safetensors"},
+            {
+                "repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged",
+                "artifact": "NewBie-Image-Exp0.1-bf16.safetensors",
+            },
             {"repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged", "artifact": "gemma_3_4b_it_bf16.safetensors"},
             {"repository": "Comfy-Org/NewBie-image-Exp0.1_repackaged", "artifact": "jina_clip_v2_bf16.safetensors"},
             {"repository": "Comfy-Org/z_image_turbo", "artifact": "ae.safetensors"},
@@ -3148,7 +3289,10 @@ _PINNED_SOURCE_REVIEWS = {
         "reviewedWorkflowId": "StableDiffusionPipeline:control_image",
         "artifactDependencies": [
             {"repository": "Comfy-Org/stable-diffusion-3.5-fp8", "artifact": "sd3.5_large_fp8_scaled.safetensors"},
-            {"repository": "Comfy-Org/stable-diffusion-3.5-controlnets_ComfyUI_repackaged", "artifact": "sd3.5_large_controlnet_blur.safetensors"},
+            {
+                "repository": "Comfy-Org/stable-diffusion-3.5-controlnets_ComfyUI_repackaged",
+                "artifact": "sd3.5_large_controlnet_blur.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_requires_admission",
@@ -3182,6 +3326,7 @@ _PINNED_SOURCE_REVIEWS = {
         "assetPath": "templates/utility_image_stitch.json",
         "assetSha256": "d00b088bdba0d456b008b59f65643fc6cb1d3f825a242b6ef7d696897cd521c4",
         "gitBlobOid": "bdb26ba2aaeca8fa08e0e10ee48a052c4f07fa4d",
+        "reviewedWorkflowId": "BuiltinImageOperation:image_stitch",
         "reviewedTaskMode": "image_stitch",
         "modelFree": True,
         "artifactDependencies": [
@@ -3189,14 +3334,14 @@ _PINNED_SOURCE_REVIEWS = {
             {"repository": "Comfy-Org/ComfyUI", "artifact": "image resize contract"},
         ],
         "comparison": {
-            "state": "model_free_new_task_required",
-            "currentWorkflowId": None,
+            "state": "model_free_builtin_operation_contract_review_required",
+            "currentWorkflowId": "BuiltinImageOperation:image_stitch",
             "currentRepository": None,
             "currentRevision": None,
-            "reasonCode": "image_stitch_requires_bounded_multi_image_layout_task",
+            "reasonCode": "comfy_image_stitch_requires_builtin_algorithm_parity_review",
         },
-        "resolutionState": "new_task_boundary_required",
-        "mappingMeaning": "source_reviewed_model_free_image_stitch_task_required",
+        "resolutionState": "existing_task_boundary_builtin_operation_review_required",
+        "mappingMeaning": "source_reviewed_model_free_task_candidate_algorithm_parity_not_proven",
     },
     "comfy-research:template:utility_interpolation_image_upscale": {
         "assetPath": "templates/utility_interpolation_image_upscale.json",
@@ -3273,7 +3418,10 @@ _PINNED_SOURCE_REVIEWS = {
         "assetSha256": "5a0aad5c7c2dbb06d939920967221e340e9027590d4b859ee475b7ff14d0d246",
         "gitBlobOid": "9bbc51947f221f3d25bab3fd4a7891f4b4e4a804",
         "artifactDependencies": [
-            {"repository": "Comfy-Org/hunyuan3D_2.0_repackaged", "artifact": "hunyuan3d-dit-v2-mv-turbo_fp16.safetensors"},
+            {
+                "repository": "Comfy-Org/hunyuan3D_2.0_repackaged",
+                "artifact": "hunyuan3d-dit-v2-mv-turbo_fp16.safetensors",
+            },
         ],
         "comparison": {
             "state": "different_model_generation_and_new_task_required",
@@ -3515,8 +3663,10 @@ def build_comfy_contract_resolution_ledger(root: Path) -> dict[str, Any]:
             raise ComfyContractResolutionError(f"Comfy output media evidence is invalid for {contract_id}.")
         if pinned_source_review is not None and pinned_source_review.get("reviewedOutputMediaKinds") is not None:
             reviewed_output_kinds = pinned_source_review.get("reviewedOutputMediaKinds")
-            if not isinstance(reviewed_output_kinds, list) or not reviewed_output_kinds or any(
-                not isinstance(value, str) or not value for value in reviewed_output_kinds
+            if (
+                not isinstance(reviewed_output_kinds, list)
+                or not reviewed_output_kinds
+                or any(not isinstance(value, str) or not value for value in reviewed_output_kinds)
             ):
                 raise ComfyContractResolutionError(
                     f"Pinned Comfy source review output media kinds are invalid for {contract_id}."

@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:810b3eb33c410a6681fc55179b4222ff2513b94560c25a6734afb29dbf4c6c7d",
+  "contentHash": "sha256:3e697574baa0129d5818261cb181e442143193b7923f740c8ca847e9a1f9016d",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:41a65d51a135b991664e3208bef341dd07630b4d5cc33dd8e4406a474e70bbfc",
+      "contentHash": "sha256:b1ca245b2be060b8b8916e3899824436de0a5712a5fcfc7e22de942ecd8418dc",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:b4b41300d636f8b48582b667f0bfb3d6e0660470b02283d83b6858715c205da1"
+      "sha256": "sha256:4e1484041cec90ba30531ecc89312975f99f7838ec7a7fc9c84f2324843fcf50"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:0d8f54d84cc7a2e92d8512d6cd4a1b531cc2768691f02dd65c554fc3067ee56f"
+      "sha256": "sha256:8374e90d09fe839ff0c328e411b311f59477e90d92a2b3916fea9dfbfe169028"
     }
   },
   "specifications": [
@@ -42,7 +42,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/allegro-pipeline/text-to-video.json",
-        "sha256": "1d04d6914298f9d7395bd17f8dfd82599069f266bdedd6f431d05cf0e1ca604a"
+        "sha256": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8"
       },
       "canonicalWorkflowId": "AllegroPipeline:text_to_video",
       "claims": {
@@ -130,7 +130,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "1d04d6914298f9d7395bd17f8dfd82599069f266bdedd6f431d05cf0e1ca604a",
+        "sourceGraphSha256": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -216,7 +216,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-control-net-pipeline/control-to-video.json",
-        "sha256": "aee3ac8d462054adcc18a47773a2be3c168db68afceff66558f1a32a84596ef4"
+        "sha256": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8"
       },
       "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
       "claims": {
@@ -329,7 +329,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "aee3ac8d462054adcc18a47773a2be3c168db68afceff66558f1a32a84596ef4",
+        "sourceGraphSha256": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -422,7 +422,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-pag-pipeline/text-to-video.json",
-        "sha256": "8831f3c7ed404e86b9e3cffaf38d5428714e207ee8ea708e518e89fd0959cbe1"
+        "sha256": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3"
       },
       "canonicalWorkflowId": "AnimateDiffPAGPipeline:text_to_video",
       "claims": {
@@ -520,7 +520,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8831f3c7ed404e86b9e3cffaf38d5428714e207ee8ea708e518e89fd0959cbe1",
+        "sourceGraphSha256": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -599,7 +599,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-pipeline/text-to-video.json",
-        "sha256": "eecf568b427172e11b450a39ffa7b17f1ccbeb0e96b55e0038eb30f9ce4998ff"
+        "sha256": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4"
       },
       "canonicalWorkflowId": "AnimateDiffPipeline:text_to_video",
       "claims": {
@@ -687,7 +687,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "eecf568b427172e11b450a39ffa7b17f1ccbeb0e96b55e0038eb30f9ce4998ff",
+        "sourceGraphSha256": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -773,7 +773,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
-        "sha256": "7d69476818c5d03264257d295ca77ea054de854aa7440d5cf9206b10d6e2005b"
+        "sha256": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d"
       },
       "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "claims": {
@@ -901,7 +901,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "7d69476818c5d03264257d295ca77ea054de854aa7440d5cf9206b10d6e2005b",
+        "sourceGraphSha256": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1007,7 +1007,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
-        "sha256": "8e59c244969942533668edd180548705cd8b70c356718b96468b3d0fc1434cd7"
+        "sha256": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25"
       },
       "canonicalWorkflowId": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "claims": {
@@ -1110,7 +1110,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8e59c244969942533668edd180548705cd8b70c356718b96468b3d0fc1434cd7",
+        "sourceGraphSha256": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1204,7 +1204,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/animate-lcm-pipeline/text-to-video.json",
-        "sha256": "37469de1d87a0576b9fb8aefedc3c543760d477e204cf6d2f85b2441268d229f"
+        "sha256": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2"
       },
       "canonicalWorkflowId": "AnimateLCMPipeline:text_to_video",
       "claims": {
@@ -1292,7 +1292,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "37469de1d87a0576b9fb8aefedc3c543760d477e204cf6d2f85b2441268d229f",
+        "sourceGraphSha256": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1362,7 +1362,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/audio-ldm2-pipeline/text-to-audio.json",
-        "sha256": "441143e08ab8b085038b352afcc6754325c9c9f44828a43bc7d40d6439dfacc5"
+        "sha256": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a"
       },
       "canonicalWorkflowId": "AudioLDM2Pipeline:text_to_audio",
       "claims": {
@@ -1420,7 +1420,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "441143e08ab8b085038b352afcc6754325c9c9f44828a43bc7d40d6439dfacc5",
+        "sourceGraphSha256": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1490,7 +1490,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/aura-flow-pipeline/text-to-image.json",
-        "sha256": "947eefe6822b88ca18f15a4a52eb8d5bfc12784fa258a78c8235c624441e9038"
+        "sha256": "86b5e19ff3235d381d2dc44631812ebd5a3b7547a450574ef3b7e259438486fd"
       },
       "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
       "claims": {
@@ -1543,7 +1543,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "947eefe6822b88ca18f15a4a52eb8d5bfc12784fa258a78c8235c624441e9038",
+        "sourceGraphSha256": "86b5e19ff3235d381d2dc44631812ebd5a3b7547a450574ef3b7e259438486fd",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2201,7 +2201,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-image-operation/image-adjustment.json",
-        "sha256": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08"
+        "sha256": "1d6ffbff9c58a2091e61ae1c0ce113bb4014f353714e4c1750b2caa9a71eb6f0"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:image_adjustment",
       "claims": {
@@ -2221,7 +2221,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08",
+        "sourceGraphSha256": "1d6ffbff9c58a2091e61ae1c0ce113bb4014f353714e4c1750b2caa9a71eb6f0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2305,7 +2305,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-image-operation/image-channels.json",
-        "sha256": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768"
+        "sha256": "ce467ad8f8e326fcc6126d14c91615afc3c0253104fe459af295a683f98b86d1"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:image_channels",
       "claims": {
@@ -2325,7 +2325,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "b347959c54f8678273f1b9542117d409a45d3b8bd121bb2f3d7500bb93941768",
+        "sourceGraphSha256": "ce467ad8f8e326fcc6126d14c91615afc3c0253104fe459af295a683f98b86d1",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2409,7 +2409,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-image-operation/image-crop.json",
-        "sha256": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c"
+        "sha256": "cafb4b92e19febc6a4ca79157351e133359aaab98c3be605898b54ba1ec32bca"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:image_crop",
       "claims": {
@@ -2429,7 +2429,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "3c82db6f32b42140cb371a7e6d20cc807695841c40f7854b16c5a1d87ed11b2c",
+        "sourceGraphSha256": "cafb4b92e19febc6a4ca79157351e133359aaab98c3be605898b54ba1ec32bca",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2513,7 +2513,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-image-operation/image-filter.json",
-        "sha256": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f"
+        "sha256": "bef88543cc2243c6add7158181aaeff6c33639ddc657530c151b73192490dde3"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:image_filter",
       "claims": {
@@ -2533,7 +2533,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "1efc37f46a933c7aff29c1d8a893bc08e084b7a391747c478efdc8dff179755f",
+        "sourceGraphSha256": "bef88543cc2243c6add7158181aaeff6c33639ddc657530c151b73192490dde3",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2616,8 +2616,112 @@
       "assets": [],
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
+        "path": "studio/builtin-image-operation/image-stitch.json",
+        "sha256": "c70c712b07320b95b9765e9a99f95f554906f58e28051072b261abeb2bdb69cd"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:image_stitch",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "c70c712b07320b95b9765e9a99f95f554906f58e28051072b261abeb2bdb69cd",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": false,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinImageOperation:image_stitch",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 2,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_stitch",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinImageOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Built-in Media image stitch workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Image Stitch [BuiltinImageOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/image-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
         "path": "studio/builtin-image-operation/image-tile.json",
-        "sha256": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087"
+        "sha256": "3934c3eb2e2465f2ea06154b7d8498c0c270a40951f165ea3e0b3ec253266ce9"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:image_tile",
       "claims": {
@@ -2637,7 +2741,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "4c76ac85749defa24cdf7fa58dd27dccd32f91e98a924b5dc0224fbc1a329087",
+        "sourceGraphSha256": "3934c3eb2e2465f2ea06154b7d8498c0c270a40951f165ea3e0b3ec253266ce9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2721,7 +2825,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-image-operation/image-upscale.json",
-        "sha256": "5c70e632e46629be806e28846195a9913ec3865e5a4866f8f7f887f61de7d2dc"
+        "sha256": "568ba26873e3bcd15c88117a7138b40f00cb6b2cf950f42e7b7f5ba9add6f91e"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:image_upscale",
       "claims": {
@@ -2741,7 +2845,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "5c70e632e46629be806e28846195a9913ec3865e5a4866f8f7f887f61de7d2dc",
+        "sourceGraphSha256": "568ba26873e3bcd15c88117a7138b40f00cb6b2cf950f42e7b7f5ba9add6f91e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -2825,7 +2929,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-image-operation/mask-composite.json",
-        "sha256": "b3cb792c36111c427b7a901840d2774b1a2e5ce193a538948c7cce7ada710bc8"
+        "sha256": "3b0f0be3b6e09979525563af8d3a9a1d3d624c9e075f355cea2c562db8f4a4f0"
       },
       "canonicalWorkflowId": "BuiltinImageOperation:mask_composite",
       "claims": {
@@ -2850,7 +2954,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "b3cb792c36111c427b7a901840d2774b1a2e5ce193a538948c7cce7ada710bc8",
+        "sourceGraphSha256": "3b0f0be3b6e09979525563af8d3a9a1d3d624c9e075f355cea2c562db8f4a4f0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3050,7 +3154,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-frame-extract.json",
-        "sha256": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17"
+        "sha256": "1a916c4ba2bcd6753142311612533c80d2dfea61c825aaaad774335304bddf84"
       },
       "canonicalWorkflowId": "BuiltinVideoOperation:video_frame_extract",
       "claims": {
@@ -3064,7 +3168,7 @@
       "defaultsPlan": {
         "fields": [],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17",
+        "sourceGraphSha256": "1a916c4ba2bcd6753142311612533c80d2dfea61c825aaaad774335304bddf84",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3148,7 +3252,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-reverse.json",
-        "sha256": "223094c5d8b02c6bc1a6546cf1dae4064941040c1961bdcc48df3ac1997502ee"
+        "sha256": "1a24de60155c543ffba92419dbca402114d76cbe313e9cea821eb1e4c83009f0"
       },
       "canonicalWorkflowId": "BuiltinVideoOperation:video_reverse",
       "claims": {
@@ -3168,7 +3272,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "223094c5d8b02c6bc1a6546cf1dae4064941040c1961bdcc48df3ac1997502ee",
+        "sourceGraphSha256": "1a24de60155c543ffba92419dbca402114d76cbe313e9cea821eb1e4c83009f0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3252,7 +3356,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-stitch.json",
-        "sha256": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9"
+        "sha256": "89b10547495e6c9df1f5dfc859230e3f9f8622937db48c6cee50a945cc5a4699"
       },
       "canonicalWorkflowId": "BuiltinVideoOperation:video_stitch",
       "claims": {
@@ -3272,7 +3376,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "e2ec33cec2ab354d79350cc8c109cfb211ceef6e67c6638718d839274ecb9ac9",
+        "sourceGraphSha256": "89b10547495e6c9df1f5dfc859230e3f9f8622937db48c6cee50a945cc5a4699",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3356,7 +3460,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-tile.json",
-        "sha256": "7dfca3c41f53b54990caae80b0cc17b104871fae79a208726908152a59707736"
+        "sha256": "6ca094876c15fdec1bf75fba7bf3a9149f97305156de06218ae2932c865a24cc"
       },
       "canonicalWorkflowId": "BuiltinVideoOperation:video_tile",
       "claims": {
@@ -3376,7 +3480,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "7dfca3c41f53b54990caae80b0cc17b104871fae79a208726908152a59707736",
+        "sourceGraphSha256": "6ca094876c15fdec1bf75fba7bf3a9149f97305156de06218ae2932c865a24cc",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3460,7 +3564,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-trim.json",
-        "sha256": "8c5fc8e0a79919665524936390ff9d0d235bb8b3368ced2ce3ebca8837e326eb"
+        "sha256": "01c1b803b28f60474548401a4c582f760569070e50c0e7deacb893dc614250e4"
       },
       "canonicalWorkflowId": "BuiltinVideoOperation:video_trim",
       "claims": {
@@ -3480,7 +3584,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "8c5fc8e0a79919665524936390ff9d0d235bb8b3368ced2ce3ebca8837e326eb",
+        "sourceGraphSha256": "01c1b803b28f60474548401a4c582f760569070e50c0e7deacb893dc614250e4",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3564,7 +3668,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/chroma-img2-img-pipeline/edit-image.json",
-        "sha256": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9"
+        "sha256": "9d7303189c3767c205e0f43c9b5ab4c2ba7d385fec2e581bd25f14f3b716686b"
       },
       "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
       "claims": {
@@ -3622,7 +3726,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
+        "sourceGraphSha256": "9d7303189c3767c205e0f43c9b5ab4c2ba7d385fec2e581bd25f14f3b716686b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3707,7 +3811,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/chroma-inpaint-pipeline/inpaint.json",
-        "sha256": "b99e771b0375387c3ef6ec07100067b35fce282ab18c9b01fc8484fb73a7aa20"
+        "sha256": "b9a6bbff11f5bd4d8b032189d752ae2c53cb1abeba8c7920711f9ec01c20328c"
       },
       "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
       "claims": {
@@ -3770,7 +3874,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "b99e771b0375387c3ef6ec07100067b35fce282ab18c9b01fc8484fb73a7aa20",
+        "sourceGraphSha256": "b9a6bbff11f5bd4d8b032189d752ae2c53cb1abeba8c7920711f9ec01c20328c",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -3867,7 +3971,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/chroma-inpaint-pipeline/outpaint.json",
-        "sha256": "844b8a2f6bf3b24d66a7be2ef1e9776cd4cadfe974341f7489f825982ef15b6e"
+        "sha256": "54dbdca8b76f84abd603f48a2e000280ebd172b3fe191e51e3262ae0c9d3ec76"
       },
       "canonicalWorkflowId": "ChromaInpaintPipeline:outpaint",
       "claims": {
@@ -3970,7 +4074,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "844b8a2f6bf3b24d66a7be2ef1e9776cd4cadfe974341f7489f825982ef15b6e",
+        "sourceGraphSha256": "54dbdca8b76f84abd603f48a2e000280ebd172b3fe191e51e3262ae0c9d3ec76",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4055,7 +4159,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/chroma-pipeline/text-to-image.json",
-        "sha256": "d1fdc14b41fcdd803c386b7c0f5121d52e19714d041566f159f3e63ab81a7b42"
+        "sha256": "2f4671b9224d01c3926f71cdc2223da255cdbd8db259c039c23a2d35334699b2"
       },
       "canonicalWorkflowId": "ChromaPipeline:text_to_image",
       "claims": {
@@ -4108,7 +4212,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "d1fdc14b41fcdd803c386b7c0f5121d52e19714d041566f159f3e63ab81a7b42",
+        "sourceGraphSha256": "2f4671b9224d01c3926f71cdc2223da255cdbd8db259c039c23a2d35334699b2",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4178,7 +4282,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/cog-video-x-pipeline/text-to-video.json",
-        "sha256": "73ccd79e0aab9b8b5fd13dbbfb332ee928fcbca8516150594a186b6f64dc6334"
+        "sha256": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75"
       },
       "canonicalWorkflowId": "CogVideoXPipeline:text_to_video",
       "claims": {
@@ -4266,7 +4370,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "73ccd79e0aab9b8b5fd13dbbfb332ee928fcbca8516150594a186b6f64dc6334",
+        "sourceGraphSha256": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4336,7 +4440,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
-        "sha256": "7f0aa19c7c3c85d40e098e4230c6b4a97e4e947aa066042b3c3ce6943f3a7865"
+        "sha256": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194"
       },
       "canonicalWorkflowId": "CogVideoXVideoToVideoPipeline:video_to_video",
       "claims": {
@@ -4439,7 +4543,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "7f0aa19c7c3c85d40e098e4230c6b4a97e4e947aa066042b3c3ce6943f3a7865",
+        "sourceGraphSha256": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4524,7 +4628,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/cog-view3-plus-pipeline/text-to-image.json",
-        "sha256": "d21ad49474f5c702db711fdf94c4d451010121a32bfe5cdd5a706a8d7fbe10bb"
+        "sha256": "bee086eeaf06c82b1102569dd129c38da5cc6af60f5c5e838001ee03e2e9dbf5"
       },
       "canonicalWorkflowId": "CogView3PlusPipeline:text_to_image",
       "claims": {
@@ -4577,7 +4681,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "d21ad49474f5c702db711fdf94c4d451010121a32bfe5cdd5a706a8d7fbe10bb",
+        "sourceGraphSha256": "bee086eeaf06c82b1102569dd129c38da5cc6af60f5c5e838001ee03e2e9dbf5",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4647,7 +4751,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/cog-view4-pipeline/text-to-image.json",
-        "sha256": "eb5c63006a8f0696abaabd6b7de5ae51b83946b67bcdc1bfe6611fae48420a29"
+        "sha256": "f9542124eb1bf031078d92e565145b09694eb3e2c3e1268c19f25c7f87150396"
       },
       "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
       "claims": {
@@ -4700,7 +4804,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "eb5c63006a8f0696abaabd6b7de5ae51b83946b67bcdc1bfe6611fae48420a29",
+        "sourceGraphSha256": "f9542124eb1bf031078d92e565145b09694eb3e2c3e1268c19f25c7f87150396",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4770,7 +4874,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/consistency-model-pipeline/unconditional-image.json",
-        "sha256": "023e8063f248ccc00443b545370b33b541212fdd09b1d682e4ec0a15a1674649"
+        "sha256": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029"
       },
       "canonicalWorkflowId": "ConsistencyModelPipeline:unconditional_image",
       "claims": {
@@ -4813,7 +4917,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "023e8063f248ccc00443b545370b33b541212fdd09b1d682e4ec0a15a1674649",
+        "sourceGraphSha256": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4883,7 +4987,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ddim-pipeline/unconditional-image.json",
-        "sha256": "5c256c06c376d41bde54b53e122cb792b992003e6a55f96dd25245a0462a6fb5"
+        "sha256": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d"
       },
       "canonicalWorkflowId": "DDIMPipeline:unconditional_image",
       "claims": {
@@ -4926,7 +5030,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5c256c06c376d41bde54b53e122cb792b992003e6a55f96dd25245a0462a6fb5",
+        "sourceGraphSha256": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4996,7 +5100,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ddpm-pipeline/unconditional-image.json",
-        "sha256": "05526121af00645ea2458528ba4ac4de718e3ea5596c825c21730c58986613ca"
+        "sha256": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267"
       },
       "canonicalWorkflowId": "DDPMPipeline:unconditional_image",
       "claims": {
@@ -5039,7 +5143,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "05526121af00645ea2458528ba4ac4de718e3ea5596c825c21730c58986613ca",
+        "sourceGraphSha256": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5109,7 +5213,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/dream-lite-mobile-pipeline/edit-image.json",
-        "sha256": "42db7cae121f0a9aa7755174ab9f61dd5850354ccf8ba93c15901a4ce6bb4037"
+        "sha256": "6cf362ac7bb4c479b7e56dca9a4b42fea1e670e57543c0cf65428aaa8fc9ae37"
       },
       "canonicalWorkflowId": "DreamLiteMobilePipeline:edit_image",
       "claims": {
@@ -5152,7 +5256,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "42db7cae121f0a9aa7755174ab9f61dd5850354ccf8ba93c15901a4ce6bb4037",
+        "sourceGraphSha256": "6cf362ac7bb4c479b7e56dca9a4b42fea1e670e57543c0cf65428aaa8fc9ae37",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5237,7 +5341,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/dream-lite-mobile-pipeline/text-to-image.json",
-        "sha256": "33aa7a7f04a15b5bcd4035d6034b3b8e4c1f6010893781b62e79b9f7a334bc04"
+        "sha256": "dc4c8d8e18b592d23c0ce3329b1d0237e8ae180e6b5f53dda2c80bbe0fc6fde6"
       },
       "canonicalWorkflowId": "DreamLiteMobilePipeline:text_to_image",
       "claims": {
@@ -5280,7 +5384,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "33aa7a7f04a15b5bcd4035d6034b3b8e4c1f6010893781b62e79b9f7a334bc04",
+        "sourceGraphSha256": "dc4c8d8e18b592d23c0ce3329b1d0237e8ae180e6b5f53dda2c80bbe0fc6fde6",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5350,7 +5454,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/dream-lite-pipeline/edit-image.json",
-        "sha256": "c4318637cd358c4c088e509c569216da8cdfdc6d1c4eacce122c2f593471cd75"
+        "sha256": "34999f99197323dc1da2cf25e05899c4782fb08ea9bfdf77455090d98de769aa"
       },
       "canonicalWorkflowId": "DreamLitePipeline:edit_image",
       "claims": {
@@ -5403,7 +5507,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c4318637cd358c4c088e509c569216da8cdfdc6d1c4eacce122c2f593471cd75",
+        "sourceGraphSha256": "34999f99197323dc1da2cf25e05899c4782fb08ea9bfdf77455090d98de769aa",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5488,7 +5592,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/dream-lite-pipeline/text-to-image.json",
-        "sha256": "bf195379c3a1eaf29c033221a4a2256fd450e4fd35ba38eb63bc68bb17d76744"
+        "sha256": "f4aeea2217b04c962955052c60fe0324388bdf00c74f0facab3d19d5ba510d77"
       },
       "canonicalWorkflowId": "DreamLitePipeline:text_to_image",
       "claims": {
@@ -5536,7 +5640,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "bf195379c3a1eaf29c033221a4a2256fd450e4fd35ba38eb63bc68bb17d76744",
+        "sourceGraphSha256": "f4aeea2217b04c962955052c60fe0324388bdf00c74f0facab3d19d5ba510d77",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5606,7 +5710,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ernie-image-pipeline/text-to-image.json",
-        "sha256": "15078615ed5ef10e1c9d1614695c03d76198e05b13f2218f3c92c643fc41660a"
+        "sha256": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686"
       },
       "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
       "claims": {
@@ -5659,7 +5763,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "15078615ed5ef10e1c9d1614695c03d76198e05b13f2218f3c92c643fc41660a",
+        "sourceGraphSha256": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5729,7 +5833,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux2-klein-inpaint-pipeline/inpaint.json",
-        "sha256": "8b4405401a47ee2518bc6f798946e2e5ac2c5373024bd2b9f004e56d9dba1941"
+        "sha256": "21fed2a2267264f2f1b674ec4c0f55cc109176bc4fd80e4d785ac95af6ab0c82"
       },
       "canonicalWorkflowId": "Flux2KleinInpaintPipeline:inpaint",
       "claims": {
@@ -5792,7 +5896,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8b4405401a47ee2518bc6f798946e2e5ac2c5373024bd2b9f004e56d9dba1941",
+        "sourceGraphSha256": "21fed2a2267264f2f1b674ec4c0f55cc109176bc4fd80e4d785ac95af6ab0c82",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5889,7 +5993,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux2-klein-inpaint-pipeline/outpaint.json",
-        "sha256": "9e610eeac59bfed59e1f288f5c9cb944f2b2a752614883f9ca6216543a9f0dec"
+        "sha256": "bd268b83f696ad223f2251a2dd42b42ab69bc86f4392634ecc57dad5a85cad0d"
       },
       "canonicalWorkflowId": "Flux2KleinInpaintPipeline:outpaint",
       "claims": {
@@ -5992,7 +6096,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9e610eeac59bfed59e1f288f5c9cb944f2b2a752614883f9ca6216543a9f0dec",
+        "sourceGraphSha256": "bd268b83f696ad223f2251a2dd42b42ab69bc86f4392634ecc57dad5a85cad0d",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6077,7 +6181,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-canny-pipeline/control-edit-image.json",
-        "sha256": "8b25d2aa65c84161309b7f54bf6e8d780bb7bd9db5311dcb2f4d87b1d1ad4e9c"
+        "sha256": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028"
       },
       "canonicalWorkflowId": "FluxCannyPipeline:control_edit_image",
       "claims": {
@@ -6140,7 +6244,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8b25d2aa65c84161309b7f54bf6e8d780bb7bd9db5311dcb2f4d87b1d1ad4e9c",
+        "sourceGraphSha256": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6237,7 +6341,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-canny-pipeline/control-inpaint.json",
-        "sha256": "4695bd9f3f639881b1dd497d3e6885083a22af0e1a372b1f9146d0b670df1955"
+        "sha256": "e4e9fe9e60c99fb3200d4dbdcc831f99609e4d0feec1118f327e958bf091002a"
       },
       "canonicalWorkflowId": "FluxCannyPipeline:control_inpaint",
       "claims": {
@@ -6305,7 +6409,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "4695bd9f3f639881b1dd497d3e6885083a22af0e1a372b1f9146d0b670df1955",
+        "sourceGraphSha256": "e4e9fe9e60c99fb3200d4dbdcc831f99609e4d0feec1118f327e958bf091002a",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6414,7 +6518,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-depth-pipeline/control-edit-image.json",
-        "sha256": "aeb503ba807c33d83ebfc948047456c361ea9bede6da2b2484ff81533137481a"
+        "sha256": "f61e215dcc6809dd34579ec3c949327fc1f3d570e2fba8bc77f1795ceea15885"
       },
       "canonicalWorkflowId": "FluxDepthPipeline:control_edit_image",
       "claims": {
@@ -6477,7 +6581,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "aeb503ba807c33d83ebfc948047456c361ea9bede6da2b2484ff81533137481a",
+        "sourceGraphSha256": "f61e215dcc6809dd34579ec3c949327fc1f3d570e2fba8bc77f1795ceea15885",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6574,7 +6678,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-depth-pipeline/control-inpaint.json",
-        "sha256": "76fd7766d11bdabfe4d882f8b13692256ffde4d62e75a4848689ef0e879ce1b1"
+        "sha256": "a906e69cc8f69d9007dd78f6ebea5ce0e537fa1575cf48b03620a5fc4255b716"
       },
       "canonicalWorkflowId": "FluxDepthPipeline:control_inpaint",
       "claims": {
@@ -6642,7 +6746,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "76fd7766d11bdabfe4d882f8b13692256ffde4d62e75a4848689ef0e879ce1b1",
+        "sourceGraphSha256": "a906e69cc8f69d9007dd78f6ebea5ce0e537fa1575cf48b03620a5fc4255b716",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6751,7 +6855,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-dev-pipeline/edit-image.json",
-        "sha256": "093686aa8bf6f04aecae7704a73178d14b075b2fd6548f8cd31c97de1ed77539"
+        "sha256": "eb422873f1ca72ebc43c12bc5a0ad1c2f7653f204222d055005c2ef5be1da7b4"
       },
       "canonicalWorkflowId": "FluxDevPipeline:edit_image",
       "claims": {
@@ -6814,7 +6918,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "093686aa8bf6f04aecae7704a73178d14b075b2fd6548f8cd31c97de1ed77539",
+        "sourceGraphSha256": "eb422873f1ca72ebc43c12bc5a0ad1c2f7653f204222d055005c2ef5be1da7b4",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6899,7 +7003,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-dev-pipeline/inpaint.json",
-        "sha256": "85bf8b9785bef7e58b1f8a5854012859ff42ccf0044748f5b676431d4c18d0d6"
+        "sha256": "55f2c56fdb6dffa151bb272a432d5885a00d3310e369476c3bca20c107ab9c2c"
       },
       "canonicalWorkflowId": "FluxDevPipeline:inpaint",
       "claims": {
@@ -6967,7 +7071,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "85bf8b9785bef7e58b1f8a5854012859ff42ccf0044748f5b676431d4c18d0d6",
+        "sourceGraphSha256": "55f2c56fdb6dffa151bb272a432d5885a00d3310e369476c3bca20c107ab9c2c",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -7064,7 +7168,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-kontext-inpaint-pipeline/inpaint.json",
-        "sha256": "a7108434eeef5ed608d215dd72ee56065bd9d165c1ce0f56d919f58f2a2dc62a"
+        "sha256": "f3f955b0f3c9d27e12b78fa922f5611da72e0ced1f03bab24921804cba809110"
       },
       "canonicalWorkflowId": "FluxKontextInpaintPipeline:inpaint",
       "claims": {
@@ -7127,7 +7231,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "a7108434eeef5ed608d215dd72ee56065bd9d165c1ce0f56d919f58f2a2dc62a",
+        "sourceGraphSha256": "f3f955b0f3c9d27e12b78fa922f5611da72e0ced1f03bab24921804cba809110",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -7224,7 +7328,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/flux-kontext-inpaint-pipeline/outpaint.json",
-        "sha256": "f98a3012edc66d578a5985387cd50ae1bc62df53fe4b0645f12cfa3c439b8a70"
+        "sha256": "b48661cb0592d7f72185769ca5ee6b8c577bd43aefc7da7168f9abe920e699f9"
       },
       "canonicalWorkflowId": "FluxKontextInpaintPipeline:outpaint",
       "claims": {
@@ -7327,7 +7431,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f98a3012edc66d578a5985387cd50ae1bc62df53fe4b0645f12cfa3c439b8a70",
+        "sourceGraphSha256": "b48661cb0592d7f72185769ca5ee6b8c577bd43aefc7da7168f9abe920e699f9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -7412,7 +7516,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/glm-image-pipeline/text-to-image.json",
-        "sha256": "f06e856d0dd0f16e3904ddd248135283088b798018da0a879aa36f7e179f9ecb"
+        "sha256": "c7504887fd3d6b93dd8f44054285a0f4d8e077586e6efdf67f0ffdfef0fc3a00"
       },
       "canonicalWorkflowId": "GlmImagePipeline:text_to_image",
       "claims": {
@@ -7465,7 +7569,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f06e856d0dd0f16e3904ddd248135283088b798018da0a879aa36f7e179f9ecb",
+        "sourceGraphSha256": "c7504887fd3d6b93dd8f44054285a0f4d8e077586e6efdf67f0ffdfef0fc3a00",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -8269,7 +8373,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
-        "sha256": "aad9fec1e67aabf26af68c2e45994207c6cf084d8ac5d7f80bd3157873dea2e1"
+        "sha256": "5b57f7e9647531955e0e38047ae3bbb6dc4d28935f79acb2ea0b806fa59945cf"
       },
       "canonicalWorkflowId": "HunyuanDiTControlNetPipeline:control_image",
       "claims": {
@@ -8337,7 +8441,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "aad9fec1e67aabf26af68c2e45994207c6cf084d8ac5d7f80bd3157873dea2e1",
+        "sourceGraphSha256": "5b57f7e9647531955e0e38047ae3bbb6dc4d28935f79acb2ea0b806fa59945cf",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -8421,7 +8525,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/hunyuan-di-tpag-pipeline/text-to-image.json",
-        "sha256": "273f91b6b3f1c2a81a5fc132a0895f2f291e29922128fa8d497c6a7be951f95a"
+        "sha256": "604fa5a3e2cb7e9649fbbefb66988929b58001a3e70cd8f1c77e14d4b7ba6c95"
       },
       "canonicalWorkflowId": "HunyuanDiTPAGPipeline:text_to_image",
       "claims": {
@@ -8474,7 +8578,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "273f91b6b3f1c2a81a5fc132a0895f2f291e29922128fa8d497c6a7be951f95a",
+        "sourceGraphSha256": "604fa5a3e2cb7e9649fbbefb66988929b58001a3e70cd8f1c77e14d4b7ba6c95",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -8544,7 +8648,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/hunyuan-di-t-pipeline/text-to-image.json",
-        "sha256": "3e10eb5d87057d64b88b28f10da5943c6cb779a5c635f4429805a0184ddd39f2"
+        "sha256": "8add16fe42e1586bfc36a62fdfea275bde66360ae0083d7cb83c3ce7f40061f7"
       },
       "canonicalWorkflowId": "HunyuanDiTPipeline:text_to_image",
       "claims": {
@@ -8597,7 +8701,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "3e10eb5d87057d64b88b28f10da5943c6cb779a5c635f4429805a0184ddd39f2",
+        "sourceGraphSha256": "8add16fe42e1586bfc36a62fdfea275bde66360ae0083d7cb83c3ce7f40061f7",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -8682,7 +8786,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
-        "sha256": "916c0801e3aff641e44a0dbf083e7b386c67a4ad5b9c244a880019b0f363e005"
+        "sha256": "5cb4c6f1b0d8d8c27d86fd14fa6faa7ea777d03cfd7cb39a98e8f569dc89ee92"
       },
       "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
       "claims": {
@@ -8790,7 +8894,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "916c0801e3aff641e44a0dbf083e7b386c67a4ad5b9c244a880019b0f363e005",
+        "sourceGraphSha256": "5cb4c6f1b0d8d8c27d86fd14fa6faa7ea777d03cfd7cb39a98e8f569dc89ee92",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -8875,7 +8979,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/joy-image-edit-pipeline/edit-image.json",
-        "sha256": "959b162fb89a77e2732c665d2c52b7db0939dc8d39c316da7b57142dfbb1fd9c"
+        "sha256": "000ba470f00cb4f8805243773dc497b7a7078a4bd86238de0ce017cd1de35ecd"
       },
       "canonicalWorkflowId": "JoyImageEditPipeline:edit_image",
       "claims": {
@@ -8938,7 +9042,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "959b162fb89a77e2732c665d2c52b7db0939dc8d39c316da7b57142dfbb1fd9c",
+        "sourceGraphSha256": "000ba470f00cb4f8805243773dc497b7a7078a4bd86238de0ce017cd1de35ecd",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9023,7 +9127,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/joy-image-edit-pipeline/text-to-image.json",
-        "sha256": "3acab8b05eb0a1f4b00909ebcbfb91cc119c8a684877b2c145b6d0b921908978"
+        "sha256": "0dc24e5c95b035ac23ea5279b3810f1750b6d0e6e3885ad2fbf008503a8e8bc3"
       },
       "canonicalWorkflowId": "JoyImageEditPipeline:text_to_image",
       "claims": {
@@ -9076,7 +9180,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "3acab8b05eb0a1f4b00909ebcbfb91cc119c8a684877b2c145b6d0b921908978",
+        "sourceGraphSha256": "0dc24e5c95b035ac23ea5279b3810f1750b6d0e6e3885ad2fbf008503a8e8bc3",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9146,7 +9250,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/joy-image-edit-plus-pipeline/edit-image.json",
-        "sha256": "b2d55874a502a84f79fd9847575f9590febe671cec919f1429e73e24958dd9dd"
+        "sha256": "40e71f30b95057e199b771567d1dcb65f3e0f805f1e6c05b982256b2206d8f03"
       },
       "canonicalWorkflowId": "JoyImageEditPlusPipeline:edit_image",
       "claims": {
@@ -9209,7 +9313,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "b2d55874a502a84f79fd9847575f9590febe671cec919f1429e73e24958dd9dd",
+        "sourceGraphSha256": "40e71f30b95057e199b771567d1dcb65f3e0f805f1e6c05b982256b2206d8f03",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9294,7 +9398,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
-        "sha256": "2f9aa1acccc6eefbb97d65ab914d19e1a92961fbac55d93d96b6ccda6ec3e962"
+        "sha256": "cc3c646913a21599fed82f412a3c00eaf8538e933f53d68625cbe0f30ef42423"
       },
       "canonicalWorkflowId": "JoyImageEditPlusPipeline:multi_image_reference_edit",
       "claims": {
@@ -9357,7 +9461,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "2f9aa1acccc6eefbb97d65ab914d19e1a92961fbac55d93d96b6ccda6ec3e962",
+        "sourceGraphSha256": "cc3c646913a21599fed82f412a3c00eaf8538e933f53d68625cbe0f30ef42423",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9442,7 +9546,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/kandinsky3-pipeline/edit-image.json",
-        "sha256": "067a4719421ee2415712fade715dc37ed6cddb3fe6650d9ee004223b3c41e6ad"
+        "sha256": "96240a351d2a8933d09166917cefc987eda47d532f2824d21fd630d0465250d0"
       },
       "canonicalWorkflowId": "Kandinsky3Pipeline:edit_image",
       "claims": {
@@ -9505,7 +9609,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "067a4719421ee2415712fade715dc37ed6cddb3fe6650d9ee004223b3c41e6ad",
+        "sourceGraphSha256": "96240a351d2a8933d09166917cefc987eda47d532f2824d21fd630d0465250d0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9590,7 +9694,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/kandinsky3-pipeline/text-to-image.json",
-        "sha256": "c61b1e055e52834d223547eed19e3269e2c22d542f395b4b87505a34825a1827"
+        "sha256": "0e7b481bc0912757839a955bde03caa456c74f67d38444ed73bc820dbb153270"
       },
       "canonicalWorkflowId": "Kandinsky3Pipeline:text_to_image",
       "claims": {
@@ -9643,7 +9747,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c61b1e055e52834d223547eed19e3269e2c22d542f395b4b87505a34825a1827",
+        "sourceGraphSha256": "0e7b481bc0912757839a955bde03caa456c74f67d38444ed73bc820dbb153270",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9713,7 +9817,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/ltx2-condition-pipeline/image-to-video.json",
-        "sha256": "6b5ee18885bc097bbabebaa55ea2063960ae4438e9d8f8864fda07740b5b8d1f"
+        "sha256": "a424e84bad9dbebf3e920a921882c7e7dc5de1b39dcb207dba0852e6b184a9d4"
       },
       "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
       "claims": {
@@ -9806,7 +9910,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6b5ee18885bc097bbabebaa55ea2063960ae4438e9d8f8864fda07740b5b8d1f",
+        "sourceGraphSha256": "a424e84bad9dbebf3e920a921882c7e7dc5de1b39dcb207dba0852e6b184a9d4",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -9891,7 +9995,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/ltx2-condition-pipeline/reference-to-video.json",
-        "sha256": "45f99ff7b0e15f90bd2e2f934dd616f822e41e51977ad3688208836a1ec6839a"
+        "sha256": "63cb08ec94eb7e3bd64139b03bc188c957abcef4ec4f713d3b578409b64c18eb"
       },
       "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
       "claims": {
@@ -9984,7 +10088,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "45f99ff7b0e15f90bd2e2f934dd616f822e41e51977ad3688208836a1ec6839a",
+        "sourceGraphSha256": "63cb08ec94eb7e3bd64139b03bc188c957abcef4ec4f713d3b578409b64c18eb",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -10069,7 +10173,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ltx2-condition-pipeline/text-to-video.json",
-        "sha256": "2698c98b44c83c38da8ee109f9acd90ca6c4d93a62843d816c448f086fb7a996"
+        "sha256": "6bae7965725fbd6625a3f4f2f888de6df0914191f84a5afbdf798599e6858eb8"
       },
       "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
       "claims": {
@@ -10157,7 +10261,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "2698c98b44c83c38da8ee109f9acd90ca6c4d93a62843d816c448f086fb7a996",
+        "sourceGraphSha256": "6bae7965725fbd6625a3f4f2f888de6df0914191f84a5afbdf798599e6858eb8",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -10227,7 +10331,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/ltx2-condition-pipeline/video-to-video.json",
-        "sha256": "fa78e4f258a638eb3dee582ded618ff693231f499e973d3822a0b079909e1ee6"
+        "sha256": "e79cc1828502035652887e5479ac371ee1616d6d1dbf323818271fc04d04dbde"
       },
       "canonicalWorkflowId": "LTX2ConditionPipeline:video_to_video",
       "claims": {
@@ -10330,7 +10434,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "fa78e4f258a638eb3dee582ded618ff693231f499e973d3822a0b079909e1ee6",
+        "sourceGraphSha256": "e79cc1828502035652887e5479ac371ee1616d6d1dbf323818271fc04d04dbde",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -10415,7 +10519,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ltx2-pipeline/text-to-video.json",
-        "sha256": "cbea850b64d2b8250d64da065b5ba1c3b2da8f815e04337659bfa16247cacc9f"
+        "sha256": "0f05f85122d07cbfd40b6c51c7fa0229e9bc1d947b9e4036121c09e5458455ad"
       },
       "canonicalWorkflowId": "LTX2Pipeline:text_to_video",
       "claims": {
@@ -10503,7 +10607,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "cbea850b64d2b8250d64da065b5ba1c3b2da8f815e04337659bfa16247cacc9f",
+        "sourceGraphSha256": "0f05f85122d07cbfd40b6c51c7fa0229e9bc1d947b9e4036121c09e5458455ad",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -10573,7 +10677,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/ltxi2-v-long-multi-prompt-pipeline/image-to-video.json",
-        "sha256": "304be1307cf9ace571edac868f7cb8285c5f3e246069cf38f22f0157a4fb2c84"
+        "sha256": "7715c08078c2fada5b6855a97f23a39c477e77117996703312fd1f04a1a6e98b"
       },
       "canonicalWorkflowId": "LTXI2VLongMultiPromptPipeline:image_to_video",
       "claims": {
@@ -10691,7 +10795,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "304be1307cf9ace571edac868f7cb8285c5f3e246069cf38f22f0157a4fb2c84",
+        "sourceGraphSha256": "7715c08078c2fada5b6855a97f23a39c477e77117996703312fd1f04a1a6e98b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -10776,7 +10880,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/latent-consistency-model-pipeline/edit-image.json",
-        "sha256": "ad3eb743824392c9c2cfbb74a9df479cd2882d500559d01909273b4eb59e8243"
+        "sha256": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556"
       },
       "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
       "claims": {
@@ -10819,7 +10923,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "ad3eb743824392c9c2cfbb74a9df479cd2882d500559d01909273b4eb59e8243",
+        "sourceGraphSha256": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -10904,7 +11008,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/latent-consistency-model-pipeline/text-to-image.json",
-        "sha256": "e8572689f94d379e4bff23bdf7ffeb43d0f8f2f429f95e6edf3b5d12075c1f3d"
+        "sha256": "284e99d7f54edcf8fe6bac0724df73e79a301c17b19cf0a06e150f5272f785d3"
       },
       "canonicalWorkflowId": "LatentConsistencyModelPipeline:text_to_image",
       "claims": {
@@ -10957,7 +11061,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "e8572689f94d379e4bff23bdf7ffeb43d0f8f2f429f95e6edf3b5d12075c1f3d",
+        "sourceGraphSha256": "284e99d7f54edcf8fe6bac0724df73e79a301c17b19cf0a06e150f5272f785d3",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11027,7 +11131,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/latte-pipeline/text-to-video.json",
-        "sha256": "9a40342ef5ab2afb45e4f3f6c00db92145f39df5b693102e28b7fb97263c33c4"
+        "sha256": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87"
       },
       "canonicalWorkflowId": "LattePipeline:text_to_video",
       "claims": {
@@ -11115,7 +11219,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9a40342ef5ab2afb45e4f3f6c00db92145f39df5b693102e28b7fb97263c33c4",
+        "sourceGraphSha256": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11185,7 +11289,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
-        "sha256": "13f43948c2f883c2ccb354943962c26e6ee27cc5985e8237e48d6a0c075f0776"
+        "sha256": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54"
       },
       "canonicalWorkflowId": "LongCatAudioDiTPipeline:text_to_audio",
       "claims": {
@@ -11238,7 +11342,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "13f43948c2f883c2ccb354943962c26e6ee27cc5985e8237e48d6a0c075f0776",
+        "sourceGraphSha256": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11308,7 +11412,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/long-cat-image-edit-pipeline/edit-image.json",
-        "sha256": "4d9046b3e5d55e22eded45dc9431a56d5fe468395e4b3b704bfc4cfe26f4becc"
+        "sha256": "14bd74d7ddff1ff37e1c2ce0028c5cae7dc9dce9ffc81d86161b98e564c237a2"
       },
       "canonicalWorkflowId": "LongCatImageEditPipeline:edit_image",
       "claims": {
@@ -11371,7 +11475,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "4d9046b3e5d55e22eded45dc9431a56d5fe468395e4b3b704bfc4cfe26f4becc",
+        "sourceGraphSha256": "14bd74d7ddff1ff37e1c2ce0028c5cae7dc9dce9ffc81d86161b98e564c237a2",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11456,7 +11560,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/long-cat-image-pipeline/text-to-image.json",
-        "sha256": "9bebe5defb6b8a7e4747ffec8ebe9c638175174ba4dc3fb013fea5b0390b354f"
+        "sha256": "2f609ab2ff5b46a03d6ac2e6ed4db3a9ca53208d403ec003013e41c9429fa549"
       },
       "canonicalWorkflowId": "LongCatImagePipeline:text_to_image",
       "claims": {
@@ -11509,7 +11613,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9bebe5defb6b8a7e4747ffec8ebe9c638175174ba4dc3fb013fea5b0390b354f",
+        "sourceGraphSha256": "2f609ab2ff5b46a03d6ac2e6ed4db3a9ca53208d403ec003013e41c9429fa549",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11579,7 +11683,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/lumina2-pipeline/text-to-image.json",
-        "sha256": "81394f7fa836da9416af36e4f2243af3d5765c036c62e59dad38daba6aeea251"
+        "sha256": "6450de9203e349373fd13ef55e7089d320bbdc3fee1a816a264f45e82b6cafc9"
       },
       "canonicalWorkflowId": "Lumina2Pipeline:text_to_image",
       "claims": {
@@ -11632,7 +11736,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "81394f7fa836da9416af36e4f2243af3d5765c036c62e59dad38daba6aeea251",
+        "sourceGraphSha256": "6450de9203e349373fd13ef55e7089d320bbdc3fee1a816a264f45e82b6cafc9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11702,7 +11806,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/lumina-pipeline/text-to-image.json",
-        "sha256": "51f8a546d9da1cba9859b9a9b7799982fb237bcffb59eff1240444bea8056ebb"
+        "sha256": "3e837f852c651ee855d8eaaddd21281da049f319f9c71c15b161e8c14b0418ae"
       },
       "canonicalWorkflowId": "LuminaPipeline:text_to_image",
       "claims": {
@@ -11755,7 +11859,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "51f8a546d9da1cba9859b9a9b7799982fb237bcffb59eff1240444bea8056ebb",
+        "sourceGraphSha256": "3e837f852c651ee855d8eaaddd21281da049f319f9c71c15b161e8c14b0418ae",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11825,7 +11929,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/marigold-depth-pipeline/depth-estimation.json",
-        "sha256": "da165b5a20b76d3f1da64b96bc22f2b8ea4ec9095a84de11ca0a465b71a4392d"
+        "sha256": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44"
       },
       "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
       "claims": {
@@ -11873,7 +11977,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "da165b5a20b76d3f1da64b96bc22f2b8ea4ec9095a84de11ca0a465b71a4392d",
+        "sourceGraphSha256": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11958,7 +12062,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/mochi-pipeline/text-to-video.json",
-        "sha256": "e07b4d7fb702ef3f80ad40393a3851d79ab75315e3b50324c596bafdfa81cd82"
+        "sha256": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008"
       },
       "canonicalWorkflowId": "MochiPipeline:text_to_video",
       "claims": {
@@ -12046,7 +12150,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "e07b4d7fb702ef3f80ad40393a3851d79ab75315e3b50324c596bafdfa81cd82",
+        "sourceGraphSha256": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12116,7 +12220,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/nucleus-mo-e-image-pipeline/text-to-image.json",
-        "sha256": "9f0c924a90cd512ffe59678fc2abddbd69b3e13f70a25f16c76863032f59433e"
+        "sha256": "a43f29f8c296a78c34f5db9f973d7feae49b72e7f47dd082a47f93f9da9a1b04"
       },
       "canonicalWorkflowId": "NucleusMoEImagePipeline:text_to_image",
       "claims": {
@@ -12169,7 +12273,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9f0c924a90cd512ffe59678fc2abddbd69b3e13f70a25f16c76863032f59433e",
+        "sourceGraphSha256": "a43f29f8c296a78c34f5db9f973d7feae49b72e7f47dd082a47f93f9da9a1b04",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12239,7 +12343,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/omni-gen-pipeline/edit-image.json",
-        "sha256": "f6c71685e75fde37f0696be04917749c1a03b27be3ef07ca82c7e954893d02f9"
+        "sha256": "79b7cf01b3ae809f61e557957a95e970e89fb924e3ad051cd89562f4905a8107"
       },
       "canonicalWorkflowId": "OmniGenPipeline:edit_image",
       "claims": {
@@ -12292,7 +12396,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f6c71685e75fde37f0696be04917749c1a03b27be3ef07ca82c7e954893d02f9",
+        "sourceGraphSha256": "79b7cf01b3ae809f61e557957a95e970e89fb924e3ad051cd89562f4905a8107",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12377,7 +12481,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/omni-gen-pipeline/multi-image-reference-edit.json",
-        "sha256": "2662728b6c2bd0ee7acfc9c0aaa4a4e5e4be2fee80773e528a20f7ae3af3e4e2"
+        "sha256": "a623ab254badb2f29500ab52e3ae321d118d280d3e3a60d9cff15d3d192909ef"
       },
       "canonicalWorkflowId": "OmniGenPipeline:multi_image_reference_edit",
       "claims": {
@@ -12430,7 +12534,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "2662728b6c2bd0ee7acfc9c0aaa4a4e5e4be2fee80773e528a20f7ae3af3e4e2",
+        "sourceGraphSha256": "a623ab254badb2f29500ab52e3ae321d118d280d3e3a60d9cff15d3d192909ef",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12515,7 +12619,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/omni-gen-pipeline/text-to-image.json",
-        "sha256": "075bd71067f5228717ffa9574d400d2e913ab57644e7ab92bc08fca17acabc75"
+        "sha256": "41aedc44dd8892506158c5dbb237f1e10a580969862f37fae8e783ca6b4a34be"
       },
       "canonicalWorkflowId": "OmniGenPipeline:text_to_image",
       "claims": {
@@ -12558,7 +12662,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "075bd71067f5228717ffa9574d400d2e913ab57644e7ab92bc08fca17acabc75",
+        "sourceGraphSha256": "41aedc44dd8892506158c5dbb237f1e10a580969862f37fae8e783ca6b4a34be",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12628,7 +12732,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ovis-image-pipeline/text-to-image.json",
-        "sha256": "f2d4303c17caafba097bedb6918139c729e87fa874c0804af2bcd1435260b52d"
+        "sha256": "aed20632974012552f5c9dc17e23636eebad26af57974c7c25a52a434bc70a15"
       },
       "canonicalWorkflowId": "OvisImagePipeline:text_to_image",
       "claims": {
@@ -12681,7 +12785,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f2d4303c17caafba097bedb6918139c729e87fa874c0804af2bcd1435260b52d",
+        "sourceGraphSha256": "aed20632974012552f5c9dc17e23636eebad26af57974c7c25a52a434bc70a15",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12751,7 +12855,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/prx-pipeline/text-to-image.json",
-        "sha256": "651f27cfbedc07f63fe77dfd9d25b3e83491ba413c80eb59398e7acf319e772e"
+        "sha256": "ba58b2b75dac0fe633cddae8120b7ad6043c2bb57a45394d9a71eb75f9357e1c"
       },
       "canonicalWorkflowId": "PRXPipeline:text_to_image",
       "claims": {
@@ -12804,7 +12908,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "651f27cfbedc07f63fe77dfd9d25b3e83491ba413c80eb59398e7acf319e772e",
+        "sourceGraphSha256": "ba58b2b75dac0fe633cddae8120b7ad6043c2bb57a45394d9a71eb75f9357e1c",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12874,7 +12978,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/pix-art-sigma-pag-pipeline/text-to-image.json",
-        "sha256": "a2356878df94bca81002448d1a72108c6c8d6686d8d14c54c9f53b6af2de1e10"
+        "sha256": "a3261130573d3e5ef2632c20999574c4a215de714f3c01603608220582b5603b"
       },
       "canonicalWorkflowId": "PixArtSigmaPAGPipeline:text_to_image",
       "claims": {
@@ -12932,7 +13036,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "a2356878df94bca81002448d1a72108c6c8d6686d8d14c54c9f53b6af2de1e10",
+        "sourceGraphSha256": "a3261130573d3e5ef2632c20999574c4a215de714f3c01603608220582b5603b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13002,7 +13106,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/pix-art-sigma-pipeline/text-to-image.json",
-        "sha256": "782bd32748aa489255d52ef2a8378efbbd28bfe5f469dd38be09396f7489c852"
+        "sha256": "8d52526a2c7c66a0d0416a128f13d3d3f61506ccb51fd89e7313e08e4906632b"
       },
       "canonicalWorkflowId": "PixArtSigmaPipeline:text_to_image",
       "claims": {
@@ -13055,7 +13159,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "782bd32748aa489255d52ef2a8378efbbd28bfe5f469dd38be09396f7489c852",
+        "sourceGraphSha256": "8d52526a2c7c66a0d0416a128f13d3d3f61506ccb51fd89e7313e08e4906632b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13134,7 +13238,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-control-net-pipeline/control-image.json",
-        "sha256": "61525a8e6b25e0e001d1dacf8f0d05fb3da10b41f02f82cc54b1387808b90083"
+        "sha256": "c17aa494a25dde027d92b10881d9099281b417ee2f3490c3622cc10522a1bfdd"
       },
       "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
       "claims": {
@@ -13202,7 +13306,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "61525a8e6b25e0e001d1dacf8f0d05fb3da10b41f02f82cc54b1387808b90083",
+        "sourceGraphSha256": "c17aa494a25dde027d92b10881d9099281b417ee2f3490c3622cc10522a1bfdd",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13286,7 +13390,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-edit-pipeline/edit-image.json",
-        "sha256": "c9dee5e88e26fe0375fbc39a8af4c448d54387c7758069bf1ef24a3fc799f18b"
+        "sha256": "aa58b6fd489895ad81e6e40e5c29933310022d2644d12d07eeac0c30a891359e"
       },
       "canonicalWorkflowId": "QwenImageEditPipeline:edit_image",
       "claims": {
@@ -13339,7 +13443,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c9dee5e88e26fe0375fbc39a8af4c448d54387c7758069bf1ef24a3fc799f18b",
+        "sourceGraphSha256": "aa58b6fd489895ad81e6e40e5c29933310022d2644d12d07eeac0c30a891359e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13424,7 +13528,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-edit-plus-pipeline/edit-image.json",
-        "sha256": "a349cc61f8d07c2a2815aada3bf15f2a65d68c05a5d0981fa81383e4b418f769"
+        "sha256": "5cb8682610aab1fbd98f024bd4df4a975c694da934fcf1128fb0b6867a726b57"
       },
       "canonicalWorkflowId": "QwenImageEditPlusPipeline:edit_image",
       "claims": {
@@ -13477,7 +13581,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "a349cc61f8d07c2a2815aada3bf15f2a65d68c05a5d0981fa81383e4b418f769",
+        "sourceGraphSha256": "5cb8682610aab1fbd98f024bd4df4a975c694da934fcf1128fb0b6867a726b57",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13562,7 +13666,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-edit-plus-pipeline/multi-image-reference-edit.json",
-        "sha256": "067daf9b1830dc44ba8407dc90fed0bd41f6f97fbb875196edc7372d9910ae2d"
+        "sha256": "fc70297c7fe46516bcadac7f6e85d65e207d418556d80eb9bd2a898200c9db0e"
       },
       "canonicalWorkflowId": "QwenImageEditPlusPipeline:multi_image_reference_edit",
       "claims": {
@@ -13615,7 +13719,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "067daf9b1830dc44ba8407dc90fed0bd41f6f97fbb875196edc7372d9910ae2d",
+        "sourceGraphSha256": "fc70297c7fe46516bcadac7f6e85d65e207d418556d80eb9bd2a898200c9db0e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13700,7 +13804,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-layered-pipeline/layer-decomposition.json",
-        "sha256": "8090ca88d42252af11bcfb8789107ecc9eff2721fb2f13f19878f2b1f8c290da"
+        "sha256": "68b395e852276102540297bcdecc2a6635ebedc52562c340eec13b3b27c6486e"
       },
       "canonicalWorkflowId": "QwenImageLayeredPipeline:layer_decomposition",
       "claims": {
@@ -13763,7 +13867,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8090ca88d42252af11bcfb8789107ecc9eff2721fb2f13f19878f2b1f8c290da",
+        "sourceGraphSha256": "68b395e852276102540297bcdecc2a6635ebedc52562c340eec13b3b27c6486e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13848,7 +13952,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-modular-pipeline/edit-image.json",
-        "sha256": "eb4d4f5a0025dee55e7c03b32ef7698e7434d5b73b1877ccb703d624128bad1e"
+        "sha256": "3dfb6a0fe77efb20ab82cc48e211fbff47255aa81eb885cb0c6f6feba0c27d75"
       },
       "canonicalWorkflowId": "QwenImageModularPipeline:edit_image",
       "claims": {
@@ -13911,7 +14015,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "eb4d4f5a0025dee55e7c03b32ef7698e7434d5b73b1877ccb703d624128bad1e",
+        "sourceGraphSha256": "3dfb6a0fe77efb20ab82cc48e211fbff47255aa81eb885cb0c6f6feba0c27d75",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13996,7 +14100,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/qwen-image-modular-pipeline/inpaint.json",
-        "sha256": "53b73f0ae866be2936b93de86cba8c51e9f3508a7481ad61125f22fb1925ce30"
+        "sha256": "c32bae066f8287fc079599fa4f945f363d220fceeb2d6dceb9eaab1ba6ed603b"
       },
       "canonicalWorkflowId": "QwenImageModularPipeline:inpaint",
       "claims": {
@@ -14064,7 +14168,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "53b73f0ae866be2936b93de86cba8c51e9f3508a7481ad61125f22fb1925ce30",
+        "sourceGraphSha256": "c32bae066f8287fc079599fa4f945f363d220fceeb2d6dceb9eaab1ba6ed603b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14161,7 +14265,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/sana-image-to-video-pipeline/image-to-video.json",
-        "sha256": "63d884964e7ac0a90dcde7d1e30733eeb652bdd72f606c18b794840040ffd872"
+        "sha256": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e"
       },
       "canonicalWorkflowId": "SanaImageToVideoPipeline:image_to_video",
       "claims": {
@@ -14254,7 +14358,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "63d884964e7ac0a90dcde7d1e30733eeb652bdd72f606c18b794840040ffd872",
+        "sourceGraphSha256": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14339,7 +14443,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/sana-pag-pipeline/text-to-image.json",
-        "sha256": "765475cf4505c7aee180db25740b7a978f86bdbe504512de040c36fbe167bb43"
+        "sha256": "9dc8ee6545039d96bd918021f12e18a7c98d858e337685e4a0d408f78fce85d9"
       },
       "canonicalWorkflowId": "SanaPAGPipeline:text_to_image",
       "claims": {
@@ -14397,7 +14501,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "765475cf4505c7aee180db25740b7a978f86bdbe504512de040c36fbe167bb43",
+        "sourceGraphSha256": "9dc8ee6545039d96bd918021f12e18a7c98d858e337685e4a0d408f78fce85d9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14467,7 +14571,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/sana-pipeline/text-to-image.json",
-        "sha256": "cbd9bd5c7c9470baef6953b64a4604768841089b6f1c402356426c7803ca1a90"
+        "sha256": "12434dbf331f3b7ead82dbccae2f3f149d65e6cbc6ec23cefde9a3ba03d0f7eb"
       },
       "canonicalWorkflowId": "SanaPipeline:text_to_image",
       "claims": {
@@ -14520,7 +14624,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "cbd9bd5c7c9470baef6953b64a4604768841089b6f1c402356426c7803ca1a90",
+        "sourceGraphSha256": "12434dbf331f3b7ead82dbccae2f3f149d65e6cbc6ec23cefde9a3ba03d0f7eb",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14590,7 +14694,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/sana-sprint-pipeline/edit-image.json",
-        "sha256": "6c81da740dbe64979061155715a3424d05191813349b92855b50482134d71fe4"
+        "sha256": "c0e078e0300bd34b518432025afa7366c1c7179ae74a5b0168741cc6c91ea76c"
       },
       "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
       "claims": {
@@ -14653,7 +14757,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6c81da740dbe64979061155715a3424d05191813349b92855b50482134d71fe4",
+        "sourceGraphSha256": "c0e078e0300bd34b518432025afa7366c1c7179ae74a5b0168741cc6c91ea76c",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14738,7 +14842,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/sana-sprint-pipeline/text-to-image.json",
-        "sha256": "daa35b6f47e818df5a263c2cc7bbb4a041ce710c141a81365be2076b9a27dd92"
+        "sha256": "833942b8e5b8d93e0c306eab83a5641c0173078cbb272865c4e2d95b7e42faf0"
       },
       "canonicalWorkflowId": "SanaSprintPipeline:text_to_image",
       "claims": {
@@ -14791,7 +14895,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "daa35b6f47e818df5a263c2cc7bbb4a041ce710c141a81365be2076b9a27dd92",
+        "sourceGraphSha256": "833942b8e5b8d93e0c306eab83a5641c0173078cbb272865c4e2d95b7e42faf0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14861,7 +14965,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/sana-video-pipeline/text-to-video.json",
-        "sha256": "6604b59d807bf6f99ebc821fb8bfbf741076df6559b9f98c800ae198ba291ef5"
+        "sha256": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf"
       },
       "canonicalWorkflowId": "SanaVideoPipeline:text_to_video",
       "claims": {
@@ -14949,7 +15053,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6604b59d807bf6f99ebc821fb8bfbf741076df6559b9f98c800ae198ba291ef5",
+        "sourceGraphSha256": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15019,7 +15123,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/shap-e-pipeline/text-to-3d.json",
-        "sha256": "06d256b7ac16029e1a3bb8aa90c0515f338b5c0af6e79afe2c843875a3c51e74"
+        "sha256": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b"
       },
       "canonicalWorkflowId": "ShapEPipeline:text_to_3d",
       "claims": {
@@ -15062,7 +15166,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "06d256b7ac16029e1a3bb8aa90c0515f338b5c0af6e79afe2c843875a3c51e74",
+        "sourceGraphSha256": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15132,7 +15236,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/spandrel-video-upscale/video-upscale.json",
-        "sha256": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc"
+        "sha256": "122023ff6db5233ee0f75ed2e0b6e253f77d84df2e66198fa5c5af71faca7ce5"
       },
       "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
       "claims": {
@@ -15157,7 +15261,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "bf11295a2e2bd132b448eeca242f9b223b887844ee373a4a015b2914f43e64bc",
+        "sourceGraphSha256": "122023ff6db5233ee0f75ed2e0b6e253f77d84df2e66198fa5c5af71faca7ce5",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15241,7 +15345,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-audio-pipeline/text-to-audio.json",
-        "sha256": "0a583350a1b97f08098c6b8fee9b0925b97bade0187ad87066a004583234d852"
+        "sha256": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0"
       },
       "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
       "claims": {
@@ -15299,7 +15403,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "0a583350a1b97f08098c6b8fee9b0925b97bade0187ad87066a004583234d852",
+        "sourceGraphSha256": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15378,7 +15482,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pag-pipeline/control-image.json",
-        "sha256": "ef89768fa0a99406ab5bd909223106d40372013f76537299e2063d93cdcfce67"
+        "sha256": "b4c291f2c533fdf71b4d330d68bc5d96cf2f52accd6a9f362890a33e52c4b1a5"
       },
       "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_image",
       "claims": {
@@ -15456,7 +15560,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "ef89768fa0a99406ab5bd909223106d40372013f76537299e2063d93cdcfce67",
+        "sourceGraphSha256": "b4c291f2c533fdf71b4d330d68bc5d96cf2f52accd6a9f362890a33e52c4b1a5",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15549,7 +15653,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pag-pipeline/control-inpaint.json",
-        "sha256": "0b69d302a7ee84e62e541c526cddb5eb620d8c9226bf1582b68c11697aa95029"
+        "sha256": "abf07406c397bf8f0184663f9388a58efee06ef6d9cae9e7024b5600e4f3da04"
       },
       "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_inpaint",
       "claims": {
@@ -15642,7 +15746,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "0b69d302a7ee84e62e541c526cddb5eb620d8c9226bf1582b68c11697aa95029",
+        "sourceGraphSha256": "abf07406c397bf8f0184663f9388a58efee06ef6d9cae9e7024b5600e4f3da04",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15751,7 +15855,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pag-pipeline/edit-image.json",
-        "sha256": "adce7be184c1901c5d285b2a2a98d087b6cae115dcde2faf8979d0ac09ec6970"
+        "sha256": "8af4c0c90478c2484463c7b9d712b05399c109502b6875bc46da33e3bbb39f1e"
       },
       "canonicalWorkflowId": "StableDiffusionPAGPipeline:edit_image",
       "claims": {
@@ -15804,7 +15908,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "adce7be184c1901c5d285b2a2a98d087b6cae115dcde2faf8979d0ac09ec6970",
+        "sourceGraphSha256": "8af4c0c90478c2484463c7b9d712b05399c109502b6875bc46da33e3bbb39f1e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15889,7 +15993,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pag-pipeline/inpaint.json",
-        "sha256": "d9a60f2c6c57ad85e365db649e8f1f939159be244e10ab1b56528461a772b8ec"
+        "sha256": "fd8fe8eaa27fe9d64e202c90100dc39c368161e9aee1dbf66993b7b1f247a82a"
       },
       "canonicalWorkflowId": "StableDiffusionPAGPipeline:inpaint",
       "claims": {
@@ -15957,7 +16061,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "d9a60f2c6c57ad85e365db649e8f1f939159be244e10ab1b56528461a772b8ec",
+        "sourceGraphSha256": "fd8fe8eaa27fe9d64e202c90100dc39c368161e9aee1dbf66993b7b1f247a82a",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -16054,7 +16158,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pag-pipeline/text-to-image.json",
-        "sha256": "03547b6ae65fc8022ec874df10b1db90a8253a7c1b740ca3d4e69409e5e6e6a3"
+        "sha256": "d60e4f8bbce1a4482aedea886bf2eddc5a8dc5cd81cbf1ca737e64d1899a8cb7"
       },
       "canonicalWorkflowId": "StableDiffusionPAGPipeline:text_to_image",
       "claims": {
@@ -16117,7 +16221,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "03547b6ae65fc8022ec874df10b1db90a8253a7c1b740ca3d4e69409e5e6e6a3",
+        "sourceGraphSha256": "d60e4f8bbce1a4482aedea886bf2eddc5a8dc5cd81cbf1ca737e64d1899a8cb7",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -16196,7 +16300,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pipeline/control-edit-image.json",
-        "sha256": "ef4fdac8f502616c11b43650ee922e9cbb074b69285f1f020da8ac9d948ff306"
+        "sha256": "7a4cd08806d078973425d38b12cf464c2af09e7bd01f79e7a9e9174317abf5ee"
       },
       "canonicalWorkflowId": "StableDiffusionPipeline:control_edit_image",
       "claims": {
@@ -16274,7 +16378,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "ef4fdac8f502616c11b43650ee922e9cbb074b69285f1f020da8ac9d948ff306",
+        "sourceGraphSha256": "7a4cd08806d078973425d38b12cf464c2af09e7bd01f79e7a9e9174317abf5ee",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -16380,7 +16484,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pipeline/control-image.json",
-        "sha256": "d9e3eabb5a47d0ed5a54316d09747c8681d16d8d6fe87750655bccbee88ec1ee"
+        "sha256": "48d01edc957ef46a7926d0b1897c3c0974a1815bd999fea6244f9573349ef26b"
       },
       "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
       "claims": {
@@ -16448,7 +16552,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "d9e3eabb5a47d0ed5a54316d09747c8681d16d8d6fe87750655bccbee88ec1ee",
+        "sourceGraphSha256": "48d01edc957ef46a7926d0b1897c3c0974a1815bd999fea6244f9573349ef26b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -16541,7 +16645,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pipeline/control-inpaint.json",
-        "sha256": "27063e499d847027dbf3542e4af88d2580ea7f1dc7ba5a059661c11ca4093d02"
+        "sha256": "3e86035ac71b5b02f2080eb7c948e733f32465b4c8693f24ce6242eed45cd081"
       },
       "canonicalWorkflowId": "StableDiffusionPipeline:control_inpaint",
       "claims": {
@@ -16624,7 +16728,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "27063e499d847027dbf3542e4af88d2580ea7f1dc7ba5a059661c11ca4093d02",
+        "sourceGraphSha256": "3e86035ac71b5b02f2080eb7c948e733f32465b4c8693f24ce6242eed45cd081",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -16733,7 +16837,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pipeline/edit-image.json",
-        "sha256": "6e0f54f9a2702a6fd37fa587115fb7b7ba57cbed056d0988df68b3253d22c086"
+        "sha256": "dc3c5229bafd9c4684dbf813a005fc65b9282c342438b8669b73a869698d3725"
       },
       "canonicalWorkflowId": "StableDiffusionPipeline:edit_image",
       "claims": {
@@ -16796,7 +16900,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6e0f54f9a2702a6fd37fa587115fb7b7ba57cbed056d0988df68b3253d22c086",
+        "sourceGraphSha256": "dc3c5229bafd9c4684dbf813a005fc65b9282c342438b8669b73a869698d3725",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -16881,7 +16985,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pipeline/inpaint.json",
-        "sha256": "c6fc64135d01a872ae51a86bf0c9c8f5df058600fff5cb9ca04d76b2874e7219"
+        "sha256": "fd12912bff820e0ab7dbcb452a88abd2c41468a044f11811494ac1c00b575e7f"
       },
       "canonicalWorkflowId": "StableDiffusionPipeline:inpaint",
       "claims": {
@@ -16949,7 +17053,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c6fc64135d01a872ae51a86bf0c9c8f5df058600fff5cb9ca04d76b2874e7219",
+        "sourceGraphSha256": "fd12912bff820e0ab7dbcb452a88abd2c41468a044f11811494ac1c00b575e7f",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17046,7 +17150,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-pipeline/text-to-image.json",
-        "sha256": "a30835bdfb5f6f9c93c9666114f5c8f65bf3147b36274d9a8f660b7e2a88132d"
+        "sha256": "08a568f18c2c7bdb9f1f7aab5410291fabe70a0c9594ef3214819cd6b1797013"
       },
       "canonicalWorkflowId": "StableDiffusionPipeline:text_to_image",
       "claims": {
@@ -17099,7 +17203,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "a30835bdfb5f6f9c93c9666114f5c8f65bf3147b36274d9a8f660b7e2a88132d",
+        "sourceGraphSha256": "08a568f18c2c7bdb9f1f7aab5410291fabe70a0c9594ef3214819cd6b1797013",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17178,7 +17282,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-adapter-pipeline/control-image.json",
-        "sha256": "5eb28b65541e891c76d8a5d4f33513498c7eb48fd5693b0d881806ee3a3451f7"
+        "sha256": "c767d695491be5fc71965da83c6d7aec6ec907c23a30903182c7fb49e563854b"
       },
       "canonicalWorkflowId": "StableDiffusionXLAdapterPipeline:control_image",
       "claims": {
@@ -17246,7 +17350,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5eb28b65541e891c76d8a5d4f33513498c7eb48fd5693b0d881806ee3a3451f7",
+        "sourceGraphSha256": "c767d695491be5fc71965da83c6d7aec6ec907c23a30903182c7fb49e563854b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17339,7 +17443,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-control-net-pipeline/control-edit-image.json",
-        "sha256": "1cfd0521d2c8750f2945ad54ea82553269161724f0fb978e05816cdbe24af40d"
+        "sha256": "ee20adaf0178fa51c213ff214f5e292fe5d810f6a541b8f720d1272daf91c05a"
       },
       "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_edit_image",
       "claims": {
@@ -17417,7 +17521,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "1cfd0521d2c8750f2945ad54ea82553269161724f0fb978e05816cdbe24af40d",
+        "sourceGraphSha256": "ee20adaf0178fa51c213ff214f5e292fe5d810f6a541b8f720d1272daf91c05a",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17523,7 +17627,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-control-net-pipeline/control-image.json",
-        "sha256": "4f779cb5ad0b920799b260231cfddc77113c12b138633436215a3ebccce71f20"
+        "sha256": "439ef8bd351f3a7c12024f1d4ee7f1c2ec221e32b55a5f098092ceebc79a3bbb"
       },
       "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_image",
       "claims": {
@@ -17591,7 +17695,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "4f779cb5ad0b920799b260231cfddc77113c12b138633436215a3ebccce71f20",
+        "sourceGraphSha256": "439ef8bd351f3a7c12024f1d4ee7f1c2ec221e32b55a5f098092ceebc79a3bbb",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17684,7 +17788,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-control-net-pipeline/control-inpaint.json",
-        "sha256": "5e53b315197449c5815bf10b3072b1bd3992d182e03372c6720b2c15892ed4da"
+        "sha256": "a34b257c5f250e191b246b2a7eb075893934a7fe9be26635911f58cdde9686ad"
       },
       "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_inpaint",
       "claims": {
@@ -17767,7 +17871,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5e53b315197449c5815bf10b3072b1bd3992d182e03372c6720b2c15892ed4da",
+        "sourceGraphSha256": "a34b257c5f250e191b246b2a7eb075893934a7fe9be26635911f58cdde9686ad",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17876,7 +17980,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-instruct-pix2-pix-pipeline/edit-image.json",
-        "sha256": "6ca1024304e70a7f2ad3ece682cebf550e2bc125b0ca3a2f7bc4991568a529c3"
+        "sha256": "f0eff156025a08290dcccd53e6a99ec8c112c74b7f58e7b8ec024481257200fb"
       },
       "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
       "claims": {
@@ -17944,7 +18048,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6ca1024304e70a7f2ad3ece682cebf550e2bc125b0ca3a2f7bc4991568a529c3",
+        "sourceGraphSha256": "f0eff156025a08290dcccd53e6a99ec8c112c74b7f58e7b8ec024481257200fb",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -18038,7 +18142,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xlpag-pipeline/control-edit-image.json",
-        "sha256": "e93ffb65b1d61da73ba0a12388ff3356854c858ae7fd5dccf5fd2ca0750e1d1c"
+        "sha256": "b65c1d3b4d3a8441d9fc64b30f738598ebb6f0023696eb52f116ab70fa107549"
       },
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_edit_image",
       "claims": {
@@ -18126,7 +18230,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "e93ffb65b1d61da73ba0a12388ff3356854c858ae7fd5dccf5fd2ca0750e1d1c",
+        "sourceGraphSha256": "b65c1d3b4d3a8441d9fc64b30f738598ebb6f0023696eb52f116ab70fa107549",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -18232,7 +18336,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xlpag-pipeline/control-image.json",
-        "sha256": "c7c1c39a03f8aa24fc8d780f2b12856f179b53515fb56f7cf7746d01a86f3c5e"
+        "sha256": "2d76e9160a6a64301e86588b9c6cd9bc88c9837c37b21f4e0bc92190bc124445"
       },
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_image",
       "claims": {
@@ -18310,7 +18414,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c7c1c39a03f8aa24fc8d780f2b12856f179b53515fb56f7cf7746d01a86f3c5e",
+        "sourceGraphSha256": "2d76e9160a6a64301e86588b9c6cd9bc88c9837c37b21f4e0bc92190bc124445",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -18394,7 +18498,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xlpag-pipeline/edit-image.json",
-        "sha256": "4b496ca518c7de6ed73b728a8a185693e1c361c696792f613b26e9a464f5ea67"
+        "sha256": "a3cfb03d9848be968e24ff5f31f01ba9e64bf1667ab72adc3c7f47557e7a80fb"
       },
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:edit_image",
       "claims": {
@@ -18467,7 +18571,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "4b496ca518c7de6ed73b728a8a185693e1c361c696792f613b26e9a464f5ea67",
+        "sourceGraphSha256": "a3cfb03d9848be968e24ff5f31f01ba9e64bf1667ab72adc3c7f47557e7a80fb",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -18552,7 +18656,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xlpag-pipeline/inpaint.json",
-        "sha256": "9ccc50465d9e749459a269fca5371a31d7c1b1b97a78992b56026bf4c8ba735c"
+        "sha256": "832e33641bdb745eccef9a37fd71e56186c643427bd1bc6dca83fb43e835acb3"
       },
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:inpaint",
       "claims": {
@@ -18630,7 +18734,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9ccc50465d9e749459a269fca5371a31d7c1b1b97a78992b56026bf4c8ba735c",
+        "sourceGraphSha256": "832e33641bdb745eccef9a37fd71e56186c643427bd1bc6dca83fb43e835acb3",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -18727,7 +18831,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xlpag-pipeline/text-to-image.json",
-        "sha256": "23f824ac14954aafd401f35658d5bcbdc0b9fb790ae489a9fbbe99d41eb7e496"
+        "sha256": "0b3f109f748f948f65b428022faa46d332a75df5398c9e817f0861bc08fcd3d2"
       },
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:text_to_image",
       "claims": {
@@ -18790,7 +18894,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "23f824ac14954aafd401f35658d5bcbdc0b9fb790ae489a9fbbe99d41eb7e496",
+        "sourceGraphSha256": "0b3f109f748f948f65b428022faa46d332a75df5398c9e817f0861bc08fcd3d2",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -18860,7 +18964,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-pipeline/edit-image.json",
-        "sha256": "f4bd168f3f09065b2d15550d371a31af6dc491cb198ee3e44c6ea80c26b82915"
+        "sha256": "f3a9e6fcf0c8cce323e14eb0999c739c3afc27e84089d166e491e87316625374"
       },
       "canonicalWorkflowId": "StableDiffusionXLPipeline:edit_image",
       "claims": {
@@ -18923,7 +19027,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f4bd168f3f09065b2d15550d371a31af6dc491cb198ee3e44c6ea80c26b82915",
+        "sourceGraphSha256": "f3a9e6fcf0c8cce323e14eb0999c739c3afc27e84089d166e491e87316625374",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19008,7 +19112,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-pipeline/inpaint.json",
-        "sha256": "5850e6d16f9361d1dc900cbd102bf3875df2ddc07527bf89bc5e0c53a25cf2e4"
+        "sha256": "2119b7660d3b78f873133967ec2c58ffbd4f51b640cbd965a539f1a80c35181f"
       },
       "canonicalWorkflowId": "StableDiffusionXLPipeline:inpaint",
       "claims": {
@@ -19076,7 +19180,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5850e6d16f9361d1dc900cbd102bf3875df2ddc07527bf89bc5e0c53a25cf2e4",
+        "sourceGraphSha256": "2119b7660d3b78f873133967ec2c58ffbd4f51b640cbd965a539f1a80c35181f",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19173,7 +19277,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-pipeline/text-to-image.json",
-        "sha256": "b82e5cc52159d93f85a0864e2aa42fcf8dd8be3975fef199d029358333254653"
+        "sha256": "344b648baedb1eeb02a1991006ed9ff5ffe08db201bf7f00ba3cecd67bc73b75"
       },
       "canonicalWorkflowId": "StableDiffusionXLPipeline:text_to_image",
       "claims": {
@@ -19226,7 +19330,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "b82e5cc52159d93f85a0864e2aa42fcf8dd8be3975fef199d029358333254653",
+        "sourceGraphSha256": "344b648baedb1eeb02a1991006ed9ff5ffe08db201bf7f00ba3cecd67bc73b75",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19296,7 +19400,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-turbo-pipeline/text-to-image.json",
-        "sha256": "13840dd4f022d85bb52d8f90d1fd1da43e0b3873d078b83cbb127b38f755e30d"
+        "sha256": "4cd9ae37e51d2c4d8f9a4697eb80cffc3b205e036f19d82b00d322339468b5dc"
       },
       "canonicalWorkflowId": "StableDiffusionXLTurboPipeline:text_to_image",
       "claims": {
@@ -19349,7 +19453,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "13840dd4f022d85bb52d8f90d1fd1da43e0b3873d078b83cbb127b38f755e30d",
+        "sourceGraphSha256": "4cd9ae37e51d2c4d8f9a4697eb80cffc3b205e036f19d82b00d322339468b5dc",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19419,7 +19523,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-video-diffusion-pipeline/image-to-video.json",
-        "sha256": "6f080372bd727f36d241b95305b9ccf287a3fffadf2dc50ef44f47540c43df3b"
+        "sha256": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34"
       },
       "canonicalWorkflowId": "StableVideoDiffusionPipeline:image_to_video",
       "claims": {
@@ -19512,7 +19616,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6f080372bd727f36d241b95305b9ccf287a3fffadf2dc50ef44f47540c43df3b",
+        "sourceGraphSha256": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19597,7 +19701,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/wan22-pipeline/text-to-video.json",
-        "sha256": "00310bbf122da1eb96eb85e33099df87455af289bdcf0cb5fefd116c6d7779e1"
+        "sha256": "662314aa27fe0f388ec831b5b722398afcf11c06e77ac020d137a3abcdb95838"
       },
       "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
       "claims": {
@@ -19690,7 +19794,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "00310bbf122da1eb96eb85e33099df87455af289bdcf0cb5fefd116c6d7779e1",
+        "sourceGraphSha256": "662314aa27fe0f388ec831b5b722398afcf11c06e77ac020d137a3abcdb95838",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19760,7 +19864,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/wan-animate-pipeline/character-animate.json",
-        "sha256": "f486e24a1ffcaf48ec78642f046ec075e3b1d549fdb27fecff5566beea7c5c6b"
+        "sha256": "a1848cabef8777fbac8a4beb0bd2b894ac3619efd8c4d48d857f81c5f2f60203"
       },
       "canonicalWorkflowId": "WanAnimatePipeline:character_animate",
       "claims": {
@@ -19873,7 +19977,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f486e24a1ffcaf48ec78642f046ec075e3b1d549fdb27fecff5566beea7c5c6b",
+        "sourceGraphSha256": "a1848cabef8777fbac8a4beb0bd2b894ac3619efd8c4d48d857f81c5f2f60203",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19982,7 +20086,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/wan-animate-pipeline/character-replace.json",
-        "sha256": "491edaec4335c2cfefb0e3a288f3b81eefaefb8b129d3a920077bca0b24f515e"
+        "sha256": "d760efebf29eb73991975d2aab25b80b5e1ced429f1e1ca9a20fe8a741d91ac9"
       },
       "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
       "claims": {
@@ -20095,7 +20199,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "491edaec4335c2cfefb0e3a288f3b81eefaefb8b129d3a920077bca0b24f515e",
+        "sourceGraphSha256": "d760efebf29eb73991975d2aab25b80b5e1ced429f1e1ca9a20fe8a741d91ac9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -20228,7 +20332,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/wan-image2-video-modular-pipeline/image-to-video.json",
-        "sha256": "6408030f3d660b223b4c2c02aed853d57a630e09a4830ca6f7f2401fe17af729"
+        "sha256": "2f4342b88d313c68d42873d7dba60eaeaf0aafb00aba59cd7dc50d60c5d7ee2f"
       },
       "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
       "claims": {
@@ -20324,7 +20428,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6408030f3d660b223b4c2c02aed853d57a630e09a4830ca6f7f2401fe17af729",
+        "sourceGraphSha256": "2f4342b88d313c68d42873d7dba60eaeaf0aafb00aba59cd7dc50d60c5d7ee2f",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -20422,7 +20526,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/wan-vace-pipeline/text-to-video.json",
-        "sha256": "b7cc597ebd276f2c61108b1a8b88dddd6fd242cc63d5a8a384d171205b5a056e"
+        "sha256": "96bdf3652fd8b14af52b5b709b37ac27f138d41d6509a3369bfba3a8a8144195"
       },
       "canonicalWorkflowId": "WanVACEPipeline:text_to_video",
       "claims": {
@@ -20520,7 +20624,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "b7cc597ebd276f2c61108b1a8b88dddd6fd242cc63d5a8a384d171205b5a056e",
+        "sourceGraphSha256": "96bdf3652fd8b14af52b5b709b37ac27f138d41d6509a3369bfba3a8a8144195",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -20590,7 +20694,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/z-image-inpaint-pipeline/inpaint.json",
-        "sha256": "0b8e148ed0b7fd270d8de4fed61448e6b050244069af805ddf6c927236102593"
+        "sha256": "3fb4c05f4ab68511085159080eec122b70b002372deeb9a40918b4405308b310"
       },
       "canonicalWorkflowId": "ZImageInpaintPipeline:inpaint",
       "claims": {
@@ -20653,7 +20757,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "0b8e148ed0b7fd270d8de4fed61448e6b050244069af805ddf6c927236102593",
+        "sourceGraphSha256": "3fb4c05f4ab68511085159080eec122b70b002372deeb9a40918b4405308b310",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -20750,7 +20854,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/z-image-inpaint-pipeline/outpaint.json",
-        "sha256": "32f752fc5958091e456f9c098e6eae84dee9fb42695ef5ef2298ac310ad3de68"
+        "sha256": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1"
       },
       "canonicalWorkflowId": "ZImageInpaintPipeline:outpaint",
       "claims": {
@@ -20853,7 +20957,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "32f752fc5958091e456f9c098e6eae84dee9fb42695ef5ef2298ac310ad3de68",
+        "sourceGraphSha256": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -20938,7 +21042,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/z-image-modular-pipeline/edit-image.json",
-        "sha256": "70b900760d789469cbe71e855e8d4443f4c23fc2cef0d592950bf6d0121a37a9"
+        "sha256": "56ccfbded52bd815379abc703e334a10c30031f04ce088d99f02f3a53bfcec0b"
       },
       "canonicalWorkflowId": "ZImageModularPipeline:edit_image",
       "claims": {
@@ -21001,7 +21105,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "70b900760d789469cbe71e855e8d4443f4c23fc2cef0d592950bf6d0121a37a9",
+        "sourceGraphSha256": "56ccfbded52bd815379abc703e334a10c30031f04ce088d99f02f3a53bfcec0b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -21076,16 +21180,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 146,
+    "authoringSpecCount": 147,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 55,
-      "draft_complete_input_selection_pending": 91
+      "draft_complete_input_selection_pending": 92
     },
-    "canonicalDefaultsCapturedCount": 146,
-    "generationPendingCount": 146,
-    "inputSelectionPendingCount": 91,
+    "canonicalDefaultsCapturedCount": 147,
+    "generationPendingCount": 147,
+    "inputSelectionPendingCount": 92,
     "promptDraftedCount": 123,
-    "promptNotApplicableCount": 23,
-    "rightsReviewPendingCount": 146
+    "promptNotApplicableCount": 24,
+    "rightsReviewPendingCount": 147
   }
 }
