@@ -7004,7 +7004,13 @@ retry completed in 382.86 seconds. DreamLite Mobile edit failed with bfloat16
 on CPU because the upstream timestep embedding remained Float; the same exact
 graph and weights completed in float32 in about 24 seconds. A Sana Sprint edit
 that materially changed the requested scene was retained only as a local
-negative output and was not added to the receipt ledger.
+negative output and was not added to the receipt ledger. The exact fp16
+AnimateDiff text-to-video route then remained inside its upstream denoiser for
+more than the declared 15-minute CPU ceiling at the minimum eight frames and
+eight steps. The app replaced the non-cooperative supervised worker, released
+the approximately 6.7 GB process RSS, retained no partial video, and preserved
+the active optional runtime; this is measured evidence that the route still
+needs accelerator execution rather than a reason to weaken its contract.
 
 App-only model provisioning completed exact SmolLM2, SmolVLM, and Janus
 selections totaling 4,951,475,788 bytes without deleting an older model. The
@@ -7036,6 +7042,8 @@ than the current generated-data head. The subsequent live campaign fixes are
 `47e5fb1` (mode-aware exact loader-profile resolution), `b98250a` and `da37883`
 (LongCat VAE slicing/tiling exclusions), and `accef77` (the regenerated LongCat
 graph and all bound coverage, candidate, authoring, and Comfy ledgers).
+`4f53667` makes malformed submitted runtime receipts fail as bounded HTTP 400
+admission errors rather than uncaught HTTP 500 responses.
 
 The following separate gates do remain external:
 
