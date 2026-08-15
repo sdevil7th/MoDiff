@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:16c7f5530561941492874808c7ee75579342ca2123577f333813e92af4aa4355",
+  "contentHash": "sha256:e605d2e0bcc178d31ca2f061e4cbb8db5ce93e6fe72c7c832ad549c7c1b17f46",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -9833,9 +9833,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_sdxl_svd_two_stage_generation_is_not_allegro",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -9862,7 +9862,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 15,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
@@ -9925,6 +9925,35 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "sd_xl_base_1.0.safetensors",
+            "repository": "stabilityai/stable-diffusion-xl-base-1.0"
+          },
+          {
+            "artifact": "svd_xt.safetensors",
+            "repository": "stabilityai/stable-video-diffusion-img2vid-xt"
+          }
+        ],
+        "assetPath": "templates/txt_to_image_to_video.json",
+        "assetSha256": "5f10394fa88508f80b45d1ff221a7a912054f2f0c74aef803096f1892b3e3fda",
+        "catalogRecommendedWorkflowId": "AllegroPipeline:text_to_video",
+        "comparison": {
+          "currentRepository": "rhymes-ai/Allegro",
+          "currentRevision": "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+          "currentWorkflowId": "AllegroPipeline:text_to_video",
+          "reasonCode": "sdxl_svd_two_stage_generation_is_not_allegro",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "4c8a4894c1a2ae5fb35702880266fe2b57174e8b",
+        "importsGraph": false,
+        "reviewedWorkflowId": "AllegroPipeline:text_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SVD Text to Image to Video"
     },
     {
@@ -10748,8 +10777,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_bernini_r_image_edit_is_not_chroma1_hd",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -10775,7 +10805,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 25,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
@@ -10868,12 +10898,54 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "edit_image",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_bernini_r_high_noise_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Bernini-R"
+          },
+          {
+            "artifact": "wan2.2_bernini_r_low_noise_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Bernini-R"
+          },
+          {
+            "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan2_1_VAE_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          }
+        ],
+        "assetPath": "templates/video_bernini_r_image_editing.json",
+        "assetSha256": "fd002ed6f77274a46cfdfc1d379765647eca01882c62f3a1c41ce94ac9e2ccee",
+        "catalogRecommendedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "comparison": {
+          "currentRepository": "lodestones/Chroma1-HD",
+          "currentRevision": "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+          "currentWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+          "reasonCode": "bernini_r_image_edit_is_not_chroma1_hd",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "ca3d1c2a1981faa2322ae98ee0bfa85995b379c2",
+        "importsGraph": false,
+        "reviewedWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Bernini-R: Image Edit"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_bernini_r_requires_bounded_video_edit_task_and_model_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -10900,19 +10972,59 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_video_edit_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "edit_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_bernini_r_high_noise_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Bernini-R"
+          },
+          {
+            "artifact": "wan2.2_bernini_r_low_noise_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Bernini-R"
+          },
+          {
+            "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan2_1_VAE_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          }
+        ],
+        "assetPath": "templates/video_bernini_r_video_editing.json",
+        "assetSha256": "1af0f1ef82c211e0acdb0d726411b7e5e19b9468d785c507d1d9a64b241bf093",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "bernini_r_requires_bounded_video_edit_task_and_model_generation",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c9d3623d4049b986356e47bcbb112fd07040d765",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Bernini-R: Video Edit"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_capybara_video_i2v_is_not_ltx2",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -10938,7 +11050,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 8,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
@@ -10977,12 +11089,54 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "image_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "capybara_v0.1.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b.safetensors",
+            "repository": "Comfy-Org/HunyuanImage_2.1_ComfyUI"
+          },
+          {
+            "artifact": "byt5_small_glyphxl_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "hunyuanvideo15_vae_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "sigclip_vision_patch14_384.safetensors",
+            "repository": "Comfy-Org/sigclip_vision_384"
+          }
+        ],
+        "assetPath": "templates/video_capybara_v0_1_image_to_video.json",
+        "assetSha256": "9fa710ee75a352831f47e6aa36277bde3913daa57743de8c66915d8d6241cbbc",
+        "catalogRecommendedWorkflowId": "LTX2ConditionPipeline:image_to_video",
+        "comparison": {
+          "currentRepository": "Lightricks/LTX-2",
+          "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+          "currentWorkflowId": "LTX2ConditionPipeline:image_to_video",
+          "reasonCode": "capybara_video_i2v_is_not_ltx2",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c02cacb9f876fa0fb934d3151511d070b3a9e382",
+        "importsGraph": false,
+        "reviewedWorkflowId": "LTX2ConditionPipeline:image_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Capybara: Image to Video"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_capybara_requires_bounded_video_edit_task_and_model_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -11009,13 +11163,52 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_video_edit_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": null,
       "representativeWorkflowOptions": [],
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "edit_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "capybara_v0.1.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "qwen_2.5_vl_7b.safetensors",
+            "repository": "Comfy-Org/HunyuanImage_2.1_ComfyUI"
+          },
+          {
+            "artifact": "byt5_small_glyphxl_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "hunyuanvideo15_vae_fp16.safetensors",
+            "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged"
+          },
+          {
+            "artifact": "sigclip_vision_patch14_384.safetensors",
+            "repository": "Comfy-Org/sigclip_vision_384"
+          }
+        ],
+        "assetPath": "templates/video_capybara_v0_1_video_edit.json",
+        "assetSha256": "d202d82f4d0d89b5f19e50d00e37cec016e7b4bed06a8324be421f1972458e93",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "capybara_requires_bounded_video_edit_task_and_model_generation",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "ded8c063e15f0173c65d94e41625eb6e29395c5d",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Capybara: Video Edit"
     },
     {
@@ -11116,12 +11309,13 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_humo_requires_image_audio_conditioned_video_task_and_model_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "exact_catalog_model_or_variant_admission_required"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -11142,71 +11336,56 @@
       },
       "contractId": "comfy-research:template:video_humo",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 15,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_new_image_audio_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
-        "canonicalWorkflowId": "AllegroPipeline:text_to_video",
-        "modelFamily": "Allegro",
-        "modelType": "AllegroPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "AllegroPipeline:text_to_video",
-          "modelFamily": "Allegro",
-          "modelType": "AllegroPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "AnimateDiffPAGPipeline:text_to_video",
-          "modelFamily": "AnimateDiff",
-          "modelType": "AnimateDiffPAGPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "CogVideoXPipeline:text_to_video",
-          "modelFamily": "CogVideoX",
-          "modelType": "CogVideoXPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
-          "modelFamily": "LTX Video",
-          "modelType": "LTX2ConditionPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "LattePipeline:text_to_video",
-          "modelFamily": "Latte",
-          "modelType": "LattePipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "MochiPipeline:text_to_video",
-          "modelFamily": "Mochi",
-          "modelType": "MochiPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "SanaVideoPipeline:text_to_video",
-          "modelFamily": "SANA Video",
-          "modelType": "SanaVideoPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        },
-        {
-          "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "Wan22Pipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_task_boundary_model_admission_required",
-      "selectedCandidateMode": "text_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "image_audio_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "humo_17B_fp8_e4m3fn.safetensors",
+            "repository": "Comfy-Org/HuMo_ComfyUI"
+          },
+          {
+            "artifact": "whisper_large_v3_fp16.safetensors",
+            "repository": "Comfy-Org/HuMo_ComfyUI"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          }
+        ],
+        "assetPath": "templates/video_humo.json",
+        "assetSha256": "4a8a18e27e216e4419fa0b8d812b881546afb243e1ac3fdb01c3097500768fba",
+        "catalogSelectedCandidateMode": "text_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "humo_requires_image_audio_conditioned_video_task_and_model_generation",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "c408a326b85c701e69146104ecc83f5cb89a291d",
+        "importsGraph": false,
+        "reviewedTaskMode": "image_audio_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "HuMo Video Generation"
     },
     {
@@ -15056,7 +15235,7 @@
       "first_last_frame_to_video_with_audio": 3,
       "frame_interpolation": 1,
       "image_audio_to_text": 1,
-      "image_audio_to_video": 1,
+      "image_audio_to_video": 2,
       "image_to_3d": 7,
       "image_to_text": 2,
       "image_to_video": 10,
@@ -15072,30 +15251,30 @@
       "text_generation": 1,
       "text_to_audio": 5,
       "text_to_image": 33,
-      "text_to_video": 11,
+      "text_to_video": 10,
       "text_to_video_with_audio": 1,
       "video_inpaint": 1,
       "video_outpaint": 1,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 95,
+    "pinnedSourceReviewCount": 101,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 23,
-      "different_model_generation_requires_admission": 53,
+      "different_model_generation_and_new_task_required": 26,
+      "different_model_generation_requires_admission": 56,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 75,
+    "recordsWithHiddenAuthoringSpecOption": 74,
     "recordsWithPublicTemplateOption": 30,
-    "recordsWithRecommendedWorkflow": 105,
+    "recordsWithRecommendedWorkflow": 104,
     "resolutionCount": 138,
     "resolutionStateCounts": {
       "existing_family_workflow_candidate": 18,
-      "existing_task_boundary_model_admission_required": 87,
-      "new_task_boundary_required": 33
+      "existing_task_boundary_model_admission_required": 86,
+      "new_task_boundary_required": 34
     },
     "sourceProposalCount": 138
   }
