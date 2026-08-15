@@ -6950,15 +6950,20 @@ executing Comfy graphs. A separate fail-closed authoring-research ledger covers
 mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
-the 138 proposed new MoDiff contracts are deliberately not yet authored. Four
+the 138 proposed new MoDiff contracts are deliberately not yet authored. Nine
 of those 138 candidates now also have exact pinned graph-source dependency
 reviews, performed read-only without importing, executing, or copying their
 graphs, nodes, or prompts. The two Stable Audio 3 records and the original
 Qwen-Image-plus-Lightning record resolve only to existing task boundaries and
 still require distinct model-generation admissions; the Chroma record remains
 a same-family candidate because its FP8 repackaged component partition is not
-the admitted Diffusers checkpoint. No Comfy graph, node package, prompt, model,
-or media asset was copied or downloaded.
+the admitted Diffusers checkpoint. The second review tranche likewise keeps
+Chroma1 Radiance, Z-Image Base/Base-Int8, and both FLUX.2 Klein 9B generations
+outside the currently admitted Chroma1-HD, Z-Image-Turbo, and FLUX.2 Klein 4B
+partitions. Pinned graph structure also corrects both Klein 9B records from the
+catalog's text-to-image tag to the existing generic image-edit task boundary.
+No Comfy graph, node package, prompt, model, or media asset was copied or
+downloaded.
 
 Historical Gallery evidence discovery preserves all 70 approved examples. The
 current release audit finds 26 records whose retained evidence remains current
@@ -7059,8 +7064,9 @@ The restarted live app returned the malformed-receipt canary as HTTP 400 and
 completed a 60-second-budget normal graph, while the 149-test queue, loop,
 supervisor, security, and model-I/O matrix passed with one expected skip after
 updating the affected test doubles. `6796b74` seals the first four exact pinned
-Comfy graph-source dependency reviews while retaining fail-closed model,
-execution, rights, and asset claims.
+Comfy graph-source dependency reviews, and `f80f83e` adds five model-partition
+decisions plus the two source-proven Klein task corrections, while retaining
+fail-closed model, execution, rights, and asset claims throughout.
 
 The following separate gates do remain external:
 
