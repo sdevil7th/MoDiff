@@ -598,6 +598,219 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
     },
+    "comfy-research:template:image_to_video_wan": {
+        "assetPath": "templates/image_to_video_wan.json",
+        "assetSha256": "12930b58377d52e9581ad25b1c24bff93fddb693bd9066b9fdd93cafda59182f",
+        "gitBlobOid": "acde9a84eb81fd560275032192595beb0292fd1c",
+        "reviewedTaskMode": "image_to_video",
+        "reviewedWorkflowId": "WanImageToVideoPipeline:image_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_i2v_480p_14B_fp16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImageToVideoPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+            "currentRevision": "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+            "reasonCode": "wan2_1_i2v_480p_14b_is_not_wan2_2_i2v_a14b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_wan2.1_alpha_t2v_14B": {
+        "assetPath": "templates/video_wan2.1_alpha_t2v_14B.json",
+        "assetSha256": "57b22a6cb4577473bfcd527f8d01a47c86d357acb263759828d4886a878d95e0",
+        "gitBlobOid": "ac6049b77add3cf6a43c542fb5153d85f330a1cd",
+        "reviewedWorkflowId": "WanVideoPipeline:text_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_t2v_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_alpha_2.1_rgba_lora.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_alpha_2.1_vae_rgb_channel.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_alpha_2.1_vae_alpha_channel.safetensors",
+            },
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanVideoPipeline:text_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+            "currentRevision": "0fad780a534b6463e45facd96134c9f345acfa5b",
+            "reasonCode": "wan2_1_alpha_14b_assembly_is_not_wan2_1_t2v_1_3b",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_wan2.1_fun_camera_v1.1_1.3B": {
+        "assetPath": "templates/video_wan2.1_fun_camera_v1.1_1.3B.json",
+        "assetSha256": "e8d590f10dd5fb80bca0e5dd83d9722a16bdc14aaa0af3119316b2d6fe7f5c8e",
+        "gitBlobOid": "9a341101b06053db4e022b41809d9a56bfc69810",
+        "reviewedTaskMode": "camera_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_fun_camera_v1.1_1.3B_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "wan2_1_fun_camera_requires_camera_motion_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_camera_video_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_wan2.1_fun_camera_v1.1_14B": {
+        "assetPath": "templates/video_wan2.1_fun_camera_v1.1_14B.json",
+        "assetSha256": "e955740d40b1b5c5479b6338a27ea1a6d542cf0a8acbdb6d5332900c84bead54",
+        "gitBlobOid": "386e500f9e6deb022c0da1281aef36983964161e",
+        "reviewedTaskMode": "camera_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_fun_camera_v1.1_14B_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "wan2_1_fun_camera_14b_requires_camera_motion_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_camera_video_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_wan2_2_14B_fun_camera": {
+        "assetPath": "templates/video_wan2_2_14B_fun_camera.json",
+        "assetSha256": "aa7b009804e4ba117a3bf597d7c0c1e0a21c43ff58b59c3630816b6fb00f58fe",
+        "gitBlobOid": "a2aaea351b04b2ce6b4284ccfcba33f91e6a8cf9",
+        "reviewedTaskMode": "camera_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_camera_high_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_camera_low_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "wan2_2_fun_camera_requires_camera_motion_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_camera_video_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_wan2_2_14B_fun_control": {
+        "assetPath": "templates/video_wan2_2_14B_fun_control.json",
+        "assetSha256": "a0f68cfa069c425acf59587c73588d0bcbbaf703d0b0625357343a367ab35505",
+        "gitBlobOid": "643e223e867ca74e808c700917d3272563051478",
+        "reviewedTaskMode": "control_video_to_video",
+        "reviewedWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_control_high_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_control_low_noise_14B_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+            "currentRepository": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+            "currentRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            "currentAuxiliaryRepositories": ["guoyww/animatediff-motion-adapter-v1-5-2"],
+            "reasonCode": "wan2_2_fun_control_reuses_boundary_not_animatediff_model",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:image_z_image": {
         "assetPath": "templates/image_z_image.json",
         "assetSha256": "f7b3ceb43a3688e17cc5bce67d1beafe833a674b4e4a257c626a6243b3ebedc2",

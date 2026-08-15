@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:a0dcd26405532670d8f55a223e5794d56fecdcd46d9fb83ef06fa74b35072b9a",
+  "contentHash": "sha256:b2887a5513cd348f7005e62dc2575f21653e4b948a99cae5a94d8ec24ab00e6f",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -7241,12 +7241,12 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_1_i2v_480p_14b_is_not_wan2_2_i2v_a14b",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -7267,32 +7267,75 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:image_to_video_wan",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 15,
+      "currentFamilyOptionCount": 3,
+      "currentTaskBoundaryOptionCount": 8,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:Wan22Pipeline:text_to_video",
-        "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
         "modelFamily": "Wan Video",
-        "modelType": "Wan22Pipeline",
-        "publicTemplateIds": [],
+        "modelType": "WanImageToVideoPipeline",
+        "publicTemplateIds": [
+          "wan_22_i2v_seed_vault"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
+          "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
           "modelFamily": "Wan Video",
-          "modelType": "Wan22Pipeline",
+          "modelType": "WanImageToVideoPipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
+          "modelFamily": "Wan Video",
+          "modelType": "HunyuanVideoFramepackPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "text_to_video",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "image_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_i2v_480p_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/image_to_video_wan.json",
+        "assetSha256": "12930b58377d52e9581ad25b1c24bff93fddb693bd9066b9fdd93cafda59182f",
+        "catalogRecommendedWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
+        "catalogSelectedCandidateMode": "text_to_video",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+          "currentRevision": "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+          "currentWorkflowId": "WanImageToVideoPipeline:image_to_video",
+          "reasonCode": "wan2_1_i2v_480p_14b_is_not_wan2_2_i2v_a14b",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "acde9a84eb81fd560275032192595beb0292fd1c",
+        "importsGraph": false,
+        "reviewedTaskMode": "image_to_video",
+        "reviewedWorkflowId": "WanImageToVideoPipeline:image_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.1 Image to Video"
     },
     {
@@ -11061,12 +11104,12 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_1_alpha_14b_assembly_is_not_wan2_1_t2v_1_3b",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -11090,19 +11133,29 @@
       "currentFamilyOptionCount": 4,
       "currentTaskBoundaryOptionCount": 15,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:Wan22Pipeline:text_to_video",
-        "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
+        "authoringSpecId": null,
+        "canonicalWorkflowId": "WanVideoPipeline:text_to_video",
         "modelFamily": "Wan Video",
-        "modelType": "Wan22Pipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "modelType": "WanVideoPipeline",
+        "publicTemplateIds": [
+          "wan_21_t2v_13b_seed_vault",
+          "wan_vace_cinematic_text_to_video",
+          "wan_video_long_showcase"
+        ],
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "WanVideoPipeline:text_to_video",
+          "modelFamily": "Wan Video",
+          "modelType": "WanVideoPipeline",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
+        },
         {
           "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
           "modelFamily": "Wan Video",
@@ -11110,19 +11163,65 @@
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
+      "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "text_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_t2v_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_alpha_2.1_rgba_lora.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_alpha_2.1_vae_rgb_channel.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_alpha_2.1_vae_alpha_channel.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          }
+        ],
+        "assetPath": "templates/video_wan2.1_alpha_t2v_14B.json",
+        "assetSha256": "57b22a6cb4577473bfcd527f8d01a47c86d357acb263759828d4886a878d95e0",
+        "catalogRecommendedWorkflowId": "Wan22Pipeline:text_to_video",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+          "currentRevision": "0fad780a534b6463e45facd96134c9f345acfa5b",
+          "currentWorkflowId": "WanVideoPipeline:text_to_video",
+          "reasonCode": "wan2_1_alpha_14b_assembly_is_not_wan2_1_t2v_1_3b",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "ac6049b77add3cf6a43c542fb5153d85f330a1cd",
+        "importsGraph": false,
+        "reviewedWorkflowId": "WanVideoPipeline:text_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 Alpha T2V"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_1_fun_camera_requires_camera_motion_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -11143,42 +11242,62 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan2.1_fun_camera_v1.1_1.3B",
-      "currentFamilyOptionCount": 3,
-      "currentTaskBoundaryOptionCount": 8,
+      "currentFamilyOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_new_camera_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HunyuanVideoFramepackPipeline:image_to_video",
-        "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-        "modelFamily": "Wan Video",
-        "modelType": "HunyuanVideoFramepackPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "HunyuanVideoFramepackPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "image_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "camera_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_fun_camera_v1.1_1.3B_bf16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2.1_fun_camera_v1.1_1.3B.json",
+        "assetSha256": "e8d590f10dd5fb80bca0e5dd83d9722a16bdc14aaa0af3119316b2d6fe7f5c8e",
+        "catalogSelectedCandidateMode": "image_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan2_1_fun_camera_requires_camera_motion_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "9a341101b06053db4e022b41809d9a56bfc69810",
+        "importsGraph": false,
+        "reviewedTaskMode": "camera_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.1 Fun Camera 1.3B"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_1_fun_camera_14b_requires_camera_motion_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -11199,32 +11318,51 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan2.1_fun_camera_v1.1_14B",
-      "currentFamilyOptionCount": 3,
-      "currentTaskBoundaryOptionCount": 8,
+      "currentFamilyOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_new_camera_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HunyuanVideoFramepackPipeline:image_to_video",
-        "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-        "modelFamily": "Wan Video",
-        "modelType": "HunyuanVideoFramepackPipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "HunyuanVideoFramepackPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "image_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "camera_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_fun_camera_v1.1_14B_bf16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2.1_fun_camera_v1.1_14B.json",
+        "assetSha256": "e955740d40b1b5c5479b6338a27ea1a6d542cf0a8acbdb6d5332900c84bead54",
+        "catalogSelectedCandidateMode": "image_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan2_1_fun_camera_14b_requires_camera_motion_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "386e500f9e6deb022c0da1281aef36983964161e",
+        "importsGraph": false,
+        "reviewedTaskMode": "camera_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.1 Fun Camera 14B"
     },
     {
@@ -11417,12 +11555,13 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_2_fun_camera_requires_camera_motion_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -11443,44 +11582,73 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan2_2_14B_fun_camera",
-      "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 5,
+      "currentFamilyOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_new_camera_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
-      "recommendedWorkflow": {
-        "authoringSpecId": null,
-        "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
-        "modelFamily": "Wan Video",
-        "modelType": "WanVideoPipeline",
-        "publicTemplateIds": [
-          "wan_vace_video_to_video"
-        ],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "WanVideoPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "video_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "camera_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_fun_camera_high_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_fun_camera_low_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2_2_14B_fun_camera.json",
+        "assetSha256": "aa7b009804e4ba117a3bf597d7c0c1e0a21c43ff58b59c3630816b6fb00f58fe",
+        "catalogSelectedCandidateMode": "video_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan2_2_fun_camera_requires_camera_motion_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "a2aaea351b04b2ce6b4284ccfcba33f91e6a8cf9",
+        "importsGraph": false,
+        "reviewedTaskMode": "camera_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.2 14B Fun Camera Control"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan2_2_fun_control_reuses_boundary_not_animatediff_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -11501,34 +11669,82 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan2_2_14B_fun_control",
-      "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 5,
+      "currentFamilyOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
-        "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
-        "modelFamily": "Wan Video",
-        "modelType": "WanVideoPipeline",
-        "publicTemplateIds": [
-          "wan_vace_video_to_video"
-        ],
+        "authoringSpecId": "template-authoring:AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "modelFamily": "AnimateDiff",
+        "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
+        "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "WanVideoPipeline",
+          "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+          "modelFamily": "AnimateDiff",
+          "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "video_to_video",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "control_video_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_fun_control_high_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_fun_control_low_noise_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2_2_14B_fun_control.json",
+        "assetSha256": "a0f68cfa069c425acf59587c73588d0bcbbaf703d0b0625357343a367ab35505",
+        "catalogRecommendedWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "catalogSelectedCandidateMode": "video_to_video",
+        "comparison": {
+          "currentAuxiliaryRepositories": [
+            "guoyww/animatediff-motion-adapter-v1-5-2"
+          ],
+          "currentRepository": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+          "currentRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+          "currentWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+          "reasonCode": "wan2_2_fun_control_reuses_boundary_not_animatediff_model",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "643e223e867ca74e808c700917d3272563051478",
+        "importsGraph": false,
+        "reviewedTaskMode": "control_video_to_video",
+        "reviewedWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.2 14B Fun Control"
     },
     {
@@ -12416,15 +12632,17 @@
     "exactCatalogCheckpointSupportClaims": 0,
     "modeCounts": {
       "audio_to_video": 3,
+      "camera_to_video": 3,
       "character_replace": 2,
       "control_image": 1,
+      "control_video_to_video": 1,
       "edit_audio": 1,
       "edit_image": 22,
       "edit_video": 2,
       "first_last_frame_to_video": 7,
       "frame_interpolation": 1,
       "image_to_3d": 7,
-      "image_to_video": 15,
+      "image_to_video": 14,
       "image_upscale": 4,
       "inpaint": 4,
       "layer_decomposition": 1,
@@ -12434,27 +12652,27 @@
       "text_generation": 4,
       "text_to_audio": 5,
       "text_to_image": 35,
-      "text_to_video": 15,
-      "video_to_video": 4,
+      "text_to_video": 14,
+      "video_to_video": 2,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 23,
+    "pinnedSourceReviewCount": 29,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 1,
-      "different_model_generation_requires_admission": 18,
+      "different_model_generation_and_new_task_required": 4,
+      "different_model_generation_requires_admission": 21,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 1,
       "same_upstream_generation_requires_auxiliary_admission": 2
     },
-    "recordsWithHiddenAuthoringSpecOption": 92,
+    "recordsWithHiddenAuthoringSpecOption": 89,
     "recordsWithPublicTemplateOption": 25,
-    "recordsWithRecommendedWorkflow": 117,
+    "recordsWithRecommendedWorkflow": 114,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 39,
-      "existing_task_boundary_model_admission_required": 78,
-      "new_task_boundary_required": 21
+      "existing_family_workflow_candidate": 33,
+      "existing_task_boundary_model_admission_required": 81,
+      "new_task_boundary_required": 24
     },
     "sourceProposalCount": 138
   }
