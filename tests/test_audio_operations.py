@@ -24,6 +24,7 @@ from modules.Audio.main import (
     _audio_to_numpy,
     _read_wav,
 )
+from modiff.config import CONFIG
 
 
 def _audio(*, frames=16000, sample_rate=16000, channels=1):
@@ -37,6 +38,10 @@ def _audio(*, frames=16000, sample_rate=16000, channels=1):
 
 
 class BuiltinAudioOperationTests(unittest.TestCase):
+    def test_config_exposes_the_audio_export_directory(self):
+        self.assertIn("audio", CONFIG.paths)
+        self.assertTrue(Path(CONFIG.paths["audio"]).is_dir())
+
     def test_facade_exposes_three_exact_install_free_operations(self):
         self.assertEqual(AUDIO_OPERATION_MODES, ["audio_trim", "audio_join", "audio_loudness_match"])
         self.assertEqual(ProcessAudio.params["pipeline_class"]["default"], AUDIO_OPERATION_PIPELINE_CLASS)
