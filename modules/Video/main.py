@@ -1511,7 +1511,7 @@ class UpscaleVideo(NodeBase):
             "options": VIDEO_DEVICE_OPTIONS,
         },
         "fps": {"label": "Output FPS", "type": "float", "default": 24, "min": 1, "max": 120},
-        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "video_out"},
         "video_out": {"label": "Upscaled Video", "display": "output", "type": "video"},
         "width": {"display": "output", "type": "int"},
         "height": {"display": "output", "type": "int"},

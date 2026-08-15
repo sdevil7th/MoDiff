@@ -28,6 +28,7 @@ class VideoUpscaleContractTests(unittest.TestCase):
         self.assertEqual(UpscaleVideo.params["operation"]["options"], [VIDEO_UPSCALE_MODE])
         self.assertEqual(UpscaleVideo.params["pipeline_class"]["default"], VIDEO_UPSCALE_PIPELINE_CLASS)
         self.assertEqual(UpscaleVideo.params["model_id"]["default"], VIDEO_UPSCALE_MODEL_SELECTION)
+        self.assertEqual(UpscaleVideo.params["preview"]["dataSource"], "video_out")
         self.assertEqual(VIDEO_UPSCALE_MODEL_SELECTION["revision"], "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094")
         self.assertEqual(VIDEO_UPSCALE_MODEL_SELECTION["byteSize"], 67_061_725)
 
