@@ -10,6 +10,7 @@ from modules.ImageOperations.main import (
     CropImage,
     FilterImage,
     ImageChannels,
+    MaskComposite,
     ProcessImage,
     ResizeImage,
     TileImage,
@@ -177,6 +178,37 @@ class ImageOperationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported image channel"):
             ImageChannels().execute(image=rgba, channel="cyan")
 
+    def test_mask_composite_is_deterministic_channel_explicit_and_size_strict(self):
+        background = Image.new("RGB", (2, 1), "red")
+        foreground = Image.new("RGB", (2, 1), "blue")
+        mask = Image.new("RGB", (2, 1))
+        mask.putdata([(0, 0, 0), (255, 255, 255)])
+        node = MaskComposite()
+
+        output = node.execute(
+            background=background,
+            foreground=foreground,
+            mask=mask,
+            mask_channel="luminance",
+        )["output"]
+        inverted = node.execute(
+            background=background,
+            foreground=foreground,
+            mask=mask,
+            mask_channel="red",
+            invert_mask=True,
+        )["output"]
+        self.assertEqual([output.getpixel((x, 0)) for x in range(2)], [(255, 0, 0), (0, 0, 255)])
+        self.assertEqual([inverted.getpixel((x, 0)) for x in range(2)], [(0, 0, 255), (255, 0, 0)])
+        with self.assertRaisesRegex(ValueError, "dimensions must match"):
+            node.execute(
+                background=background,
+                foreground=foreground,
+                mask=Image.new("L", (1, 1)),
+            )
+        with self.assertRaisesRegex(ValueError, "Unsupported mask channel"):
+            node.execute(background=background, foreground=foreground, mask=mask, mask_channel="depth")
+
     def test_collection_and_pixel_limits_fail_closed_before_processing(self):
         source = Image.new("RGB", (1, 1), "black")
         with self.assertRaisesRegex(ValueError, "at most"):
@@ -221,12 +253,18 @@ class ImageOperationTests(unittest.TestCase):
                 operation="image_channels",
                 channel="red",
             ),
+            "mask_composite": node.execute(
+                image=[source, Image.new("RGBA", source.size, (200, 40, 20, 255))],
+                mask=Image.new("L", source.size, 255),
+                operation="mask_composite",
+            ),
         }
         self.assertEqual(set(results), set(ProcessImage.params["operation"]["options"]))
         self.assertEqual(results["image_crop"]["output"].size, (4, 3))
         self.assertEqual(results["image_upscale"]["output"].size, (4, 3))
         self.assertEqual(len(results["image_tile"]["output"]), 4)
         self.assertEqual(results["image_channels"]["output"].mode, "L")
+        self.assertEqual(results["mask_composite"]["output"].getpixel((0, 0)), (200, 40, 20, 255))
 
         with self.assertRaisesRegex(ValueError, "contract identity"):
             node.execute(
@@ -241,7 +279,7 @@ class ImageOperationTests(unittest.TestCase):
                 pipeline_class=IMAGE_OPERATION_PIPELINE_CLASS,
             )
 
-    def test_registry_exposes_only_the_seven_generic_operations(self):
+    def test_registry_exposes_only_the_eight_generic_operations(self):
         from modules import MODULE_MAP
 
         self.assertEqual(
@@ -253,6 +291,7 @@ class ImageOperationTests(unittest.TestCase):
                 "ResizeImage",
                 "TileImage",
                 "ImageChannels",
+                "MaskComposite",
                 "ProcessImage",
             },
         )

@@ -39,14 +39,14 @@ class BuiltinImageStudioContractTests(unittest.IsolatedAsyncioTestCase):
                     specification["defaultRepo"],
                     "builtin://modiff/image-operations/v1",
                 )
-                self.assertEqual(
-                    [item[:2] for item in specification["roles"]],
-                    [
-                        ("loadImage", "modules.Image.Load"),
-                        ("imageOperation", "modules.ImageOperations.ProcessImage"),
-                        ("preview", "modules.Image.Preview"),
-                    ],
-                )
+                expected_roles = [
+                    ("loadImage", "modules.Image.Load"),
+                    ("imageOperation", "modules.ImageOperations.ProcessImage"),
+                    ("preview", "modules.Image.Preview"),
+                ]
+                if mode == "mask_composite":
+                    expected_roles.insert(1, ("loadMask", "modules.Image.Load"))
+                self.assertEqual([item[:2] for item in specification["roles"]], expected_roles)
                 profiles = execution_profiles_for_execution("BuiltinImageOperation", mode)
                 self.assertEqual(len(profiles), 1)
                 self.assertEqual(profiles[0].id, "builtin-image-operations:direct")
@@ -68,16 +68,19 @@ class BuiltinImageStudioContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(capability["artifactInstallRequired"])
         self.assertEqual(capability["downloadFiles"], [])
         self.assertEqual(capability["revisionCandidates"], [])
-        self.assertEqual(
-            capability["inputContracts"],
-            {
-                mode: {
-                    "requiredImages": ["referenceImages"],
-                    "note": "Requires one local source image; no model or network access is used.",
-                }
-                for mode in IMAGE_OPERATION_MODES
-            },
-        )
+        expected_input_contracts = {
+            mode: {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one local source image; no model or network access is used.",
+            }
+            for mode in IMAGE_OPERATION_MODES
+        }
+        expected_input_contracts["mask_composite"] = {
+            "requiredImages": ["referenceImages", "maskImage"],
+            "minimumCounts": {"referenceImages": 2},
+            "note": "Requires two same-size local source images and one same-size mask; no model or network access is used.",
+        }
+        self.assertEqual(capability["inputContracts"], expected_input_contracts)
         self.assertFalse(capability["autoEligible"])
         self.assertTrue(capability["templateEligible"])
         self.assertFalse(capability["galleryEligible"])
@@ -89,10 +92,13 @@ class BuiltinImageStudioContractTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(mode=mode):
                 contract = contracts[("BuiltinImageOperation", mode)]
                 self.assertEqual(contract["mediaKind"], "image")
-                self.assertEqual(
-                    contract["requiredMedia"],
-                    [{"kind": "image", "field": "referenceImages", "minimumCount": 1}],
-                )
+                expected_media = [{"kind": "image", "field": "referenceImages", "minimumCount": 1}]
+                if mode == "mask_composite":
+                    expected_media = [
+                        {"kind": "image", "field": "referenceImages", "minimumCount": 2},
+                        {"kind": "image", "field": "maskImage", "minimumCount": 1},
+                    ]
+                self.assertEqual(contract["requiredMedia"], expected_media)
                 self.assertEqual(contract["loaderRole"], "imageOperation")
                 self.assertEqual(contract["loaderRepositories"], ["builtin://modiff/image-operations/v1"])
                 self.assertEqual(contract["output"]["nodeKey"], "modules.Image.Preview")

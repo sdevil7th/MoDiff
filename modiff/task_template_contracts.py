@@ -71,6 +71,15 @@ def _required_media(input_contract: Any, specification: Mapping[str, Any]) -> li
         raise TaskTemplateContractError("Task-template input contract must be an object.")
     required = []
     seen = set()
+    minimum_counts = input_contract.get("minimumCounts", {})
+    if not isinstance(minimum_counts, Mapping) or any(
+        not isinstance(field, str)
+        or not isinstance(count, int)
+        or isinstance(count, bool)
+        or not 1 <= count <= 64
+        for field, count in minimum_counts.items()
+    ):
+        raise TaskTemplateContractError("Task-template minimumCounts must map media fields to integers from 1 to 64.")
     for contract_key, kind in _MEDIA_REQUIREMENT_KEYS.items():
         values = input_contract.get(contract_key, [])
         if not isinstance(values, list):
@@ -80,7 +89,7 @@ def _required_media(input_contract: Any, specification: Mapping[str, Any]) -> li
             if field_contract is None or field_contract[0] != kind or field in seen:
                 raise TaskTemplateContractError(f"Task-template media field {field!r} is invalid or duplicated.")
             seen.add(field)
-            required.append({"kind": kind, "field": field, "minimumCount": 1})
+            required.append({"kind": kind, "field": field, "minimumCount": minimum_counts.get(field, 1)})
     # The reviewed execution spec is the final authority for graph inputs. A
     # few older capabilities predate schema-v2 inputContracts, so normalize
     # their generic bindings instead of adding model-name exceptions.
@@ -91,7 +100,9 @@ def _required_media(input_contract: Any, specification: Mapping[str, Any]) -> li
         field_contract = _MEDIA_FIELDS.get(field) if isinstance(field, str) else None
         if field_contract is not None and field not in seen:
             seen.add(field)
-            required.append({"kind": field_contract[0], "field": field, "minimumCount": 1})
+            required.append({"kind": field_contract[0], "field": field, "minimumCount": minimum_counts.get(field, 1)})
+    if set(minimum_counts) - seen:
+        raise TaskTemplateContractError("Task-template minimumCounts may only name required media fields.")
     return required
 
 

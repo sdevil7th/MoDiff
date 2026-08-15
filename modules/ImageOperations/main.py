@@ -25,6 +25,7 @@ FILTER_OPERATIONS = (
     "chromatic_aberration",
 )
 IMAGE_CHANNELS = ("red", "green", "blue", "alpha", "luminance")
+MASK_CHANNELS = ("luminance", "alpha", "red", "green", "blue")
 RESIZE_FIT_MODES = ("stretch", "contain", "cover")
 RESIZE_RESAMPLING = ("nearest", "bilinear", "bicubic", "lanczos")
 IMAGE_OPERATION_MODES = (
@@ -34,6 +35,7 @@ IMAGE_OPERATION_MODES = (
     "image_upscale",
     "image_tile",
     "image_channels",
+    "mask_composite",
 )
 IMAGE_OPERATION_PIPELINE_CLASS = "BuiltinImageOperationV1"
 
@@ -518,6 +520,59 @@ class ImageChannels(NodeBase):
         }
 
 
+class MaskComposite(NodeBase):
+    """Composite one foreground over one background through a bounded mask."""
+
+    label = "Composite Images with Mask"
+    category = "Image Operations"
+    params = {
+        "background": {"label": "Background", "display": "input", "type": "image"},
+        "foreground": {"label": "Foreground", "display": "input", "type": "image"},
+        "mask": {"label": "Mask", "display": "input", "type": "image"},
+        "mask_channel": {
+            "label": "Mask Channel",
+            "type": "string",
+            "options": MASK_CHANNELS,
+            "default": "luminance",
+        },
+        "invert_mask": {"label": "Invert Mask", "type": "bool", "default": False},
+        "output": {"label": "Composite", "display": "output", "type": "image"},
+    }
+
+    def execute(self, **kwargs):
+        background, background_singular = _images(kwargs.get("background"), name="background")
+        foreground, foreground_singular = _images(kwargs.get("foreground"), name="foreground")
+        masks, mask_singular = _images(kwargs.get("mask"), name="mask")
+        if not background_singular or not foreground_singular or not mask_singular:
+            raise ValueError("Mask Composite accepts exactly one background, foreground, and mask image.")
+        background_image = background[0]
+        foreground_image = foreground[0]
+        mask_image = masks[0]
+        if len({background_image.size, foreground_image.size, mask_image.size}) != 1:
+            raise ValueError("Mask Composite background, foreground, and mask dimensions must match.")
+        if sum(image.width * image.height for image in (background_image, foreground_image, mask_image)) > MAX_TOTAL_PIXELS:
+            raise ValueError(f"Mask Composite inputs exceed the {MAX_TOTAL_PIXELS}-pixel execution limit.")
+
+        channel = str(kwargs.get("mask_channel") or "luminance")
+        if channel not in MASK_CHANNELS:
+            raise ValueError(f"Unsupported mask channel {channel!r}.")
+        rgba_mask = mask_image.convert("RGBA")
+        if channel == "luminance":
+            mask = mask_image.convert("L")
+        else:
+            mask = rgba_mask.getchannel({"alpha": "A", "red": "R", "green": "G", "blue": "B"}[channel])
+        if bool(kwargs.get("invert_mask", False)):
+            mask = ImageOps.invert(mask)
+
+        output_mode = "RGBA" if "A" in background_image.getbands() or "A" in foreground_image.getbands() else "RGB"
+        output = Image.composite(
+            foreground_image.convert(output_mode),
+            background_image.convert(output_mode),
+            mask,
+        )
+        return {"output": output}
+
+
 class ProcessImage(NodeBase):
     """Dispatch one reviewed built-in image task through a stable generic facade."""
 
@@ -526,6 +581,7 @@ class ProcessImage(NodeBase):
     resizable = True
     params = {
         "image": {"label": "Image", "display": "input", "type": "image"},
+        "mask": {"label": "Mask", "display": "input", "type": "image"},
         "pipeline_class": {
             "label": "Built-in Contract",
             "type": "string",
@@ -580,6 +636,13 @@ class ProcessImage(NodeBase):
             "options": IMAGE_CHANNELS,
             "default": "luminance",
         },
+        "composite_mask_channel": {
+            "label": "Composite Mask Channel",
+            "type": "string",
+            "options": MASK_CHANNELS,
+            "default": "luminance",
+        },
+        "composite_invert_mask": {"label": "Invert Composite Mask", "type": "bool", "default": False},
         "output": {"label": "Processed Image", "display": "output", "type": "image"},
     }
 
@@ -636,6 +699,17 @@ class ProcessImage(NodeBase):
                 columns=kwargs.get("columns", 2),
             )
             return {"output": result["tiles"]}
+        if operation == "mask_composite":
+            images, singular = _images(image)
+            if singular or len(images) != 2:
+                raise ValueError("Mask Composite requires exactly two source images: background, then foreground.")
+            return MaskComposite().execute(
+                background=images[0],
+                foreground=images[1],
+                mask=kwargs.get("mask"),
+                mask_channel=kwargs.get("composite_mask_channel", "luminance"),
+                invert_mask=kwargs.get("composite_invert_mask", False),
+            )
         return {
             "output": ImageChannels().execute(
                 image=image,

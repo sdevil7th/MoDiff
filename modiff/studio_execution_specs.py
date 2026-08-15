@@ -11900,6 +11900,7 @@ _BUILTIN_IMAGE_OPERATION_MODES = (
     "image_upscale",
     "image_tile",
     "image_channels",
+    "mask_composite",
 )
 _BUILTIN_IMAGE_OPERATION_PIPELINE_CLASS = "BuiltinImageOperationV1"
 _BUILTIN_IMAGE_OPERATION_REPO = "builtin://modiff/image-operations/v1"
@@ -11946,7 +11947,7 @@ _BUILTIN_IMAGE_OPERATION_CAPABILITY = {
     "supportsNegativePrompt": False,
     "supportsImageInput": True,
     "supportsAudioInput": False,
-    "supportsMask": False,
+    "supportsMask": True,
     "supportsMultiImage": True,
     "supportsControlImage": False,
     "supportsLayers": False,
@@ -11974,10 +11975,18 @@ _BUILTIN_IMAGE_OPERATION_CAPABILITY = {
     "galleryEligible": False,
     "liveProof": False,
     "modeRequirements": {
-        mode: {
-            "requiredImages": ["referenceImages"],
-            "note": "Requires one local source image; no model or network access is used.",
-        }
+        mode: (
+            {
+                "requiredImages": ["referenceImages", "maskImage"],
+                "minimumCounts": {"referenceImages": 2},
+                "note": "Requires two same-size local source images and one same-size mask; no model or network access is used.",
+            }
+            if mode == "mask_composite"
+            else {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one local source image; no model or network access is used.",
+            }
+        )
         for mode in _BUILTIN_IMAGE_OPERATION_MODES
     },
     "notes": [
@@ -12001,15 +12010,42 @@ _BUILTIN_IMAGE_OPERATION_BINDINGS = (
     ("imageOperation", "pipeline_class", "pipelineClass"),
     ("imageOperation", "operation", "mode"),
 )
+_BUILTIN_MASK_COMPOSITE_ROLES = (
+    ("loadImage", "modules.Image.Load", -720, -180),
+    ("loadMask", "modules.Image.Load", -720, 240),
+    ("imageOperation", "modules.ImageOperations.ProcessImage", -160, -80),
+    ("preview", "modules.Image.Preview", 400, -80),
+)
+_BUILTIN_MASK_COMPOSITE_EDGES = (
+    ("loadImage", "image", "imageOperation", "image"),
+    ("loadMask", "image", "imageOperation", "mask"),
+    ("imageOperation", "output", "preview", "image"),
+)
+_BUILTIN_MASK_COMPOSITE_BINDINGS = _BUILTIN_IMAGE_OPERATION_BINDINGS + (
+    ("loadMask", "file", "maskImage"),
+    ("loadMask", "alpha_channel", "removeAlpha"),
+)
 for _builtin_image_mode in _BUILTIN_IMAGE_OPERATION_MODES:
     STUDIO_EXECUTION_SPEC_DEFINITIONS[f"builtin-image-operations:{_builtin_image_mode.replace('_', '-')}:v1"] = {
         "modelType": "BuiltinImageOperation",
         "mode": _builtin_image_mode,
         "profile": _BUILTIN_IMAGE_OPERATION_PROFILE,
         "capability": _BUILTIN_IMAGE_OPERATION_CAPABILITY,
-        "roles": _BUILTIN_IMAGE_OPERATION_ROLES,
-        "edges": _BUILTIN_IMAGE_OPERATION_EDGES,
-        "bindings": _BUILTIN_IMAGE_OPERATION_BINDINGS,
+        "roles": (
+            _BUILTIN_MASK_COMPOSITE_ROLES
+            if _builtin_image_mode == "mask_composite"
+            else _BUILTIN_IMAGE_OPERATION_ROLES
+        ),
+        "edges": (
+            _BUILTIN_MASK_COMPOSITE_EDGES
+            if _builtin_image_mode == "mask_composite"
+            else _BUILTIN_IMAGE_OPERATION_EDGES
+        ),
+        "bindings": (
+            _BUILTIN_MASK_COMPOSITE_BINDINGS
+            if _builtin_image_mode == "mask_composite"
+            else _BUILTIN_IMAGE_OPERATION_BINDINGS
+        ),
     }
 
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
