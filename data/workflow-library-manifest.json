@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T09:44:23.991Z",
+  "generatedAt": "2026-08-15T10:19:48.444Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 178,
-  "supportedPairCount": 190,
+  "supportedCanonicalPairCount": 181,
+  "supportedPairCount": 193,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -592,6 +592,101 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/aura-flow-pipeline/text-to-image.json",
       "graphHash": "947eefe6822b88ca18f15a4a52eb8d5bfc12784fa258a78c8235c624441e9038"
+    },
+    {
+      "id": "BuiltinAudioOperation:audio_join",
+      "modelType": "BuiltinAudioOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "audio_join",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/audio-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredAudio": [
+          "sourceAudio",
+          "referenceAudio"
+        ],
+        "note": "Requires source and continuation audio within the combined sample budget."
+      },
+      "pipelineClasses": [
+        "BuiltinAudioOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-audio-operations:join:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-audio-operation/audio-join.json",
+      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7"
+    },
+    {
+      "id": "BuiltinAudioOperation:audio_loudness_match",
+      "modelType": "BuiltinAudioOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "audio_loudness_match",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/audio-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredAudio": [
+          "sourceAudio",
+          "referenceAudio"
+        ],
+        "note": "Requires source and reference audio and applies bounded constant-gain loudness matching."
+      },
+      "pipelineClasses": [
+        "BuiltinAudioOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-audio-operations:loudness-match:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
+      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49"
+    },
+    {
+      "id": "BuiltinAudioOperation:audio_trim",
+      "modelType": "BuiltinAudioOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "audio_trim",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/audio-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredAudio": [
+          "sourceAudio"
+        ],
+        "note": "Requires one bounded local audio source."
+      },
+      "pipelineClasses": [
+        "BuiltinAudioOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-audio-operations:trim:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-audio-operation/audio-trim.json",
+      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a"
     },
     {
       "id": "BuiltinImageOperation:image_adjustment",
