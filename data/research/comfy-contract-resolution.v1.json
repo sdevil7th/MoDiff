@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:d9703c4f94eaab0d116f06e5bfb5f322b8de9fb354ddd0940a2a11104253d79d",
+  "contentHash": "sha256:f522cf0e3f316625dd2e86a064e4e48fe24e4666f68acf1c96aae5c5e301cfab",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -12744,8 +12744,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_scail2_and_sam3_character_replacement_is_not_wan_animate",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -12771,7 +12772,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:WanAnimatePipeline:character_replace",
@@ -12792,12 +12793,62 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "character_replace",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_14B_SCAIL_2_fp16.safetensors",
+            "repository": "Comfy-Org/SCAIL-2"
+          },
+          {
+            "artifact": "wan2.1_SCAIL_2_DPO_lora_bf16.safetensors",
+            "repository": "Comfy-Org/SCAIL-2"
+          },
+          {
+            "artifact": "sam3.1_multiplex_fp16.safetensors",
+            "repository": "Comfy-Org/sam3.1"
+          },
+          {
+            "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "Wan2_1_VAE_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan21_scail2_character_replacement.json",
+        "assetSha256": "d85a06af10724e66e5f7857e5f7d9fc10cf28fc528abe19b86514b04ee84ccde",
+        "catalogRecommendedWorkflowId": "WanAnimatePipeline:character_replace",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.2-Animate-14B-Diffusers",
+          "currentRevision": "6f4df10861c758af86ac3c979aacc1bf5c03eff0",
+          "currentWorkflowId": "WanAnimatePipeline:character_replace",
+          "reasonCode": "scail2_and_sam3_character_replacement_is_not_wan_animate",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "d442da88aab84e0b9673162dc77e5e7a479e16c4",
+        "importsGraph": false,
+        "reviewedWorkflowId": "WanAnimatePipeline:character_replace",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SCAIL-2: Character Replacement"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_scail2_int8_and_sam3_character_replacement_is_not_wan_animate",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "exact_catalog_model_or_variant_admission_required"
@@ -12823,7 +12874,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 1,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_boundary_reuse_candidate_only_catalog_model_unmatched",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
         "authoringSpecId": "template-authoring:WanAnimatePipeline:character_replace",
@@ -12844,12 +12895,62 @@
       "resolutionState": "existing_task_boundary_model_admission_required",
       "selectedCandidateMode": "character_replace",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_14B_SCAIL_2_int8_convrot.safetensors",
+            "repository": "Comfy-Org/SCAIL-2"
+          },
+          {
+            "artifact": "wan2.1_SCAIL_2_DPO_lora_bf16.safetensors",
+            "repository": "Comfy-Org/SCAIL-2"
+          },
+          {
+            "artifact": "sam3.1_multiplex_fp16.safetensors",
+            "repository": "Comfy-Org/sam3.1"
+          },
+          {
+            "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "Wan2_1_VAE_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan21_scail2_character_replacement_int8.json",
+        "assetSha256": "e1f89c0e5bc58697ebef14a8d55569643e067de57b70d560418ba927912c748d",
+        "catalogRecommendedWorkflowId": "WanAnimatePipeline:character_replace",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.2-Animate-14B-Diffusers",
+          "currentRevision": "6f4df10861c758af86ac3c979aacc1bf5c03eff0",
+          "currentWorkflowId": "WanAnimatePipeline:character_replace",
+          "reasonCode": "scail2_int8_and_sam3_character_replacement_is_not_wan_animate",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "2c404d05c00a455aa76def65bc6be13e3fc93c7e",
+        "importsGraph": false,
+        "reviewedWorkflowId": "WanAnimatePipeline:character_replace",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "SCAIL-2 Int8: Character Replacement"
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_infinitetalk_requires_audio_conditioned_video_task_and_model_patch",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -12876,7 +12977,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_audio_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -12885,6 +12986,49 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "audio_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "Wan2_1-I2V-14B-480p_fp8_e4m3fn_scaled_KJ.safetensors",
+            "repository": "Kijai/WanVideo_comfy_fp8_scaled"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan2_1_VAE_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "wan2.1_infiniteTalk_multi_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wav2vec2-chinese-base_fp16.safetensors",
+            "repository": "Kijai/wav2vec2_safetensors"
+          },
+          {
+            "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          }
+        ],
+        "assetPath": "templates/video_wan2_1_infinitetalk.json",
+        "assetSha256": "29daad103b235336af64ea3ec87aa2a5ef1a88ea13d2f24c24c27413b3ade293",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "infinitetalk_requires_audio_conditioned_video_task_and_model_patch",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "add0693ba9cd40026c4e9842a01fd02646fc16e7",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "InfiniteTalk: Audio-Driven Full-Body Video Dubbing"
     },
     {
@@ -13169,9 +13313,9 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_s2v_requires_audio_conditioned_video_task_and_model",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -13199,7 +13343,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_audio_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -13208,6 +13352,45 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "audio_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_s2v_14B_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wav2vec2_large_english_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2_2_14B_s2v.json",
+        "assetSha256": "e5e8eda3c0ec86fdeca79c1a8d8648685ccbd200708ec87aa2087b75d98d0a45",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan_s2v_requires_audio_conditioned_video_task_and_model",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "e1106394a66ad51011394c48064899f46735cdb3",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.2-S2V Audio-Driven Video Generation"
     },
     {
@@ -13382,8 +13565,9 @@
     },
     {
       "blockers": [
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_dancer_requires_audio_pose_video_task_and_dual_model_generation",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "new_bounded_modiff_task_contract_required",
@@ -13410,7 +13594,7 @@
       "currentFamilyOptionCount": 0,
       "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "no_current_mode_and_output_boundary",
+      "mappingMeaning": "source_reviewed_new_audio_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
@@ -13419,6 +13603,49 @@
       "resolutionState": "new_task_boundary_required",
       "selectedCandidateMode": "audio_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_dancer_14b_global_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan-Dancer"
+          },
+          {
+            "artifact": "wan2.2_dancer_14b_local_fp8_scaled.safetensors",
+            "repository": "Comfy-Org/Wan-Dancer"
+          },
+          {
+            "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan2_1_VAE_bf16.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          }
+        ],
+        "assetPath": "templates/video_wan_dancer.json",
+        "assetSha256": "8558abb7332977ca80d20580887711c0919be2f122350c68d5407150d547c311",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan_dancer_requires_audio_pose_video_task_and_dual_model_generation",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "26ad8546a395a39c725351f8d5687343f9649b7e",
+        "importsGraph": false,
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan Dancer: Music to Dance"
     },
     {
@@ -14286,10 +14513,10 @@
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 74,
+    "pinnedSourceReviewCount": 79,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 12,
-      "different_model_generation_requires_admission": 45,
+      "different_model_generation_and_new_task_required": 15,
+      "different_model_generation_requires_admission": 47,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
       "same_upstream_generation_different_partition_and_auxiliary": 6,

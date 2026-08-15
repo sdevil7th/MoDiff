@@ -65,12 +65,12 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 106)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 28)
         self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 78)
-        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 74)
+        self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 79)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
             {
-                "different_model_generation_and_new_task_required": 12,
-                "different_model_generation_requires_admission": 45,
+                "different_model_generation_and_new_task_required": 15,
+                "different_model_generation_requires_admission": 47,
                 "same_upstream_family_different_default_partition": 1,
                 "same_upstream_generation_different_partition_and_auxiliary": 6,
                 "same_upstream_generation_and_new_task_auxiliary_required": 1,
@@ -214,7 +214,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertFalse(resolution["claims"]["exactCatalogCheckpointSupported"])
             self.assertFalse(resolution["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_pinned_source_reviews_resolve_seventy_four_exact_dependency_surfaces_without_copying_graphs(self):
+    def test_pinned_source_reviews_resolve_seventy_nine_exact_dependency_surfaces_without_copying_graphs(self):
         reviewed = {
             row["catalogId"]: row
             for row in self.ledger["resolutions"]
@@ -280,8 +280,10 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "video_minimax_h3_r2v",
                 "video_minimax_h3_t2v",
                 "video_wan2.1_alpha_t2v_14B",
+                "video_wan2_1_infinitetalk",
                 "video_wan2.1_fun_camera_v1.1_1.3B",
                 "video_wan2.1_fun_camera_v1.1_14B",
+                "video_wan2_2_14B_s2v",
                 "video_wan2_2_14B_fun_camera",
                 "video_wan2_2_14B_fun_control",
                 "video_wan2_2_5B_fun_control",
@@ -289,6 +291,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 "video_wan_vace_14B_ref2v",
                 "video_wan_vace_14B_t2v",
                 "video_wan_vace_14B_v2v",
+                "video_wan21_scail2_character_replacement",
+                "video_wan21_scail2_character_replacement_int8",
+                "video_wan_dancer",
                 "video_wanmove_480p",
                 "wan2.1_fun_control",
                 "utility_birefnet_remove_background",
@@ -334,6 +339,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "audio_ace_step_1_t2a_instrumentals",
             "audio_ace_step_1_t2a_song",
             "audio_minimax_music_3",
+            "video_wan21_scail2_character_replacement",
+            "video_wan21_scail2_character_replacement_int8",
             "audio_stable_audio_3_medium",
             "audio_stable_audio_3_medium_base",
             "image_chroma1_radiance_text_to_image",
