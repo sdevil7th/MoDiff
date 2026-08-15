@@ -688,6 +688,74 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "existing_family_workflow_candidate",
         "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
     },
+    "comfy-research:template:templates-1_click_multiple_character_angles-v1.0": {
+        "assetPath": "templates/templates-1_click_multiple_character_angles-v1.0.json",
+        "assetSha256": "d16ea80b6c7b28b66b84d0a3c4ce3e5c52ac61b89aad28a2bec9205b4aa89820",
+        "gitBlobOid": "65342f0c439959c17c2a93035769214faa8689f9",
+        "reviewedWorkflowId": "QwenImageEditPlusModularPipeline:edit_image",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI",
+                "artifact": "qwen_image_edit_2511_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "lightx2v/Qwen-Image-Edit-2511-Lightning",
+                "artifact": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+            },
+            {
+                "repository": "fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA",
+                "artifact": "qwen-image-edit-2511-multiple-angles-lora.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_requires_auxiliary_admission",
+            "currentWorkflowId": "QwenImageEditPlusModularPipeline:edit_image",
+            "currentRepository": "Qwen/Qwen-Image-Edit-2511",
+            "currentRevision": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9",
+            "currentAuxiliaryRepositories": ["lightx2v/Qwen-Image-Edit-2511-Lightning"],
+            "reasonCode": "qwen_edit_2511_multiple_angles_lora_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:templates-1_click_multiple_scene_angles-v1.0": {
+        "assetPath": "templates/templates-1_click_multiple_scene_angles-v1.0.json",
+        "assetSha256": "d9bf5d0920bd1780d981160d28de79ae5536e6b090c7f9f3992080ebc768b894",
+        "gitBlobOid": "05f187fd77665e7ecd5f5a5b194e36759c90e8b6",
+        "artifactDependencies": [
+            {"repository": "Comfy-Org/Qwen-Image_ComfyUI", "artifact": "qwen_image_vae.safetensors"},
+            {
+                "repository": "Comfy-Org/Qwen-Image_ComfyUI",
+                "artifact": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI",
+                "artifact": "qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Qwen-Image-Edit_ComfyUI",
+                "artifact": "Qwen-Edit-2509-Multiple-angles.safetensors",
+            },
+            {
+                "repository": "lightx2v/Qwen-Image-Lightning",
+                "artifact": "Qwen-Image-Edit-2509-Lightning-4steps-V1.0-bf16.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_requires_auxiliary_admission",
+            "currentWorkflowId": "QwenImageEditModularPipeline:edit_image",
+            "currentRepository": "Qwen/Qwen-Image-Edit",
+            "currentRevision": "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+            "reasonCode": "qwen_edit_2509_multiple_angles_lora_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
+    },
     "comfy-research:template:ltxv_image_to_video": {
         "assetPath": "templates/ltxv_image_to_video.json",
         "assetSha256": "96bf9ddbbf4591af29df2b707933c2ea25d9c3a406296ade0fbe1ae91d43b0d0",
@@ -1184,6 +1252,96 @@ _PINNED_SOURCE_REVIEWS = {
         },
         "resolutionState": "existing_task_boundary_model_admission_required",
         "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_causal_forcing_i2v": {
+        "assetPath": "templates/video_causal_forcing_i2v.json",
+        "assetSha256": "9fa0b00d61da61966b5149bda4fa6da295247680f1a00632e518faf591c03ca2",
+        "gitBlobOid": "03ee6adfc18b1c49021b4bd81bb43ac40a3d8ff0",
+        "reviewedWorkflowId": "WanImageToVideoPipeline:image_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "TalmajM/causal_forcing_framewise_ComfyUI_repackaged",
+                "artifact": "causal_forcing-framewise.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanImageToVideoPipeline:image_to_video",
+            "currentRepository": "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+            "currentRevision": "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+            "reasonCode": "causal_forcing_framewise_is_not_wan2_2_i2v",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_wan2_2_5B_fun_control": {
+        "assetPath": "templates/video_wan2_2_5B_fun_control.json",
+        "assetSha256": "2e80a254d3fb263f02d1a74e6abb0676d4dbb6aaf813575bf75ff4bda7bbb40d",
+        "gitBlobOid": "92cd847090ae109ec9dec8182e021ac719243931",
+        "reviewedTaskMode": "control_video_to_video",
+        "reviewedWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_control_5B_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_vae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+            "currentRepository": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+            "currentRevision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+            "currentAuxiliaryRepositories": ["guoyww/animatediff-motion-adapter-v1-5-2"],
+            "reasonCode": "wan2_2_5b_fun_control_reuses_boundary_not_animatediff_model",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_wanmove_480p": {
+        "assetPath": "templates/video_wanmove_480p.json",
+        "assetSha256": "6492b8deabf5b3151402d003a73c8b79615edb34e2b23ac1b8617d70e407da85",
+        "gitBlobOid": "294015f805fbb69564a662029d96122105b364a9",
+        "reviewedTaskMode": "motion_track_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Kijai/WanVideo_comfy_fp8_scaled",
+                "artifact": "Wan21-WanMove_fp8_scaled_e4m3fn_KJ.safetensors",
+            },
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan_2.1_vae.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "wanmove_requires_motion_track_task_and_model",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_motion_track_video_task_and_model_generation_required",
     },
     "comfy-research:template:image_ernie_image": {
         "assetPath": "templates/image_ernie_image.json",
