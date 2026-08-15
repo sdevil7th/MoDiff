@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:24932c55107c05f4a29a19cf4bbf3615f4a15d3bca005bfd1d566af24fffbdb7",
+  "contentHash": "sha256:41a65d51a135b991664e3208bef341dd07630b4d5cc33dd8e4406a474e70bbfc",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -3588,7 +3588,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b44fa4d012cf20271b5d22439ce4a7d397768c2c224c3ed5233bee47f888725a",
+      "graphHash": "13f43948c2f883c2ccb354943962c26e6ee27cc5985e8237e48d6a0c075f0776",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -6600,13 +6600,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:4d0e2b191cf1c3840c2b8ebf01e2f7a8c1ef93897c37fe9ba768375938d3da71",
+      "contentHash": "sha256:505adfb65462a62acbc33bedbd8457c9d686f7a4b1db4a7370ca6c7d9fa36db5",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:e2d61e57f1f652ff69e550f027f2077f3cf47f163eb7149a967cb2d23f385e7a"
+      "sha256": "sha256:4203c0c7e15b98bc69a363c2f014508c4ecf67644c05637053e5b788270bdb54"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:02b4f2aa7f1763ccfa88448f9b4d84a8d1d2f101223892897c947d90658fb711"
+      "sha256": "sha256:0d8f54d84cc7a2e92d8512d6cd4a1b531cc2768691f02dd65c554fc3067ee56f"
     }
   },
   "summary": {

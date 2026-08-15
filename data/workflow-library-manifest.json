@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T12:30:22.503Z",
+  "generatedAt": "2026-08-15T13:26:25.261Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 185,
@@ -3347,7 +3347,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
-      "graphHash": "b44fa4d012cf20271b5d22439ce4a7d397768c2c224c3ed5233bee47f888725a"
+      "graphHash": "13f43948c2f883c2ccb354943962c26e6ee27cc5985e8237e48d6a0c075f0776"
     },
     {
       "id": "LongCatImageEditPipeline:edit_image",

@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:6cac243af6cc083391b19303835874c0e714e3ec61b3bb51b006acf698a8405c",
+  "contentHash": "sha256:810b3eb33c410a6681fc55179b4222ff2513b94560c25a6734afb29dbf4c6c7d",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:24932c55107c05f4a29a19cf4bbf3615f4a15d3bca005bfd1d566af24fffbdb7",
+      "contentHash": "sha256:41a65d51a135b991664e3208bef341dd07630b4d5cc33dd8e4406a474e70bbfc",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:f038f0e86640629df0c76152450888a01340970d4185918539676928dd213be1"
+      "sha256": "sha256:b4b41300d636f8b48582b667f0bfb3d6e0660470b02283d83b6858715c205da1"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:02b4f2aa7f1763ccfa88448f9b4d84a8d1d2f101223892897c947d90658fb711"
+      "sha256": "sha256:0d8f54d84cc7a2e92d8512d6cd4a1b531cc2768691f02dd65c554fc3067ee56f"
     }
   },
   "specifications": [
@@ -11185,7 +11185,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
-        "sha256": "b44fa4d012cf20271b5d22439ce4a7d397768c2c224c3ed5233bee47f888725a"
+        "sha256": "13f43948c2f883c2ccb354943962c26e6ee27cc5985e8237e48d6a0c075f0776"
       },
       "canonicalWorkflowId": "LongCatAudioDiTPipeline:text_to_audio",
       "claims": {
@@ -11238,7 +11238,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "b44fa4d012cf20271b5d22439ce4a7d397768c2c224c3ed5233bee47f888725a",
+        "sourceGraphSha256": "13f43948c2f883c2ccb354943962c26e6ee27cc5985e8237e48d6a0c075f0776",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
