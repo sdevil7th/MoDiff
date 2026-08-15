@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T10:53:54.963Z",
+  "generatedAt": "2026-08-15T11:09:29.011Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 184,
-  "supportedPairCount": 196,
+  "supportedCanonicalPairCount": 185,
+  "supportedPairCount": 197,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -986,6 +986,37 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-image-operation/mask-composite.json",
       "graphHash": "b3cb792c36111c427b7a901840d2774b1a2e5ce193a538948c7cce7ada710bc8"
+    },
+    {
+      "id": "BuiltinVideoOperation:frame_interpolation",
+      "modelType": "BuiltinVideoOperation",
+      "modelFamily": "Built-in Media",
+      "mode": "frame_interpolation",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "requiredVideos": [
+          "sourceVideo"
+        ],
+        "note": "Requires one local source video and performs bounded deterministic FFmpeg blend interpolation; it is not an optical-flow or model-equivalence claim."
+      },
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "sourceTemplateId": "task-template:builtin-video-operations:frame-interpolation:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/builtin-video-operation/frame-interpolation.json",
+      "graphHash": "d87491f272df636c918d324a469158b8488277e8e0e55f014db11900cf3e1fa5"
     },
     {
       "id": "BuiltinVideoOperation:video_frame_extract",
