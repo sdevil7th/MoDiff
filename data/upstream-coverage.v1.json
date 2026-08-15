@@ -187,6 +187,39 @@
       "status": "executable"
     },
     {
+      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+      "graphPath": "studio/builtin-audio-operation/audio-join.json",
+      "id": "BuiltinAudioOperation:audio_join",
+      "mode": "audio_join",
+      "modelType": "BuiltinAudioOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+      "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
+      "id": "BuiltinAudioOperation:audio_loudness_match",
+      "mode": "audio_loudness_match",
+      "modelType": "BuiltinAudioOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+      "graphPath": "studio/builtin-audio-operation/audio-trim.json",
+      "id": "BuiltinAudioOperation:audio_trim",
+      "mode": "audio_trim",
+      "modelType": "BuiltinAudioOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08",
       "graphPath": "studio/builtin-image-operation/image-adjustment.json",
       "id": "BuiltinImageOperation:image_adjustment",
@@ -2227,7 +2260,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:7775ce689d14ffa9b9dd1628d905be336d3120a9177d294637d42edc98c4f674",
+  "contentHash": "sha256:507ea0dabeab958546a0020d1a566dd62a977782e0dc3b5411780d9f9ea6aef2",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7963,9 +7996,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 190,
+    "canonicalWorkflowCount": 193,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 139,
+    "canonicalWorkflowsWithoutPublicTemplates": 142,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7998,7 +8031,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 190,
+      "executable": 193,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

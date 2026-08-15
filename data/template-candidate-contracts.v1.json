@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:29263085dd4cf94d6170ee56565253bcee53f7f845e9162a6751b4e63fab2641",
+  "contentHash": "sha256:57100c47e5e14fec3cb9bb3aeef4ae325534223897d38cac2303c8eb63548bef",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -524,6 +524,134 @@
         "fal/AuraFlow-v0.3"
       ],
       "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinAudioOperation:audio_join",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+      "graphPath": "studio/builtin-audio-operation/audio-join.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "audio",
+      "mode": "audio_join",
+      "modelType": "BuiltinAudioOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinAudioOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/audio-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires source and continuation audio within the combined sample budget.",
+        "requiredAudio": [
+          "sourceAudio",
+          "referenceAudio"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinAudioOperation:audio_loudness_match",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+      "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "audio",
+      "mode": "audio_loudness_match",
+      "modelType": "BuiltinAudioOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinAudioOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/audio-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires source and reference audio and applies bounded constant-gain loudness matching.",
+        "requiredAudio": [
+          "sourceAudio",
+          "referenceAudio"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinAudioOperation:audio_trim",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+      "graphPath": "studio/builtin-audio-operation/audio-trim.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "audio",
+      "mode": "audio_trim",
+      "modelType": "BuiltinAudioOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinAudioOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/audio-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one bounded local audio source.",
+        "requiredAudio": [
+          "sourceAudio"
+        ]
+      },
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -6319,27 +6447,27 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:7775ce689d14ffa9b9dd1628d905be336d3120a9177d294637d42edc98c4f674",
+      "contentHash": "sha256:507ea0dabeab958546a0020d1a566dd62a977782e0dc3b5411780d9f9ea6aef2",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:7c8864b063fe535d81088f2473cfb28ec5cf1d9f3e37db6eefcbb96d60fa232a"
+      "sha256": "sha256:17a2e2c2b0c6827c695f6eb25f14346b4a9cae2ddb398dc09d266b33914d395f"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:99537c6c61e5673254f79e7457e91f6fabc89c86a59624293a0fe182321129c6"
+      "sha256": "sha256:3c02ffeb1bd1a315f8ebe0c1bf61af28f9e2e284b09350ff0a2d40f31a5baf5d"
     }
   },
   "summary": {
-    "candidateContractCount": 139,
-    "canonicalWorkflowCount": 190,
+    "candidateContractCount": 142,
+    "canonicalWorkflowCount": 193,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 87,
+    "contractsRequiringInputExamples": 90,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
-      "audio": 3,
+      "audio": 6,
       "image": 98,
       "json": 6,
       "video": 32

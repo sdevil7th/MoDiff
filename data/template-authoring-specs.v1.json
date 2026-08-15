@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:1042ad843b1d65ce5f78ffd21df71a9a192c89b923410df188956d6ef421ef2c",
+  "contentHash": "sha256:a91bd7223a68b8d55118dfe53c363b464a846a218435c49ef314c2c65b6d3d30",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:29263085dd4cf94d6170ee56565253bcee53f7f845e9162a6751b4e63fab2641",
+      "contentHash": "sha256:57100c47e5e14fec3cb9bb3aeef4ae325534223897d38cac2303c8eb63548bef",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:7a635beb2dcc9eea2458f52cebbc8af4a90f8fca20c950386973c564b5a31e0a"
+      "sha256": "sha256:34e68293c1b3172860c45cbe182f03b9a1423016bececed75e4d6e218498db2e"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:99537c6c61e5673254f79e7457e91f6fabc89c86a59624293a0fe182321129c6"
+      "sha256": "sha256:3c02ffeb1bd1a315f8ebe0c1bf61af28f9e2e284b09350ff0a2d40f31a5baf5d"
     }
   },
   "specifications": [
@@ -1599,6 +1599,342 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "AuraFlow — Text To Image [AuraFlowPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/audio-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-audio-operation/audio-join.json",
+        "sha256": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7"
+      },
+      "canonicalWorkflowId": "BuiltinAudioOperation:audio_join",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "sample_rate",
+            "role": "audioExport",
+            "value": 48000
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinAudioOperation:audio_join",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceAudio",
+            "mediaKind": "audio",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_audio",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          },
+          {
+            "field": "referenceAudio",
+            "mediaKind": "audio",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_audio",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "audio",
+      "mode": "audio_join",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinAudioOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "audio"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_duration_sample_rate_and_decodable_output",
+          "prompt_alignment_and_coherent_structure",
+          "clean_loudness_without_clipping_or_abrupt_cut",
+          "no_unrequested_voice_or_copyrighted_source_imitation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one audio result for the exact Built-in Media audio join workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Audio Join [BuiltinAudioOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/audio-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-audio-operation/audio-loudness-match.json",
+        "sha256": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49"
+      },
+      "canonicalWorkflowId": "BuiltinAudioOperation:audio_loudness_match",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "sample_rate",
+            "role": "audioExport",
+            "value": 48000
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinAudioOperation:audio_loudness_match",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceAudio",
+            "mediaKind": "audio",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_audio",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          },
+          {
+            "field": "referenceAudio",
+            "mediaKind": "audio",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_audio",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "audio",
+      "mode": "audio_loudness_match",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinAudioOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "audio"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_duration_sample_rate_and_decodable_output",
+          "prompt_alignment_and_coherent_structure",
+          "clean_loudness_without_clipping_or_abrupt_cut",
+          "no_unrequested_voice_or_copyrighted_source_imitation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one audio result for the exact Built-in Media audio loudness match workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Audio Loudness Match [BuiltinAudioOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/audio-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-audio-operation/audio-trim.json",
+        "sha256": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a"
+      },
+      "canonicalWorkflowId": "BuiltinAudioOperation:audio_trim",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "sample_rate",
+            "role": "audioExport",
+            "value": 48000
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinAudioOperation:audio_trim",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceAudio",
+            "mediaKind": "audio",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_audio",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "audio",
+      "mode": "audio_trim",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinAudioOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "audio"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_duration_sample_rate_and_decodable_output",
+          "prompt_alignment_and_coherent_structure",
+          "clean_loudness_without_clipping_or_abrupt_cut",
+          "no_unrequested_voice_or_copyrighted_source_imitation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one audio result for the exact Built-in Media audio trim workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Audio Trim [BuiltinAudioOperation]"
     },
     {
       "artifactPlan": {
@@ -20384,16 +20720,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 139,
+    "authoringSpecCount": 142,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 52,
-      "draft_complete_input_selection_pending": 87
+      "draft_complete_input_selection_pending": 90
     },
-    "canonicalDefaultsCapturedCount": 139,
-    "generationPendingCount": 139,
-    "inputSelectionPendingCount": 87,
+    "canonicalDefaultsCapturedCount": 142,
+    "generationPendingCount": 142,
+    "inputSelectionPendingCount": 90,
     "promptDraftedCount": 120,
-    "promptNotApplicableCount": 19,
-    "rightsReviewPendingCount": 139
+    "promptNotApplicableCount": 22,
+    "rightsReviewPendingCount": 142
   }
 }
