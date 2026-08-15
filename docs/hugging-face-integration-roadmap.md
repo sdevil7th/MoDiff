@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Seventy-four of those 138 candidates now also have exact pinned graph-source
+Seventy-nine of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7025,6 +7025,11 @@ graphs are source-proven to decode synchronized audio as well as video, so their
 video-only catalog modes are corrected to `text_to_video_with_audio`,
 `image_to_video_with_audio`, and `reference_to_video_with_audio`. Those bounded
 tasks and runnable workflows remain unauthored.
+Three Wan audio-driven video reviews retain InfiniteTalk, S2V, and Wan Dancer
+as separate model/patch/audio-encoder admissions behind the unauthored
+`audio_to_video` boundary. Two SCAIL-2 variants reuse only the generic
+`character_replace` task while retaining their SCAIL, SAM3, LoRA, vision, and
+VAE dependency gates; they are not Wan Animate support claims.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7146,7 +7151,8 @@ multiple-angle, causal-forcing, Wan Fun Control, and WanMove decisions.
 corrections. `527709b` adds the six FILM, SeedVR2, PixelDiT, and BiRefNet
 utility-model decisions. `9d62715` adds the four causal and multimodal text
 decisions. `80f86fd` adds MiniMax Music 3 and corrects all three H3 output/task
-contracts to video plus audio.
+contracts to video plus audio. `04c0445` adds the three Wan audio-driven video
+and two SCAIL-2 character-replacement decisions.
 
 The following separate gates do remain external:
 
