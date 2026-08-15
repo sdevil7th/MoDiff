@@ -15,7 +15,7 @@ MAX_IMAGE_COUNT = 64
 MAX_IMAGE_PIXELS = 16_777_216
 MAX_TOTAL_PIXELS = 67_108_864
 MAX_TILE_COUNT = 64
-FILTER_OPERATIONS = (
+FILTER_OPERATIONS = [
     "gaussian_blur",
     "box_blur",
     "sharpen",
@@ -23,12 +23,12 @@ FILTER_OPERATIONS = (
     "glow",
     "film_grain",
     "chromatic_aberration",
-)
-IMAGE_CHANNELS = ("red", "green", "blue", "alpha", "luminance")
-MASK_CHANNELS = ("luminance", "alpha", "red", "green", "blue")
-RESIZE_FIT_MODES = ("stretch", "contain", "cover")
-RESIZE_RESAMPLING = ("nearest", "bilinear", "bicubic", "lanczos")
-IMAGE_OPERATION_MODES = (
+]
+IMAGE_CHANNELS = ["red", "green", "blue", "alpha", "luminance"]
+MASK_CHANNELS = ["luminance", "alpha", "red", "green", "blue"]
+RESIZE_FIT_MODES = ["stretch", "contain", "cover"]
+RESIZE_RESAMPLING = ["nearest", "bilinear", "bicubic", "lanczos"]
+IMAGE_OPERATION_MODES = [
     "image_adjustment",
     "image_filter",
     "image_crop",
@@ -36,7 +36,7 @@ IMAGE_OPERATION_MODES = (
     "image_tile",
     "image_channels",
     "mask_composite",
-)
+]
 IMAGE_OPERATION_PIPELINE_CLASS = "BuiltinImageOperationV1"
 
 

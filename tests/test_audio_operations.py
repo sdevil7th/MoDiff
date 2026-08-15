@@ -38,7 +38,7 @@ def _audio(*, frames=16000, sample_rate=16000, channels=1):
 
 class BuiltinAudioOperationTests(unittest.TestCase):
     def test_facade_exposes_three_exact_install_free_operations(self):
-        self.assertEqual(AUDIO_OPERATION_MODES, ("audio_trim", "audio_join", "audio_loudness_match"))
+        self.assertEqual(AUDIO_OPERATION_MODES, ["audio_trim", "audio_join", "audio_loudness_match"])
         self.assertEqual(ProcessAudio.params["pipeline_class"]["default"], AUDIO_OPERATION_PIPELINE_CLASS)
         self.assertEqual(ProcessAudio.params["operation"]["options"], AUDIO_OPERATION_MODES)
 

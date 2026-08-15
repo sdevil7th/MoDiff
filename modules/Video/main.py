@@ -9,14 +9,14 @@ from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST
 
 logger = logging.getLogger("modiff")
 
-VIDEO_OPERATION_MODES = (
+VIDEO_OPERATION_MODES = [
     "video_frame_extract",
     "frame_interpolation",
     "video_stitch",
     "video_trim",
     "video_reverse",
     "video_tile",
-)
+]
 VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
 VIDEO_UPSCALE_MODE = "video_upscale"
 VIDEO_UPSCALE_PIPELINE_CLASS = "SpandrelVideoUpscaleV1"
@@ -28,7 +28,6 @@ VIDEO_UPSCALE_MODEL_SELECTION = {
     "byteSize": 67_061_725,
     "license": "bsd-3-clause",
 }
-VIDEO_DEVICE_OPTIONS = tuple(DEVICE_LIST.keys())
 MAX_VIDEO_OPERATION_INPUTS = 16
 MAX_VIDEO_OPERATION_FRAMES_PER_INPUT = 14_400
 MAX_VIDEO_OPERATION_TOTAL_FRAMES = 57_600
@@ -1645,7 +1644,7 @@ class UpscaleVideo(NodeBase):
             "label": "Device",
             "type": "string",
             "default": DEFAULT_DEVICE,
-            "options": VIDEO_DEVICE_OPTIONS,
+            "options": DEVICE_LIST,
         },
         "fps": {"label": "Output FPS", "type": "float", "default": 24, "min": 1, "max": 120},
         "preview": {"display": "ui_video", "type": "url", "dataSource": "video_out"},

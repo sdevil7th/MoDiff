@@ -21,7 +21,7 @@ AUDIO_SAMPLE_RATE_OPTIONS = {
     "88200": "88.2 kHz",
     "96000": "96 kHz",
 }
-AUDIO_OPERATION_MODES = ("audio_trim", "audio_join", "audio_loudness_match")
+AUDIO_OPERATION_MODES = ["audio_trim", "audio_join", "audio_loudness_match"]
 AUDIO_OPERATION_PIPELINE_CLASS = "BuiltinAudioOperationV1"
 MAX_AUDIO_OPERATION_DURATION_SECONDS = 300.0
 MAX_AUDIO_OPERATION_SCALAR_SAMPLES = 14_400_000
