@@ -439,6 +439,44 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
 
+    def test_loader_resolution_uses_declared_mode_before_repository(self):
+        values = {
+            "pipeline_class": "DreamLiteMobilePipeline",
+            "model_id": {"source": "hub", "value": "carlofkl/DreamLite-mobile"},
+        }
+        cases = {
+            "text_to_image": "dreamlite-mobile:direct",
+            "edit_image": "dreamlite-mobile:edit-direct",
+        }
+        for mode, expected in cases.items():
+            with self.subTest(mode=mode):
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    {**values, "mode": mode},
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected])
+
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+        )
+        self.assertEqual(reason, "loader_profile_ambiguous")
+        self.assertEqual(len(profiles), 2)
+
+        cases = (("unknown", "loader_mode_unregistered"), ([], "loader_mode_invalid"))
+        for mode, expected_reason in cases:
+            with self.subTest(mode=mode):
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    {**values, "mode": mode},
+                )
+                self.assertEqual(reason, expected_reason)
+                self.assertEqual(len(profiles), 2)
+
     def test_reviewed_custom_loaders_share_the_first_use_optional_runtime_gate(self):
         cases = (
             (

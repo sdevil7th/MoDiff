@@ -1044,6 +1044,18 @@ def resolve_execution_profiles_for_loader(
     if len(matching) == 1:
         return matching, None
 
+    raw_mode = values.get("mode")
+    if raw_mode is not None:
+        if not isinstance(raw_mode, str) or not raw_mode.strip():
+            return matching, "loader_mode_invalid"
+        mode = raw_mode.strip()
+        mode_matches = tuple(profile for profile in matching if mode in profile.modes)
+        if not mode_matches:
+            return matching, "loader_mode_unregistered"
+        matching = mode_matches
+        if len(matching) == 1:
+            return matching, None
+
     raw_repository = values.get("model_id") or values.get("repo_id")
     if isinstance(raw_repository, str):
         repository = raw_repository.strip()
