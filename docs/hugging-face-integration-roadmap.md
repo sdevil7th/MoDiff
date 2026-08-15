@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Seventy of those 138 candidates now also have exact pinned graph-source
+Seventy-four of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7020,6 +7020,11 @@ Four LLM reviews leave Qwen3 as bounded causal text generation, correct Qwen3.5
 and Qwen3-VL to image-conditioned text, and identify Gemma4's connected image
 plus audio inputs as a new bounded `image_audio_to_text` task. Their Comfy
 single-file text-encoder artifacts remain separate model admissions.
+MiniMax Music 3 remains a distinct text-to-audio model admission. The three H3
+graphs are source-proven to decode synchronized audio as well as video, so their
+video-only catalog modes are corrected to `text_to_video_with_audio`,
+`image_to_video_with_audio`, and `reference_to_video_with_audio`. Those bounded
+tasks and runnable workflows remain unauthored.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7140,7 +7145,8 @@ multiple-angle, causal-forcing, Wan Fun Control, and WanMove decisions.
 `e6205d1` finishes the five Wan/VACE family source reviews and their task
 corrections. `527709b` adds the six FILM, SeedVR2, PixelDiT, and BiRefNet
 utility-model decisions. `9d62715` adds the four causal and multimodal text
-decisions.
+decisions. `80f86fd` adds MiniMax Music 3 and corrects all three H3 output/task
+contracts to video plus audio.
 
 The following separate gates do remain external:
 
