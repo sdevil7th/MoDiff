@@ -99,6 +99,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             "image_tile",
             "image_upscale",
             "mask_composite",
+            "frame_interpolation",
             "video_frame_extract",
             "video_reverse",
             "video_stitch",

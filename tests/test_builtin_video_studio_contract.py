@@ -20,10 +20,13 @@ from modules.Video.main import (
     MAX_VIDEO_OPERATION_FRAMES_PER_INPUT,
     MAX_VIDEO_OPERATION_INPUTS,
     MAX_VIDEO_OPERATION_PIXELS,
+    MAX_VIDEO_INTERPOLATION_FPS,
+    MAX_VIDEO_INTERPOLATION_PIXEL_FRAMES,
     MAX_VIDEO_REVERSE_PIXEL_FRAMES,
     VIDEO_OPERATION_MODES,
     VIDEO_OPERATION_PIPELINE_CLASS,
     FrameExtract,
+    FrameInterpolateAsset,
     ProcessVideo,
 )
 
@@ -130,6 +133,46 @@ class BuiltinVideoOperationTests(unittest.TestCase):
         self.assertEqual(tile.call_args.kwargs["gap"], 8)
         self.assertEqual(tile.call_args.kwargs["background"], "gray")
 
+    def test_frame_interpolation_delegates_with_one_bounded_source_and_exact_target_rate(self):
+        source = _asset(frames=48, fps=24, path="source.mp4")
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[source]),
+            patch(
+                "modules.Video.main.FrameInterpolateAsset.execute",
+                return_value={"file": "interpolated.mp4"},
+            ) as execute,
+        ):
+            result = ProcessVideo().execute(
+                videos="source.mp4",
+                operation="frame_interpolation",
+                interpolation_fps=60,
+            )
+        self.assertEqual(result["video"], "interpolated.mp4")
+        self.assertEqual(execute.call_args.kwargs["video"], source)
+        self.assertEqual(execute.call_args.kwargs["target_fps"], 60)
+
+    def test_frame_interpolation_uses_literal_bounded_ffmpeg_blend_filter(self):
+        source = _asset(frames=48, fps=24, path="source.mp4")
+        result = {"file": "interpolated.mp4", "asset": {"fps": 60}}
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[source]),
+            patch("modiff.media_assets.allocate_video_path", return_value=("asset", "output.mp4")),
+            patch("modiff.media_assets.run_ffmpeg") as run_ffmpeg,
+            patch("modules.Video.main._derived_asset_result", return_value=result),
+        ):
+            self.assertIs(FrameInterpolateAsset().execute(video=source, target_fps=60), result)
+        command = run_ffmpeg.call_args.args[0]
+        self.assertEqual(
+            command[command.index("-vf") + 1],
+            (
+                "tpad=stop_mode=clone:stop_duration=1,"
+                "minterpolate=fps=60:mi_mode=blend,"
+                "trim=duration=2,setpts=PTS-STARTPTS"
+            ),
+        )
+        self.assertEqual(command[command.index("-r") + 1], "60")
+        self.assertIn("-an", command)
+
     def test_new_operations_fail_closed_on_workload_and_field_bounds(self):
         source = _asset(frames=48)
         trim_cases = (
@@ -146,7 +189,7 @@ class BuiltinVideoOperationTests(unittest.TestCase):
                 self.assertRaisesRegex(ValueError, "trim"),
             ):
                 ProcessVideo().execute(videos="source.mp4", operation="video_trim", **values)
-        for operation in ("video_trim", "video_reverse"):
+        for operation in ("frame_interpolation", "video_trim", "video_reverse"):
             with (
                 self.subTest(operation=operation),
                 patch("modules.Video.main._file_asset_collection", return_value=[source, source]),
@@ -163,6 +206,43 @@ class BuiltinVideoOperationTests(unittest.TestCase):
             self.assertRaisesRegex(ValueError, "pixel-frames"),
         ):
             ProcessVideo().execute(videos="source.mp4", operation="video_reverse")
+
+        interpolation_cases = (24, 12, float("nan"), MAX_VIDEO_INTERPOLATION_FPS + 1)
+        for target_fps in interpolation_cases:
+            with (
+                self.subTest(interpolation_fps=target_fps),
+                patch("modules.Video.main._file_asset_collection", return_value=[source]),
+                self.assertRaisesRegex(ValueError, "interpolation FPS"),
+            ):
+                ProcessVideo().execute(
+                    videos="source.mp4",
+                    operation="frame_interpolation",
+                    interpolation_fps=target_fps,
+                )
+        oversized_interpolation = _asset(
+            frames=MAX_VIDEO_OPERATION_FRAMES_PER_INPUT,
+            fps=1,
+        )
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[oversized_interpolation]),
+            self.assertRaisesRegex(ValueError, "frame output limit"),
+        ):
+            ProcessVideo().execute(
+                videos="source.mp4",
+                operation="frame_interpolation",
+                interpolation_fps=MAX_VIDEO_INTERPOLATION_FPS,
+            )
+        pixel_frame_limited = _asset(width=4096, height=4096, frames=24, fps=24)
+        self.assertLessEqual(4096 * 4096, MAX_VIDEO_OPERATION_PIXELS)
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[pixel_frame_limited]),
+            self.assertRaisesRegex(ValueError, str(MAX_VIDEO_INTERPOLATION_PIXEL_FRAMES)),
+        ):
+            ProcessVideo().execute(
+                videos="source.mp4",
+                operation="frame_interpolation",
+                interpolation_fps=60,
+            )
 
         tile_assets = [_asset(width=1920, height=1080), _asset(width=1920, height=1080)]
         invalid_tile_fields = (
@@ -273,6 +353,7 @@ class BuiltinVideoStudioContractTests(unittest.IsolatedAsyncioTestCase):
             capability["modeOutputKinds"],
             {
                 "video_frame_extract": "image",
+                "frame_interpolation": "video",
                 "video_stitch": "video",
                 "video_trim": "video",
                 "video_reverse": "video",
@@ -285,6 +366,7 @@ class BuiltinVideoStudioContractTests(unittest.IsolatedAsyncioTestCase):
 
         contracts = contracts_by_pair(payload["taskTemplateContracts"])
         extract = contracts[("BuiltinVideoOperation", "video_frame_extract")]
+        interpolate = contracts[("BuiltinVideoOperation", "frame_interpolation")]
         stitch = contracts[("BuiltinVideoOperation", "video_stitch")]
         trim = contracts[("BuiltinVideoOperation", "video_trim")]
         reverse = contracts[("BuiltinVideoOperation", "video_reverse")]
@@ -295,7 +377,7 @@ class BuiltinVideoStudioContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stitch["requiredMedia"], [{"kind": "video", "field": "referenceVideos", "minimumCount": 2}])
         self.assertEqual(stitch["mediaKind"], "video")
         self.assertEqual(stitch["output"]["nodeKey"], "modules.Video.Export")
-        for contract in (trim, reverse):
+        for contract in (interpolate, trim, reverse):
             self.assertEqual(contract["requiredMedia"], [{"kind": "video", "field": "sourceVideo", "minimumCount": 1}])
             self.assertEqual(contract["mediaKind"], "video")
             self.assertEqual(contract["output"]["nodeKey"], "modules.Video.Export")

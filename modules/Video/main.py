@@ -11,6 +11,7 @@ logger = logging.getLogger("modiff")
 
 VIDEO_OPERATION_MODES = (
     "video_frame_extract",
+    "frame_interpolation",
     "video_stitch",
     "video_trim",
     "video_reverse",
@@ -33,6 +34,8 @@ MAX_VIDEO_OPERATION_FRAMES_PER_INPUT = 14_400
 MAX_VIDEO_OPERATION_TOTAL_FRAMES = 57_600
 MAX_VIDEO_OPERATION_PIXELS = 16_777_216
 MAX_VIDEO_REVERSE_PIXEL_FRAMES = 251_658_240
+MAX_VIDEO_INTERPOLATION_FPS = 120
+MAX_VIDEO_INTERPOLATION_PIXEL_FRAMES = 251_658_240
 MAX_EXTRACTED_FRAMES = 64
 MAX_VIDEO_UPSCALE_FRAMES = 1_200
 MAX_VIDEO_UPSCALE_INPUT_PIXELS = 4_194_304
@@ -1355,6 +1358,33 @@ def _bounded_video_operation_assets(value, *, minimum):
     return assets
 
 
+def _validate_video_interpolation(source, target_fps):
+    source_fps = float(source["fps"])
+    target_fps = float(target_fps)
+    if (
+        not math.isfinite(target_fps)
+        or target_fps <= source_fps
+        or target_fps > MAX_VIDEO_INTERPOLATION_FPS
+    ):
+        raise ValueError(
+            "Video frame interpolation FPS must be finite, above the source rate, "
+            f"and at most {MAX_VIDEO_INTERPOLATION_FPS}."
+        )
+    predicted_frames = math.ceil(float(source["duration_seconds"]) * target_fps)
+    if predicted_frames > MAX_VIDEO_OPERATION_TOTAL_FRAMES:
+        raise ValueError(
+            "Video frame interpolation exceeds the bounded "
+            f"{MAX_VIDEO_OPERATION_TOTAL_FRAMES}-frame output limit."
+        )
+    pixel_frames = int(source["width"]) * int(source["height"]) * predicted_frames
+    if pixel_frames > MAX_VIDEO_INTERPOLATION_PIXEL_FRAMES:
+        raise ValueError(
+            "Video frame interpolation exceeds the bounded "
+            f"{MAX_VIDEO_INTERPOLATION_PIXEL_FRAMES} output pixel-frame limit."
+        )
+    return target_fps
+
+
 class ProcessVideo(NodeBase):
     """Dispatch reviewed install-free video tasks through existing bounded nodes."""
 
@@ -1390,6 +1420,14 @@ class ProcessVideo(NodeBase):
         "timecodes": {"label": "Times (seconds)", "type": "string", "default": "0"},
         "every_n": {"label": "Every N Frames", "type": "int", "default": 16, "min": 1, "max": 14400},
         "fps": {"label": "Output FPS", "type": "float", "default": 24, "min": 1, "max": 120},
+        "interpolation_fps": {
+            "label": "Interpolation FPS",
+            "type": "float",
+            "default": 60,
+            "min": 1,
+            "max": MAX_VIDEO_INTERPOLATION_FPS,
+            "step": 0.01,
+        },
         "transition_seconds": {
             "label": "Crossfade",
             "type": "float",
@@ -1460,7 +1498,14 @@ class ProcessVideo(NodeBase):
                 "selected_indices": result["selected_indices"],
                 "timestamps": result["timestamps"],
             }
-        if operation == "video_stitch":
+        if operation == "frame_interpolation":
+            assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=1)
+            if len(assets) != 1:
+                raise ValueError("Video frame interpolation requires exactly one input video.")
+            source = assets[0]
+            target_fps = _validate_video_interpolation(source, kwargs.get("interpolation_fps") or 60)
+            result = FrameInterpolateAsset().execute(video=source, target_fps=target_fps, pin=False)
+        elif operation == "video_stitch":
             assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
             transition_seconds = float(kwargs.get("transition_seconds") or 0)
             if not math.isfinite(transition_seconds) or not 0 <= transition_seconds <= 5:
@@ -1822,6 +1867,73 @@ class ReverseAsset(NodeBase):
             destination,
         )
         return _derived_asset_result(destination, asset_id, [source], "reverse", pin=bool(kwargs.get("pin")))
+
+
+class FrameInterpolateAsset(NodeBase):
+    """Increase a retained clip's frame rate through bounded deterministic blending."""
+
+    label = "Interpolate Retained Video Frames"
+    category = "Video"
+    params = {
+        "video": {"label": "Video", "display": "input", "type": ["video_asset", "str"]},
+        "target_fps": {
+            "label": "Target FPS",
+            "type": "float",
+            "default": 60,
+            "min": 1,
+            "max": MAX_VIDEO_INTERPOLATION_FPS,
+        },
+        "pin": {"label": "Protect From Cleanup", "type": "bool", "default": False},
+        "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
+        "asset": {"label": "Video Asset", "display": "output", "type": "video_asset"},
+        "file": {"label": "File", "display": "output", "type": "video"},
+        "duration_seconds": {"label": "Duration", "display": "output", "type": "float"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+
+        sources = _bounded_video_operation_assets(kwargs.get("video"), minimum=1)
+        if len(sources) != 1:
+            raise ValueError("Interpolate Retained Video Frames requires exactly one input video.")
+        source = sources[0]
+        source_fps = float(source.get("fps") or 0)
+        target_fps = _validate_video_interpolation(source, kwargs.get("target_fps") or 60)
+        duration = float(source.get("duration_seconds") or 0)
+        fps_text = f"{target_fps:.12g}"
+        duration_text = f"{duration:.12g}"
+        tail_padding_text = f"{max(1.0, 2.0 / source_fps):.12g}"
+        asset_id, destination = allocate_video_path(task_id=current_task_id())
+        run_ffmpeg(
+            [
+                "-i",
+                source["path"],
+                "-vf",
+                (
+                    f"tpad=stop_mode=clone:stop_duration={tail_padding_text},"
+                    f"minterpolate=fps={fps_text}:mi_mode=blend,"
+                    f"trim=duration={duration_text},setpts=PTS-STARTPTS"
+                ),
+                "-an",
+                "-r",
+                fps_text,
+                "-c:v",
+                "libx264",
+                "-crf",
+                "18",
+                "-movflags",
+                "+faststart",
+            ],
+            destination,
+        )
+        return _derived_asset_result(
+            destination,
+            asset_id,
+            [source],
+            "frame_interpolation_blend",
+            pin=bool(kwargs.get("pin")),
+        )
 
 
 class CrossfadeAssets(NodeBase):

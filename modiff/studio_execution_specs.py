@@ -12285,6 +12285,7 @@ for _builtin_data_mode, _builtin_data_spec_name in (
 
 _BUILTIN_VIDEO_OPERATION_MODES = (
     "video_frame_extract",
+    "frame_interpolation",
     "video_stitch",
     "video_trim",
     "video_reverse",
@@ -12343,6 +12344,7 @@ _BUILTIN_VIDEO_OPERATION_CAPABILITY = {
     "outputKind": "video",
     "modeOutputKinds": {
         "video_frame_extract": "image",
+        "frame_interpolation": "video",
         "video_stitch": "video",
         "video_trim": "video",
         "video_reverse": "video",
@@ -12373,6 +12375,13 @@ _BUILTIN_VIDEO_OPERATION_CAPABILITY = {
         "video_frame_extract": {
             "requiredVideos": ["sourceVideo"],
             "note": "Requires one local source video and extracts at most 64 frames without model or network access.",
+        },
+        "frame_interpolation": {
+            "requiredVideos": ["sourceVideo"],
+            "note": (
+                "Requires one local source video and performs bounded deterministic FFmpeg blend interpolation; "
+                "it is not an optical-flow or model-equivalence claim."
+            ),
         },
         "video_stitch": {
             "requiredVideos": ["referenceVideos"],
@@ -12414,6 +12423,23 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:frame-extract:v1"] =
     ),
     "edges": (("videoOperation", "images", "preview", "image"),),
     "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS + (("videoOperation", "videos", "sourceVideo"),),
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:frame-interpolation:v1"] = {
+    "modelType": "BuiltinVideoOperation",
+    "mode": "frame_interpolation",
+    "profile": _BUILTIN_VIDEO_OPERATION_PROFILE,
+    "capability": _BUILTIN_VIDEO_OPERATION_CAPABILITY,
+    "roles": (
+        ("videoOperation", "modules.Video.ProcessVideo", -220, -80),
+        ("videoExport", "modules.Video.Export", 260, -80),
+    ),
+    "edges": (("videoOperation", "video", "videoExport", "video"),),
+    "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS
+    + (
+        ("videoOperation", "videos", "sourceVideo"),
+        ("videoOperation", "interpolation_fps", "fps"),
+        ("videoExport", "fps", "fps"),
+    ),
 }
 STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:stitch:v1"] = {
     "modelType": "BuiltinVideoOperation",

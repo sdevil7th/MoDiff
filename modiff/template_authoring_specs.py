@@ -43,6 +43,7 @@ _NO_PROMPT_MODES = {
     "image_upscale",
     "image_tile",
     "mask_composite",
+    "frame_interpolation",
     "video_frame_extract",
     "video_reverse",
     "video_stitch",
