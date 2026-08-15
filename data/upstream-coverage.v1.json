@@ -231,6 +231,17 @@
       "status": "executable"
     },
     {
+      "graphHash": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475",
+      "graphPath": "studio/builtin-data-operation/graph-utility.json",
+      "id": "BuiltinDataOperation:graph_utility",
+      "mode": "graph_utility",
+      "modelType": "BuiltinDataOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66",
       "graphPath": "studio/builtin-data-operation/text-select.json",
       "id": "BuiltinDataOperation:text_select",
@@ -2282,7 +2293,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:7431af79645e0fda297d55cde2a85afa9d177ec9719fe769447b4f4d52682cc4",
+  "contentHash": "sha256:83a8dfa0d94ae16293cd584452c5d7173beee303578d8c12d0c9dce92d4c4f46",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8018,9 +8029,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 195,
+    "canonicalWorkflowCount": 196,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 144,
+    "canonicalWorkflowsWithoutPublicTemplates": 145,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -8053,7 +8064,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 195,
+      "executable": 196,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

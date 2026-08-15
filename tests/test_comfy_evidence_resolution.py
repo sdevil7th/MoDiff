@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 61,
+                "recordsWithHiddenAuthoringSpecOption": 62,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 87,
+                "recordsWithRecommendedWorkflow": 88,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 28,
+                    "explicit_new_task_candidate": 27,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 62,
+                    "explicit_task_candidate": 63,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 62,
-                    "new_task_boundary_required": 28,
+                    "existing_task_boundary_model_admission_required": 63,
+                    "new_task_boundary_required": 27,
                     "task_undetermined": 1,
                 },
             },
@@ -227,6 +227,7 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
         expected = {
             "select_per_line_text_by_index": ("text_select", "BuiltinDataOperation:text_select"),
             "basic_datatype_conversion": ("data_conversion", "BuiltinDataOperation:data_conversion"),
+            "basic_switch_node": ("graph_utility", "BuiltinDataOperation:graph_utility"),
         }
         by_catalog_id = {row["catalogId"]: row for row in self.ledger["resolutions"]}
         for catalog_id, (mode, workflow_id) in expected.items():

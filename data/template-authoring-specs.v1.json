@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:0d62e908179ad7d94d2981f0cb3add8e8a6eb4a57798d58d3ec98c90d31e5e85",
+  "contentHash": "sha256:493967664844cd321e38f5e7a48b9a4505f50372c07b7ae209d1cdd9984c034e",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:5f429487f95be6d4f3fad13cbb08ebcc058d7023c42b4e124ee4db729817cd50",
+      "contentHash": "sha256:72d94ce631227b21bd68ec54a36f1bf7f4e1dedc18cc42f221c743a9bba8cb1e",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:621efb8ce1b40710cc8851324eee0989709b8285d7ade17a60a3e9a53d169f7d"
+      "sha256": "sha256:44009bf70e93eef52659c9721ecee13581c4d8816306ab2025b1b5158740cb80"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:15f2e9bd2753e03c973beb8f7e4bcfac8b806656ed34c6a8ede7082c1dcb4cc4"
+      "sha256": "sha256:e1649a631cc20536fed1170c52420d756aad7d099d859dd121d0bad7f3e60312"
     }
   },
   "specifications": [
@@ -2019,6 +2019,90 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "Built-in Media — Data Conversion [BuiltinDataOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/data-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "studio/builtin-data-operation/graph-utility.json",
+        "sha256": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475"
+      },
+      "canonicalWorkflowId": "BuiltinDataOperation:graph_utility",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "a01e0e21549a57477a6aead2f6bb2768b2a22b9828fd4b046e2fe41499ca1475",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": false,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinDataOperation:graph_utility",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "json",
+      "mode": "graph_utility",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinDataOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "json"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "bounded_decodable_result",
+          "instruction_or_source_alignment",
+          "no_unsupported_claims_or_hidden_detail_invention",
+          "receipt_matches_exact_input_and_runtime"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Primary branch: the repaired footbridge is ready for the morning crossing.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one json result for the exact Built-in Media graph utility workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Graph Utility [BuiltinDataOperation]"
     },
     {
       "artifactPlan": {
@@ -20888,16 +20972,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 144,
+    "authoringSpecCount": 145,
     "authoringStateCounts": {
-      "draft_complete_execution_pending": 54,
+      "draft_complete_execution_pending": 55,
       "draft_complete_input_selection_pending": 90
     },
-    "canonicalDefaultsCapturedCount": 144,
-    "generationPendingCount": 144,
+    "canonicalDefaultsCapturedCount": 145,
+    "generationPendingCount": 145,
     "inputSelectionPendingCount": 90,
-    "promptDraftedCount": 122,
+    "promptDraftedCount": 123,
     "promptNotApplicableCount": 22,
-    "rightsReviewPendingCount": 144
+    "rightsReviewPendingCount": 145
   }
 }
