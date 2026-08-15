@@ -7102,14 +7102,14 @@ of the 51 advertised resource recipes has a measured physical qualification
 receipt on this host. Source completeness, prior visual approval, asset
 authoring, and physical release qualification remain separate claims.
 
-A separate ignored local technical-review receipt now captures 37 completed app
-workflows and 41 byte-hashed outputs. It includes all 19 model-free built-in
+A separate ignored local technical-review receipt now captures 38 completed app
+workflows and 42 byte-hashed outputs. It includes all 20 model-free built-in
 image, audio, video, and JSON candidates; generic SmolLM2 text generation and
 SmolVLM image-to-text; and 16 real-model workflow canaries: SD1.5 text, edit,
 and Canny ControlNet; LCM text and edit; DreamLite Mobile text and edit; SD1.5
 PAG; Sana Sprint text; Marigold depth; LongCat AudioDiT; Shap-E; Consistency,
 DDIM, and DDPM unconditional generation; and SDXL Turbo. The media partition is
-four audio, 26 image, six video, and five JSON outputs. Every receipt remains
+four audio, 27 image, six video, and five JSON outputs. Every receipt remains
 explicitly pending human quality and rights review, with Gallery approval,
 publication, and release eligibility false.
 
@@ -7223,6 +7223,7 @@ launches and normalize backend collision suffixes plus connected-field UI
 state without changing execution values or topology. Backend `3275f22` reseals
 upstream coverage, all 147 hidden candidate/authoring contracts, and the Comfy
 resolution ledger against that exact graph library.
+
 The first app execution of that stitch graph then found a real generic-facade
 output mismatch: `StitchImages` returns diagnostic `rows` and `count` fields,
 while `ProcessImage` declares only its stable `output`. Backend `8eb958e` now
@@ -7232,8 +7233,18 @@ completed on CPU in 0.0404 seconds at 438,063,104 bytes process RSS and saved
 the ignored technical candidate
 `data/images/campaign-image-stitch-v1.png` (1,040 by 592 RGB PNG, 81,600 bytes,
 SHA-256 `6df5aba74e28bdb8bb00a702ef35485b8d59c6327644c9cb298dd1f205289b22`).
-Its separate receipt remains pending human quality and rights review; it is not
-a Gallery, publication, or release-eligibility claim.
+Its receipt remains pending human quality and rights review; it is not a
+Gallery, publication, or release-eligibility claim.
+
+Backend `c8bae74` also adds the explicit no-rerun evidence path used here: it
+loads each receipt's historical graph from an exact Git commit, verifies the
+retained canonical graph hash, compares a bounded execution-only projection,
+and rebinds only when modules, actions, node enablement, topology, and parameter
+values remain identical after portable data-reference normalization. It keeps
+the previous graph hash, source commit, projection version, and semantic hash
+in the receipt. Twenty-eight of the 37 retained pre-stitch receipts reconciled
+this way; the other nine graph hashes were already current. Any execution drift
+fails closed and still requires a real rerun.
 
 The following separate gates do remain external:
 
