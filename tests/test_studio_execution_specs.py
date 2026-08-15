@@ -373,6 +373,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("BuiltinAudioOperation", "audio_trim"),
                 ("BuiltinAudioOperation", "audio_join"),
                 ("BuiltinAudioOperation", "audio_loudness_match"),
+                ("BuiltinDataOperation", "text_select"),
+                ("BuiltinDataOperation", "data_conversion"),
                 ("BuiltinVideoOperation", "video_frame_extract"),
                 ("BuiltinVideoOperation", "video_stitch"),
                 ("BuiltinVideoOperation", "video_trim"),

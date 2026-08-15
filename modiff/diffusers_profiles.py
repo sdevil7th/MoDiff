@@ -279,6 +279,10 @@ class DiffusersExecutionProfile:
                 "modules.Audio",
                 "ProcessAudio",
             ),
+            "builtin-data-operation": (
+                "modules.Text",
+                "ProcessText",
+            ),
             "builtin-video-operation": (
                 "modules.Video",
                 "ProcessVideo",

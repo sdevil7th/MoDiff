@@ -258,6 +258,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                         profile.id,
                         {
                             "builtin-audio-operations:direct",
+                            "builtin-data-operations:direct",
                             "builtin-image-operations:direct",
                             "builtin-video-operations:direct",
                             "real-esrgan-x2-video-upscale:direct",

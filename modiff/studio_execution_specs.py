@@ -12178,6 +12178,110 @@ for _builtin_audio_mode, _builtin_audio_spec_name in (
         else _BUILTIN_AUDIO_OPERATION_BINDINGS,
     }
 
+_BUILTIN_DATA_OPERATION_MODES = ("text_select", "data_conversion")
+_BUILTIN_DATA_OPERATION_PIPELINE_CLASS = "BuiltinDataOperationV1"
+_BUILTIN_DATA_OPERATION_REPO = "builtin://modiff/data-operations/v1"
+_BUILTIN_DATA_OPERATION_PROFILE = {
+    "id": "builtin-data-operations:direct",
+    "model_type": "BuiltinDataOperation",
+    "modes": _BUILTIN_DATA_OPERATION_MODES,
+    "loader_module": "modules.Text",
+    "loader_action": "ProcessText",
+    "execution_path": "builtin-data-operation",
+    "pipeline_class": _BUILTIN_DATA_OPERATION_PIPELINE_CLASS,
+    "default_repo": _BUILTIN_DATA_OPERATION_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "optional_runtime_profiles": (),
+    "optional_runtime_delivery": "base",
+    "optional_runtime_platform_deliveries": (),
+    "compatible_repos": (),
+}
+_BUILTIN_DATA_OPERATION_CAPABILITY = {
+    "modelType": "BuiltinDataOperation",
+    "label": "Built-in Data Operations",
+    "displayName": "Built-in Data Operations",
+    "family": "Built-in Media",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": _BUILTIN_DATA_OPERATION_REPO,
+    "artifactLabel": "Versioned MoDiff built-in operation contract",
+    "artifactKind": "builtin",
+    "artifactInstallRequired": False,
+    "downloadFiles": [],
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 0, "height": 0, "aspectRatio": "data"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "json",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 0,
+        "height": 0,
+    },
+    "modes": list(_BUILTIN_DATA_OPERATION_MODES),
+    "executionStatus": "supported",
+    "revisionCandidates": [],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "modeRequirements": {},
+    "notes": [
+        "Runs deterministic bounded text selection and data conversion in the base MoDiff process.",
+        "No model artifact, optional runtime, accelerator, download, or remote code is required.",
+        "Gallery publication remains disabled pending authored examples and human review.",
+    ],
+}
+_BUILTIN_DATA_OPERATION_ROLES = (
+    ("dataOperation", "modules.Text.ProcessText", -220, -80),
+    ("dataPreview", "modules.Primitive.DataViewer", 260, -80),
+)
+_BUILTIN_DATA_OPERATION_EDGES = (("dataOperation", "output", "dataPreview", "value"),)
+_BUILTIN_DATA_OPERATION_BINDINGS = (
+    ("dataOperation", "pipeline_class", "pipelineClass"),
+    ("dataOperation", "operation", "mode"),
+    ("dataOperation", "source", "prompt"),
+)
+for _builtin_data_mode, _builtin_data_spec_name in (
+    ("text_select", "text-select"),
+    ("data_conversion", "data-conversion"),
+):
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"builtin-data-operations:{_builtin_data_spec_name}:v1"] = {
+        "modelType": "BuiltinDataOperation",
+        "mode": _builtin_data_mode,
+        "profile": _BUILTIN_DATA_OPERATION_PROFILE,
+        "capability": _BUILTIN_DATA_OPERATION_CAPABILITY,
+        "roles": _BUILTIN_DATA_OPERATION_ROLES,
+        "edges": _BUILTIN_DATA_OPERATION_EDGES,
+        "bindings": _BUILTIN_DATA_OPERATION_BINDINGS,
+    }
+
 _BUILTIN_VIDEO_OPERATION_MODES = (
     "video_frame_extract",
     "video_stitch",

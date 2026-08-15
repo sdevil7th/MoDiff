@@ -165,6 +165,7 @@ _MODE_PROMPTS = {
     "control_inpaint": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
     "control_to_video": "Generate a temporally coherent cinematic shot that follows the supplied control motion and structure, with stable subjects, smooth movement, and consistent lighting.",
     "control_video_to_video": "Transform the source video while following the control video frame by frame; preserve timing and camera motion, keep subjects stable, and avoid flicker or geometry drift.",
+    "data_conversion": '{"project":"footbridge repair","shot_count":5,"approved":false,"tags":["documentary","community"]}',
     "edit_image": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
     "image_to_text": "Describe the supplied image accurately and concisely. Identify the main subject, setting, visible actions, composition, lighting, and any clearly legible text without guessing hidden details.",
     "image_to_video": "Animate the supplied image into a short cinematic shot with subtle camera movement, physically plausible subject motion, stable identity, coherent depth, and no sudden scene changes.",
@@ -174,6 +175,7 @@ _MODE_PROMPTS = {
     "outpaint": "Extend the supplied image beyond its original frame with a seamless continuation of perspective, lighting, architecture or landscape, texture, and depth; do not duplicate the central subject.",
     "reference_to_video": "Create a coherent short cinematic shot guided by the supplied reference, preserving its subject identity, visual language, palette, and spatial relationships while adding natural motion.",
     "text_generation": "Write a concise production brief for a 20-second documentary shot about a community repairing a storm-damaged footbridge. Include setting, subject action, camera plan, sound cues, and a clear ending in five short bullet points.",
+    "text_select": "Wide establishing shot at dawn\nClose detail of hands fitting the replacement plank\nMedium shot of neighbors testing the repaired footbridge\nQuiet final view as the river passes beneath the completed span",
     "text_to_3d": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview.",
     "video_to_video": "Restyle the supplied video as a restrained cinematic documentary while preserving timing, camera motion, subject identity, scene layout, and temporal continuity.",
 }
