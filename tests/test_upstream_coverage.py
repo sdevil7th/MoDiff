@@ -44,9 +44,9 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 183,
+                "canonicalWorkflowCount": 184,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "canonicalWorkflowsWithoutPublicTemplates": 132,
+                "canonicalWorkflowsWithoutPublicTemplates": 133,
                 "diffusersPipelineSymbolCount": 327,
                 "pipelineStatusCounts": {
                     "contract-only": 20,
@@ -79,7 +79,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 183,
+                    "executable": 184,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,

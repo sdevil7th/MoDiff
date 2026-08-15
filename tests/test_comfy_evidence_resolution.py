@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 54,
+                "recordsWithHiddenAuthoringSpecOption": 55,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 80,
+                "recordsWithRecommendedWorkflow": 81,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 35,
+                    "explicit_new_task_candidate": 34,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 55,
+                    "explicit_task_candidate": 56,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 55,
-                    "new_task_boundary_required": 35,
+                    "existing_task_boundary_model_admission_required": 56,
+                    "new_task_boundary_required": 34,
                     "task_undetermined": 1,
                 },
             },
@@ -192,6 +192,23 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
         self.assertEqual(
             row["recommendedWorkflow"]["canonicalWorkflowId"],
             "BuiltinImageOperation:image_upscale",
+        )
+
+    def test_explicit_mask_composite_metadata_reuses_the_bounded_install_free_task(self):
+        row = next(
+            row
+            for row in self.ledger["resolutions"]
+            if row["catalogId"] == "basic_mask_operations_and_compositing"
+        )
+        self.assertEqual(row["inferredMode"], "mask_composite")
+        self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+        self.assertEqual(
+            row["taskBoundaryState"],
+            "existing_task_boundary_model_admission_required",
+        )
+        self.assertEqual(
+            row["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinImageOperation:mask_composite",
         )
 
     def test_every_recommendation_is_a_current_public_or_hidden_workflow(self):

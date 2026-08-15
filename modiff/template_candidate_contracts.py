@@ -44,7 +44,7 @@ _MANIFEST_BINDING_FIELDS = (
     "qualificationScope",
 )
 _MEDIA_INPUT_FIELDS = ("requiredImages", "requiredVideos", "requiredAudio")
-_NON_MEDIA_INPUT_FIELDS = {"modelRequirements", "note"}
+_NON_MEDIA_INPUT_FIELDS = {"minimumCounts", "modelRequirements", "note"}
 _AUTHORING_STATE_WITH_INPUTS = {
     "status": "authoring_required",
     "prompt": "required_if_applicable",
@@ -199,6 +199,23 @@ def _workflow_records(root: Path, manifest: Mapping[str, Any]) -> tuple[dict[str
                             label=f"canonical workflow {workflow_id} {field}",
                             allow_empty=False,
                         )
+                minimum_counts = required_inputs.get("minimumCounts", {})
+                declared_media_fields = {
+                    item
+                    for media_field in _MEDIA_INPUT_FIELDS
+                    for item in required_inputs.get(media_field, [])
+                }
+                if not isinstance(minimum_counts, Mapping) or any(
+                    not isinstance(field, str)
+                    or field not in declared_media_fields
+                    or not isinstance(count, int)
+                    or isinstance(count, bool)
+                    or not 1 <= count <= 64
+                    for field, count in minimum_counts.items()
+                ):
+                    raise TemplateCandidateContractError(
+                        f"Canonical workflow {workflow_id} minimumCounts must bind declared media fields to integers from 1 to 64."
+                    )
             for field in (
                 "qualificationStatus",
                 "graphQualificationStatus",

@@ -281,13 +281,21 @@ def _input_items(required_inputs: Any, *, mode: str) -> list[dict[str, Any]]:
         return []
     if not isinstance(required_inputs, Mapping):
         raise TemplateAuthoringSpecError("Candidate required inputs must be a list or object.")
+    minimum_counts = required_inputs.get("minimumCounts", {})
+    if not isinstance(minimum_counts, Mapping):
+        raise TemplateAuthoringSpecError("Candidate minimumCounts must be an object.")
     items = []
     for field_name, media_kind in _MEDIA_FIELDS.items():
         fields = required_inputs.get(field_name, [])
         if not isinstance(fields, list) or any(not isinstance(field, str) or not field for field in fields):
             raise TemplateAuthoringSpecError(f"Candidate {field_name} must contain non-empty strings.")
         for field in fields:
-            minimum_count = 2 if mode == "multi_image_reference_edit" and field == "referenceImages" else 1
+            default_minimum = 2 if mode == "multi_image_reference_edit" and field == "referenceImages" else 1
+            minimum_count = minimum_counts.get(field, default_minimum)
+            if not isinstance(minimum_count, int) or isinstance(minimum_count, bool) or not 1 <= minimum_count <= 64:
+                raise TemplateAuthoringSpecError(
+                    f"Candidate minimum count for {field!r} must be an integer from 1 to 64."
+                )
             items.append(
                 {
                     "field": field,

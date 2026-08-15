@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:bdeec44681fcc9b0ef09c02ed2215c8f902d2c08e2ec1ed871510feec98320a4",
+  "contentHash": "sha256:42fdbcca1016aecbc76061c668f5effdf916642ec7beac082cdafb6397195035",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -774,6 +774,52 @@
         "note": "Requires one local source image; no model or network access is used.",
         "requiredImages": [
           "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinImageOperation:mask_composite",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b3cb792c36111c427b7a901840d2774b1a2e5ce193a538948c7cce7ada710bc8",
+      "graphPath": "studio/builtin-image-operation/mask-composite.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "mask_composite",
+      "modelType": "BuiltinImageOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinImageOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/image-operations/v1"
+      ],
+      "requiredInputs": {
+        "minimumCounts": {
+          "referenceImages": 2
+        },
+        "note": "Requires two same-size local source images and one same-size mask; no model or network access is used.",
+        "requiredImages": [
+          "referenceImages",
+          "maskImage"
         ]
       },
       "runtimeQualificationStatus": "unqualified"
@@ -6015,28 +6061,28 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:17817fbbfc08cc2fbc3ce78806b50656f1f5cd7ea9c82f304b89e29fb97f7527",
+      "contentHash": "sha256:5228b75342d92553a1594ab59a210043e41b60294e544ae4d41458c344cf8e0a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:153c6618c26d640dd0cf0d472114c796fc0ff8e242e6753090c91c87c662090a"
+      "sha256": "sha256:5ee21ae17df5feb7775eb8b81a30960db44020777186802244295e0a419b5997"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:01706eae3858258a0dc0ee98c70b029eb7e60ae3185b44a5e755fa829581bc51"
+      "sha256": "sha256:99f40f629031168ec5ddea445de7736271f1cb1586ffdd8844270400bd87b49d"
     }
   },
   "summary": {
-    "candidateContractCount": 132,
-    "canonicalWorkflowCount": 183,
+    "candidateContractCount": 133,
+    "canonicalWorkflowCount": 184,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 80,
+    "contractsRequiringInputExamples": 81,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 3,
-      "image": 96,
+      "image": 97,
       "json": 6,
       "video": 27
     },

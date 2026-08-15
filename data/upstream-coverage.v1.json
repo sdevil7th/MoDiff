@@ -253,6 +253,17 @@
       "status": "executable"
     },
     {
+      "graphHash": "b3cb792c36111c427b7a901840d2774b1a2e5ce193a538948c7cce7ada710bc8",
+      "graphPath": "studio/builtin-image-operation/mask-composite.json",
+      "id": "BuiltinImageOperation:mask_composite",
+      "mode": "mask_composite",
+      "modelType": "BuiltinImageOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "497f9d4b7bc9add3a5f9524ad6cd7fbf3f95225233cf54ebf5fea20c50e0bee9",
       "graphPath": "studio/chroma-img2-img-pipeline/edit-image.json",
       "id": "ChromaImg2ImgPipeline:edit_image",
@@ -2150,7 +2161,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:17817fbbfc08cc2fbc3ce78806b50656f1f5cd7ea9c82f304b89e29fb97f7527",
+  "contentHash": "sha256:5228b75342d92553a1594ab59a210043e41b60294e544ae4d41458c344cf8e0a",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7886,9 +7897,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 183,
+    "canonicalWorkflowCount": 184,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 132,
+    "canonicalWorkflowsWithoutPublicTemplates": 133,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -7921,7 +7932,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 183,
+      "executable": 184,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

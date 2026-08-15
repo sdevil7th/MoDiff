@@ -70,12 +70,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 183,
+                "canonicalWorkflowCount": 184,
                 "publicTemplateCount": 77,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "candidateContractCount": 132,
-                "mediaKindCounts": {"audio": 3, "image": 96, "json": 6, "video": 27},
-                "contractsRequiringInputExamples": 80,
+                "candidateContractCount": 133,
+                "mediaKindCounts": {"audio": 3, "image": 97, "json": 6, "video": 27},
+                "contractsRequiringInputExamples": 81,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},

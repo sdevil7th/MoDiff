@@ -51,17 +51,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 132,
+                "authoringSpecCount": 133,
                 "promptDraftedCount": 120,
-                "promptNotApplicableCount": 12,
-                "canonicalDefaultsCapturedCount": 132,
-                "inputSelectionPendingCount": 80,
-                "rightsReviewPendingCount": 132,
-                "generationPendingCount": 132,
+                "promptNotApplicableCount": 13,
+                "canonicalDefaultsCapturedCount": 133,
+                "inputSelectionPendingCount": 81,
+                "rightsReviewPendingCount": 133,
+                "generationPendingCount": 133,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 52,
-                    "draft_complete_input_selection_pending": 80,
+                    "draft_complete_input_selection_pending": 81,
                 },
             },
         )
@@ -95,6 +95,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             "image_filter",
             "image_tile",
             "image_upscale",
+            "mask_composite",
             "speech_to_text",
             "speech_translation",
             "unconditional_image",
@@ -126,10 +127,20 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             required_inputs = candidate_by_id[specification["canonicalWorkflowId"]]["requiredInputs"]
             expected = []
             if isinstance(required_inputs, dict):
+                minimum_counts = required_inputs.get("minimumCounts", {})
                 for key, media_kind in media_keys.items():
                     for field in required_inputs.get(key, []):
-                        expected.append((field, media_kind))
-            actual = [(item["field"], item["mediaKind"]) for item in specification["inputPlan"]["items"]]
+                        default_count = (
+                            2
+                            if specification["mode"] == "multi_image_reference_edit"
+                            and field == "referenceImages"
+                            else 1
+                        )
+                        expected.append((field, media_kind, minimum_counts.get(field, default_count)))
+            actual = [
+                (item["field"], item["mediaKind"], item["minimumCount"])
+                for item in specification["inputPlan"]["items"]
+            ]
             with self.subTest(workflow=specification["canonicalWorkflowId"]):
                 self.assertEqual(actual, expected)
                 self.assertEqual(
