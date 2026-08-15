@@ -220,6 +220,28 @@
       "status": "executable"
     },
     {
+      "graphHash": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6",
+      "graphPath": "studio/builtin-data-operation/data-conversion.json",
+      "id": "BuiltinDataOperation:data_conversion",
+      "mode": "data_conversion",
+      "modelType": "BuiltinDataOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66",
+      "graphPath": "studio/builtin-data-operation/text-select.json",
+      "id": "BuiltinDataOperation:text_select",
+      "mode": "text_select",
+      "modelType": "BuiltinDataOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "fd7d8d8e7582542d70570403999a1d073d9a6228d4b2346d8f5a3ec44f232b08",
       "graphPath": "studio/builtin-image-operation/image-adjustment.json",
       "id": "BuiltinImageOperation:image_adjustment",
@@ -2260,7 +2282,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:507ea0dabeab958546a0020d1a566dd62a977782e0dc3b5411780d9f9ea6aef2",
+  "contentHash": "sha256:7431af79645e0fda297d55cde2a85afa9d177ec9719fe769447b4f4d52682cc4",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7996,9 +8018,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 193,
+    "canonicalWorkflowCount": 195,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 142,
+    "canonicalWorkflowsWithoutPublicTemplates": 144,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -8031,7 +8053,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 193,
+      "executable": 195,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

@@ -31,6 +31,7 @@ _WORKFLOW_MANIFEST_PATH = "data/workflow-library-manifest.json"
 _UPSTREAM_COVERAGE_PATH = "data/upstream-coverage.v1.json"
 _AUTHORING_SPEC_PATH = "data/template-authoring-specs.v1.json"
 _MEDIA_KIND_ALIASES = {"text": "json", "three_d": "video"}
+_NON_MEDIA_UTILITY_MODES = {"data_conversion", "graph_utility", "text_select"}
 _FAMILY_MARKERS = {
     "ace-step": "ACE Audio",
     "chroma": "Chroma",
@@ -340,7 +341,8 @@ def build_comfy_evidence_resolution_ledger(root: Path) -> dict[str, Any]:
                 for workflow in workflows
                 if workflow["mode"] == inferred_mode
                 and (
-                    workflow["mediaKind"] in normalized_kinds
+                    inferred_mode in _NON_MEDIA_UTILITY_MODES
+                    or workflow["mediaKind"] in normalized_kinds
                     or bool(input_media_by_workflow.get(workflow["id"], set()) & normalized_kinds)
                 )
             ]

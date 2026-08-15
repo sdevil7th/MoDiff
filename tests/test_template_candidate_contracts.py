@@ -70,11 +70,11 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 193,
+                "canonicalWorkflowCount": 195,
                 "publicTemplateCount": 77,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "candidateContractCount": 142,
-                "mediaKindCounts": {"audio": 6, "image": 98, "json": 6, "video": 32},
+                "candidateContractCount": 144,
+                "mediaKindCounts": {"audio": 6, "image": 98, "json": 8, "video": 32},
                 "contractsRequiringInputExamples": 90,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
@@ -96,6 +96,8 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "BuiltinAudioOperation:audio_trim",
             "BuiltinAudioOperation:audio_join",
             "BuiltinAudioOperation:audio_loudness_match",
+            "BuiltinDataOperation:text_select",
+            "BuiltinDataOperation:data_conversion",
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 

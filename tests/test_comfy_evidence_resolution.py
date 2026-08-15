@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 59,
+                "recordsWithHiddenAuthoringSpecOption": 61,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 85,
+                "recordsWithRecommendedWorkflow": 87,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 30,
+                    "explicit_new_task_candidate": 28,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 60,
+                    "explicit_task_candidate": 62,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 60,
-                    "new_task_boundary_required": 30,
+                    "existing_task_boundary_model_admission_required": 62,
+                    "new_task_boundary_required": 28,
                     "task_undetermined": 1,
                 },
             },
@@ -222,6 +222,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
             row["recommendedWorkflow"]["canonicalWorkflowId"],
             "BuiltinImageOperation:mask_composite",
         )
+
+    def test_explicit_data_utility_metadata_reuses_bounded_install_free_tasks(self):
+        expected = {
+            "select_per_line_text_by_index": ("text_select", "BuiltinDataOperation:text_select"),
+            "basic_datatype_conversion": ("data_conversion", "BuiltinDataOperation:data_conversion"),
+        }
+        by_catalog_id = {row["catalogId"]: row for row in self.ledger["resolutions"]}
+        for catalog_id, (mode, workflow_id) in expected.items():
+            with self.subTest(catalog_id=catalog_id):
+                row = by_catalog_id[catalog_id]
+                self.assertEqual(row["inferredMode"], mode)
+                self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+                self.assertEqual(row["taskBoundaryState"], "existing_task_boundary_model_admission_required")
+                self.assertEqual(row["recommendedWorkflow"]["canonicalWorkflowId"], workflow_id)
+                self.assertEqual(row["recommendedWorkflow"]["modelType"], "BuiltinDataOperation")
+                self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
 
     def test_explicit_frame_extraction_metadata_matches_video_input_to_image_output(self):
         row = next(

@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:d4f882a3ceefcd454b78ab12aa5c87cccee35f6afc28bef35041974654e0ef5e",
+  "contentHash": "sha256:9ff71b5843f3e0d463238315e3d60b6091ed172cb2eee6e3778b074a415205f9",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -3046,8 +3046,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "select_per_line_text_by_index",
       "catalogModelLabels": [],
@@ -3065,18 +3064,32 @@
       },
       "contractId": "comfy-research:blueprint:select_per_line_text_by_index",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_text_selection",
       "inferredMode": "text_select",
       "presentationMediaHints": [
         "text"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinDataOperation:text_select",
+        "canonicalWorkflowId": "BuiltinDataOperation:text_select",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinDataOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinDataOperation:text_select",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinDataOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Select Per-Line Text by Index"
     },
     {
@@ -4929,8 +4942,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "basic_datatype_conversion",
       "catalogModelLabels": [
@@ -4950,18 +4962,32 @@
       },
       "contractId": "comfy-research:template:basic_datatype_conversion",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_data_conversion",
       "inferredMode": "data_conversion",
       "presentationMediaHints": [
         "image"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinDataOperation:data_conversion",
+        "canonicalWorkflowId": "BuiltinDataOperation:data_conversion",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinDataOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinDataOperation:data_conversion",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinDataOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "template",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Built-in Data Type Conversion Example"
     },
     {
@@ -7425,18 +7451,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:a91bd7223a68b8d55118dfe53c363b464a846a218435c49ef314c2c65b6d3d30",
+      "contentHash": "sha256:0d62e908179ad7d94d2981f0cb3add8e8a6eb4a57798d58d3ec98c90d31e5e85",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:c0e4d5ae324795473cd6e56204d420d7fc9c8f1edc658eb93f7a282954b7277a"
+      "sha256": "sha256:c397743e52b0b5837a453c4eddc0b09d40124809b63b3036ee39f1339994a322"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:507ea0dabeab958546a0020d1a566dd62a977782e0dc3b5411780d9f9ea6aef2",
+      "contentHash": "sha256:7431af79645e0fda297d55cde2a85afa9d177ec9719fe769447b4f4d52682cc4",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:17a2e2c2b0c6827c695f6eb25f14346b4a9cae2ddb398dc09d266b33914d395f"
+      "sha256": "sha256:0fd50a7e9985645d81493a54d597e308d9c9da955ea76c9274a2b916d0dd813a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:3c02ffeb1bd1a315f8ebe0c1bf61af28f9e2e284b09350ff0a2d40f31a5baf5d"
+      "sha256": "sha256:15f2e9bd2753e03c973beb8f7e4bcfac8b806656ed34c6a8ede7082c1dcb4cc4"
     }
   },
   "summary": {
@@ -7488,22 +7514,22 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 59,
+    "recordsWithHiddenAuthoringSpecOption": 61,
     "recordsWithInferredTask": 115,
     "recordsWithPublicTemplateOption": 26,
-    "recordsWithRecommendedWorkflow": 85,
+    "recordsWithRecommendedWorkflow": 87,
     "resolutionCount": 116,
     "resolutionStateCounts": {
-      "explicit_new_task_candidate": 30,
+      "explicit_new_task_candidate": 28,
       "explicit_task_and_family_candidate": 25,
-      "explicit_task_candidate": 60,
+      "explicit_task_candidate": 62,
       "source_review_required": 1
     },
     "sourceUndeterminedCount": 116,
     "taskBoundaryStateCounts": {
       "existing_family_workflow_candidate": 25,
-      "existing_task_boundary_model_admission_required": 60,
-      "new_task_boundary_required": 30,
+      "existing_task_boundary_model_admission_required": 62,
+      "new_task_boundary_required": 28,
       "task_undetermined": 1
     }
   }

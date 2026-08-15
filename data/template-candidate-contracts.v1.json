@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:57100c47e5e14fec3cb9bb3aeef4ae325534223897d38cac2303c8eb63548bef",
+  "contentHash": "sha256:5f429487f95be6d4f3fad13cbb08ebcc058d7023c42b4e124ee4db729817cd50",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -652,6 +652,80 @@
           "sourceAudio"
         ]
       },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinDataOperation:data_conversion",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "b52db7e4f0fcc171cf39f9d0804607cc056f19d6fd87d0db59cd6b5a9f2c82a6",
+      "graphPath": "studio/builtin-data-operation/data-conversion.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "data_conversion",
+      "modelType": "BuiltinDataOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinDataOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/data-operations/v1"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinDataOperation:text_select",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "5f4ff41948811a63597de8130a4029a5147a60d7430ff191cee9b9fcaa043a66",
+      "graphPath": "studio/builtin-data-operation/text-select.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "text_select",
+      "modelType": "BuiltinDataOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinDataOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/data-operations/v1"
+      ],
+      "requiredInputs": [],
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -6447,18 +6521,18 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:507ea0dabeab958546a0020d1a566dd62a977782e0dc3b5411780d9f9ea6aef2",
+      "contentHash": "sha256:7431af79645e0fda297d55cde2a85afa9d177ec9719fe769447b4f4d52682cc4",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:17a2e2c2b0c6827c695f6eb25f14346b4a9cae2ddb398dc09d266b33914d395f"
+      "sha256": "sha256:0fd50a7e9985645d81493a54d597e308d9c9da955ea76c9274a2b916d0dd813a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:3c02ffeb1bd1a315f8ebe0c1bf61af28f9e2e284b09350ff0a2d40f31a5baf5d"
+      "sha256": "sha256:15f2e9bd2753e03c973beb8f7e4bcfac8b806656ed34c6a8ede7082c1dcb4cc4"
     }
   },
   "summary": {
-    "candidateContractCount": 142,
-    "canonicalWorkflowCount": 193,
+    "candidateContractCount": 144,
+    "canonicalWorkflowCount": 195,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
@@ -6469,7 +6543,7 @@
     "mediaKindCounts": {
       "audio": 6,
       "image": 98,
-      "json": 6,
+      "json": 8,
       "video": 32
     },
     "publicTemplateCount": 77
