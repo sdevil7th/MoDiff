@@ -51,17 +51,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 145,
+                "authoringSpecCount": 146,
                 "promptDraftedCount": 123,
-                "promptNotApplicableCount": 22,
-                "canonicalDefaultsCapturedCount": 145,
-                "inputSelectionPendingCount": 90,
-                "rightsReviewPendingCount": 145,
-                "generationPendingCount": 145,
+                "promptNotApplicableCount": 23,
+                "canonicalDefaultsCapturedCount": 146,
+                "inputSelectionPendingCount": 91,
+                "rightsReviewPendingCount": 146,
+                "generationPendingCount": 146,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 55,
-                    "draft_complete_input_selection_pending": 90,
+                    "draft_complete_input_selection_pending": 91,
                 },
             },
         )
@@ -125,6 +125,22 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                     self.assertLessEqual(len(prompt_plan["prompt"]), 700)
                     self.assertTrue(prompt_plan["mustBeLockedInGenerationReceipt"])
                 self.assertNotIn("Comfy", prompt_plan["prompt"] or "")
+
+    def test_builtin_media_operations_do_not_claim_an_accelerator_requirement(self):
+        builtins = [
+            specification
+            for specification in self.ledger["specifications"]
+            if specification["modelType"]
+            in {"BuiltinAudioOperation", "BuiltinDataOperation", "BuiltinImageOperation", "BuiltinVideoOperation"}
+        ]
+        self.assertTrue(builtins)
+        for specification in builtins:
+            with self.subTest(workflow=specification["canonicalWorkflowId"]):
+                self.assertEqual(
+                    specification["artifactPlan"]["cacheState"],
+                    "not_applicable_builtin_contract",
+                )
+                self.assertFalse(specification["generationPlan"]["requiresQualifiedAccelerator"])
 
     def test_input_plans_are_exact_and_keep_selection_and_rights_pending(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}

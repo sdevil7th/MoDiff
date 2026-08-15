@@ -523,7 +523,9 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
                 },
                 "generationPlan": {
                     "status": "blocked_pending_external_evidence",
-                    "requiresQualifiedAccelerator": media_kind in {"image", "video", "audio"},
+                    "requiresQualifiedAccelerator": (
+                        media_kind in {"image", "video", "audio"} and not built_in_artifacts
+                    ),
                     "blockers": generation_blockers,
                 },
                 "authoringState": (

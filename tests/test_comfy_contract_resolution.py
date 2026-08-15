@@ -56,15 +56,15 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.ledger["summary"]["resolutionStateCounts"],
             {
                 "existing_family_workflow_candidate": 57,
-                "existing_task_boundary_model_admission_required": 59,
-                "new_task_boundary_required": 22,
+                "existing_task_boundary_model_admission_required": 60,
+                "new_task_boundary_required": 21,
             },
         )
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
-        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 116)
+        self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 117)
         self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 25)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 91)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 92)
 
     def test_resolutions_are_exactly_the_unwritten_comfy_proposals(self):
         expected = {
@@ -80,7 +80,6 @@ class ComfyContractResolutionTests(unittest.TestCase):
             "edit_audio": 1,
             "edit_video": 2,
             "first_last_frame_to_video": 7,
-            "frame_interpolation": 1,
             "image_to_3d": 7,
             "remove_background": 1,
         }
@@ -95,6 +94,23 @@ class ComfyContractResolutionTests(unittest.TestCase):
             self.assertIsNone(resolution["recommendedWorkflow"])
             self.assertIn("new_bounded_modiff_task_contract_required", resolution["blockers"])
         self.assertEqual(actual, expected_mode_counts)
+
+    def test_frame_interpolation_reuses_only_the_bounded_non_model_task_boundary(self):
+        row = next(
+            row
+            for row in self.ledger["resolutions"]
+            if row["catalogId"] == "utility_video_frame_interpolation"
+        )
+        self.assertEqual(row["selectedCandidateMode"], "frame_interpolation")
+        self.assertEqual(row["resolutionState"], "existing_task_boundary_model_admission_required")
+        self.assertEqual(row["currentTaskBoundaryOptionCount"], 1)
+        self.assertEqual(
+            row["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinVideoOperation:frame_interpolation",
+        )
+        self.assertTrue(row["exactCatalogModelReproductionRequiresAdmission"])
+        self.assertFalse(row["claims"]["exactCatalogCheckpointSupported"])
+        self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
 
     def test_image_upscale_proposals_reuse_the_bounded_install_free_task(self):
         rows = [

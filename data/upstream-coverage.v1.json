@@ -330,6 +330,17 @@
       "status": "executable"
     },
     {
+      "graphHash": "d87491f272df636c918d324a469158b8488277e8e0e55f014db11900cf3e1fa5",
+      "graphPath": "studio/builtin-video-operation/frame-interpolation.json",
+      "id": "BuiltinVideoOperation:frame_interpolation",
+      "mode": "frame_interpolation",
+      "modelType": "BuiltinVideoOperation",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17",
       "graphPath": "studio/builtin-video-operation/video-frame-extract.json",
       "id": "BuiltinVideoOperation:video_frame_extract",
@@ -2293,7 +2304,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:83a8dfa0d94ae16293cd584452c5d7173beee303578d8c12d0c9dce92d4c4f46",
+  "contentHash": "sha256:dc1e6b7ee7691b702c84ddf172c264b4d6cce0e8215e13eea0090ea5ba5ecd4a",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8029,9 +8040,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 196,
+    "canonicalWorkflowCount": 197,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 145,
+    "canonicalWorkflowsWithoutPublicTemplates": 146,
     "diffusersPipelineSymbolCount": 327,
     "pipelineStatusCounts": {
       "contract-only": 20,
@@ -8064,7 +8075,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 196,
+      "executable": 197,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

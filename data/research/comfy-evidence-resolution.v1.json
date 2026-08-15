@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:398ab0dbcc184e31ffe2d525f989dba7e3d98440b603c536c5dd5f6a6fbdca5c",
+  "contentHash": "sha256:cdc87bdb868ee96b986af1558114ac2a756453fdc7e416581281ffe5e0b2dd3e",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -1147,8 +1147,7 @@
         "catalog_metadata_only_no_graph_or_prompt_reviewed",
         "exact_model_component_and_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "new_bounded_modiff_task_contract_required",
-        "new_original_modiff_workflow_required"
+        "metadata_inference_requires_independent_semantic_review"
       ],
       "catalogId": "frame_interpolation",
       "catalogModelLabels": [],
@@ -1166,18 +1165,32 @@
       },
       "contractId": "comfy-research:blueprint:frame_interpolation",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 1,
       "inferenceBasis": "explicit_title_frame_interpolation",
       "inferredMode": "frame_interpolation",
       "presentationMediaHints": [
         "video"
       ],
       "recognizedMoDiffFamilies": [],
-      "recommendedWorkflow": null,
-      "representativeWorkflowOptions": [],
-      "resolutionState": "explicit_new_task_candidate",
+      "recommendedWorkflow": {
+        "authoringSpecId": "template-authoring:BuiltinVideoOperation:frame_interpolation",
+        "canonicalWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+        "modelFamily": "Built-in Media",
+        "modelType": "BuiltinVideoOperation",
+        "publicTemplateIds": [],
+        "qualificationStatus": "graph-qualified-execution-pending"
+      },
+      "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+          "modelFamily": "Built-in Media",
+          "modelType": "BuiltinVideoOperation",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        }
+      ],
+      "resolutionState": "explicit_task_candidate",
       "sourceKind": "blueprint",
-      "taskBoundaryState": "new_task_boundary_required",
+      "taskBoundaryState": "existing_task_boundary_model_admission_required",
       "title": "Frame Interpolation"
     },
     {
@@ -7464,18 +7477,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:493967664844cd321e38f5e7a48b9a4505f50372c07b7ae209d1cdd9984c034e",
+      "contentHash": "sha256:71cea97d6f8b37e53193cbac48f1463af24dbe7fbb15ea66f495ad646ed65d81",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:6dede975fdb864a762d6c893d571dc268faa6f32c293f222f988e98754c17e82"
+      "sha256": "sha256:3c5df1006844c793ae459f78731c4adc171a536db009211e65af9e51da990fa1"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:83a8dfa0d94ae16293cd584452c5d7173beee303578d8c12d0c9dce92d4c4f46",
+      "contentHash": "sha256:dc1e6b7ee7691b702c84ddf172c264b4d6cce0e8215e13eea0090ea5ba5ecd4a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:4bcb6848f55adf139a4a916f6598551bbbd1e923c9379ae382742211528257f6"
+      "sha256": "sha256:c78a33348f48e29cb03caff5b76d83d70e9c069450e2669fdcc64bae6d0143ee"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e1649a631cc20536fed1170c52420d756aad7d099d859dd121d0bad7f3e60312"
+      "sha256": "sha256:2616aeaf3571f0990484c61b1277a8d285002a11a2daebd14f049f8ece61ca93"
     }
   },
   "summary": {
@@ -7527,22 +7540,22 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 62,
+    "recordsWithHiddenAuthoringSpecOption": 63,
     "recordsWithInferredTask": 115,
     "recordsWithPublicTemplateOption": 26,
-    "recordsWithRecommendedWorkflow": 88,
+    "recordsWithRecommendedWorkflow": 89,
     "resolutionCount": 116,
     "resolutionStateCounts": {
-      "explicit_new_task_candidate": 27,
+      "explicit_new_task_candidate": 26,
       "explicit_task_and_family_candidate": 25,
-      "explicit_task_candidate": 63,
+      "explicit_task_candidate": 64,
       "source_review_required": 1
     },
     "sourceUndeterminedCount": 116,
     "taskBoundaryStateCounts": {
       "existing_family_workflow_candidate": 25,
-      "existing_task_boundary_model_admission_required": 63,
-      "new_task_boundary_required": 27,
+      "existing_task_boundary_model_admission_required": 64,
+      "new_task_boundary_required": 26,
       "task_undetermined": 1
     }
   }

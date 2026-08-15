@@ -104,22 +104,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 62,
+                "recordsWithHiddenAuthoringSpecOption": 63,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 26,
-                "recordsWithRecommendedWorkflow": 88,
+                "recordsWithRecommendedWorkflow": 89,
                 "resolutionCount": 116,
                 "resolutionStateCounts": {
-                    "explicit_new_task_candidate": 27,
+                    "explicit_new_task_candidate": 26,
                     "explicit_task_and_family_candidate": 25,
-                    "explicit_task_candidate": 63,
+                    "explicit_task_candidate": 64,
                     "source_review_required": 1,
                 },
                 "sourceUndeterminedCount": 116,
                 "taskBoundaryStateCounts": {
                     "existing_family_workflow_candidate": 25,
-                    "existing_task_boundary_model_admission_required": 63,
-                    "new_task_boundary_required": 27,
+                    "existing_task_boundary_model_admission_required": 64,
+                    "new_task_boundary_required": 26,
                     "task_undetermined": 1,
                 },
             },
@@ -252,6 +252,22 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
             row["recommendedWorkflow"]["canonicalWorkflowId"],
             "BuiltinVideoOperation:video_frame_extract",
         )
+
+    def test_frame_interpolation_metadata_reuses_only_the_non_model_task_boundary(self):
+        row = next(
+            row
+            for row in self.ledger["resolutions"]
+            if row["catalogId"] == "frame_interpolation"
+        )
+        self.assertEqual(row["inferredMode"], "frame_interpolation")
+        self.assertEqual(row["resolutionState"], "explicit_task_candidate")
+        self.assertEqual(row["taskBoundaryState"], "existing_task_boundary_model_admission_required")
+        self.assertEqual(
+            row["recommendedWorkflow"]["canonicalWorkflowId"],
+            "BuiltinVideoOperation:frame_interpolation",
+        )
+        self.assertFalse(row["claims"]["exactModelSupported"])
+        self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
 
     def test_every_recommendation_is_a_current_public_or_hidden_workflow(self):
         workflow_by_id = {row["id"]: row for row in self.manifest["workflows"]}

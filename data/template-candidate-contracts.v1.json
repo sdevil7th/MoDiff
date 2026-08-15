@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:72d94ce631227b21bd68ec54a36f1bf7f4e1dedc18cc42f221c743a9bba8cb1e",
+  "contentHash": "sha256:f6cfbaa0ddd573c10c1793574f2d0ed806a2298d219e228f23d3707468f995ba",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -1059,6 +1059,48 @@
         "requiredImages": [
           "referenceImages",
           "maskImage"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d87491f272df636c918d324a469158b8488277e8e0e55f014db11900cf3e1fa5",
+      "graphPath": "studio/builtin-video-operation/frame-interpolation.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "video",
+      "mode": "frame_interpolation",
+      "modelType": "BuiltinVideoOperation",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "BuiltinVideoOperationV1"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "builtin://modiff/video-operations/v1"
+      ],
+      "requiredInputs": {
+        "note": "Requires one local source video and performs bounded deterministic FFmpeg blend interpolation; it is not an optical-flow or model-equivalence claim.",
+        "requiredVideos": [
+          "sourceVideo"
         ]
       },
       "runtimeQualificationStatus": "unqualified"
@@ -6558,30 +6600,30 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:83a8dfa0d94ae16293cd584452c5d7173beee303578d8c12d0c9dce92d4c4f46",
+      "contentHash": "sha256:dc1e6b7ee7691b702c84ddf172c264b4d6cce0e8215e13eea0090ea5ba5ecd4a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:4bcb6848f55adf139a4a916f6598551bbbd1e923c9379ae382742211528257f6"
+      "sha256": "sha256:c78a33348f48e29cb03caff5b76d83d70e9c069450e2669fdcc64bae6d0143ee"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e1649a631cc20536fed1170c52420d756aad7d099d859dd121d0bad7f3e60312"
+      "sha256": "sha256:2616aeaf3571f0990484c61b1277a8d285002a11a2daebd14f049f8ece61ca93"
     }
   },
   "summary": {
-    "candidateContractCount": 145,
-    "canonicalWorkflowCount": 196,
+    "candidateContractCount": 146,
+    "canonicalWorkflowCount": 197,
     "canonicalWorkflowsWithPublicTemplates": 51,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 90,
+    "contractsRequiringInputExamples": 91,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
       "image": 98,
       "json": 9,
-      "video": 32
+      "video": 33
     },
     "publicTemplateCount": 77
   }

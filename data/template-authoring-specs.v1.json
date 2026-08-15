@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:493967664844cd321e38f5e7a48b9a4505f50372c07b7ae209d1cdd9984c034e",
+  "contentHash": "sha256:71cea97d6f8b37e53193cbac48f1463af24dbe7fbb15ea66f495ad646ed65d81",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:72d94ce631227b21bd68ec54a36f1bf7f4e1dedc18cc42f221c743a9bba8cb1e",
+      "contentHash": "sha256:f6cfbaa0ddd573c10c1793574f2d0ed806a2298d219e228f23d3707468f995ba",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:44009bf70e93eef52659c9721ecee13581c4d8816306ab2025b1b5158740cb80"
+      "sha256": "sha256:6ee59096ff3cfa14f9982b146397449750990a85bef0fa611c8aa367c01a516a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e1649a631cc20536fed1170c52420d756aad7d099d859dd121d0bad7f3e60312"
+      "sha256": "sha256:2616aeaf3571f0990484c61b1277a8d285002a11a2daebd14f049f8ece61ca93"
     }
   },
   "specifications": [
@@ -1645,7 +1645,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinAudioOperation:audio_join",
@@ -1761,7 +1761,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinAudioOperation:audio_loudness_match",
@@ -1877,7 +1877,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinAudioOperation:audio_trim",
@@ -2233,7 +2233,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:image_adjustment",
@@ -2337,7 +2337,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:image_channels",
@@ -2441,7 +2441,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:image_crop",
@@ -2545,7 +2545,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:image_filter",
@@ -2649,7 +2649,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:image_tile",
@@ -2753,7 +2753,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:image_upscale",
@@ -2862,7 +2862,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinImageOperation:mask_composite",
@@ -2945,6 +2945,110 @@
       "assets": [],
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
+        "path": "studio/builtin-video-operation/frame-interpolation.json",
+        "sha256": "d87491f272df636c918d324a469158b8488277e8e0e55f014db11900cf3e1fa5"
+      },
+      "canonicalWorkflowId": "BuiltinVideoOperation:frame_interpolation",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 60
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "d87491f272df636c918d324a469158b8488277e8e0e55f014db11900cf3e1fa5",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "builtin_contract_identity_must_match_active_app",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": false,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:BuiltinVideoOperation:frame_interpolation",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceVideo",
+            "mediaKind": "video",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "frame_interpolation",
+      "modelFamily": "Built-in Media",
+      "modelType": "BuiltinVideoOperation",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Built-in Media frame interpolation workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Built-in Media — Frame Interpolation [BuiltinVideoOperation]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "not_applicable_builtin_contract",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "builtin://modiff/video-operations/v1"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
         "path": "studio/builtin-video-operation/video-frame-extract.json",
         "sha256": "c1d1e538c570520cdc497a0ba606048d359b53f37ee45f0aa1125c197ec43b17"
       },
@@ -2972,7 +3076,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinVideoOperation:video_frame_extract",
@@ -3076,7 +3180,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinVideoOperation:video_reverse",
@@ -3180,7 +3284,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinVideoOperation:video_stitch",
@@ -3284,7 +3388,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinVideoOperation:video_tile",
@@ -3388,7 +3492,7 @@
           "model_and_output_rights_review_required",
           "generated_asset_and_human_quality_review_required"
         ],
-        "requiresQualifiedAccelerator": true,
+        "requiresQualifiedAccelerator": false,
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:BuiltinVideoOperation:video_trim",
@@ -20972,16 +21076,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 145,
+    "authoringSpecCount": 146,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 55,
-      "draft_complete_input_selection_pending": 90
+      "draft_complete_input_selection_pending": 91
     },
-    "canonicalDefaultsCapturedCount": 145,
-    "generationPendingCount": 145,
-    "inputSelectionPendingCount": 90,
+    "canonicalDefaultsCapturedCount": 146,
+    "generationPendingCount": 146,
+    "inputSelectionPendingCount": 91,
     "promptDraftedCount": 123,
-    "promptNotApplicableCount": 22,
-    "rightsReviewPendingCount": 145
+    "promptNotApplicableCount": 23,
+    "rightsReviewPendingCount": 146
   }
 }
