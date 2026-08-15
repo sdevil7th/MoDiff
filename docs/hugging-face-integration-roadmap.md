@@ -6951,7 +6951,7 @@ mapping candidates (39 templates and 15 blueprints), 138
 `new_contract_not_authored` candidates, and 116 `contract_undetermined`
 records. The research/listing and contract states are therefore complete, but
 the 138 proposed new MoDiff contracts are deliberately not yet authored.
-Ninety-five of those 138 candidates now also have exact pinned graph-source
+One hundred one of those 138 candidates now also have exact pinned graph-source
 dependency reviews, performed read-only without importing, executing, or
 copying their graphs, nodes, or prompts. The two Stable Audio 3 records and the
 original Qwen-Image-plus-Lightning record resolve only to existing task
@@ -7043,6 +7043,11 @@ Five further video reviews retain classic Hunyuan Video, HunyuanVideo 1.5
 T2V/I2V, and Kandinsky 5 T2V/I2V behind the existing generic video task
 boundaries while requiring their distinct transformer, encoder, vision, and
 VAE admissions. Allegro and LTX2 support is not inherited by those graphs.
+Six composite/edit reviews retain Capybara I2V and Bernini image editing behind
+existing task boundaries, while both model families still need new bounded
+video-edit tasks. HuMo is corrected from plain T2V to
+`image_audio_to_video`, and the SDXL-to-SVD composition remains a distinct
+two-stage text-to-video admission rather than Allegro support.
 No Comfy graph, node package, prompt, model, or media asset was copied or
 downloaded.
 
@@ -7169,7 +7174,8 @@ and two SCAIL-2 character-replacement decisions. `f7bf0b1` adds the four VACE,
 Wan Fun, and Anima inpaint/media decisions. `24efba9` adds all seven endpoint-
 conditioned Wan/LTX decisions and preserves the LTX audio output contract.
 `b433ff8` adds the five classic Hunyuan, HunyuanVideo 1.5, and Kandinsky 5
-video-generation decisions.
+video-generation decisions. `b091868` adds the six Capybara, Bernini, HuMo,
+and SDXL-to-SVD composite decisions.
 
 The following separate gates do remain external:
 
