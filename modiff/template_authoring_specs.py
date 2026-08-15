@@ -32,6 +32,9 @@ _MEDIA_FIELDS = {
     "requiredAudio": "audio",
 }
 _NO_PROMPT_MODES = {
+    "audio_join",
+    "audio_loudness_match",
+    "audio_trim",
     "depth_estimation",
     "image_adjustment",
     "image_channels",

@@ -50,6 +50,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.ImageOperations",
                 "ProcessImage",
             ),
+            "builtin-audio-operation": (
+                "modules.Audio",
+                "ProcessAudio",
+            ),
             "builtin-video-operation": (
                 "modules.Video",
                 "ProcessVideo",
@@ -177,6 +181,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "HuggingFaceTextGenerationModel",
             "HuggingFaceImageTextToTextModel",
             "HuggingFaceAnyToAnyModel",
+            "BuiltinAudioOperation",
             "BuiltinImageOperation",
             "BuiltinVideoOperation",
             "SpandrelVideoUpscale",

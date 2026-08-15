@@ -3531,7 +3531,7 @@ _BINDING_SOURCES = frozenset(
         *_THREE_D_GRAPH_BINDINGS,
         *_UNCONDITIONAL_GRAPH_BINDINGS,
     )
-) | {"referenceVideos"}
+) | {"referenceAudio", "referenceVideos"}
 
 _MODULAR_EDIT_PLUS_PROFILE = {
     "id": "qwen-edit-plus:modular",
@@ -12046,6 +12046,136 @@ for _builtin_image_mode in _BUILTIN_IMAGE_OPERATION_MODES:
             if _builtin_image_mode == "mask_composite"
             else _BUILTIN_IMAGE_OPERATION_BINDINGS
         ),
+    }
+
+_BUILTIN_AUDIO_OPERATION_MODES = ("audio_trim", "audio_join", "audio_loudness_match")
+_BUILTIN_AUDIO_OPERATION_PIPELINE_CLASS = "BuiltinAudioOperationV1"
+_BUILTIN_AUDIO_OPERATION_REPO = "builtin://modiff/audio-operations/v1"
+_BUILTIN_AUDIO_OPERATION_PROFILE = {
+    "id": "builtin-audio-operations:direct",
+    "model_type": "BuiltinAudioOperation",
+    "modes": _BUILTIN_AUDIO_OPERATION_MODES,
+    "loader_module": "modules.Audio",
+    "loader_action": "ProcessAudio",
+    "execution_path": "builtin-audio-operation",
+    "pipeline_class": _BUILTIN_AUDIO_OPERATION_PIPELINE_CLASS,
+    "default_repo": _BUILTIN_AUDIO_OPERATION_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "optional_runtime_profiles": (),
+    "optional_runtime_delivery": "base",
+    "optional_runtime_platform_deliveries": (),
+    "compatible_repos": (),
+}
+_BUILTIN_AUDIO_OPERATION_CAPABILITY = {
+    "modelType": "BuiltinAudioOperation",
+    "label": "Built-in Audio Operations",
+    "displayName": "Built-in Audio Operations",
+    "family": "Built-in Media",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": _BUILTIN_AUDIO_OPERATION_REPO,
+    "artifactLabel": "Versioned MoDiff built-in operation contract",
+    "artifactKind": "builtin",
+    "artifactInstallRequired": False,
+    "downloadFiles": [],
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 0, "height": 0, "aspectRatio": "audio"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "audio",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 0,
+        "height": 0,
+    },
+    "modes": list(_BUILTIN_AUDIO_OPERATION_MODES),
+    "executionStatus": "supported",
+    "revisionCandidates": [],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "modeRequirements": {
+        "audio_trim": {
+            "requiredAudio": ["sourceAudio"],
+            "note": "Requires one bounded local audio source.",
+        },
+        "audio_join": {
+            "requiredAudio": ["sourceAudio", "referenceAudio"],
+            "note": "Requires source and continuation audio within the combined sample budget.",
+        },
+        "audio_loudness_match": {
+            "requiredAudio": ["sourceAudio", "referenceAudio"],
+            "note": "Requires source and reference audio and applies bounded constant-gain loudness matching.",
+        },
+    },
+    "notes": [
+        "Runs bounded in-memory audio operations in the base MoDiff process.",
+        "No model artifact, optional runtime, accelerator, download, or remote code is required.",
+        "Gallery publication remains disabled pending authored examples and human review.",
+    ],
+}
+_BUILTIN_AUDIO_OPERATION_BINDINGS = (
+    ("audioOperation", "pipeline_class", "pipelineClass"),
+    ("audioOperation", "operation", "mode"),
+    ("loadAudio", "file", "sourceAudio"),
+    ("audioExport", "sample_rate", "sampleRate48000"),
+)
+_BUILTIN_AUDIO_SINGLE_ROLES = (
+    ("loadAudio", "modules.Audio.Load", -620, -80),
+    ("audioOperation", "modules.Audio.ProcessAudio", -220, -80),
+    ("audioExport", "modules.Audio.Export", 260, -80),
+)
+_BUILTIN_AUDIO_DUAL_ROLES = _BUILTIN_AUDIO_SINGLE_ROLES + (("loadReferenceAudio", "modules.Audio.Load", -620, 160),)
+_BUILTIN_AUDIO_SINGLE_EDGES = (
+    ("loadAudio", "audio", "audioOperation", "source"),
+    ("audioOperation", "output", "audioExport", "audio"),
+)
+_BUILTIN_AUDIO_DUAL_EDGES = _BUILTIN_AUDIO_SINGLE_EDGES + (
+    ("loadReferenceAudio", "audio", "audioOperation", "reference"),
+)
+for _builtin_audio_mode, _builtin_audio_spec_name in (
+    ("audio_trim", "trim"),
+    ("audio_join", "join"),
+    ("audio_loudness_match", "loudness-match"),
+):
+    _builtin_audio_dual = _builtin_audio_mode != "audio_trim"
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"builtin-audio-operations:{_builtin_audio_spec_name}:v1"] = {
+        "modelType": "BuiltinAudioOperation",
+        "mode": _builtin_audio_mode,
+        "profile": _BUILTIN_AUDIO_OPERATION_PROFILE,
+        "capability": _BUILTIN_AUDIO_OPERATION_CAPABILITY,
+        "roles": _BUILTIN_AUDIO_DUAL_ROLES if _builtin_audio_dual else _BUILTIN_AUDIO_SINGLE_ROLES,
+        "edges": _BUILTIN_AUDIO_DUAL_EDGES if _builtin_audio_dual else _BUILTIN_AUDIO_SINGLE_EDGES,
+        "bindings": _BUILTIN_AUDIO_OPERATION_BINDINGS + (("loadReferenceAudio", "file", "referenceAudio"),)
+        if _builtin_audio_dual
+        else _BUILTIN_AUDIO_OPERATION_BINDINGS,
     }
 
 _BUILTIN_VIDEO_OPERATION_MODES = (

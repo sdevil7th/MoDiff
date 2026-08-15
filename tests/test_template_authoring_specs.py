@@ -88,6 +88,9 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
 
     def test_prompt_drafts_are_original_bounded_and_mode_complete(self):
         no_prompt_modes = {
+            "audio_join",
+            "audio_loudness_match",
+            "audio_trim",
             "depth_estimation",
             "image_adjustment",
             "image_channels",
