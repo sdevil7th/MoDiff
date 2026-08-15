@@ -12048,7 +12048,13 @@ for _builtin_image_mode in _BUILTIN_IMAGE_OPERATION_MODES:
         ),
     }
 
-_BUILTIN_VIDEO_OPERATION_MODES = ("video_frame_extract", "video_stitch")
+_BUILTIN_VIDEO_OPERATION_MODES = (
+    "video_frame_extract",
+    "video_stitch",
+    "video_trim",
+    "video_reverse",
+    "video_tile",
+)
 _BUILTIN_VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
 _BUILTIN_VIDEO_OPERATION_REPO = "builtin://modiff/video-operations/v1"
 _BUILTIN_VIDEO_OPERATION_PROFILE = {
@@ -12100,7 +12106,13 @@ _BUILTIN_VIDEO_OPERATION_CAPABILITY = {
     "supportsLayers": False,
     "supportsLora": False,
     "outputKind": "video",
-    "modeOutputKinds": {"video_frame_extract": "image", "video_stitch": "video"},
+    "modeOutputKinds": {
+        "video_frame_extract": "image",
+        "video_stitch": "video",
+        "video_trim": "video",
+        "video_reverse": "video",
+        "video_tile": "video",
+    },
     "offloadSupport": {
         "default": OFFLOAD_MODE_NONE,
         "lowVram": OFFLOAD_MODE_NONE,
@@ -12131,6 +12143,19 @@ _BUILTIN_VIDEO_OPERATION_CAPABILITY = {
             "requiredVideos": ["referenceVideos"],
             "minimumCounts": {"referenceVideos": 2},
             "note": "Requires two to sixteen local source videos and uses the app-owned bounded FFmpeg path.",
+        },
+        "video_trim": {
+            "requiredVideos": ["sourceVideo"],
+            "note": "Requires one local source video and applies a finite trim range through app-owned FFmpeg.",
+        },
+        "video_reverse": {
+            "requiredVideos": ["sourceVideo"],
+            "note": "Requires one local source video within the explicit reverse pixel-frame memory budget.",
+        },
+        "video_tile": {
+            "requiredVideos": ["referenceVideos"],
+            "minimumCounts": {"referenceVideos": 2},
+            "note": "Requires two to sixteen local source videos and produces a bounded synchronized tile wall.",
         },
     },
     "notes": [
@@ -12171,6 +12196,27 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["builtin-video-operations:stitch:v1"] = {
         ("videoExport", "fps", "fps"),
     ),
 }
+for _builtin_video_mode, _builtin_video_spec_name, _builtin_video_field in (
+    ("video_trim", "trim", "sourceVideo"),
+    ("video_reverse", "reverse", "sourceVideo"),
+    ("video_tile", "tile", "referenceVideos"),
+):
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"builtin-video-operations:{_builtin_video_spec_name}:v1"] = {
+        "modelType": "BuiltinVideoOperation",
+        "mode": _builtin_video_mode,
+        "profile": _BUILTIN_VIDEO_OPERATION_PROFILE,
+        "capability": _BUILTIN_VIDEO_OPERATION_CAPABILITY,
+        "roles": (
+            ("videoOperation", "modules.Video.ProcessVideo", -220, -80),
+            ("videoExport", "modules.Video.Export", 260, -80),
+        ),
+        "edges": (("videoOperation", "video", "videoExport", "video"),),
+        "bindings": _BUILTIN_VIDEO_OPERATION_BINDINGS
+        + (
+            ("videoOperation", "videos", _builtin_video_field),
+            ("videoExport", "fps", "fps"),
+        ),
+    }
 
 _SPANDREL_VIDEO_UPSCALE_MODEL_TYPE = "SpandrelVideoUpscale"
 _SPANDREL_VIDEO_UPSCALE_MODE = "video_upscale"

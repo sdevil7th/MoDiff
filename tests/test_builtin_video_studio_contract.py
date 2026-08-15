@@ -19,6 +19,8 @@ from modules.Video.main import (
     MAX_EXTRACTED_FRAMES,
     MAX_VIDEO_OPERATION_FRAMES_PER_INPUT,
     MAX_VIDEO_OPERATION_INPUTS,
+    MAX_VIDEO_OPERATION_PIXELS,
+    MAX_VIDEO_REVERSE_PIXEL_FRAMES,
     VIDEO_OPERATION_MODES,
     VIDEO_OPERATION_PIPELINE_CLASS,
     FrameExtract,
@@ -82,6 +84,109 @@ class BuiltinVideoOperationTests(unittest.TestCase):
         self.assertIsNone(result["images"])
         self.assertEqual(execute.call_args.kwargs["clips"], assets)
         self.assertEqual(execute.call_args.kwargs["transition_seconds"], 0.5)
+
+    def test_trim_reverse_and_tile_delegate_to_retained_video_nodes(self):
+        first = _asset(frames=48, path="one.mp4")
+        second = _asset(frames=36, path="two.mp4")
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[first]),
+            patch("modules.Video.main.TrimAsset.execute", return_value={"file": "trimmed.mp4"}) as trim,
+        ):
+            result = ProcessVideo().execute(
+                videos="one.mp4",
+                operation="video_trim",
+                start_seconds=0.25,
+                end_seconds=1.5,
+            )
+        self.assertEqual(result["video"], "trimmed.mp4")
+        self.assertEqual(trim.call_args.kwargs["video"], first)
+        self.assertEqual(trim.call_args.kwargs["start_seconds"], 0.25)
+        self.assertEqual(trim.call_args.kwargs["end_seconds"], 1.5)
+
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[first]),
+            patch("modules.Video.main.ReverseAsset.execute", return_value={"file": "reversed.mp4"}) as reverse,
+        ):
+            result = ProcessVideo().execute(videos="one.mp4", operation="video_reverse")
+        self.assertEqual(result["video"], "reversed.mp4")
+        self.assertEqual(reverse.call_args.kwargs["video"], first)
+
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=[first, second]),
+            patch("modules.Video.main.StackTileAssets.execute", return_value={"file": "tiled.mp4"}) as tile,
+        ):
+            result = ProcessVideo().execute(
+                videos=["one.mp4", "two.mp4"],
+                operation="video_tile",
+                columns=2,
+                sync="shortest",
+                gap=8,
+                background="gray",
+            )
+        self.assertEqual(result["video"], "tiled.mp4")
+        self.assertEqual(tile.call_args.kwargs["videos"], [first, second])
+        self.assertEqual(tile.call_args.kwargs["columns"], 2)
+        self.assertEqual(tile.call_args.kwargs["sync"], "shortest")
+        self.assertEqual(tile.call_args.kwargs["gap"], 8)
+        self.assertEqual(tile.call_args.kwargs["background"], "gray")
+
+    def test_new_operations_fail_closed_on_workload_and_field_bounds(self):
+        source = _asset(frames=48)
+        trim_cases = (
+            {"start_seconds": float("nan")},
+            {"start_seconds": -1},
+            {"start_seconds": 2},
+            {"start_seconds": 1, "end_seconds": 0.5},
+            {"end_seconds": 3},
+        )
+        for values in trim_cases:
+            with (
+                self.subTest(trim=values),
+                patch("modules.Video.main._file_asset_collection", return_value=[source]),
+                self.assertRaisesRegex(ValueError, "trim"),
+            ):
+                ProcessVideo().execute(videos="source.mp4", operation="video_trim", **values)
+        for operation in ("video_trim", "video_reverse"):
+            with (
+                self.subTest(operation=operation),
+                patch("modules.Video.main._file_asset_collection", return_value=[source, source]),
+                self.assertRaisesRegex(ValueError, "exactly one"),
+            ):
+                ProcessVideo().execute(videos=["one.mp4", "two.mp4"], operation=operation)
+        reverse_width = 1024
+        reverse_frames = MAX_VIDEO_REVERSE_PIXEL_FRAMES // (reverse_width * reverse_width) + 1
+        with (
+            patch(
+                "modules.Video.main._file_asset_collection",
+                return_value=[_asset(width=reverse_width, height=reverse_width, frames=reverse_frames)],
+            ),
+            self.assertRaisesRegex(ValueError, "pixel-frames"),
+        ):
+            ProcessVideo().execute(videos="source.mp4", operation="video_reverse")
+
+        tile_assets = [_asset(width=1920, height=1080), _asset(width=1920, height=1080)]
+        invalid_tile_fields = (
+            {"columns": 0},
+            {"columns": 5},
+            {"gap": -1},
+            {"gap": 257},
+            {"sync": "stretch"},
+            {"background": "black;movie=payload"},
+        )
+        for values in invalid_tile_fields:
+            with (
+                self.subTest(tile=values),
+                patch("modules.Video.main._file_asset_collection", return_value=tile_assets),
+                self.assertRaisesRegex(ValueError, "tile"),
+            ):
+                ProcessVideo().execute(videos=["one.mp4", "two.mp4"], operation="video_tile", **values)
+        oversized = [_asset(width=4096, height=2048), _asset(width=4096, height=2048)]
+        self.assertLessEqual(4096 * 2048, MAX_VIDEO_OPERATION_PIXELS)
+        with (
+            patch("modules.Video.main._file_asset_collection", return_value=oversized),
+            self.assertRaisesRegex(ValueError, "tile output"),
+        ):
+            ProcessVideo().execute(videos=["one.mp4", "two.mp4"], operation="video_tile", columns=2, gap=1)
 
     def test_facade_fails_closed_on_identity_operation_count_and_media_bounds(self):
         with self.assertRaisesRegex(ValueError, "contract identity"):
@@ -164,7 +269,16 @@ class BuiltinVideoStudioContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(capability["executionStatus"], "supported")
         self.assertEqual(capability["artifactKind"], "builtin")
         self.assertFalse(capability["artifactInstallRequired"])
-        self.assertEqual(capability["modeOutputKinds"], {"video_frame_extract": "image", "video_stitch": "video"})
+        self.assertEqual(
+            capability["modeOutputKinds"],
+            {
+                "video_frame_extract": "image",
+                "video_stitch": "video",
+                "video_trim": "video",
+                "video_reverse": "video",
+                "video_tile": "video",
+            },
+        )
         self.assertFalse(capability["autoEligible"])
         self.assertTrue(capability["templateEligible"])
         self.assertFalse(capability["galleryEligible"])
@@ -172,12 +286,22 @@ class BuiltinVideoStudioContractTests(unittest.IsolatedAsyncioTestCase):
         contracts = contracts_by_pair(payload["taskTemplateContracts"])
         extract = contracts[("BuiltinVideoOperation", "video_frame_extract")]
         stitch = contracts[("BuiltinVideoOperation", "video_stitch")]
+        trim = contracts[("BuiltinVideoOperation", "video_trim")]
+        reverse = contracts[("BuiltinVideoOperation", "video_reverse")]
+        tile = contracts[("BuiltinVideoOperation", "video_tile")]
         self.assertEqual(extract["requiredMedia"], [{"kind": "video", "field": "sourceVideo", "minimumCount": 1}])
         self.assertEqual(extract["mediaKind"], "image")
         self.assertEqual(extract["output"]["nodeKey"], "modules.Image.Preview")
         self.assertEqual(stitch["requiredMedia"], [{"kind": "video", "field": "referenceVideos", "minimumCount": 2}])
         self.assertEqual(stitch["mediaKind"], "video")
         self.assertEqual(stitch["output"]["nodeKey"], "modules.Video.Export")
+        for contract in (trim, reverse):
+            self.assertEqual(contract["requiredMedia"], [{"kind": "video", "field": "sourceVideo", "minimumCount": 1}])
+            self.assertEqual(contract["mediaKind"], "video")
+            self.assertEqual(contract["output"]["nodeKey"], "modules.Video.Export")
+        self.assertEqual(tile["requiredMedia"], [{"kind": "video", "field": "referenceVideos", "minimumCount": 2}])
+        self.assertEqual(tile["mediaKind"], "video")
+        self.assertEqual(tile["output"]["nodeKey"], "modules.Video.Export")
 
 
 if __name__ == "__main__":

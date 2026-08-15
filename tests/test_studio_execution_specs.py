@@ -372,6 +372,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("BuiltinImageOperation", "mask_composite"),
                 ("BuiltinVideoOperation", "video_frame_extract"),
                 ("BuiltinVideoOperation", "video_stitch"),
+                ("BuiltinVideoOperation", "video_trim"),
+                ("BuiltinVideoOperation", "video_reverse"),
+                ("BuiltinVideoOperation", "video_tile"),
                 ("SpandrelVideoUpscale", "video_upscale"),
             ],
         )

@@ -9,7 +9,13 @@ from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST
 
 logger = logging.getLogger("modiff")
 
-VIDEO_OPERATION_MODES = ("video_frame_extract", "video_stitch")
+VIDEO_OPERATION_MODES = (
+    "video_frame_extract",
+    "video_stitch",
+    "video_trim",
+    "video_reverse",
+    "video_tile",
+)
 VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
 VIDEO_UPSCALE_MODE = "video_upscale"
 VIDEO_UPSCALE_PIPELINE_CLASS = "SpandrelVideoUpscaleV1"
@@ -26,6 +32,7 @@ MAX_VIDEO_OPERATION_INPUTS = 16
 MAX_VIDEO_OPERATION_FRAMES_PER_INPUT = 14_400
 MAX_VIDEO_OPERATION_TOTAL_FRAMES = 57_600
 MAX_VIDEO_OPERATION_PIXELS = 16_777_216
+MAX_VIDEO_REVERSE_PIXEL_FRAMES = 251_658_240
 MAX_EXTRACTED_FRAMES = 64
 MAX_VIDEO_UPSCALE_FRAMES = 1_200
 MAX_VIDEO_UPSCALE_INPUT_PIXELS = 4_194_304
@@ -1328,12 +1335,15 @@ def _bounded_video_operation_assets(value, *, minimum):
         height = int(asset.get("height") or 0)
         frame_count = int(asset.get("frame_count") or 0)
         fps = float(asset.get("fps") or 0)
+        duration = float(asset.get("duration_seconds") or 0)
         if width < 1 or height < 1 or width * height > MAX_VIDEO_OPERATION_PIXELS:
             raise ValueError(
                 f"Built-in video input {index} must contain between 1 and {MAX_VIDEO_OPERATION_PIXELS} pixels per frame."
             )
         if not math.isfinite(fps) or fps <= 0:
             raise ValueError(f"Built-in video input {index} must declare a positive frame rate.")
+        if not math.isfinite(duration) or duration <= 0:
+            raise ValueError(f"Built-in video input {index} must declare a positive finite duration.")
         if not 1 <= frame_count <= MAX_VIDEO_OPERATION_FRAMES_PER_INPUT:
             raise ValueError(
                 f"Built-in video input {index} must contain between 1 and "
@@ -1388,8 +1398,24 @@ class ProcessVideo(NodeBase):
             "max": 5,
             "step": 0.05,
         },
+        "start_seconds": {"label": "Trim Start", "type": "float", "default": 0, "min": 0, "max": 86_400},
+        "end_seconds": {"label": "Trim End (0 = end)", "type": "float", "default": 0, "min": 0, "max": 86_400},
+        "columns": {"label": "Tile Columns", "type": "int", "default": 2, "min": 1, "max": 4},
+        "sync": {
+            "label": "Tile Length",
+            "type": "string",
+            "options": ["shortest", "longest_hold"],
+            "default": "longest_hold",
+        },
+        "gap": {"label": "Tile Gap", "type": "int", "default": 0, "min": 0, "max": 256},
+        "background": {
+            "label": "Tile Background",
+            "type": "string",
+            "options": ["black", "white", "gray"],
+            "default": "black",
+        },
         "images": {"label": "Extracted Frames", "display": "output", "type": "image"},
-        "video": {"label": "Stitched Video", "display": "output", "type": "video"},
+        "video": {"label": "Processed Video", "display": "output", "type": "video"},
         "selected_indices": {"label": "Indices", "display": "output", "type": "collection"},
         "timestamps": {"label": "Timestamps", "display": "output", "type": "collection"},
     }
@@ -1434,15 +1460,81 @@ class ProcessVideo(NodeBase):
                 "selected_indices": result["selected_indices"],
                 "timestamps": result["timestamps"],
             }
-        assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
-        transition_seconds = float(kwargs.get("transition_seconds") or 0)
-        if not math.isfinite(transition_seconds) or not 0 <= transition_seconds <= 5:
-            raise ValueError("Video stitch crossfade must be between 0 and 5 seconds.")
-        result = ConcatenateAssets().execute(
-            clips=assets,
-            transition_seconds=transition_seconds,
-            pin=False,
-        )
+        if operation == "video_stitch":
+            assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
+            transition_seconds = float(kwargs.get("transition_seconds") or 0)
+            if not math.isfinite(transition_seconds) or not 0 <= transition_seconds <= 5:
+                raise ValueError("Video stitch crossfade must be between 0 and 5 seconds.")
+            result = ConcatenateAssets().execute(
+                clips=assets,
+                transition_seconds=transition_seconds,
+                pin=False,
+            )
+        elif operation == "video_trim":
+            assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=1)
+            if len(assets) != 1:
+                raise ValueError("Video trim requires exactly one input video.")
+            start_seconds = float(kwargs.get("start_seconds") or 0)
+            end_seconds = float(kwargs.get("end_seconds") or 0)
+            duration = float(assets[0]["duration_seconds"])
+            if not math.isfinite(start_seconds) or not math.isfinite(end_seconds):
+                raise ValueError("Video trim bounds must be finite.")
+            if start_seconds < 0 or start_seconds >= duration:
+                raise ValueError("Video trim start must be within the source duration.")
+            if end_seconds < 0 or end_seconds > duration or (end_seconds and end_seconds <= start_seconds):
+                raise ValueError("Video trim end must be zero or after start within the source duration.")
+            result = TrimAsset().execute(
+                video=assets[0],
+                start_seconds=start_seconds,
+                end_seconds=end_seconds,
+                pin=False,
+            )
+        elif operation == "video_reverse":
+            assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=1)
+            if len(assets) != 1:
+                raise ValueError("Video reverse requires exactly one input video.")
+            source = assets[0]
+            pixel_frames = int(source["width"]) * int(source["height"]) * int(source["frame_count"])
+            if pixel_frames > MAX_VIDEO_REVERSE_PIXEL_FRAMES:
+                raise ValueError(
+                    "Video reverse exceeds the bounded in-memory FFmpeg reverse workload "
+                    f"of {MAX_VIDEO_REVERSE_PIXEL_FRAMES} pixel-frames."
+                )
+            result = ReverseAsset().execute(video=source, pin=False)
+        else:
+            assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
+            raw_columns = kwargs.get("columns", 2)
+            raw_gap = kwargs.get("gap", 0)
+            columns = int(2 if raw_columns is None else raw_columns)
+            gap = int(0 if raw_gap is None else raw_gap)
+            sync = str(kwargs.get("sync") or "longest_hold")
+            background = str(kwargs.get("background") or "black")
+            if not 1 <= columns <= 4:
+                raise ValueError("Video tile columns must be between 1 and 4.")
+            if not 0 <= gap <= 256:
+                raise ValueError("Video tile gap must be between 0 and 256 pixels.")
+            if sync not in StackTileAssets.params["sync"]["options"]:
+                raise ValueError(f"Unsupported video tile synchronization policy {sync!r}.")
+            if background not in ProcessVideo.params["background"]["options"]:
+                raise ValueError(f"Unsupported video tile background {background!r}.")
+            width = int(assets[0]["width"])
+            height = int(assets[0]["height"])
+            used_columns = min(columns, len(assets))
+            rows = math.ceil(len(assets) / columns)
+            output_width = used_columns * width + (used_columns - 1) * gap
+            output_height = rows * height + (rows - 1) * gap
+            if output_width * output_height > MAX_VIDEO_OPERATION_PIXELS:
+                raise ValueError(
+                    f"Video tile output must contain at most {MAX_VIDEO_OPERATION_PIXELS} pixels per frame."
+                )
+            result = StackTileAssets().execute(
+                videos=assets,
+                columns=columns,
+                sync=sync,
+                gap=gap,
+                background=background,
+                pin=False,
+            )
         return {
             "images": None,
             "video": result["file"],

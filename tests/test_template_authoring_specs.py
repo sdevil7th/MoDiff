@@ -97,7 +97,10 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             "image_upscale",
             "mask_composite",
             "video_frame_extract",
+            "video_reverse",
             "video_stitch",
+            "video_tile",
+            "video_trim",
             "video_upscale",
             "speech_to_text",
             "speech_translation",
@@ -135,8 +138,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                     for field in required_inputs.get(key, []):
                         default_count = (
                             2
-                            if specification["mode"] == "multi_image_reference_edit"
-                            and field == "referenceImages"
+                            if specification["mode"] == "multi_image_reference_edit" and field == "referenceImages"
                             else 1
                         )
                         expected.append((field, media_kind, minimum_counts.get(field, default_count)))
