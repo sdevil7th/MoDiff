@@ -30,6 +30,7 @@ class VideoDownloadSelectionTests(unittest.TestCase):
             for model_type, capability in capabilities.items()
             if capability.get("outputKind") == "video"
             and capability.get("defaultRepo")
+            and capability.get("artifactInstallRequired", True)
             and not capability.get("downloadFiles")
         }
 
@@ -37,6 +38,11 @@ class VideoDownloadSelectionTests(unittest.TestCase):
             unbounded,
             {"LTX2ConditionPipeline", "LTX2Pipeline", "WanAnimatePipeline"},
         )
+
+        builtin = capabilities["BuiltinVideoOperation"]
+        self.assertEqual(builtin["artifactKind"], "builtin")
+        self.assertFalse(builtin["artifactInstallRequired"])
+        self.assertEqual(builtin["downloadFiles"], [])
 
     def test_remaining_admitted_wan_routes_publish_bounded_component_selections(self):
         capabilities = studio_capability_definitions()

@@ -279,7 +279,13 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
                 if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
-                    self.assertEqual(profile.id, "builtin-image-operations:direct")
+                    self.assertIn(
+                        profile.id,
+                        {
+                            "builtin-image-operations:direct",
+                            "builtin-video-operations:direct",
+                        },
+                    )
                     self.assertEqual(profile.optional_runtime_profiles, ())
                     for mode in profile.modes:
                         self.assertEqual(
