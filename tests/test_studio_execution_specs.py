@@ -1600,6 +1600,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertIn(("audioGenerate", "task_type", "text2audio"), spec["bindings"])
                 self.assertIn(("audioGenerate", "sample_rate", sample_rate), spec["bindings"])
                 self.assertIn(("audioExport", "sample_rate", sample_rate), spec["bindings"])
+                if model_type == "LongCatAudioDiTPipeline":
+                    self.assertIn(("diffusersRecipe", "vae_slicing", "false"), spec["bindings"])
+                else:
+                    self.assertIn(("diffusersRecipe", "vae_slicing", "true"), spec["bindings"])
                 if waveforms is None:
                     self.assertFalse(any(param == "num_waveforms" for _role, param, _source in spec["bindings"]))
                 else:

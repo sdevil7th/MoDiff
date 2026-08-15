@@ -3294,7 +3294,15 @@ _STABLE_AUDIO_GRAPH_BINDINGS = (
     ("audioExport", "sample_rate", "sampleRate48000"),
 )
 _LONGCAT_AUDIO_DIT_GRAPH_BINDINGS = tuple(
-    (role, param, "sampleRate24000") if param == "sample_rate" else (role, param, source)
+    (
+        role,
+        param,
+        "false"
+        if role == "diffusersRecipe" and param == "vae_slicing"
+        else "sampleRate24000"
+        if param == "sample_rate"
+        else source,
+    )
     for role, param, source in _STABLE_AUDIO_GRAPH_BINDINGS
     if param != "num_waveforms"
 )
