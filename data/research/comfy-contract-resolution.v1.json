@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:8fff8646d8b72a90bc9dd555f30f5f9c59d1b8f96cd01b95bcb266029a9bf4a5",
+  "contentHash": "sha256:5ecab82166bf05d0ec1acdd23d6e03d7fb78339e7639dab3504e7da4879e51df",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -12801,12 +12801,13 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_fun_inpaint_graph_is_first_last_frame_generation_not_video_inpaint",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "new_bounded_modiff_task_contract_required",
+        "new_original_modiff_workflow_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -12827,32 +12828,51 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan2_2_5B_fun_inpaint",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 15,
+      "currentFamilyOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 0,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
-      "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:Wan22Pipeline:text_to_video",
-        "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
-        "modelFamily": "Wan Video",
-        "modelType": "Wan22Pipeline",
-        "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
-      },
-      "representativeWorkflowOptions": [
-        {
-          "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "Wan22Pipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
-        }
-      ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "text_to_video",
+      "recommendedWorkflow": null,
+      "representativeWorkflowOptions": [],
+      "resolutionState": "new_task_boundary_required",
+      "selectedCandidateMode": "first_last_frame_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.2_fun_inpaint_5B_bf16.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan2.2_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan2_2_5B_fun_inpaint.json",
+        "assetSha256": "47a669db3795ec2f06b99f00c579c3e214530cb16bb67a2a08b5428af784fb79",
+        "catalogSelectedCandidateMode": "text_to_video",
+        "comparison": {
+          "currentRepository": null,
+          "currentRevision": null,
+          "currentWorkflowId": null,
+          "reasonCode": "wan_fun_inpaint_graph_is_first_last_frame_generation_not_video_inpaint",
+          "state": "different_model_generation_and_new_task_required"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "15161f3c41adfb40228a50da6c0238ab5c649b7b",
+        "importsGraph": false,
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.2 5B Fun Inpaint"
     },
     {
@@ -12898,12 +12918,12 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_vace_14b_reference_generation_is_not_ltx2",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -12924,39 +12944,78 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:video_wan_vace_14B_ref2v",
-      "currentFamilyOptionCount": 3,
-      "currentTaskBoundaryOptionCount": 8,
+      "currentFamilyOptionCount": 0,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HunyuanVideoFramepackPipeline:image_to_video",
-        "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-        "modelFamily": "Wan Video",
-        "modelType": "HunyuanVideoFramepackPipeline",
+        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+        "modelFamily": "LTX Video",
+        "modelType": "LTX2ConditionPipeline",
         "publicTemplateIds": [],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
-          "modelFamily": "Wan Video",
-          "modelType": "HunyuanVideoFramepackPipeline",
+          "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+          "modelFamily": "LTX Video",
+          "modelType": "LTX2ConditionPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "image_to_video",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "reference_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan_vace_14B_ref2v.json",
+        "assetSha256": "7c120c85409ca5b87ac5caad3245470c005b056adfe732392f892b8d0a9ea455",
+        "catalogRecommendedWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+        "catalogSelectedCandidateMode": "image_to_video",
+        "comparison": {
+          "currentRepository": "Lightricks/LTX-2",
+          "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+          "currentWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+          "reasonCode": "wan_vace_14b_reference_generation_is_not_ltx2",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "55cb2a0b5736a48b0128fb04ef64dd028907ad74",
+        "importsGraph": false,
+        "reviewedTaskMode": "reference_to_video",
+        "reviewedWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 VACE Reference to Video"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_vace_14b_partition_and_causvid_lora_not_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "family_match_requires_exact_checkpoint_and_variant_review"
@@ -12983,19 +13042,25 @@
       "currentFamilyOptionCount": 4,
       "currentTaskBoundaryOptionCount": 15,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:Wan22Pipeline:text_to_video",
-        "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
+        "authoringSpecId": "template-authoring:WanVACEPipeline:text_to_video",
+        "canonicalWorkflowId": "WanVACEPipeline:text_to_video",
         "modelFamily": "Wan Video",
-        "modelType": "Wan22Pipeline",
+        "modelType": "WanVACEPipeline",
         "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
+        {
+          "canonicalWorkflowId": "WanVACEPipeline:text_to_video",
+          "modelFamily": "Wan Video",
+          "modelType": "WanVACEPipeline",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
+        },
         {
           "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
           "modelFamily": "Wan Video",
@@ -13006,13 +13071,50 @@
       "resolutionState": "existing_family_workflow_candidate",
       "selectedCandidateMode": "text_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan_vace_14B_t2v.json",
+        "assetSha256": "d022cdcf44060fb017b53188d419996aaa1bba09262a72c8ed2d3cd2f1443893",
+        "catalogRecommendedWorkflowId": "Wan22Pipeline:text_to_video",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+          "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+          "currentWorkflowId": "WanVACEPipeline:text_to_video",
+          "reasonCode": "wan_vace_14b_partition_and_causvid_lora_not_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "bbf56c17732e6db1a7182a721afdf497c6847245",
+        "importsGraph": false,
+        "reviewedWorkflowId": "WanVACEPipeline:text_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 VACE Text to Video"
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_vace_14b_control_partition_and_causvid_lora_not_admitted",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
         "family_match_requires_exact_checkpoint_and_variant_review"
@@ -13037,33 +13139,72 @@
       },
       "contractId": "comfy-research:template:video_wan_vace_14B_v2v",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
         "authoringSpecId": null,
-        "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
+        "canonicalWorkflowId": "WanVACEPipeline:control_to_video",
         "modelFamily": "Wan Video",
-        "modelType": "WanVideoPipeline",
+        "modelType": "WanVACEPipeline",
         "publicTemplateIds": [
-          "wan_vace_video_to_video"
+          "wan_vace_grayscale_control"
         ],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
+          "canonicalWorkflowId": "WanVACEPipeline:control_to_video",
           "modelFamily": "Wan Video",
-          "modelType": "WanVideoPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
+          "modelType": "WanVACEPipeline",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
       "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "video_to_video",
+      "selectedCandidateMode": "control_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            "repository": "Kijai/WanVideo_comfy"
+          },
+          {
+            "artifact": "umt5_xxl_fp16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/video_wan_vace_14B_v2v.json",
+        "assetSha256": "b1b79044f20eea5590aa419b4ca28a5fb455981c38ffd22db8a9fb6f641e00b9",
+        "catalogRecommendedWorkflowId": "WanVACEPipeline:control_to_video",
+        "catalogSelectedCandidateMode": "video_to_video",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+          "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+          "currentWorkflowId": "WanVACEPipeline:control_to_video",
+          "reasonCode": "wan_vace_14b_control_partition_and_causvid_lora_not_admitted",
+          "state": "same_upstream_generation_different_partition_and_auxiliary"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "716f54717cf4b80800f994d641b72be96d8a197f",
+        "importsGraph": false,
+        "reviewedTaskMode": "control_to_video",
+        "reviewedWorkflowId": "WanVACEPipeline:control_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan2.1 VACE Control Video"
     },
     {
@@ -13392,12 +13533,12 @@
     },
     {
       "blockers": [
-        "catalog_entry_source_review_required",
-        "catalog_metadata_is_semantic_evidence_only",
+        "pinned_source_dependencies_reviewed_without_import_or_execution",
         "exact_catalog_checkpoint_and_component_compatibility_not_proven",
+        "source_review_wan_fun_control_model_is_not_wan_vace",
         "model_artifact_and_input_output_rights_review_required",
         "execution_and_asset_quality_not_proven",
-        "family_match_requires_exact_checkpoint_and_variant_review"
+        "exact_catalog_model_or_variant_admission_required"
       ],
       "candidateOutputMediaKinds": [
         "video"
@@ -13419,33 +13560,72 @@
       },
       "contractId": "comfy-research:template:wan2.1_fun_control",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
-      "mappingMeaning": "task_and_family_semantic_candidate_only_exact_checkpoint_not_proven",
+      "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
         "Wan Video"
       ],
       "recommendedWorkflow": {
         "authoringSpecId": null,
-        "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
+        "canonicalWorkflowId": "WanVACEPipeline:control_to_video",
         "modelFamily": "Wan Video",
-        "modelType": "WanVideoPipeline",
+        "modelType": "WanVACEPipeline",
         "publicTemplateIds": [
-          "wan_vace_video_to_video"
+          "wan_vace_grayscale_control"
         ],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
         {
-          "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
+          "canonicalWorkflowId": "WanVACEPipeline:control_to_video",
           "modelFamily": "Wan Video",
-          "modelType": "WanVideoPipeline",
-          "qualificationStatus": "graph-qualified-execution-pending"
+          "modelType": "WanVACEPipeline",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
-      "resolutionState": "existing_family_workflow_candidate",
-      "selectedCandidateMode": "video_to_video",
+      "resolutionState": "existing_task_boundary_model_admission_required",
+      "selectedCandidateMode": "control_to_video",
       "sourceKind": "template",
+      "sourceReview": {
+        "artifactDependencies": [
+          {
+            "artifact": "wan2.1_fun_control_1.3B_bf16.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "wan_2.1_vae.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          },
+          {
+            "artifact": "clip_vision_h.safetensors",
+            "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged"
+          }
+        ],
+        "assetPath": "templates/wan2.1_fun_control.json",
+        "assetSha256": "aff0f79b23f071f5aee6293ac0d6da6f254762e19df783243e151f61d6929fab",
+        "catalogRecommendedWorkflowId": "WanVACEPipeline:control_to_video",
+        "catalogSelectedCandidateMode": "video_to_video",
+        "comparison": {
+          "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+          "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+          "currentWorkflowId": "WanVACEPipeline:control_to_video",
+          "reasonCode": "wan_fun_control_model_is_not_wan_vace",
+          "state": "different_model_generation_requires_admission"
+        },
+        "copiesNodesOrPrompts": false,
+        "executesGraph": false,
+        "gitBlobOid": "15b557afbee8c9b56270576316e285a4b3f1ad79",
+        "importsGraph": false,
+        "reviewedTaskMode": "control_to_video",
+        "reviewedWorkflowId": "WanVACEPipeline:control_to_video",
+        "sourceRevision": "d9e66019b85da231b7c936ad9cb7ff08cec16557",
+        "state": "complete"
+      },
       "title": "Wan 2.1 ControlNet"
     },
     {
@@ -13570,49 +13750,49 @@
       "camera_to_video": 3,
       "character_replace": 2,
       "control_image": 2,
+      "control_to_video": 2,
       "control_video_to_video": 2,
       "depth_estimation": 1,
       "edit_audio": 1,
       "edit_image": 22,
       "edit_video": 2,
-      "first_last_frame_to_video": 7,
+      "first_last_frame_to_video": 8,
       "frame_interpolation": 1,
       "image_audio_to_video": 1,
       "image_to_3d": 7,
-      "image_to_video": 12,
+      "image_to_video": 11,
       "image_upscale": 4,
       "inpaint": 4,
       "layer_decomposition": 1,
       "motion_track_to_video": 1,
       "outpaint": 1,
       "reference_to_image": 1,
-      "reference_to_video": 2,
+      "reference_to_video": 3,
       "remove_background": 1,
       "text_generation": 4,
       "text_to_audio": 5,
       "text_to_image": 32,
-      "text_to_video": 13,
-      "video_to_video": 2,
+      "text_to_video": 12,
       "video_upscale": 1
     },
     "newWorkflowClaims": 0,
-    "pinnedSourceReviewCount": 55,
+    "pinnedSourceReviewCount": 60,
     "pinnedSourceReviewDecisionCounts": {
-      "different_model_generation_and_new_task_required": 6,
-      "different_model_generation_requires_admission": 35,
+      "different_model_generation_and_new_task_required": 7,
+      "different_model_generation_requires_admission": 37,
       "same_upstream_family_different_default_partition": 1,
       "same_upstream_generation_and_new_task_auxiliary_required": 1,
-      "same_upstream_generation_different_partition_and_auxiliary": 4,
+      "same_upstream_generation_different_partition_and_auxiliary": 6,
       "same_upstream_generation_requires_auxiliary_admission": 8
     },
-    "recordsWithHiddenAuthoringSpecOption": 84,
+    "recordsWithHiddenAuthoringSpecOption": 83,
     "recordsWithPublicTemplateOption": 27,
-    "recordsWithRecommendedWorkflow": 111,
+    "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,
     "resolutionStateCounts": {
-      "existing_family_workflow_candidate": 18,
-      "existing_task_boundary_model_admission_required": 93,
-      "new_task_boundary_required": 27
+      "existing_family_workflow_candidate": 15,
+      "existing_task_boundary_model_admission_required": 95,
+      "new_task_boundary_required": 28
     },
     "sourceProposalCount": 138
   }

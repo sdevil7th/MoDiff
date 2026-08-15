@@ -1343,6 +1343,155 @@ _PINNED_SOURCE_REVIEWS = {
         "resolutionState": "new_task_boundary_required",
         "mappingMeaning": "source_reviewed_new_motion_track_video_task_and_model_generation_required",
     },
+    "comfy-research:template:video_wan2_2_5B_fun_inpaint": {
+        "assetPath": "templates/video_wan2_2_5B_fun_inpaint.json",
+        "assetSha256": "47a669db3795ec2f06b99f00c579c3e214530cb16bb67a2a08b5428af784fb79",
+        "gitBlobOid": "15161f3c41adfb40228a50da6c0238ab5c649b7b",
+        "reviewedTaskMode": "first_last_frame_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+                "artifact": "wan2.2_fun_inpaint_5B_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "artifact": "wan2.2_vae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_and_new_task_required",
+            "currentWorkflowId": None,
+            "currentRepository": None,
+            "currentRevision": None,
+            "reasonCode": "wan_fun_inpaint_graph_is_first_last_frame_generation_not_video_inpaint",
+        },
+        "resolutionState": "new_task_boundary_required",
+        "mappingMeaning": "source_reviewed_new_first_last_frame_video_task_and_model_generation_required",
+    },
+    "comfy-research:template:video_wan_vace_14B_ref2v": {
+        "assetPath": "templates/video_wan_vace_14B_ref2v.json",
+        "assetSha256": "7c120c85409ca5b87ac5caad3245470c005b056adfe732392f892b8d0a9ea455",
+        "gitBlobOid": "55cb2a0b5736a48b0128fb04ef64dd028907ad74",
+        "reviewedTaskMode": "reference_to_video",
+        "reviewedWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            },
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp16.safetensors",
+            },
+            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+            "currentRepository": "Lightricks/LTX-2",
+            "currentRevision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            "reasonCode": "wan_vace_14b_reference_generation_is_not_ltx2",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
+    "comfy-research:template:video_wan_vace_14B_t2v": {
+        "assetPath": "templates/video_wan_vace_14B_t2v.json",
+        "assetSha256": "d022cdcf44060fb017b53188d419996aaa1bba09262a72c8ed2d3cd2f1443893",
+        "gitBlobOid": "bbf56c17732e6db1a7182a721afdf497c6847245",
+        "reviewedWorkflowId": "WanVACEPipeline:text_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            },
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp16.safetensors",
+            },
+            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_different_partition_and_auxiliary",
+            "currentWorkflowId": "WanVACEPipeline:text_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+            "reasonCode": "wan_vace_14b_partition_and_causvid_lora_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:video_wan_vace_14B_v2v": {
+        "assetPath": "templates/video_wan_vace_14B_v2v.json",
+        "assetSha256": "b1b79044f20eea5590aa419b4ca28a5fb455981c38ffd22db8a9fb6f641e00b9",
+        "gitBlobOid": "716f54717cf4b80800f994d641b72be96d8a197f",
+        "reviewedTaskMode": "control_to_video",
+        "reviewedWorkflowId": "WanVACEPipeline:control_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_vace_14B_fp16.safetensors",
+            },
+            {
+                "repository": "Kijai/WanVideo_comfy",
+                "artifact": "Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp16.safetensors",
+            },
+            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
+        ],
+        "comparison": {
+            "state": "same_upstream_generation_different_partition_and_auxiliary",
+            "currentWorkflowId": "WanVACEPipeline:control_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+            "reasonCode": "wan_vace_14b_control_partition_and_causvid_lora_not_admitted",
+        },
+        "resolutionState": "existing_family_workflow_candidate",
+        "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
+    },
+    "comfy-research:template:wan2.1_fun_control": {
+        "assetPath": "templates/wan2.1_fun_control.json",
+        "assetSha256": "aff0f79b23f071f5aee6293ac0d6da6f254762e19df783243e151f61d6929fab",
+        "gitBlobOid": "15b557afbee8c9b56270576316e285a4b3f1ad79",
+        "reviewedTaskMode": "control_to_video",
+        "reviewedWorkflowId": "WanVACEPipeline:control_to_video",
+        "artifactDependencies": [
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "wan2.1_fun_control_1.3B_bf16.safetensors",
+            },
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {"repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "artifact": "wan_2.1_vae.safetensors"},
+            {
+                "repository": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+                "artifact": "clip_vision_h.safetensors",
+            },
+        ],
+        "comparison": {
+            "state": "different_model_generation_requires_admission",
+            "currentWorkflowId": "WanVACEPipeline:control_to_video",
+            "currentRepository": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+            "currentRevision": "ec4d2cb062b548996b179d493fdd05340de702a1",
+            "reasonCode": "wan_fun_control_model_is_not_wan_vace",
+        },
+        "resolutionState": "existing_task_boundary_model_admission_required",
+        "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
+    },
     "comfy-research:template:image_ernie_image": {
         "assetPath": "templates/image_ernie_image.json",
         "assetSha256": "d75ba44837ed432a5acf4f4eeb6a6f688b55827f8f2cfb7a464e09a8bf67be2c",
