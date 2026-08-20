@@ -3527,6 +3527,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         loaded = {}
         called = {}
         encoded = {}
+        prior = {}
         placements = []
 
         class TextEncoder:
@@ -3555,14 +3556,23 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 max_sequence_length=2048,
                 negative_prompt_embeds=None,
                 prompt_embeds=None,
+                prior_token_ids=None,
+                prior_token_image_ids=None,
+                source_image_grid_thw=None,
                 generator=None,
                 output_type="pil",
                 return_dict=True,
                 callback_on_step_end=None,
                 callback_on_step_end_tensor_inputs=None,
             ):
+                if prompt is not None and prompt_embeds is not None:
+                    raise ValueError("Cannot forward both prompt and prompt_embeds")
                 called.update(locals())
                 return SimpleNamespace(images=[Image.new("RGB", (width, height))])
+
+            def generate_prior_tokens(self, prompt, image, height, width, device, generator):
+                prior.update(locals())
+                return "prior-token-ids", None, None
 
             def encode_prompt(
                 self,
@@ -3626,6 +3636,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(called["max_sequence_length"], 2048)
         self.assertEqual(called["prompt_embeds"], "bfloat16-prompt-embeds")
         self.assertEqual(called["negative_prompt_embeds"], "bfloat16-negative-prompt-embeds")
+        self.assertIsNone(called["prompt"])
+        self.assertEqual(called["prior_token_ids"], "prior-token-ids")
+        self.assertEqual(prior["prompt"], "reviewed fixture")
+        self.assertIsNone(prior["image"])
+        self.assertEqual(prior["height"], 1024)
+        self.assertEqual(prior["width"], 1024)
         self.assertEqual(encoded["prompt"], "reviewed fixture")
         self.assertTrue(encoded["do_classifier_free_guidance"])
         self.assertEqual(encoded["dtype"], "bfloat16")
@@ -3657,6 +3673,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         override = dict(adapter.component_dtype_overrides)
         self.assertEqual(override, {"text_encoder": "float32"})
         self.assertEqual(adapter.prompt_embedding_dtype_component, "transformer")
+        self.assertEqual(adapter.prompt_prior_token_method, "generate_prior_tokens")
 
         text_encoder = torch.nn.Linear(4, 4).to(getattr(torch, override["text_encoder"]))
         float32_activations = torch.ones((1, 4), dtype=torch.float32)

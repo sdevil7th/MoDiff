@@ -126,6 +126,7 @@ class ImagePipelineAdapter:
     weight_variant: str | None = None
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     prompt_embedding_dtype_component: str | None = None
+    prompt_prior_token_method: str | None = None
     max_inference_steps: int = 100
     min_output_side: int = 16
     max_output_side: int = 2048
@@ -228,6 +229,14 @@ class ImagePipelineAdapter:
             or self.prompt_embedding_dtype_component != self.prompt_embedding_dtype_component.strip()
         ):
             raise ValueError("An image prompt-embedding dtype component must be a nonblank component name.")
+        if self.prompt_prior_token_method is not None and (
+            self.prompt_embedding_dtype_component is None
+            or not self.prompt_prior_token_method
+            or self.prompt_prior_token_method != self.prompt_prior_token_method.strip()
+        ):
+            raise ValueError(
+                "An image prompt prior-token method requires a prompt-embedding dtype component and a nonblank name."
+            )
         if (self.min_reference_aspect_ratio is None) != (self.max_reference_aspect_ratio is None):
             raise ValueError("Image reference aspect-ratio bounds must be declared together.")
         if self.min_reference_aspect_ratio is not None and not (
@@ -380,10 +389,31 @@ class ImagePipelineAdapter:
 
         import torch
 
+        raw_prompt = target.get("prompt") or ""
+        if self.prompt_prior_token_method is not None:
+            generate_prior_tokens = getattr(pipeline, self.prompt_prior_token_method, None)
+            if not callable(generate_prior_tokens):
+                raise RuntimeError(
+                    f"{self.pipeline_class} did not expose its reviewed {self.prompt_prior_token_method} prompt bridge."
+                )
+            prior = generate_prior_tokens(
+                prompt=raw_prompt,
+                image=target.get("image"),
+                height=target.get("height"),
+                width=target.get("width"),
+                device=getattr(pipeline, "_execution_device", None),
+                generator=target.get("generator"),
+            )
+            if not isinstance(prior, tuple) or len(prior) != 3:
+                raise RuntimeError(
+                    f"{self.pipeline_class} returned an invalid reviewed prior-token bridge result."
+                )
+            target["prior_token_ids"], target["prior_token_image_ids"], target["source_image_grid_thw"] = prior
+
         guidance_scale = float(target.get(self.guidance_parameter or "guidance_scale", 0.0))
         with torch.no_grad():
             prompt_embeds, negative_prompt_embeds = encode_prompt(
-                target.get("prompt") or "",
+                raw_prompt,
                 do_classifier_free_guidance=guidance_scale > 1.0,
                 num_images_per_prompt=1,
                 device=getattr(pipeline, "_execution_device", None),
@@ -392,6 +422,10 @@ class ImagePipelineAdapter:
             )
         target["prompt_embeds"] = prompt_embeds
         target["negative_prompt_embeds"] = negative_prompt_embeds
+        # Upstream pipelines reject raw prompt text together with prepared
+        # embeddings. GLM separately consumes the prompt for prior tokens, so
+        # that reviewed bridge must complete before the raw prompt is removed.
+        target.pop("prompt", None)
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -937,6 +971,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         # transformer boundary before the upstream denoising call.
         component_dtype_overrides=(("text_encoder", "float32"),),
         prompt_embedding_dtype_component="transformer",
+        prompt_prior_token_method="generate_prior_tokens",
         max_inference_steps=50,
         min_output_side=1024,
         max_output_side=1024,
