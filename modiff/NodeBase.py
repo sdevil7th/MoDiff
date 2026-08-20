@@ -373,7 +373,14 @@ class NodeBase:
                     type = self.default_params[key]['type']
                     if isinstance(type, list):
                         type = type[0]
-                    params[key] = recursive_type_cast(value, type, key)
+                    if self.default_params[key].get('display') == 'modelselect' and isinstance(value, dict):
+                        # Structured model selections carry typed immutable
+                        # receipt fields. The UI control itself is string-like,
+                        # but recursively casting its metadata would turn
+                        # byteSize into a string before exact verification.
+                        params[key] = value
+                    else:
+                        params[key] = recursive_type_cast(value, type, key)
 
                 if 'options' in self.default_params[key] and not self.default_params[key].get('fieldOptions', {}).get('noValidation', False):
                     options = self.default_params[key]['options']

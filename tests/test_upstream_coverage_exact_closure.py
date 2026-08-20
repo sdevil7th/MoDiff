@@ -53,10 +53,10 @@ class UpstreamCoverageExactClosureTests(unittest.TestCase):
         self.assertEqual(
             Counter(item["status"] for item in items),
             {
-                "executable": 116,
+                "executable": 117,
                 "equivalent": 15,
                 "intentionally-excluded": 56,
-                "research-blocked": 120,
+                "research-blocked": 119,
                 "contract-only": 20,
             },
         )

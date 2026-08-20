@@ -44,7 +44,7 @@ class PrimitiveDataExportTests(unittest.TestCase):
                     filename=str(data_root / "selected.txt"),
                     format="text",
                 )
-                json_string = ExportData("data-export-json-string")(
+                ExportData("data-export-json-string")(
                     value="selected branch",
                     filename=str(data_root / "selected.json"),
                     format="json",

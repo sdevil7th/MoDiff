@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:3e697574baa0129d5818261cb181e442143193b7923f740c8ca847e9a1f9016d",
+  "contentHash": "sha256:977b348029f77bdef78ac67bc10f45549688f905d697183b65cd69b7c930a417",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:b1ca245b2be060b8b8916e3899824436de0a5712a5fcfc7e22de942ecd8418dc",
+      "contentHash": "sha256:628ca7d68834966804dc1f9ba4ef917527c9b5da12ba98aa1243fc0fecf3d9b2",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:4e1484041cec90ba30531ecc89312975f99f7838ec7a7fc9c84f2324843fcf50"
+      "sha256": "sha256:a08f236950e7f3d913cb072e3cbadc72e2f7814a93dfe706dacf28982196063a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -172,7 +172,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses the frame, clouds drift naturally, exposure stays stable, and motion remains continuous",
+        "prompt": "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses once, clouds drift naturally, exposure stays stable. Locked-off 24 mm with a very slow pan, continuous motion, believable cloth and wheel rotation, no flicker, duplicate cyclists, or sudden weather resets.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -385,7 +385,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Generate a temporally coherent cinematic shot that follows the supplied control motion and structure, with stable subjects, smooth movement, and consistent lighting.",
+        "prompt": "Generate a temporally coherent cinematic shot that follows the supplied control motion and structure, with stable subjects, smooth movement, and consistent lighting. No flicker or geometry drift.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -562,7 +562,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains its form, the camera makes a subtle arc, and temporal details remain consistent",
+        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains form, water catches the rim, camera makes a subtle arc. Keep identity, workshop background, and wheel speed consistent. Soft side light, no jump cuts, extra limbs, or clay that ignores gravity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -729,7 +729,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "A small research boat moving through calm arctic water beneath low fog; ice fragments drift slowly, soft light changes gradually, and the horizon remains stable",
+        "prompt": "A small research boat moving through calm arctic water beneath low fog; ice fragments drift slowly, soft light changes gradually, horizon remains stable. Gentle 50 mm lateral drift, continuous wake, physically plausible water, no flicker, teleporting ice, or sudden sunbursts.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -1334,7 +1334,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains its form, the camera makes a subtle arc, and temporal details remain consistent",
+        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains form, water catches the rim, camera makes a subtle arc. Keep identity, workshop background, and wheel speed consistent. Soft side light, no jump cuts, extra limbs, or clay that ignores gravity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -1462,7 +1462,7 @@
           "status": "not_supported_by_canonical_graph",
           "value": null
         },
-        "prompt": "Instrumental downtempo electronic piece with brushed drums, warm analog bass, soft granular textures, and a restrained melodic arc; clean mix, gradual development, resolved ending",
+        "prompt": "Instrumental downtempo electronic piece with brushed drums, warm analog bass, soft granular textures, and a restrained melodic arc; clean mix, gradual verse-like development, resolved ending, no vocals or abrupt cuts.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -1585,7 +1585,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -3783,7 +3783,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -4254,7 +4254,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -4412,7 +4412,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains its form, the camera makes a subtle arc, and temporal details remain consistent",
+        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains form, water catches the rim, camera makes a subtle arc. Keep identity, workshop background, and wheel speed consistent. Soft side light, no jump cuts, extra limbs, or clay that ignores gravity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -4723,7 +4723,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -4846,7 +4846,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -5313,7 +5313,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -5426,7 +5426,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -5564,7 +5564,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -5682,7 +5682,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -5805,7 +5805,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -6313,7 +6313,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly.",
+        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -6490,7 +6490,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
+        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions. Leave every unmasked pixel conceptually unchanged.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -6650,7 +6650,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly.",
+        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -6827,7 +6827,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
+        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions. Leave every unmasked pixel conceptually unchanged.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -6975,7 +6975,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -7611,7 +7611,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -7900,7 +7900,7 @@
           "status": "not_supported_by_canonical_graph",
           "value": null
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -8497,7 +8497,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -8620,7 +8620,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -8743,7 +8743,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -9099,7 +9099,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -9222,7 +9222,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -9370,7 +9370,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -9666,7 +9666,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -9789,7 +9789,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -10303,7 +10303,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "A small research boat moving through calm arctic water beneath low fog; ice fragments drift slowly, soft light changes gradually, and the horizon remains stable",
+        "prompt": "A small research boat moving through calm arctic water beneath low fog; ice fragments drift slowly, soft light changes gradually, horizon remains stable. Gentle 50 mm lateral drift, continuous wake, physically plausible water, no flicker, teleporting ice, or sudden sunbursts.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -10649,7 +10649,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains its form, the camera makes a subtle arc, and temporal details remain consistent",
+        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains form, water catches the rim, camera makes a subtle arc. Keep identity, workshop background, and wheel speed consistent. Soft side light, no jump cuts, extra limbs, or clay that ignores gravity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -10980,7 +10980,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11103,7 +11103,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11261,7 +11261,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains its form, the camera makes a subtle arc, and temporal details remain consistent",
+        "prompt": "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains form, water catches the rim, camera makes a subtle arc. Keep identity, workshop background, and wheel speed consistent. Soft side light, no jump cuts, extra limbs, or clay that ignores gravity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11384,7 +11384,7 @@
           "status": "not_supported_by_canonical_graph",
           "value": null
         },
-        "prompt": "Instrumental downtempo electronic piece with brushed drums, warm analog bass, soft granular textures, and a restrained melodic arc; clean mix, gradual development, resolved ending",
+        "prompt": "Instrumental downtempo electronic piece with brushed drums, warm analog bass, soft granular textures, and a restrained melodic arc; clean mix, gradual verse-like development, resolved ending, no vocals or abrupt cuts.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11532,7 +11532,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11655,7 +11655,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11778,7 +11778,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Handcrafted miniature harbor town inside an open walnut music box, tiny boats and lighthouse, macro photography, shallow depth of field, warm practical lights, intricate physical detail",
+        "prompt": "Campaign still: macro photograph of a handcrafted miniature harbor town inside an open walnut music box. Tiny boats, lighthouse, painted quays, precise joinery. 100 mm macro, shallow depth of field, warm practicals inside and a cool rim outside. Walnut grain, paint chips, grounded shadows, no branding or CGI gloss.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -11901,7 +11901,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Editorial product photograph of a translucent cobalt glass radio on pale limestone, soft window light, precise reflections, restrained blue and amber palette, clean negative space, realistic materials",
+        "prompt": "Campaign still: editorial product photograph of one unbranded translucent cobalt glass table radio on pale limestone. Compact mid-century shell, analog tuning dial, woven grille, four rubber feet, no branding. Eye-level 50 mm three-quarter view, sharp microdetail, correct contact shadow, generous negative space. Soft north-window key, weak warm bounce, glass thickness, blue-amber palette, limestone pores, fine grain.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12192,7 +12192,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "A slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, and the camera movement remains smooth and physically coherent",
+        "prompt": "Slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, condensation stays physically coherent on glass. Smooth 35 mm chest-height dolly-in, stable horizon, no cuts. Soft overcast skylight, faint brick bounce, continuous plant identity and water motion, no flicker or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12315,7 +12315,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12453,7 +12453,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12704,7 +12704,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12827,7 +12827,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12950,7 +12950,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -13078,7 +13078,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -13201,7 +13201,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -13362,7 +13362,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -13500,7 +13500,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -13638,7 +13638,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -14072,7 +14072,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -14543,7 +14543,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -14666,7 +14666,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -14814,7 +14814,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -14937,7 +14937,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -15095,7 +15095,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "A slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, and the camera movement remains smooth and physically coherent",
+        "prompt": "Slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, condensation stays physically coherent on glass. Smooth 35 mm chest-height dolly-in, stable horizon, no cuts. Soft overcast skylight, faint brick bounce, continuous plant identity and water motion, no flicker or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -15208,7 +15208,7 @@
           "status": "not_supported_by_canonical_graph",
           "value": null
         },
-        "prompt": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview.",
+        "prompt": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview. No text or extra parts.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -15445,7 +15445,7 @@
           "status": "not_supported_by_canonical_graph",
           "value": null
         },
-        "prompt": "Atmospheric science-documentary score with glassy mallets, low strings, subtle pulses, and spacious reverberation; evolving structure, no abrupt cuts, controlled loudness",
+        "prompt": "Atmospheric science-documentary score with glassy mallets, low strings, subtle pulses, and spacious reverberation; evolving structure, no abrupt cuts, controlled loudness, resolved final chord, no vocals or trailer brass hits.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -15616,7 +15616,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -15827,7 +15827,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
+        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions. Leave every unmasked pixel conceptually unchanged.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -15965,7 +15965,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -16263,7 +16263,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -16447,7 +16447,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly.",
+        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -16608,7 +16608,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -16809,7 +16809,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
+        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions. Leave every unmasked pixel conceptually unchanged.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -16957,7 +16957,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -17245,7 +17245,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -17406,7 +17406,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -17590,7 +17590,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly.",
+        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -17751,7 +17751,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -17952,7 +17952,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
+        "prompt": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions. Leave every unmasked pixel conceptually unchanged.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -18105,7 +18105,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -18299,7 +18299,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly.",
+        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -18470,7 +18470,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
+        "prompt": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -18628,7 +18628,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -18936,7 +18936,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -19084,7 +19084,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -19372,7 +19372,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Editorial product photograph of a translucent cobalt glass radio on pale limestone, soft window light, precise reflections, restrained blue and amber palette, clean negative space, realistic materials",
+        "prompt": "Campaign still: editorial product photograph of one unbranded translucent cobalt glass table radio on pale limestone. Compact mid-century shell, analog tuning dial, woven grille, four rubber feet, no branding. Eye-level 50 mm three-quarter view, sharp microdetail, correct contact shadow, generous negative space. Soft north-window key, weak warm bounce, glass thickness, blue-amber palette, limestone pores, fine grain.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -19495,7 +19495,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -19836,7 +19836,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses the frame, clouds drift naturally, exposure stays stable, and motion remains continuous",
+        "prompt": "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses once, clouds drift naturally, exposure stays stable. Locked-off 24 mm with a very slow pan, continuous motion, believable cloth and wheel rotation, no flicker, duplicate cyclists, or sudden weather resets.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -20058,7 +20058,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Animate the supplied character using the pose and face performances while preserving identity, clothing, proportions, background continuity, and natural temporal motion.",
+        "prompt": "Animate the supplied character using the pose and face performances while preserving identity, clothing, proportions, background continuity, and natural temporal motion. Keep seams stable and match source timing.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -20304,7 +20304,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Replace the performer with the supplied character while preserving the source staging, camera movement, background, timing, face performance, and clean mask boundaries.",
+        "prompt": "Replace the performer with the supplied character while preserving the source staging, camera movement, background, timing, face performance, and clean mask boundaries. Do not restage the shot.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -20666,7 +20666,7 @@
           "status": "drafted",
           "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
         },
-        "prompt": "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses the frame, clouds drift naturally, exposure stays stable, and motion remains continuous",
+        "prompt": "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses once, clouds drift naturally, exposure stays stable. Locked-off 24 mm with a very slow pan, continuous motion, believable cloth and wheel rotation, no flicker, duplicate cyclists, or sudden weather resets.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -21162,7 +21162,7 @@
           "status": "drafted",
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },

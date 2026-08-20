@@ -3,7 +3,8 @@
 This module is intentionally Python-standard-library only.  Registry discovery,
 template browsing, and Auto planning may inspect these contracts and local
 distribution metadata, but must never import, install, or activate the declared
-packages.  Installation and activation remain a later, explicit P0.5 slice.
+packages. Installation and activation are performed only by the app-owned
+optional-runtime endpoints.
 """
 
 from __future__ import annotations
@@ -23,6 +24,10 @@ OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = (
     "huggingface-transformers-main-96fe6dce-peft-0.20.0"
+)
+GALLERY_MEDIA_RUNTIME_PROFILE_ID = "gallery-media-opencv-5.0.0.93"
+TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID = (
+    "huggingface-transformers-main-96fe6dce-peft-0.20.0-quanto-0.2.7"
 )
 TRANSFORMERS_MAIN_COMMIT = "96fe6dce36cc929a5ffd3e34296554c4cb6b669e"
 TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT = "a597f974857b3d92939971296bc0deb93d33d780"
@@ -84,6 +89,42 @@ _TOKENIZERS_RUNTIME_WHEELS = {
     ("windows", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-win_amd64.whl", "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl", "c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48", 2747786),
     ("windows", "arm64"): ("tokenizers-0.22.2-cp39-abi3-win_arm64.whl", "https://files.pythonhosted.org/packages/72/f4/0de46cfa12cdcbcd464cc59fde36912af405696f687e53a091fb432f694c/tokenizers-0.22.2-cp39-abi3-win_arm64.whl", "9ce725d22864a1e965217204946f830c37876eee3b2ba6fc6255e8e903d5fcbc", 2612133),
 }
+
+_QUANTO_LINUX_X86_64_WHEELS = (
+    (
+        "optimum-quanto",
+        "0.2.7",
+        "optimum_quanto-0.2.7-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/8d/33/4ad914b0ae7e46296fe00d76d084be351fef69816b3498ed32a178471c8a/optimum_quanto-0.2.7-py3-none-any.whl",
+        "1369b1d9a4a197f88c0d1c67e8d950694e5b86ce4c9f3878e178d5be35339f61",
+        165_285,
+    ),
+    (
+        "ninja",
+        "1.13.0",
+        "ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "https://files.pythonhosted.org/packages/ed/de/0e6edf44d6a04dabd0318a519125ed0415ce437ad5a1ec9b9be03d9048cf/ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "fb46acf6b93b8dd0322adc3a4945452a4e774b75b91293bafcc7b7f8e6517dfa",
+        180_716,
+    ),
+)
+
+
+def _quanto_linux_x86_64_artifact_locks() -> tuple[dict, ...]:
+    return tuple(
+        {
+            "distribution": distribution,
+            "version": version,
+            "filename": filename,
+            "url": url,
+            "sha256": sha256,
+            "byteSize": byte_size,
+            "platform": "linux",
+            "pythonTag": "cp312",
+            "machine": "x86_64",
+        }
+        for distribution, version, filename, url, sha256, byte_size in _QUANTO_LINUX_X86_64_WHEELS
+    )
 
 
 def _transformers_peft_artifact_locks() -> tuple[dict, ...]:
@@ -295,6 +336,7 @@ class OptionalRuntimeProfile:
     install_action_available: bool = False
     activation_available: bool = False
     target_contracts: tuple[OptionalRuntimeTargetContract, ...] = ()
+    satisfies_profiles: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         targets = tuple((contract.platform, contract.machine) for contract in self.target_contracts)
@@ -366,6 +408,11 @@ class OptionalRuntimeProfile:
                 for method, parameters in self.pipeline_adapter_methods
             ],
         }
+        if self.satisfies_profiles:
+            spec["satisfiesProfiles"] = [
+                {"id": profile_id, "specDigest": spec_digest}
+                for profile_id, spec_digest in self.satisfies_profiles
+            ]
         if self.source_builds:
             spec["sourceBuilds"] = [
                 deepcopy(source_build) for source_build in self.source_builds
@@ -724,6 +771,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
         "LongCatAudioDiTPipeline",
         "AudioLDM2Pipeline",
         "ShapEPipeline",
+        "ShapEImg2ImgPipeline",
         "StableDiffusionXLModularPipeline",
         "StableDiffusionXLPipeline",
         "StableDiffusionXLImg2ImgPipeline",
@@ -902,10 +950,138 @@ _TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
     ),
 )
 
+
+_TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE = replace(
+    _TRANSFORMERS_MAIN_PEFT_PROFILE,
+    id=TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
+    label="Transformers main + PEFT + Optimum Quanto 0.2.7 (Linux x86-64 candidate)",
+    packages=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
+        OptionalRuntimePackageContract(
+            distribution="optimum-quanto",
+            import_name="optimum.quanto",
+            version="0.2.7",
+            publisher="Hugging Face",
+            project_url="https://github.com/huggingface/optimum-quanto",
+            distribution_url="https://pypi.org/project/optimum-quanto/0.2.7/",
+            license="Apache-2.0",
+            role="runtime_root",
+            required_symbols=("freeze", "quantize"),
+        ),
+        OptionalRuntimePackageContract(
+            distribution="ninja",
+            import_name="ninja",
+            version="1.13.0",
+            publisher="Kitware and contributors",
+            project_url="https://github.com/scikit-build/ninja-python-distributions",
+            distribution_url="https://pypi.org/project/ninja/1.13.0/",
+            license="Apache-2.0 AND BSD-3-Clause",
+            role="runtime_dependency",
+            required_symbols=("ninja",),
+        ),
+    ),
+    required_diffusers_symbols=tuple(
+        dict.fromkeys((*_TRANSFORMERS_MAIN_PEFT_PROFILE.required_diffusers_symbols, "QuantoConfig"))
+    ),
+    artifact_locks=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
+        *_quanto_linux_x86_64_artifact_locks(),
+    ),
+    contract_state="candidate_unqualified",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        OptionalRuntimeTargetContract(
+            platform=platform_name,
+            machine=machine,
+            contract_state=(
+                "qualified"
+                if (platform_name, machine) == ("linux", "x86_64")
+                else "candidate_unqualified"
+            ),
+            cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+            install_action_available=(platform_name, machine) == ("linux", "x86_64"),
+            activation_available=(platform_name, machine) == ("linux", "x86_64"),
+        )
+        for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    ),
+    satisfies_profiles=(
+        (
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            _TRANSFORMERS_MAIN_PEFT_PROFILE.spec_digest,
+        ),
+    ),
+)
+
+
+_GALLERY_MEDIA_PROFILE = replace(
+    _TRANSFORMERS_MAIN_PEFT_PROFILE,
+    id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+    label="Transformers main + PEFT + gallery media (OpenCV)",
+    packages=(*_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
+        OptionalRuntimePackageContract(
+            distribution="opencv-python-headless",
+            import_name="cv2",
+            version="5.0.0.93",
+            publisher="OpenCV on Wheels",
+            project_url="https://github.com/opencv/opencv-python",
+            distribution_url="https://pypi.org/project/opencv-python-headless/",
+            license="Apache-2.0 AND MIT; bundled third-party notices",
+            role="runtime_root",
+            required_symbols=(
+                "Canny",
+                "GaussianBlur",
+                "Sobel",
+                "calcOpticalFlowFarneback",
+                "cvtColor",
+                "remap",
+            ),
+        ),
+    ),
+    # OpenCV 5 requires NumPy 2 on Python 3.12. NumPy remains owned by the
+    # application's verified base environment rather than duplicated into the
+    # overlay.
+    base_packages=tuple(
+        replace(package, specifier=">=2,<3")
+        if package.distribution == "numpy"
+        else package
+        for package in _TRANSFORMERS_MAIN_PEFT_PROFILE.base_packages
+    ),
+    artifact_locks=(*_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
+        {
+            "distribution": "opencv-python-headless",
+            "version": "5.0.0.93",
+            "filename": "opencv_python_headless-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl",
+            "url": (
+                "https://files.pythonhosted.org/packages/9b/21/"
+                "f6ef335f6e65724aa78b8d792b48d40a48c381715f1e62f5a5049e09d07e/"
+                "opencv_python_headless-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl"
+            ),
+            "sha256": "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37",
+            "byteSize": 61_204_038,
+            "platform": "linux",
+            "pythonTag": "cp312",
+            "machine": "x86_64",
+        },
+    ),
+    # The composite validates the exact Transformers main contract as part of
+    # the same authenticated environment. This lets loader and media worker
+    # checks remain independently fail-closed while one overlay satisfies both.
+    satisfies_profiles=(
+        (
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            _TRANSFORMERS_MAIN_PEFT_PROFILE.spec_digest,
+        ),
+    ),
+)
+
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
     {
         _TRANSFORMERS_PEFT_PROFILE.id: _TRANSFORMERS_PEFT_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_PROFILE,
+        _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE,
+        _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
     }
 )
 

@@ -18,8 +18,10 @@ from modiff.diffusers_profiles import (
     public_execution_profiles,
 )
 from modiff.optional_runtimes import (
+    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_requirements,
     public_optional_runtime_profiles,
@@ -29,6 +31,7 @@ from modiff.server import WebServer
 
 GIB = 1024**3
 OPTIONAL_STAGE_IMPORTS = {
+    "cv2",
     "transformers",
     "peft",
     "tokenizers",
@@ -39,6 +42,8 @@ OPTIONAL_STAGE_IMPORTS = {
     "mdurl",
     "pygments",
     "shellingham",
+    "optimum",
+    "ninja",
 }
 
 
@@ -87,6 +92,31 @@ def _cpu_hardware():
 
 
 class OptionalRuntimeContractTests(unittest.TestCase):
+    def test_quanto_composite_is_exact_and_linux_x86_64_qualified(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID]
+        linux = profile.contract_for_target(platform_name="linux", machine="x86_64")
+        self.assertEqual(linux.contract_state, "qualified")
+        self.assertTrue(linux.install_action_available)
+        self.assertEqual(
+            [(package.distribution, package.version) for package in profile.packages[-2:]],
+            [("optimum-quanto", "0.2.7"), ("ninja", "1.13.0")],
+        )
+        self.assertIn("QuantoConfig", profile.required_diffusers_symbols)
+        self.assertEqual(
+            {artifact["distribution"] for artifact in profile.artifact_locks[-2:]},
+            {"optimum-quanto", "ninja"},
+        )
+        self.assertEqual(
+            profile.satisfies_profiles,
+            ((TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+              OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest),),
+        )
+
+        self.assertEqual(
+            profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
+            "candidate_unqualified",
+        )
+
     def test_composite_contract_is_exact_hashed_and_platform_qualified(self):
         versions = {"transformers": "5.14.1", "peft": "0.20.0"}
         profile = public_optional_runtime_profiles(
@@ -557,8 +587,10 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 {profile["id"] for profile in capabilities["optionalRuntimeProfiles"]},
                 {
+                    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
                 },
             )
             z_image = next(

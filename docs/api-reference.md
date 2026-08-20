@@ -149,7 +149,9 @@ unique list drawn from `bnb_4bit`, `bnb_8bit`, `quanto_float8`, and
 `torchao_float8`. Studio exposes only those choices for the exact selected
 model-and-mode specification; absence means that no Expert quantization
 selector is advertised. The client does not infer choices from a model family
-or pipeline name.
+or pipeline name. This field proves schema admission, not package delivery or
+live qualification. See the [quantization support
+matrix](quantization-support.md) for the current app-installable boundary.
 
 An execution profile may also publish `expert_mps_policy` with
 `schema_version: 1`, a reviewed `qualification` (`unqualified` or

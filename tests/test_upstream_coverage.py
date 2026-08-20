@@ -51,9 +51,9 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "pipelineStatusCounts": {
                     "contract-only": 20,
                     "equivalent": 15,
-                    "executable": 116,
+                    "executable": 117,
                     "intentionally-excluded": 56,
-                    "research-blocked": 120,
+                    "research-blocked": 119,
                     "unreviewed": 0,
                 },
                 "publicTemplateCount": 77,
@@ -116,7 +116,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_non_video = [
             item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_non_video), 81)
+        self.assertEqual(len(reviewed_non_video), 80)
         self.assertEqual(
             {
                 status: sum(item["status"] == status for item in reviewed_non_video)
@@ -127,7 +127,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "equivalent": 0,
                 "executable": 0,
                 "intentionally-excluded": 43,
-                "research-blocked": 38,
+                "research-blocked": 37,
                 "unreviewed": 0,
             },
         )
@@ -300,10 +300,17 @@ class UpstreamCoverageTests(unittest.TestCase):
     def test_template_and_gallery_source_fingerprints_remain_current(self):
         expected_bundle_hash = hashlib.sha256(TEMPLATE_BUNDLE.read_bytes()).hexdigest()
         self.assertEqual(self.ledger["scope"]["templateBundleSha256"], expected_bundle_hash)
-        gallery = json.loads(GALLERY_MANIFEST.read_text(encoding="utf-8"))
-        gallery_ids = {item["templateId"] for item in gallery["examples"]}
         ledger_gallery_ids = {item["id"] for item in self.ledger["publicTemplates"] if item["galleryExamplePresent"]}
-        self.assertEqual(ledger_gallery_ids, gallery_ids)
+        if GALLERY_MANIFEST.is_file():
+            gallery = json.loads(GALLERY_MANIFEST.read_text(encoding="utf-8"))
+            gallery_ids = {item["templateId"] for item in gallery["examples"]}
+            self.assertEqual(ledger_gallery_ids, gallery_ids)
+        else:
+            source = json.loads((ROOT / "web" / "assets" / "template-asset-source.v1.json").read_text())
+            self.assertEqual(source["mode"], "huggingface")
+            self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
+            self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
+            self.assertEqual(len(ledger_gallery_ids), 70)
 
     def test_generator_matches_when_reviewed_sources_are_available(self):
         diffusers_source = os.environ.get("MODIFF_DIFFUSERS_SOURCE")

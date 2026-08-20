@@ -12233,11 +12233,43 @@ class WebServer:
                 optional_runtime_catalog_snapshot = public_optional_runtime_catalog()
             return optional_runtime_catalog_snapshot
 
-        profiles_by_model = {}
-        for profile in public_execution_profiles(
+        published_execution_profiles = public_execution_profiles(
             observe_optional_runtime=True,
             optional_runtime_catalog_resolver=request_optional_runtime_catalog,
-        ):
+        )
+        _fingerprint, optimization_hardware, optimization_profile = self._optimization_runtime_context()
+        optimization_catalog = public_optimization_catalog(
+            runtime_profile=optimization_profile,
+            hardware=optimization_hardware,
+            optional_runtime_catalog=request_optional_runtime_catalog(),
+        )
+        optimization_by_id = {
+            item.get("id"): item
+            for item in optimization_catalog.get("capabilities", [])
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        }
+        quantization_capabilities = {
+            "bnb_4bit": "bitsandbytes",
+            "bnb_8bit": "bitsandbytes",
+            "quanto_float8": "optimum_quanto",
+            "torchao_float8": "torchao",
+        }
+        for profile in published_execution_profiles:
+            declared_modes = profile.get("expert_quantization_modes")
+            if not isinstance(declared_modes, list):
+                continue
+            profile["available_expert_quantization_modes"] = [
+                mode
+                for mode in declared_modes
+                if (
+                    isinstance(mode, str)
+                    and isinstance(optimization_by_id.get(quantization_capabilities.get(mode)), dict)
+                    and optimization_by_id[quantization_capabilities[mode]].get("availableForExecution") is True
+                )
+            ]
+
+        profiles_by_model = {}
+        for profile in published_execution_profiles:
             profiles_by_model.setdefault(profile.get("model_type"), []).append(profile)
 
         capabilities = []
@@ -12351,10 +12383,7 @@ class WebServer:
                 "capabilities": capabilities,
                 "taskTemplateContractSchemaVersion": TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
                 "taskTemplateContracts": task_template_contracts,
-                "diffusersExecutionProfiles": public_execution_profiles(
-                    observe_optional_runtime=True,
-                    optional_runtime_catalog_resolver=request_optional_runtime_catalog,
-                ),
+                "diffusersExecutionProfiles": published_execution_profiles,
                 "studioExecutionSpecs": execution_specs,
                 "optionalRuntimeProfiles": public_optional_runtime_profiles(),
                 "experimentalCapabilities": public_experimental_pipelines(

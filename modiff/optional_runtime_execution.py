@@ -9,6 +9,7 @@ pre-cutover application remains readiness-neutral.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 import os
 import re
 from typing import Any
@@ -21,7 +22,10 @@ from modiff.diffusers_profiles import (
     resolve_execution_profiles_for_loader,
 )
 from modiff.optimization_packages import public_optional_runtime_catalog
-from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+from modiff.optional_runtimes import (
+    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+    OPTIONAL_RUNTIME_PROFILES,
+)
 
 
 _PROCESS_BLOCK_STATES = {
@@ -70,6 +74,45 @@ _OVERLAY_STATES = {
     "staged_unchecked",
 }
 _PROCESS_STATES = {"active", "base", *_PROCESS_BLOCK_STATES}
+
+
+@dataclass(frozen=True)
+class _NodeOptionalRuntimeProfile:
+    """Structural execution profile for model-neutral optional node actions."""
+
+    id: str
+    optional_runtime_profiles: tuple[str, ...]
+
+    def optional_runtime_delivery_for_target(self, **_target: Any) -> str:
+        return OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+
+    def optional_runtime_profile_ids_for_target(self, **_target: Any) -> tuple[str, ...]:
+        return self.optional_runtime_profiles
+
+
+_GALLERY_MEDIA_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
+    id="video-conditioning:gallery-media",
+    optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
+)
+_NODE_OPTIONAL_RUNTIME_PROFILES = {
+    ("modules.VideoConditioning", "EdgePreprocessor"): (
+        _GALLERY_MEDIA_EXECUTION_PROFILE,
+    ),
+    ("modules.VideoConditioning", "ObjectMaskPropagate"): (
+        _GALLERY_MEDIA_EXECUTION_PROFILE,
+    ),
+}
+
+
+def _execution_profiles_for_node(
+    module: str,
+    action: str,
+    values: dict[str, Any],
+) -> tuple[tuple[Any, ...], str | None]:
+    node_profiles = _NODE_OPTIONAL_RUNTIME_PROFILES.get((module, action))
+    if node_profiles is not None:
+        return node_profiles, None
+    return resolve_execution_profiles_for_loader(module, action, values)
 
 
 def _copy_requirement(requirement: dict[str, Any], *, state: str, reason: str) -> dict[str, Any]:
@@ -288,7 +331,7 @@ def loader_optional_runtime_requirement(
     *,
     catalog_resolver: Callable[[], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    profiles, resolution_reason = resolve_execution_profiles_for_loader(
+    profiles, resolution_reason = _execution_profiles_for_node(
         module,
         action,
         values,
@@ -450,7 +493,7 @@ def graph_optional_runtime_requirement(
                 seen_node_ids.add(node_id)
                 executable_node_ids.append(node_id)
 
-    selected: list[DiffusersExecutionProfile] = []
+    selected: list[Any] = []
     blocking_resolution_reason: str | None = None
     for node_id in executable_node_ids:
         node = nodes[node_id]
@@ -460,7 +503,7 @@ def graph_optional_runtime_requirement(
         action = node.get("action")
         if not isinstance(module, str) or not isinstance(action, str):
             continue
-        profiles, resolution_reason = resolve_execution_profiles_for_loader(
+        profiles, resolution_reason = _execution_profiles_for_node(
             module,
             action,
             _static_node_values(node),

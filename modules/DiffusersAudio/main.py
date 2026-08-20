@@ -909,6 +909,45 @@ def crop_tail(audio: dict[str, Any], start_seconds: float, duration_seconds: flo
     }
 
 
+_AUDIO_LDM2_TRANSFORMERS_VERSION = "5.16.0.dev0"
+_AUDIO_LDM2_GENERATION_UPDATE_SHA256 = "fb244c4da03341e837bbf50b900e70ea88a6fee722a43aa40c6172dfedfd15ef"
+
+
+def _reviewed_audioldm2_generation_helper() -> tuple[type, Any]:
+    """Return only the exact Transformers helper reviewed with AudioLDM2."""
+
+    import hashlib
+    import inspect
+    import transformers
+    from transformers import GPT2Model
+    from transformers.generation.utils import GenerationMixin
+
+    helper = GenerationMixin._update_model_kwargs_for_generation
+    helper_sha256 = hashlib.sha256(inspect.getsource(helper).encode("utf-8")).hexdigest()
+    if (
+        transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION
+        or helper_sha256 != _AUDIO_LDM2_GENERATION_UPDATE_SHA256
+    ):
+        raise RuntimeError(
+            "AudioLDM2 generation compatibility has not been reviewed for the active Transformers runtime."
+        )
+    return GPT2Model, helper
+
+
+def _ensure_language_model_generation_api(pipeline: Any, pipeline_class: str) -> None:
+    """Bridge one reviewed AudioLDM2/GPT-2 API removal, failing closed on drift."""
+
+    if pipeline_class != "AudioLDM2Pipeline":
+        return
+    language_model = getattr(pipeline, "language_model", None)
+    gpt2_model, helper = _reviewed_audioldm2_generation_helper()
+    if not isinstance(language_model, gpt2_model):
+        raise RuntimeError("The reviewed AudioLDM2 artifact must contain a Transformers GPT2Model language model.")
+    if hasattr(language_model, "_update_model_kwargs_for_generation"):
+        return
+    language_model._update_model_kwargs_for_generation = helper.__get__(language_model, type(language_model))
+
+
 class LoadPipeline(NodeBase):
     """Load a generic Diffusers audio pipeline."""
 
@@ -1102,6 +1141,7 @@ class LoadPipeline(NodeBase):
         self.progress(-1, phase="loading", message=f"Loading {pipeline_class_name}")
         with self.diffusers_loading_progress():
             pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+        _ensure_language_model_generation_api(pipeline, adapter.pipeline_class)
         self._tag_pipeline(pipeline, adapter, mode, model_id, revision)
         if recipe:
             apply_execution_recipe_to_pipeline(pipeline, recipe)

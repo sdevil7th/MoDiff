@@ -35,6 +35,7 @@ from typing import Any
 
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     optional_runtime_base_contracts,
     public_optional_runtime_profiles,
 )
@@ -1244,6 +1245,7 @@ def public_catalog(
     *,
     runtime_profile: dict[str, Any] | None = None,
     hardware: dict[str, Any] | None = None,
+    optional_runtime_catalog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     state = read_state()
     profile_id = _profile_id(runtime_profile)
@@ -1255,6 +1257,16 @@ def public_catalog(
     accelerators = hardware.get("accelerators") if isinstance(hardware.get("accelerators"), list) else []
     device_count = len(devices or accelerators)
     enabled = {str(item) for item in state.get("enabledCapabilities") or []}
+    optional_profiles = {
+        item.get("id"): item
+        for item in (
+            optional_runtime_catalog.get("profiles", [])
+            if isinstance(optional_runtime_catalog, dict)
+            and isinstance(optional_runtime_catalog.get("profiles"), list)
+            else []
+        )
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
     capabilities = []
     for capability_id, raw in _catalog().items():
         item = {"id": capability_id, **deepcopy(raw)}
@@ -1297,6 +1309,26 @@ def public_catalog(
             reason = "The upstream feature is documented, but MoDiff has not qualified a safe execution contract yet."
         installed_version = _package_version(str(item.get("distribution"))) if item.get("distribution") else None
         installed = bool(installed_version) if item.get("distribution") else implemented
+        base_profile_delivered = bool(
+            capability_id == "bitsandbytes"
+            and profile_id == "nvidia-cuda"
+            and installed_version == "0.50.0"
+        )
+        optional_runtime_profile_id = (
+            TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID
+            if capability_id == "optimum_quanto"
+            else None
+        )
+        optional_profile = optional_profiles.get(optional_runtime_profile_id)
+        optional_profile_delivered = bool(
+            capability_id == "optimum_quanto"
+            and installed_version == "0.2.7"
+            and isinstance(optional_profile, dict)
+            and optional_profile.get("contractState") == "qualified"
+            and optional_profile.get("cutoverReady") is True
+            and optional_profile.get("overlayStatus") == "active"
+        )
+        delivery_qualified = base_profile_delivered or optional_profile_delivered
         can_enable = compatible and (
             item.get("kind") == "runtime" or (item.get("kind") in {"package", "profile", "external"} and installed)
         )
@@ -1308,6 +1340,16 @@ def public_catalog(
                 "enabled": capability_id in enabled,
                 "installed": installed,
                 "installedVersion": installed_version,
+                "deliveryQualified": delivery_qualified,
+                "delivery": (
+                    "base_profile"
+                    if base_profile_delivered
+                    else "optional_overlay"
+                    if optional_profile_delivered
+                    else "unqualified"
+                ),
+                "availableForExecution": bool(delivery_qualified and compatible),
+                "optionalRuntimeProfileId": optional_runtime_profile_id,
                 "canInstall": item.get("kind") == "package" and compatible,
                 "canEnable": can_enable,
                 "requiresRestart": item.get("kind") == "package",
@@ -1317,7 +1359,9 @@ def public_catalog(
             item["canInstall"] = False
             item["canEnable"] = False
             item["disabledReason"] = (
-                "This legacy package profile has no reviewed immutable artifact lock and remains unqualified."
+                None
+                if delivery_qualified
+                else "This legacy package profile has no reviewed immutable artifact lock and remains unqualified."
             )
         if item.get("kind") == "external":
             item["disabledReason"] = (
@@ -2041,6 +2085,26 @@ def install_optional_runtime(
     )
 
 
+def _environment_spec_satisfies_optional_profile(
+    spec: dict[str, Any],
+    profile: dict[str, Any],
+) -> bool:
+    if spec.get("kind") != "optional_runtime":
+        return False
+    if (
+        spec.get("id") == profile["id"]
+        and spec.get("specDigest") == profile["specDigest"]
+    ):
+        return True
+    provider = OPTIONAL_RUNTIME_PROFILES.get(str(spec.get("id") or ""))
+    return bool(
+        provider
+        and spec.get("specDigest") == provider.spec_digest
+        and (profile["id"], profile["specDigest"])
+        in provider.satisfies_profiles
+    )
+
+
 def public_optional_runtime_catalog() -> dict[str, Any]:
     state = read_state()
     process_load_status = os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS", "base")
@@ -2121,9 +2185,7 @@ def public_optional_runtime_catalog() -> dict[str, Any]:
             environment
             for environment in environments
             if any(
-                spec.get("kind") == "optional_runtime"
-                and spec.get("id") == profile["id"]
-                and spec.get("specDigest") == profile["specDigest"]
+                _environment_spec_satisfies_optional_profile(spec, profile)
                 for spec in environment["specs"]
             )
         ]

@@ -141,34 +141,34 @@ _BOUNDARY = {
 }
 
 _TEXT_TO_IMAGE_PROMPTS = (
-    "Editorial product photograph of a translucent cobalt glass radio on pale limestone, soft window light, precise reflections, restrained blue and amber palette, clean negative space, realistic materials",
-    "A quiet rain-soaked tram stop at blue hour, one red umbrella, wet pavement reflections, cinematic natural light, layered depth, believable urban details, no visible brand marks",
-    "Botanical field-study illustration of six imaginary alpine flowers arranged on warm archival paper, delicate ink contours, subtle watercolor washes, clear spacing, museum catalog composition",
-    "Sunlit modern reading room carved into warm sandstone, linen seating, mature olive tree, long geometric shadows, tactile architectural photography, calm human scale",
-    "Handcrafted miniature harbor town inside an open walnut music box, tiny boats and lighthouse, macro photography, shallow depth of field, warm practical lights, intricate physical detail",
-    "A documentary portrait of an elderly bicycle mechanic in a compact workshop, honest expression, weathered tools, soft side light, natural skin texture, unobtrusive composition",
+    "Campaign still: editorial product photograph of one unbranded translucent cobalt glass table radio on pale limestone. Compact mid-century shell, analog tuning dial, woven grille, four rubber feet, no branding. Eye-level 50 mm three-quarter view, sharp microdetail, correct contact shadow, generous negative space. Soft north-window key, weak warm bounce, glass thickness, blue-amber palette, limestone pores, fine grain.",
+    "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
+    "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
+    "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
+    "Campaign still: macro photograph of a handcrafted miniature harbor town inside an open walnut music box. Tiny boats, lighthouse, painted quays, precise joinery. 100 mm macro, shallow depth of field, warm practicals inside and a cool rim outside. Walnut grain, paint chips, grounded shadows, no branding or CGI gloss.",
+    "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
 )
 _TEXT_TO_VIDEO_PROMPTS = (
-    "A slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, and the camera movement remains smooth and physically coherent",
-    "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses the frame, clouds drift naturally, exposure stays stable, and motion remains continuous",
-    "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains its form, the camera makes a subtle arc, and temporal details remain consistent",
-    "A small research boat moving through calm arctic water beneath low fog; ice fragments drift slowly, soft light changes gradually, and the horizon remains stable",
+    "Slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, condensation stays physically coherent on glass. Smooth 35 mm chest-height dolly-in, stable horizon, no cuts. Soft overcast skylight, faint brick bounce, continuous plant identity and water motion, no flicker or extra people.",
+    "Wide coastal grassland at dusk as wind moves in visible waves; a lone cyclist crosses once, clouds drift naturally, exposure stays stable. Locked-off 24 mm with a very slow pan, continuous motion, believable cloth and wheel rotation, no flicker, duplicate cyclists, or sudden weather resets.",
+    "Close-up of a ceramic artist shaping a bowl on a spinning wheel; hands move deliberately, wet clay retains form, water catches the rim, camera makes a subtle arc. Keep identity, workshop background, and wheel speed consistent. Soft side light, no jump cuts, extra limbs, or clay that ignores gravity.",
+    "A small research boat moving through calm arctic water beneath low fog; ice fragments drift slowly, soft light changes gradually, horizon remains stable. Gentle 50 mm lateral drift, continuous wake, physically plausible water, no flicker, teleporting ice, or sudden sunbursts.",
 )
 _TEXT_TO_AUDIO_PROMPTS = (
-    "Instrumental downtempo electronic piece with brushed drums, warm analog bass, soft granular textures, and a restrained melodic arc; clean mix, gradual development, resolved ending",
-    "Intimate chamber-folk cue led by fingerpicked acoustic guitar, muted cello, light hand percussion, and room ambience; natural dynamics, memorable motif, gentle ending",
-    "Atmospheric science-documentary score with glassy mallets, low strings, subtle pulses, and spacious reverberation; evolving structure, no abrupt cuts, controlled loudness",
+    "Instrumental downtempo electronic piece with brushed drums, warm analog bass, soft granular textures, and a restrained melodic arc; clean mix, gradual verse-like development, resolved ending, no vocals or abrupt cuts.",
+    "Intimate chamber-folk cue led by fingerpicked acoustic guitar, muted cello, light hand percussion, and room ambience; natural dynamics, memorable four-bar motif, gentle ending, no distortion or sudden loudness jumps.",
+    "Atmospheric science-documentary score with glassy mallets, low strings, subtle pulses, and spacious reverberation; evolving structure, no abrupt cuts, controlled loudness, resolved final chord, no vocals or trailer brass hits.",
 )
 _MODE_PROMPTS = {
-    "character_animate": "Animate the supplied character using the pose and face performances while preserving identity, clothing, proportions, background continuity, and natural temporal motion.",
-    "character_replace": "Replace the performer with the supplied character while preserving the source staging, camera movement, background, timing, face performance, and clean mask boundaries.",
-    "control_edit_image": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly.",
-    "control_image": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text.",
-    "control_inpaint": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions.",
-    "control_to_video": "Generate a temporally coherent cinematic shot that follows the supplied control motion and structure, with stable subjects, smooth movement, and consistent lighting.",
+    "character_animate": "Animate the supplied character using the pose and face performances while preserving identity, clothing, proportions, background continuity, and natural temporal motion. Keep seams stable and match source timing.",
+    "character_replace": "Replace the performer with the supplied character while preserving the source staging, camera movement, background, timing, face performance, and clean mask boundaries. Do not restage the shot.",
+    "control_edit_image": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
+    "control_image": "Create a detailed cinematic scene that follows the supplied control structure precisely, with coherent lighting, realistic materials, clean edges, and no unwanted text. Preserve silhouette, camera height, and major spatial masses.",
+    "control_inpaint": "Replace only the masked region, follow the supplied control geometry, and match the source perspective, lighting, texture, scale, and edge transitions. Leave every unmasked pixel conceptually unchanged.",
+    "control_to_video": "Generate a temporally coherent cinematic shot that follows the supplied control motion and structure, with stable subjects, smooth movement, and consistent lighting. No flicker or geometry drift.",
     "control_video_to_video": "Transform the source video while following the control video frame by frame; preserve timing and camera motion, keep subjects stable, and avoid flicker or geometry drift.",
     "data_conversion": '{"project":"footbridge repair","shot_count":5,"approved":false,"tags":["documentary","community"]}',
-    "edit_image": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition.",
+    "edit_image": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
     "image_to_text": "Describe the supplied image accurately and concisely. Identify the main subject, setting, visible actions, composition, lighting, and any clearly legible text without guessing hidden details.",
     "image_to_video": "Animate the supplied image into a short cinematic shot with subtle camera movement, physically plausible subject motion, stable identity, coherent depth, and no sudden scene changes.",
     "inpaint": "Replace only the masked area with a believable matching element; preserve all unmasked pixels conceptually and match perspective, illumination, material texture, scale, and depth of field.",
@@ -179,7 +179,7 @@ _MODE_PROMPTS = {
     "text_generation": "Write a concise production brief for a 20-second documentary shot about a community repairing a storm-damaged footbridge. Include setting, subject action, camera plan, sound cues, and a clear ending in five short bullet points.",
     "graph_utility": "Primary branch: the repaired footbridge is ready for the morning crossing.",
     "text_select": "Wide establishing shot at dawn\nClose detail of hands fitting the replacement plank\nMedium shot of neighbors testing the repaired footbridge\nQuiet final view as the river passes beneath the completed span",
-    "text_to_3d": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview.",
+    "text_to_3d": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview. No text or extra parts.",
     "video_to_video": "Restyle the supplied video as a restrained cinematic documentary while preserving timing, camera motion, subject identity, scene layout, and temporal continuity.",
 }
 

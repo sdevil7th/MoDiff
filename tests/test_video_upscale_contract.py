@@ -127,6 +127,29 @@ class VideoUpscaleContractTests(unittest.TestCase):
             contract=("modules.Video", "UpscaleVideo"),
         )
 
+    def test_controlled_receipt_uses_the_exact_default_when_serialization_keeps_a_null_value(self):
+        selection = dict(VIDEO_UPSCALE_MODEL_SELECTION)
+        graph = {
+            "nodes": {
+                "upscale": {
+                    "module": "modules.Video",
+                    "action": "UpscaleVideo",
+                    "params": {"model_id": {"value": None, "default": selection}},
+                }
+            },
+            "paths": [["upscale"]],
+        }
+        receipt = {"kind": "spandrel_upscaler", "module": "modules.Video", "action": "UpscaleVideo"}
+        with patch(
+            "modiff.controlled_artifacts.resolve_upscaler_artifact",
+            return_value=SimpleNamespace(receipt=receipt),
+        ) as resolve:
+            self.assertEqual(controlled_artifact_receipts_from_graph(graph), [receipt])
+        resolve.assert_called_once_with(
+            selection,
+            contract=("modules.Video", "UpscaleVideo"),
+        )
+
 
 class FakeRequest:
     query = {}

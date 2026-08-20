@@ -1203,6 +1203,20 @@ SHAP_E_SAFE_COMPONENT_FILES = [
     "tokenizer/tokenizer_config.json",
     "tokenizer/vocab.json",
 ]
+SHAP_E_IMG2IMG_REPO = "openai/shap-e-img2img"
+SHAP_E_IMG2IMG_SAFE_COMPONENT_FILES = [
+    ".gitattributes",
+    "README.md",
+    "image_encoder/config.json",
+    "image_encoder/model.fp16.safetensors",
+    "image_processor/preprocessor_config.json",
+    "model_index.json",
+    "prior/config.json",
+    "prior/diffusion_pytorch_model.fp16.safetensors",
+    "renderer/config.json",
+    "renderer/diffusion_pytorch_model.fp16.safetensors",
+    "scheduler/scheduler_config.json",
+]
 WAN_22_T2V_A14B_REPO = "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
 WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
 WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
@@ -1942,6 +1956,7 @@ _TRANSFORMERS_TEXT_GRAPH_BINDINGS = (
     ("transformersTextModel", "revision", "defaultRevision"),
     ("transformersTextModel", "dtype", "dtype"),
     ("transformersTextModel", "device", "device"),
+    ("transformersTextModel", "quantization_mode", "quantizationMode"),
     ("transformersTextGenerate", "prompt", "prompt"),
 )
 _TRANSFORMERS_IMAGE_TEXT_GRAPH_ROLES = (
@@ -3223,7 +3238,7 @@ _AUDIO_GRAPH_BINDINGS = (
     ("diffusersRecipe", "device_map", "deviceMapNone"),
     ("diffusersRecipe", "offload_mode", "offloadMode"),
     ("diffusersRecipe", "device", "device"),
-    ("diffusersRecipe", "attention_backend", "attentionBackend"),
+    ("diffusersRecipe", "attention_backend", "nativeMath"),
     ("diffusersRecipe", "attention_components", "empty"),
     ("diffusersRecipe", "vae_slicing", "true"),
     ("diffusersRecipe", "vae_tiling", "true"),
@@ -3301,6 +3316,8 @@ _LONGCAT_AUDIO_DIT_GRAPH_BINDINGS = tuple(
         if role == "diffusersRecipe" and param in {"vae_slicing", "vae_tiling"}
         else "sampleRate24000"
         if param == "sample_rate"
+        else "nativeMath"
+        if role == "diffusersRecipe" and param == "attention_backend"
         else source,
     )
     for role, param, source in _STABLE_AUDIO_GRAPH_BINDINGS
@@ -3418,6 +3435,20 @@ _THREE_D_GRAPH_BINDINGS = (
     ("diffusersThreeDGenerate", "guidance_scale", "guidanceScale"),
     ("diffusersThreeDGenerate", "frame_size", "width"),
     ("videoExport", "fps", "fps"),
+)
+_THREE_D_IMAGE_GRAPH_ROLES = _THREE_D_GRAPH_ROLES + (
+    ("loadImage", "modules.Image.Load", -520, 260),
+)
+_THREE_D_IMAGE_GRAPH_EDGES = _THREE_D_GRAPH_EDGES + (
+    ("loadImage", "image", "diffusersThreeDGenerate", "reference_images"),
+)
+_THREE_D_IMAGE_GRAPH_BINDINGS = tuple(
+    binding
+    for binding in _THREE_D_GRAPH_BINDINGS
+    if not (binding[0] == "diffusersThreeDGenerate" and binding[1] == "prompt")
+) + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
 )
 _UNCONDITIONAL_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1080, -80),
@@ -3564,6 +3595,7 @@ _MODULAR_EDIT_PLUS_PROFILE = {
     "max_low_memory_steps": 24,
     "live_proof": False,
     "compatible_repos": (),
+    "expert_quantization_modes": ("bnb_4bit",),
 }
 _MODULAR_LAYERED_PROFILE = {
     "id": "qwen-layered:modular",
@@ -6211,6 +6243,93 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _THREE_D_GRAPH_ROLES,
         "edges": _THREE_D_GRAPH_EDGES,
         "bindings": _THREE_D_GRAPH_BINDINGS,
+    },
+    "shap-e:image-to-3d:v1": {
+        "modelType": "ShapEImg2ImgPipeline",
+        "mode": "image_to_3d",
+        "profile": {
+            "id": "shap-e-img2img:direct",
+            "model_type": "ShapEImg2ImgPipeline",
+            "modes": ("image_to_3d",),
+            "loader_module": "modules.DiffusersThreeD",
+            "loader_action": "LoadPipeline",
+            "execution_path": "direct-diffusers-three-d",
+            "pipeline_class": "ShapEImg2ImgPipeline",
+            "default_repo": SHAP_E_IMG2IMG_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+            "retry_offload_modes": (
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_SEQUENTIAL_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "max_low_memory_side": 256,
+            "max_low_memory_steps": 64,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "ShapEImg2ImgPipeline",
+            "label": "Shap-E Image to Rendered 3D",
+            "displayName": "shap-e-img2img",
+            "family": "Shap-E",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": SHAP_E_IMG2IMG_REPO,
+            "artifactLabel": "Explicit safe-component Diffusers assembly",
+            "downloadFiles": SHAP_E_IMG2IMG_SAFE_COMPONENT_FILES,
+            "defaultDtype": "float16",
+            "defaultSize": {"width": 256, "height": 256, "aspectRatio": "1:1"},
+            "recommendedSteps": 64,
+            "recommendedGuidance": 3.0,
+            "guidanceLabel": "Guidance",
+            "supportsImageInput": True,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": False,
+            "supportsVideoInput": False,
+            "supportsAudioInput": False,
+            "outputKind": "video",
+            "recommendedFrames": 20,
+            "recommendedFps": 12,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_DIRECT_OFFLOAD_MODES),
+            },
+            "lowVram": {
+                "dtype": "float16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                "steps": 64,
+                "width": 256,
+                "height": 256,
+                "numFrames": 20,
+            },
+            "modes": ["image_to_3d"],
+            "modeRequirements": {"image_to_3d": {"requiredImages": ["referenceImages"]}},
+            "executionStatus": "expert_only",
+            "revisionCandidates": [
+                require_catalog_revision(SHAP_E_IMG2IMG_REPO, model_type="ShapEImg2ImgPipeline")
+            ],
+            "autoEligible": False,
+            "templateEligible": True,
+            "galleryEligible": False,
+            "notes": [
+                "The generic contract accepts exactly one bounded source image and returns a rendered orbit; it does not expose latent or mesh serialization.",
+                "The loader explicitly assembles only the official fp16 safetensors prior, CLIP vision encoder, processor, and pre-rename renderer component.",
+                "MIT applies; Auto and Gallery remain disabled pending app-only installation, remote runtime, output-quality, and export review.",
+            ],
+        },
+        "roles": _THREE_D_IMAGE_GRAPH_ROLES,
+        "edges": _THREE_D_IMAGE_GRAPH_EDGES,
+        "bindings": _THREE_D_IMAGE_GRAPH_BINDINGS,
     },
     "flux-dev:edit-image:v1": {
         "modelType": "FluxDevPipeline",
@@ -10929,6 +11048,7 @@ _SMOLLM2_135M_INSTRUCT_CAPABILITY = {
     "galleryEligible": False,
     "notes": [
         "The generic causal-LM boundary clamps input and output tokens and returns a versioned JSON receipt plus plain text.",
+        "Expert bnb_4bit is bounded to this exact revision with bfloat16 compute on an NVIDIA CUDA runtime that delivers bitsandbytes 0.50.0.",
         "Auto and Gallery remain disabled until app-installed weights receive live output review.",
     ],
 }

@@ -72,7 +72,48 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertFalse(by_id["torchao"]["enabled"])
         self.assertFalse(by_id["torchao"]["canInstall"])
         self.assertFalse(by_id["torchao"]["canEnable"])
+        self.assertFalse(by_id["torchao"]["deliveryQualified"])
+        self.assertFalse(by_id["torchao"]["availableForExecution"])
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
+
+    def test_reviewed_nvidia_base_bitsandbytes_is_execution_available(self):
+        with mock.patch.object(optimizations, "_package_version", return_value="0.50.0"):
+            catalog = optimizations.public_catalog(
+                runtime_profile={"installed": "nvidia-cuda"},
+                hardware={"torch": {"version": "2.8.0"}},
+            )
+        bitsandbytes = next(item for item in catalog["capabilities"] if item["id"] == "bitsandbytes")
+        self.assertTrue(bitsandbytes["compatible"])
+        self.assertTrue(bitsandbytes["deliveryQualified"])
+        self.assertEqual(bitsandbytes["delivery"], "base_profile")
+        self.assertTrue(bitsandbytes["availableForExecution"])
+        self.assertIsNone(bitsandbytes["disabledReason"])
+
+    def test_active_qualified_quanto_overlay_is_execution_available(self):
+        profile_id = optimizations.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID
+        runtime_catalog = {
+            "profiles": [
+                {
+                    "id": profile_id,
+                    "contractState": "qualified",
+                    "cutoverReady": True,
+                    "overlayStatus": "active",
+                }
+            ]
+        }
+        with mock.patch.object(optimizations, "_package_version", return_value="0.2.7"):
+            catalog = optimizations.public_catalog(
+                runtime_profile={"installed": "amd-rocm-linux"},
+                hardware={"torch": {"version": "2.9.1+rocm7.2"}},
+                optional_runtime_catalog=runtime_catalog,
+            )
+        quanto = next(item for item in catalog["capabilities"] if item["id"] == "optimum_quanto")
+        self.assertTrue(quanto["compatible"])
+        self.assertTrue(quanto["deliveryQualified"])
+        self.assertEqual(quanto["delivery"], "optional_overlay")
+        self.assertTrue(quanto["availableForExecution"])
+        self.assertEqual(quanto["optionalRuntimeProfileId"], profile_id)
+        self.assertIsNone(quanto["disabledReason"])
 
     def test_obsolete_aiter_attention_is_not_advertised_or_recorded(self):
         catalog = optimizations.public_catalog(

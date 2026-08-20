@@ -23,6 +23,7 @@ from modiff.diffusers_offload import (
 )
 from modiff.model_artifact_catalog import (
     IMMUTABLE_HUB_REVISION,
+    catalog_artifact_file,
     catalog_repository_pin,
     catalog_revision,
     require_catalog_revision,
@@ -124,6 +125,7 @@ class ImagePipelineAdapter:
     safe_serialization_required: bool = False
     weight_variant: str | None = None
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
+    prompt_embedding_dtype_component: str | None = None
     max_inference_steps: int = 100
     min_output_side: int = 16
     max_output_side: int = 2048
@@ -221,6 +223,11 @@ class ImagePipelineAdapter:
             raise ValueError("Image component dtype overrides must name unique non-empty components.")
         if any(dtype not in {"float32", "float16", "bfloat16"} for _name, dtype in self.component_dtype_overrides):
             raise ValueError("Image component dtype overrides must use a supported torch dtype.")
+        if self.prompt_embedding_dtype_component is not None and (
+            not self.prompt_embedding_dtype_component
+            or self.prompt_embedding_dtype_component != self.prompt_embedding_dtype_component.strip()
+        ):
+            raise ValueError("An image prompt-embedding dtype component must be a nonblank component name.")
         if (self.min_reference_aspect_ratio is None) != (self.max_reference_aspect_ratio is None):
             raise ValueError("Image reference aspect-ratio bounds must be declared together.")
         if self.min_reference_aspect_ratio is not None and not (
@@ -356,6 +363,35 @@ class ImagePipelineAdapter:
             target["cfg_normalization"] = self.cfg_normalization
         if self.max_input_image_size is not None and supports_arg(pipeline, "max_input_image_size"):
             target["max_input_image_size"] = self.max_input_image_size
+
+    def prepare_prompt_embeddings(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> None:
+        """Bridge a reviewed mixed-dtype prompt encoder to its denoising component."""
+
+        component_name = self.prompt_embedding_dtype_component
+        if component_name is None:
+            return
+        component = getattr(pipeline, component_name, None)
+        component_dtype = getattr(component, "dtype", None)
+        encode_prompt = getattr(pipeline, "encode_prompt", None)
+        if component is None or component_dtype is None or not callable(encode_prompt):
+            raise RuntimeError(
+                f"{self.pipeline_class} did not expose its reviewed {component_name} prompt-embedding dtype boundary."
+            )
+
+        import torch
+
+        guidance_scale = float(target.get(self.guidance_parameter or "guidance_scale", 0.0))
+        with torch.no_grad():
+            prompt_embeds, negative_prompt_embeds = encode_prompt(
+                target.get("prompt") or "",
+                do_classifier_free_guidance=guidance_scale > 1.0,
+                num_images_per_prompt=1,
+                device=getattr(pipeline, "_execution_device", None),
+                dtype=component_dtype,
+                max_sequence_length=values["max_sequence_length"],
+            )
+        target["prompt_embeds"] = prompt_embeds
+        target["negative_prompt_embeds"] = negative_prompt_embeds
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -894,7 +930,13 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"text_to_image"}),
         GLM_IMAGE_REPO,
         safe_serialization_required=True,
+        # The reviewed GLM checkpoint keeps its Transformers text encoder in
+        # float32. Its upstream pipeline derives ``self.dtype`` from that first
+        # component even though the diffusion transformer is bfloat16, so the
+        # adapter pre-encodes and explicitly casts prompt embeddings at the
+        # transformer boundary before the upstream denoising call.
         component_dtype_overrides=(("text_encoder", "float32"),),
+        prompt_embedding_dtype_component="transformer",
         max_inference_steps=50,
         min_output_side=1024,
         max_output_side=1024,
@@ -937,6 +979,9 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_inference_steps=50,
         minimum_image_guidance_scale=0.0,
         max_sequence_length=200,
+        # Edit prepares latents from text_encoder.dtype; a float32 encoder vs bf16 UNet
+        # fails in time_embedding (mat1 Float / mat2 BFloat16).
+        component_dtype_overrides=(("text_encoder", "bfloat16"),),
     ),
     "DreamLiteMobilePipeline": ImagePipelineAdapter(
         "DreamLiteMobilePipeline",
@@ -948,6 +993,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         guidance_parameter=None,
         ignored_generation_parameters=frozenset({"image_guidance_scale"}),
         max_sequence_length=200,
+        component_dtype_overrides=(("text_encoder", "bfloat16"),),
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -3138,6 +3184,32 @@ def quant_config_for(method: str, dtype: Any, modules_to_not_convert: list[str] 
     return None
 
 
+def reviewed_flux_schnell_gguf_component(component: Any) -> Any:
+    """Require the one reviewed FLUX Q4_0 component identity before assembly."""
+
+    artifact_repo = "city96/FLUX.1-schnell-gguf"
+    filename = "flux1-schnell-Q4_0.gguf"
+    artifact = catalog_repository_pin(artifact_repo)
+    file_contract = catalog_artifact_file(artifact_repo, filename)
+    observed = getattr(component, "_modiff_prequantized_component_contract", None)
+    expected = {
+        "schemaVersion": 1,
+        "artifactRepo": artifact_repo,
+        "artifactRevision": artifact["revision"] if artifact is not None else None,
+        "filename": filename,
+        "sha256": file_contract["sha256"] if file_contract is not None else None,
+        "byteSize": file_contract["byteSize"] if file_contract is not None else None,
+        "componentClass": "FluxTransformer2DModel",
+        "baseConfigRepo": FLUX_SCHNELL_REPO,
+        "baseConfigRevision": require_catalog_revision(FLUX_SCHNELL_REPO),
+        "subfolder": "transformer",
+        "computeDtype": "bfloat16",
+    }
+    if artifact is None or file_contract is None or observed != expected:
+        raise ValueError("The pre-quantized transformer is not the reviewed FLUX.1-schnell Q4_0 component.")
+    return component
+
+
 def build_pipeline_quantization_config(method: str, components: list[str], dtype: Any):
     if method == "none" or not components:
         return None
@@ -3216,6 +3288,9 @@ def add_progress_callback(node: NodeBase, pipeline: Any, call_kwargs: dict[str, 
         total_steps=steps,
         elapsed_seconds=0.0,
     )
+    # ErnieImage and similar pipelines invoke callback_on_step_end before they
+    # assign this Diffusers progress field. NodeBase.pipe_callback reads it.
+    pipeline._num_timesteps = steps
     if not supports_arg(pipeline, "callback_on_step_end"):
         return
 
@@ -3457,6 +3532,12 @@ class LoadPipeline(NodeBase):
             "display": "input",
             "type": "diffusers_execution_recipe",
         },
+        "prequantized_transformer": {
+            "label": "Pre-quantized Transformer",
+            "display": "input",
+            "type": "any",
+            "description": "Reviewed single-file transformer component for exact base-pipeline assembly.",
+        },
         "device_map": {
             "label": "Device Map",
             "type": "string",
@@ -3637,6 +3718,24 @@ class LoadPipeline(NodeBase):
         )
         quantization_mode = str(kwargs.get("quantization_mode") or "none")
         quantized_components = normalize_component_list(kwargs.get("quantized_components"))
+        prequantized_transformer = kwargs.get("prequantized_transformer")
+        if prequantized_transformer is not None:
+            if (
+                pipeline_class_name != "FluxPipeline"
+                or requested_mode != "text_to_image"
+                or model_source != "hub"
+                or model_id != FLUX_SCHNELL_REPO
+                or revision != require_catalog_revision(FLUX_SCHNELL_REPO)
+                or conditioning_selection is not None
+                or quantization_mode != "none"
+                or quantized_components
+                or execution_recipe.get("quantization_config") is not None
+                or str(kwargs.get("dtype") or "bfloat16") != "bfloat16"
+            ):
+                raise ValueError(
+                    "The reviewed GGUF assembly supports only the pinned bfloat16 FLUX.1-schnell text-to-image base with no second quantizer."
+                )
+            prequantized_transformer = reviewed_flux_schnell_gguf_component(prequantized_transformer)
         if model_id == QWEN_IMAGE_2512_PREQUANTIZED_REPO:
             quantization_mode = "none"
             quantized_components = []
@@ -3672,6 +3771,8 @@ class LoadPipeline(NodeBase):
             load_kwargs["variant"] = adapter.weight_variant
         if quant_config is not None:
             load_kwargs["quantization_config"] = quant_config
+        if prequantized_transformer is not None:
+            load_kwargs["transformer"] = prequantized_transformer
         recipe_device_map = execution_recipe.get("device_map")
         direct_device_map = kwargs.get("device_map")
         device_map = (
@@ -4263,6 +4364,7 @@ class Generate(NodeBase):
             "return_dict": True,
         }
         adapter.apply_generation_parameters(pipeline, values, call_kwargs)
+        adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
         add_progress_callback(self, pipeline, call_kwargs, steps)
         self._active_pipeline = pipeline
         try:

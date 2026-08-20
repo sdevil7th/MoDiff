@@ -243,6 +243,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LongCatAudioDiTPipeline", "text_to_audio"),
                 ("AudioLDM2Pipeline", "text_to_audio"),
                 ("ShapEPipeline", "text_to_3d"),
+                ("ShapEImg2ImgPipeline", "image_to_3d"),
                 ("FluxDevPipeline", "edit_image"),
                 ("FluxDevPipeline", "inpaint"),
                 ("StableDiffusionXLPipeline", "text_to_image"),
@@ -1557,6 +1558,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(repaint["edges"], variation["edges"])
         for spec in (text, variation, continuation, repaint):
             self.assertIn(("audioGenerate", "sample_rate", "sampleRate48000"), spec["bindings"])
+            self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
 
@@ -1604,6 +1606,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 if model_type == "LongCatAudioDiTPipeline":
                     self.assertIn(("diffusersRecipe", "vae_slicing", "false"), spec["bindings"])
                     self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
+                    self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
                 else:
                     self.assertIn(("diffusersRecipe", "vae_slicing", "true"), spec["bindings"])
                     self.assertIn(("diffusersRecipe", "vae_tiling", "true"), spec["bindings"])
@@ -1624,6 +1627,24 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersThreeDGenerate", "frame_size", "width"), spec["bindings"])
         self.assertIn(("diffusersThreeDGenerate", "video", "videoExport", "video"), spec["edges"])
         graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+        image_spec = studio_execution_spec_for_pair("ShapEImg2ImgPipeline", "image_to_3d")
+        self.assertIsNotNone(image_spec)
+        self.assertEqual(image_spec["executionProfileId"], "shap-e-img2img:direct")
+        self.assertEqual(image_spec["defaultRepo"], "openai/shap-e-img2img")
+        self.assertIn(
+            ("loadImage", "image", "diffusersThreeDGenerate", "reference_images"),
+            image_spec["edges"],
+        )
+        self.assertIn(("loadImage", "file", "referenceImages"), image_spec["bindings"])
+        self.assertFalse(
+            any(
+                role == "diffusersThreeDGenerate" and param == "prompt"
+                for role, param, _source in image_spec["bindings"]
+            )
+        )
+        graph, hints = executable_graph_for_spec(image_spec)
         assert_studio_execution_graph(graph, hints)
 
     def test_stable_video_diffusion_seals_exact_safe_image_to_video_route(self):

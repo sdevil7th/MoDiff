@@ -1,5 +1,6 @@
 import json
 import unittest
+from unittest.mock import patch
 
 import modules as module_registry
 from modiff.auto_resource import AUTO_MODEL_REQUIREMENTS
@@ -20,6 +21,33 @@ class FakeRequest:
 
 
 class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
+    async def test_capabilities_publish_only_app_delivered_quantization_as_available(self):
+        catalog = {
+            "capabilities": [
+                {"id": "bitsandbytes", "availableForExecution": True},
+                {"id": "optimum_quanto", "availableForExecution": False},
+                {"id": "torchao", "availableForExecution": False},
+            ]
+        }
+        server = WebServer(module_registry.MODULE_MAP)
+        with (
+            patch.object(server, "_optimization_runtime_context", return_value=({}, {}, {})),
+            patch("modiff.server.public_optimization_catalog", return_value=catalog),
+        ):
+            response = await server.model_capabilities(FakeRequest())
+        payload = json.loads(response.text)
+        by_model = {item["modelType"]: item for item in payload["capabilities"]}
+        qwen_modes = {
+            tuple(profile["available_expert_quantization_modes"])
+            for profile in by_model["QwenImageModularPipeline"]["executionProfiles"]
+        }
+        flux_modes = {
+            tuple(profile["available_expert_quantization_modes"])
+            for profile in by_model["FluxSchnellPipeline"]["executionProfiles"]
+        }
+        self.assertEqual(qwen_modes, {("bnb_4bit",)})
+        self.assertEqual(flux_modes, {("bnb_4bit", "bnb_8bit")})
+
     async def test_capabilities_publish_normalized_execution_contract(self):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
@@ -174,7 +202,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 186)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 187)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -1063,6 +1091,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(shap_e["recommendedFrames"], 20)
         self.assertEqual(shap_e["revisionCandidates"], ["7bd337afdea1c17842e1c3cc45c4e268356dba40"])
         self.assertEqual(shap_e["studioExecutionSpecs"][0]["executionPath"], "direct-diffusers-three-d")
+        shap_e_image = by_model["ShapEImg2ImgPipeline"]
+        self.assertEqual(shap_e_image["runnableModes"], ["image_to_3d"])
+        self.assertEqual(shap_e_image["outputKind"], "video")
+        self.assertEqual(shap_e_image["recommendedFrames"], 20)
+        self.assertEqual(
+            shap_e_image["revisionCandidates"],
+            ["0e0aba80f08d368aaf6af9cb93583707481cc29b"],
+        )
+        self.assertEqual(
+            shap_e_image["inputContracts"]["image_to_3d"]["requiredImages"],
+            ["referenceImages"],
+        )
+        self.assertFalse(shap_e_image["autoEligible"])
+        self.assertFalse(shap_e_image["galleryEligible"])
         stable_video = by_model["StableVideoDiffusionPipeline"]
         self.assertEqual(stable_video["runnableModes"], ["image_to_video"])
         self.assertEqual(stable_video["defaultDtype"], "float16")

@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 186)
+        self.assertEqual(len(self.contracts), 187)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -149,6 +149,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("DreamLiteMobilePipeline", "text_to_image"): [],
             ("DreamLiteMobilePipeline", "edit_image"): [("image", "referenceImages")],
             ("ShapEPipeline", "text_to_3d"): [],
+            ("ShapEImg2ImgPipeline", "image_to_3d"): [("image", "referenceImages")],
             ("StableDiffusionXLPipeline", "edit_image"): [
                 ("image", "referenceImages"),
             ],

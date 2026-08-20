@@ -52,7 +52,8 @@ def _graph_param_value(node: Mapping[str, Any], key: str, default: Any = None) -
     param = params.get(key)
     if not isinstance(param, Mapping):
         return default
-    return param.get("value", param.get("default", default))
+    value = param.get("value")
+    return param.get("default", default) if value is None else value
 
 
 def _executable_node_ids(graph: Mapping[str, Any]) -> list[str]:

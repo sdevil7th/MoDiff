@@ -129,6 +129,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "LongCatAudioDiTPipeline",
             "AudioLDM2Pipeline",
             "ShapEPipeline",
+            "ShapEImg2ImgPipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
             "FluxKreaPipeline",

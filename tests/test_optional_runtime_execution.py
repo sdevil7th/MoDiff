@@ -28,8 +28,10 @@ from modiff.optional_runtime_execution import (
     optional_runtime_requirement_for_profiles,
 )
 from modiff.optional_runtimes import (
+    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     public_optional_runtime_profiles,
 )
@@ -439,6 +441,38 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
 
+    def test_quanto_loader_selection_requires_the_exact_qualified_composite(self):
+        values = {
+            "pipeline_class": "FluxPipeline",
+            "model_id": {"source": "hub", "value": "black-forest-labs/FLUX.1-dev"},
+            "quantization_mode": "quanto_float8",
+        }
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+        )
+        self.assertIsNone(reason)
+        self.assertEqual([profile.id for profile in profiles], ["flux-dev:direct"])
+        self.assertEqual(
+            profiles[0].optional_runtime_profiles,
+            (TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+        )
+        requirement = loader_optional_runtime_requirement(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+            catalog_resolver=lambda: runtime_catalog(
+                "missing",
+                profile_id=TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
+            ),
+        )
+        self.assertEqual(
+            requirement["profileIds"],
+            [TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(requirement["state"], "missing")
+
     def test_loader_resolution_uses_declared_mode_before_repository(self):
         values = {
             "pipeline_class": "DreamLiteMobilePipeline",
@@ -590,6 +624,104 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
             self.assertEqual(executable["state"], "missing")
             self.assertEqual(executable["executionProfileIds"], [EXECUTION_PROFILE_ID])
             catalog.assert_called_once_with()
+
+    def test_gallery_media_nodes_require_the_exact_app_owned_opencv_overlay(self):
+        for action in ("EdgePreprocessor", "ObjectMaskPropagate"):
+            graph = {
+                "nodes": {
+                    "media": {
+                        "module": "modules.VideoConditioning",
+                        "action": action,
+                        "params": {},
+                    }
+                },
+                "paths": [["media"]],
+            }
+            with self.subTest(action=action):
+                requirement = graph_optional_runtime_requirement(
+                    graph,
+                    catalog_resolver=lambda: runtime_catalog(
+                        profile_id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+                    ),
+                )
+                self.assertTrue(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "missing")
+                self.assertEqual(
+                    requirement["profileIds"],
+                    [GALLERY_MEDIA_RUNTIME_PROFILE_ID],
+                )
+                self.assertEqual(
+                    requirement["executionProfileIds"],
+                    ["video-conditioning:gallery-media"],
+                )
+
+    def test_gallery_media_worker_check_rejects_wrong_active_overlay(self):
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ):
+            requirement = loader_optional_runtime_requirement(
+                "modules.VideoConditioning",
+                "EdgePreprocessor",
+                {},
+                catalog_resolver=lambda: runtime_catalog(
+                    "present_unqualified",
+                    process_status="active",
+                    overlay_status="active",
+                    qualified=True,
+                    profile_id=TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                ),
+            )
+        self.assertEqual(requirement["state"], "unavailable")
+        self.assertEqual(requirement["reason"], "optional_runtime_profile_unknown")
+
+    def test_composite_gallery_overlay_satisfies_loader_and_media_checks(self):
+        gallery_contract = OPTIONAL_RUNTIME_PROFILES[
+            GALLERY_MEDIA_RUNTIME_PROFILE_ID
+        ]
+        main_contract = OPTIONAL_RUNTIME_PROFILES[
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+        ]
+        catalog = {
+            "schemaVersion": 1,
+            "profiles": [
+                {
+                    **contract.to_spec_dict(),
+                    "specDigest": contract.spec_digest,
+                    "status": "present_unqualified",
+                    "overlayStatus": "active",
+                    "contractState": "qualified",
+                    "cutoverReady": True,
+                    "installActionAvailable": True,
+                    "activationAvailable": True,
+                }
+                for contract in (main_contract, gallery_contract)
+            ],
+            "overlay": {"processLoadStatus": "active"},
+        }
+        graph = qwen_loader_graph()
+        graph["nodes"]["media"] = {
+            "module": "modules.VideoConditioning",
+            "action": "EdgePreprocessor",
+            "params": {},
+        }
+        graph["paths"] = [["loader", "media"]]
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ):
+            requirement = graph_optional_runtime_requirement(
+                graph,
+                catalog_resolver=lambda: catalog,
+            )
+        self.assertEqual(requirement["state"], "active")
+        self.assertEqual(
+            requirement["profileIds"],
+            [
+                TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            ],
+        )
 
     def test_malformed_or_missing_path_references_do_not_authorize_loaders(self):
         graph = loader_graph()

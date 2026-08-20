@@ -95,7 +95,7 @@ class DiffusersRuntimeTests(unittest.TestCase):
             @classmethod
             def from_single_file(cls, path, **kwargs):
                 calls["component"] = (path, kwargs)
-                return object()
+                return cls()
 
         with tempfile.NamedTemporaryFile(suffix=".gguf") as artifact_file:
             node = LoadPrequantizedDiffusersComponent("gguf-revision-probe")
@@ -104,6 +104,7 @@ class DiffusersRuntimeTests(unittest.TestCase):
                 patch("diffusers.FluxTransformer2DModel", FakeComponent),
                 patch("diffusers.GGUFQuantizationConfig", return_value=object()),
                 patch("huggingface_hub.hf_hub_download", return_value=artifact_file.name) as download,
+                patch("modules.DiffusersRuntime.main.verify_cataloged_artifact_file"),
             ):
                 result = node.execute(
                     artifact={"source": "hub", "value": "city96/FLUX.1-schnell-gguf"},
@@ -121,6 +122,10 @@ class DiffusersRuntimeTests(unittest.TestCase):
             "741f7c3ce8b383c54771c7003378a50191e9efe9",
         )
         self.assertIn("@f495746ed9c5efcf4661f53ef05401dceadc17d2:", result["resolved_artifact"])
+        self.assertEqual(
+            result["component"]._modiff_prequantized_component_contract["sha256"],
+            "90a393d3a44bec691c707003f434fdde06064b870bb3c206eb7a4f109b25ff4e",
+        )
 
     def test_runtime_nodes_are_registered(self):
         runtime = MODULE_MAP["modules.DiffusersRuntime"]

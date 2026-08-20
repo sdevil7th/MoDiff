@@ -9,6 +9,8 @@ config.ini
 *.local
 
 artifacts/
+review-pending/
+review-approved/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/

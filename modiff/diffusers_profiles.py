@@ -18,6 +18,7 @@ from modiff.modular_workflow_contracts import (
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_target,
     public_optional_runtime_profiles,
@@ -1028,11 +1029,26 @@ def resolve_execution_profiles_for_loader(
     if not isinstance(values, dict):
         return backend_profiles, "loader_parameters_invalid"
 
+    def selected_optional_runtime(profiles: tuple[DiffusersExecutionProfile, ...]):
+        quantization_mode = values.get("quantization_mode")
+        if quantization_mode != "quanto_float8":
+            return profiles
+        return tuple(
+            replace(
+                profile,
+                optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+            )
+            if quantization_mode in profile.expert_quantization_modes
+            and profile.optional_runtime_delivery_for_target() == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+            else profile
+            for profile in profiles
+        )
+
     identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
     raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)
     identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
     if not identity:
-        return backend_profiles, "loader_identity_missing"
+        return selected_optional_runtime(backend_profiles), "loader_identity_missing"
 
     matching = tuple(
         profile
@@ -1040,21 +1056,21 @@ def resolve_execution_profiles_for_loader(
         if (profile.model_type == identity if action == "ModelsLoader" else profile.pipeline_class == identity)
     )
     if not matching:
-        return backend_profiles, "loader_selection_unregistered"
+        return selected_optional_runtime(backend_profiles), "loader_selection_unregistered"
     if len(matching) == 1:
-        return matching, None
+        return selected_optional_runtime(matching), None
 
     raw_mode = values.get("mode")
     if raw_mode is not None:
         if not isinstance(raw_mode, str) or not raw_mode.strip():
-            return matching, "loader_mode_invalid"
+            return selected_optional_runtime(matching), "loader_mode_invalid"
         mode = raw_mode.strip()
         mode_matches = tuple(profile for profile in matching if mode in profile.modes)
         if not mode_matches:
-            return matching, "loader_mode_unregistered"
+            return selected_optional_runtime(matching), "loader_mode_unregistered"
         matching = mode_matches
         if len(matching) == 1:
-            return matching, None
+            return selected_optional_runtime(matching), None
 
     raw_repository = values.get("model_id") or values.get("repo_id")
     if isinstance(raw_repository, str):
@@ -1078,9 +1094,9 @@ def resolve_execution_profiles_for_loader(
             if repository in {profile.default_repo, profile.fallback_repo, *profile.compatible_repos}
         )
         if len(repository_matches) == 1:
-            return repository_matches, None
+            return selected_optional_runtime(repository_matches), None
 
-    return matching, "loader_profile_ambiguous"
+    return selected_optional_runtime(matching), "loader_profile_ambiguous"
 
 
 def public_experimental_pipelines(

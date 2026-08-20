@@ -10,6 +10,7 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Understand HTTP and WebSocket surfaces                                      | [API reference](api-reference.md)                                                |
 | Diagnose startup, ports, slow/stalled runs, devices, downloads, or media    | [Troubleshooting](troubleshooting.md)                                            |
 | Compare the qualified accelerator profiles and their proof levels           | [Runtime support matrix](runtime-support-matrix.md)                              |
+| Check quantized model, dependency, download, and qualification support       | [Quantization support matrix](quantization-support.md)                           |
 | Review optional attention, quantization, and compilation capabilities        | [Optional runtime optimizations](optional-runtime-optimizations.md)              |
 | Build Modular Diffusers graphs and understand experimental compatibility    | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                 |
 | Track Diffusers, Modular Diffusers, speech, testing, and asset work          | [Hugging Face integration roadmap](hugging-face-integration-roadmap.md)          |

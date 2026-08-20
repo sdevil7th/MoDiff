@@ -23,6 +23,8 @@ from modules.HuggingFaceTransformers.main import (
     LoadAnyToAnyModel,
     LoadImageTextToTextModel,
     LoadTextGenerationModel,
+    SMOLLM2_135M_INSTRUCT_REPO,
+    SMOLLM2_135M_INSTRUCT_REVISION,
     SECURITY_CONTRACT,
     _batch_to_device,
     _generation_controls,
@@ -105,6 +107,7 @@ def _transformers_runtime(*, tokenizer=None, processor=None, model=None, config=
         AutoModelForCausalLM=SimpleNamespace(from_pretrained=Mock(return_value=model)),
         AutoModelForImageTextToText=SimpleNamespace(from_pretrained=Mock(return_value=model)),
         AutoModelForMultimodalLM=SimpleNamespace(from_pretrained=Mock(return_value=model)),
+        BitsAndBytesConfig=Mock(return_value=SimpleNamespace(kind="bnb-4bit")),
         AnyToAnyPipeline=pipeline_class or AnyToAnyPipeline,
     )
 
@@ -373,6 +376,55 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
         self.assertNotIn("revision", runtime.AutoModelForCausalLM.from_pretrained.call_args.kwargs)
         self.assertEqual(loaded["receipt"]["source"]["kind"], "local")
         self.assertRegex(loaded["receipt"]["source"]["configSha256"], r"^sha256:[0-9a-f]{64}$")
+
+    def test_smollm2_bnb4_is_exact_nvidia_only_and_skips_post_load_move(self):
+        tokenizer = Mock()
+        model = Mock()
+        model.config = SimpleNamespace(model_type="llama", architectures=["LlamaForCausalLM"])
+        runtime = _transformers_runtime(tokenizer=tokenizer, model=model)
+        with (
+            patch.dict("sys.modules", {"transformers": runtime}),
+            patch("modules.HuggingFaceTransformers.main._normalized_device", return_value="cuda"),
+        ):
+            loaded = LoadTextGenerationModel("smollm2-bnb4-load").execute(
+                model_id={"source": "hub", "value": SMOLLM2_135M_INSTRUCT_REPO},
+                revision=SMOLLM2_135M_INSTRUCT_REVISION,
+                dtype="bfloat16",
+                device="cuda",
+                quantization_mode="bnb_4bit",
+            )
+
+        config_call = runtime.BitsAndBytesConfig.call_args.kwargs
+        self.assertTrue(config_call["load_in_4bit"])
+        self.assertEqual(config_call["bnb_4bit_quant_type"], "nf4")
+        self.assertTrue(config_call["bnb_4bit_use_double_quant"])
+        self.assertEqual(config_call["bnb_4bit_compute_dtype"], torch.bfloat16)
+        model_call = runtime.AutoModelForCausalLM.from_pretrained.call_args.kwargs
+        self.assertIs(model_call["quantization_config"], runtime.BitsAndBytesConfig.return_value)
+        self.assertEqual(model_call["device_map"], {"": "cuda"})
+        model.to.assert_not_called()
+        self.assertEqual(
+            loaded["receipt"]["runtime"]["quantization"],
+            {
+                "mode": "bnb_4bit",
+                "quantType": "nf4",
+                "doubleQuant": True,
+                "computeDtype": "bfloat16",
+            },
+        )
+
+        with (
+            patch.dict("sys.modules", {"transformers": runtime}),
+            patch("modules.HuggingFaceTransformers.main._normalized_device", return_value="cuda"),
+        ):
+            with self.assertRaisesRegex(ValueError, "qualified only for pinned SmolLM2"):
+                LoadTextGenerationModel("unreviewed-bnb4-load").execute(
+                    model_id={"source": "hub", "value": REPOSITORY},
+                    revision=REVISION,
+                    dtype="bfloat16",
+                    device="cuda",
+                    quantization_mode="bnb_4bit",
+                )
 
     def test_text_generation_is_bounded_and_normalized(self):
         loaded, _runtime, tokenizer, model = _load_text_handle()

@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import sys
 import tempfile
 import unittest
@@ -8,6 +9,12 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import numpy as np
+
+
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers") is not None,
+    "Transformers optional runtime is not active",
+)
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -27,6 +34,7 @@ from modules.DiffusersAudio.main import (  # noqa: E402
     LoadAdapter,
     LoadPipeline,
     SetAdapters,
+    _ensure_language_model_generation_api,
     _resolve_audio_model_selection,
     _resolve_audio_loader_revision,
     _preflight_audio_invocation,
@@ -161,6 +169,44 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 adapter = AUDIO_PIPELINE_ADAPTERS[profile["pipeline_class"]]
                 self.assertEqual(tuple(profile["modes"]), adapter.modes)
                 self.assertEqual(profile["default_repo"], adapter.default_repo)
+
+    def test_audioldm2_language_model_gains_generation_mixin_update_helper(self):
+        class FakeGpt2:
+            pass
+
+        class FakeGenerationMixin:
+            def _update_model_kwargs_for_generation(self, outputs, model_kwargs):
+                return model_kwargs
+
+        helper = FakeGenerationMixin._update_model_kwargs_for_generation
+        with patch(
+            "modules.DiffusersAudio.main._reviewed_audioldm2_generation_helper",
+            return_value=(FakeGpt2, helper),
+        ):
+            pipeline = SimpleNamespace(language_model=FakeGpt2())
+            _ensure_language_model_generation_api(pipeline, "AudioLDM2Pipeline")
+            self.assertTrue(callable(pipeline.language_model._update_model_kwargs_for_generation))
+            sentinel = pipeline.language_model._update_model_kwargs_for_generation
+            _ensure_language_model_generation_api(pipeline, "AudioLDM2Pipeline")
+            self.assertIs(pipeline.language_model._update_model_kwargs_for_generation, sentinel)
+
+            unrelated = SimpleNamespace(language_model=object())
+            _ensure_language_model_generation_api(unrelated, "StableAudioPipeline")
+            self.assertFalse(hasattr(unrelated.language_model, "_update_model_kwargs_for_generation"))
+
+            with self.assertRaisesRegex(RuntimeError, "must contain a Transformers GPT2Model"):
+                _ensure_language_model_generation_api(
+                    SimpleNamespace(language_model=object()),
+                    "AudioLDM2Pipeline",
+                )
+
+    @requires_transformers
+    def test_audioldm2_generation_helper_matches_the_reviewed_optional_runtime(self):
+        from modules.DiffusersAudio.main import _reviewed_audioldm2_generation_helper
+
+        gpt2_model, helper = _reviewed_audioldm2_generation_helper()
+        self.assertEqual(gpt2_model.__name__, "GPT2Model")
+        self.assertEqual(helper.__name__, "_update_model_kwargs_for_generation")
 
     def test_adapter_identity_and_real_loader_inputs_are_strict(self):
         for invalid in (None, "", " AceStepPipeline", "AceStepPipeline ", False, 0, {}, []):
@@ -2106,6 +2152,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 with (
                     patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipeline),
                     patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
+                    patch("modules.DiffusersAudio.main._ensure_language_model_generation_api"),
                 ):
                     node.execute(
                         model_id={"source": "hub", "value": repo},

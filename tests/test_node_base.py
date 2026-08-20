@@ -343,6 +343,42 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
             self.assertEqual(node(sample_rate=44100), {"result": 44100})
             self.assertEqual(node.params["sample_rate"], 44100)
 
+    def test_structured_model_selection_preserves_typed_receipt_metadata(self):
+        class ModelSelectionNode(NodeBase):
+            def execute(self, model_id):
+                return {"result": model_id}
+
+        module_name = ".".join(ModelSelectionNode.__module__.split(".")[:-1])
+        definition = {
+            module_name: {
+                "ModelSelectionNode": {
+                    "params": {
+                        "model_id": {
+                            "type": "string",
+                            "display": "modelselect",
+                            "fieldOptions": {"noValidation": True, "sources": ["hub"]},
+                        },
+                        "result": {"type": "object", "display": "output"},
+                    }
+                }
+            }
+        }
+        selection = {
+            "source": "hub",
+            "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
+            "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+            "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+            "byteSize": 67_061_725,
+        }
+
+        with (
+            patch("modiff.NodeBase._module_map", return_value=definition),
+            patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True),
+        ):
+            node = ModelSelectionNode("model-selection-node")
+            self.assertEqual(node(model_id=selection), {"result": selection})
+            self.assertIsInstance(node.params["model_id"]["byteSize"], int)
+
     def test_pipeline_callback_without_node_identity_preserves_diffusers_kwargs(self):
         node = _Generate()
         callback_kwargs = {"latents": object()}

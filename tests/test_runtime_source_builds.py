@@ -257,7 +257,7 @@ class SourceBuildContractTests(SourceBuildFixture):
         self.assertNotIn("sourceBuilds", current.to_spec_dict())
         self.assertEqual(
             current.spec_digest,
-            "sha256:fc1ec7d64d3401981b818ccbed49f8b3d7072d1f6db9b1b55b9fce60d980c8ea",
+            "sha256:897da20e9a99ad9493cd08df0432b3e7a0386dd2aaa62dcd4e4f9c2a84298d08",
         )
         self.assertEqual(profile.packages[0].version, "5.16.0.dev0")
         self.assertEqual(source["sourceArtifact"]["commit"], TRANSFORMERS_MAIN_COMMIT)

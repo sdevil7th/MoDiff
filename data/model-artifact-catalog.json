@@ -179,6 +179,13 @@
       "artifacts": []
     },
     {
+      "modelType": "ShapEImg2ImgPipeline",
+      "baseRepo": "openai/shap-e-img2img",
+      "baseRevision": "0e0aba80f08d368aaf6af9cb93583707481cc29b",
+      "baseLicense": "mit",
+      "artifacts": []
+    },
+    {
       "modelType": "StableVideoDiffusionPipeline",
       "baseRepo": "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
       "baseRevision": "043843887ccd51926e3efed36270444a838e7861",
@@ -191,7 +198,7 @@
       "baseRevision": "741f7c3ce8b383c54771c7003378a50191e9efe9",
       "baseLicense": "apache-2.0",
       "artifacts": [
-        {"repo": "city96/FLUX.1-schnell-gguf", "revision": "f495746ed9c5efcf4661f53ef05401dceadc17d2", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 69959, "likes": 343}
+        {"repo": "city96/FLUX.1-schnell-gguf", "revision": "f495746ed9c5efcf4661f53ef05401dceadc17d2", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 69959, "likes": 343, "files": [{"filename": "flux1-schnell-Q4_0.gguf", "sha256": "90a393d3a44bec691c707003f434fdde06064b870bb3c206eb7a4f109b25ff4e", "byteSize": 6770707360, "componentClass": "FluxTransformer2DModel", "baseConfigRepo": "black-forest-labs/FLUX.1-schnell", "baseConfigRevision": "741f7c3ce8b383c54771c7003378a50191e9efe9", "subfolder": "transformer", "computeDtype": "bfloat16"}]}
       ]
     },
     {

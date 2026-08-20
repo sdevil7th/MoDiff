@@ -115,6 +115,24 @@ if not finite or list(output.shape) != [1, 4, 16] or len(trainable) != 4 or USE_
 if transformers.__version__ != candidate.packages[0].version:
     raise RuntimeError("the workload loaded a different Transformers version")
 
+quanto = None
+if any(package.distribution == "optimum-quanto" for package in candidate.packages):
+    from diffusers import QuantoConfig
+    from optimum.quanto import freeze, qfloat8, quantize
+
+    quantized = torch.nn.Sequential(torch.nn.Linear(8, 8), torch.nn.GELU(), torch.nn.Linear(8, 4)).eval()
+    quantize(quantized, weights=qfloat8)
+    freeze(quantized)
+    with torch.no_grad():
+        quantized_output = quantized(torch.linspace(-1, 1, 16, dtype=torch.float32).reshape(2, 8))
+    quanto = {
+        "configWeightsDtype": QuantoConfig(weights_dtype="float8").weights_dtype,
+        "finite": bool(torch.isfinite(quantized_output).all().item()),
+        "shape": list(quantized_output.shape),
+    }
+    if quanto != {"configWeightsDtype": "float8", "finite": True, "shape": [2, 4]}:
+        raise RuntimeError("the no-weight Quanto float8 workload failed its invariant")
+
 print(json.dumps({
     "status": "passed",
     "environmentId": environment_id,
@@ -125,6 +143,7 @@ print(json.dumps({
     "finite": finite,
     "trainableAdapterParameters": len(trainable),
     "diffusersPeftBackend": bool(USE_PEFT_BACKEND),
+    "quanto": quanto,
 }, sort_keys=True))
 """
 
@@ -148,7 +167,17 @@ for name in json.loads(sys.argv[2]):
         continue
     present.append(name)
 if active is not None or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "base" or present:
-    raise RuntimeError("rollback did not restore the clean base process")
+    raise RuntimeError(
+        "rollback did not restore the clean base process: "
+        + json.dumps(
+            {
+                "active": active,
+                "status": os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS"),
+                "present": present,
+            },
+            sort_keys=True,
+        )
+    )
 print(json.dumps({"status": "passed", "activeEnvironment": None, "stagedPackagesPresent": present}))
 """
 
@@ -361,7 +390,16 @@ def _json_process(script: str, *arguments: str, timeout: int = 300) -> dict[str,
         check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError("an isolated qualification process failed")
+        diagnostic = next(
+            (
+                line.strip()
+                for line in reversed(result.stderr.splitlines())
+                if line.strip().startswith(("RuntimeError:", "ImportError:", "ModuleNotFoundError:", "AssertionError:"))
+            ),
+            "child exited without a structured Python error",
+        )
+        diagnostic = re.sub(r"[^\x20-\x7e]", "?", diagnostic)[:512]
+        raise RuntimeError(f"an isolated qualification process failed: {diagnostic}")
     try:
         value = json.loads(result.stdout.strip().splitlines()[-1])
     except (IndexError, json.JSONDecodeError) as exc:

@@ -47,6 +47,8 @@ MAX_LOCAL_CONFIG_BYTES = 2 * 1024 * 1024
 MAX_LOCAL_CONFIG_NODES = 100_000
 MAX_RECEIPT_BYTES = 16_384
 MAX_ANY_TO_ANY_IMAGE_TOKENS = 4_096
+SMOLLM2_135M_INSTRUCT_REPO = "HuggingFaceTB/SmolLM2-135M-Instruct"
+SMOLLM2_135M_INSTRUCT_REVISION = "12fd25f77366fa6b3b4b768ec3050bf629380bac"
 
 # This registry is intentionally finite. An adapter becomes executable only after
 # the pinned production source exposes enough family-specific information to
@@ -300,7 +302,15 @@ def _config_metadata(model: Any) -> tuple[str | None, list[str]]:
     return model_type, architectures
 
 
-def _load_model(*, selection_value: Any, revision_value: Any, dtype_value: Any, device_value: Any, task: str):
+def _load_model(
+    *,
+    selection_value: Any,
+    revision_value: Any,
+    dtype_value: Any,
+    device_value: Any,
+    task: str,
+    quantization_value: Any = "none",
+):
     import transformers
 
     selection = _model_selection(selection_value)
@@ -309,6 +319,27 @@ def _load_model(*, selection_value: Any, revision_value: Any, dtype_value: Any, 
     device = _normalized_device(device_value)
     source_receipt = _model_source_receipt(selection, revision)
     source = selection["value"]
+    quantization_mode = str(quantization_value or "none").strip().casefold()
+    if quantization_mode not in {"none", "bnb_4bit"}:
+        raise ValueError("Transformers quantization must be exactly none or bnb_4bit.")
+    quantization_config = None
+    if quantization_mode == "bnb_4bit":
+        if (
+            task != "text-generation"
+            or selection != {"source": "hub", "value": SMOLLM2_135M_INSTRUCT_REPO}
+            or revision != SMOLLM2_135M_INSTRUCT_REVISION
+            or dtype_name != "bfloat16"
+            or not device.startswith("cuda")
+        ):
+            raise ValueError(
+                "bnb_4bit is qualified only for pinned SmolLM2-135M-Instruct with bfloat16 compute on NVIDIA CUDA."
+            )
+        quantization_config = transformers.BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=dtype,
+        )
     common = {
         "local_files_only": True,
         "trust_remote_code": False,
@@ -329,15 +360,22 @@ def _load_model(*, selection_value: Any, revision_value: Any, dtype_value: Any, 
         handle_kind = "transformers-image-text-to-text"
     else:  # pragma: no cover - internal programming error
         raise RuntimeError("Unsupported internal Transformers task.")
+    model_kwargs = {
+        "dtype": dtype,
+        "use_safetensors": True,
+        "weights_only": True,
+        "low_cpu_mem_usage": True,
+        **common,
+    }
+    if quantization_config is not None:
+        model_kwargs["quantization_config"] = quantization_config
+        model_kwargs["device_map"] = {"": device}
     model = auto_model.from_pretrained(
         source,
-        dtype=dtype,
-        use_safetensors=True,
-        weights_only=True,
-        low_cpu_mem_usage=True,
-        **common,
+        **model_kwargs,
     )
-    model.to(device)
+    if quantization_config is None:
+        model.to(device)
     model.eval()
     model_type, architectures = _config_metadata(model)
     receipt = _sealed_receipt(
@@ -359,6 +397,16 @@ def _load_model(*, selection_value: Any, revision_value: Any, dtype_value: Any, 
                 "modelClass": _class_name(model),
                 "modelType": model_type,
                 "architectures": architectures,
+                "quantization": (
+                    {
+                        "mode": "bnb_4bit",
+                        "quantType": "nf4",
+                        "doubleQuant": True,
+                        "computeDtype": dtype_name,
+                    }
+                    if quantization_config is not None
+                    else {"mode": "none"}
+                ),
             },
         }
     )
@@ -721,7 +769,23 @@ def _output_sequences(value: Any) -> Any:
 
 def _token_prefix_matches(sequences: Any, input_ids: Any, input_tokens: int) -> bool:
     try:
-        comparison = sequences[0, :input_tokens] == input_ids[0]
+        # Generation normally returns tokens on the model device, but bounded
+        # fake-pipeline contracts and some wrappers may return them on CPU.
+        # Compare the small token prefix on CPU so device placement cannot turn
+        # an otherwise exact prefix into a false contract violation.
+        sequence_prefix = sequences[0, :input_tokens]
+        input_prefix = input_ids[0]
+        for name, value in (("sequence", sequence_prefix), ("input", input_prefix)):
+            detach = getattr(value, "detach", None)
+            value = detach() if callable(detach) else value
+            mover = getattr(value, "to", None)
+            if callable(mover):
+                value = mover("cpu")
+            if name == "sequence":
+                sequence_prefix = value
+            else:
+                input_prefix = value
+        comparison = sequence_prefix == input_prefix
         reducer = getattr(comparison, "all", None)
         reduced = reducer() if callable(reducer) else all(comparison)
         item = getattr(reduced, "item", None)
@@ -1058,6 +1122,12 @@ class LoadTextGenerationModel(NodeBase):
             "default": "float32",
         },
         "device": {"label": "Device", "type": "string", "options": DEVICE_LIST, "default": DEFAULT_DEVICE},
+        "quantization_mode": {
+            "label": "Quantization",
+            "type": "string",
+            "options": ["none", "bnb_4bit"],
+            "default": "none",
+        },
         "receipt": {"label": "Model Receipt", "display": "output", "type": "object"},
     }
 
@@ -1070,6 +1140,7 @@ class LoadTextGenerationModel(NodeBase):
             dtype_value=kwargs.get("dtype"),
             device_value=kwargs.get("device"),
             task="text-generation",
+            quantization_value=kwargs.get("quantization_mode"),
         )
         return {"model": model, "receipt": receipt}
 

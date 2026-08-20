@@ -1,6 +1,7 @@
 """Composable runtime configuration nodes shared by Diffusers pipelines."""
 
 import gc
+import hashlib
 import json
 import importlib.util
 import os
@@ -8,7 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from modiff.NodeBase import NodeBase
-from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.model_artifact_catalog import (
+    catalog_artifact_file,
+    catalog_repository_pin,
+    resolve_model_revision,
+)
 from modules.DiffusersImage.main import QUANT_COMPONENTS, quant_config_for
 from utils.torch_utils import str_to_dtype
 
@@ -62,6 +67,20 @@ NO_QUANTIZATION_CONFIG = {
     "backend": "none",
     "disabled": True,
 }
+
+
+def verify_cataloged_artifact_file(path: Path, contract: dict[str, Any]) -> None:
+    """Verify one downloaded model file against its immutable catalog identity."""
+
+    resolved = path.resolve(strict=True)
+    if not resolved.is_file() or resolved.stat().st_size != contract["byteSize"]:
+        raise RuntimeError("The cataloged model file has an unexpected size.")
+    digest = hashlib.sha256()
+    with resolved.open("rb") as source:
+        while chunk := source.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    if digest.hexdigest() != contract["sha256"]:
+        raise RuntimeError("The cataloged model file failed its immutable SHA-256 check.")
 
 
 def _normalize_optional_quantization_config(value: Any):
@@ -1655,11 +1674,15 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             "label": "Artifact",
             "display": "modelselect",
             "type": "string",
-            "value": {"source": "hub", "value": ""},
+            "value": {"source": "hub", "value": "city96/FLUX.1-schnell-gguf"},
             "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]},
         },
-        "filename": {"label": "GGUF Filename", "type": "string", "default": ""},
-        "revision": {"label": "Revision", "type": "string", "default": ""},
+        "filename": {"label": "GGUF Filename", "type": "string", "default": "flux1-schnell-Q4_0.gguf"},
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "default": "f495746ed9c5efcf4661f53ef05401dceadc17d2",
+        },
         "component_class": {
             "label": "Component Architecture",
             "type": "string",
@@ -1674,13 +1697,13 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
         "config_model": {
             "label": "Base Config",
             "type": "string",
-            "default": "",
+            "default": "black-forest-labs/FLUX.1-schnell",
             "description": "Optional base repository used to validate the component architecture.",
         },
         "config_revision": {
             "label": "Base Config Revision",
             "type": "string",
-            "default": "",
+            "default": "741f7c3ce8b383c54771c7003378a50191e9efe9",
             "description": "Optional immutable revision for the base configuration repository.",
         },
         "subfolder": {"label": "Config Subfolder", "type": "string", "default": "transformer"},
@@ -1702,6 +1725,10 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
         artifact = _model_value(artifact_selection)
         filename = str(kwargs.get("filename") or "").strip()
         artifact_source = artifact_selection.get("source") if isinstance(artifact_selection, dict) else None
+        artifact_pin = catalog_repository_pin(artifact) if artifact_source in {None, "hub"} else None
+        file_contract = catalog_artifact_file(artifact, filename) if artifact_pin is not None else None
+        if artifact_pin is not None and artifact_pin.get("format") == "gguf" and file_contract is None:
+            raise ValueError("Choose an exact reviewed GGUF filename from the model artifact catalog.")
         revision = resolve_model_revision(
             artifact,
             kwargs.get("revision"),
@@ -1716,6 +1743,8 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             raise RuntimeError(f"Installed Diffusers does not expose GGUF loading for {class_name}.")
         if not artifact:
             raise ValueError("Choose a pre-quantized artifact.")
+        if file_contract is not None and class_name != file_contract["componentClass"]:
+            raise ValueError("The selected GGUF file does not match the reviewed component architecture.")
 
         source = Path(artifact).expanduser()
         if source.is_file():
@@ -1737,6 +1766,8 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             )
         if resolved.suffix.lower() != ".gguf":
             raise ValueError(f"Expected a GGUF artifact, got {resolved.name!r}.")
+        if file_contract is not None:
+            verify_cataloged_artifact_file(resolved, file_contract)
 
         from diffusers import GGUFQuantizationConfig
 
@@ -1747,9 +1778,20 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
         }
         config_model = str(kwargs.get("config_model") or "").strip()
         subfolder = str(kwargs.get("subfolder") or "transformer").strip()
+        if file_contract is not None:
+            reviewed_config = str(file_contract["baseConfigRepo"])
+            reviewed_subfolder = str(file_contract["subfolder"])
+            reviewed_dtype = str(file_contract["computeDtype"])
+            if config_model and config_model != reviewed_config:
+                raise ValueError("The selected GGUF file requires its reviewed base configuration repository.")
+            if subfolder != reviewed_subfolder or str(kwargs.get("compute_dtype") or "bfloat16") != reviewed_dtype:
+                raise ValueError("The selected GGUF file requires its reviewed subfolder and compute dtype.")
+            config_model = reviewed_config
         if config_model:
             load_kwargs["config"] = config_model
             config_revision = resolve_model_revision(config_model, kwargs.get("config_revision"))
+            if file_contract is not None and config_revision != file_contract["baseConfigRevision"]:
+                raise ValueError("The selected GGUF file requires its reviewed immutable base configuration revision.")
             if config_revision:
                 load_kwargs["config_revision"] = config_revision
             if subfolder:
@@ -1761,6 +1803,20 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             raise RuntimeError(
                 f"{resolved.name} does not match {class_name} or its selected base config: {exc}"
             ) from exc
+        if file_contract is not None:
+            component._modiff_prequantized_component_contract = {
+                "schemaVersion": 1,
+                "artifactRepo": artifact_pin["repo"],
+                "artifactRevision": revision,
+                "filename": filename,
+                "sha256": file_contract["sha256"],
+                "byteSize": file_contract["byteSize"],
+                "componentClass": class_name,
+                "baseConfigRepo": config_model,
+                "baseConfigRevision": file_contract["baseConfigRevision"],
+                "subfolder": subfolder,
+                "computeDtype": str(kwargs.get("compute_dtype") or "bfloat16"),
+            }
         return {
             "component": component,
             "resolved_artifact": (

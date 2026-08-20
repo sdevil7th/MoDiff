@@ -1039,6 +1039,18 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"min": 1024, "max": 1024, "step": 32},
             )
         self.assertEqual(glm_image["maxOutputPixels"], 1024 * 1024)
+        self.assertEqual(
+            IMAGE_PIPELINE_ADAPTERS["GlmImagePipeline"].component_dtype_overrides,
+            (("text_encoder", "float32"),),
+        )
+        self.assertEqual(
+            IMAGE_PIPELINE_ADAPTERS["DreamLitePipeline"].component_dtype_overrides,
+            (("text_encoder", "bfloat16"),),
+        )
+        self.assertEqual(
+            IMAGE_PIPELINE_ADAPTERS["DreamLiteMobilePipeline"].component_dtype_overrides,
+            (("text_encoder", "bfloat16"),),
+        )
         self.assertTrue(glm_image["fieldParams"]["negative_prompt"]["hidden"])
         self.assertFalse(glm_image["fieldParams"]["guidance_scale"]["hidden"])
         self.assertFalse(glm_image["fieldParams"]["max_sequence_length"]["hidden"])
@@ -3511,9 +3523,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
                 Generate(f"ernie-image-{field}-contract").execute(**values)
 
-    def test_glm_image_loads_safe_bfloat16_with_fp32_t5_and_enforces_the_exact_recipe(self):
+    def test_glm_image_loads_safe_bfloat16_with_matching_t5_and_enforces_the_exact_recipe(self):
         loaded = {}
         called = {}
+        encoded = {}
         placements = []
 
         class TextEncoder:
@@ -3524,6 +3537,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         class GlmImagePipeline:
             def __init__(self):
                 self.text_encoder = TextEncoder()
+                self.transformer = SimpleNamespace(dtype="bfloat16")
+                self._execution_device = "cpu"
 
             @classmethod
             def from_pretrained(cls, repo, **kwargs):
@@ -3539,6 +3554,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 guidance_scale=1.5,
                 max_sequence_length=2048,
                 negative_prompt_embeds=None,
+                prompt_embeds=None,
                 generator=None,
                 output_type="pil",
                 return_dict=True,
@@ -3547,6 +3563,18 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ):
                 called.update(locals())
                 return SimpleNamespace(images=[Image.new("RGB", (width, height))])
+
+            def encode_prompt(
+                self,
+                prompt,
+                do_classifier_free_guidance=True,
+                num_images_per_prompt=1,
+                device=None,
+                dtype=None,
+                max_sequence_length=2048,
+            ):
+                encoded.update(locals())
+                return "bfloat16-prompt-embeds", "bfloat16-negative-prompt-embeds"
 
         node = LoadPipeline("glm-image-load-probe")
         node.progress = lambda *args, **kwargs: None
@@ -3596,7 +3624,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(called["num_inference_steps"], 50)
         self.assertEqual(called["guidance_scale"], 1.5)
         self.assertEqual(called["max_sequence_length"], 2048)
-        self.assertIsNone(called["negative_prompt_embeds"])
+        self.assertEqual(called["prompt_embeds"], "bfloat16-prompt-embeds")
+        self.assertEqual(called["negative_prompt_embeds"], "bfloat16-negative-prompt-embeds")
+        self.assertEqual(encoded["prompt"], "reviewed fixture")
+        self.assertTrue(encoded["do_classifier_free_guidance"])
+        self.assertEqual(encoded["dtype"], "bfloat16")
+        self.assertEqual(encoded["max_sequence_length"], 2048)
 
         for field, value, message in (
             ("width", 992, "between 1024 and 1024"),
@@ -3617,13 +3650,42 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
                 Generate(f"glm-image-{field}-contract").execute(**values)
 
+    def test_glm_text_encoder_stays_float32_and_embeddings_cross_the_bfloat16_boundary(self):
+        import torch
+
+        adapter = IMAGE_PIPELINE_ADAPTERS["GlmImagePipeline"]
+        override = dict(adapter.component_dtype_overrides)
+        self.assertEqual(override, {"text_encoder": "float32"})
+        self.assertEqual(adapter.prompt_embedding_dtype_component, "transformer")
+
+        text_encoder = torch.nn.Linear(4, 4).to(getattr(torch, override["text_encoder"]))
+        float32_activations = torch.ones((1, 4), dtype=torch.float32)
+        glyph_embeddings = text_encoder(float32_activations)
+        self.assertEqual(glyph_embeddings.dtype, torch.float32)
+
+        # The adapter requests this cast explicitly because pinned Diffusers'
+        # pipeline-wide dtype property otherwise resolves to the float32 T5.
+        diffusion_embeddings = glyph_embeddings.to(torch.bfloat16)
+        diffusion_transformer = torch.nn.Linear(4, 4).to(torch.bfloat16)
+        self.assertEqual(diffusion_transformer(diffusion_embeddings).dtype, torch.bfloat16)
+
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
         loaded = {}
 
         def pipeline_class(name):
+            class Encoder:
+                def __init__(self):
+                    self.to_calls = []
+
+                def to(self, dtype):
+                    self.to_calls.append(dtype)
+                    return self
+
             def from_pretrained(cls, repo, **kwargs):
-                loaded[name] = {"repo": repo, "kwargs": kwargs}
-                return cls()
+                pipeline = cls()
+                pipeline.text_encoder = Encoder()
+                loaded[name] = {"repo": repo, "kwargs": kwargs, "pipeline": pipeline}
+                return pipeline
 
             def call(self, **_kwargs):
                 raise AssertionError("invalid DreamLite settings must fail before inference")
@@ -3662,6 +3724,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertTrue(loaded[name]["kwargs"]["use_safetensors"])
                 self.assertNotIn("variant", loaded[name]["kwargs"])
                 self.assertNotIn("trust_remote_code", loaded[name]["kwargs"])
+                self.assertEqual(loaded[name]["pipeline"].text_encoder.to_calls, ["bfloat16"])
 
         base = tag_test_image_pipeline(
             pipeline_class("DreamLitePipeline")(),
@@ -3804,6 +3867,70 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(offload["mode"], "group_cpu")
         self.assertEqual(offload["device"], "cuda:0")
         self.assertEqual(result["pipeline"].transformer.backends, ["native"])
+
+    def test_flux_schnell_assembles_only_the_exact_reviewed_gguf_transformer(self):
+        loaded = {}
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+        component = SimpleNamespace(
+            _modiff_prequantized_component_contract={
+                "schemaVersion": 1,
+                "artifactRepo": "city96/FLUX.1-schnell-gguf",
+                "artifactRevision": "f495746ed9c5efcf4661f53ef05401dceadc17d2",
+                "filename": "flux1-schnell-Q4_0.gguf",
+                "sha256": "90a393d3a44bec691c707003f434fdde06064b870bb3c206eb7a4f109b25ff4e",
+                "byteSize": 6_770_707_360,
+                "componentClass": "FluxTransformer2DModel",
+                "baseConfigRepo": FLUX_SCHNELL_REPO,
+                "baseConfigRevision": catalog_revision(FLUX_SCHNELL_REPO),
+                "subfolder": "transformer",
+                "computeDtype": "bfloat16",
+            }
+        )
+        node = LoadPipeline("flux-schnell-reviewed-gguf-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=FakePipeline),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            node.execute(
+                model_id={"source": "hub", "value": FLUX_SCHNELL_REPO},
+                pipeline_class="FluxPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(FLUX_SCHNELL_REPO),
+                dtype="bfloat16",
+                quantization_mode="none",
+                quantized_components=[],
+                prequantized_transformer=component,
+                auto_offload=False,
+                offload_mode="none",
+                device="cpu",
+            )
+
+        self.assertEqual(loaded["repo"], FLUX_SCHNELL_REPO)
+        self.assertIs(loaded["kwargs"]["transformer"], component)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(FLUX_SCHNELL_REPO))
+        self.assertNotIn("quantization_config", loaded["kwargs"])
+
+        component._modiff_prequantized_component_contract["filename"] = "flux1-schnell-Q5_0.gguf"
+        with self.assertRaisesRegex(ValueError, "reviewed FLUX.1-schnell Q4_0"):
+            node.execute(
+                model_id={"source": "hub", "value": FLUX_SCHNELL_REPO},
+                pipeline_class="FluxPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(FLUX_SCHNELL_REPO),
+                dtype="bfloat16",
+                prequantized_transformer=component,
+                auto_offload=False,
+                offload_mode="none",
+                device="cpu",
+            )
 
     def test_execution_recipe_applies_cache_and_compile_to_direct_image_pipeline(self):
         applied = {}
@@ -4671,6 +4798,22 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             call_kwargs["callback_on_step_end"](pipeline, 0, 1, {})
 
         self.assertTrue(pipeline._interrupt)
+
+    def test_generic_step_callback_sets_num_timesteps_before_first_tick(self):
+        class FakePipeline:
+            _interrupt = False
+
+            def __call__(self, *, callback_on_step_end=None, callback_on_step_end_tensor_inputs=None):
+                pass
+
+        node = Inpaint("timesteps-probe")
+        node.progress = lambda *args, **kwargs: None
+        pipeline = FakePipeline()
+        call_kwargs = {}
+        add_progress_callback(node, pipeline, call_kwargs, 4)
+        self.assertEqual(pipeline._num_timesteps, 4)
+        call_kwargs["callback_on_step_end"](pipeline, 0, 1, {})
+        self.assertEqual(pipeline._num_timesteps, 4)
 
     def test_generic_execution_exposes_active_pipeline_during_inference(self):
         node = Inpaint("active-pipeline-probe")
