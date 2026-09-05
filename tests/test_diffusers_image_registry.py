@@ -41,6 +41,7 @@ from modules.DiffusersImage.main import (
     DREAMLITE_MOBILE_REPO,
     ERNIE_IMAGE_TURBO_REPO,
     GLM_IMAGE_REPO,
+    FLUX2_DEV_REPO,
     FLUX2_KLEIN_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
@@ -84,6 +85,7 @@ from modules.DiffusersImage.main import (
     image_pipeline_contract,
     output_image_dimensions,
     pipeline_class_from_name,
+    preflight_image_action,
     quant_config_for,
     resolve_image_model_selection,
     resolve_image_pipeline_revision,
@@ -833,6 +835,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_class_only_changes_replace_the_inherited_managed_repository(self):
         cases = {
             "ZImagePipeline": ("text_to_image", Z_IMAGE_REPO),
+            "Flux2Pipeline": ("text_to_image", FLUX2_DEV_REPO),
             "Flux2KleinPipeline": ("text_to_image", FLUX2_KLEIN_REPO),
             "FluxFillPipeline": ("inpaint", FLUX_FILL_REPO),
             "FluxControlPipeline": ("control_image", FLUX_DEPTH_REPO),
@@ -947,6 +950,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         flux_text = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image")
         self.assertTrue(flux_text["fieldParams"]["strength"]["hidden"])
         self.assertTrue(flux_text["fieldParams"]["padding_mask_crop"]["hidden"])
+        flux_fill = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxFillPipeline"], "inpaint")
+        self.assertEqual(flux_fill["fieldParams"]["guidance_scale"]["max"], 30.0)
+        self.assertNotIn("max", flux_text["fieldParams"]["guidance_scale"])
         sdxl_edit = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLImg2ImgPipeline"], "edit_image")
         self.assertFalse(sdxl_edit["fieldParams"]["strength"]["hidden"])
         self.assertTrue(sdxl_edit["fieldParams"]["width"]["hidden"])
@@ -1054,6 +1060,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertTrue(glm_image["fieldParams"]["negative_prompt"]["hidden"])
         self.assertFalse(glm_image["fieldParams"]["guidance_scale"]["hidden"])
         self.assertFalse(glm_image["fieldParams"]["max_sequence_length"]["hidden"])
+        for pipeline_name, mode in (
+            ("JoyImageEditPipeline", "text_to_image"),
+            ("JoyImageEditPipeline", "edit_image"),
+            ("JoyImageEditPlusPipeline", "edit_image"),
+            ("JoyImageEditPlusPipeline", "multi_image_reference_edit"),
+        ):
+            with self.subTest(joyimage_prompt_length=(pipeline_name, mode)):
+                joyimage = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
+                self.assertFalse(joyimage["fieldParams"]["max_sequence_length"]["hidden"])
+                self.assertEqual(joyimage["fieldParams"]["max_sequence_length"]["max"], 4096)
         sana_sprint = image_pipeline_contract(
             IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
         )
@@ -1603,6 +1619,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 FLUX2_KLEIN_REPO,
                 {"prompt", "image", "mask_image"},
             ),
+            "Flux2Pipeline": (
+                {"text_to_image", "edit_image", "multi_image_reference_edit"},
+                FLUX2_DEV_REPO,
+                {"prompt", "image"},
+            ),
             "FluxControlImg2ImgPipeline": (
                 {"control_edit_image"},
                 FLUX_DEPTH_REPO,
@@ -1630,7 +1651,6 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     self.assertIn(adapter.guidance_parameter, parameters)
 
         for deferred in (
-            "Flux2Pipeline",
             "Flux2KleinKVPipeline",
             "FluxControlNetPipeline",
             "FluxControlNetImg2ImgPipeline",
@@ -2472,6 +2492,29 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertNotIn("torch halted", str(raised.exception))
         self.assertEqual(calls, [])
 
+    def test_flux_fill_accepts_the_official_guidance_scale_without_weakening_generic_bounds(self):
+        image = Image.new("RGB", (16, 16), "black")
+        mask = Image.new("L", (16, 16), "white")
+        fill = tag_test_image_pipeline(type("FluxFillPipeline", (), {})(), "FluxFillPipeline", "inpaint")
+        _adapter, values = preflight_image_action(
+            fill,
+            "Inpaint",
+            {
+                "image": image,
+                "mask_image": mask,
+                "prompt": "replace the masked object",
+                "guidance_scale": 30,
+                "num_inference_steps": 50,
+            },
+        )
+        self.assertEqual(values["guidance_scale"], 30.0)
+        with self.assertRaisesRegex(ValueError, "between 0.0 and 30.0"):
+            preflight_image_action(fill, "Inpaint", {"image": image, "mask_image": mask, "guidance_scale": 30.1})
+
+        generic = tag_test_image_pipeline(type("FluxPipeline", (), {})(), "FluxPipeline", "text_to_image")
+        with self.assertRaisesRegex(ValueError, "between 0.0 and 20.0"):
+            preflight_image_action(generic, "Generate", {"guidance_scale": 30})
+
     def test_generate_preflight_rejects_every_declared_bound_and_nonfinite_value(self):
         class FluxPipeline:
             def __call__(self, **_kwargs):
@@ -2579,6 +2622,79 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 pipeline=single_mode,
                 image=[Image.new("RGB", (1, 1)), Image.new("RGB", (1, 1))],
             )
+
+    def test_flux2_standard_pipeline_executes_text_and_ordered_reference_workflows(self):
+        class Flux2Pipeline:
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(
+                self,
+                image=None,
+                prompt=None,
+                height=None,
+                width=None,
+                num_inference_steps=50,
+                guidance_scale=4.0,
+                generator=None,
+                output_type="pil",
+                return_dict=True,
+                callback_on_step_end=None,
+                callback_on_step_end_tensor_inputs=None,
+                max_sequence_length=512,
+            ):
+                self.calls.append(
+                    {
+                        "image": image,
+                        "prompt": prompt,
+                        "height": height,
+                        "width": width,
+                        "num_inference_steps": num_inference_steps,
+                        "guidance_scale": guidance_scale,
+                        "output_type": output_type,
+                        "return_dict": return_dict,
+                        "max_sequence_length": max_sequence_length,
+                    }
+                )
+                return SimpleNamespace(images=[Image.new("RGB", (width or 64, height or 64), "blue")])
+
+        text_pipeline = tag_test_image_pipeline(Flux2Pipeline(), "Flux2Pipeline", "text_to_image")
+        generated = Generate().execute(
+            pipeline=text_pipeline,
+            prompt="A precise studio photograph of a blue ceramic sculpture",
+            width=768,
+            height=768,
+            num_inference_steps=12,
+            guidance_scale=3.5,
+            max_sequence_length=512,
+            seed=7,
+        )
+        self.assertEqual(generated["width_out"], 768)
+        self.assertEqual(text_pipeline.calls[0]["image"], None)
+        self.assertEqual(text_pipeline.calls[0]["guidance_scale"], 3.5)
+
+        reference_pipeline = tag_test_image_pipeline(
+            Flux2Pipeline(),
+            "Flux2Pipeline",
+            "multi_image_reference_edit",
+        )
+        references = [Image.new("RGB", (64, 64), "red"), Image.new("RGB", (64, 64), "green")]
+        edited = Edit().execute(
+            pipeline=reference_pipeline,
+            image=references,
+            prompt="Combine the subject and material references into one coherent product photograph",
+            width=768,
+            height=768,
+            num_inference_steps=10,
+            guidance_scale=4.0,
+            max_sequence_length=512,
+            seed=11,
+        )
+        self.assertEqual(edited["height_out"], 768)
+        self.assertEqual(reference_pipeline.calls[0]["image"], references)
+        self.assertEqual(reference_pipeline.calls[0]["prompt"], "Combine the subject and material references into one coherent product photograph")
 
     def test_generate_preflight_preserves_valid_zero_and_boundary_values(self):
         received = {}
@@ -2810,18 +2926,21 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 HUNYUAN_DIT_DISTILLED_REPO,
                 None,
                 (),
+                ["blocks.14"],
             ),
             (
                 "PixArtSigmaPAGPipeline",
                 PIXART_SIGMA_REPO,
                 None,
                 (),
+                ["blocks.14"],
             ),
             (
                 "SanaPAGPipeline",
                 SANA_REPO,
                 "fp16",
                 (("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+                None,
             ),
         )
         with (
@@ -2832,7 +2951,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
             patch("modules.DiffusersImage.main.apply_pipeline_offload"),
         ):
-            for pipeline_name, repo, variant, component_dtypes in cases:
+            for pipeline_name, repo, variant, component_dtypes, pag_applied_layers in cases:
                 with self.subTest(pipeline=pipeline_name):
                     node = LoadPipeline(f"{pipeline_name}-load-probe")
                     node.progress = lambda *args, **kwargs: None
@@ -2857,6 +2976,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         self.assertNotIn("variant", load_kwargs)
                     else:
                         self.assertEqual(load_kwargs["variant"], variant)
+                    if pag_applied_layers is None:
+                        self.assertNotIn("pag_applied_layers", load_kwargs)
+                    else:
+                        self.assertEqual(load_kwargs["pag_applied_layers"], pag_applied_layers)
                     for component_name, component_dtype in component_dtypes:
                         self.assertEqual(getattr(pipeline, component_name).to_calls, [component_dtype])
                     self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
@@ -2868,7 +2991,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         self.assertEqual(
             [call.args[0] for call in resolve_pipeline.call_args_list],
-            [pipeline_name for pipeline_name, _repo, _variant, _components in cases],
+            [pipeline_name for pipeline_name, _repo, _variant, _components, _pag_layers in cases],
         )
 
     def test_sana_loads_the_reviewed_mixed_precision_safetensors_variant(self):
@@ -3685,6 +3808,97 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         diffusion_embeddings = glyph_embeddings.to(torch.bfloat16)
         diffusion_transformer = torch.nn.Linear(4, 4).to(torch.bfloat16)
         self.assertEqual(diffusion_transformer(diffusion_embeddings).dtype, torch.bfloat16)
+
+    def test_joyimage_edit_prepares_finite_float32_multimodal_embeddings_at_the_bfloat16_boundary(self):
+        import torch
+
+        adapter = IMAGE_PIPELINE_ADAPTERS["JoyImageEditPipeline"]
+        self.assertEqual(adapter.prompt_embedding_dtype_component, "transformer")
+        self.assertEqual(adapter.prompt_embedding_encoder_dtype, "float32")
+        self.assertEqual(adapter.prompt_embedding_mask_modes, frozenset({"edit_image"}))
+
+        calls = []
+
+        class Processor:
+            @staticmethod
+            def resize_center_crop(image, size):
+                calls.append(("resize", image, size))
+                return "processed-image"
+
+        class Pipeline:
+            _execution_device = torch.device("cpu")
+            transformer = torch.nn.Linear(4, 4).to(torch.bfloat16)
+            vae_image_processor = Processor()
+
+            @staticmethod
+            def encode_prompt_multiple_images(**kwargs):
+                calls.append(("encode", kwargs))
+                value = 2.0 if kwargs["prompt"] else -2.0
+                return torch.full((1, 3, 4), value, dtype=torch.float32), torch.ones((1, 3), dtype=torch.long)
+
+        pipeline = tag_test_image_pipeline(Pipeline(), "JoyImageEditPipeline", "edit_image")
+        source = Image.new("RGB", (64, 64), "orange")
+        target = {
+            "prompt": "Move the camera.",
+            "negative_prompt": "",
+            "image": source,
+            "height": 1024,
+            "width": 1024,
+        }
+        adapter.prepare_prompt_embeddings(pipeline, {"max_sequence_length": 4096}, target)
+
+        self.assertNotIn("prompt", target)
+        self.assertNotIn("negative_prompt", target)
+        self.assertEqual(target["prompt_embeds"].dtype, torch.bfloat16)
+        self.assertEqual(target["negative_prompt_embeds"].dtype, torch.bfloat16)
+        self.assertTrue(bool(torch.isfinite(target["prompt_embeds"]).all()))
+        self.assertTrue(bool(torch.isfinite(target["negative_prompt_embeds"]).all()))
+        self.assertEqual(calls[0], ("resize", source, (1024, 1024)))
+        self.assertEqual(calls[1][1]["images"], "processed-image")
+        self.assertEqual(calls[1][1]["max_sequence_length"], 4096)
+        self.assertEqual(calls[2][1]["prompt"], "")
+
+    def test_joyimage_loader_places_only_the_edit_text_encoder_in_float32(self):
+        loaded = []
+
+        class Encoder:
+            def __init__(self):
+                self.to_calls = []
+
+            def to(self, dtype):
+                self.to_calls.append(dtype)
+                return self
+
+        class JoyImageEditPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                pipeline = cls()
+                pipeline.text_encoder = Encoder()
+                loaded.append((repo, kwargs, pipeline))
+                return pipeline
+
+        for mode, expected_calls in (("text_to_image", []), ("edit_image", ["float32"])):
+            node = LoadPipeline(f"joyimage-{mode}-dtype-probe")
+            node.progress = lambda *args, **kwargs: None
+            node.mm_add = lambda *args, **kwargs: None
+            with (
+                patch(
+                    "modules.DiffusersImage.main.pipeline_class_from_name",
+                    return_value=JoyImageEditPipeline,
+                ),
+                patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+                patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            ):
+                node.execute(
+                    model_id=JOYIMAGE_EDIT_REPO,
+                    pipeline_class="JoyImageEditPipeline",
+                    mode=mode,
+                    revision=catalog_revision(JOYIMAGE_EDIT_REPO),
+                    dtype="bfloat16",
+                    auto_offload=False,
+                    offload_mode="none",
+                )
+            self.assertEqual(loaded[-1][2].text_encoder.to_calls, expected_calls)
 
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
         loaded = {}

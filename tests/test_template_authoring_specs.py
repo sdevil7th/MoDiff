@@ -51,17 +51,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 147,
+                "authoringSpecCount": 148,
                 "promptDraftedCount": 123,
-                "promptNotApplicableCount": 24,
-                "canonicalDefaultsCapturedCount": 147,
-                "inputSelectionPendingCount": 92,
-                "rightsReviewPendingCount": 147,
-                "generationPendingCount": 147,
+                "promptNotApplicableCount": 25,
+                "canonicalDefaultsCapturedCount": 148,
+                "inputSelectionPendingCount": 93,
+                "rightsReviewPendingCount": 148,
+                "generationPendingCount": 148,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 55,
-                    "draft_complete_input_selection_pending": 92,
+                    "draft_complete_input_selection_pending": 93,
                 },
             },
         )

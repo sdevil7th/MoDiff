@@ -31278,7 +31278,7 @@
             }
           ],
           "kind": "sequential",
-          "label": "Controlnet Image2Image",
+          "label": "Control Edit Image",
           "outputs": [
             {
               "default": null,
@@ -31562,7 +31562,7 @@
               "path": "decode"
             }
           ],
-          "taskId": "controlnet_image2image"
+          "taskId": "control_edit_image"
         },
         {
           "executionPipelineClass": "StableDiffusionXLModularPipeline",
@@ -31842,7 +31842,7 @@
             }
           ],
           "kind": "sequential",
-          "label": "Controlnet Inpainting",
+          "label": "Control Inpaint",
           "outputs": [
             {
               "default": null,
@@ -32155,7 +32155,7 @@
               "path": "decode"
             }
           ],
-          "taskId": "controlnet_inpainting"
+          "taskId": "control_inpaint"
         },
         {
           "executionPipelineClass": "StableDiffusionXLModularPipeline",
@@ -42064,6 +42064,6 @@
       ]
     }
   ],
-  "diffusersRevision": "90b4e34e79a86ec5e7f2437634fe95ecd2108796",
+  "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
   "schemaVersion": 1
 }

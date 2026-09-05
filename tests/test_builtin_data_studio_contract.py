@@ -63,9 +63,9 @@ class BuiltinDataStudioContractTests(unittest.IsolatedAsyncioTestCase):
 
         contracts = contracts_by_pair(payload["taskTemplateContracts"])
         expected_hashes = {
-            "text_select": "task-template-v1-0316a2ed",
-            "data_conversion": "task-template-v1-62126d8c",
-            "graph_utility": "task-template-v1-b7ba0129",
+            "text_select": "task-template-v1-9c4a824e",
+            "data_conversion": "task-template-v1-91088a7b",
+            "graph_utility": "task-template-v1-b3f3772a",
         }
         for mode in self.MODES:
             with self.subTest(mode=mode):

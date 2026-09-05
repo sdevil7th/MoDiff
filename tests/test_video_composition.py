@@ -5,6 +5,7 @@ from modiff import media_assets
 from modules.Video.main import (
     Compose,
     ConcatenateAssets,
+    Export,
     ExportAsset,
     ExportWithAudio,
     LyricOverlay,
@@ -34,6 +35,10 @@ def test_compose_inputs_are_visible_to_static_node_registry():
     params = MODULE_MAP["modules.Video"]["Compose"]["params"]
     assert params["clip_1"]["display"] == "input"
     assert "video_collection" in params["clip_1"]["type"]
+
+
+def test_plain_video_export_uses_delivery_quality_by_default():
+    assert Export.params["quality"]["default"] == 8
 
 
 def test_lyric_overlay_requires_and_renders_lrc_timeline():

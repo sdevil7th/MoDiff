@@ -2344,8 +2344,11 @@ def _activate_environment_transaction(
             current_inspection = _environment_inspection(current)
             if (
                 state.get("activeTrustClass") != expected_trust_class
-                or current_inspection.get("manifest", {}).get("trustClass")
-                != expected_trust_class
+                or (
+                    current_inspection.get("status") == "ready"
+                    and current_inspection.get("manifest", {}).get("trustClass")
+                    != expected_trust_class
+                )
             ):
                 raise RuntimeError(
                     "Roll back the current runtime trust class before activating another class."

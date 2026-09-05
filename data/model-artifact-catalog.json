@@ -16,8 +16,14 @@
     "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
   },
   "repositoryPins": [
+    {"repo": "Qwen/Qwen-Image", "revision": "75e0b4be04f60ec59a75f475837eced720f823b6", "license": "apache-2.0", "purpose": "qwen-image-modular-text-to-image-base-family-variant", "snapshotByteSize": 57704594653, "weightByteSize": 57699249390, "verifiedAt": "2026-09-04T00:00:00+05:30"},
+    {"repo": "nvidia/Cosmos-Guardrail1", "revision": "d6d4bfa899a71454a700907664f3e88f503950cf", "license": "nvidia-open-model-license", "purpose": "cosmos3-mandatory-safety-guardrail", "gated": true, "snapshotByteSize": 7171449905, "weightByteSize": 3627263067, "verifiedAt": "2026-09-02T00:00:00+05:30"},
+    {"repo": "nvidia/Cosmos3-Super-Image2Video-4Step", "revision": "cd55ce81bc5cea51a09c37cd7652144e7278f049", "license": "openmdw-1.1", "purpose": "cosmos3-distilled-modular-image-to-video-4-step", "snapshotByteSize": 129446040640, "weightByteSize": 129405417712, "verifiedAt": "2026-09-02T00:00:00+05:30"},
+    {"repo": "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v_step_distilled", "revision": "854c04a4c8a53d990b418c7478f0802c0fc8c726", "license": "tencent-hunyuan-community", "purpose": "hunyuanvideo15-modular-image-to-video-step-distilled", "snapshotByteSize": 34636998160, "weightByteSize": 34620593582, "verifiedAt": "2026-09-02T00:00:00+05:30"},
+    {"repo": "tencent/HunyuanVideo-1.5", "revision": "9b49404b3f5df2a8f0b31df27a0c7ab872e7b038", "license": "tencent-hunyuan-community", "purpose": "hunyuanvideo15-governing-license-and-acceptable-use-policy", "licensePath": "LICENSE", "licenseSha256": "c38236952096107a4adbc164f44cd1768745b0a20090ea858e0954c96a6b8391", "licenseByteSize": 16424, "verifiedAt": "2026-09-02T00:00:00+05:30"},
     {"repo": "TencentARC/t2i-adapter-canny-sdxl-1.0", "revision": "2d7244ba45ded9129cfbf8e96a4befb7f6094210", "license": "apache-2.0", "purpose": "sdxl-t2i-adapter-canny-component", "variant": "fp16", "weightName": "diffusion_pytorch_model.fp16.safetensors", "sha256": "e3db0d9cb3dd54c116a429a1de067d952780047944dd7dba8be032dd2e737f81", "byteSize": 158060440, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "diffusers/controlnet-canny-sdxl-1.0", "revision": "eb115a19a10d14909256db740ed109532ab1483c", "license": "openrail++", "purpose": "sdxl-controlnet-canny-component", "variant": "fp16", "weightName": "diffusion_pytorch_model.fp16.safetensors", "sha256": "b2e7d3921058a442cc80430d1ec8847f42599c705e2451c95e77cf4dcf8d6c25", "byteSize": 2502139136, "verifiedAt": "2026-08-13T00:00:00+05:30"},
+    {"repo": "xinsir/controlnet-union-sdxl-1.0", "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c", "license": "apache-2.0", "purpose": "sdxl-controlnet-union-component", "componentKind": "controlnet", "configClass": "ControlNetModel", "loadClass": "ControlNetUnionModel", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "a9e13fd61f3193887791c8a0dd07a07202174dc47d5ddaea94ea1344f07c7467", "byteSize": 2512030408, "verifiedAt": "2026-08-25T00:00:00+05:30"},
     {"repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny", "revision": "b2d21391ebcf78939344cfec84891932f9d53aa0", "license": "tencent-hunyuan-community", "purpose": "hunyuan-dit-v1.2-controlnet-canny-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "b12c2f44e6787beca8301023e25455ec0ee564c0365b6edb3fef575256bb587e", "byteSize": 2976967704, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Depth", "revision": "c09e53a3f84294f1c64bbd6fbc1a13b889bf9f37", "license": "tencent-hunyuan-community", "purpose": "hunyuan-dit-v1.2-controlnet-depth-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "14f688b71d9f311943ecb2ef395dea77be76a2f7b19a5db33c062cd2c8d9021e", "byteSize": 2976967704, "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Pose", "revision": "62a1747f7f0c999c10b0eb1da2d0d50e6fa80e50", "license": "tencent-hunyuan-community", "purpose": "hunyuan-dit-v1.2-controlnet-pose-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "sha256": "84dca4d3e8076fe10ef314be112a8916944bcecad48611ec08840670c23eafc7", "byteSize": 2976967704, "verifiedAt": "2026-08-13T00:00:00+05:30"},
@@ -31,7 +37,7 @@
     {"repo": "maxin-cn/Latte-1", "revision": "0653024365272f061fc44d1078134df22842b687", "license": "apache-2.0", "purpose": "latte-native-text-to-video", "format": "safetensors", "weightByteSize": 23614979636, "weightFiles": [{"path": "text_encoder/model-00001-of-00004.safetensors", "sha256": "7a68b2c8c080696a10109612a649bc69330991ecfea65930ccfdfbdb011f2686", "byteSize": 4989319680}, {"path": "text_encoder/model-00002-of-00004.safetensors", "sha256": "b8ed6556d7507e38af5b428c605fb2a6f2bdb7e80bd481308b865f7a40c551ca", "byteSize": 4999830656}, {"path": "text_encoder/model-00003-of-00004.safetensors", "sha256": "c831635f83041f83faf0024b39c6ecb21b45d70dd38a63ea5bac6c7c6e5e558c", "byteSize": 4865612720}, {"path": "text_encoder/model-00004-of-00004.safetensors", "sha256": "02a5f2d69205be92ad48fe5d712d38c2ff55627969116aeffc58bd75a28da468", "byteSize": 4194506688}, {"path": "transformer/diffusion_pytorch_model.safetensors", "sha256": "ba986b64787f07b8bc963256c636945495317c78fcef5be63f63d4f740dad71a", "byteSize": 4231066624}, {"path": "vae/diffusion_pytorch_model.safetensors", "sha256": "703abdcd7c389316b5128faa9b750a530ea1680b453170b27afebac5e4db30c4", "byteSize": 334643268}], "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "genmo/mochi-1-preview", "revision": "14be5fcea23095ed330cb214647916a451e38b6e", "license": "apache-2.0", "purpose": "mochi-native-text-to-video-bf16", "format": "safetensors", "variant": "bf16", "weightByteSize": 40024303350, "weightFiles": [{"path": "text_encoder/model-00001-of-00004.safetensors", "sha256": "7a68b2c8c080696a10109612a649bc69330991ecfea65930ccfdfbdb011f2686", "byteSize": 4989319680}, {"path": "text_encoder/model-00002-of-00004.safetensors", "sha256": "b8ed6556d7507e38af5b428c605fb2a6f2bdb7e80bd481308b865f7a40c551ca", "byteSize": 4999830656}, {"path": "text_encoder/model-00003-of-00004.safetensors", "sha256": "c831635f83041f83faf0024b39c6ecb21b45d70dd38a63ea5bac6c7c6e5e558c", "byteSize": 4865612720}, {"path": "text_encoder/model-00004-of-00004.safetensors", "sha256": "02a5f2d69205be92ad48fe5d712d38c2ff55627969116aeffc58bd75a28da468", "byteSize": 4194506688}, {"path": "transformer/diffusion_pytorch_model.bf16-00001-of-00003.safetensors", "sha256": "29f767d34af7bfba3a216def2d1a45c23f0a71ce69ead170af92328e0605eb1a", "byteSize": 9937333040}, {"path": "transformer/diffusion_pytorch_model.bf16-00002-of-00003.safetensors", "sha256": "fd0c821a4ed49847f30f4baed76136b5f0e3077d95538469e196ecca50259713", "byteSize": 9929099008}, {"path": "transformer/diffusion_pytorch_model.bf16-00003-of-00003.safetensors", "sha256": "e94bb39dec286bafcd626252a2e26f00ea36a900bd813bf8b0e3cc17493a49db", "byteSize": 189051592}, {"path": "vae/diffusion_pytorch_model.bf16.safetensors", "sha256": "fecceadc048487f07cad99f6f5fbbf691f7385573d53cea2f06e461b3a9721ea", "byteSize": 919549966}], "verifiedAt": "2026-08-13T00:00:00+05:30"},
     {"repo": "Efficient-Large-Model/SANA-Video_2B_480p_diffusers", "revision": "db5f398b13ca086d09a50ce156c20527773841b1", "license": "apache-2.0", "purpose": "sana-video-2b-480p-native-text-and-image-to-video", "format": "safetensors", "weightByteSize": 13963813420, "weightFiles": [{"path": "text_encoder/model-00001-of-00002.safetensors", "sha256": "e909230aabafad02d097c7dc02f2ae062b4e6b0593477c1f07679d277e09ce71", "byteSize": 4988024144}, {"path": "text_encoder/model-00002-of-00002.safetensors", "sha256": "48e14f6b7a917e54cabc4ff2047ac2bfe0dae663e771eed3a8acf4ea27dcac18", "byteSize": 240691624}, {"path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors", "sha256": "714048c98ea3ce4debd901576ea7fdfabec8c27225011510290c984aa2bd876e", "byteSize": 4949628208}, {"path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors", "sha256": "a1d92ca24d0b03386b6bf050b1a532c2d2a42a374a72c2f9c64b2fab87a655af", "byteSize": 3277877552}, {"path": "vae/diffusion_pytorch_model.safetensors", "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793", "byteSize": 507591892}], "verifiedAt": "2026-08-13T00:00:00+05:30"},
-    {"repo": "h94/IP-Adapter", "revision": "018e402774aeeddd60609b4ecdb7e298259dc729", "license": "apache-2.0", "purpose": "sdxl-ip-adapter", "weightName": "sdxl_models/ip-adapter_sdxl.safetensors", "sha256": "ba1002529e783604c5f326d49f0122025392d1d20ac8d573b3eeb3e6dea4ebb6", "byteSize": 702585376, "imageEncoderSubfolder": "models/image_encoder", "imageEncoderClass": "CLIPVisionModelWithProjection", "verifiedAt": "2026-08-12T00:00:00+05:30"},
+    {"repo": "h94/IP-Adapter", "revision": "018e402774aeeddd60609b4ecdb7e298259dc729", "license": "apache-2.0", "purpose": "sdxl-ip-adapter", "weightName": "sdxl_models/ip-adapter_sdxl.safetensors", "sha256": "ba1002529e783604c5f326d49f0122025392d1d20ac8d573b3eeb3e6dea4ebb6", "byteSize": 702585376, "imageEncoderSubfolder": "sdxl_models/image_encoder", "imageEncoderClass": "CLIPVisionModelWithProjection", "imageEncoderFiles": [{"filename": "sdxl_models/image_encoder/config.json", "sha256": "1d53c2b4b74c5f85171d313adda3e3b8771ff5c698ee66a29710d0ac822298e4", "byteSize": 2013}, {"filename": "sdxl_models/image_encoder/model.safetensors", "sha256": "657723e09f46a7c3957df651601029f66b1748afb12b419816330f16ed45d64d", "byteSize": 3689912664}], "verifiedAt": "2026-08-25T22:10:00+05:30"},
     {"repo": "nateraw/real-esrgan", "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094", "license": "bsd-3-clause", "purpose": "controlled-video-delivery-upscaler", "weightName": "RealESRGAN_x2plus.pth", "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb", "byteSize": 67061725, "verifiedAt": "2026-08-12T00:00:00+05:30"},
     {"repo": "lllyasviel/FramePackI2V_HY", "revision": "86cef4396041b6002c957852daac4c91aaa47c79", "license": "not-declared", "purpose": "framepack-transformer", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "hunyuanvideo-community/HunyuanVideo", "revision": "e8c2aaa66fe3742a32c11a6766aecbf07c56e773", "license": "not-declared", "purpose": "framepack-base-components", "verifiedAt": "2026-08-03T14:34:36+05:30"},
@@ -45,11 +51,97 @@
     {"repo": "Wan-AI/Wan2.2-T2V-A14B-Diffusers", "revision": "5be7df9619b54f4e2667b2755bc6a756675b5cd7", "license": "apache-2.0", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Wan-AI/Wan2.2-Animate-14B-Diffusers", "revision": "6f4df10861c758af86ac3c979aacc1bf5c03eff0", "license": "apache-2.0", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "Lightricks/LTX-2", "revision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a", "license": "other", "purpose": "built-in-diffusers-video-default", "verifiedAt": "2026-08-03T14:34:36+05:30"},
+    {"repo": "Lightricks/LTX-2-19b-IC-LoRA-Canny-Control", "revision": "28be96236294914042a1605f37e3f7812b45f43f", "license": "other", "purpose": "ltx2-in-context-canny-ic-lora", "weightName": "ltx-2-19b-ic-lora-canny-control.safetensors", "byteSize": 654465256, "verifiedAt": "2026-08-28T03:03:00+05:30"},
+    {"repo": "black-forest-labs/FLUX.2-dev", "revision": "26afe3a78bb242c0a8bb181dcc8937bb16e5c66c", "license": "flux-non-commercial-license", "purpose": "built-in-flux2-standard-and-modular-equivalent", "weightByteSize": 112823045100, "verifiedAt": "2026-08-28T03:30:00+05:30"},
     {"repo": "Lightricks/LTX-Video", "revision": "8984fa25007f376c1a299016d0957a37a2f797bb", "license": "other", "purpose": "verified-diffusers-fallback", "verifiedAt": "2026-08-03T14:34:36+05:30"},
     {"repo": "InstantX/Qwen-Image-ControlNet-Union", "revision": "b13036f066d6dee7c20513e263d3d673055e9de8", "license": "apache-2.0", "purpose": "qwen-image-controlnet-component", "verifiedAt": "2026-08-09T23:24:38+05:30"},
     {"repo": "fuliucansheng/FLUX.1-Canny-dev-diffusers", "revision": "24df2ba1c46a8c735589cc8f81302678797c9821", "license": "other", "purpose": "verified-diffusers-repair-source", "verifiedAt": "2026-08-03T14:34:36+05:30"}
   ],
   "models": [
+    {
+      "modelType": "AnimaModularPipeline",
+      "baseRepo": "circlestone-labs/Anima-Base-v1.0-Diffusers",
+      "baseRevision": "073c3a9db359c31ad0e8aa268d15775473c2176c",
+      "baseLicense": "circlestone-labs-non-commercial-license-v1.0",
+      "weightByteSize": 5628156702,
+      "artifacts": []
+    },
+    {
+      "modelType": "HeliosModularPipeline",
+      "baseRepo": "BestWishYsh/Helios-Base",
+      "baseRevision": "5c50b6bc90eae9bd815d2a50b0c9877e3fd2cf88",
+      "baseLicense": "apache-2.0",
+      "weightByteSize": 80481086028,
+      "artifacts": []
+    },
+    {
+      "modelType": "HunyuanVideo15ModularPipeline",
+      "baseRepo": "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v",
+      "baseRevision": "286be7ce72277246578a3e3cc2487e95ddae5bcf",
+      "baseLicense": "tencent-hunyuan-community",
+      "snapshotByteSize": 53384320257,
+      "weightByteSize": 53367753676,
+      "artifacts": []
+    },
+    {
+      "modelType": "HeliosPyramidModularPipeline",
+      "baseRepo": "BestWishYsh/Helios-Mid",
+      "baseRevision": "477c55427ec0ea774bdebd0fbe736313cfc5a312",
+      "baseLicense": "apache-2.0",
+      "weightByteSize": 80481086028,
+      "artifacts": []
+    },
+    {
+      "modelType": "HeliosPyramidDistilledModularPipeline",
+      "baseRepo": "BestWishYsh/Helios-Distilled",
+      "baseRevision": "b991c0379a018f4de3227d95468237f56066f5bb",
+      "baseLicense": "apache-2.0",
+      "weightByteSize": 80481086028,
+      "artifacts": []
+    },
+    {
+      "modelType": "WanAnimate2ModularPipeline",
+      "baseRepo": "Wan-AI/Wan2.2-Animate-2-14B-Diffusers",
+      "baseRevision": "7d48412d7b903ff3a89f4f5a960d99e1899605a1",
+      "baseLicense": "apache-2.0",
+      "weightByteSize": 45920934868,
+      "artifacts": []
+    },
+    {
+      "modelType": "WanAnimate2DistilledModularPipeline",
+      "baseRepo": "Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers",
+      "baseRevision": "59e4141466bcb1bf9733eca1bc78be6891c9fbdf",
+      "baseLicense": "apache-2.0",
+      "weightByteSize": 45920934868,
+      "artifacts": []
+    },
+    {
+      "modelType": "Cosmos3OmniModularPipeline",
+      "baseRepo": "nvidia/Cosmos3-Nano",
+      "baseRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+      "baseLicense": "openmdw-1.1",
+      "snapshotByteSize": 34986890561,
+      "weightByteSize": 34894818144,
+      "artifacts": []
+    },
+    {
+      "modelType": "Cosmos3DistilledModularPipeline",
+      "baseRepo": "nvidia/Cosmos3-Super-Text2Image-4Step",
+      "baseRevision": "aa0d5a57b7b045d68daa60fbacd84ec723c7cb7b",
+      "baseLicense": "openmdw-1.1",
+      "snapshotByteSize": 131423464104,
+      "weightByteSize": 131391926304,
+      "artifacts": []
+    },
+    {
+      "modelType": "MiniMaxH3ModularPipeline",
+      "baseRepo": "MiniMaxAI/MiniMax-H3",
+      "baseRevision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "baseLicense": "minimax-h3-community-license-agreement",
+      "snapshotByteSize": 354016018214,
+      "weightByteSize": 210296909532,
+      "artifacts": []
+    },
     {
       "modelType": "ZImageModularPipeline",
       "baseRepo": "Tongyi-MAI/Z-Image-Turbo",
@@ -273,6 +365,20 @@
         {"repo": "black-forest-labs/FLUX.2-klein-4b-fp8", "revision": "5b4408e59397a4a37ccb46afe426d8ed86379441", "license": "apache-2.0", "format": "fp8", "bits": 8, "components": ["transformer"], "provenance": "official", "trust": "official", "downloads": 86722, "likes": 54},
         {"repo": "unsloth/FLUX.2-klein-4B-GGUF", "revision": "0084d1df98e2e2137fe776d55170bc4792ec1d66", "license": "apache-2.0", "format": "gguf", "bits": 4, "components": ["transformer"], "provenance": "community", "trust": "popular_unverified", "downloads": 153603, "likes": 182}
       ]
+    },
+    {
+      "modelType": "Flux2ModularPipeline",
+      "baseRepo": "black-forest-labs/FLUX.2-dev",
+      "baseRevision": "26afe3a78bb242c0a8bb181dcc8937bb16e5c66c",
+      "baseLicense": "flux-non-commercial-license",
+      "artifacts": []
+    },
+    {
+      "modelType": "Flux2KleinBaseModularPipeline",
+      "baseRepo": "black-forest-labs/FLUX.2-klein-base-4B",
+      "baseRevision": "a3b4f4849157f664bdbc776fd7453c2783562f4d",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
     },
     {
       "modelType": "DDPMPipeline",
@@ -531,6 +637,20 @@
       "baseRepo": "openai/whisper-tiny",
       "baseRevision": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
       "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+      "baseRepo": "facebook/wav2vec2-base-960h",
+      "baseRevision": "22aad52d435eb6dbaf354bdad9b0da84ce7d6156",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "MiniMaxMusic3ModularPipeline",
+      "baseRepo": "MiniMaxAI/MiniMax-Music3",
+      "baseRevision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
+      "baseLicense": "minimax-music3-community-license",
       "artifacts": []
     }
   ]

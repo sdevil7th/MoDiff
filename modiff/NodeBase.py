@@ -825,7 +825,11 @@ class NodeBase:
             "params": params,
         })
 
-    def get_signal_value(self, field: str, timeout: int = 5):
+    def get_signal_value(self, field: str, timeout: int = 60):
+        # Large managed graphs can keep the browser busy reconciling several
+        # node-definition publications before it answers this synchronous
+        # schema lookup. Keep the wait bounded, but allow enough time for the
+        # connected client to reply under that legitimate UI load.
         if not self._sid or not self.node_id:
             return None
 

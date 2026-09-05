@@ -41,7 +41,7 @@ from modules.DiffusersVideo.main import (
 
 CHROMA_IMG2IMG_SOURCE_SHA256 = "4dfa9751d317efb5cbae8faadc4a77b53312a98a9920675afb44bab01aae0a09"
 CHROMA_INPAINT_SOURCE_SHA256 = "b149fa04c9ae0b4165d761aa380b484e7a8d57f62589c7139fd41040f41e78ae"
-LTX2_SOURCE_SHA256 = "603460f8e85819e8f5884667af8c26e873710fdf6c310a35a322b84de7d55c09"
+LTX2_SOURCE_SHA256 = "39aa535e809492eaa49a5e8161c05d82674c54b8ab14e77a8899c848a37562e8"
 CHROMA_REVISION = "0e0c60ece1e82b17cb7f77342d765ba5024c40c0"
 LTX2_REPO = "Lightricks/LTX-2"
 LTX2_REVISION = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
@@ -236,7 +236,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
     def test_exact_pinned_sources_and_call_surfaces_are_preserved(self):
         import diffusers
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "90b4e34e79a86ec5e7f2437634fe95ecd2108796")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
         root = Path(diffusers.__file__).resolve().parent / "pipelines"
         cases = (
             (
@@ -340,7 +340,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         )
 
     def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
-        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 187)
+        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 267)
         capabilities = studio_capability_definitions()
         cases = {
             ("ChromaImg2ImgPipeline", "edit_image"): (
@@ -551,6 +551,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
 
     def test_ltx2_loader_uses_exact_class_pin_and_safe_serialization_without_downloads(self):
         calls = []
+        snapshot = Path("/reviewed-cache/LTX-2/snapshots") / LTX2_REVISION
 
         class FakeLTX2Pipeline:
             @classmethod
@@ -565,6 +566,10 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             patch("diffusers.LTX2Pipeline", FakeLTX2Pipeline, create=True),
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline", return_value={}),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersVideo.main.exact_cached_snapshot_path",
+                return_value=snapshot,
+            ) as resolve_snapshot,
             patch("huggingface_hub.hf_hub_download", side_effect=AssertionError("download attempted")),
             patch("huggingface_hub.snapshot_download", side_effect=AssertionError("download attempted")),
         ):
@@ -579,8 +584,10 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             )
 
         self.assertIsInstance(result["pipeline"], FakeLTX2Pipeline)
-        self.assertEqual(calls[0][0], LTX2_REPO)
-        self.assertEqual(calls[0][1]["revision"], LTX2_REVISION)
+        resolve_snapshot.assert_called_once_with(LTX2_REPO, LTX2_REVISION)
+        self.assertEqual(calls[0][0], snapshot)
+        self.assertNotIn("revision", calls[0][1])
+        self.assertTrue(calls[0][1]["local_files_only"])
         self.assertTrue(calls[0][1]["use_safetensors"])
         self.assertNotIn("trust_remote_code", calls[0][1])
         self.assertEqual(result["pipeline"]._modiff_video_pipeline_class, "LTX2Pipeline")

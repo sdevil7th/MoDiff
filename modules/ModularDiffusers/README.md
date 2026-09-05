@@ -131,13 +131,17 @@ positive/negative embeddings to Denoise. It accepts only
 `sdxl_models/ip-adapter_sdxl.safetensors`, verifies the cataloged byte size and
 SHA-256 from the local Hub cache, and never downloads during graph execution.
 Its image encoder also loads locally from the pinned repository revision and
-must match the reviewed CLIP ViT-H geometry. The process-local receipt binds the
+must use `sdxl_models/image_encoder` and match the reviewed
+`CLIPVisionModelWithProjection` geometry: 224-pixel images, 14-pixel patches,
+1664 hidden dimensions, 48 layers, 16 attention heads, and a 1280-dimensional
+projection. The process-local receipt binds the
 loader execution, UNet mutation, adapter parameters/scale, encoder, processor,
 Guider, source pixels, and embedding tensors through cache and Denoise
 boundaries. Re-running Models Loader removes only that current owned mutation
 before issuing a new loader receipt. This single-adapter path is contract-only:
 it is not a public mode or template, requires the optional Transformers runtime
-to have been installed explicitly, and has no live output qualification.
+to have been installed explicitly, and remains pending manual publication
+approval even though visible-frontend qualification outputs now exist.
 Multiple adapters and Multi-ControlNet remain disabled. Wan
 first/last-frame topology remains unadvertised, but its official artifact is
 reviewed at an immutable revision. The generic Models Loader accepts that exact
@@ -161,6 +165,29 @@ execution- and physical-macOS-qualification pending.
 Compatible tasks can share components from one `Load Models` node. For example, an image-edit path can add image encoding/conditioning nodes while reusing the model components already loaded for text-to-image.
 
 Component reuse depends on compatible pipeline contracts and current cache state. It reduces duplicate loading but does not guarantee that every model remains resident or that a new task avoids additional allocations.
+
+### LTX-2.5 split-workflow boundary
+
+The internal LTX-2.5 whole-workflow nodes mirror the reviewed Distilled source
+recipe without advertising an executable Cluster route. They carry one
+process-local `torch.Generator` through every sampling and diffusion-decode
+stage, use the exact eight-sigma schedule instead of a step-count substitute,
+install separate video and audio guiders at guidance `1.0`, and preserve an
+omitted `noise_scale` for the selected upstream branch to resolve. Condition
+and in-context inputs are accepted only as the exact Diffusers
+`LTX2VideoCondition` / `LTX2ReferenceCondition` containers. A spatial
+conditioning-attention mask must be a finite floating tensor shaped
+`(1, 1, F, H, W)` with values in `[0, 1]`.
+
+The reviewed diffusion decoder requires
+`LTX2VideoVaeNeighborhoodNattenProcessor` plus tiling. Constructing that
+processor asks the Hugging Face `kernels` runtime to resolve executable kernel
+code from the Hub. MoDiff does not currently have the required artifact-locked,
+explicit setup receipt, so graph execution will not perform that fetch. Decode
+therefore fails closed unless the exact NATTEN processor was provisioned before
+the run; once present, the split decoder verifies it and enables tiling. This
+restriction is independent of the model's gated artifact, resource, and live
+output qualification gates.
 
 [Watch a model-reuse demo (MP4)](https://github.com/user-attachments/assets/ddbc3e06-6254-4595-8209-4cfd98d3aabc)
 

@@ -49,6 +49,7 @@ FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
+FLUX2_DEV_REPO = "black-forest-labs/FLUX.2-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
@@ -127,12 +128,15 @@ class ImagePipelineAdapter:
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     prompt_embedding_dtype_component: str | None = None
     prompt_prior_token_method: str | None = None
+    prompt_embedding_encoder_dtype: str | None = None
+    prompt_embedding_mask_modes: frozenset[str] = frozenset()
     max_inference_steps: int = 100
     min_output_side: int = 16
     max_output_side: int = 2048
     output_side_step: int = 16
     max_output_pixels: int = _MAX_IMAGE_OUTPUT_PIXELS
     fixed_guidance_scale: float | None = None
+    maximum_guidance_scale: float = 20.0
     minimum_image_guidance_scale: float = 0.0
     default_image_guidance_scale: float = 1.5
     guidance_parameter: str | None = "guidance_scale"
@@ -162,6 +166,7 @@ class ImagePipelineAdapter:
     control_image_parameter: str = "control_image"
     conditioning_scale_parameter: str | None = None
     conditioning_config_requirements: tuple[tuple[str, int], ...] = ()
+    pag_applied_layers: tuple[str, ...] = ()
     min_layers: int = 1
     max_layers: int = 1
     layer_resolutions: tuple[int, ...] = ()
@@ -181,8 +186,10 @@ class ImagePipelineAdapter:
             raise ValueError("Image adapter output-side bounds must align to their declared increment.")
         if not self.min_output_side**2 <= self.max_output_pixels <= _MAX_IMAGE_OUTPUT_PIXELS:
             raise ValueError("Image adapters must declare a bounded output-pixel ceiling covering the minimum size.")
-        if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= 20.0:
-            raise ValueError("An exact text guidance scale must be between 0 and 20.")
+        if not 0.0 <= self.maximum_guidance_scale <= 50.0:
+            raise ValueError("The maximum text guidance scale must be between 0 and 50.")
+        if self.fixed_guidance_scale is not None and not 0.0 <= self.fixed_guidance_scale <= self.maximum_guidance_scale:
+            raise ValueError("An exact text guidance scale must satisfy the reviewed adapter bounds.")
         if not 0.0 <= self.minimum_image_guidance_scale <= 20.0:
             raise ValueError("The minimum image guidance scale must be between 0 and 20.")
         if not self.minimum_image_guidance_scale <= self.default_image_guidance_scale <= 20.0:
@@ -237,6 +244,18 @@ class ImagePipelineAdapter:
             raise ValueError(
                 "An image prompt prior-token method requires a prompt-embedding dtype component and a nonblank name."
             )
+        if (self.prompt_embedding_encoder_dtype is None) != (not self.prompt_embedding_mask_modes):
+            raise ValueError(
+                "Masked prompt-embedding modes and their encoder dtype must be declared together."
+            )
+        if self.prompt_embedding_encoder_dtype is not None:
+            if self.prompt_embedding_encoder_dtype not in {"float32", "float16", "bfloat16"}:
+                raise ValueError("A masked prompt encoder must use a supported torch dtype.")
+            if self.prompt_embedding_dtype_component is None:
+                raise ValueError("Masked prompt embeddings require a reviewed denoising-component dtype boundary.")
+            unsupported_prompt_modes = self.prompt_embedding_mask_modes - self.modes
+            if unsupported_prompt_modes:
+                raise ValueError("Masked prompt-embedding modes must be supported by the image adapter.")
         if (self.min_reference_aspect_ratio is None) != (self.max_reference_aspect_ratio is None):
             raise ValueError("Image reference aspect-ratio bounds must be declared together.")
         if self.min_reference_aspect_ratio is not None and not (
@@ -275,6 +294,15 @@ class ImagePipelineAdapter:
             raise ValueError("Image conditioning config requirements must contain unique integer fields.")
         if self.conditioning_config_requirements and self.conditioning_kind is None:
             raise ValueError("Conditioning config requirements require an auxiliary component contract.")
+        if (
+            len(self.pag_applied_layers) != len(set(self.pag_applied_layers))
+            or any(
+                not isinstance(layer, str) or not layer.startswith("blocks.") or not layer.removeprefix("blocks.").isdigit()
+                for layer in self.pag_applied_layers
+            )
+            or (self.pag_applied_layers and "PAG" not in self.pipeline_class)
+        ):
+            raise ValueError("PAG applied layers must be unique canonical block paths on a PAG pipeline adapter.")
         layered = "layer_decomposition" in self.modes
         if (
             type(self.min_layers) is not int
@@ -379,10 +407,17 @@ class ImagePipelineAdapter:
         component_name = self.prompt_embedding_dtype_component
         if component_name is None:
             return
+        loaded_mode = getattr(pipeline, "_modiff_image_mode", None)
+        if self.prompt_embedding_mask_modes and loaded_mode not in self.prompt_embedding_mask_modes:
+            return
         component = getattr(pipeline, component_name, None)
         component_dtype = getattr(component, "dtype", None)
-        encode_prompt = getattr(pipeline, "encode_prompt", None)
-        if component is None or component_dtype is None or not callable(encode_prompt):
+        if component is not None and component_dtype is None:
+            try:
+                component_dtype = next(component.parameters()).dtype
+            except (AttributeError, StopIteration):
+                component_dtype = None
+        if component is None or component_dtype is None:
             raise RuntimeError(
                 f"{self.pipeline_class} did not expose its reviewed {component_name} prompt-embedding dtype boundary."
             )
@@ -390,6 +425,53 @@ class ImagePipelineAdapter:
         import torch
 
         raw_prompt = target.get("prompt") or ""
+        if loaded_mode in self.prompt_embedding_mask_modes:
+            encode_prompt_with_images = getattr(pipeline, "encode_prompt_multiple_images", None)
+            image_processor = getattr(pipeline, "vae_image_processor", None)
+            resize_center_crop = getattr(image_processor, "resize_center_crop", None)
+            raw_image = target.get(self.image_parameter)
+            if not callable(encode_prompt_with_images) or not callable(resize_center_crop) or raw_image is None:
+                raise RuntimeError(
+                    f"{self.pipeline_class} did not expose its reviewed masked prompt-embedding bridge."
+                )
+            processed_image = resize_center_crop(raw_image, (target["height"], target["width"]))
+            common_kwargs = {
+                "images": processed_image,
+                "device": getattr(pipeline, "_execution_device", None),
+                "num_images_per_prompt": 1,
+                "max_sequence_length": values["max_sequence_length"],
+            }
+            with torch.no_grad():
+                prompt_embeds, prompt_embeds_mask = encode_prompt_with_images(
+                    prompt=raw_prompt,
+                    **common_kwargs,
+                )
+                negative_prompt = target.get("negative_prompt")
+                if negative_prompt is None:
+                    negative_prompt = ""
+                negative_prompt_embeds, negative_prompt_embeds_mask = encode_prompt_with_images(
+                    prompt=negative_prompt,
+                    **common_kwargs,
+                )
+            tensors = {
+                "prompt_embeds": prompt_embeds.to(dtype=component_dtype),
+                "negative_prompt_embeds": negative_prompt_embeds.to(dtype=component_dtype),
+            }
+            for name, tensor in tensors.items():
+                if not bool(torch.isfinite(tensor).all()):
+                    raise RuntimeError(f"{self.pipeline_class} produced non-finite {name} before denoising.")
+            target.update(
+                **tensors,
+                prompt_embeds_mask=prompt_embeds_mask,
+                negative_prompt_embeds_mask=negative_prompt_embeds_mask,
+            )
+            target.pop("prompt", None)
+            target.pop("negative_prompt", None)
+            return
+
+        encode_prompt = getattr(pipeline, "encode_prompt", None)
+        if not callable(encode_prompt):
+            raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed prompt-embedding bridge.")
         if self.prompt_prior_token_method is not None:
             generate_prior_tokens = getattr(pipeline, self.prompt_prior_token_method, None)
             if not callable(generate_prior_tokens):
@@ -600,6 +682,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         output_side_step=32,
         max_output_pixels=1024 * 1024,
         max_sequence_length=256,
+        pag_applied_layers=("blocks.14",),
     ),
     "HunyuanDiTControlNetPipeline": ImagePipelineAdapter(
         "HunyuanDiTControlNetPipeline",
@@ -739,6 +822,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         max_inference_steps=50,
         max_sequence_length=300,
+        pag_applied_layers=("blocks.14",),
     ),
     "Kandinsky3Pipeline": ImagePipelineAdapter(
         "Kandinsky3Pipeline",
@@ -989,7 +1073,16 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
-        max_sequence_length=2048,
+        # Qwen3-VL's image-conditioned BF16 prompt path is non-finite on the
+        # qualified ROCm profile. Encode edit prompts in float32, then cross
+        # the explicit transformer boundary in bfloat16. Text-only generation
+        # keeps the upstream bfloat16 path that is already finite and qualified.
+        prompt_embedding_dtype_component="transformer",
+        prompt_embedding_encoder_dtype="float32",
+        prompt_embedding_mask_modes=frozenset({"edit_image"}),
+        # Diffusers 0.40 exposes 4096 as the reviewed generation-surface
+        # default for both JoyImage text-only generation and image editing.
+        max_sequence_length=4096,
     ),
     "JoyImageEditPlusPipeline": ImagePipelineAdapter(
         "JoyImageEditPlusPipeline",
@@ -1002,7 +1095,8 @@ IMAGE_PIPELINE_ADAPTERS = {
         output_side_step=32,
         max_output_pixels=1024 * 1024,
         image_parameter="images",
-        max_sequence_length=2048,
+        # JoyImage Edit Plus uses the same 4096-token upstream call contract.
+        max_sequence_length=4096,
         max_reference_images=5,
         max_reference_pixels=5 * 1024 * 1024,
     ),
@@ -1187,6 +1281,13 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
     ),
+    "Flux2Pipeline": ImagePipelineAdapter(
+        "Flux2Pipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        FLUX2_DEV_REPO,
+        safe_serialization_required=True,
+        max_reference_images=8,
+    ),
     "Flux2KleinPipeline": ImagePipelineAdapter(
         "Flux2KleinPipeline",
         frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
@@ -1224,6 +1325,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         frozenset({"inpaint", "outpaint"}),
         FLUX_FILL_REPO,
         safe_serialization_required=True,
+        maximum_guidance_scale=30.0,
     ),
     "FluxControlPipeline": ImagePipelineAdapter(
         "FluxControlPipeline",
@@ -1231,6 +1333,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_DEPTH_REPO,
         compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
         safe_serialization_required=True,
+        maximum_guidance_scale=30.0,
     ),
     "FluxControlImg2ImgPipeline": ImagePipelineAdapter(
         "FluxControlImg2ImgPipeline",
@@ -1798,6 +1901,10 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "FluxPipeline": {
         "text_to_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_SEQUENCE),
     },
+    "Flux2Pipeline": {
+        mode: _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE)
+        for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
+    },
     "Flux2KleinPipeline": {
         mode: _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE)
         for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
@@ -2115,6 +2222,11 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
 def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[str, Any]:
     field_contract = get_image_mode_field_contract(adapter, mode)
     field_params = field_contract.field_param_overlay()
+    if adapter.maximum_guidance_scale != 20.0:
+        field_params["guidance_scale"] = {
+            **field_params["guidance_scale"],
+            "max": adapter.maximum_guidance_scale,
+        }
     if (
         adapter.min_output_side != 16
         or adapter.max_output_side != 2048
@@ -2583,7 +2695,11 @@ def preflight_image_action(
         maximum=adapter.max_inference_steps,
     )
     values["guidance_scale"] = _bounded_image_float(
-        values.get("guidance_scale"), field="guidance_scale", default=0.0, minimum=0.0, maximum=20.0
+        values.get("guidance_scale"),
+        field="guidance_scale",
+        default=0.0,
+        minimum=0.0,
+        maximum=adapter.maximum_guidance_scale,
     )
     if adapter.fixed_guidance_scale is not None and values["guidance_scale"] != adapter.fixed_guidance_scale:
         raise ValueError(
@@ -3466,7 +3582,7 @@ class LoadPipeline(NodeBase):
     # Flux2KleinPipeline uses one resident pipeline for generation and edit
     # calls. Mode validates the requested operation but does not participate in
     # from_pretrained(), so changing it must not force another 13-minute load.
-    cache_ignored_params = frozenset({"mode"})
+    cache_ignored_params = frozenset({"mode", "execution_profile_id"})
     params = {
         "pipeline": {
             "label": "Pipeline",
@@ -3508,6 +3624,13 @@ class LoadPipeline(NodeBase):
             "default": "text_to_image",
             "fieldOptions": {"noValidation": True},
             "onChange": "update_pipeline_contract",
+        },
+        "execution_profile_id": {
+            "label": "Execution Profile",
+            "type": "string",
+            "default": "",
+            "hidden": True,
+            "fieldOptions": {"noValidation": True},
         },
         "revision": {"label": "Revision", "type": "string", "default": ""},
         "conditioning_kind": {
@@ -3804,6 +3927,8 @@ class LoadPipeline(NodeBase):
             load_kwargs["use_safetensors"] = True
         if adapter.weight_variant is not None:
             load_kwargs["variant"] = adapter.weight_variant
+        if adapter.pag_applied_layers:
+            load_kwargs["pag_applied_layers"] = list(adapter.pag_applied_layers)
         if quant_config is not None:
             load_kwargs["quantization_config"] = quant_config
         if prequantized_transformer is not None:
@@ -3895,7 +4020,10 @@ class LoadPipeline(NodeBase):
             pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
                 pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
-        for component_name, component_dtype in adapter.component_dtype_overrides:
+        component_dtype_overrides = list(adapter.component_dtype_overrides)
+        if requested_mode in adapter.prompt_embedding_mask_modes:
+            component_dtype_overrides.append(("text_encoder", str(adapter.prompt_embedding_encoder_dtype)))
+        for component_name, component_dtype in component_dtype_overrides:
             component = getattr(pipeline, component_name, None)
             if component is None or not callable(getattr(component, "to", None)):
                 raise RuntimeError(
@@ -4468,6 +4596,7 @@ class Edit(Generate):
             **extra_kwargs,
         }
         adapter.apply_generation_parameters(pipeline, values, call_kwargs)
+        adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
         add_progress_callback(self, pipeline, call_kwargs, steps)
         self._active_pipeline = pipeline
         try:

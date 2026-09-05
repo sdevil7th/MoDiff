@@ -10,7 +10,7 @@ from modiff.upstream_coverage import _REVIEWED_PIPELINE_DECISIONS, _pipeline_cov
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PINNED_EXPORT_SHA256 = "f53f106e6741413a30fb3d55a894cc3bcb958093c2a7d8ee89d2365af26ebf56"
+PINNED_EXPORT_SHA256 = "a31b3d860c85b22f08976b00c81a00f36cd3986c702715954bb230882803493f"
 PROMOTED_PIPELINES = {
     "AnimateDiffControlNetPipeline",
     "AnimateDiffPAGPipeline",
@@ -21,7 +21,10 @@ PROMOTED_PIPELINES = {
     "CogVideoXVideoToVideoPipeline",
     "FluxControlImg2ImgPipeline",
     "FluxControlInpaintPipeline",
+    "Flux2Pipeline",
+    "LTX2InContextPipeline",
     "LTX2Pipeline",
+    "Cosmos3OmniModularPipeline",
     "StableDiffusionControlNetImg2ImgPipeline",
     "StableDiffusionControlNetInpaintPipeline",
     "StableDiffusionControlNetPAGInpaintPipeline",
@@ -33,6 +36,8 @@ PROMOTED_PIPELINES = {
 }
 NEW_EQUIVALENT_PIPELINES = {
     "ErnieImageModularPipeline",
+    "Flux2ModularPipeline",
+    "LTX2ModularPipeline",
     "LTXModularPipeline",
     "LuminaText2ImgPipeline",
     "Wan22Image2VideoModularPipeline",
@@ -43,25 +48,39 @@ NEW_EQUIVALENT_PIPELINES = {
 class UpstreamCoverageExactClosureTests(unittest.TestCase):
     def test_exact_pin_closes_with_the_reviewed_finite_partition(self):
         source = Path(diffusers.__file__).resolve().parent
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "90b4e34e79a86ec5e7f2437634fe95ecd2108796")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
         self.assertEqual(hashlib.sha256((source / "__init__.py").read_bytes()).hexdigest(), PINNED_EXPORT_SHA256)
         self.assertTrue(PROMOTED_PIPELINES.isdisjoint(_REVIEWED_PIPELINE_DECISIONS))
 
         version, items = _pipeline_coverage(ROOT, source)
         self.assertEqual(version, "0.40.0.dev0")
-        self.assertEqual(len(items), 327)
+        self.assertEqual(len(items), 330)
         self.assertEqual(
             Counter(item["status"] for item in items),
             {
-                "executable": 117,
-                "equivalent": 15,
+                "executable": 137,
+                "equivalent": 12,
                 "intentionally-excluded": 56,
-                "research-blocked": 119,
-                "contract-only": 20,
+                "research-blocked": 120,
+                "contract-only": 5,
             },
         )
 
         by_name = {item["name"]: item for item in items}
+        stable_audio_contracts = {
+            "StableAudio3Pipeline": ("text_to_audio", ["prompt"]),
+            "StableAudio3AudioToAudioPipeline": ("audio_to_audio", ["prompt", "sourceAudio"]),
+            "StableAudio3InpaintPipeline": ("audio_inpaint", ["prompt", "sourceAudio"]),
+        }
+        for pipeline_class, (mode, required_inputs) in stable_audio_contracts.items():
+            with self.subTest(stable_audio_3=pipeline_class):
+                item = by_name[pipeline_class]
+                self.assertEqual(item["status"], "research-blocked")
+                self.assertEqual(item["reviewDecision"], "pinned-diffusers-stable-audio-3-source-triage")
+                self.assertEqual(item["genericTaskContract"]["mode"], mode)
+                self.assertEqual(item["genericTaskContract"]["requiredInputs"], required_inputs)
+                self.assertEqual(item["genericTaskContract"]["outputMediaKinds"], ["audio"])
+                self.assertFalse(item["exactExecutionSpecs"])
         for pipeline_class in PROMOTED_PIPELINES:
             with self.subTest(promoted=pipeline_class):
                 self.assertEqual(by_name[pipeline_class]["status"], "executable")

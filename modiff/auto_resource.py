@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import cache
 import json
 import math
 import os
+import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from modiff.optimization_packages import qualified_auto_overrides, workload_key_for_form
 
@@ -38,6 +40,7 @@ from modiff.model_artifact_catalog import (
     AUTO_TRUST_LEVELS,
     catalog_artifact,
     catalog_model,
+    catalog_revision,
     community_artifact_is_discoverable,
 )
 from modiff.optional_runtimes import public_optional_runtime_profiles
@@ -508,7 +511,7 @@ def _repo_plan_path(repo_id: str, cache_dir: str | os.PathLike[str]) -> Path:
     return _hf_repo_cache_dir(repo_id, cache_dir) / ".modiff_download_plan.json"
 
 
-def _expected_files_for_repo(repo_id: str, cache_dirs: list[str]) -> list[dict[str, Any]]:
+def _download_plan_for_repo(repo_id: str, cache_dirs: list[str]) -> dict[str, Any] | None:
     for cache_dir in cache_dirs:
         plan_path = _repo_plan_path(repo_id, cache_dir)
         if not plan_path.exists():
@@ -518,9 +521,16 @@ def _expected_files_for_repo(repo_id: str, cache_dirs: list[str]) -> list[dict[s
                 plan = json.load(handle)
         except (OSError, json.JSONDecodeError, TypeError):
             continue
-        files = plan.get("files") if isinstance(plan, dict) else None
-        if isinstance(files, list):
-            return [item for item in files if isinstance(item, dict)]
+        if isinstance(plan, dict):
+            return plan
+    return None
+
+
+def _expected_files_for_repo(repo_id: str, cache_dirs: list[str]) -> list[dict[str, Any]]:
+    plan = _download_plan_for_repo(repo_id, cache_dirs)
+    files = plan.get("files") if isinstance(plan, dict) else None
+    if isinstance(files, list):
+        return [item for item in files if isinstance(item, dict)]
     return []
 
 
@@ -742,7 +752,31 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         }
 
     cache_dirs = _cache_dirs_for_record(record)
-    expected_files = _expected_files_for_repo(repo_id, cache_dirs)
+    download_plan = _download_plan_for_repo(repo_id, cache_dirs)
+    expected_files = (
+        [item for item in download_plan.get("files", []) if isinstance(item, dict)]
+        if isinstance(download_plan, dict)
+        else []
+    )
+    planned_revision = str(download_plan.get("revision") or "") if isinstance(download_plan, dict) else ""
+    # Download-plan receipts created before immutable catalog pins were added
+    # do not contain ``revision`` even though the scanned cache record does.
+    # Recover the catalog pin only when that exact snapshot is actually
+    # indexed locally.  This keeps an older/different revision from satisfying
+    # the frontend's exact model-selection contract.
+    if not planned_revision and isinstance(download_plan, dict):
+        try:
+            pinned_revision = str(catalog_revision(repo_id) or "").lower()
+        except ValueError:
+            pinned_revision = ""
+        indexed_revisions = {
+            str(item.get("hash") or "").lower()
+            for item in record.get("revisions") or []
+            if isinstance(item, dict)
+        }
+        if pinned_revision and pinned_revision in indexed_revisions:
+            planned_revision = pinned_revision
+    planned_files = [str(item.get("name")) for item in expected_files if item.get("name")]
     active_files: list[str] = []
     for cache_dir in cache_dirs:
         active_files.extend(_active_repo_download_files(_hf_repo_cache_dir(repo_id, cache_dir)))
@@ -782,6 +816,8 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
                 "activeFiles": active_files[:25],
                 "snapshots": checked,
                 "expectedFileCount": len(expected_files),
+                "plannedRevision": planned_revision or None,
+                "plannedFiles": planned_files,
             }
 
     first_reason = checked[0].get("reason") if checked else "Artifact snapshot could not be validated."
@@ -806,6 +842,8 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         "activeFiles": active_files[:25],
         "snapshots": checked,
         "expectedFileCount": len(expected_files),
+        "plannedRevision": planned_revision or None,
+        "plannedFiles": planned_files,
     }
 
 
@@ -818,6 +856,37 @@ def artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | Non
     of treating every scanned revision as installed.
     """
     return _artifact_cache_status(repo_id, local_models)
+
+
+def artifact_revision_cache_status(
+    repo_id: str,
+    revision: str,
+    local_models: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Validate one exact immutable Hub snapshot instead of any repo revision.
+
+    Expert execution still needs the same installed-artifact integrity boundary
+    as Auto.  Filtering the indexed cache record to the requested commit makes
+    the existing shard/plan validation inspect only that snapshot and prevents
+    another healthy revision of the same repository from satisfying the check.
+    """
+
+    normalized_revision = str(revision or "").strip().lower()
+    if re.fullmatch(r"[0-9a-f]{40}", normalized_revision) is None:
+        raise ValueError("An immutable 40-character Hugging Face revision is required.")
+    record = _local_model_record(local_models, repo_id)
+    if not isinstance(record, dict):
+        status = _artifact_cache_status(repo_id, local_models)
+    else:
+        exact_record = deepcopy(record)
+        exact_record["revisions"] = [{"hash": normalized_revision}]
+        status = _artifact_cache_status(repo_id, [exact_record])
+    return {
+        **status,
+        "repo": str(repo_id),
+        "revision": normalized_revision,
+        "exactRevisionComplete": bool(status.get("complete")),
+    }
 
 
 def _runtime_key(runtime_fingerprint: dict[str, Any] | None) -> str:
@@ -2029,6 +2098,7 @@ def _candidate(
     required_packages: list[str] | None = None,
     install_action_label: str | None = None,
     device_map: str | None = None,
+    reviewed_native_artifact: bool = False,
 ) -> dict[str, Any]:
     missing = list(requirements_missing or [])
     known_bad = list(known_bad_reasons or [])
@@ -2062,13 +2132,27 @@ def _candidate(
     )
     model_catalog = catalog_model(model_type) or {}
     artifact_catalog = catalog_artifact(model_type, artifact) or {}
-    base_artifact = str(model_catalog.get("baseRepo") or artifact)
-    trust = str(artifact_catalog.get("trust") or ("official" if artifact == base_artifact else "community"))
-    artifact_format = str(artifact_catalog.get("format") or ("native" if artifact == base_artifact else "prequantized"))
+    base_artifact = artifact if reviewed_native_artifact else str(model_catalog.get("baseRepo") or artifact)
+    trust = str(
+        artifact_catalog.get("trust")
+        or ("modiff_qualified" if reviewed_native_artifact else "official" if artifact == base_artifact else "community")
+    )
+    artifact_format = str(
+        artifact_catalog.get("format")
+        or ("native" if reviewed_native_artifact or artifact == base_artifact else "prequantized")
+    )
     is_prequantized_artifact = artifact.lower() != base_artifact.lower() and artifact_format != "native"
     loaded_quantization = artifact_format if is_prequantized_artifact else quantization_mode
+    base_revision = (
+        catalog_revision(base_artifact, model_type=model_type)
+        if reviewed_native_artifact
+        else model_catalog.get("baseRevision")
+        or catalog_revision(base_artifact, model_type=model_type)
+    )
     resolved_revision = artifact_catalog.get("revision") or (
-        model_catalog.get("baseRevision") if artifact.lower() == base_artifact.lower() else None
+        base_revision
+        if artifact.lower() == base_artifact.lower()
+        else catalog_revision(artifact, model_type=model_type)
     )
     if trust not in AUTO_TRUST_LEVELS:
         health_badge = "Community option"
@@ -2100,7 +2184,7 @@ def _candidate(
         "modelRepo": artifact,
         "resolvedArtifact": artifact,
         "artifactResolution": {
-            "base": {"repo": base_artifact, "revision": model_catalog.get("baseRevision")},
+            "base": {"repo": base_artifact, "revision": base_revision},
             "resolved": {
                 "repo": artifact,
                 "revision": resolved_revision,
@@ -2445,6 +2529,16 @@ def _requirements_for_candidate(requirements: dict[str, Any], key: str, fallback
     return value if isinstance(value, dict) else fallback
 
 
+def _requirements_for_offload(
+    requirements: dict[str, Any],
+    offload_mode: str,
+    fallback: dict[str, Any],
+) -> dict[str, Any]:
+    by_offload = requirements.get("offloadRequirements")
+    value = by_offload.get(offload_mode) if isinstance(by_offload, dict) else None
+    return value if isinstance(value, dict) else fallback
+
+
 def _requirements_missing_for_dict(
     hardware: dict[str, Any],
     requirement: dict[str, Any],
@@ -2521,8 +2615,25 @@ def _declared_profile_candidates(
     requirements = _auto_requirements_for_pair(model_type, mode)
     if requirements is None:
         return _undeclared_pair_candidates(form)
-    default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or form.get("modelRepo") or "")
-    lower_memory_repo = str(requirements.get("preferredLowerMemoryRepo") or "")
+    declared_default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or "")
+    requested_repo = str(form.get("modelRepo") or "").strip()
+    admitted_repositories = {
+        str(repository)
+        for repository in (
+            requirements.get("defaultRepo"),
+            requirements.get("fallbackRepo"),
+            *(requirements.get("compatibleRepos") or []),
+        )
+        if isinstance(repository, str) and repository
+    }
+    if requested_repo and requested_repo not in admitted_repositories:
+        raise ValueError(
+            f"Model repository {requested_repo!r} is not a reviewed variant for {model_type}:{mode}."
+        )
+    default_repo = requested_repo or declared_default_repo
+    # An explicit same-family checkpoint choice is authoritative. Auto may
+    # tune its recipe but must not substitute a lower-memory repository.
+    lower_memory_repo = "" if requested_repo else str(requirements.get("preferredLowerMemoryRepo") or "")
     manual_only_reason = requirements.get("manualOnlyReason")
     loader_module = str(requirements["loaderModule"])
     loader_action = str(requirements["loaderAction"])
@@ -2542,9 +2653,22 @@ def _declared_profile_candidates(
     # preference order. Several modular profiles list `none` first so the UI
     # can offer it in Expert mode; treating that as Auto's fallback silently
     # selected full residency even when the full-residency requirements failed.
+    constrained_modes = [str(mode) for mode in supported_offload if str(mode) != OFFLOAD_MODE_NONE]
     constrained_offload = next(
-        (mode for mode in supported_offload if str(mode) != OFFLOAD_MODE_NONE),
-        OFFLOAD_MODE_NONE if OFFLOAD_MODE_NONE in supported_offload else OFFLOAD_MODE_MODEL_CPU,
+        (
+            offload_mode
+            for offload_mode in constrained_modes
+            if not _requirements_missing_for_dict(
+                hardware,
+                _requirements_for_offload(requirements, offload_mode, minimum),
+                offload_mode=offload_mode,
+            )
+        ),
+        constrained_modes[0]
+        if constrained_modes
+        else OFFLOAD_MODE_NONE
+        if OFFLOAD_MODE_NONE in supported_offload
+        else OFFLOAD_MODE_MODEL_CPU,
     )
     accelerator = hardware.get("accelerator") if isinstance(hardware.get("accelerator"), dict) else {}
     accelerator_kind = str(accelerator.get("kind") or "cpu")
@@ -2604,7 +2728,7 @@ def _declared_profile_candidates(
         ))
 
     if default_repo:
-        native_req = requirements.get("minimum") if isinstance(requirements.get("minimum"), dict) else minimum
+        native_req = _requirements_for_offload(requirements, preferred_offload, minimum)
         native_missing = _requirements_missing_for_dict(hardware, native_req, offload_mode=preferred_offload)
         default_cache_status = _artifact_cache_status(default_repo, local_models)
         candidates.append(_candidate(
@@ -2634,16 +2758,18 @@ def _declared_profile_candidates(
                 "recommended": requirements.get("recommended"),
                 "fullResidency": requirements.get("fullResidency"),
                 "supportedOffloadModes": requirements.get("supportedOffloadModes"),
+                "offloadRequirements": requirements.get("offloadRequirements"),
                 "coldLoadTarget": requirements.get("coldLoadTarget"),
             },
             required_packages=required_packages,
+            reviewed_native_artifact=bool(requested_repo),
         ))
 
     existing_artifacts = {
         str(candidate.get("resolvedArtifact") or candidate.get("artifact") or "").lower()
         for candidate in candidates
     }
-    profile_artifacts = {
+    profile_artifacts = {requested_repo} if requested_repo else {
         str(repo)
         for repo in (
             requirements.get("defaultRepo"),
@@ -3153,6 +3279,7 @@ def build_auto_resource_plan(
     local_models: list[dict[str, Any]] | None,
     data_dir: str | os.PathLike[str],
     history: dict[str, Any] | None = None,
+    optional_runtime_catalog_resolver: Callable[[], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     payload = request_payload if isinstance(request_payload, dict) else {}
     form = payload.get("form") if isinstance(payload.get("form"), dict) else payload
@@ -3181,6 +3308,7 @@ def build_auto_resource_plan(
     optional_runtime_requirement = optional_runtime_requirement_for_execution(
         model_type,
         mode,
+        catalog_resolver=optional_runtime_catalog_resolver,
     )
     studio_execution_spec = studio_execution_spec_for_pair(model_type, mode)
     studio_execution_spec_contract = (
@@ -3350,6 +3478,12 @@ def build_auto_resource_plans(
     payload = request_payload if isinstance(request_payload, dict) else {}
     forms = payload.get("forms") if isinstance(payload.get("forms"), list) else []
     history = read_auto_resource_history(data_dir)
+    # One live snapshot per request, not one expensive environment inspection
+    # per form. Lazy resolution preserves base-runtime/non-installing behavior;
+    # the next request and actual graph admission always recheck runtime state.
+    from modiff.optional_runtime_execution import public_optional_runtime_catalog
+
+    catalog_snapshot = cache(public_optional_runtime_catalog)
     plans = []
     for index, form in enumerate(forms):
         if not isinstance(form, dict):
@@ -3360,6 +3494,7 @@ def build_auto_resource_plans(
             local_models=local_models,
             data_dir=data_dir,
             history=history,
+            optional_runtime_catalog_resolver=catalog_snapshot,
         )
         plan["requestIndex"] = index
         plan_key = payload.get("keys", [])[index] if isinstance(payload.get("keys"), list) and index < len(payload.get("keys", [])) else None

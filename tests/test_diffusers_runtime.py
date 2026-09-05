@@ -32,12 +32,16 @@ from modules.DiffusersRuntime.main import (
 class FakeAttentionComponent:
     def __init__(self):
         self.backends = []
+        self.backend_resets = 0
         self.is_cache_enabled = False
         self.cache_configs = []
         self.compile_calls = []
 
     def set_attention_backend(self, backend):
         self.backends.append(backend)
+
+    def reset_attention_backend(self):
+        self.backend_resets += 1
 
     def enable_cache(self, config):
         self.cache_configs.append(config)
@@ -253,12 +257,50 @@ class DiffusersRuntimeTests(unittest.TestCase):
                     build_execution_recipe(attention_backend=backend)
                 self.assertEqual(pipeline.transformer.backends, [])
 
-    def test_attention_auto_preserves_diffusers_default(self):
+    def test_attention_auto_restores_model_and_process_defaults(self):
+        from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
+        from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND
+
         pipeline = FakePipeline()
-        result = apply_attention_backend(pipeline, "auto")
+        original_backend, _original_fn = _AttentionBackendRegistry.get_active_backend()
+        try:
+            _AttentionBackendRegistry.set_active_backend(AttentionBackendName("_native_flash"))
+            result = apply_attention_backend(pipeline, "auto")
+            active_backend, _active_fn = _AttentionBackendRegistry.get_active_backend()
+        finally:
+            _AttentionBackendRegistry.set_active_backend(original_backend)
 
         self.assertEqual(pipeline.transformer.backends, [])
+        self.assertEqual(pipeline.transformer.backend_resets, 1)
+        self.assertEqual(result["reset"], ["transformer"])
+        self.assertEqual(active_backend.value, result["registry_default"])
+        self.assertEqual(result["registry_default"], str(DIFFUSERS_ATTN_BACKEND))
         self.assertTrue(result["default_selection"])
+
+    def test_explicit_attention_backend_does_not_leak_into_later_auto_models(self):
+        from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
+        from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND
+
+        pipeline = FakePipeline()
+
+        def set_backend_and_mutate_registry(backend):
+            pipeline.transformer.backends.append(backend)
+            _AttentionBackendRegistry.set_active_backend(AttentionBackendName(backend))
+
+        # Match pinned Diffusers ModelMixin semantics: configuring this model
+        # also mutates the process-global dispatcher as a side effect.
+        pipeline.transformer.set_attention_backend = set_backend_and_mutate_registry
+        original_backend, _original_fn = _AttentionBackendRegistry.get_active_backend()
+        try:
+            result = apply_attention_backend(pipeline, "_native_flash")
+            active_backend, _active_fn = _AttentionBackendRegistry.get_active_backend()
+        finally:
+            _AttentionBackendRegistry.set_active_backend(original_backend)
+
+        self.assertEqual(pipeline.transformer.backends, ["_native_flash"])
+        self.assertEqual(result["applied"], ["transformer"])
+        self.assertEqual(active_backend, AttentionBackendName(str(DIFFUSERS_ATTN_BACKEND)))
+        self.assertEqual(result["registry_default"], str(DIFFUSERS_ATTN_BACKEND))
 
     def test_attention_backend_configures_both_dual_expert_transformers(self):
         pipeline = FakePipeline()

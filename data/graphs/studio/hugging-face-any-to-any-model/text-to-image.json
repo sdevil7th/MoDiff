@@ -67,7 +67,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -85,6 +85,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -163,7 +171,8 @@
           "do_sample": {
             "default": false,
             "label": "Sample",
-            "type": "boolean"
+            "type": "boolean",
+            "value": true
           },
           "generation_mode": {
             "default": "text",
@@ -310,7 +319,7 @@
         "module": "modules.HuggingFaceTransformers",
         "params": {
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
             "label": "Device",
             "options": {
               "cpu": {
@@ -328,6 +337,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -346,10 +363,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"

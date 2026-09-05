@@ -1,9 +1,10 @@
 import json
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 
 
@@ -55,7 +56,10 @@ class LTX25ArtifactReviewTests(unittest.TestCase):
         )
 
     def test_three_source_recipes_bind_exact_schedules_and_audio_video_handoffs(self):
-        self.assertEqual(self.review["sourceReview"]["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
+        reviewed_revision = self.review["sourceReview"]["diffusersRevision"]
+        self.assertEqual(reviewed_revision, "90b4e34e79a86ec5e7f2437634fe95ecd2108796")
+        self.assertNotEqual(reviewed_revision, PINNED_DIFFUSERS_REVISION)
+        self.assertEqual(self.review["admission"]["status"], "contract_only")
         recipes = self.review["recipeContracts"]
         self.assertEqual(
             set(recipes),
@@ -105,6 +109,21 @@ class LTX25ArtifactReviewTests(unittest.TestCase):
         self.assertTrue(decoder["tilingRequiredForBoundedPeakMemory"])
         self.assertFalse(decoder["denormalizeLatents"])
         self.assertEqual(components["latentOutputAudioDecode"]["outputSampleRate"], 48000)
+
+    def test_four_workflows_have_exact_native_diffusion_decoder_graph_adapters(self):
+        expected = {
+            "text2video": ["text_encoder", "duration", "denoise", "decode"],
+            "image2video": ["text_encoder", "duration", "vae_encoder", "denoise", "decode"],
+            "condition": ["text_encoder", "duration", "condition_encoder", "denoise", "decode"],
+            "in_context": ["text_encoder", "condition_encoder", "reference_encoder", "denoise", "decode"],
+        }
+        for workflow_id, sequence in expected.items():
+            adapter = reviewed_whole_workflow_graph_adapter("LTX25ModularPipeline", workflow_id)
+            self.assertEqual(adapter["adapterId"], "official_top_level_blocks")
+            self.assertEqual(adapter["upstreamBlockSequence"], sequence)
+            self.assertEqual(len(adapter["stateEdges"]), len(sequence) - 1)
+        self.assertFalse(self.review["admission"]["runtimeCatalogExposed"])
+        self.assertFalse(self.review["admission"]["downloadCatalogExposed"])
 
 
 if __name__ == "__main__":

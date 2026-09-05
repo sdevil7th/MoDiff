@@ -173,6 +173,10 @@ def _custom_node_contract(custom_config, workflow_contract=None):
         pipeline_output_names = {
             name[4:] if name.startswith("out_") else name for name in contract["output_names"]
         }
+        # ``doc`` is a framework-owned synthetic output populated from
+        # ``pipeline.blocks.doc`` after upstream execution; it is not a
+        # PipelineState field and therefore does not appear in workflow outputs.
+        pipeline_output_names.discard("doc")
         unknown_outputs = sorted(pipeline_output_names - all_workflow_outputs)
         if unknown_inputs or unknown_outputs:
             details = []

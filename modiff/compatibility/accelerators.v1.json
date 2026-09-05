@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "revision": "2026.08.04-topology-xpu-contract",
+  "revision": "2026.09.05-instinct-preview",
   "validated_at": "2026-08-04",
   "python": "3.12.*",
   "profiles": {
@@ -27,6 +27,18 @@
         "triton": "73d435248c3a207fec6f5a7a2aba631c7079a61230ce4aaa8cde02e800024b47"
       },
       "proof": "amd-qualified-stack-awaiting-modiff-model-proof", "sources": ["https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/compatibility/compatibilityryz/native_linux/native_linux_compatibility.html", "https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/install/installryz/native_linux/install-pytorch.html"]
+    },
+    "amd-instinct-rocm-linux": {
+      "os": ["linux"], "architectures": ["x86_64"], "tier": "preview",
+      "torch": "2.10.0+rocm7.14.0", "torchvision": "0.25.0+rocm7.14.0", "torchaudio": "2.10.0+rocm7.14.0", "triton": "3.6.0+rocm7.14.0", "cuda": null, "rocm": "7.14",
+      "index": "https://repo.amd.com/rocm/whl-multi-arch/", "requirements": "requirements/profiles/amd-instinct-rocm-linux.txt",
+      "uv_config": "requirements/profiles/amd-instinct-rocm-linux.uv.toml",
+      "required": ["amd-torch-device-gfx942", "amd-torchvision-device-gfx942", "rocm-sdk-core", "rocm-sdk-libraries", "rocm-sdk-device-gfx942"],
+      "prohibited": ["bitsandbytes", "xformers", "nunchaku"],
+      "default_dtype": "float16", "capabilities": ["torch-gpu", "amd-rocm", "fp16", "bf16", "dedicated-memory"],
+      "device_families": ["gfx942"], "allowed_os_versions": ["24.04", "24.04.4"], "minimum_kernel": "6.8",
+      "runtime_layout": "python-sdk", "proof": "official-sdk-resolver-and-contract-tests-awaiting-mi300x-device-and-model-proof",
+      "sources": ["https://rocm.docs.amd.com/en/docs-7.14.0/compatibility/compatibility-matrix.html", "https://rocm.docs.amd.com/projects/ai-ecosystem/en/latest/frameworks/pytorch/install.html"]
     },
     "amd-pytorch-windows": {
       "os": ["windows"], "architectures": ["x86_64"], "tier": "conditional",

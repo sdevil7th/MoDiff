@@ -13,6 +13,8 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Check quantized model, dependency, download, and qualification support       | [Quantization support matrix](quantization-support.md)                           |
 | Review optional attention, quantization, and compilation capabilities        | [Optional runtime optimizations](optional-runtime-optimizations.md)              |
 | Build Modular Diffusers graphs and understand experimental compatibility    | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                 |
+| Implement the shared Cluster/User Node composite contract and V2 schemas     | [Unified composite-node contract](unified-composite-node-implementation-plan-2026-09-01.md) |
+| Track the first-party visual Diffusers/Transformers node system              | [Hugging Face visual node system plan](hugging-face-visual-node-system-plan.md)  |
 | Track Diffusers, Modular Diffusers, speech, testing, and asset work          | [Hugging Face integration roadmap](hugging-face-integration-roadmap.md)          |
 | Review the Hugging Face-derived engineering and runtime requirements        | [Hugging Face engineering alignment](hugging-face-standards.md)                  |
 | Review inherited source baselines and per-file modification notices         | [Source provenance map](source-provenance.md)                                    |

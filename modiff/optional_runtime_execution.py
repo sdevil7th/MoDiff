@@ -51,6 +51,11 @@ _RESOLUTION_REASONS = {
     "loader_identity_missing",
     "loader_selection_unregistered",
     "loader_profile_ambiguous",
+    "loader_execution_profile_invalid",
+    "loader_execution_profile_unregistered",
+    "loader_execution_profile_mismatch",
+    "loader_mode_invalid",
+    "loader_mode_unregistered",
 }
 _STATE_PRIORITY = {
     "active": 0,
@@ -94,6 +99,10 @@ _GALLERY_MEDIA_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
     id="video-conditioning:gallery-media",
     optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
 )
+_LTX2_IMAGE_CONDITIONING_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
+    id="ltx2:image-conditioning-media",
+    optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
+)
 _NODE_OPTIONAL_RUNTIME_PROFILES = {
     ("modules.VideoConditioning", "EdgePreprocessor"): (
         _GALLERY_MEDIA_EXECUTION_PROFILE,
@@ -112,6 +121,17 @@ def _execution_profiles_for_node(
     node_profiles = _NODE_OPTIONAL_RUNTIME_PROFILES.get((module, action))
     if node_profiles is not None:
         return node_profiles, None
+    # Upstream LTX-2 applies H.264 CRF re-compression to image conditions by
+    # default. Diffusers imports PyAV only when one of these conditioned modes
+    # executes, so keep text-only generation on the smaller Transformers
+    # overlay while admitting image conditioning only through the reviewed
+    # composite media-codec overlay.
+    if (
+        module == "modules.DiffusersVideo"
+        and action in {"GenerateVideoAudio", "GenerateLTX2"}
+        and values.get("mode") in {"image_to_video", "reference_to_video"}
+    ):
+        return (_LTX2_IMAGE_CONDITIONING_EXECUTION_PROFILE,), None
     return resolve_execution_profiles_for_loader(module, action, values)
 
 

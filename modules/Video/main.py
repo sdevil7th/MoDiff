@@ -6,6 +6,7 @@ import logging
 import math
 from utils.paths import parse_filename
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST
+from modiff.upscaler_contracts import real_esrgan_x2_model_selection
 
 logger = logging.getLogger("modiff")
 
@@ -20,14 +21,7 @@ VIDEO_OPERATION_MODES = [
 VIDEO_OPERATION_PIPELINE_CLASS = "BuiltinVideoOperationV1"
 VIDEO_UPSCALE_MODE = "video_upscale"
 VIDEO_UPSCALE_PIPELINE_CLASS = "SpandrelVideoUpscaleV1"
-VIDEO_UPSCALE_MODEL_SELECTION = {
-    "source": "hub",
-    "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
-    "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
-    "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
-    "byteSize": 67_061_725,
-    "license": "bsd-3-clause",
-}
+VIDEO_UPSCALE_MODEL_SELECTION = real_esrgan_x2_model_selection()
 MAX_VIDEO_OPERATION_INPUTS = 16
 MAX_VIDEO_OPERATION_FRAMES_PER_INPUT = 14_400
 MAX_VIDEO_OPERATION_TOTAL_FRAMES = 57_600
@@ -127,7 +121,9 @@ class Export(NodeBase):
             "default": "{PATH:videos}/MoDiff_{HASH:6}.mp4",
         },
         # "codec": { "type": "str", "options": ["libx264", "vp9"], "default": "libx264" },
-        "quality": {"display": "slider", "type": "int", "min": 1, "max": 10, "default": 5},
+        # Match the app's other delivery exporters. Quality 5 produces a very
+        # small, visibly blocky H.264 file for native 480p diffusion output.
+        "quality": {"display": "slider", "type": "int", "min": 1, "max": 10, "default": 8},
         "fps": {"label": "FPS", "type": "float", "default": 24, "min": 1, "max": 240, "step": 0.01},
         "preview": {"display": "ui_video", "type": "url", "dataSource": "file"},
         "file": {"type": "video", "display": "output"},
@@ -143,7 +139,7 @@ class Export(NodeBase):
 
         video = kwargs["video"]
         filename = kwargs.get("filename", "{PATH:videos}/MoDiff_{HASH:6}.mp4")
-        quality = kwargs.get("quality", 5)
+        quality = kwargs.get("quality", 8)
         fps = kwargs.get("fps", 24)
 
         def frame_to_array(frame):
@@ -1752,7 +1748,6 @@ class UpscaleVideo(NodeBase):
             "width": output_width,
             "height": output_height,
             "frames": decoded_frames,
-            "fps": output_fps,
         }
 
 

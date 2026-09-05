@@ -132,7 +132,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertFalse(row["claims"]["exactCatalogCheckpointSupported"])
         self.assertFalse(row["claims"]["recommendedWorkflowEquivalent"])
 
-    def test_image_upscale_proposals_reuse_the_bounded_install_free_task(self):
+    def test_image_upscale_proposals_reuse_the_two_bounded_task_options(self):
         rows = [row for row in self.ledger["resolutions"] if row["selectedCandidateMode"] == "image_upscale"]
         self.assertEqual(len(rows), 3)
         for row in rows:
@@ -143,7 +143,7 @@ class ComfyContractResolutionTests(unittest.TestCase):
                     else "existing_task_boundary_model_admission_required"
                 )
                 self.assertEqual(row["resolutionState"], expected_state)
-                self.assertEqual(row["currentTaskBoundaryOptionCount"], 1)
+                self.assertEqual(row["currentTaskBoundaryOptionCount"], 2)
                 self.assertEqual(
                     row["recommendedWorkflow"]["canonicalWorkflowId"],
                     "BuiltinImageOperation:image_upscale",

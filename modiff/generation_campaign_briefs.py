@@ -151,18 +151,115 @@ _TEXT_TO_AUDIO = (
 )
 
 _WORKFLOW_BRIEFS = {
+    "AceStepAudioPipeline:text_to_audio": {
+        "prompt": (
+            "A complete progressive alternative-metal song at 126 BPM in D minor and 4/4. Begin with eight bars of "
+            "clean delay guitar and restrained room ambience; build into down-tuned rhythm guitars, articulate bass, "
+            "an acoustic metal drum kit, and one expressive clean lead vocal. The verse should remain spacious, the "
+            "pre-chorus should increase rhythmic density, and the chorus should introduce a memorable rising hook with "
+            "wide backing vocals. Add a short half-time bridge, return to a larger final chorus, then resolve every "
+            "instrument together on a deliberate final chord. Preserve intelligible lyrics, human dynamics, stable "
+            "tempo and key, clean headroom, and one coherent mix; no unrelated intro, abrupt splice, fade-out, clipping, "
+            "unintelligible vocal, or artist imitation."
+        ),
+        "negativePrompt": _NEGATIVE_AUDIO,
+        "provenance": "official_ace_step_prompt_contract_adapted_modiff_song_v1",
+    },
+    "AceStepAudioPipeline:audio_continuation": {
+        "prompt": (
+            "Continue the supplied alternative-metal song as one musically continuous final coda. Preserve its vocalist, "
+            "melody language, down-tuned guitars, bass articulation, drum room, tempo, key, meter, loudness, stereo field, "
+            "and phrase timing. Re-enter on the established pulse, complete the supplied continuation lyric, lift into one "
+            "last hook, and resolve all instruments and vocals on a deliberate hard stop. Do not restart with a new intro, "
+            "change singer, change genre, drift in tempo or key, replay an earlier section, fade out, clip, or leave an "
+            "unresolved tail."
+        ),
+        "negativePrompt": _NEGATIVE_AUDIO,
+        "provenance": "official_ace_step_audio_to_audio_contract_adapted_modiff_continuation_v1",
+    },
+    "AceStepAudioPipeline:audio_variation": {
+        "prompt": (
+            "Create a cohesive alternate arrangement of the supplied song while preserving its recognizable lead melody, "
+            "lyric wording and phrase timing, chord movement, tempo, meter, section order, and total duration. Re-orchestrate "
+            "it as cinematic chamber rock with fingerpicked baritone guitar, warm cello, articulate electric bass, a tight "
+            "brush-and-stick drum kit, and the same lead-vocal identity. Develop clear verse, chorus, and bridge contrast; "
+            "keep every transition causal and the ending fully resolved. No single sustained-note texture, unrelated new "
+            "song, changed singer, tempo drift, intelligibility loss, abrupt splice, fade-out, or clipping."
+        ),
+        "negativePrompt": _NEGATIVE_AUDIO,
+        "provenance": "official_ace_step_audio_to_audio_contract_adapted_modiff_variation_v1",
+    },
+    "AceStepAudioPipeline:audio_repaint": {
+        "prompt": (
+            "Regenerate only the selected middle passage of the supplied song. Preserve all audio outside the interval and "
+            "match the source vocalist, lyric timing, tempo, key, meter, chord progression, guitar and drum timbre, stereo "
+            "placement, noise floor, and room decay at both boundaries. Replace the passage with a more complex performance: "
+            "one melodic guitar answer, a controlled tom fill, and a clear vocal pickup that leads naturally into the "
+            "untouched next phrase. No audible splice, single held tone, flammed transient, changed singer, lyric substitution, "
+            "tempo drift, silence, clipping, or reverb discontinuity."
+        ),
+        "negativePrompt": _NEGATIVE_AUDIO,
+        "provenance": "official_ace_step_audio_to_audio_contract_adapted_modiff_repaint_v1",
+    },
+    "AudioLDM2Pipeline:text_to_audio": {
+        "prompt": (
+            "A clearly identifiable nighttime thunderstorm heard from inside a small wooden cabin: steady medium rain strikes "
+            "the roof and window, three distinct low thunder rolls move from left to right at separated intervals, a wood "
+            "stove crackles quietly in the foreground, and wind briefly rattles one loose shutter before settling. Natural "
+            "field-recording perspective, coherent room reflections, controlled dynamics, no music, no speech, no siren, and "
+            "a gentle rain-only ending rather than an abrupt cut."
+        ),
+        "negativePrompt": "Low quality, music, speech, voice, siren, alarm, clipping, abrupt cut, artificial loop",
+        "provenance": "official_audioldm2_descriptive_sound_contract_adapted_modiff_cabin_v1",
+    },
+    "LongCatAudioDiTPipeline:text_to_audio": {
+        "prompt": (
+            "A close field recording of small ocean waves washing over rounded pebbles. Each wave advances, rolls the stones "
+            "with a brief granular rattle, then recedes through the gaps; light coastal wind remains behind the water and one "
+            "distant gull calls once. Natural stereo depth, no music, no speech, no synthetic drone, no clipping, and no "
+            "unidentifiable vocal-like sound."
+        ),
+        "negativePrompt": _NEGATIVE_AUDIO,
+        "provenance": "official_longcat_audio_example_contract_adapted_modiff_pebbles_v1",
+    },
     "CogView4Pipeline:text_to_image": {
         "prompt": (
-            "Natural product photograph of one small dark-green enamel kettle on a worn oak table beside a window. "
-            "Complete kettle, curved handle, short spout, fitted lid, subtle chips in the enamel, soft morning side light, "
-            "realistic contact shadow, muted brown and green colors. No people, cups, food, text, labels, logos, extra "
-            "kettles, reflections of people, neon, or illustration."
+            "Architectural editorial photograph inside a compact cliffside observatory library at sunrise. A complete "
+            "brass telescope stands on a dark walnut tripod at frame right, aimed through one open circular window toward "
+            "a calm blue ocean; a curved cast-concrete book wall fills frame left, and a narrow spiral stair descends in "
+            "the middle distance. Camera: 28 mm eye-level wide view, straight verticals, all three elements fully visible, "
+            "clear foreground-to-horizon depth. Warm sunrise grazes brass, walnut, book cloth, and concrete while cool sky "
+            "fill preserves shadow detail. Photorealistic material texture, precise joinery, restrained natural color, no "
+            "people, lettering, logos, duplicate telescope, warped stair, sealed window, fantasy machinery, or CGI glow."
         ),
         "negativePrompt": (
-            "person, people, hand, cup, food, text, letters, label, logo, watermark, extra kettle, duplicate object, "
-            "cropped kettle, detached handle, warped spout, floating object, neon, oversaturation, illustration"
+            "person, people, text, letters, label, logo, watermark, duplicate telescope, cropped telescope, warped tripod, "
+            "broken spiral stair, sealed window, floating books, impossible perspective, neon, oversaturation, illustration, "
+            "plastic materials, blur, low detail"
         ),
-        "provenance": "original_modiff_campaign_brief_cogview4_kettle_v1",
+        "provenance": "official_cogview4_recipe_adapted_modiff_observatory_v2",
+    },
+    "HuggingFaceAnyToAnyModel:text_to_image": {
+        "prompt": (
+            "A small red sailboat crossing a clear turquoise bay beneath one sunlit white limestone cliff. "
+            "Single boat, full white sail, visible wake, calm blue sky, clean horizon, natural midday light, "
+            "strong red-white-blue color separation, crisp readable silhouette, no people, text, logo, extra "
+            "boats, storm, fog, fantasy objects, or cropped hull."
+        ),
+        # Janus does not expose a separate negative-prompt channel. Keep every
+        # exclusion in the positive prompt rather than pretending the generic
+        # workflow can bind an unsupported input.
+        "negativePrompt": "",
+        "provenance": "official_janus_sampled_image_contract_adapted_modiff_sailboat_v1",
+    },
+    "HuggingFaceImageTextToTextModel:image_to_text": {
+        "prompt": (
+            "Describe this image in one factual sentence of 25 to 45 words. Mention the rainy weather, the single person "
+            "holding a red umbrella, the dark glass transit shelter, its warm interior light, and reflections on the wet "
+            "pavement. Do not infer a city, identity, story, or hidden detail. Do not use a heading or bullet list."
+        ),
+        "negativePrompt": "",
+        "provenance": "official_smolvlm_single_image_recipe_adapted_modiff_rain_shelter_v1",
     },
     "DreamLiteMobilePipeline:text_to_image": {
         "prompt": (
@@ -176,6 +273,92 @@ _WORKFLOW_BRIEFS = {
             "crooked walls, floating objects, sand dunes, desert, overexposure, neon, illustration, fantasy"
         ),
         "provenance": "original_modiff_campaign_brief_dreamlite_mobile_courtyard_v1",
+    },
+    "HunyuanDiTPAGPipeline:text_to_image": {
+        "prompt": (
+            "Photorealistic Suzhou garden after rain. Center one complete circular moon gate in a white wall under dark "
+            "timber eaves. A wet stone path leads through it to bamboo and one scholar rock. Soft overcast light, natural "
+            "colors, realistic plaster, wood, and stone. Empty scene. No people, text, warped beams, neon, illustration, "
+            "or CGI."
+        ),
+        "negativePrompt": (
+            "person, people, furniture, lantern, sign, text, letters, logo, watermark, extra gate, duplicate arch, "
+            "broken circle, cropped gate, warped beam, leaning wall, impossible path, floating rock, neon, fantasy "
+            "glow, oversaturation, overexposure, illustration, painting, CGI, plastic, blurry, low detail"
+        ),
+        "provenance": "official_hunyuandit_pag_recipe_adapted_modiff_suzhou_corridor_v1",
+    },
+    "PixArtSigmaPipeline:text_to_image": {
+        "prompt": (
+            "Photorealistic editorial landscape photograph of one monumental wind-driven kinetic sculpture on a "
+            "shallow mirror of rainwater in the Salar de Uyuni. The sculpture has exactly three complete nested arcs "
+            "of brushed stainless steel joined to one dark basalt pedestal, all fully visible and physically grounded. "
+            "Low eye-level 35 mm view, distant salt-flat horizon, stable bilateral composition, pale storm clouds, and "
+            "one restrained shaft of late-afternoon sunlight from camera left. Preserve crisp machined edges, fine "
+            "brushed-metal grain, realistic reflections, small wind ripples, salt-crust texture, and natural slate, "
+            "silver, and muted amber color. No people, buildings, vehicles, lettering, logos, duplicate arcs, floating "
+            "parts, fantasy glow, or illustration."
+        ),
+        "negativePrompt": (
+            "person, people, building, vehicle, text, letters, logo, watermark, extra sculpture, duplicate arc, broken "
+            "joint, cropped sculpture, floating metal, warped horizon, neon, oversaturation, illustration, painting, "
+            "CGI, plastic, blurry, low detail"
+        ),
+        "provenance": "official_pixart_sigma_recipe_adapted_modiff_kinetic_sculpture_v1",
+    },
+    "PixArtSigmaPAGPipeline:text_to_image": {
+        "prompt": (
+            "Museum-quality still-life photograph of one complete hand-built orrery on a dark walnut table. One brass "
+            "sun sphere at the center, exactly three small enamel planets on separate concentric brass arms, and a "
+            "clearly readable gear train are all fully visible and mechanically connected. Eye-level 70 mm three-quarter "
+            "view, precise circular structure, soft north-window key light, restrained warm rim light, deep neutral "
+            "background. Preserve engraved metal microtexture without readable lettering, realistic patina, walnut grain, "
+            "clean contact shadows, and crisp edges. No people, hands, extra planets, detached gears, text, logos, neon, "
+            "fantasy particles, or illustration."
+        ),
+        "negativePrompt": (
+            "person, hand, text, letters, logo, watermark, extra planet, duplicate sphere, detached arm, broken gear, "
+            "cropped object, floating part, warped circle, neon, oversaturation, illustration, painting, plastic, blur"
+        ),
+        "provenance": "official_pixart_sigma_pag_recipe_adapted_modiff_orrery_v1",
+    },
+    "JoyImageEditPipeline:text_to_image": {
+        "prompt": (
+            "Photorealistic documentary interior of a violin maker's workshop in morning light. One unfinished violin "
+            "lies horizontally on a worn maple workbench, with a complete body, neck, scroll, and four aligned strings. "
+            "A small wood plane rests to the left and curled maple shavings to the right. Hand tools hang neatly on the "
+            "plain plaster wall behind it with no labels. Camera: eye-level 50 mm three-quarter view, the full violin in "
+            "frame, straight bench edges, natural working scale. Soft north-window light, warm wood, neutral shadows, "
+            "realistic varnish, metal, dust, and contact shadows. No people, extra instruments, text, logos, warped "
+            "strings, detached parts, neon, illustration, or CGI."
+        ),
+        "negativePrompt": (
+            "person, people, hand, extra violin, duplicate instrument, cropped violin, broken body, detached neck, "
+            "warped strings, extra strings, floating tool, text, letters, label, logo, watermark, neon, oversaturation, "
+            "illustration, painting, CGI, plastic, blurry, low detail"
+        ),
+        "provenance": "official_joyimage_edit_t2i_recipe_adapted_modiff_violin_workshop_v1",
+    },
+    "JoyImageEditPipeline:edit_image": {
+        "prompt": (
+            "Move the camera.\n"
+            "- Camera rotation: Yaw 20.0°, Pitch -12.0°.\n"
+            "- Camera zoom: unchanged.\n"
+            "- Keep the 3D scene static; only change the viewpoint."
+        ),
+        "negativePrompt": "",
+        "provenance": "official_joyimage_edit_camera_control_template_violin_workshop_v1",
+    },
+    "LongCatImageEditPipeline:edit_image": {
+        "prompt": (
+            "Change only the open red umbrella canopy to saturated mustard-yellow waxed canvas. Preserve the exact "
+            "canopy size, panel seams, folds, position, and raindrops, and keep its black shaft and curved handle "
+            "unchanged. Keep the seated person, pose, clothing, face, shelter, bench, timetable panel, tram rails, "
+            "buildings, rainy blue-hour lighting, reflections, perspective, framing, and every other object unchanged. "
+            "Do not add or remove any object and do not alter any existing lettering."
+        ),
+        "negativePrompt": "",
+        "provenance": "official_longcat_image_edit_precise_consistency_recipe_modiff_umbrella_color_v1",
     },
     "FluxSchnellPipeline:text_to_image": {
         "prompt": (
@@ -241,19 +424,6 @@ _WORKFLOW_BRIEFS = {
         ),
         "provenance": "original_modiff_campaign_brief_v6",
     },
-    "JoyImageEditPipeline:text_to_image": {
-        "prompt": (
-            "Natural product photograph of one cream ceramic table lamp on a dark walnut side table against a plain warm "
-            "gray wall. Complete lamp, rounded base, simple linen shade, switched on, soft amber glow, realistic contact "
-            "shadow, visible ceramic and fabric texture, quiet uncluttered scene. No people, books, flowers, text, labels, "
-            "logos, extra lamps, neon, or illustration."
-        ),
-        "negativePrompt": (
-            "person, people, hand, book, flower, text, letters, label, logo, watermark, extra lamp, duplicate object, "
-            "cropped lamp, detached shade, warped table, floating object, neon, oversaturation, overexposure, illustration"
-        ),
-        "provenance": "original_modiff_campaign_brief_joyimage_lamp_v1",
-    },
     "LuminaPipeline:text_to_image": {
         "prompt": (
             "Natural product photograph of one shallow cobalt-blue ceramic bowl on folded beige linen beside a window. "
@@ -269,16 +439,42 @@ _WORKFLOW_BRIEFS = {
     },
     "OmniGenPipeline:text_to_image": {
         "prompt": (
-            "Natural photograph of one mustard-yellow canvas backpack resting on a simple gray wooden bench beside a "
-            "plaster wall. Complete backpack, closed flap, two shoulder straps, visible canvas weave, soft afternoon side "
-            "light, realistic contact shadow, muted yellow and gray colors, quiet uncluttered scene. No people, hands, "
-            "clothing, text, labels, logos, extra bags, neon, or illustration."
+            "Documentary macro photograph of one Greta oto glasswing butterfly, side view, resting on a small crimson "
+            "heliconia in an Andean cloud forest after rain. Both complete wings are genuinely colorless transparent "
+            "membranes: the green forest is clearly visible through them, with only narrow dark-brown borders and fine "
+            "black veins. Complete small dark body, two slender clubbed antennae, exactly six coherent legs gripping the "
+            "flower, pearly droplets, soft fog, cool dawn light, true-to-life color and optical translucency. No opaque "
+            "white wing panels, extra insects, clipped wings, malformed anatomy, illustration, plastic surfaces, neon "
+            "saturation, text, or fantasy glow."
         ),
-        "negativePrompt": (
-            "person, people, hand, clothing, text, letters, label, logo, watermark, extra bag, duplicate backpack, cropped "
-            "backpack, detached strap, warped bench, floating object, neon, oversaturation, overexposure, illustration"
+        "negativePrompt": "",
+        "provenance": "official_omnigen_diffusers_recipe_adapted_modiff_glasswing_v3",
+    },
+    "OmniGenPipeline:edit_image": {
+        "prompt": (
+            "Keep the input photograph unchanged except for two localized edits. Replace the illuminated timetable and "
+            "advertising panel on the right side of the tram shelter with one plain matte cobalt-blue enamel panel with no "
+            "text or logo. Close the seated person's open red umbrella and place the same umbrella, now folded navy blue, "
+            "leaning against the bench beside them. Preserve the person's exact identity, face, pose, hands, clothing, the "
+            "complete shelter and bench, tram tracks, buildings, rainy blue-hour lighting, wet reflections, perspective, "
+            "framing, and every other object. Photorealistic; no added people, objects, signage, warped geometry, or style change."
         ),
-        "provenance": "original_modiff_campaign_brief_omnigen_backpack_v1",
+        "negativePrompt": "",
+        "provenance": "official_omnigen_localized_edit_recipe_adapted_modiff_tram_panel_v2",
+    },
+    "OmniGenPipeline:multi_image_reference_edit": {
+        "prompt": (
+            "Create one photorealistic macro scene beside a shaded forest stream. Use the moss-covered black metal "
+            "lantern, arched handle, peaked roof, and glass chamber from the second reference as the complete outer "
+            "object. Inside its glass chamber, replace the candle with a simplified miniature harbor from the first "
+            "reference. The chamber must visibly contain exactly three hero elements: one complete white lighthouse in "
+            "the back and exactly two clearly separated wooden sailboats in the foreground on blue water. Both boats "
+            "must be fully visible inside the glass. Keep one complete lantern on one mossy rock, soft "
+            "overcast forest light, realistic glass reflections and shallow depth of field. No people, extra lanterns, "
+            "extra or merged boats, buildings, docks, text, logos, illustration, plastic surfaces, or fantasy glow."
+        ),
+        "negativePrompt": "",
+        "provenance": "official_omnigen_ordered_multi_reference_recipe_adapted_modiff_harbor_lantern_v2",
     },
     "SanaPAGPipeline:text_to_image": {
         "prompt": (
@@ -293,6 +489,23 @@ _WORKFLOW_BRIEFS = {
         ),
         "provenance": "original_modiff_campaign_brief_sana_pag_tent_v1",
     },
+    "SanaPipeline:text_to_image": {
+        "prompt": (
+            "Orthographic satellite survey image of Icelandic volcanic terrain. The camera points straight down at a "
+            "90-degree nadir angle; the sensor plane is parallel to the ground, terrain fills the square frame edge "
+            "to edge, and no sky or horizon is visible. One sinuous turquoise glacial river enters at the upper-left "
+            "corner, divides around one long rust-red almond-shaped gravel bar centered in the frame, rejoins below "
+            "it, and exits at the lower-right corner. Pale sediment fans feather into charcoal-black sand, with crisp "
+            "rippled mineral textures under soft overcast daylight. Natural remote-sensing photography, restrained "
+            "turquoise, rust, slate, and black palette, highly detailed."
+        ),
+        "negativePrompt": (
+            "oblique view, angled camera, perspective view, horizon, skyline, sky, mountain silhouette, person, people, "
+            "road, building, vehicle, bridge, boat, text, logo, watermark, repeated river, duplicate island, impossible "
+            "water flow, neon, oversaturation, drawing, painting, illustration, CGI, noisy, blurry, soft, low detail"
+        ),
+        "provenance": "official_sana_diffusers_recipe_adapted_modiff_orthophoto_v3",
+    },
     "SanaSprintPipeline:text_to_image": {
         "prompt": (
             "Natural photograph of one mustard-yellow raincoat hanging from a single wooden peg in a quiet mudroom. "
@@ -305,6 +518,32 @@ _WORKFLOW_BRIEFS = {
             "cropped garment, missing sleeve, detached hood, floating clothing, neon, oversaturation, overexposure, illustration"
         ),
         "provenance": "original_modiff_campaign_brief_sana_sprint_raincoat_v1",
+    },
+    "SanaSprintPipeline:edit_image": {
+        "prompt": (
+            "Preserve the exact tram-shelter architecture, camera position, straight verticals, platform layout, and "
+            "urban depth of the supplied image. Transform the rainy blue-hour scene into a quiet winter morning just "
+            "after fresh snowfall: clean white snow rests on the shelter roof, platform edges, bare branches, and "
+            "pavement; low pale-gold sunlight enters from the left and reflects softly in the shelter glass. Remove the "
+            "person, red umbrella, falling rain, and wet asphalt while keeping the shelter's dark timber frame and red "
+            "panels recognizable. Natural documentary photography, physically coherent snow, crisp material detail, "
+            "no readable signage."
+        ),
+        "negativePrompt": (
+            "person, people, umbrella, rain, wet pavement, puddle, duplicate shelter, changed camera angle, bent "
+            "architecture, distorted windows, extra doors, fantasy snow, blizzard, neon, drawing, painting, illustration, "
+            "CGI, plastic materials, text, logo, watermark, noisy, blurry, soft, low detail"
+        ),
+        "provenance": "official_sana_sprint_img2img_recipe_adapted_modiff_snowy_shelter_v2",
+    },
+    "StableDiffusionXLInstructPix2PixPipeline:edit_image": {
+        "prompt": (
+            "Turn this botanical field-study sheet into a traditional Prussian-blue cyanotype print. Preserve the "
+            "exact number and arrangement of the flowers, stems, leaves, paper rectangle, tabletop, window, shadows, "
+            "framing, and perspective. Add no words, labels, borders, signatures, or objects."
+        ),
+        "negativePrompt": "",
+        "provenance": "official_sdxl_instruct_pix2pix_recipe_adapted_modiff_cyanotype_v1",
     },
     "StableDiffusionPipeline:text_to_image": {
         "prompt": (
@@ -334,10 +573,125 @@ _WORKFLOW_BRIEFS = {
 }
 
 _WORKFLOW_FORM_OVERRIDES = {
-    "CogView4Pipeline:text_to_image": {"seed": 137},
+    "AceStepAudioPipeline:text_to_audio": {
+        "audioDuration": 60,
+        "steps": 8,
+        "guidanceScale": 1,
+        "shift": 3,
+        "lyrics": (
+            "[verse]\nStreetlights dissolve in the rain\nI trace the signal home again\n"
+            "[pre-chorus]\nEvery broken line aligns\nThe pulse returns in measured time\n"
+            "[chorus]\nCarry the current through the night\nHold every fragment to the light\n"
+            "[bridge]\nLet the silence mark the turn\nThen raise the final chord and burn\n"
+            "[final chorus]\nCarry the current through the night\nWe leave the whole horizon bright"
+        ),
+        "vocalLanguage": "en",
+        "bpm": 126,
+        "keyscale": "D minor",
+        "timesignature": "4",
+    },
+    "HuggingFaceImageTextToTextModel:image_to_text": {
+        "dtype": "bfloat16",
+    },
+    "PixArtSigmaPipeline:text_to_image": {
+        "dtype": "float32",
+        "width": 1024,
+        "height": 1024,
+        "steps": 20,
+        "guidanceScale": 4.5,
+        "maxSequenceLength": 300,
+    },
+    "PixArtSigmaPAGPipeline:text_to_image": {
+        "dtype": "float32",
+        "width": 1024,
+        "height": 1024,
+        "steps": 20,
+        "guidanceScale": 1.0,
+        "maxSequenceLength": 300,
+        "pagScale": 4.0,
+        "pagAdaptiveScale": 0.0,
+    },
+    "LongCatImageEditPipeline:edit_image": {
+        "dtype": "bfloat16",
+        "steps": 50,
+        "guidanceScale": 4.5,
+        "seed": 43,
+        "randomSeed": False,
+        "offloadMode": "model_cpu",
+        "maxSequenceLength": 512,
+    },
+    "AceStepAudioPipeline:audio_continuation": {
+        "audioDuration": 75,
+        "extensionDuration": 15,
+        "steps": 8,
+        "guidanceScale": 1,
+        "shift": 3,
+        "lyrics": "[coda]\nHold the final line in time\nBring the signal home tonight",
+        "vocalLanguage": "en",
+        "bpm": 170,
+        "keyscale": "C# minor",
+        "timesignature": "3",
+    },
+    "AceStepAudioPipeline:audio_variation": {
+        "audioDuration": 60,
+        "steps": 8,
+        "guidanceScale": 1,
+        "shift": 3,
+        "audioCoverStrength": 0.65,
+        "vocalLanguage": "en",
+    },
+    "AceStepAudioPipeline:audio_repaint": {
+        "audioDuration": 75,
+        "steps": 8,
+        "guidanceScale": 1,
+        "shift": 3,
+        "repaintingStart": 28,
+        "repaintingEnd": 43,
+        "vocalLanguage": "en",
+    },
+    "AudioLDM2Pipeline:text_to_audio": {
+        "audioDuration": 30,
+        "numWaveforms": 3,
+        "steps": 200,
+        "guidanceScale": 3.5,
+    },
+    "LongCatAudioDiTPipeline:text_to_audio": {
+        "audioDuration": 5,
+        "steps": 20,
+        "guidanceScale": 4,
+    },
+    "CogVideoXPipeline:text_to_video": {
+        "width": 720,
+        "height": 480,
+        "numFrames": 49,
+        "steps": 50,
+        "guidanceScale": 6,
+    },
+    "CogVideoXVideoToVideoPipeline:video_to_video": {
+        "width": 720,
+        "height": 480,
+        "numFrames": 49,
+        "steps": 50,
+        "guidanceScale": 6,
+    },
+    "CogView4Pipeline:text_to_image": {
+        "steps": 50,
+        "width": 1280,
+        "height": 768,
+        "guidanceScale": 3.5,
+        "seed": 314159,
+    },
     "DreamLiteMobilePipeline:text_to_image": {"seed": 137},
     "FluxSchnellPipeline:text_to_image": {"seed": 137},
     "GlmImagePipeline:text_to_image": {"steps": 50, "seed": 137},
+    "HunyuanDiTPAGPipeline:text_to_image": {
+        "steps": 25,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 4.0,
+        "pagScale": 3.0,
+        "seed": 314159,
+    },
     "FluxDevPipeline:text_to_image": {
         "steps": 20,
         "width": 768,
@@ -347,11 +701,76 @@ _WORKFLOW_FORM_OVERRIDES = {
     },
     "LatentConsistencyModelPipeline:edit_image": {"strength": 0.4},
     "LatentConsistencyModelPipeline:text_to_image": {"seed": 137},
-    "JoyImageEditPipeline:text_to_image": {"seed": 137},
+    "JoyImageEditPipeline:text_to_image": {
+        "steps": 40,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 4.0,
+        "maxSequenceLength": 4096,
+        "seed": 42,
+    },
+    "JoyImageEditPipeline:edit_image": {
+        "steps": 40,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 4.0,
+        "maxSequenceLength": 4096,
+        "seed": 43,
+    },
     "LuminaPipeline:text_to_image": {"seed": 137},
-    "OmniGenPipeline:text_to_image": {"seed": 137},
+    "OmniGenPipeline:text_to_image": {
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 2.5,
+        "seed": 271828,
+    },
+    "OmniGenPipeline:edit_image": {
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 2.0,
+        "conditioningScale": 1.6,
+        "seed": 222,
+    },
+    "OmniGenPipeline:multi_image_reference_edit": {
+        "steps": 50,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 2.5,
+        "conditioningScale": 1.6,
+        "seed": 667,
+    },
     "SanaPAGPipeline:text_to_image": {"guidanceScale": 4.5, "seed": 137},
+    "SanaPipeline:text_to_image": {
+        "steps": 20,
+        "width": 1024,
+        "height": 1024,
+        "guidanceScale": 4.5,
+        "maxSequenceLength": 300,
+        "seed": 314159,
+    },
     "SanaSprintPipeline:text_to_image": {"seed": 137},
+    "SanaSprintPipeline:edit_image": {
+        "steps": 2,
+        "width": 1024,
+        "height": 512,
+        "guidanceScale": 4.5,
+        "maxSequenceLength": 300,
+        "strength": 0.6,
+        "seed": 271828,
+    },
+    "StableDiffusionXLInstructPix2PixPipeline:edit_image": {
+        "dtype": "float16",
+        "steps": 30,
+        "width": 768,
+        "height": 768,
+        "guidanceScale": 3.0,
+        "conditioningScale": 1.5,
+        "seed": 43,
+        "randomSeed": False,
+        "offloadMode": "model_cpu",
+    },
     "ZImageModularPipeline:text_to_image": {"steps": 8, "guidanceScale": 1, "seed": 211},
 }
 
@@ -566,9 +985,6 @@ def param_overlay_for(mode: str, model_type: str) -> dict[str, Any]:
         overlay.update({"steps": 30})
     elif mode == "text_to_audio":
         overlay.update({"steps": 50})
-    elif mode == "audio_repaint":
-        # Campaign fixture tone_a.wav is 2s; Studio graph defaults repaintingEnd to 10s.
-        overlay.update({"repaintingStart": 0, "repaintingEnd": 1.5})
     elif mode in {
         "edit_image",
         "control_image",
@@ -604,7 +1020,7 @@ def param_overlay_for(mode: str, model_type: str) -> dict[str, Any]:
         "inpaint",
         "outpaint",
         "multi_image_reference_edit",
-    } and any(token in family for token in _SHARED_MEMORY_T2I_CAP_FAMILIES):
+    } and model_type != "SanaPipeline" and any(token in family for token in _SHARED_MEMORY_T2I_CAP_FAMILIES):
         overlay["steps"] = min(int(overlay.get("steps") or 16), 16)
         overlay["width"] = min(int(overlay.get("width") or 512), 512)
         overlay["height"] = min(int(overlay.get("height") or 512), 512)

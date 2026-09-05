@@ -52,9 +52,15 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(len(payload["experimentalCapabilities"]), 24)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
+        self.assertEqual(
+            len(payload["experimentalCapabilities"]),
+            len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME),
+        )
         self.assertTrue(all(item["supportTier"] == "experimental" for item in payload["experimentalCapabilities"]))
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
+        self.assertEqual(set(experimental), set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME))
+        supported = {item["modelType"]: item for item in payload["capabilities"]}
         self.assertNotIn("DiffusionGemmaForBlockDiffusion", experimental)
         for model_type in CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME:
             with self.subTest(contract_only_modular=model_type):
@@ -63,40 +69,128 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualificationStatus"], "contract_only")
                 self.assertTrue(capability["expertVisible"])
                 self.assertFalse(capability["autoEligible"])
-        minimax_music = experimental["MiniMaxMusic3ModularPipeline"]
-        self.assertEqual(minimax_music["upstreamWorkflows"], ["text_to_audio"])
-        self.assertEqual(minimax_music["runnableModes"], [])
+        minimax_music = supported["MiniMaxMusic3ModularPipeline"]
+        self.assertEqual(minimax_music["runnableModes"], ["text_to_audio"])
+        self.assertEqual(minimax_music["qualificationStatus"], "graph-qualified-execution-pending")
+        self.assertEqual(len(minimax_music["downloadFiles"]), 23)
+        cosmos = supported["Cosmos3OmniModularPipeline"]
+        self.assertEqual(
+            cosmos["runnableModes"],
+            [
+                "image_to_video",
+                "image_to_video_with_audio",
+                "text_to_image",
+                "text_to_video",
+                "text_to_video_with_audio",
+                "video_to_video",
+                "video_to_video_with_audio",
+            ],
+        )
+        self.assertEqual(cosmos["qualifiedModes"], [])
+        self.assertEqual(cosmos["qualificationStatus"], "graph-qualified-execution-pending")
+        self.assertFalse(cosmos["autoEligible"])
+        self.assertEqual(
+            cosmos["modeOutputKinds"],
+            {
+                "text_to_image": "image",
+                "text_to_video": "video",
+                "image_to_video": "video",
+                "video_to_video": "video",
+                "text_to_video_with_audio": "video",
+                "image_to_video_with_audio": "video",
+                "video_to_video_with_audio": "video",
+            },
+        )
+        cosmos_distilled = supported["Cosmos3DistilledModularPipeline"]
+        self.assertEqual(cosmos_distilled["runnableModes"], ["image_to_video", "text_to_image"])
+        self.assertEqual(cosmos_distilled["qualifiedModes"], [])
+        self.assertEqual(
+            cosmos_distilled["modeOutputKinds"],
+            {"text_to_image": "image", "image_to_video": "video"},
+        )
+        self.assertEqual(
+            cosmos_distilled["qualificationStatus"],
+            "graph-qualified-execution-pending",
+        )
+        self.assertFalse(cosmos_distilled["autoEligible"])
+        self.assertEqual(
+            minimax_music["revisionCandidates"],
+            ["fbdf52fbaaca799592917417eb05f1899f1255ec"],
+        )
+        self.assertFalse(minimax_music["autoEligible"])
         self.assertFalse(minimax_music["templateEligible"])
         self.assertFalse(minimax_music["galleryEligible"])
         # Official Hugging Face libraries may back generic task nodes, but the
         # removed library/model-specific driver must not return as a parallel path.
         self.assertNotIn("modules.TransformersMultimodal", module_registry.MODULE_MAP)
+        self.assertNotIn("Flux2KleinModularPipeline", experimental)
         self.assertEqual(
-            experimental["Flux2KleinModularPipeline"]["runnableModes"],
-            ["text_to_image", "edit_image", "multi_image_reference_edit"],
+            supported["Flux2KleinModularPipeline"]["runnableModes"],
+            ["edit_image", "text_to_image"],
+        )
+        self.assertNotIn("Flux2KleinBaseModularPipeline", experimental)
+        self.assertEqual(
+            supported["Flux2KleinBaseModularPipeline"]["runnableModes"],
+            ["edit_image", "text_to_image"],
         )
         self.assertEqual(
-            experimental["FluxModularPipeline"]["runnableModes"],
-            ["text_to_image", "image_to_image"],
+            supported["FluxModularPipeline"]["runnableModes"],
+            ["image_to_image", "text_to_image"],
         )
+        self.assertNotIn("Flux2ModularPipeline", experimental)
         self.assertEqual(
-            experimental["ZImageModularPipeline"]["backendPath"],
-            "modules.ModularDiffusers.ModelsLoader",
+            supported["Flux2ModularPipeline"]["runnableModes"],
+            ["multi_image_reference_edit", "text_to_image"],
         )
+        self.assertNotIn("AnimaModularPipeline", experimental)
         self.assertEqual(
-            experimental["ZImageModularPipeline"]["pipelineClasses"],
-            ["ZImageModularPipeline"],
+            supported["AnimaModularPipeline"]["runnableModes"],
+            ["image_to_image", "text_to_image"],
         )
-        sdxl = experimental["StableDiffusionXLModularPipeline"]
-        self.assertEqual(sdxl["qualificationStatus"], "contract_only")
-        self.assertEqual(sdxl["runnableModes"], ["text_to_image", "image_to_image", "control_image", "inpaint"])
-        self.assertEqual(sdxl["pipelineClasses"], ["StableDiffusionXLModularPipeline"])
-        self.assertEqual(sdxl["backendPath"], "modules.ModularDiffusers.ModelsLoader")
-        self.assertEqual(sdxl["executionProfiles"], [])
-        self.assertFalse(sdxl["autoEligible"])
-        self.assertFalse(sdxl["templateEligible"])
-        self.assertFalse(sdxl["galleryEligible"])
-        self.assertNotIn("StableDiffusionXLModularPipeline", AUTO_MODEL_REQUIREMENTS)
+        for helios_type in (
+            "HeliosModularPipeline",
+            "HeliosPyramidModularPipeline",
+            "HeliosPyramidDistilledModularPipeline",
+        ):
+            self.assertNotIn(helios_type, experimental)
+            self.assertEqual(
+                supported[helios_type]["runnableModes"],
+                ["image_to_video", "text_to_video", "video_to_video"],
+            )
+            self.assertEqual(len(supported[helios_type]["downloadFiles"]), 24)
+            self.assertFalse(supported[helios_type]["liveProof"])
+        z_image_modular_profiles = [
+            profile
+            for profile in supported["ZImageModularPipeline"]["executionProfiles"]
+            if profile["execution_path"] == "modular-diffusers"
+        ]
+        self.assertEqual(len(z_image_modular_profiles), 1)
+        self.assertEqual(z_image_modular_profiles[0]["backend_path"], "modules.ModularDiffusers.ModelsLoader")
+        self.assertEqual(z_image_modular_profiles[0]["pipeline_class"], "ZImageModularPipeline")
+        self.assertNotIn("StableDiffusionXLModularPipeline", experimental)
+        self.assertEqual(
+            AUTO_MODEL_REQUIREMENTS["StableDiffusionXLModularPipeline"]["supportedTasks"],
+            [
+                "text_to_image",
+                "edit_image",
+                "inpaint",
+                "control_image",
+                "control_edit_image",
+                "control_inpaint",
+                "control_union_image",
+                "control_union_edit_image",
+                "control_union_inpaint",
+                "ip_adapter_image",
+                "ip_adapter_edit_image",
+                "ip_adapter_inpaint",
+                "ip_adapter_control_image",
+                "ip_adapter_control_edit_image",
+                "ip_adapter_control_inpaint",
+                "ip_adapter_control_union_image",
+                "ip_adapter_control_union_edit_image",
+                "ip_adapter_control_union_inpaint",
+            ],
+        )
         for capability in payload["experimentalCapabilities"]:
             self.assertIn("executionProfiles", capability)
             self.assertIn("inputContracts", capability)
@@ -106,6 +200,23 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("revisionCandidates", capability)
             self.assertIn("quantizationSupport", capability)
         by_model = {item["modelType"]: item for item in payload["capabilities"]}
+        sdxl = by_model["StableDiffusionXLModularPipeline"]
+        self.assertEqual(sdxl["qualificationStatus"], "graph-qualified-execution-pending")
+        self.assertEqual(
+            sdxl["runnableModes"],
+            sorted(AUTO_MODEL_REQUIREMENTS["StableDiffusionXLModularPipeline"]["supportedTasks"]),
+        )
+        self.assertEqual(sdxl["pipelineClasses"], ["StableDiffusionXLModularPipeline"])
+        self.assertEqual(sdxl["executionStatus"], "expert_only")
+        # The generic Studio capability may plan reviewed Auto recipes while
+        # the immutable Cluster publication remains non-executable until its
+        # separate live-proof/manual-approval gate is promoted.
+        self.assertTrue(sdxl["autoEligible"])
+        self.assertEqual(sdxl["revisionCandidates"], ["462165984030d82259a11f4367a4eed129e94a7b"])
+        self.assertEqual(
+            sdxl["studioExecutionSpecModes"],
+            sorted(AUTO_MODEL_REQUIREMENTS["StableDiffusionXLModularPipeline"]["supportedTasks"]),
+        )
         planning_video = {
             "Wan22Pipeline": (
                 ["text_to_video"],
@@ -121,6 +232,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ),
             "LTX2ConditionPipeline": (
                 ["image_to_video", "reference_to_video", "text_to_video", "video_to_video"],
+                "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            ),
+            "LTX2InContextPipeline": (
+                ["in_context_to_video"],
+                "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+            ),
+            "LTX2ModularPipeline": (
+                ["image_to_video", "in_context_to_video", "reference_to_video", "text_to_video"],
                 "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
             ),
             "LTX2Pipeline": (
@@ -187,22 +306,32 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 ["image_to_video"],
                 "db5f398b13ca086d09a50ce156c20527773841b1",
             ),
+            "WanModularPipeline": (
+                ["text_to_video"],
+                "0fad780a534b6463e45facd96134c9f345acfa5b",
+            ),
             "WanImage2VideoModularPipeline": (
-                ["image_to_video"],
-                "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+                ["image_to_video", "single_image_to_video"],
+                [
+                    "b184e23a8a16b20f108f727c902e769e873ffc73",
+                    "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
+                ],
             ),
         }
         for model_type, (modes, revision) in planning_video.items():
             with self.subTest(planning_video=model_type):
                 capability = by_model[model_type]
                 self.assertEqual(capability["runnableModes"], modes)
-                self.assertEqual(capability["revisionCandidates"], [revision])
+                self.assertEqual(
+                    capability["revisionCandidates"],
+                    revision if isinstance(revision, list) else [revision],
+                )
                 self.assertEqual(capability["qualificationStatus"], "graph-qualified-execution-pending")
                 self.assertEqual(capability["executionStatus"], "expert_only")
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 187)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 267)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -218,6 +347,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "Wan22Pipeline",
             "WanAnimatePipeline",
             "WanImage2VideoModularPipeline",
+            "WanModularPipeline",
             "WanVideoPipeline",
             "LTXVideoPipeline",
             "LTXI2VLongMultiPromptPipeline",
@@ -285,6 +415,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "StableDiffusionPAGPipeline",
             "MarigoldDepthPipeline",
             "HuggingFaceSpeechRecognitionModel",
+            "HuggingFaceCTCSpeechRecognitionModel",
             "HuggingFaceAnyToAnyModel",
         ):
             self.assertEqual(
@@ -444,7 +575,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["ba991d1546d8c50936c4c16398ed0a87b9b99fb1"],
         )
         self.assertEqual(hunyuan_pag["recommendedSteps"], 25)
-        self.assertEqual(hunyuan_pag["recommendedGuidance"], 5.0)
+        self.assertEqual(hunyuan_pag["recommendedGuidance"], 4.0)
         self.assertEqual(hunyuan_pag["recommendedPagScale"], 3.0)
         self.assertEqual(hunyuan_pag["recommendedPagAdaptiveScale"], 0.0)
         self.assertNotIn("recommendedMaxSequenceLength", hunyuan_pag)
@@ -505,6 +636,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(pixart["recommendedSteps"], 20)
         self.assertEqual(pixart["recommendedGuidance"], 4.5)
         self.assertEqual(pixart["recommendedMaxSequenceLength"], 300)
+        self.assertEqual(pixart["defaultDtype"], "float32")
+        self.assertEqual(pixart["lowVram"]["dtype"], "float32")
         self.assertEqual(pixart["modes"], ["text_to_image"])
         self.assertEqual(pixart["pipelineClasses"], ["PixArtSigmaPipeline"])
         self.assertFalse(pixart["autoEligible"])
@@ -516,9 +649,11 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["e102b3591cc82e97071b8b4cb90d834d0c487207"],
         )
         self.assertEqual(pixart_pag["recommendedSteps"], 20)
-        self.assertEqual(pixart_pag["recommendedGuidance"], 4.5)
+        self.assertEqual(pixart_pag["recommendedGuidance"], 1.0)
         self.assertEqual(pixart_pag["recommendedMaxSequenceLength"], 300)
-        self.assertEqual(pixart_pag["recommendedPagScale"], 3.0)
+        self.assertEqual(pixart_pag["defaultDtype"], "float32")
+        self.assertEqual(pixart_pag["lowVram"]["dtype"], "float32")
+        self.assertEqual(pixart_pag["recommendedPagScale"], 4.0)
         self.assertEqual(pixart_pag["recommendedPagAdaptiveScale"], 0.0)
         self.assertEqual(pixart_pag["pipelineClasses"], ["PixArtSigmaPAGPipeline"])
         self.assertFalse(pixart_pag["autoEligible"])
@@ -846,11 +981,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(i2v_spec["mode"], "image_to_video")
         self.assertEqual(i2v_spec["pipelineClass"], "WanImageToVideoPipeline")
         self.assertIn("loadImage", [item[0] for item in i2v_spec["roles"]])
+        self.assertEqual(
+            by_model["WanImageToVideoPipeline"]["revisionCandidates"],
+            ["596658fd9ca6b7b71d5057529bbf319ecbc61d74"],
+        )
 
         ti2v_spec = by_model["WanTI2VPipeline"]["studioExecutionSpecs"][0]
         self.assertEqual(ti2v_spec["mode"], "text_to_video")
         self.assertEqual(ti2v_spec["pipelineClass"], "WanTI2VPipeline")
         self.assertIn("wanGenerate", [item[0] for item in ti2v_spec["roles"]])
+        self.assertFalse(by_model["WanTI2VPipeline"]["supportsImageInput"])
+        self.assertEqual(
+            by_model["WanTI2VPipeline"]["revisionCandidates"],
+            ["b8fff7315c768468a5333511427288870b2e9635"],
+        )
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -876,14 +1020,20 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             )
 
         z_image = by_model["ZImageModularPipeline"]
-        self.assertEqual(z_image["pipelineClasses"], ["ZImageImg2ImgPipeline", "ZImagePipeline"])
+        self.assertEqual(
+            z_image["pipelineClasses"],
+            ["ZImageImg2ImgPipeline", "ZImageModularPipeline", "ZImagePipeline"],
+        )
         self.assertEqual(
             z_image["executionProfiles"][0]["backend_path"],
             "modules.DiffusersImage.LoadPipeline",
         )
         self.assertEqual(z_image["executionProfiles"][0]["execution_path"], "direct-diffusers-image")
         self.assertNotIn("expert_quantization_modes", z_image["executionProfiles"][0])
-        self.assertEqual(z_image["studioExecutionSpecModes"], ["edit_image", "text_to_image"])
+        self.assertEqual(
+            z_image["studioExecutionSpecModes"],
+            ["edit_image", "modular_image_to_image", "modular_text_to_image", "text_to_image"],
+        )
         z_image_text = next(item for item in z_image["studioExecutionSpecs"] if item["mode"] == "text_to_image")
         z_image_edit = next(item for item in z_image["studioExecutionSpecs"] if item["mode"] == "edit_image")
         self.assertEqual(z_image_text["id"], "z-image:text-to-image:v1")
@@ -905,7 +1055,17 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             qwen_image["studioExecutionSpecModes"],
-            ["control_image", "edit_image", "inpaint", "text_to_image"],
+            [
+                "control_edit_image",
+                "control_image",
+                "control_inpaint",
+                "edit_image",
+                "image_to_image",
+                "inpaint",
+                "inpainting",
+                "modular_text_to_image",
+                "text_to_image",
+            ],
         )
         qwen_text_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "text_to_image")
         qwen_edit_spec = next(item for item in qwen_image["studioExecutionSpecs"] if item["mode"] == "edit_image")
@@ -1123,8 +1283,16 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["edit_image", "multi_image_reference_edit"],
         )
         qwen_edit = by_model["QwenImageEditModularPipeline"]
-        self.assertEqual(qwen_edit["studioExecutionSpecModes"], ["edit_image", "inpaint", "outpaint"])
-        qwen_inpaint_spec, qwen_outpaint_spec, qwen_edit_spec = qwen_edit["studioExecutionSpecs"]
+        self.assertEqual(
+            qwen_edit["studioExecutionSpecModes"],
+            ["edit_image", "inpaint", "modular_inpainting", "outpaint"],
+        )
+        qwen_inpaint_spec = next(item for item in qwen_edit["studioExecutionSpecs"] if item["mode"] == "inpaint")
+        qwen_outpaint_spec = next(item for item in qwen_edit["studioExecutionSpecs"] if item["mode"] == "outpaint")
+        qwen_edit_spec = next(item for item in qwen_edit["studioExecutionSpecs"] if item["mode"] == "edit_image")
+        qwen_modular_inpaint_spec = next(
+            item for item in qwen_edit["studioExecutionSpecs"] if item["mode"] == "modular_inpainting"
+        )
         self.assertEqual(qwen_inpaint_spec["executionProfileId"], "qwen-edit:direct-inpaint")
         self.assertEqual(qwen_inpaint_spec["pipelineClass"], "QwenImageEditInpaintPipeline")
         self.assertIn("loadMask", [item[0] for item in qwen_inpaint_spec["roles"]])
@@ -1143,6 +1311,8 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(qwen_edit_spec["pipelineClass"], "QwenImageEditModularPipeline")
         self.assertIn("models", [item[0] for item in qwen_edit_spec["roles"]])
         self.assertIn(["imageEncode", "image_latents", "denoise", "image_latents"], qwen_edit_spec["edges"])
+        self.assertEqual(qwen_modular_inpaint_spec["executionProfileId"], "qwen-edit:modular")
+        self.assertIn("loadMask", [item[0] for item in qwen_modular_inpaint_spec["roles"]])
         qwen_layered = by_model["QwenImageLayeredModularPipeline"]
         self.assertEqual(qwen_layered["studioExecutionSpecModes"], ["layer_decomposition"])
         qwen_layered_spec = qwen_layered["studioExecutionSpecs"][0]
@@ -1201,7 +1371,15 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ltx["artifactCandidates"],
             ["Lightricks/LTX-Video-0.9.8-13B-distilled"],
         )
-        self.assertEqual(len(ltx["downloadFiles"]), 22)
+        self.assertEqual(len(ltx["downloadFiles"]), 34)
+        self.assertIn(
+            "vae/text_encoder/model-00001-of-00004.safetensors",
+            ltx["downloadFiles"],
+        )
+        self.assertIn(
+            "vae/transformer/diffusion_pytorch_model.safetensors.index.json",
+            ltx["downloadFiles"],
+        )
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", ltx["downloadFiles"])
 
         canny = by_model["FluxCannyPipeline"]
@@ -1224,7 +1402,10 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(qwen_inpaint["inpaintContract"]["source"], "modules.DiffusersImage.Inpaint")
         self.assertIn("QwenImageEditInpaintPipeline", qwen_inpaint["pipelineClasses"])
         self.assertEqual(qwen_inpaint["modes"], ["edit_image", "inpaint", "outpaint"])
-        self.assertEqual(qwen_inpaint["runnableModes"], ["edit_image", "inpaint", "outpaint"])
+        self.assertEqual(
+            qwen_inpaint["runnableModes"],
+            ["edit_image", "inpaint", "modular_inpainting", "outpaint"],
+        )
 
         qwen_control = by_model["QwenImageModularPipeline"]
         control_requirement = qwen_control["modeRequirements"]["control_image"]["modelRequirements"][0]

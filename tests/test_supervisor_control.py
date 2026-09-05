@@ -184,6 +184,64 @@ class SupervisorControlTests(unittest.TestCase):
             self.assertIsNone(persisted["current"])
             self.assertEqual(persisted["recent"][0]["task_id"], "done")
 
+    def test_unexpected_worker_exit_preserves_active_failure_and_cancels_queued_work(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "supervisor-queue.json"
+            state_path.write_text(
+                json.dumps(
+                    {
+                        "workerPid": 4242,
+                        "current": {
+                            "task_id": "active",
+                            "status": "running",
+                            "phase": "denoising",
+                            "workflow_snapshot": {"nodes": [{"id": "recoverable"}], "edges": []},
+                        },
+                        "queued": {"next": {"task_id": "next", "status": "queued"}},
+                        "recent": [{"task_id": "prior", "status": "completed"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = SupervisorController(state_path)
+
+            self.assertTrue(controller.reconcile_interrupted_worker(worker_pid=4242, return_code=-9))
+
+            persisted = json.loads(state_path.read_text(encoding="utf-8"))
+            self.assertIsNone(persisted["current"])
+            self.assertEqual(persisted["queued"], {})
+            self.assertEqual([task["task_id"] for task in persisted["recent"][:3]], ["active", "next", "prior"])
+            self.assertEqual(persisted["recent"][0]["status"], "failed")
+            self.assertEqual(persisted["recent"][0]["error_code"], "backend_worker_exited")
+            self.assertTrue(persisted["recent"][0]["backend_restart"])
+            self.assertEqual(
+                persisted["recent"][0]["workflow_snapshot"]["nodes"][0]["id"],
+                "recoverable",
+            )
+            self.assertEqual(persisted["recent"][1]["status"], "cancelled")
+
+    def test_worker_exit_reconciliation_rejects_an_unrelated_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "supervisor-queue.json"
+            state_path.write_text(
+                json.dumps(
+                    {
+                        "workerPid": 1111,
+                        "current": {"task_id": "other-worker"},
+                        "queued": {},
+                        "recent": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = SupervisorController(state_path)
+
+            self.assertFalse(controller.reconcile_interrupted_worker(worker_pid=2222, return_code=-9))
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding="utf-8"))["current"]["task_id"],
+                "other-worker",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

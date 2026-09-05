@@ -14,13 +14,6 @@ class ContractOnlyModularPipeline:
 
 
 CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES = (
-    ContractOnlyModularPipeline("AnimaModularPipeline", "Anima (Contract only)", "image"),
-    ContractOnlyModularPipeline("Flux2ModularPipeline", "FLUX.2 (Contract only)", "image"),
-    ContractOnlyModularPipeline(
-        "Flux2KleinBaseModularPipeline",
-        "FLUX.2 Klein Base (Contract only)",
-        "image",
-    ),
     ContractOnlyModularPipeline("Ideogram4ModularPipeline", "Ideogram 4 (Contract only)", "image"),
     ContractOnlyModularPipeline("Krea2ModularPipeline", "Krea 2 (Contract only)", "image"),
     ContractOnlyModularPipeline(
@@ -35,84 +28,12 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES = (
     ),
 )
 
-CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES = (
-    ContractOnlyModularPipeline("HeliosModularPipeline", "Helios (Contract only)", "video"),
-    ContractOnlyModularPipeline(
-        "HeliosPyramidModularPipeline",
-        "Helios Pyramid (Contract only)",
-        "video",
-    ),
-    ContractOnlyModularPipeline(
-        "HeliosPyramidDistilledModularPipeline",
-        "Helios Pyramid Distilled (Contract only)",
-        "video",
-    ),
-    ContractOnlyModularPipeline(
-        "HunyuanVideo15ModularPipeline",
-        "HunyuanVideo 1.5 (Contract only)",
-        "video",
-    ),
-    ContractOnlyModularPipeline(
-        "WanAnimate2ModularPipeline",
-        "Wan Animate 2 (Contract only)",
-        "video",
-        (("default", "character_animate"),),
-    ),
-    ContractOnlyModularPipeline(
-        "WanAnimate2DistilledModularPipeline",
-        "Wan Animate 2 Distilled (Contract only)",
-        "video",
-        (("default", "character_animate"),),
-    ),
-)
+CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES = ()
 
-CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES = (
-    ContractOnlyModularPipeline(
-        "MiniMaxMusic3ModularPipeline",
-        "MiniMax Music 3 (Contract only)",
-        "audio",
-        (("default", "text_to_audio"),),
-    ),
-)
+CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES = ()
 
 # Cosmos can cross image/video and, for Omni, sound/action domains.
 CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES = (
-    ContractOnlyModularPipeline(
-        "Cosmos3DistilledModularPipeline",
-        "Cosmos 3 Distilled (Contract only)",
-        "multimodal",
-    ),
-    ContractOnlyModularPipeline(
-        "Cosmos3OmniModularPipeline",
-        "Cosmos 3 Omni (Contract only)",
-        "multimodal",
-        (
-            ("text2video_with_sound", "text_to_video_with_audio"),
-            ("image2video_with_sound", "image_to_video_with_audio"),
-            ("video2video_with_sound", "video_to_video_with_audio"),
-        ),
-    ),
-    ContractOnlyModularPipeline(
-        "MiniMaxH3ModularPipeline",
-        "MiniMax H3 (Contract only)",
-        "multimodal",
-        (
-            ("t2va", "text_to_video_with_audio"),
-            ("fl2va", "first_last_frame_to_video_with_audio"),
-            ("ref2va", "reference_to_video_with_audio"),
-        ),
-    ),
-    ContractOnlyModularPipeline(
-        "LTX2ModularPipeline",
-        "LTX-2 (Contract only)",
-        "multimodal",
-        (
-            ("text2video", "text_to_video_with_audio"),
-            ("image2video", "image_to_video_with_audio"),
-            ("condition", "condition_to_video_with_audio"),
-            ("in_context", "in_context_to_video_with_audio"),
-        ),
-    ),
     ContractOnlyModularPipeline(
         "LTX25ModularPipeline",
         "LTX-2.5 (Contract only)",
@@ -143,7 +64,33 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME = {
 # runnable Modular profile or loader claim.
 CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS = {
     "ErnieImageModularPipeline": ("ErnieImagePipeline",),
+    "Flux2ModularPipeline": ("Flux2Pipeline",),
     "LTXModularPipeline": ("LTXConditionPipeline",),
+    "LTX2ModularPipeline": ("LTX2ConditionPipeline", "LTX2InContextPipeline"),
     "Wan22ModularPipeline": ("WanPipeline",),
     "Wan22Image2VideoModularPipeline": ("WanImageToVideoPipeline",),
 }
+
+# Some upstream AutoBlocks expose more workflows than the reviewed standard
+# executor can represent exactly.  Keep those promotions workflow-scoped so a
+# proven text/image route cannot relabel sibling condition or in-context
+# workflows as equivalent.
+CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS = {
+    ("Flux2ModularPipeline", "text2image"): ("Flux2Pipeline",),
+    ("Flux2ModularPipeline", "image_conditioned"): ("Flux2Pipeline",),
+    ("LTX2ModularPipeline", "text2video"): ("LTX2ConditionPipeline",),
+    ("LTX2ModularPipeline", "image2video"): ("LTX2ConditionPipeline",),
+    # The reviewed adapter materializes an ordered image list as official
+    # LTX2VideoCondition instances before calling the exact condition
+    # pipeline.  In-context remains separate because it additionally requires
+    # LTX2ReferenceCondition values and a pinned IC-LoRA.
+    ("LTX2ModularPipeline", "condition"): ("LTX2ConditionPipeline",),
+    ("LTX2ModularPipeline", "in_context"): ("LTX2InContextPipeline",),
+}
+
+
+def equivalent_modular_targets(pipeline_class: str, workflow_id: str) -> tuple[str, ...]:
+    return CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS.get(
+        (pipeline_class, workflow_id),
+        CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS.get(pipeline_class, ()),
+    )

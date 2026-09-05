@@ -16,11 +16,13 @@ _MEDIA_REQUIREMENT_KEYS = {
 }
 _MEDIA_FIELDS = {
     "referenceImages": ("image", ("loadImage",)),
+    "conditionImages": ("image", ("loadImage",)),
     "lastImage": ("image", ("loadLastImage",)),
     "maskImage": ("image", ("loadMask",)),
     "controlImage": ("image", ("loadControlImage", "loadImage")),
+    "ipAdapterImage": ("image", ("loadIPAdapterImage",)),
     "sourceVideo": ("video", ("loadVideo", "videoOperation", "videoUpscaler")),
-    "referenceVideos": ("video", ("videoOperation",)),
+    "referenceVideos": ("video", ("videoOperation", "loadReferenceVideo")),
     "maskVideo": ("video", ("loadMaskVideo",)),
     "controlVideo": ("video", ("loadControlVideo",)),
     "poseVideo": ("video", ("loadPoseVideo",)),
@@ -112,11 +114,22 @@ def _output_contract(specification: Mapping[str, Any], media_kind: str) -> dict[
         raise TaskTemplateContractError("Task-template output contract is invalid.")
     outgoing = {edge[0] for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4}
     sinks = [item for item in roles if isinstance(item, (list, tuple)) and len(item) == 4 and item[0] not in outgoing]
-    if len(sinks) != 1 or sinks[0][1] not in expected_node_keys:
+    auxiliary_terminal_roles = specification.get("auxiliaryTerminalRoles", ())
+    if (
+        not isinstance(auxiliary_terminal_roles, (list, tuple))
+        or any(not isinstance(role, str) or not role for role in auxiliary_terminal_roles)
+        or len(auxiliary_terminal_roles) != len(set(auxiliary_terminal_roles))
+    ):
+        raise TaskTemplateContractError("Task-template auxiliary terminal roles are invalid.")
+    sink_roles = {item[0] for item in sinks}
+    if any(role not in sink_roles for role in auxiliary_terminal_roles):
+        raise TaskTemplateContractError("Task-template auxiliary terminal role must be an exact graph sink.")
+    media_sinks = [item for item in sinks if item[0] not in set(auxiliary_terminal_roles)]
+    if len(media_sinks) != 1 or media_sinks[0][1] not in expected_node_keys:
         raise TaskTemplateContractError(
             f"Task-template {media_kind!r} graph must end at exactly one reviewed output node."
         )
-    role = sinks[0][0]
+    role = media_sinks[0][0]
     incoming = [edge for edge in edges if isinstance(edge, (list, tuple)) and len(edge) == 4 and edge[2] == role]
     media_inputs = [edge for edge in incoming if edge[3] == _OUTPUT_INPUT_HANDLES[media_kind]]
     if len(media_inputs) != 1:
@@ -124,7 +137,7 @@ def _output_contract(specification: Mapping[str, Any], media_kind: str) -> dict[
     return {
         "mediaKind": media_kind,
         "role": role,
-        "nodeKey": sinks[0][1],
+        "nodeKey": media_sinks[0][1],
         "inputHandle": media_inputs[0][3],
     }
 
@@ -235,6 +248,7 @@ def build_task_template_contracts(
             "loaderRepositories": loader_repositories,
             "requiredMedia": _required_media(input_contracts.get(mode, {}), specification),
             "output": _output_contract(specification, str(media_kind)),
+            "auxiliaryTerminalRoles": list(specification.get("auxiliaryTerminalRoles", ())),
             "qualificationStatus": _mode_qualification(capability, mode),
             # P2 graph skeletons remain planning-only until the separate remote
             # qualification/review slice explicitly opts an exact pair in.

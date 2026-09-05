@@ -124,6 +124,55 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(failure["httpStatus"], 507)
         self.assertEqual(sum(entry.get("reserved_bytes", 0) for entry in (first, second)), 500)
 
+    async def test_reservation_reclaims_interrupted_exact_attempts_then_replans(self):
+        server = WebServer(modules={})
+        entry = {
+            "requested_files": ["model.safetensors"],
+            "revision": "a" * 40,
+            "started_at": 1_700_000_000.0,
+        }
+        before = self._space_plan(
+            remainingBytes=700,
+            freeBytes=800,
+            effectiveFreeBytes=1100,
+            reserveBytes=300,
+            reclaimableIncompleteBytes=300,
+            reclaimableIncompleteFileCount=2,
+        )
+        after = self._space_plan(
+            remainingBytes=700,
+            freeBytes=1100,
+            effectiveFreeBytes=1100,
+            reserveBytes=300,
+            reclaimableIncompleteBytes=0,
+            reclaimableIncompleteFileCount=0,
+        )
+        cleanup_receipt = {
+            "removed": ["blobs/hash.1234abcd.incomplete", "blobs/hash.5678abcd.incomplete"],
+            "logical_bytes": 300,
+            "allocated_bytes": 300,
+        }
+
+        with mock.patch(
+            "modiff.server.plan_hub_model_download", side_effect=[before, after]
+        ) as plan, mock.patch(
+            "modiff.server.cleanup_interrupted_hub_download_files",
+            return_value=cleanup_receipt,
+        ) as cleanup:
+            failure = await server._reserve_hf_download_space("unit/exact-model", entry)
+
+        self.assertIsNone(failure)
+        self.assertEqual(entry["reserved_bytes"], 700)
+        self.assertEqual(entry["interrupted_partial_cleanup"], cleanup_receipt)
+        self.assertEqual(plan.call_count, 2)
+        cleanup.assert_called_once_with(
+            "unit/exact-model",
+            "/app-cache",
+            ["model.safetensors"],
+            "a" * 40,
+            older_than=1_700_000_000.0,
+        )
+
     async def test_app_refuses_download_when_immutable_size_is_unknown(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
@@ -183,6 +232,11 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 "repair": False,
                 "requested_files": ["config.json", "weights/model.safetensors"],
                 "reserved_bytes": 40,
+                "interrupted_partial_cleanup": {
+                    "removed": ["blobs/hash.1234abcd.incomplete"],
+                    "logical_bytes": 42,
+                    "allocated_bytes": 4096,
+                },
                 "download_plan": {
                     "totalBytes": 100,
                     "completedBytes": 60,
@@ -208,7 +262,10 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first["requested_file_count"], 2)
         self.assertEqual(first["remaining_bytes"], 40)
         self.assertEqual(first["total_bytes"], 100)
+        self.assertEqual(first["reclaimed_interrupted_bytes"], 4096)
+        self.assertEqual(first["reclaimed_interrupted_file_count"], 1)
         self.assertNotIn("requested_files", first)
+        self.assertNotIn("interrupted_partial_cleanup", first)
 
     async def test_app_plan_does_not_double_count_an_identical_active_download(self):
         server = WebServer(modules={})
@@ -413,10 +470,15 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         payload = json.loads(response.text)
 
         self.assertFalse(payload["error"])
-        self.assertEqual(len(captured["requested_files"]), 22)
+        self.assertEqual(len(captured["requested_files"]), 34)
         self.assertIn("model_index.json", captured["requested_files"])
         self.assertIn("transformer/diffusion_pytorch_model.safetensors.index.json", captured["requested_files"])
         self.assertIn("text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
+        self.assertIn("vae/text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
+        self.assertIn(
+            "vae/transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+            captured["requested_files"],
+        )
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", captured["requested_files"])
 
     async def test_framepack_auxiliary_plan_and_download_use_the_reviewed_component_selection(self):

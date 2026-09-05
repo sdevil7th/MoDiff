@@ -7,6 +7,7 @@
 | Intel XPU (Linux/Windows x64) | Preview | Manifest, installer, and XPU tensor contract | Required per model/device/driver recipe |
 | AMD ROCm Linux, Ubuntu 24.04.3, gfx1150/gfx1151 | Supported stack | Detector fixtures | MoDiff model proof required |
 | AMD ROCm Linux, Ubuntu 26.04 | Experimental | Detector fixtures | Local tensor and model proof required |
+| AMD Instinct MI300X, Ubuntu 24.04, gfx942 | Preview | Separate SDK profile, resolver and installer/runtime contracts | Cloud device tensor and frontend model proof still required |
 | AMD PyTorch Windows | Conditional, install blocked | Official-platform manifest and explicit guidance | Complete MoDiff SDK wheel lock and physical model proof required |
 | CPU | Supported | Install and tensor smoke | Reference host required |
 

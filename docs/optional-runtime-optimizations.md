@@ -131,6 +131,19 @@ name no longer has an implementation at the pin, while the replacement resolves
 a mutable Hub-kernel revision and therefore cannot satisfy the immutable runtime
 contract. Imported or saved recipes requesting either spelling fail closed.
 
+Attention selection is isolated at every pipeline boundary. The reviewed
+Diffusers implementation persists a model backend until
+`reset_attention_backend()` is called, and its model setter also changes the
+dispatcher's process-global active backend. MoDiff therefore resets Auto-owned
+component overrides and restores Diffusers' configured default after both Auto
+and explicit selections. An optimized `_native_flash` run cannot leak into a
+later masked Qwen run, while an explicit backend remains attached to the model
+that requested it. This changes no creator prompt, dimensions, steps,
+quantization, or other workflow value. A backend/mask incompatibility is
+reported as `runtime_compatibility` / `attention_backend_mask_unsupported`
+with an Auto/native retry hint rather than being mislabeled as invalid user
+input.
+
 ### Exact Transformers main source delivery
 
 The exact-main profile does not execute upstream setup or build code. The app
@@ -497,6 +510,7 @@ feature safely.
 ## Official sources reviewed
 
 - [Diffusers attention backends](https://huggingface.co/docs/diffusers/optimization/attention_backends)
+- [Diffusers process-global attention-backend leak issue](https://github.com/huggingface/diffusers/issues/14249)
 - [Hugging Face kernels installation](https://huggingface.co/docs/kernels/main/installation)
 - [FlashAttention repository and platform requirements](https://github.com/Dao-AILab/flash-attention)
 - [TorchAO inference workflows](https://docs.pytorch.org/ao/stable/workflows/inference.html)

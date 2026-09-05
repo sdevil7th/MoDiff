@@ -40,7 +40,7 @@ import zipfile
 
 PYPI_SIMPLE_INDEX = "https://pypi.org/simple"
 PINNED_DIFFUSERS_SOURCE_URL = "https://github.com/huggingface/diffusers.git"
-PINNED_DIFFUSERS_COMMIT = "90b4e34e79a86ec5e7f2437634fe95ecd2108796"
+PINNED_DIFFUSERS_COMMIT = "2f7e0154a9db246e95c9ede43edba7db5b130805"
 PINNED_DIFFUSERS_VERSION = "0.40.0.dev0"
 _DIGEST_PREFIX = "sha256:"
 MANAGED_ROOT = Path(

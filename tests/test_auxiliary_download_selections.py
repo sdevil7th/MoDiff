@@ -14,6 +14,10 @@ from modiff.studio_execution_specs import (
     SD15_CONTROLNET_CANNY_REPO,
     SDXL_CONTROLNET_CANNY_FP16_FILES,
     SDXL_CONTROLNET_CANNY_REPO,
+    SDXL_CONTROLNET_UNION_FILES,
+    SDXL_CONTROLNET_UNION_REPO,
+    SDXL_IP_ADAPTER_FILES,
+    SDXL_IP_ADAPTER_REPO,
     SDXL_T2I_ADAPTER_CANNY_FP16_FILES,
     SDXL_T2I_ADAPTER_CANNY_REPO,
 )
@@ -82,9 +86,7 @@ class AuxiliaryDownloadSelectionTests(unittest.TestCase):
             with self.subTest(model_type=model_type, mode=mode):
                 requirement = next(
                     item
-                    for item in STUDIO_MODEL_CAPABILITIES[model_type]["modeRequirements"][mode][
-                        "modelRequirements"
-                    ]
+                    for item in STUDIO_MODEL_CAPABILITIES[model_type]["modeRequirements"][mode]["modelRequirements"]
                     if item["repo"] == repo
                 )
                 self.assertEqual(requirement["downloadFiles"], expected_files)
@@ -106,6 +108,28 @@ class AuxiliaryDownloadSelectionTests(unittest.TestCase):
         self.assertIn("diffusion_pytorch_model.fp16.safetensors", ANIMATEDIFF_MOTION_FP16_FILES)
         self.assertIn("diffusion_pytorch_model.fp16.safetensors", ANIMATELCM_MOTION_FP16_FILES)
         self.assertIn("AnimateLCM_sd15_t2v_lora.safetensors", ANIMATELCM_MOTION_FP16_FILES)
+
+    def test_modular_sdxl_union_and_ip_adapter_use_only_the_reviewed_files(self):
+        self.assertEqual(
+            SDXL_CONTROLNET_UNION_FILES,
+            ["config.json", "diffusion_pytorch_model.safetensors"],
+        )
+        self.assertEqual(
+            SDXL_IP_ADAPTER_FILES,
+            [
+                "sdxl_models/ip-adapter_sdxl.safetensors",
+                "sdxl_models/image_encoder/config.json",
+                "sdxl_models/image_encoder/model.safetensors",
+            ],
+        )
+        self.assertCountEqual(
+            studio_download_files_for_repo(SDXL_CONTROLNET_UNION_REPO),
+            SDXL_CONTROLNET_UNION_FILES,
+        )
+        self.assertCountEqual(
+            studio_download_files_for_repo(SDXL_IP_ADAPTER_REPO),
+            SDXL_IP_ADAPTER_FILES,
+        )
 
 
 if __name__ == "__main__":

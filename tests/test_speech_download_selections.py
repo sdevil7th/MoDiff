@@ -1,12 +1,26 @@
 import unittest
 
 from modiff.studio_execution_specs import (
+    WAV2VEC2_BASE_960H_TRANSFORMERS_FILES,
     WHISPER_TINY_TRANSFORMERS_FILES,
     studio_capability_definitions,
 )
 
 
 class SpeechDownloadSelectionTests(unittest.TestCase):
+    def test_wav2vec2_ctc_selection_uses_only_the_safetensors_inference_surface(self):
+        selected = set(WAV2VEC2_BASE_960H_TRANSFORMERS_FILES)
+        capability = studio_capability_definitions()["HuggingFaceCTCSpeechRecognitionModel"]
+
+        self.assertEqual(capability["downloadFiles"], WAV2VEC2_BASE_960H_TRANSFORMERS_FILES)
+        self.assertEqual(len(selected), 9)
+        self.assertIn("model.safetensors", selected)
+        self.assertIn("feature_extractor_config.json", selected)
+        self.assertIn("vocab.json", selected)
+        self.assertNotIn("pytorch_model.bin", selected)
+        self.assertNotIn("tf_model.h5", selected)
+        self.assertFalse(any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected))
+
     def test_whisper_tiny_selection_keeps_one_safe_transformers_surface(self):
         selected = set(WHISPER_TINY_TRANSFORMERS_FILES)
         capability = studio_capability_definitions()["HuggingFaceSpeechRecognitionModel"]

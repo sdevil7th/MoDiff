@@ -80,7 +80,9 @@ class DataViewer(NodeBase):
                 "format": value.format,
                 "mode": value.mode,
                 "size": value.size,
-                "filename": value.filename,
+                # In-memory Diffusers outputs are valid PIL images but do not
+                # necessarily carry Image.open()'s optional filename field.
+                "filename": getattr(value, "filename", ""),
                 "exif": exif_data
             }, indent=2)
 

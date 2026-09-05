@@ -158,6 +158,17 @@ def _drm_vendor_ids() -> set[str]:
     return vendors
 
 
+def _rocminfo_architectures(text: str) -> list[str]:
+    """Read concrete agent names, not ISA compatibility aliases or errors.
+
+    ROCm 7.14 also prints ``amdgcn-amd-amdhsa--gfx9-4-generic``. Searching
+    the whole output for gfx tokens misidentifies that alias as another GPU
+    named gfx9 and rejects a valid MI300X host as mixed hardware.
+    """
+
+    return sorted(set(re.findall(r"^\s*Name:\s*(gfx[0-9a-f]+)(?=[:\s]|$)", text.lower(), re.MULTILINE | re.IGNORECASE)))
+
+
 def detect_host() -> dict[str, Any]:
     """Detect candidates without importing Torch and separate presence from usability."""
     os_name = normalized_os()
@@ -194,8 +205,7 @@ def detect_host() -> dict[str, Any]:
         )
     )
     rocminfo = _command(["rocminfo"], timeout=15) if shutil.which("rocminfo") else None
-    rocm_text = f"{rocminfo['stdout']}\n{rocminfo['stderr']}" if rocminfo else ""
-    architectures = sorted(set(re.findall(r"\bgfx\d+[a-z0-9]*\b", rocm_text.lower())))
+    architectures = _rocminfo_architectures(rocminfo["stdout"]) if rocminfo else []
     kfd = Path("/dev/kfd")
     render_nodes = sorted(str(path) for path in Path("/dev/dri").glob("renderD*"))
     groups = _groups()
@@ -241,13 +251,21 @@ def detect_host() -> dict[str, Any]:
     }
 
 
+def _amd_profile_for_host(host: dict[str, Any]) -> str:
+    if host["os"] == "windows":
+        return "amd-pytorch-windows"
+    if "gfx942" in host.get("amd_architectures", []):
+        return "amd-instinct-rocm-linux"
+    return "amd-rocm-linux"
+
+
 def resolve_profile(accelerator: str, host: dict[str, Any], *, allow_experimental: bool = False, non_interactive: bool = False) -> str:
-    aliases = {"nvidia": "nvidia-cuda", "intel": "intel-xpu", "mps": "apple-mps"}
+    aliases = {"nvidia": "nvidia-cuda", "intel": "intel-xpu", "mps": "apple-mps", "amd-instinct": "amd-instinct-rocm-linux"}
     if accelerator not in {"auto", "amd", "cpu", *aliases}:
         raise ValueError(f"Unknown accelerator: {accelerator}")
     if accelerator != "auto":
         if accelerator == "amd":
-            return "amd-pytorch-windows" if host["os"] == "windows" else "amd-rocm-linux"
+            return _amd_profile_for_host(host)
         return aliases.get(accelerator, accelerator)
     if host.get("wsl"):
         return "cpu"
@@ -260,7 +278,7 @@ def resolve_profile(accelerator: str, host: dict[str, Any], *, allow_experimenta
         experimental = host.get("os") == "linux" and host.get("os_version") == "26.04"
         if experimental and non_interactive and not allow_experimental:
             return "cpu"
-        return "amd-pytorch-windows" if host["os"] == "windows" else "amd-rocm-linux"
+        return _amd_profile_for_host(host)
     if host.get("intel_xpu_candidate"):
         return "intel-xpu"
     if host.get("mps_candidate"):
@@ -330,6 +348,34 @@ def _amd_qualification(host: dict[str, Any], spec: dict[str, Any]) -> tuple[str,
     return tier, issues
 
 
+def _amd_instinct_qualification(host: dict[str, Any], spec: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+    """Inspect a provider-prepared Instinct host without proposing driver mutations.
+
+    This profile installs versioned Python SDK userspace. Ryzen's ldconfig
+    library list and driver remediation must never run on this path. A real
+    staged GPU tensor and architecture check are still mandatory.
+    """
+    issues = []
+    if host.get("os_id") != "ubuntu" or host.get("os_version") not in spec["allowed_os_versions"]:
+        issues.append(_issue("unsupported-os", "The Instinct preview requires the reviewed Ubuntu 24.04 image."))
+    if _kernel_tuple(host.get("kernel", "")) < _kernel_tuple(spec["minimum_kernel"]):
+        issues.append(_issue("kernel-too-old", f"The Instinct preview requires kernel {spec['minimum_kernel']} or newer."))
+    if not host.get("kfd_present") or not host.get("render_nodes"):
+        issues.append(_issue("gpu-device-nodes-missing", "Expose /dev/kfd and DRM render devices to the application before installing."))
+    if not host.get("kfd_accessible"):
+        issues.append(_issue("kfd-permission-denied", "The application user needs read/write access to /dev/kfd."))
+    if host.get("rocminfo_returncode") != 0:
+        issues.append(_issue("rocminfo-failed", host.get("rocminfo_error") or "The provider ROCm probe must enumerate the GPU successfully."))
+    detected = set(host.get("amd_architectures", []))
+    if not detected:
+        issues.append(_issue("amd-architecture-unverified", "Verify gfx942 with the provider's rocminfo before installing."))
+    elif not detected.issubset(set(spec["device_families"])):
+        issues.append(_issue("unsupported-amd-architecture", f"This preview requires only gfx942; detected {', '.join(sorted(detected))}."))
+    if host.get("wsl"):
+        issues.append(_issue("unsupported-platform", "The Instinct preview does not qualify WSL."))
+    return "preview", issues
+
+
 def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     host = detect_host()
     profile = resolve_profile(args.accelerator, host, allow_experimental=args.allow_experimental, non_interactive=args.non_interactive)
@@ -344,6 +390,9 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         issues.extend(amd_issues)
         if tier == "experimental" and not args.allow_experimental:
             issues.append(_issue("experimental-opt-in-required", "Ubuntu 26.04 AMD setup requires --allow-experimental."))
+    elif profile == "amd-instinct-rocm-linux":
+        tier, amd_issues = _amd_instinct_qualification(host, spec)
+        issues.extend(amd_issues)
     elif profile == "amd-pytorch-windows":
         tier = "conditional"
         issues.append(_issue(
@@ -354,6 +403,9 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     requirement = ROOT / spec["requirements"]
     if not requirement.is_file():
         issues.append(_issue("profile-lock-missing", f"Profile requirements are missing: {requirement}"))
+    uv_config = ROOT / spec["uv_config"] if spec.get("uv_config") else None
+    if uv_config is not None and not uv_config.is_file():
+        issues.append(_issue("profile-lock-missing", f"Profile package-index configuration is missing: {uv_config}"))
     if host["os"] == "windows":
         cpu_fallback_command = r".\install.ps1 -Accelerator cpu"
         resume_command = r".\install.ps1 -Accelerator auto -Resume"
@@ -361,7 +413,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             resume_command += " -AllowExperimental"
     else:
         cpu_fallback_command = "./install.sh --accelerator cpu"
-        resume_command = "./install.sh --accelerator auto --resume"
+        resume_accelerator = "amd-instinct" if profile == "amd-instinct-rocm-linux" else "auto"
+        resume_command = f"./install.sh --accelerator {resume_accelerator} --resume"
         if tier == "experimental":
             resume_command += " --allow-experimental"
     steps = [
@@ -380,6 +433,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "profile": profile,
         "support_tier": tier,
         "requirements": str(requirement),
+        "uv_config": str(uv_config) if uv_config is not None else None,
         "requirements_exist": requirement.is_file(),
         "issues": issues,
         "steps": steps,
@@ -833,7 +887,7 @@ def _install_client(*, backend_only: bool, python: Path | None = None) -> dict[s
 
 
 def _smoke_script(profile: str) -> str:
-    expected = {"amd-rocm-linux": "rocm", "amd-pytorch-windows": "rocm", "nvidia-cuda": "cuda", "intel-xpu": "xpu", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
+    expected = {"amd-rocm-linux": "rocm", "amd-instinct-rocm-linux": "rocm", "amd-pytorch-windows": "rocm", "nvidia-cuda": "cuda", "intel-xpu": "xpu", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
     return f"""
 import json, torch
 detected_backend = 'rocm' if torch.version.hip else ('cuda' if torch.version.cuda else ('xpu' if hasattr(torch, 'xpu') and torch.xpu.is_available() else ('mps' if torch.backends.mps.is_built() else 'cpu')))
@@ -848,6 +902,11 @@ else:
     assert backend == {expected!r}, (backend, {expected!r})
 device = 'cuda:0' if backend in ('cuda', 'rocm') else ('xpu:0' if backend == 'xpu' else ('mps:0' if backend == 'mps' else 'cpu:0'))
 assert device == 'cpu:0' or (torch.cuda.is_available() if device.startswith('cuda') else (torch.xpu.is_available() if device.startswith('xpu') else torch.backends.mps.is_available()))
+if {profile!r} == 'amd-instinct-rocm-linux':
+    assert str(torch.__version__) == '2.10.0+rocm7.14.0', torch.__version__
+    assert str(torch.version.hip).split('.')[:2] == ['7', '14'], torch.version.hip
+    architecture = str(getattr(torch.cuda.get_device_properties(0), 'gcnArchName', '')).split(':', 1)[0]
+    assert architecture == 'gfx942', ('Expected gfx942 on cuda:0', architecture)
 dtype = torch.float16 if backend in ('cuda', 'rocm', 'xpu', 'mps') else torch.float32
 x = torch.tensor([1.0, 2.0], device=device, dtype=dtype)
 y = x * 2 + 1
@@ -952,7 +1011,8 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
     if STAGED_VENV.exists():
         shutil.rmtree(STAGED_VENV)
     python = _ensure_venv(uv, STAGED_VENV)
-    _run([uv, "pip", "install", "--python", str(python), "-r", plan["requirements"]])
+    index_options = ["--config-file", plan["uv_config"]] if plan.get("uv_config") else []
+    _run([uv, "pip", "install", "--python", str(python), *index_options, "-r", plan["requirements"]])
     smoke_environment = _rocm_environment() if plan["profile"] == "amd-rocm-linux" else os.environ.copy()
     smoke = _command([str(python), "-c", _smoke_script(plan["profile"])], timeout=60, env=smoke_environment)
     if smoke["returncode"] != 0:
@@ -1017,7 +1077,7 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("--accelerator", default="auto", choices=["auto", "nvidia", "amd", "intel", "mps", "cpu"])
+    result.add_argument("--accelerator", default="auto", choices=["auto", "nvidia", "amd", "amd-instinct", "intel", "mps", "cpu"])
     result.add_argument("--dry-run", action="store_true")
     result.add_argument("--non-interactive", action="store_true")
     result.add_argument("--repair", action="store_true")

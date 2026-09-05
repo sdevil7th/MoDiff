@@ -12,6 +12,7 @@ import time
 
 from modiff.hardware import get_hardware_snapshot, legacy_torch_status
 from modiff.runtime_profile import runtime_profile
+from modiff.secret_config import huggingface_token
 
 
 PACKAGE_CHECKS = {
@@ -181,6 +182,7 @@ def package_status(module_name, distribution_name, import_check=True):
 def build_report(args):
     root = project_root()
     cfg = read_config(root)
+    hf_token, hf_token_source = huggingface_token(cfg, root / ".env")
     host = config_value(cfg, "server", "host", "127.0.0.1") or "127.0.0.1"
     port = args.check_port or config_int(cfg, "server", "port", 8088)
     bind_host = "127.0.0.1" if host == "0.0.0.0" else host
@@ -262,7 +264,8 @@ def build_report(args):
             "configuredCacheDir": configured_hf_cache,
             "resolvedCacheDir": resolved_hf_cache,
             "onlineStatus": config_value(cfg, "huggingface", "online_status", "Auto"),
-            "tokenConfigured": bool(config_value(cfg, "huggingface", "token")),
+            "tokenConfigured": bool(hf_token),
+            "tokenSource": hf_token_source,
         },
         "paths": paths,
         "packages": packages,

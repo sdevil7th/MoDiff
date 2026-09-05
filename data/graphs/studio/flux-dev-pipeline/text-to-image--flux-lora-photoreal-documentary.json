@@ -648,9 +648,17 @@
             "value": ""
           },
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
             "label": "Device",
             "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -739,10 +747,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -885,7 +892,7 @@
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "mode"
+              "origin": "pipeline_class"
             },
             "type": "image_diffusion_pipeline"
           },
@@ -1581,6 +1588,13 @@
             "type": "string",
             "value": "FluxPipeline"
           },
+          "prequantized_transformer": {
+            "description": "Reviewed single-file transformer component for exact base-pipeline assembly.",
+            "display": "input",
+            "isConnected": false,
+            "label": "Pre-quantized Transformer",
+            "type": "any"
+          },
           "quantization_mode": {
             "default": "none",
             "label": "Quantization",
@@ -1895,10 +1909,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1989,19 +2002,17 @@
                 "value": "native"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -2024,10 +2035,9 @@
                 "value": "_native_cudnn"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flex",
                 "schemaVersion": 1,
                 "value": "flex"
@@ -2035,7 +2045,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "flash-attn package is not installed",
                 "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
@@ -2116,7 +2126,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "SageAttention package is not installed",
                 "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
@@ -2677,7 +2687,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -2695,6 +2705,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string"

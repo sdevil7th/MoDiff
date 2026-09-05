@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -17,6 +18,8 @@ from modiff.upstream_coverage import (
     TRANSFORMERS_REVIEWED_MAIN_VERSION,
     UPSTREAM_COVERAGE_PATH,
     UPSTREAM_COVERAGE_STATUSES,
+    UpstreamCoverageError,
+    _load_reviewed_gallery_manifest,
     build_upstream_coverage,
     load_upstream_coverage,
     render_upstream_coverage,
@@ -44,16 +47,16 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 198,
+                "canonicalWorkflowCount": 199,
                 "canonicalWorkflowsWithPublicTemplates": 51,
-                "canonicalWorkflowsWithoutPublicTemplates": 147,
-                "diffusersPipelineSymbolCount": 327,
+                "canonicalWorkflowsWithoutPublicTemplates": 148,
+                "diffusersPipelineSymbolCount": 330,
                 "pipelineStatusCounts": {
-                    "contract-only": 20,
-                    "equivalent": 15,
-                    "executable": 117,
+                    "contract-only": 5,
+                    "equivalent": 12,
+                    "executable": 137,
                     "intentionally-excluded": 56,
-                    "research-blocked": 119,
+                    "research-blocked": 120,
                     "unreviewed": 0,
                 },
                 "publicTemplateCount": 77,
@@ -79,7 +82,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 198,
+                    "executable": 199,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -92,14 +95,16 @@ class UpstreamCoverageTests(unittest.TestCase):
         names = [item["name"] for item in items]
         self.assertEqual(names, sorted(names))
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(len(names), 327)
+        self.assertEqual(len(names), 330)
         self.assertTrue({item["status"] for item in items}.issubset(UPSTREAM_COVERAGE_STATUSES))
 
         by_name = {item["name"]: item for item in items}
         self.assertEqual(by_name["FluxPipeline"]["status"], "executable")
-        self.assertEqual(by_name["FluxModularPipeline"]["status"], "equivalent")
-        self.assertEqual(by_name["MiniMaxMusic3ModularPipeline"]["status"], "contract-only")
+        self.assertEqual(by_name["FluxModularPipeline"]["status"], "executable")
+        self.assertEqual(by_name["MiniMaxMusic3ModularPipeline"]["status"], "executable")
         self.assertEqual(by_name["Krea2Pipeline"]["status"], "research-blocked")
+        self.assertEqual(by_name["StableAudio3Pipeline"]["status"], "research-blocked")
+        self.assertEqual(by_name["StableAudio3Pipeline"]["genericTaskContract"]["mode"], "text_to_audio")
         self.assertEqual(by_name["DiffusionPipeline"]["status"], "intentionally-excluded")
         self.assertEqual(by_name["AltDiffusionPipeline"]["status"], "intentionally-excluded")
         self.assertEqual(
@@ -116,7 +121,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_non_video = [
             item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_non_video), 80)
+        self.assertEqual(len(reviewed_non_video), 79)
         self.assertEqual(
             {
                 status: sum(item["status"] == status for item in reviewed_non_video)
@@ -127,7 +132,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "equivalent": 0,
                 "executable": 0,
                 "intentionally-excluded": 43,
-                "research-blocked": 37,
+                "research-blocked": 36,
                 "unreviewed": 0,
             },
         )
@@ -179,13 +184,12 @@ class UpstreamCoverageTests(unittest.TestCase):
             "HunyuanVideoImageToVideoPipeline",
             "HunyuanVideoPipeline",
             "LTX2HDRPipeline",
-            "LTX2InContextPipeline",
             "LTX2LatentUpsamplePipeline",
             "LTXLatentUpsamplePipeline",
             "MotifVideoImage2VideoPipeline",
             "MotifVideoPipeline",
         }
-        self.assertEqual(len(equivalent) + len(intentionally_excluded) + len(research_blocked), 22)
+        self.assertEqual(len(equivalent) + len(intentionally_excluded) + len(research_blocked), 21)
         for name, targets in equivalent.items():
             self.assertEqual(by_name[name]["status"], "equivalent", name)
             self.assertEqual(by_name[name]["equivalentTo"], targets, name)
@@ -197,6 +201,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertIn(("LTXConditionPipeline", "text_to_video"), exact_pairs)
         self.assertIn(("LTXConditionPipeline", "image_to_video"), exact_pairs)
         self.assertIn(("LTX2ConditionPipeline", "image_to_video"), exact_pairs)
+        self.assertIn(("LTX2InContextPipeline", "in_context_to_video"), exact_pairs)
         for name in intentionally_excluded:
             self.assertEqual(by_name[name]["status"], "intentionally-excluded", name)
             self.assertEqual(by_name[name]["reviewDecision"], "pinned-diffusers-video-source-triage", name)
@@ -206,7 +211,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_video = [
             item for item in by_name.values() if item["reviewDecision"] == "pinned-diffusers-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_video), 19)
+        self.assertEqual(len(reviewed_video), 18)
         self.assertEqual({item["name"] for item in reviewed_video}, intentionally_excluded | research_blocked)
         self.assertEqual(
             {item["name"] for item in by_name.values() if item["status"] == "unreviewed"},
@@ -312,17 +317,37 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
             self.assertEqual(len(ledger_gallery_ids), 70)
 
+    def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            with self.assertRaisesRegex(UpstreamCoverageError, r"--gallery-manifest"):
+                _load_reviewed_gallery_manifest(root, None)
+
+            reviewed_manifest = root / "reviewed-gallery.json"
+            reviewed_manifest.write_text('{"schemaVersion":2,"examples":[]}\n', encoding="utf-8")
+            self.assertEqual(
+                _load_reviewed_gallery_manifest(root, reviewed_manifest),
+                {"schemaVersion": 2, "examples": []},
+            )
+
     def test_generator_matches_when_reviewed_sources_are_available(self):
         diffusers_source = os.environ.get("MODIFF_DIFFUSERS_SOURCE")
         transformers_source = os.environ.get("MODIFF_TRANSFORMERS_SOURCE")
         transformers_wheel = os.environ.get("MODIFF_TRANSFORMERS_WHEEL")
-        if not all((diffusers_source, transformers_source, transformers_wheel)):
-            self.skipTest("Set all three MODIFF_*_SOURCE/WHEEL variables to run upstream source drift checks.")
+        gallery_manifest = os.environ.get("MODIFF_TEMPLATE_GALLERY_MANIFEST")
+        if gallery_manifest is None and GALLERY_MANIFEST.is_file():
+            gallery_manifest = str(GALLERY_MANIFEST)
+        if not all((diffusers_source, transformers_source, transformers_wheel, gallery_manifest)):
+            self.skipTest(
+                "Set the reviewed MODIFF_*_SOURCE/WHEEL and MODIFF_TEMPLATE_GALLERY_MANIFEST variables to run "
+                "upstream source drift checks."
+            )
         generated = build_upstream_coverage(
             ROOT,
             diffusers_source=Path(diffusers_source),
             transformers_source=Path(transformers_source),
             transformers_wheel=Path(transformers_wheel),
+            gallery_manifest=Path(gallery_manifest),
         )
         self.assertEqual(render_upstream_coverage(generated), UPSTREAM_COVERAGE_PATH.read_text(encoding="utf-8"))
 

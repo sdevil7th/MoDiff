@@ -151,7 +151,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "BriaPipeline",
         "CogView4ControlPipeline",
         "Flux2KleinKVPipeline",
-        "Flux2Pipeline",
         "FluxControlNetImg2ImgPipeline",
         "FluxControlNetInpaintPipeline",
         "FluxControlNetPipeline",
@@ -233,10 +232,6 @@ _REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES = {
         "The class consumes an SDR reference video and an HDR IC-LoRA, then emits linear HDR video; MoDiff lacks "
         "that immutable adapter selection, HDR output contract, and exact action/workflow."
     ),
-    "LTX2InContextPipeline": (
-        "The pinned Modular inventory records IC-LoRA block truth, but this standard class still requires reference "
-        "video conditions, an immutable IC-LoRA, and an exact runnable adapter/workflow."
-    ),
     "LTX2LatentUpsamplePipeline": (
         "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or "
         "bounded latent-input action/workflow for this class."
@@ -255,7 +250,52 @@ _REVIEWED_VIDEO_RESEARCH_BLOCKED_PIPELINES = {
     ),
 }
 
+# These are task-generic product contracts for reviewed upstream classes whose
+# artifacts are not yet admissible. They describe bounded MoDiff task shapes;
+# they do not add an execution specification, model download, workflow, node,
+# or Gallery claim. Keep this mapping class-exact so a new upstream class never
+# inherits support from a related family name.
+_REVIEWED_RESEARCH_TASK_CONTRACTS = {
+    "StableAudio3Pipeline": {
+        "mode": "text_to_audio",
+        "requiredInputs": ["prompt"],
+        "requiredInputAlternatives": [],
+        "optionalInputs": ["durationSeconds", "negativePrompt"],
+        "outputMediaKinds": ["audio"],
+        "qualification": "contract-only-artifact-blocked",
+    },
+    "StableAudio3AudioToAudioPipeline": {
+        "mode": "audio_to_audio",
+        "requiredInputs": ["prompt", "sourceAudio"],
+        "requiredInputAlternatives": [],
+        "optionalInputs": ["durationSeconds", "strength"],
+        "outputMediaKinds": ["audio"],
+        "qualification": "contract-only-artifact-blocked",
+    },
+    "StableAudio3InpaintPipeline": {
+        "mode": "audio_inpaint",
+        "requiredInputs": ["prompt", "sourceAudio"],
+        "requiredInputAlternatives": [["maskAudio"], ["maskStartSeconds", "maskEndSeconds"]],
+        "optionalInputs": ["durationSeconds"],
+        "outputMediaKinds": ["audio"],
+        "qualification": "contract-only-artifact-blocked",
+    },
+}
+
 _REVIEWED_PIPELINE_DECISIONS = {
+    **{
+        name: {
+            "status": "research-blocked",
+            "reason": (
+                "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated "
+                "checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff "
+                "has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain "
+                "float32 unless later exact evidence qualifies another dtype."
+            ),
+            "review": "pinned-diffusers-stable-audio-3-source-triage",
+        }
+        for name in _REVIEWED_RESEARCH_TASK_CONTRACTS
+    },
     **{
         name: {
             "status": "intentionally-excluded",
@@ -1003,6 +1043,11 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
                 "equivalentTo": equivalent_targets,
                 "artifactReviews": artifact_reviews,
                 "reviewDecision": reviewed_decision["review"] if reviewed_decision else None,
+                **(
+                    {"genericTaskContract": _REVIEWED_RESEARCH_TASK_CONTRACTS[name]}
+                    if name in _REVIEWED_RESEARCH_TASK_CONTRACTS
+                    else {}
+                ),
                 "modularWorkflowIds": (
                     sorted(item["taskId"] for item in modular.get("workflows", [])) if modular else []
                 ),
@@ -1014,6 +1059,10 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
         raise UpstreamCoverageError("An exclusion decision names a pipeline absent from the reviewed pin.")
     if set(_REVIEWED_PIPELINE_DECISIONS) - symbol_set:
         raise UpstreamCoverageError("A reviewed pipeline decision names a pipeline absent from the reviewed pin.")
+    if set(_REVIEWED_RESEARCH_TASK_CONTRACTS) - symbol_set:
+        raise UpstreamCoverageError("A reviewed research task contract names a pipeline absent from the reviewed pin.")
+    if set(_REVIEWED_RESEARCH_TASK_CONTRACTS) - set(_REVIEWED_PIPELINE_DECISIONS):
+        raise UpstreamCoverageError("A research task contract lacks an explicit reviewed pipeline decision.")
     decision_conflicts = set(_REVIEWED_PIPELINE_DECISIONS) & (
         set(exact_specs) | contract_only | set(_EQUIVALENT_PIPELINE_TARGETS) | set(_INTENTIONALLY_EXCLUDED_PIPELINES)
     )
@@ -1024,7 +1073,40 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
     return version, pipeline_items
 
 
-def _workflow_and_template_coverage(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str]:
+def _load_reviewed_gallery_manifest(root: Path, explicit_path: Path | None) -> dict[str, Any]:
+    """Load review metadata without requiring installed Gallery runtime data.
+
+    A normal remote-asset source build intentionally omits ``web/template-gallery``.
+    Coverage generation must therefore accept an explicit reviewed manifest instead
+    of restoring downloaded runtime data or inferring a sibling checkout.
+    """
+
+    manifest_path = explicit_path if explicit_path is not None else root / "web" / "template-gallery" / "manifest.json"
+    try:
+        resolved_path = manifest_path.resolve(strict=True)
+    except OSError as error:
+        if explicit_path is None:
+            raise UpstreamCoverageError(
+                "The installed Template Gallery manifest is unavailable; pass an exact reviewed "
+                "manifest with gallery_manifest (CLI: --gallery-manifest)."
+            ) from error
+        raise UpstreamCoverageError("The explicit reviewed Template Gallery manifest is unavailable.") from error
+    if not resolved_path.is_file():
+        raise UpstreamCoverageError("The reviewed Template Gallery manifest must be a regular file.")
+    try:
+        gallery = json.loads(resolved_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise UpstreamCoverageError("The reviewed Template Gallery manifest is invalid JSON.") from error
+    if not isinstance(gallery, dict) or not isinstance(gallery.get("examples"), list):
+        raise UpstreamCoverageError("The reviewed Template Gallery manifest has no examples list.")
+    return gallery
+
+
+def _workflow_and_template_coverage(
+    root: Path,
+    *,
+    gallery_manifest: Path | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str]:
     manifest_path = root / "data" / "workflow-library-manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     supported = manifest.get("workflows")
@@ -1051,7 +1133,7 @@ def _workflow_and_template_coverage(root: Path) -> tuple[list[dict[str, Any]], l
     bundle_path = root / "web" / "assets" / "studio-templates.js"
     bundle_hash = _sha256_bytes(bundle_path.read_bytes())
     public_templates = _load_public_templates(bundle_path)
-    gallery = json.loads((root / "web" / "template-gallery" / "manifest.json").read_text(encoding="utf-8"))
+    gallery = _load_reviewed_gallery_manifest(root, gallery_manifest)
     gallery_records: dict[str, dict[str, Any]] = {}
     for item in gallery.get("examples", []):
         template_id = item.get("templateId") if isinstance(item, dict) else None
@@ -1127,6 +1209,7 @@ def build_upstream_coverage(
     diffusers_source: Path | None = None,
     transformers_source: Path | None = None,
     transformers_wheel: Path | None = None,
+    gallery_manifest: Path | None = None,
 ) -> dict[str, Any]:
     """Build the complete deterministic coverage ledger without model weights."""
 
@@ -1135,7 +1218,10 @@ def build_upstream_coverage(
     source = _normalize_diffusers_source(diffusers_source) if diffusers_source else installed_diffusers_source()
     verified_source_revision = _verify_diffusers_source_revision(source, revision)
     version, pipelines = _pipeline_coverage(root, source)
-    workflows, templates, template_bundle_hash = _workflow_and_template_coverage(root)
+    workflows, templates, template_bundle_hash = _workflow_and_template_coverage(
+        root,
+        gallery_manifest=gallery_manifest,
+    )
     if transformers_source is None or transformers_wheel is None:
         raise UpstreamCoverageError(
             "Reviewed Transformers main source and the locked production wheel are required for coverage generation."

@@ -126,6 +126,34 @@ class IPAdapter(NodeBase):
             subfolder=artifact.image_encoder_subfolder,
             revision=artifact.revision,
         )
+        reusable = components.get_components_by_ids(
+            ids=components.get_ids(names="image_encoder"),
+            return_dict_with_names=False,
+        )
+        matching = [
+            component
+            for component in reusable.values()
+            if getattr(component, "_diffusers_load_id", None) == spec.load_id
+            and isinstance(component, CLIPVisionModelWithProjection)
+            and getattr(component, "dtype", None) == dtype
+        ]
+        if len(matching) > 1:
+            raise ValueError(
+                "The shared ComponentsManager contains multiple compatible SDXL IP-Adapter image encoders. "
+                "Switch model families once to clear the ambiguous resident state."
+            )
+        if matching:
+            image_encoder = matching[0]
+            sdxl_ip_adapter_image_encoder_contract(image_encoder)
+            self._image_encoder = image_encoder
+            self._image_encoder_identity = identity
+            return image_encoder
+        if any(getattr(component, "_diffusers_load_id", None) == spec.load_id for component in reusable.values()):
+            raise ValueError(
+                "The resident SDXL IP-Adapter image encoder has an incompatible class or dtype. "
+                "Switch model families before changing the image-encoder runtime dtype."
+            )
+
         image_encoder = spec.load(local_files_only=True, torch_dtype=dtype)
         image_encoder.to(device=device)
         sdxl_ip_adapter_image_encoder_contract(image_encoder)

@@ -1,9 +1,10 @@
 import json
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
 
 
@@ -111,6 +112,23 @@ class Ideogram4SourceReviewTests(unittest.TestCase):
         candidate = enhancer["localHeadCandidate"]
         self.assertRegex(candidate["revision"], SHA1)
         self.assertFalse(candidate["gated"])
+
+    def test_modular_graph_adapter_keeps_prompt_upsampling_as_a_separate_stage(self):
+        adapter = reviewed_whole_workflow_graph_adapter("Ideogram4ModularPipeline", "text2image")
+        self.assertEqual(adapter["requiredInputs"], ["prompt"])
+        self.assertEqual(
+            adapter["upstreamBlockSequence"],
+            ["prompt_upsample", "text_encoder", "denoise", "decode"],
+        )
+        self.assertEqual(
+            adapter["actionSequence"],
+            [
+                "workflow_ideogram4_prompt_upsample",
+                "workflow_ideogram4_text_encoder",
+                "workflow_ideogram4_denoise",
+                "workflow_ideogram4_decoder",
+            ],
+        )
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 187)
+        self.assertEqual(len(self.contracts), 267)
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -280,11 +280,16 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
                 ("image", "referenceImages"),
                 ("image", "lastImage"),
             ],
+            ("WanImage2VideoModularPipeline", "single_image_to_video"): [
+                ("image", "referenceImages"),
+            ],
+            ("WanModularPipeline", "text_to_video"): [],
             ("LTXI2VLongMultiPromptPipeline", "image_to_video"): [("image", "referenceImages")],
             ("LTX2ConditionPipeline", "text_to_video"): [],
             ("LTX2ConditionPipeline", "image_to_video"): [("image", "referenceImages")],
             ("LTX2ConditionPipeline", "reference_to_video"): [("image", "referenceImages")],
             ("LTX2ConditionPipeline", "video_to_video"): [("video", "sourceVideo")],
+            ("LTX2InContextPipeline", "in_context_to_video"): [("video", "referenceVideos")],
             ("LTX2Pipeline", "text_to_video"): [],
             ("HunyuanVideoFramepackPipeline", "image_to_video"): [("image", "referenceImages")],
             ("StableVideoDiffusionPipeline", "image_to_video"): [("image", "referenceImages")],
@@ -320,6 +325,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             ("HuggingFaceAnyToAnyModel", "text_to_image"): [],
             ("HuggingFaceSpeechRecognitionModel", "speech_to_text"): [("audio", "sourceAudio")],
             ("HuggingFaceSpeechRecognitionModel", "speech_translation"): [("audio", "sourceAudio")],
+            ("HuggingFaceCTCSpeechRecognitionModel", "speech_to_text"): [("audio", "sourceAudio")],
         }
         for pair, required in expected.items():
             with self.subTest(pair=pair):
@@ -348,6 +354,15 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(direct_output["nodeKey"], "modules.Video.ExportWithAudio")
         self.assertEqual(direct_output["role"], "videoExport")
         self.assertEqual(direct_output["inputHandle"], "video")
+
+        cosmos_image = self.contract_by_pair[("Cosmos3OmniModularPipeline", "text_to_image")]
+        cosmos_video = self.contract_by_pair[("Cosmos3OmniModularPipeline", "text_to_video")]
+        self.assertEqual(cosmos_image["mediaKind"], "image")
+        self.assertEqual(cosmos_image["output"]["nodeKey"], "modules.Image.Preview")
+        self.assertEqual(cosmos_image["auxiliaryTerminalRoles"], ["afterDecode"])
+        self.assertEqual(cosmos_video["mediaKind"], "video")
+        self.assertEqual(cosmos_video["output"]["nodeKey"], "modules.Video.Export")
+        self.assertEqual(cosmos_video["auxiliaryTerminalRoles"], ["afterDecode"])
 
     async def test_image_video_and_audio_graphs_round_trip_against_the_generic_contract(self):
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))

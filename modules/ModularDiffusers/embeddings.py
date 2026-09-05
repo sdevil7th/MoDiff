@@ -97,6 +97,16 @@ class EncodePrompt(NodeBase):
         model_type = self.get_signal_value("text_encoders")
 
         if self._model_type == model_type:
+            if not model_type or self._pipeline_class is None:
+                return None
+            _, node_config = require_modiff_node_contract(
+                self._pipeline_class,
+                self.node_type,
+                resolve_blocks=False,
+            )
+            node_params_to_update = dict(node_config["params"])
+            node_params_to_update.pop("text_encoders", None)
+            self.send_node_definition(node_params_to_update)
             return None
 
         if model_type is None or model_type == "":

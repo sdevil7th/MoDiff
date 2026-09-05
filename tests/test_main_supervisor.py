@@ -113,6 +113,31 @@ class MainSupervisorTests(unittest.TestCase):
             self.assertEqual(command[-1], "--worker")
             self.assertEqual(worker_env["MODIFF_WORKER_SUPERVISED"], "1")
 
+    def test_unexpected_worker_exit_is_reconciled_and_replaced(self):
+        module = load_main_module()
+        workers = [
+            Mock(pid=4242, wait=Mock(return_value=-9)),
+            Mock(pid=4243, wait=Mock(return_value=0)),
+        ]
+        for worker in workers:
+            worker.poll.return_value = None
+
+        with (
+            patch.object(module.subprocess, "Popen", side_effect=workers) as popen,
+            patch.object(module.signal, "signal"),
+            patch("modiff.supervisor_control.SupervisorController") as controller_class,
+            patch("modiff.supervisor_control.SupervisorControlServer") as server_class,
+            patch.dict(os.environ, {"MODIFF_SUPERVISOR_CONTROL_PORT": "0"}),
+        ):
+            controller = controller_class.return_value
+            controller.consume_restart_request.return_value = False
+            controller.reconcile_interrupted_worker.side_effect = [False, True]
+            self.assertEqual(module.run_supervisor(), 0)
+
+        self.assertEqual(popen.call_count, 2)
+        controller.reconcile_interrupted_worker.assert_any_call(worker_pid=4242, return_code=-9)
+        server_class.return_value.close.assert_called_once_with()
+
     def test_shutdown_signal_is_forwarded_to_the_active_worker(self):
         module = load_main_module()
         worker = Mock()

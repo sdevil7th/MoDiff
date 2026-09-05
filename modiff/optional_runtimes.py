@@ -9,25 +9,25 @@ optional-runtime endpoints.
 
 from __future__ import annotations
 
-from copy import deepcopy
-from dataclasses import dataclass, replace
 import hashlib
-from importlib import metadata
 import json
 import platform
 import sys
+from collections.abc import Callable, Iterable, Mapping
+from copy import deepcopy
+from dataclasses import dataclass, replace
+from importlib import metadata
 from types import MappingProxyType
-from typing import Callable, Iterable, Mapping
 
 
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
-TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = (
-    "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-)
-GALLERY_MEDIA_RUNTIME_PROFILE_ID = "gallery-media-opencv-5.0.0.93"
-TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID = (
-    "huggingface-transformers-main-96fe6dce-peft-0.20.0-quanto-0.2.7"
+TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0"
+GALLERY_MEDIA_RUNTIME_PROFILE_ID = "gallery-media-opencv-5.0.0.93-pyav-18.1.0"
+TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0-quanto-0.2.7"
+TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0-gguf-0.19.0"
+TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID = (
+    "huggingface-transformers-main-96fe6dce-peft-0.20.0-bitsandbytes-0.50.0"
 )
 TRANSFORMERS_MAIN_COMMIT = "96fe6dce36cc929a5ffd3e34296554c4cb6b669e"
 TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT = "a597f974857b3d92939971296bc0deb93d33d780"
@@ -57,11 +57,7 @@ def optional_runtime_target(
     selected_platform = str(platform_name or "").strip().lower()
     if not selected_platform:
         selected_platform = (
-            "windows"
-            if sys.platform.startswith("win")
-            else "macos"
-            if sys.platform == "darwin"
-            else "linux"
+            "windows" if sys.platform.startswith("win") else "macos" if sys.platform == "darwin" else "linux"
         )
     selected_machine = str(machine or platform.machine()).strip().lower()
     normalized_machine = {
@@ -70,24 +66,119 @@ def optional_runtime_target(
         "aarch64": "arm64",
     }.get(selected_machine, selected_machine)
     return selected_platform, normalized_machine
+
+
 _PURE_RUNTIME_WHEELS = (
-    ("transformers", "5.14.1", "transformers-5.14.1-py3-none-any.whl", "https://files.pythonhosted.org/packages/6f/67/8d85ca2323233ae3c0365a659c4e52ee1f587b440e4bc577e7d8e4416d0f/transformers-5.14.1-py3-none-any.whl", "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725", 11625234),
-    ("peft", "0.20.0", "peft-0.20.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/28/79/13bcabb8048126422d5c4b880575d40886c726f354db88cfeed4325525bb/peft-0.20.0-py3-none-any.whl", "0fbba16ffebfad3de96e06f2da6860fd860292324b85b6141909fa1e26ea9233", 775777),
-    ("typer", "0.27.1", "typer-0.27.1-py3-none-any.whl", "https://files.pythonhosted.org/packages/43/89/9518bc0c3929bee36b3a4a8e3daddd6e03f92f9961c66d4983b837160543/typer-0.27.1-py3-none-any.whl", "53150287edd11baeb4e4722c8e394fcdf8181c0ae89485cba8d25c778d5edd56", 122874),
-    ("annotated-doc", "0.0.5", "annotated_doc-0.0.5-py3-none-any.whl", "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl", "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101", 5302),
-    ("rich", "15.0.0", "rich-15.0.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl", "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb", 310654),
-    ("markdown-it-py", "4.2.0", "markdown_it_py-4.2.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl", "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a", 91687),
-    ("mdurl", "0.1.2", "mdurl-0.1.2-py3-none-any.whl", "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", 9979),
-    ("pygments", "2.20.0", "pygments-2.20.0-py3-none-any.whl", "https://files.pythonhosted.org/packages/f4/7e/a72dd26f3b0f4f2bf1dd8923c85f7ceb43172af56d63c7383eb62b332364/pygments-2.20.0-py3-none-any.whl", "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176", 1231151),
-    ("shellingham", "1.5.4", "shellingham-1.5.4-py2.py3-none-any.whl", "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", "7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", 9755),
+    (
+        "transformers",
+        "5.14.1",
+        "transformers-5.14.1-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/6f/67/8d85ca2323233ae3c0365a659c4e52ee1f587b440e4bc577e7d8e4416d0f/transformers-5.14.1-py3-none-any.whl",
+        "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
+        11625234,
+    ),
+    (
+        "peft",
+        "0.20.0",
+        "peft-0.20.0-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/28/79/13bcabb8048126422d5c4b880575d40886c726f354db88cfeed4325525bb/peft-0.20.0-py3-none-any.whl",
+        "0fbba16ffebfad3de96e06f2da6860fd860292324b85b6141909fa1e26ea9233",
+        775777,
+    ),
+    (
+        "typer",
+        "0.27.1",
+        "typer-0.27.1-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/43/89/9518bc0c3929bee36b3a4a8e3daddd6e03f92f9961c66d4983b837160543/typer-0.27.1-py3-none-any.whl",
+        "53150287edd11baeb4e4722c8e394fcdf8181c0ae89485cba8d25c778d5edd56",
+        122874,
+    ),
+    (
+        "annotated-doc",
+        "0.0.5",
+        "annotated_doc-0.0.5-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl",
+        "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101",
+        5302,
+    ),
+    (
+        "rich",
+        "15.0.0",
+        "rich-15.0.0-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl",
+        "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb",
+        310654,
+    ),
+    (
+        "markdown-it-py",
+        "4.2.0",
+        "markdown_it_py-4.2.0-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl",
+        "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a",
+        91687,
+    ),
+    (
+        "mdurl",
+        "0.1.2",
+        "mdurl-0.1.2-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl",
+        "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8",
+        9979,
+    ),
+    (
+        "pygments",
+        "2.20.0",
+        "pygments-2.20.0-py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/f4/7e/a72dd26f3b0f4f2bf1dd8923c85f7ceb43172af56d63c7383eb62b332364/pygments-2.20.0-py3-none-any.whl",
+        "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176",
+        1231151,
+    ),
+    (
+        "shellingham",
+        "1.5.4",
+        "shellingham-1.5.4-py2.py3-none-any.whl",
+        "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl",
+        "7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686",
+        9755,
+    ),
 )
 _TOKENIZERS_RUNTIME_WHEELS = {
-    ("linux", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", "https://files.pythonhosted.org/packages/2e/76/932be4b50ef6ccedf9d3c6639b056a967a86258c6d9200643f01269211ca/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67", 3274982),
-    ("linux", "arm64"): ("tokenizers-0.22.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", "https://files.pythonhosted.org/packages/d6/84/7990e799f1309a8b87af6b948f31edaa12a3ed22d11b352eaf4f4b2e5753/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", "2249487018adec45d6e3554c71d46eb39fa8ea67156c640f7513eb26f318cec7", 3290736),
-    ("macos", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-macosx_10_12_x86_64.whl", "https://files.pythonhosted.org/packages/92/97/5dbfabf04c7e348e655e907ed27913e03db0923abb5dfdd120d7b25630e1/tokenizers-0.22.2-cp39-abi3-macosx_10_12_x86_64.whl", "544dd704ae7238755d790de45ba8da072e9af3eea688f698b137915ae959281c", 3100275),
-    ("macos", "arm64"): ("tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl", "https://files.pythonhosted.org/packages/2e/47/174dca0502ef88b28f1c9e06b73ce33500eedfac7a7692108aec220464e7/tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl", "1e418a55456beedca4621dbab65a318981467a2b188e982a23e117f115ce5001", 2981472),
-    ("windows", "x86_64"): ("tokenizers-0.22.2-cp39-abi3-win_amd64.whl", "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl", "c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48", 2747786),
-    ("windows", "arm64"): ("tokenizers-0.22.2-cp39-abi3-win_arm64.whl", "https://files.pythonhosted.org/packages/72/f4/0de46cfa12cdcbcd464cc59fde36912af405696f687e53a091fb432f694c/tokenizers-0.22.2-cp39-abi3-win_arm64.whl", "9ce725d22864a1e965217204946f830c37876eee3b2ba6fc6255e8e903d5fcbc", 2612133),
+    ("linux", "x86_64"): (
+        "tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "https://files.pythonhosted.org/packages/2e/76/932be4b50ef6ccedf9d3c6639b056a967a86258c6d9200643f01269211ca/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67",
+        3274982,
+    ),
+    ("linux", "arm64"): (
+        "tokenizers-0.22.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "https://files.pythonhosted.org/packages/d6/84/7990e799f1309a8b87af6b948f31edaa12a3ed22d11b352eaf4f4b2e5753/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "2249487018adec45d6e3554c71d46eb39fa8ea67156c640f7513eb26f318cec7",
+        3290736,
+    ),
+    ("macos", "x86_64"): (
+        "tokenizers-0.22.2-cp39-abi3-macosx_10_12_x86_64.whl",
+        "https://files.pythonhosted.org/packages/92/97/5dbfabf04c7e348e655e907ed27913e03db0923abb5dfdd120d7b25630e1/tokenizers-0.22.2-cp39-abi3-macosx_10_12_x86_64.whl",
+        "544dd704ae7238755d790de45ba8da072e9af3eea688f698b137915ae959281c",
+        3100275,
+    ),
+    ("macos", "arm64"): (
+        "tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl",
+        "https://files.pythonhosted.org/packages/2e/47/174dca0502ef88b28f1c9e06b73ce33500eedfac7a7692108aec220464e7/tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl",
+        "1e418a55456beedca4621dbab65a318981467a2b188e982a23e117f115ce5001",
+        2981472,
+    ),
+    ("windows", "x86_64"): (
+        "tokenizers-0.22.2-cp39-abi3-win_amd64.whl",
+        "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl",
+        "c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48",
+        2747786,
+    ),
+    ("windows", "arm64"): (
+        "tokenizers-0.22.2-cp39-abi3-win_arm64.whl",
+        "https://files.pythonhosted.org/packages/72/f4/0de46cfa12cdcbcd464cc59fde36912af405696f687e53a091fb432f694c/tokenizers-0.22.2-cp39-abi3-win_arm64.whl",
+        "9ce725d22864a1e965217204946f830c37876eee3b2ba6fc6255e8e903d5fcbc",
+        2612133,
+    ),
 }
 
 _QUANTO_LINUX_X86_64_WHEELS = (
@@ -109,6 +200,24 @@ _QUANTO_LINUX_X86_64_WHEELS = (
     ),
 )
 
+_GGUF_RUNTIME_WHEEL = (
+    "gguf",
+    "0.19.0",
+    "gguf-0.19.0-py3-none-any.whl",
+    "https://files.pythonhosted.org/packages/b3/bb/d71d6da82763528c2c2ed6b59a9d6142c6595545a4c448e2085d155e88c2/gguf-0.19.0-py3-none-any.whl",
+    "70bcd10edfe697fb2dad6e40af2234b9d8ece9a41a99761405121ebda1c3c1cd",
+    118_475,
+)
+
+_BITSANDBYTES_LINUX_X86_64_WHEEL = (
+    "bitsandbytes",
+    "0.50.0",
+    "bitsandbytes-0.50.0-py3-none-manylinux_2_24_x86_64.whl",
+    "https://files.pythonhosted.org/packages/22/08/9501f4fc830448a6862bd5313df94a7dd1ae678f4f81087b96569d4a6f8b/bitsandbytes-0.50.0-py3-none-manylinux_2_24_x86_64.whl",
+    "173d137610468bec9cddbaa2e049254e97792657ab984e3e737bec1772c1668c",
+    40_860_117,
+)
+
 
 def _quanto_linux_x86_64_artifact_locks() -> tuple[dict, ...]:
     return tuple(
@@ -124,6 +233,41 @@ def _quanto_linux_x86_64_artifact_locks() -> tuple[dict, ...]:
             "machine": "x86_64",
         }
         for distribution, version, filename, url, sha256, byte_size in _QUANTO_LINUX_X86_64_WHEELS
+    )
+
+
+def _gguf_artifact_locks() -> tuple[dict, ...]:
+    distribution, version, filename, url, sha256, byte_size = _GGUF_RUNTIME_WHEEL
+    return tuple(
+        {
+            "distribution": distribution,
+            "version": version,
+            "filename": filename,
+            "url": url,
+            "sha256": sha256,
+            "byteSize": byte_size,
+            "platform": platform_name,
+            "pythonTag": python_tag,
+            "machine": machine,
+        }
+        for platform_name, python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    )
+
+
+def _bitsandbytes_linux_x86_64_artifact_locks() -> tuple[dict, ...]:
+    distribution, version, filename, url, sha256, byte_size = _BITSANDBYTES_LINUX_X86_64_WHEEL
+    return (
+        {
+            "distribution": distribution,
+            "version": version,
+            "filename": filename,
+            "url": url,
+            "sha256": sha256,
+            "byteSize": byte_size,
+            "platform": "linux",
+            "pythonTag": "cp312",
+            "machine": "x86_64",
+        },
     )
 
 
@@ -165,10 +309,7 @@ def _transformers_main_source_build() -> dict:
             "commit": TRANSFORMERS_MAIN_COMMIT,
             "archiveRoot": f"transformers-{TRANSFORMERS_MAIN_COMMIT}",
             "filename": f"transformers-{TRANSFORMERS_MAIN_COMMIT}.tar.gz",
-            "url": (
-                "https://codeload.github.com/huggingface/transformers/tar.gz/"
-                f"{TRANSFORMERS_MAIN_COMMIT}"
-            ),
+            "url": (f"https://codeload.github.com/huggingface/transformers/tar.gz/{TRANSFORMERS_MAIN_COMMIT}"),
             "sha256": "e9903aec337657fd8ae1fd1e7812efed159c2cf4444e83e7fc877e252127e1b3",
             "byteSize": 20_532_315,
         },
@@ -393,9 +534,7 @@ class OptionalRuntimeProfile:
             "activationAvailable": self.activation_available,
             "installPolicy": self.install_policy,
             "targetContracts": [contract.to_spec_dict() for contract in self.target_contracts],
-            "packages": [
-                package.to_spec_dict() for package in self.packages if package.role == "runtime_root"
-            ],
+            "packages": [package.to_spec_dict() for package in self.packages if package.role == "runtime_root"],
             "stagedPackages": [package.to_spec_dict() for package in self.packages],
             "baseRequirements": [package.to_spec_dict() for package in self.base_packages],
             "requiredDiffusersSymbols": list(self.required_diffusers_symbols),
@@ -410,13 +549,10 @@ class OptionalRuntimeProfile:
         }
         if self.satisfies_profiles:
             spec["satisfiesProfiles"] = [
-                {"id": profile_id, "specDigest": spec_digest}
-                for profile_id, spec_digest in self.satisfies_profiles
+                {"id": profile_id, "specDigest": spec_digest} for profile_id, spec_digest in self.satisfies_profiles
             ]
         if self.source_builds:
-            spec["sourceBuilds"] = [
-                deepcopy(source_build) for source_build in self.source_builds
-            ]
+            spec["sourceBuilds"] = [deepcopy(source_build) for source_build in self.source_builds]
         return spec
 
     @property
@@ -479,6 +615,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
                 "JanusProcessor",
                 "JanusImageProcessor",
                 "AutoModelForSpeechSeq2Seq",
+                "AutoModelForCTC",
                 "AnyToAnyPipeline",
                 "pipeline",
                 "Mistral3Model",
@@ -538,6 +675,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
                 "JanusProcessor",
                 "JanusImageProcessor",
                 "AutoModelForSpeechSeq2Seq",
+                "AutoModelForCTC",
                 "AnyToAnyPipeline",
                 "Mistral3Model",
                 "Mistral3ForConditionalGeneration",
@@ -754,6 +892,7 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
         "QwenImageEditModularPipeline",
         "QwenImageEditPlusModularPipeline",
         "QwenImageLayeredModularPipeline",
+        "MiniMaxMusic3ModularPipeline",
         "AnimateDiffPAGPipeline",
         "AnimateDiffVideoToVideoPipeline",
         "AnimateDiffControlNetPipeline",
@@ -892,12 +1031,9 @@ _TRANSFORMERS_PEFT_PROFILE = OptionalRuntimeProfile(
                 if (platform_name, machine) in {("linux", "x86_64"), ("windows", "x86_64")}
                 else "candidate_unqualified"
             ),
-            cutover_ready=(platform_name, machine)
-            in {("linux", "x86_64"), ("windows", "x86_64")},
-            install_action_available=(platform_name, machine)
-            in {("linux", "x86_64"), ("windows", "x86_64")},
-            activation_available=(platform_name, machine)
-            in {("linux", "x86_64"), ("windows", "x86_64")},
+            cutover_ready=(platform_name, machine) in {("linux", "x86_64"), ("windows", "x86_64")},
+            install_action_available=(platform_name, machine) in {("linux", "x86_64"), ("windows", "x86_64")},
+            activation_available=(platform_name, machine) in {("linux", "x86_64"), ("windows", "x86_64")},
         )
         for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
     ),
@@ -912,10 +1048,7 @@ _TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
         replace(
             _TRANSFORMERS_PEFT_PROFILE.packages[0],
             version="5.16.0.dev0",
-            distribution_url=(
-                "https://github.com/huggingface/transformers/commit/"
-                f"{TRANSFORMERS_MAIN_COMMIT}"
-            ),
+            distribution_url=(f"https://github.com/huggingface/transformers/commit/{TRANSFORMERS_MAIN_COMMIT}"),
         ),
         *_TRANSFORMERS_PEFT_PROFILE.packages[1:],
     ),
@@ -937,13 +1070,10 @@ _TRANSFORMERS_MAIN_PEFT_PROFILE = replace(
             platform=platform_name,
             machine=machine,
             contract_state=(
-                "qualified"
-                if (platform_name, machine) == ("linux", "x86_64")
-                else "candidate_unqualified"
+                "qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified"
             ),
             cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
-            install_action_available=(platform_name, machine)
-            == ("linux", "x86_64"),
+            install_action_available=(platform_name, machine) == ("linux", "x86_64"),
             activation_available=(platform_name, machine) == ("linux", "x86_64"),
         )
         for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
@@ -996,9 +1126,113 @@ _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE = replace(
             platform=platform_name,
             machine=machine,
             contract_state=(
-                "qualified"
-                if (platform_name, machine) == ("linux", "x86_64")
-                else "candidate_unqualified"
+                "qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified"
+            ),
+            cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+            install_action_available=(platform_name, machine) == ("linux", "x86_64"),
+            activation_available=(platform_name, machine) == ("linux", "x86_64"),
+        )
+        for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    ),
+    satisfies_profiles=(
+        (
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            _TRANSFORMERS_MAIN_PEFT_PROFILE.spec_digest,
+        ),
+    ),
+)
+
+
+_TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE = replace(
+    _TRANSFORMERS_MAIN_PEFT_PROFILE,
+    id=TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID,
+    label="Transformers main + PEFT + GGUF 0.19.0 (Linux x86-64 qualified)",
+    packages=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
+        OptionalRuntimePackageContract(
+            distribution="gguf",
+            import_name="gguf",
+            version="0.19.0",
+            publisher="ggml.org and llama.cpp contributors",
+            project_url="https://github.com/ggml-org/llama.cpp",
+            distribution_url="https://pypi.org/project/gguf/0.19.0/",
+            license="MIT",
+            role="runtime_root",
+            required_symbols=("GGUFReader",),
+        ),
+    ),
+    required_diffusers_symbols=tuple(
+        dict.fromkeys(
+            (
+                *_TRANSFORMERS_MAIN_PEFT_PROFILE.required_diffusers_symbols,
+                "GGUFQuantizationConfig",
+                "FluxTransformer2DModel",
+            )
+        )
+    ),
+    artifact_locks=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
+        *_gguf_artifact_locks(),
+    ),
+    contract_state="qualified_platform_scoped",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        OptionalRuntimeTargetContract(
+            platform=platform_name,
+            machine=machine,
+            contract_state=(
+                "qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified"
+            ),
+            cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+            install_action_available=(platform_name, machine) == ("linux", "x86_64"),
+            activation_available=(platform_name, machine) == ("linux", "x86_64"),
+        )
+        for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    ),
+    satisfies_profiles=(
+        (
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            _TRANSFORMERS_MAIN_PEFT_PROFILE.spec_digest,
+        ),
+    ),
+)
+
+
+_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = replace(
+    _TRANSFORMERS_MAIN_PEFT_PROFILE,
+    id=TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
+    label="Transformers main + PEFT + bitsandbytes 0.50.0 (Linux x86-64 qualified)",
+    packages=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
+        OptionalRuntimePackageContract(
+            distribution="bitsandbytes",
+            import_name="bitsandbytes",
+            version="0.50.0",
+            publisher="bitsandbytes contributors",
+            project_url="https://github.com/bitsandbytes-foundation/bitsandbytes",
+            distribution_url="https://pypi.org/project/bitsandbytes/0.50.0/",
+            license="MIT",
+            role="runtime_root",
+            required_symbols=("functional.dequantize_4bit", "nn.Linear4bit"),
+            required_class_symbols=("nn.Linear4bit",),
+        ),
+    ),
+    artifact_locks=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
+        *_bitsandbytes_linux_x86_64_artifact_locks(),
+    ),
+    contract_state="qualified_platform_scoped",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        OptionalRuntimeTargetContract(
+            platform=platform_name,
+            machine=machine,
+            contract_state=(
+                "qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified"
             ),
             cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
             install_action_available=(platform_name, machine) == ("linux", "x86_64"),
@@ -1018,8 +1252,9 @@ _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE = replace(
 _GALLERY_MEDIA_PROFILE = replace(
     _TRANSFORMERS_MAIN_PEFT_PROFILE,
     id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
-    label="Transformers main + PEFT + gallery media (OpenCV)",
-    packages=(*_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
+    label="Transformers main + PEFT + media codecs (OpenCV + PyAV)",
+    packages=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
         OptionalRuntimePackageContract(
             distribution="opencv-python-headless",
             import_name="cv2",
@@ -1038,17 +1273,28 @@ _GALLERY_MEDIA_PROFILE = replace(
                 "remap",
             ),
         ),
+        OptionalRuntimePackageContract(
+            distribution="av",
+            import_name="av",
+            version="18.1.0",
+            publisher="PyAV contributors",
+            project_url="https://pyav.org/",
+            distribution_url="https://pypi.org/project/av/18.1.0/",
+            license="BSD-3-Clause",
+            role="runtime_root",
+            required_symbols=("open", "VideoFrame"),
+            required_class_symbols=("VideoFrame",),
+        ),
     ),
     # OpenCV 5 requires NumPy 2 on Python 3.12. NumPy remains owned by the
     # application's verified base environment rather than duplicated into the
     # overlay.
     base_packages=tuple(
-        replace(package, specifier=">=2,<3")
-        if package.distribution == "numpy"
-        else package
+        replace(package, specifier=">=2,<3") if package.distribution == "numpy" else package
         for package in _TRANSFORMERS_MAIN_PEFT_PROFILE.base_packages
     ),
-    artifact_locks=(*_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
+    artifact_locks=(
+        *_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
         {
             "distribution": "opencv-python-headless",
             "version": "5.0.0.93",
@@ -1060,6 +1306,21 @@ _GALLERY_MEDIA_PROFILE = replace(
             ),
             "sha256": "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37",
             "byteSize": 61_204_038,
+            "platform": "linux",
+            "pythonTag": "cp312",
+            "machine": "x86_64",
+        },
+        {
+            "distribution": "av",
+            "version": "18.1.0",
+            "filename": "av-18.1.0-cp311-abi3-manylinux_2_28_x86_64.whl",
+            "url": (
+                "https://files.pythonhosted.org/packages/27/3a/"
+                "204dbfc3e08eb4cdc6e6ff57be02150bc44523ebdb50182d10025792ebd9/"
+                "av-18.1.0-cp311-abi3-manylinux_2_28_x86_64.whl"
+            ),
+            "sha256": "8a032e8d8ebc73dec079364b9b4a6837638a2d106e8472314e685ffbf163e700",
+            "byteSize": 35_786_210,
             "platform": "linux",
             "pythonTag": "cp312",
             "machine": "x86_64",
@@ -1081,6 +1342,8 @@ OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyTy
         _TRANSFORMERS_PEFT_PROFILE.id: _TRANSFORMERS_PEFT_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE,
+        _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE,
+        _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
         _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
     }
 )
@@ -1201,10 +1464,7 @@ def public_optional_runtime_profiles(
             machine=machine,
         )
         root_packages = [package for package in profile.packages if package.role == "runtime_root"]
-        package_statuses = [
-            _package_status(package, version_resolver=resolve_version)
-            for package in root_packages
-        ]
+        package_statuses = [_package_status(package, version_resolver=resolve_version) for package in root_packages]
         package_states = {package["status"] for package in package_statuses}
         if "missing" in package_states:
             status = "missing"

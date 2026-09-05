@@ -267,6 +267,94 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
         self.assertTrue(plan["fits"])
         upstream_plan.assert_called_once_with("unit/exact", ["model.safetensors"], revision)
 
+    def test_download_preflight_counts_only_exact_non_resumable_partials_as_reclaimable_space(self):
+        revision = "c" * 40
+        expected_hash = "d" * 64
+        unrelated_hash = "e" * 64
+        upstream_plan = {
+            "total_bytes": 5000,
+            "total_file_count": 1,
+            "size_known": True,
+            "selection_limited": True,
+            "snapshot_commit": revision,
+            "validation_files": [
+                {"name": "model.safetensors", "size": 5000, "blob_hash": expected_hash}
+            ],
+        }
+        with tempfile.TemporaryDirectory() as cache_dir:
+            blobs = Path(cache_dir) / "models--unit--resume" / "blobs"
+            blobs.mkdir(parents=True)
+            partial = blobs / f"{expected_hash}.1234abcd.incomplete"
+            partial.write_bytes(b"x" * 1024)
+            (blobs / f"{unrelated_hash}.1234abcd.incomplete").write_bytes(b"y" * 1024)
+            allocated = partial.stat().st_blocks * 512
+            with patch.dict(
+                huggingface.CONFIG.hf, {"cache_dir": cache_dir, "token": None}
+            ), patch.object(
+                huggingface, "_repo_download_plan", return_value=upstream_plan
+            ), patch.object(
+                huggingface.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(
+                    total=10_000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+                    used=100,
+                    free=5000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES - allocated,
+                ),
+            ):
+                plan = huggingface.plan_hub_model_download(
+                    "unit/resume", ["model.safetensors"], revision
+                )
+
+        self.assertEqual(plan["reclaimableIncompleteBytes"], allocated)
+        self.assertEqual(plan["reclaimableIncompleteFileCount"], 1)
+        self.assertEqual(plan["effectiveFreeBytes"], 5000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES)
+        self.assertTrue(plan["fits"])
+
+    def test_retry_cleanup_removes_only_older_exact_hub_attempt_files(self):
+        revision = "f" * 40
+        expected_hash = "1" * 64
+        unrelated_hash = "2" * 64
+        plan = {
+            "validation_files": [
+                {"name": "model.safetensors", "size": 100, "blob_hash": expected_hash}
+            ]
+        }
+        with tempfile.TemporaryDirectory() as cache_dir, patch.object(
+            huggingface, "_repo_download_plan", return_value=plan
+        ):
+            blobs = Path(cache_dir) / "models--unit--retry" / "blobs"
+            blobs.mkdir(parents=True)
+            stale = blobs / f"{expected_hash}.1234abcd.incomplete"
+            current = blobs / f"{expected_hash}.5678abcd.incomplete"
+            unrelated = blobs / f"{unrelated_hash}.1234abcd.incomplete"
+            legacy = blobs / f"{expected_hash}.incomplete"
+            for path in (stale, current, unrelated, legacy):
+                path.write_bytes(b"partial")
+            cutoff = 1_700_000_000.0
+            os.utime(stale, (cutoff - 10, cutoff - 10))
+            os.utime(current, (cutoff + 10, cutoff + 10))
+            os.utime(unrelated, (cutoff - 10, cutoff - 10))
+            os.utime(legacy, (cutoff - 10, cutoff - 10))
+
+            result = huggingface.cleanup_interrupted_hub_download_files(
+                "unit/retry",
+                cache_dir,
+                ["model.safetensors"],
+                revision,
+                older_than=cutoff,
+            )
+
+            stale_exists = stale.exists()
+            current_exists = current.exists()
+            unrelated_exists = unrelated.exists()
+            legacy_exists = legacy.exists()
+
+        self.assertEqual(result["removed"], [f"blobs/{stale.name}"])
+        self.assertFalse(stale_exists)
+        self.assertTrue(current_exists)
+        self.assertTrue(unrelated_exists)
+        self.assertTrue(legacy_exists)
+
     def test_repo_cache_path_rejects_windows_backslash_traversal(self):
         with tempfile.TemporaryDirectory() as cache_dir:
             with self.assertRaises((TypeError, ValueError)):
@@ -292,6 +380,57 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
 
         self.assertEqual(plan["total_file_count"], 1)
         self.assertEqual(plan["files"][0]["name"], "wanted.safetensors")
+
+    def test_download_stages_byte_identical_lfs_blob_from_another_cached_repo(self):
+        content = b"shared model shard"
+        blob_hash = hashlib.sha256(content).hexdigest()
+        revision = "a" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            source_blob = Path(cache_dir) / "models--unit--source" / "blobs" / blob_hash
+            source_blob.parent.mkdir(parents=True)
+            source_blob.write_bytes(content)
+            plan = {
+                "revision": revision,
+                "snapshot_commit": revision,
+                "validation_files": [
+                    {"name": "transformer/shard.bin", "size": len(content), "blob_hash": blob_hash}
+                ],
+            }
+
+            reused = huggingface._stage_verified_cached_lfs_blobs("unit/target", cache_dir, plan)
+
+            target_repo = Path(cache_dir) / "models--unit--target"
+            target_blob = target_repo / "blobs" / blob_hash
+            target_file = target_repo / "snapshots" / revision / "transformer" / "shard.bin"
+            self.assertEqual(reused, {"files": ["transformer/shard.bin"], "bytes": len(content)})
+            self.assertEqual(target_blob.read_bytes(), content)
+            self.assertEqual(target_file.read_bytes(), content)
+            self.assertNotEqual(source_blob.stat().st_ino, target_blob.stat().st_ino)
+
+    def test_download_does_not_trust_a_cross_repo_blob_filename_without_matching_sha256(self):
+        expected = b"expected content"
+        corrupt = b"corrupt! content"
+        self.assertEqual(len(expected), len(corrupt))
+        blob_hash = hashlib.sha256(expected).hexdigest()
+        revision = "b" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            source_blob = Path(cache_dir) / "models--unit--source" / "blobs" / blob_hash
+            source_blob.parent.mkdir(parents=True)
+            source_blob.write_bytes(corrupt)
+            plan = {
+                "revision": revision,
+                "snapshot_commit": revision,
+                "validation_files": [
+                    {"name": "transformer/shard.bin", "size": len(expected), "blob_hash": blob_hash}
+                ],
+            }
+
+            reused = huggingface._stage_verified_cached_lfs_blobs("unit/target", cache_dir, plan)
+
+            target_repo = Path(cache_dir) / "models--unit--target"
+            self.assertEqual(reused, {"files": [], "bytes": 0})
+            self.assertFalse((target_repo / "blobs" / blob_hash).exists())
+            self.assertFalse((target_repo / "snapshots" / revision / "transformer" / "shard.bin").exists())
 
     def test_download_plan_expands_hugging_face_allow_pattern_globs(self):
         class FakeHfApi:

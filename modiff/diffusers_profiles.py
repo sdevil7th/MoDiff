@@ -12,9 +12,6 @@ from modiff.diffusers_offload_modes import (
 )
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
-from modiff.modular_workflow_contracts import (
-    FLUX_MODULAR_CONTROL_UNSUPPORTED,
-)
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
@@ -260,6 +257,10 @@ class DiffusersExecutionProfile:
                 "modules.HuggingFaceSpeech",
                 "LoadSpeechRecognitionModel",
             ),
+            "direct-huggingface-speech-ctc": (
+                "modules.HuggingFaceSpeech",
+                "LoadCTCSpeechRecognitionModel",
+            ),
             "direct-huggingface-transformers-text": (
                 "modules.HuggingFaceTransformers",
                 "LoadTextGenerationModel",
@@ -291,6 +292,10 @@ class DiffusersExecutionProfile:
             "spandrel-video-upscale": (
                 "modules.Video",
                 "UpscaleVideo",
+            ),
+            "spandrel-image-upscale": (
+                "modules.Spandrel",
+                "Upscaler",
             ),
         }.get(self.execution_path)
         if expected_loader is None:
@@ -722,73 +727,7 @@ DIFFUSERS_EXECUTION_PROFILES["z-image:auto"] = replace(
 
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 
-EXPERIMENTAL_DIFFUSERS_PIPELINES = [
-    {
-        "modelType": "StableDiffusionXLModularPipeline",
-        "label": "Stable Diffusion XL (Modular)",
-        "mediaKind": "image",
-        "defaultRepo": SDXL_BASE_REPO,
-        "pipelineClasses": ["StableDiffusionXLModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_image", "image_to_image", "control_image", "inpaint"],
-        "inputContracts": {
-            "image_to_image": {"requiredImages": ["referenceImages"]},
-            "control_image": {"requiredImages": ["controlImage"]},
-            "inpaint": {"requiredImages": ["referenceImages", "maskImage"]},
-        },
-        "qualificationStatus": "contract_only",
-        "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO)],
-        "autoEligible": False,
-        "templateEligible": False,
-        "galleryEligible": False,
-    },
-    {
-        "modelType": "FluxModularPipeline",
-        "label": "FLUX (Modular)",
-        "mediaKind": "image",
-        "pipelineClasses": ["FluxModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_image", "image_to_image"],
-        "unsupportedModes": {"control_image": FLUX_MODULAR_CONTROL_UNSUPPORTED},
-    },
-    {
-        # Auto uses the established direct DiffusersImage facade for this
-        # model/task pair. Keep the separately supported Modular workflow
-        # visible as an Expert capability without creating a second Auto
-        # execution profile for the same exact pair.
-        "modelType": "ZImageModularPipeline",
-        "label": "Z-Image (Modular)",
-        "mediaKind": "image",
-        "defaultRepo": "Tongyi-MAI/Z-Image-Turbo",
-        "pipelineClasses": ["ZImageModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_image"],
-    },
-    {
-        "modelType": "Flux2KleinModularPipeline",
-        "label": "FLUX.2 Klein (Standard Diffusers)",
-        "mediaKind": "image",
-        "defaultRepo": "black-forest-labs/FLUX.2-klein-4B",
-        "pipelineClasses": ["Flux2KleinPipeline"],
-        "backendPath": "modules.DiffusersImage.LoadPipeline",
-        "executionKind": "standard",
-        "executionModelType": "Flux2KleinPipeline",
-        "executionProfileIds": ["flux2-klein:direct"],
-        "runnableModes": ["text_to_image", "edit_image", "multi_image_reference_edit"],
-    },
-    {
-        "modelType": "WanModularPipeline",
-        "label": "Wan Text to Video (Modular)",
-        "mediaKind": "video",
-        "pipelineClasses": ["WanModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_video"],
-    },
-]
+EXPERIMENTAL_DIFFUSERS_PIPELINES = []
 
 
 # These adapters have a reviewed generic loader/action contract, but no Auto
@@ -1043,6 +982,59 @@ def resolve_execution_profiles_for_loader(
             else profile
             for profile in profiles
         )
+
+    raw_execution_profile_id = values.get("execution_profile_id")
+    if raw_execution_profile_id not in (None, ""):
+        if (
+            not isinstance(raw_execution_profile_id, str)
+            or raw_execution_profile_id != raw_execution_profile_id.strip()
+        ):
+            return selected_optional_runtime(backend_profiles), "loader_execution_profile_invalid"
+        exact_profile = next(
+            (profile for profile in backend_profiles if profile.id == raw_execution_profile_id),
+            None,
+        )
+        if exact_profile is None:
+            return selected_optional_runtime(backend_profiles), "loader_execution_profile_unregistered"
+
+        identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
+        raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)
+        identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
+        expected_identity = exact_profile.model_type if action == "ModelsLoader" else exact_profile.pipeline_class
+        if not identity:
+            return selected_optional_runtime((exact_profile,)), "loader_identity_missing"
+        if identity != expected_identity:
+            return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
+
+        raw_mode = values.get("mode")
+        if raw_mode is not None:
+            if not isinstance(raw_mode, str) or not raw_mode.strip():
+                return selected_optional_runtime((exact_profile,)), "loader_mode_invalid"
+            if raw_mode.strip() not in exact_profile.modes:
+                return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
+
+        raw_repository = values.get("model_id") or values.get("repo_id")
+        if isinstance(raw_repository, str):
+            repository = raw_repository.strip()
+            repository_source = "hub"
+        elif (
+            isinstance(raw_repository, dict)
+            and set(raw_repository).issubset({"source", "value"})
+            and raw_repository.get("source") in {"hub", "local"}
+            and isinstance(raw_repository.get("value"), str)
+        ):
+            repository = raw_repository["value"].strip()
+            repository_source = raw_repository["source"]
+        else:
+            repository = ""
+            repository_source = ""
+        if repository and repository_source == "hub" and repository not in {
+            exact_profile.default_repo,
+            exact_profile.fallback_repo,
+            *exact_profile.compatible_repos,
+        }:
+            return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
+        return selected_optional_runtime((exact_profile,)), None
 
     identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
     raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)

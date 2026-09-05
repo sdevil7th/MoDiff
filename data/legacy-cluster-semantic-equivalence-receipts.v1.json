@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "kind": "legacy_cluster_semantic_equivalence_receipts",
+  "boundary": {
+    "checkedInReviewAuthority": true,
+    "doesNotInferFromLabelsOrModels": true,
+    "requiresExactCompilerMapping": true,
+    "doesNotAuthorizeWorkflowMutation": true
+  },
+  "receipts": [],
+  "contentHash": "sha256:1b1320da3432f8dffbb7f06cda1dc9f5462aa684ee2b665bd8eb58534a48f2b6"
+}

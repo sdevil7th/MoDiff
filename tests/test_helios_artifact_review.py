@@ -5,6 +5,7 @@ import unittest
 
 from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
+from modiff.studio_execution_specs import HELIOS_DIFFUSERS_FILES, studio_capability_definitions
 
 
 REVIEW_PATH = Path(__file__).resolve().parents[1] / "data" / "helios-artifact-review.json"
@@ -15,21 +16,32 @@ class HeliosArtifactReviewTests(unittest.TestCase):
     def setUp(self):
         self.review = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
 
-    def test_heavy_family_remains_contract_only_and_uncataloged(self):
+    def test_exact_graph_qualified_closures_are_cataloged_but_not_live(self):
         self.assertEqual(self.review["schemaVersion"], 1)
         self.assertEqual(self.review["format"], "safetensors")
         admission = self.review["admission"]
-        self.assertEqual(admission["status"], "contract_only")
-        self.assertFalse(admission["runtimeCatalogExposed"])
-        self.assertFalse(admission["downloadCatalogExposed"])
+        self.assertEqual(admission["status"], "graph_qualified_execution_pending")
+        self.assertTrue(admission["runtimeCatalogExposed"])
+        self.assertTrue(admission["downloadCatalogExposed"])
         self.assertFalse(admission["liveQualified"])
-        self.assertEqual(admission["executableModes"], [])
-        self.assertIn("immutable_modular_component_descriptors", admission["unresolvedGates"])
-        for repository in self.review["repositories"]:
+        self.assertEqual(
+            admission["executableModes"],
+            ["image_to_video", "text_to_video", "video_to_video"],
+        )
+        self.assertNotIn("immutable_modular_component_descriptors", admission["unresolvedGates"])
+        capabilities = studio_capability_definitions()
+        model_types = [contract["pipelineClass"] for contract in self.review["modularContracts"]]
+        for repository, model_type in zip(self.review["repositories"], model_types):
             self.assertRegex(repository["revision"], r"^[0-9a-f]{40}$")
             self.assertFalse(repository["gated"])
             self.assertFalse(repository["private"])
-            self.assertIsNone(catalog_repository_pin(repository["repository"]))
+            pin = catalog_repository_pin(repository["repository"], model_type=model_type)
+            self.assertEqual(pin["revision"], repository["revision"])
+            self.assertEqual(repository["selectedClosureFileCount"], len(HELIOS_DIFFUSERS_FILES))
+            capability = capabilities[model_type]
+            self.assertEqual(capability["downloadFiles"], HELIOS_DIFFUSERS_FILES)
+            self.assertEqual(capability["modes"], ["text_to_video", "image_to_video", "video_to_video"])
+            self.assertFalse(capability["liveProof"])
 
     def test_all_three_modular_contracts_keep_exact_generic_workflows(self):
         expected_workflows = {
@@ -99,7 +111,7 @@ class HeliosArtifactReviewTests(unittest.TestCase):
             self.assertEqual(repository["fullWeightBytes"], 137730908420)
             self.assertTrue(all(SHA256.fullmatch(item["sha256"]) for item in all_files))
 
-    def test_mutable_modular_descriptors_and_source_recipes_are_explicit(self):
+    def test_component_revision_propagation_and_source_recipes_are_explicit(self):
         artifact_index = self.review["artifactIndex"]
         self.assertIsNone(artifact_index["componentDescriptorRevision"])
         self.assertEqual(
@@ -110,6 +122,7 @@ class HeliosArtifactReviewTests(unittest.TestCase):
             artifact_index["standardIndexSelectedWeightPrefixes"],
             ["text_encoder/", "transformer/", "vae/"],
         )
+        self.assertIn("exact reviewed top-level repository commit", artifact_index["componentRevisionResolution"])
 
         base = self.review["reviewedRecipes"]["baseTextToVideo"]
         self.assertEqual(

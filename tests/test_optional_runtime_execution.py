@@ -45,6 +45,7 @@ BUILTIN_AUDIO_PROFILE_ID = "builtin-audio-operations:direct"
 BUILTIN_DATA_PROFILE_ID = "builtin-data-operations:direct"
 BUILTIN_VIDEO_PROFILE_ID = "builtin-video-operations:direct"
 SPANDREL_VIDEO_UPSCALE_PROFILE_ID = "real-esrgan-x2-video-upscale:direct"
+SPANDREL_IMAGE_UPSCALE_PROFILE_ID = "real-esrgan-x2-image-upscale:direct"
 
 
 class JsonRequest:
@@ -179,6 +180,7 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                             BUILTIN_DATA_PROFILE_ID,
                             BUILTIN_IMAGE_PROFILE_ID,
                             BUILTIN_VIDEO_PROFILE_ID,
+                            SPANDREL_IMAGE_UPSCALE_PROFILE_ID,
                             SPANDREL_VIDEO_UPSCALE_PROFILE_ID,
                         },
                     )
@@ -441,6 +443,59 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
 
+    def test_loader_resolution_honors_a_sealed_exact_execution_profile(self):
+        values = {
+            "pipeline_class": "ErnieImagePipeline",
+            "mode": "text_to_image",
+            "model_id": {"source": "hub", "value": "baidu/ERNIE-Image-Turbo"},
+        }
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+        )
+        self.assertEqual(reason, "loader_profile_ambiguous")
+        self.assertEqual(
+            {profile.id for profile in profiles},
+            {"ernie-image-turbo:direct", "ernie-image:equivalent-standard"},
+        )
+
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            {**values, "execution_profile_id": "ernie-image:equivalent-standard"},
+        )
+        self.assertIsNone(reason)
+        self.assertEqual([profile.id for profile in profiles], ["ernie-image:equivalent-standard"])
+
+        invalid_cases = (
+            ({**values, "execution_profile_id": "missing:profile"}, "loader_execution_profile_unregistered"),
+            (
+                {
+                    **values,
+                    "pipeline_class": "FluxPipeline",
+                    "execution_profile_id": "ernie-image:equivalent-standard",
+                },
+                "loader_execution_profile_mismatch",
+            ),
+            (
+                {
+                    **values,
+                    "model_id": {"source": "hub", "value": "owner/other"},
+                    "execution_profile_id": "ernie-image:equivalent-standard",
+                },
+                "loader_execution_profile_mismatch",
+            ),
+        )
+        for selected, expected_reason in invalid_cases:
+            with self.subTest(expected_reason=expected_reason):
+                _profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    selected,
+                )
+                self.assertEqual(reason, expected_reason)
+
     def test_quanto_loader_selection_requires_the_exact_qualified_composite(self):
         values = {
             "pipeline_class": "FluxPipeline",
@@ -625,7 +680,88 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
             self.assertEqual(executable["executionProfileIds"], [EXECUTION_PROFILE_ID])
             catalog.assert_called_once_with()
 
-    def test_gallery_media_nodes_require_the_exact_app_owned_opencv_overlay(self):
+    def test_whisper_graph_uses_its_sealed_loader_identity_at_submission(self):
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.HuggingFaceSpeech",
+                    "action": "LoadSpeechRecognitionModel",
+                    "params": {
+                        "model_id": {
+                            "value": {"source": "hub", "value": "openai/whisper-tiny"},
+                        },
+                        "pipeline_class": {"value": "AutoModelForSpeechSeq2Seq"},
+                        "execution_profile_id": {"value": "whisper-tiny:direct"},
+                    },
+                }
+            },
+            "paths": [["loader"]],
+        }
+        catalog = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        with mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"}):
+            requirement = graph_optional_runtime_requirement(
+                graph,
+                catalog_resolver=lambda: catalog,
+            )
+            mismatched = graph_optional_runtime_requirement(
+                {
+                    **graph,
+                    "nodes": {
+                        "loader": {
+                            **graph["nodes"]["loader"],
+                            "params": {
+                                **graph["nodes"]["loader"]["params"],
+                                "pipeline_class": {"value": "AutoModelForCTC"},
+                            },
+                        }
+                    },
+                },
+                catalog_resolver=lambda: catalog,
+            )
+
+        self.assertEqual(requirement["state"], "active")
+        self.assertEqual(requirement["executionProfileIds"], ["whisper-tiny:direct"])
+        self.assertEqual(mismatched["state"], "unavailable")
+        self.assertEqual(mismatched["reason"], "execution_profile_loader_execution_profile_mismatch")
+
+    def test_wav2vec2_ctc_graph_uses_its_distinct_sealed_loader_identity(self):
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.HuggingFaceSpeech",
+                    "action": "LoadCTCSpeechRecognitionModel",
+                    "params": {
+                        "model_id": {
+                            "value": {"source": "hub", "value": "facebook/wav2vec2-base-960h"},
+                        },
+                        "pipeline_class": {"value": "AutoModelForCTC"},
+                        "execution_profile_id": {"value": "wav2vec2-base-960h:ctc-direct"},
+                    },
+                }
+            },
+            "paths": [["loader"]],
+        }
+        catalog = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        with mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"}):
+            requirement = graph_optional_runtime_requirement(
+                graph,
+                catalog_resolver=lambda: catalog,
+            )
+
+        self.assertEqual(requirement["state"], "active")
+        self.assertEqual(requirement["executionProfileIds"], ["wav2vec2-base-960h:ctc-direct"])
+
+    def test_gallery_media_nodes_require_the_exact_app_owned_codec_overlay(self):
         for action in ("EdgePreprocessor", "ObjectMaskPropagate"):
             graph = {
                 "nodes": {
@@ -654,6 +790,44 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     requirement["executionProfileIds"],
                     ["video-conditioning:gallery-media"],
                 )
+
+    def test_ltx2_image_conditioning_requires_pyav_but_text_generation_does_not(self):
+        def graph_for(mode):
+            return {
+                "nodes": {
+                    "generate": {
+                        "module": "modules.DiffusersVideo",
+                        "action": "GenerateVideoAudio",
+                        "params": {"mode": {"value": mode}},
+                    }
+                },
+                "paths": [["generate"]],
+            }
+
+        image_requirement = graph_optional_runtime_requirement(
+            graph_for("image_to_video"),
+            catalog_resolver=lambda: runtime_catalog(
+                profile_id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            ),
+        )
+        reference_requirement = graph_optional_runtime_requirement(
+            graph_for("reference_to_video"),
+            catalog_resolver=lambda: runtime_catalog(
+                profile_id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            ),
+        )
+        text_requirement = graph_optional_runtime_requirement(
+            graph_for("text_to_video"),
+            catalog_resolver=mock.Mock(side_effect=AssertionError("text generation must not require PyAV")),
+        )
+
+        for requirement in (image_requirement, reference_requirement):
+            self.assertTrue(requirement["requiredNow"])
+            self.assertEqual(requirement["state"], "missing")
+            self.assertEqual(requirement["profileIds"], [GALLERY_MEDIA_RUNTIME_PROFILE_ID])
+            self.assertEqual(requirement["executionProfileIds"], ["ltx2:image-conditioning-media"])
+        self.assertFalse(text_requirement["requiredNow"])
+        self.assertEqual(text_requirement["state"], "base_satisfied")
 
     def test_gallery_media_worker_check_rejects_wrong_active_overlay(self):
         with mock.patch.dict(

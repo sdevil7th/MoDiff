@@ -35,7 +35,7 @@ from modules.DiffusersVideo.wan_vace import (
     repo_value,
     validate_dimensions,
 )
-from utils.huggingface import local_files_only, validate_hf_repo_id
+from utils.huggingface import exact_cached_snapshot_path, local_files_only, validate_hf_repo_id
 from utils.torch_utils import DEFAULT_DEVICE, str_to_dtype
 
 logger = logging.getLogger("modiff")
@@ -134,8 +134,12 @@ _VIDEO_DYNAMIC_FIELDS = (
     "control_video",
     "mask",
     "reference_images",
+    "reference_video",
     "conditioning_scale",
     "strength",
+    "reference_strength",
+    "reference_downscale_factor",
+    "conditioning_attention_strength",
     "denoise_strength",
     "frame_rate",
     "last_image",
@@ -166,6 +170,7 @@ _VIDEO_INPUT_FIELDS = frozenset(
         "control_video",
         "mask",
         "reference_images",
+        "reference_video",
         "last_image",
         "pose_video",
         "face_video",
@@ -310,6 +315,16 @@ VIDEO_PIPELINE_ADAPTERS = {
         diffusers_class="LTX2ConditionPipeline",
         default_repo="Lightricks/LTX-2",
         modes=("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
+        output_media=("video", "audio"),
+        max_prompt_tokens=1024,
+        default_audio_sample_rate=24000,
+    ),
+    "LTX2InContextPipeline": VideoPipelineAdapter(
+        id="ltx-2-in-context",
+        pipeline_class="LTX2InContextPipeline",
+        diffusers_class="LTX2InContextPipeline",
+        default_repo="Lightricks/LTX-2",
+        modes=("in_context_to_video",),
         output_media=("video", "audio"),
         max_prompt_tokens=1024,
         default_audio_sample_rate=24000,
@@ -574,6 +589,16 @@ VIDEO_MODE_FIELD_CONTRACTS = {
             "reference_images", "strength", "frame_rate", required_fields=("reference_images",)
         ),
     },
+    "LTX2InContextPipeline": {
+        "in_context_to_video": _video_field_contract(
+            "reference_video",
+            "reference_strength",
+            "reference_downscale_factor",
+            "conditioning_attention_strength",
+            "frame_rate",
+            required_fields=("reference_video",),
+        )
+    },
     "LTX2Pipeline": {"text_to_video": _video_field_contract("frame_rate")},
     "HunyuanVideoFramepackPipeline": {
         "image_to_video": _video_field_contract(
@@ -650,6 +675,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "LTXConditionPipeline": "_load_ltx",
     "LTXI2VLongMultiPromptPipeline": "_load_ltx_long",
     "LTX2ConditionPipeline": "_load_ltx2",
+    "LTX2InContextPipeline": "_load_ltx2_in_context",
     "LTX2Pipeline": "_load_ltx2",
     "HunyuanVideoFramepackPipeline": "_load_framepack",
     "StableVideoDiffusionPipeline": "_load_stable_video_diffusion",
@@ -680,6 +706,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "LTXConditionPipeline": "_execute_ltx",
     "LTXI2VLongMultiPromptPipeline": "_execute_ltx_long",
     "LTX2ConditionPipeline": "_execute_ltx2",
+    "LTX2InContextPipeline": "_execute_ltx2_in_context",
     "LTX2Pipeline": "_execute_ltx2",
     "HunyuanVideoFramepackPipeline": "_execute_framepack",
     "StableVideoDiffusionPipeline": "_execute_stable_video_diffusion",
@@ -1510,6 +1537,7 @@ class LoadPipeline(WanVACELoadPipeline):
 
     label = "Load Diffusers Video Pipeline"
     category = "Diffusers Video"
+    cache_ignored_params = frozenset({"execution_profile_id"})
     params = {
         **WanVACELoadPipeline.params,
         "model_id": {
@@ -1534,6 +1562,13 @@ class LoadPipeline(WanVACELoadPipeline):
             "fieldOptions": {"noValidation": True},
             "onChange": "select_adapter",
         },
+        "execution_profile_id": {
+            "label": "Execution Profile",
+            "type": "string",
+            "default": "",
+            "hidden": True,
+            "fieldOptions": {"noValidation": True},
+        },
         "motion_adapter_id": {
             "label": "Motion Adapter",
             "display": "modelselect",
@@ -1544,6 +1579,26 @@ class LoadPipeline(WanVACELoadPipeline):
         },
         "motion_adapter_revision": {
             "label": "Motion Adapter Revision",
+            "type": "string",
+            "default": "",
+            "hidden": True,
+        },
+        "ic_lora_id": {
+            "label": "IC-LoRA",
+            "display": "modelselect",
+            "type": "string",
+            "value": "",
+            "hidden": True,
+            "fieldOptions": {"noValidation": True, "sources": ["hub"]},
+        },
+        "ic_lora_revision": {
+            "label": "IC-LoRA Revision",
+            "type": "string",
+            "default": "",
+            "hidden": True,
+        },
+        "ic_lora_weight_name": {
+            "label": "IC-LoRA Weight",
             "type": "string",
             "default": "",
             "hidden": True,
@@ -1561,6 +1616,9 @@ class LoadPipeline(WanVACELoadPipeline):
         model_id = repo_value(values["model_id"])
         values["revision"] = _resolve_loader_revision(values["model_id"], model_id, values.get("revision"))
         values.setdefault("motion_adapter_id", "")
+        values.setdefault("ic_lora_id", "")
+        values.setdefault("ic_lora_revision", "")
+        values.setdefault("ic_lora_weight_name", "")
         return super().__call__(**values)
 
     def execute(self, **kwargs):
@@ -1639,8 +1697,8 @@ class LoadPipeline(WanVACELoadPipeline):
 
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
-        dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
             default_device=DEFAULT_DEVICE,
@@ -1706,6 +1764,7 @@ class LoadPipeline(WanVACELoadPipeline):
 
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
@@ -1713,20 +1772,73 @@ class LoadPipeline(WanVACELoadPipeline):
             default_offload_mode="sequential_cpu",
             direct_device_load=True,
         )
+        load_target: str | Path = model_id
+        if isinstance(model_selection, dict) and model_selection.get("source") == "hub":
+            load_target = exact_cached_snapshot_path(model_id, revision)
         load_kwargs = {
             "torch_dtype": dtype,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
-            "revision": _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
-            "local_files_only": local_files_only(model_id),
+            "local_files_only": True,
             "use_safetensors": True,
             **recipe_load_kwargs,
         }
-        if CONFIG.hf.get("cache_dir"):
-            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
         self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class} video and audio pipeline")
-        pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+        pipeline = pipeline_class.from_pretrained(load_target, **load_kwargs)
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
+    def _load_ltx2_in_context(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        import diffusers
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        pipeline_class = getattr(diffusers, adapter.diffusers_class, None)
+        if pipeline_class is None or not callable(getattr(pipeline_class, "from_pretrained", None)):
+            raise RuntimeError(f"Diffusers does not expose the reviewed {adapter.diffusers_class} runtime class.")
+        if not callable(getattr(pipeline_class, "load_lora_weights", None)):
+            raise RuntimeError(f"The reviewed {adapter.diffusers_class} runtime does not expose IC-LoRA loading.")
+
+        model_selection = kwargs.get("model_id")
+        model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        lora_selection = kwargs.get("ic_lora_id")
+        lora_id = repo_value(lora_selection)
+        lora_revision = _resolve_loader_revision(lora_selection, lora_id, kwargs.get("ic_lora_revision"))
+        weight_name = str(kwargs.get("ic_lora_weight_name") or "")
+        if not lora_id or not lora_revision or not weight_name.endswith(".safetensors") or "/" in weight_name:
+            raise ValueError("LTX-2 in-context execution requires one exact pinned IC-LoRA safetensors artifact.")
+
+        dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
+        recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
+            kwargs,
+            default_device=DEFAULT_DEVICE,
+            default_offload_mode="sequential_cpu",
+            direct_device_load=True,
+        )
+        load_target = exact_cached_snapshot_path(model_id, revision)
+        lora_target = exact_cached_snapshot_path(lora_id, lora_revision)
+        load_kwargs = {
+            "torch_dtype": dtype,
+            "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
+            "local_files_only": True,
+            "use_safetensors": True,
+            **recipe_load_kwargs,
+        }
+        self.progress(-1, phase="loading", message="Loading LTX-2 in-context video and audio pipeline")
+        pipeline = pipeline_class.from_pretrained(load_target, **load_kwargs)
+        pipeline.load_lora_weights(
+            lora_target,
+            weight_name=weight_name,
+            adapter_name="ic_lora",
+            local_files_only=True,
+        )
+        pipeline.set_adapters("ic_lora", 1.0)
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        setattr(pipeline, "_modiff_video_ic_lora_repo", lora_id)
+        setattr(pipeline, "_modiff_video_ic_lora_revision", lora_revision)
+        setattr(pipeline, "_modiff_video_ic_lora_weight_name", weight_name)
         self.mm_add(pipeline, priority=2)
         return pipeline
 
@@ -2491,6 +2603,35 @@ class Generate(WanVACEGenerate):
             "step": 0.05,
         },
         "last_image": {"label": "Optional Last Image", "display": "input", "type": "image", "required": False},
+        "reference_video": {
+            "label": "IC-LoRA Reference Video",
+            "display": "input",
+            "type": "video",
+            "required": False,
+        },
+        "reference_strength": {
+            "label": "IC-LoRA Reference Strength",
+            "type": "float",
+            "default": 1.0,
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+        },
+        "reference_downscale_factor": {
+            "label": "IC-LoRA Reference Downscale",
+            "type": "int",
+            "default": 1,
+            "min": 1,
+            "max": 8,
+        },
+        "conditioning_attention_strength": {
+            "label": "IC-LoRA Attention Strength",
+            "type": "float",
+            "default": 1.0,
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+        },
         "framepack_sampling": {
             "label": "FramePack Sampling",
             "type": "string",
@@ -4309,6 +4450,102 @@ class Generate(WanVACEGenerate):
         # Exact 90b4 LTX2PipelineOutput owns the singular `audio` field. Keep
         # the plural fallback only for already-resident older runtime objects;
         # new exact profiles and tests exercise `audio`.
+        raw_audio = getattr(result, "audio", None)
+        if raw_audio is None:
+            raw_audio = getattr(result, "audios", None)
+        return {
+            "video_out": frames,
+            "width_out": width,
+            "height_out": height,
+            "frames_out": len(frames) if isinstance(frames, list) else num_frames,
+            "_audio": raw_audio,
+        }
+
+    def _execute_ltx2_in_context(
+        self,
+        pipeline: Any,
+        adapter: VideoPipelineAdapter,
+        mode: str,
+        kwargs: dict[str, Any],
+    ):
+        if mode != "in_context_to_video":
+            raise ValueError("LTX-2 in-context execution supports in_context_to_video only.")
+        reference_video = ensure_video_list(kwargs.get("reference_video"), "IC-LoRA reference video")
+        if not reference_video:
+            raise ValueError("LTX-2 in-context execution requires a reference video.")
+        prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
+        negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
+        _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens, family="LTX-2")
+        _validate_prompt_token_limit(
+            pipeline,
+            negative_prompt,
+            "negative prompt",
+            adapter.max_prompt_tokens,
+            family="LTX-2",
+        )
+        width = int(kwargs.get("width") or 768)
+        height = int(kwargs.get("height") or 512)
+        _validate_ltx_dimensions(width, height)
+        num_frames = _normalize_ltx_frames(int(kwargs.get("num_frames") or 121))
+        reference_strength = _bounded_short_video_float(
+            kwargs.get("reference_strength"),
+            family="LTX-2 in-context",
+            default=1.0,
+            label="reference strength",
+            minimum=0.0,
+            maximum=1.0,
+        )
+        downscale = _bounded_short_video_int(
+            kwargs.get("reference_downscale_factor"),
+            family="LTX-2 in-context",
+            default=1,
+            label="reference downscale factor",
+            minimum=1,
+            maximum=8,
+        )
+        attention_strength = _bounded_short_video_float(
+            kwargs.get("conditioning_attention_strength"),
+            family="LTX-2 in-context",
+            default=1.0,
+            label="conditioning attention strength",
+            minimum=0.0,
+            maximum=1.0,
+        )
+        import torch
+        from diffusers.pipelines.ltx2.pipeline_ltx2_ic_lora import LTX2ReferenceCondition
+
+        reference_conditions = [LTX2ReferenceCondition(frames=reference_video, strength=reference_strength)]
+        device = getattr(pipeline, "_execution_device", None) or "cpu"
+        generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
+        self._active_pipeline = pipeline
+        try:
+            result = pipeline(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                reference_conditions=reference_conditions,
+                reference_downscale_factor=downscale,
+                conditioning_attention_strength=attention_strength,
+                height=height,
+                width=width,
+                num_frames=num_frames,
+                frame_rate=float(kwargs.get("frame_rate") or 24),
+                num_inference_steps=int(kwargs.get("num_inference_steps") or 30),
+                guidance_scale=float(_value_or_default(kwargs, "guidance_scale", 3)),
+                generator=generator,
+                output_type=kwargs.get("output_type") or "pil",
+                return_dict=True,
+                attention_kwargs=parse_json_object(kwargs.get("attention_kwargs_json"), "attention kwargs"),
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=callback_tensor_inputs(
+                    kwargs.get("callback_on_step_end_tensor_inputs")
+                ),
+                max_sequence_length=min(int(kwargs.get("max_sequence_length") or 1024), 1024),
+            )
+        finally:
+            self._active_pipeline = None
+        frames = getattr(result, "frames", result)
+        if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
+            frames = frames[0]
         raw_audio = getattr(result, "audio", None)
         if raw_audio is None:
             raw_audio = getattr(result, "audios", None)

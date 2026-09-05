@@ -40,6 +40,14 @@ def main() -> int:
         required=True,
         help="Exact locked production Transformers wheel; it is inspected as a zip and never installed.",
     )
+    parser.add_argument(
+        "--gallery-manifest",
+        type=Path,
+        help=(
+            "Exact reviewed Template Gallery manifest. Required for a normal remote-asset build that intentionally "
+            "omits web/template-gallery runtime data."
+        ),
+    )
     parser.add_argument("--output", type=Path, default=UPSTREAM_COVERAGE_PATH)
     args = parser.parse_args()
     rendered = render_upstream_coverage(
@@ -48,6 +56,7 @@ def main() -> int:
             diffusers_source=args.diffusers_source,
             transformers_source=args.transformers_source,
             transformers_wheel=args.transformers_wheel,
+            gallery_manifest=args.gallery_manifest,
         )
     )
     if args.check:

@@ -26,15 +26,15 @@ turn that environment into a supported MoDiff runtime.
 
 ## Current end-to-end model paths
 
-| Model/artifact                                                                                      | Quantization            | Tier                                            | App path and boundary                                                                                                                                                                                 |
-| --------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unsloth/Qwen-Image-2512-unsloth-bnb-4bit`                                                          | pre-quantized BnB 4-bit | Auto-qualified on reviewed NVIDIA CUDA profiles | Studio Auto or Model Manager can request the immutable Hub snapshot. NVIDIA setup supplies `bitsandbytes`; the exact Qwen text-to-image profile admits this fallback. Other platforms remain blocked. |
-| `black-forest-labs/FLUX.1-dev-FP8`                                                                  | native FP8 artifact     | App-admitted on declared CUDA/ROCm paths        | The exact FLUX Dev profiles admit the official immutable alternate and Auto can request it as the lower-memory artifact. Each platform/model recipe still requires a current live resource receipt.   |
-| `black-forest-labs/FLUX.1-Kontext-dev-NVFP4`                                                        | native NVFP4 artifact   | App-admitted on NVIDIA Blackwell Linux          | The exact Kontext edit/inpaint profiles admit the official immutable alternate. Preflight requires CUDA compute capability 10.0 or newer. It is not a generic FP4 fallback.                           |
-| official Qwen Image and Qwen Image Edit-family repositories                                         | on-load BnB 4-bit       | Expert contract on NVIDIA CUDA                  | Exact Qwen profiles expose only `bnb_4bit`, with reviewed component selection and offload policy. It is not Auto-defaulted where prior kernel failures are known.                                     |
-| official FLUX Schnell, Dev, Krea, Depth, Canny, Redux, Kontext, Fill, and FLUX.2 Klein repositories | on-load BnB 4/8-bit     | Expert contract on NVIDIA CUDA                  | The NVIDIA application profile installs `bitsandbytes==0.50.0`. Exact model/mode profiles bound the choices; support is not inferred for arbitrary Diffusers pipelines.                               |
-| `city96/FLUX.1-schnell-gguf` / `flux1-schnell-Q4_0.gguf`                                           | GGUF Q4_0              | Expert exact-file contract                      | The component node downloads the pinned 6,770,707,360-byte file, verifies SHA-256, loads `FluxTransformer2DModel.from_single_file`, and assembles only the pinned FLUX.1-schnell bfloat16 base.          |
-| `HuggingFaceTB/SmolLM2-135M-Instruct`                                                              | on-load BnB NF4         | Expert contract on NVIDIA CUDA                  | The exact text profile exposes `bnb_4bit`; the loader requires the pinned commit, bfloat16 compute, CUDA, NF4, double quantization, and the NVIDIA base profile's `bitsandbytes==0.50.0`.                 |
+| Model/artifact                                                                                      | Quantization            | Tier                                                 | App path and boundary                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unsloth/Qwen-Image-2512-unsloth-bnb-4bit`                                                          | pre-quantized BnB 4-bit | Auto-qualified on reviewed NVIDIA CUDA profiles      | Studio Auto or Model Manager can request the immutable Hub snapshot. NVIDIA setup supplies `bitsandbytes`; the exact Qwen text-to-image profile admits this fallback. Other platforms remain blocked.                                                            |
+| `black-forest-labs/FLUX.1-dev-FP8`                                                                  | native FP8 artifact     | App-admitted on declared CUDA/ROCm paths             | The exact FLUX Dev profiles admit the official immutable alternate and Auto can request it as the lower-memory artifact. Each platform/model recipe still requires a current live resource receipt.                                                              |
+| `black-forest-labs/FLUX.1-Kontext-dev-NVFP4`                                                        | native NVFP4 artifact   | App-admitted on NVIDIA Blackwell Linux               | The exact Kontext edit/inpaint profiles admit the official immutable alternate. Preflight requires CUDA compute capability 10.0 or newer. It is not a generic FP4 fallback.                                                                                      |
+| official Qwen Image and Qwen Image Edit-family repositories                                         | on-load BnB 4-bit       | Expert contract on NVIDIA CUDA                       | Exact Qwen profiles expose only `bnb_4bit`, with reviewed component selection and offload policy. It is not Auto-defaulted where prior kernel failures are known.                                                                                                |
+| official FLUX Schnell, Dev, Krea, Depth, Canny, Redux, Kontext, Fill, and FLUX.2 Klein repositories | on-load BnB 4/8-bit     | Expert contract on NVIDIA CUDA                       | The NVIDIA application profile installs `bitsandbytes==0.50.0`. Exact model/mode profiles bound the choices; support is not inferred for arbitrary Diffusers pipelines.                                                                                          |
+| `city96/FLUX.1-schnell-gguf` / `flux1-schnell-Q4_0.gguf`                                            | GGUF Q4_0               | Expert exact-file contract; Linux ROCm canary passed | Model Manager downloads the pinned 6,770,707,360-byte file; Setup installs the reviewed GGUF optional runtime; the component node verifies SHA-256, loads `FluxTransformer2DModel.from_single_file`, and assembles only the pinned FLUX.1-schnell bfloat16 base. |
+| `HuggingFaceTB/SmolLM2-135M-Instruct`                                                               | on-load BnB NF4         | Expert contract on NVIDIA CUDA                       | The exact text profile exposes `bnb_4bit`; the loader requires the pinned commit, bfloat16 compute, CUDA, NF4, double quantization, and the NVIDIA base profile's `bitsandbytes==0.50.0`.                                                                        |
 
 No other quantized model currently meets the complete end-to-end support
 definition. In particular, the official FLUX.2 Klein FP8 catalog entry is not
@@ -48,16 +48,16 @@ quantization controls. `bnb_8bit`, GPTQ, AWQ, GGUF, and arbitrary
 
 ## Runtime quantization backends
 
-| Backend/mode                     | Implemented loader API                                                                                                     | App-delivered dependency                                                             | Studio admission                           | Current disposition                                                               |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------- |
-| `bnb_4bit`                       | Yes, including separate Diffusers and Transformers component configs                                                       | Yes in the NVIDIA CUDA application profile                                           | Exact Qwen and FLUX profiles               | Supported only at the tiers listed above.                                         |
-| `bnb_8bit`                       | Yes                                                                                                                        | Yes in the NVIDIA CUDA application profile                                           | Exact FLUX profiles                        | Expert contract; no blanket model/platform claim.                                 |
-| `quanto_float8`                  | Yes                                                                                                                        | Yes; exact Transformers/PEFT/Quanto overlay on qualified Linux x86-64                | Exact FLUX profiles when that overlay is active | Expert contract; isolated ROCm float8 qualification passed, while each full model recipe still needs live proof. |
-| `quanto_int8`                    | Backend generic loader only                                                                                                | No                                                                                   | Not admitted by Studio profiles            | Documented research.                                                              |
-| `torchao_float8`                 | Yes                                                                                                                        | No; the legacy `torchao` package entry has no reviewed immutable install lock        | Hidden as unavailable at runtime            | Not end-to-end supported.                                                         |
-| `torchao_int8_weight_only`       | Backend generic loader only                                                                                                | No                                                                                   | Not admitted by Studio profiles            | Documented research.                                                              |
-| `torchao_mxfp8`, `torchao_nvfp4` | Artifact-creation helper only                                                                                              | No supported app environment                                                         | Not admitted                               | Research/qualification tooling, not a user runtime feature.                       |
-| GGUF                             | Exact FLUX.1-schnell Q4_0 component loading and base-pipeline assembly                                                      | Supplied by the reviewed base Diffusers runtime                                      | Exact component-node contract               | Expert exact-file path; other GGUF catalog entries remain research only.          |
+| Backend/mode                     | Implemented loader API                                                 | App-delivered dependency                                                                     | Studio admission                                | Current disposition                                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `bnb_4bit`                       | Yes, including separate Diffusers and Transformers component configs   | Yes in the NVIDIA CUDA application profile                                                   | Exact Qwen and FLUX profiles                    | Supported only at the tiers listed above.                                                                        |
+| `bnb_8bit`                       | Yes                                                                    | Yes in the NVIDIA CUDA application profile                                                   | Exact FLUX profiles                             | Expert contract; no blanket model/platform claim.                                                                |
+| `quanto_float8`                  | Yes                                                                    | Yes; exact Transformers/PEFT/Quanto overlay on qualified Linux x86-64                        | Exact FLUX profiles when that overlay is active | Expert contract; isolated ROCm float8 qualification passed, while each full model recipe still needs live proof. |
+| `quanto_int8`                    | Backend generic loader only                                            | No                                                                                           | Not admitted by Studio profiles                 | Documented research.                                                                                             |
+| `torchao_float8`                 | Yes                                                                    | No; the legacy `torchao` package entry has no reviewed immutable install lock                | Hidden as unavailable at runtime                | Not end-to-end supported.                                                                                        |
+| `torchao_int8_weight_only`       | Backend generic loader only                                            | No                                                                                           | Not admitted by Studio profiles                 | Documented research.                                                                                             |
+| `torchao_mxfp8`, `torchao_nvfp4` | Artifact-creation helper only                                          | No supported app environment                                                                 | Not admitted                                    | Research/qualification tooling, not a user runtime feature.                                                      |
+| GGUF                             | Exact FLUX.1-schnell Q4_0 component loading and base-pipeline assembly | Exact app-delivered `huggingface-transformers-main-96fe6dce-peft-0.20.0-gguf-0.19.0` overlay | Exact component-node contract                   | Expert exact-file path with a Linux ROCm load/run receipt; other GGUF catalog entries remain research only.      |
 
 Diffusers' pipeline quantization needs component-aware configuration. A
 Transformers text encoder requires `transformers.BitsAndBytesConfig`, while a
@@ -66,36 +66,58 @@ a pipeline repository substitution: upstream loads a quantized component from
 a single file and assembles it with the remaining pipeline components. Treating
 either case as a generic repository swap is unsafe.
 
+### Installing and running the reviewed GGUF path
+
+1. In **Setup > Optional runtimes**, install and activate **Transformers main +
+   PEFT + GGUF 0.19.0**. The app verifies the immutable profile digest and
+   wheel SHA-256, then restarts; do not install `gguf` into the base environment
+   with an external `pip` command.
+2. In **Model Manager**, request repository
+   `city96/FLUX.1-schnell-gguf` at commit
+   `f495746ed9c5efcf4661f53ef05401dceadc17d2`, selecting only
+   `flux1-schnell-Q4_0.gguf`. The app reserves 6,770,707,360 bytes plus its SSD
+   safety floor before downloading and verifies the cataloged file digest.
+3. Add **Load Pre-quantized Diffusers Component**, keep its reviewed defaults,
+   and connect `component` to the FLUX.1-schnell pipeline loader's
+   `prequantized_transformer` input. Keep the base revision
+   `741f7c3ce8b383c54771c7003378a50191e9efe9`, bfloat16 compute,
+   `quantization_mode=none`, and no second quantizer.
+
+The exact Linux ROCm canary loaded the component, assembled the base, completed
+four denoising steps at 512×512, and persisted a reviewed image. This evidence
+does not qualify arbitrary GGUF files, other component classes, or other
+hardware targets.
+
 ## Quantized artifact inventory
 
 `data/model-artifact-catalog.json` currently contains 22 quantized artifact
 records: two Diffusers-BnB, four FP8, fifteen GGUF, and one NVFP4. The catalog is
 an immutable discovery and review ledger, not an execution allowlist.
 
-| Model type                         | Artifact                                     | Format              | Review status                                          |
-| ---------------------------------- | -------------------------------------------- | ------------------- | ------------------------------------------------------ |
-| `ZImageModularPipeline`            | `T5B/Z-Image-Turbo-FP8`                      | FP8                 | Community research                                     |
-| `QwenImageModularPipeline`         | `unsloth/Qwen-Image-2512-unsloth-bnb-4bit`   | Diffusers-BnB 4-bit | MoDiff-qualified path                                  |
-| `QwenImageEditModularPipeline`     | `ovedrive/qwen-image-edit-4bit`              | Diffusers-BnB 4-bit | Community option; not Auto-qualified                   |
-| `QwenImageEditPlusModularPipeline` | `unsloth/Qwen-Image-Edit-2511-GGUF`          | GGUF 4-bit          | Popular unverified research                            |
-| `QwenImageEditPlusModularPipeline` | `1038lab/Qwen-Image-Edit-2511-FP8`           | FP8                 | Popular unverified research                            |
-| `QwenImageLayeredModularPipeline`  | `unsloth/Qwen-Image-Layered-GGUF`            | GGUF 4-bit          | Popular unverified research                            |
-| `WanVACEPipeline`                  | `samuelchristlie/Wan2.1-VACE-1.3B-GGUF`      | GGUF 4-bit          | Community research                                     |
-| `WanVideoPipeline`                 | `samuelchristlie/Wan2.1-T2V-1.3B-GGUF`       | GGUF 4-bit          | Popular unverified research                            |
-| `WanImageToVideoPipeline`          | `QuantStack/Wan2.2-I2V-A14B-GGUF`            | GGUF 4-bit          | Popular unverified research                            |
-| `WanTI2VPipeline`                  | `QuantStack/Wan2.2-TI2V-5B-GGUF`             | GGUF 4-bit          | Popular unverified research                            |
-| `LTXVideoPipeline`                 | `QuantStack/LTXV-13B-0.9.8-distilled-GGUF`   | GGUF 4-bit          | Community research                                     |
-| `AceStepAudioPipeline`             | `Serveurperso/ACE-Step-1.5-GGUF`             | GGUF 5-bit          | Popular unverified research                            |
-| `FluxSchnellPipeline`              | `city96/FLUX.1-schnell-gguf`                 | GGUF 4-bit          | Popular unverified research                            |
-| `FluxDevPipeline`                  | `black-forest-labs/FLUX.1-dev-FP8`           | FP8                 | Official app-admitted alternate                        |
-| `FluxKreaPipeline`                 | `QuantStack/FLUX.1-Krea-dev-GGUF`            | GGUF 4-bit          | Popular unverified research                            |
-| `FluxKontextPipeline`              | `black-forest-labs/FLUX.1-Kontext-dev-NVFP4` | NVFP4 4-bit         | Official app-admitted Blackwell alternate              |
-| `FluxFillPipeline`                 | `YarvixPA/FLUX.1-Fill-dev-GGUF`              | GGUF 4-bit          | Popular unverified research                            |
-| `FluxDepthPipeline`                | `SporkySporkness/FLUX.1-Depth-dev-GGUF`      | GGUF 4-bit          | Community research                                     |
-| `FluxCannyPipeline`                | `SporkySporkness/FLUX.1-Canny-dev-GGUF`      | GGUF 4-bit          | Community research                                     |
-| `FluxReduxPipeline`                | `second-state/FLUX.1-Redux-dev-GGUF`         | GGUF 4-bit          | Community research                                     |
-| `Flux2KleinPipeline`               | `black-forest-labs/FLUX.2-klein-4b-fp8`      | FP8                 | Official catalog entry; exact loader admission pending |
-| `Flux2KleinPipeline`               | `unsloth/FLUX.2-klein-4B-GGUF`               | GGUF 4-bit          | Popular unverified research                            |
+| Model type                         | Artifact                                     | Format              | Review status                                           |
+| ---------------------------------- | -------------------------------------------- | ------------------- | ------------------------------------------------------- |
+| `ZImageModularPipeline`            | `T5B/Z-Image-Turbo-FP8`                      | FP8                 | Community research                                      |
+| `QwenImageModularPipeline`         | `unsloth/Qwen-Image-2512-unsloth-bnb-4bit`   | Diffusers-BnB 4-bit | MoDiff-qualified path                                   |
+| `QwenImageEditModularPipeline`     | `ovedrive/qwen-image-edit-4bit`              | Diffusers-BnB 4-bit | Community option; not Auto-qualified                    |
+| `QwenImageEditPlusModularPipeline` | `unsloth/Qwen-Image-Edit-2511-GGUF`          | GGUF 4-bit          | Popular unverified research                             |
+| `QwenImageEditPlusModularPipeline` | `1038lab/Qwen-Image-Edit-2511-FP8`           | FP8                 | Popular unverified research                             |
+| `QwenImageLayeredModularPipeline`  | `unsloth/Qwen-Image-Layered-GGUF`            | GGUF 4-bit          | Popular unverified research                             |
+| `WanVACEPipeline`                  | `samuelchristlie/Wan2.1-VACE-1.3B-GGUF`      | GGUF 4-bit          | Community research                                      |
+| `WanVideoPipeline`                 | `samuelchristlie/Wan2.1-T2V-1.3B-GGUF`       | GGUF 4-bit          | Popular unverified research                             |
+| `WanImageToVideoPipeline`          | `QuantStack/Wan2.2-I2V-A14B-GGUF`            | GGUF 4-bit          | Popular unverified research                             |
+| `WanTI2VPipeline`                  | `QuantStack/Wan2.2-TI2V-5B-GGUF`             | GGUF 4-bit          | Popular unverified research                             |
+| `LTXVideoPipeline`                 | `QuantStack/LTXV-13B-0.9.8-distilled-GGUF`   | GGUF 4-bit          | Community research                                      |
+| `AceStepAudioPipeline`             | `Serveurperso/ACE-Step-1.5-GGUF`             | GGUF 5-bit          | Popular unverified research                             |
+| `FluxSchnellPipeline`              | `city96/FLUX.1-schnell-gguf`                 | GGUF 4-bit          | Exact Q4_0 component contract; Linux ROCm canary passed |
+| `FluxDevPipeline`                  | `black-forest-labs/FLUX.1-dev-FP8`           | FP8                 | Official app-admitted alternate                         |
+| `FluxKreaPipeline`                 | `QuantStack/FLUX.1-Krea-dev-GGUF`            | GGUF 4-bit          | Popular unverified research                             |
+| `FluxKontextPipeline`              | `black-forest-labs/FLUX.1-Kontext-dev-NVFP4` | NVFP4 4-bit         | Official app-admitted Blackwell alternate               |
+| `FluxFillPipeline`                 | `YarvixPA/FLUX.1-Fill-dev-GGUF`              | GGUF 4-bit          | Popular unverified research                             |
+| `FluxDepthPipeline`                | `SporkySporkness/FLUX.1-Depth-dev-GGUF`      | GGUF 4-bit          | Community research                                      |
+| `FluxCannyPipeline`                | `SporkySporkness/FLUX.1-Canny-dev-GGUF`      | GGUF 4-bit          | Community research                                      |
+| `FluxReduxPipeline`                | `second-state/FLUX.1-Redux-dev-GGUF`         | GGUF 4-bit          | Community research                                      |
+| `Flux2KleinPipeline`               | `black-forest-labs/FLUX.2-klein-4b-fp8`      | FP8                 | Official catalog entry; exact loader admission pending  |
+| `Flux2KleinPipeline`               | `unsloth/FLUX.2-klein-4B-GGUF`               | GGUF 4-bit          | Popular unverified research                             |
 
 ## Upstream coverage and function documentation
 
@@ -125,7 +147,8 @@ Remaining expansion work:
 
 1. Deliver an immutable TorchAO runtime before making TorchAO selectable.
 2. Add model-level live load/run/resource evidence before promoting the exact
-   Quanto, GGUF, or Transformers BnB contracts beyond Expert.
+   Quanto or Transformers BnB contracts beyond Expert, and qualify the reviewed
+   GGUF recipe on additional hardware before widening its Linux ROCm scope.
 3. Connect only reviewed pre-quantized repositories to exact compatible model
    profiles; catalog popularity must never create execution compatibility.
 4. Record live load/run/resource receipts per model, mode, backend, and

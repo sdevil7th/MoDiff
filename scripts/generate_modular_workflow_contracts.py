@@ -38,6 +38,12 @@ _GENERIC_TASK_ALIASES = {
 _EQUIVALENT_TASK_ALIASES = {
     "Wan22ModularPipeline": {"default": "text_to_video"},
     "Wan22Image2VideoModularPipeline": {"default": "image_to_video"},
+    "LTX2ModularPipeline": {
+        "text2video": "text_to_video_with_audio",
+        "image2video": "image_to_video_with_audio",
+        "condition": "condition_to_video_with_audio",
+        "in_context": "in_context_to_video_with_audio",
+    },
 }
 
 

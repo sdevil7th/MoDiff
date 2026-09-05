@@ -3,7 +3,7 @@
 Start with the backend preflight. It checks the runtime without importing every model node:
 
 ```bash
-./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
 On Windows, use `.\.venv\Scripts\python.exe` in place of `./.venv/bin/python`.
@@ -111,7 +111,11 @@ The normal `./run.sh` or `.\run.ps1` entrypoint keeps a lightweight supervisor o
 the model-owning worker. Stop first requests cooperative cancellation and
 removes queued runs. If a third-party model call does not return within the
 bounded grace period, the worker is replaced so the operating system releases
-its RAM/VRAM before another run is accepted.
+its RAM/VRAM before another run is accepted. If a native model runtime exits
+unexpectedly, the supervisor records the active run as failed, cancels queued
+in-memory work that cannot be reconstructed safely, and starts a clean worker.
+The browser reconnects automatically; the interrupted run does not resume from
+its last denoising step and must be retried with a resource plan that fits.
 
 ## Apple MPS or Intel XPU is unavailable
 
@@ -133,6 +137,25 @@ For supported Intel graphics on x86-64 Linux or Windows, install or repair the p
 - The token saved through the UI is plaintext in ignored `config.ini`. Do not paste it into logs or issues.
 - Set `[huggingface] cache_dir`, `HF_HOME`, or `HF_HUB_CACHE` to a writable volume with sufficient free space. A configured `cache_dir` is exported as `HF_HUB_CACHE` by the backend.
 - Avoid pointing multiple applications at partially compatible cache layouts unless you understand how snapshots and revisions are resolved.
+
+Opening or refreshing Model Manager can require a full index and artifact
+validation pass over a very large cache. Those scans run in background worker
+threads and simultaneous refresh requests share the same work, so health,
+workflow, and queue requests should remain responsive. The UI may continue to
+show the previous screen while the fresh generation is being validated, but a
+failed fresh validation is reported as an error; MoDiff does not substitute
+older cached readiness results. If unrelated API calls time out while this scan
+is active, confirm that the backend process includes the current discovery
+implementation before treating the model worker as disconnected.
+
+The same refresh also reads runtime status, optional runtimes, and the Studio
+model-capability catalog. Their hardware/package probes, filesystem inspection,
+catalog construction, and JSON encoding are likewise off the request loop and
+coalesced. The default multi-megabyte capability response is pre-serialized
+before the HTTP listener opens. `/health` uses the stable runtime identity
+captured during backend startup; changing the managed runtime requires the
+documented backend restart. Dynamic RAM, disk, and accelerator statistics
+remain available from `/system_stats` without blocking other requests.
 
 Current app-owned model and Gallery snapshot payloads use standard Hub HTTP,
 which retains bounded per-request timeouts and retries while preserving already

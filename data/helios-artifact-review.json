@@ -1,13 +1,16 @@
 {
   "admission": {
-    "downloadCatalogExposed": false,
-    "executableModes": [],
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "image_to_video",
+      "text_to_video",
+      "video_to_video"
+    ],
     "liveQualified": false,
-    "reason": "All three approximately 80.48 GB selected partitions require remote heavy-hardware qualification, and every upstream Modular component descriptor leaves revision null even though the repository snapshots reviewed here are immutable.",
-    "runtimeCatalogExposed": false,
-    "status": "contract_only",
+    "reason": "The three official top-level block graphs are statically executable from exact 24-file repository closures. Live proof still requires remote heavy-hardware qualification.",
+    "runtimeCatalogExposed": true,
+    "status": "graph_qualified_execution_pending",
     "unresolvedGates": [
-      "immutable_modular_component_descriptors",
       "remote_heavy_hardware_execution",
       "physical_macos_execution"
     ]
@@ -21,7 +24,7 @@
       "transformer",
       "vae"
     ],
-    "modularIndexRejectReason": "The checked-in Modular indexes name immutable-review repositories but set revision to null for every downloadable component. MoDiff must not turn those moving descriptors into download or runtime entries.",
+    "componentRevisionResolution": "ModelsLoader propagates the exact reviewed top-level repository commit to every same-repository component descriptor before load_components resolves weights.",
     "standardIndexSelectedWeightPrefixes": [
       "text_encoder/",
       "transformer/",
@@ -267,7 +270,9 @@
         }
       ],
       "selectedWeightBytes": 80481086028,
-      "selectedWeightFileCount": 12
+      "selectedWeightFileCount": 12,
+      "selectedClosureBytes": 80502665588,
+      "selectedClosureFileCount": 24
     },
     {
       "excludedTransformerFiles": [
@@ -352,7 +357,9 @@
         }
       ],
       "selectedWeightBytes": 80481086028,
-      "selectedWeightFileCount": 12
+      "selectedWeightFileCount": 12,
+      "selectedClosureBytes": 80502665685,
+      "selectedClosureFileCount": 24
     },
     {
       "excludedTransformerFiles": [
@@ -437,7 +444,9 @@
         }
       ],
       "selectedWeightBytes": 80481086028,
-      "selectedWeightFileCount": 12
+      "selectedWeightFileCount": 12,
+      "selectedClosureBytes": 80502665527,
+      "selectedClosureFileCount": 24
     }
   ],
   "reviewedRecipes": {

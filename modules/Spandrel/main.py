@@ -1,6 +1,11 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
-from os import path
 import logging
+import os
+from os import path
+from pathlib import Path
+import shutil
+import tempfile
+
 logger = logging.getLogger('modiff')
 
 from modiff.NodeBase import NodeBase
@@ -33,10 +38,13 @@ class Upscaler(NodeBase):
         exact_artifact = isinstance(model_id, dict) and any(
             model_id.get(key) not in (None, '') for key in ('revision', 'sha256', 'byteSize')
         )
+        reviewed_suffix = None
         if exact_artifact:
             from modiff.controlled_artifacts import resolve_upscaler_artifact
 
-            model_path = str(resolve_upscaler_artifact(model_id).path)
+            resolved_artifact = resolve_upscaler_artifact(model_id)
+            model_path = str(resolved_artifact.path)
+            reviewed_suffix = Path(resolved_artifact.receipt["artifact"]["weightName"]).suffix.lower()
         elif model_source == 'hub':
             from utils.huggingface import cached_file_path
 
@@ -79,7 +87,25 @@ class Upscaler(NodeBase):
             if model_path == self._model_path and self._model is not None:
                 model = self._model
             else:
-                model = ModelLoader().load_from_file(model_path).eval()
+                loader_path = model_path
+                temporary_loader_path = None
+                if reviewed_suffix and not Path(model_path).suffix:
+                    loader_dir = Path(CONFIG.paths["temp"]) / "spandrel-loader"
+                    loader_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+                    descriptor, alias = tempfile.mkstemp(prefix="verified-", suffix=reviewed_suffix, dir=loader_dir)
+                    os.close(descriptor)
+                    os.unlink(alias)
+                    try:
+                        os.link(model_path, alias)
+                    except OSError:
+                        shutil.copyfile(model_path, alias)
+                    loader_path = alias
+                    temporary_loader_path = alias
+                try:
+                    model = ModelLoader().load_from_file(loader_path).eval()
+                finally:
+                    if temporary_loader_path:
+                        Path(temporary_loader_path).unlink(missing_ok=True)
                 self._model_path = model_path
                 self._model = model
         except Exception as e:

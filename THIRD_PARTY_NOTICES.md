@@ -31,7 +31,7 @@ Source: <https://github.com/huggingface/diffusers/blob/bb56997d4b7e87f0743f26a61
 
 That commit remains the provenance of the adapted source. The separately
 reviewed executable Diffusers dependency is currently pinned to
-`90b4e34e79a86ec5e7f2437634fe95ecd2108796`.
+`2f7e0154a9db246e95c9ede43edba7db5b130805`.
 
 ## Comfy workflow template research metadata
 

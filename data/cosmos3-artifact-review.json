@@ -1,19 +1,91 @@
 {
   "admission": {
+    "componentRevisionResolution": {
+      "loaderIndexPreference": "modular_model_index.json",
+      "nullSameRepositoryDescriptorsBoundToTopLevelRevision": true,
+      "standardModelIndexIgnoredWhenModularIndexPresent": true
+    },
     "downloadCatalogExposed": false,
     "executableModes": [],
     "existingModularContractsPreserved": [
       "Cosmos3OmniModularPipeline",
       "Cosmos3DistilledModularPipeline"
     ],
+    "graphQualifiedRoutes": [
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_image",
+        "workflowId": "text2image"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_video",
+        "workflowId": "text2video"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "image_to_video",
+        "workflowId": "image2video"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "video_to_video",
+        "workflowId": "video2video"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_video_with_audio",
+        "workflowId": "text2video_with_sound"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "image_to_video_with_audio",
+        "workflowId": "image2video_with_sound"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "video_to_video_with_audio",
+        "workflowId": "video2video_with_sound"
+      },
+      {
+        "artifactRevision": "aa0d5a57b7b045d68daa60fbacd84ec723c7cb7b",
+        "pipelineClass": "Cosmos3DistilledModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_image",
+        "workflowId": "text2image"
+      },
+      {
+        "artifactRevision": "cd55ce81bc5cea51a09c37cd7652144e7278f049",
+        "pipelineClass": "Cosmos3DistilledModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "image_to_video",
+        "workflowId": "image2video"
+      }
+    ],
     "liveQualified": false,
-    "reason": "The public 34.89-132.62 GB repositories do not provide immutable component descriptors, the base standard index names a class absent from the pinned Diffusers revision, and production safety/remote execution have not been qualified.",
+    "reason": "All seven non-action Nano workflows and the two Distilled workflows with exact route-specific 4-step checkpoints now have static BlockDefinitionV2 graph routes. All Run, Auto, template, Gallery, and public execution claims remain closed: the mandatory gated guardrail has not been acknowledged or installed, its optional runtime has not been admitted, and neither the 34.99 GB Nano snapshot nor either roughly 130 GB Distilled snapshot has received a real resource/output qualification. The unmatched Distilled text/video routes and three action workflows still require separate route-specific review.",
     "runtimeCatalogExposed": false,
-    "status": "contract_only",
+    "status": "partially_graph_qualified",
     "unresolvedGates": [
-      "immutable_component_descriptors",
-      "standard_index_class_resolution",
-      "cosmos_guardrail_qualification",
+      "remaining_route_specific_graph_admission",
+      "distilled_tensor_parallel_resource_and_output_qualification",
+      "cosmos_guardrail_hub_access_and_license_acknowledgement",
+      "cosmos_guardrail_optional_runtime_and_revision_binding",
+      "nano_snapshot_installation_and_resource_qualification",
       "remote_heavy_hardware_execution",
       "physical_macos_execution"
     ]
@@ -21,16 +93,23 @@
   "artifactInventoryCanonicalization": {
     "digest": "sha256",
     "encoding": "utf-8",
-    "entries": [
-      "path",
-      "byteSize",
-      "sha256"
-    ],
+    "entries": ["path", "byteSize", "sha256"],
     "ordering": "ascending path",
     "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
   },
   "family": "Cosmos3",
   "format": "safetensors",
+  "guardrail": {
+    "access": "gated_auto",
+    "acknowledgedByUser": false,
+    "distribution": "cosmos-guardrail",
+    "exactPackageVersion": "0.3.1",
+    "license": "nvidia-open-model-license",
+    "repository": "nvidia/Cosmos-Guardrail1",
+    "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+    "snapshotByteSize": 7171449905,
+    "weightByteSize": 3627263067
+  },
   "license": {
     "embeddedLicenseFilePresent": false,
     "id": "openmdw-1.1",
@@ -51,80 +130,43 @@
       "pipelineClass": "Cosmos3OmniModularPipeline",
       "workflows": {
         "action_forward_dynamics": {
-          "requiredInputs": [
-            "action",
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["action", "num_inference_steps", "prompt"],
           "taskId": "action_forward_dynamics"
         },
         "action_inverse_dynamics": {
-          "requiredInputs": [
-            "action",
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["action", "num_inference_steps", "prompt"],
           "taskId": "action_inverse_dynamics"
         },
         "action_policy": {
-          "requiredInputs": [
-            "action",
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["action", "num_inference_steps", "prompt"],
           "taskId": "action_policy"
         },
         "image2video": {
-          "requiredInputs": [
-            "image",
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["image", "num_inference_steps", "prompt"],
           "taskId": "image_to_video"
         },
         "image2video_with_sound": {
-          "requiredInputs": [
-            "image",
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["image", "num_inference_steps", "prompt"],
           "taskId": "image_to_video_with_audio"
         },
         "text2image": {
-          "requiredInputs": [
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["num_inference_steps", "prompt"],
           "taskId": "text_to_image"
         },
         "text2video": {
-          "requiredInputs": [
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["num_inference_steps", "prompt"],
           "taskId": "text_to_video"
         },
         "text2video_with_sound": {
-          "requiredInputs": [
-            "num_inference_steps",
-            "prompt"
-          ],
+          "requiredInputs": ["num_inference_steps", "prompt"],
           "taskId": "text_to_video_with_audio"
         },
         "video2video": {
-          "requiredInputs": [
-            "num_inference_steps",
-            "prompt",
-            "video"
-          ],
+          "requiredInputs": ["num_inference_steps", "prompt", "video"],
           "taskId": "video_to_video"
         },
         "video2video_with_sound": {
-          "requiredInputs": [
-            "num_inference_steps",
-            "prompt",
-            "video"
-          ],
+          "requiredInputs": ["num_inference_steps", "prompt", "video"],
           "taskId": "video_to_video_with_audio"
         }
       }
@@ -134,29 +176,19 @@
       "pipelineClass": "Cosmos3DistilledModularPipeline",
       "workflows": {
         "image2video": {
-          "requiredInputs": [
-            "image",
-            "prompt"
-          ],
+          "requiredInputs": ["image", "prompt"],
           "taskId": "image_to_video"
         },
         "text2image": {
-          "requiredInputs": [
-            "prompt"
-          ],
+          "requiredInputs": ["prompt"],
           "taskId": "text_to_image"
         },
         "text2video": {
-          "requiredInputs": [
-            "prompt"
-          ],
+          "requiredInputs": ["prompt"],
           "taskId": "text_to_video"
         },
         "video2video": {
-          "requiredInputs": [
-            "prompt",
-            "video"
-          ],
+          "requiredInputs": ["prompt", "video"],
           "taskId": "video_to_video"
         }
       }
@@ -195,8 +227,9 @@
       },
       "private": false,
       "repository": "nvidia/Cosmos3-Nano",
-      "revision": "411f42a8fdfb8c5b2583cb8786e0938f49796eaa",
+      "revision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
       "role": "nano",
+      "snapshotByteSize": 34986890561,
       "transformer": {
         "actionDimension": 64,
         "configSha256": "282862cf9c42a257dbd2f00e41b5ef65c3aacfb693ad1f8ab28b05a02e1b9ffe",
@@ -242,8 +275,9 @@
       },
       "private": false,
       "repository": "nvidia/Cosmos3-Super",
-      "revision": "e0262be9d8f7586bc24c069a2aed2b665bdff266",
+      "revision": "fe77b66696d645f663b8f27e942b3b43e4629e23",
       "role": "super",
+      "snapshotByteSize": 132710200448,
       "transformer": {
         "actionDimension": 64,
         "configSha256": "7d4ade2f8cc05e8b2b505a0ed6260e8a0fb1027c5ee49bc9f0c854e895af682b",
@@ -274,12 +308,7 @@
     },
     {
       "componentDescriptorRevisionState": "revision_key_absent",
-      "distilledSigmas": [
-        1.0,
-        0.9375,
-        0.8333333333333334,
-        0.625
-      ],
+      "distilledSigmas": [1.0, 0.9375, 0.8333333333333334, 0.625],
       "gated": false,
       "guidanceScaleForced": 1.0,
       "modelIndex": {
@@ -296,8 +325,9 @@
       },
       "private": false,
       "repository": "nvidia/Cosmos3-Super-Text2Image-4Step",
-      "revision": "0573a4b26b8e15d13d416e51f4680c8bc8b8c33d",
+      "revision": "aa0d5a57b7b045d68daa60fbacd84ec723c7cb7b",
       "role": "superTextToImage4Step",
+      "snapshotByteSize": 131423464104,
       "transformer": {
         "actionDimension": 32,
         "configSha256": "0762cfbb830e78565ee88979bfa83c1109dadeb856af05e7e685df6f0102b16a",
@@ -324,12 +354,7 @@
     },
     {
       "componentDescriptorRevisionState": "revision_key_absent",
-      "distilledSigmas": [
-        1.0,
-        0.9375,
-        0.8333333333333334,
-        0.625
-      ],
+      "distilledSigmas": [1.0, 0.9375, 0.8333333333333334, 0.625],
       "gated": false,
       "guidanceScaleForced": 1.0,
       "modelIndex": {
@@ -346,8 +371,9 @@
       },
       "private": false,
       "repository": "nvidia/Cosmos3-Super-Image2Video-4Step",
-      "revision": "81da615b7f92dc710c6359b072beee06f675979c",
+      "revision": "cd55ce81bc5cea51a09c37cd7652144e7278f049",
       "role": "superImageToVideo4Step",
+      "snapshotByteSize": 129446040640,
       "transformer": {
         "actionDimension": 32,
         "configSha256": "eb80c6af30d45ea2387177e13a7b61e8841189d3304d7a188d1d9bfe7da8da18",
@@ -369,7 +395,7 @@
       "weightInventorySha256": "ea28fd89ee4c39f0c7ed1df91b26576348585f7a720592978a4704b3b1d976be"
     }
   ],
-  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "reviewedAt": "2026-09-02T13:30:00+05:30",
   "reviewedRecipes": {
     "distilled": {
       "guidanceScale": 1.0,
@@ -384,6 +410,14 @@
       "textToImage": {
         "height": 720,
         "numFrames": 1,
+        "publicOutputProjection": {
+          "catalogOutputName": "videos",
+          "executionField": "image",
+          "executionRole": "decode",
+          "publicMediaType": "image",
+          "publicPortId": "images",
+          "reason": "The pinned Cosmos3Distilled text2image catalog keeps the shared semantic output name videos, while its exact decoder publishes one PIL image on decode.image; the registered Block aliases only that reviewed terminal to an image socket."
+        },
         "repositoryRole": "superTextToImage4Step",
         "width": 1280
       }
@@ -414,10 +448,19 @@
   },
   "schemaVersion": 1,
   "sourceContract": {
-    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
     "documentation": {
-      "byteSize": 47466,
-      "sha256": "43c9a776e21ba5374c9b2164343cea0180814e75ba123e23f16533b1fb863800"
+      "byteSize": 47634,
+      "sha256": "836a47a96d563477e48566f85c14316d5649c1122271178e60478164ec6409f4",
+      "url": "https://github.com/huggingface/diffusers/blob/2f7e0154a9db246e95c9ede43edba7db5b130805/docs/source/en/api/pipelines/cosmos3.md"
+    },
+    "modelCard": {
+      "readmeByteSize": 44048,
+      "readmeSha256": "70cd946ba24ef287f5519dc76b9f3aa2e5dcac7e18560756645364f992757a4e",
+      "repository": "nvidia/Cosmos3-Nano",
+      "revision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+      "safetyByteSize": 3677,
+      "safetySha256": "b59cf989cb66eb3b1c5e0692d04c42b9a39751801259b225733ab9493e08f03b"
     },
     "sources": {
       "Cosmos3DistilledBlocks": {
@@ -429,8 +472,20 @@
         "sha256": "35aec5589de05b9f93235340c807697db40827eb6be95269e619fe8441ab83ba"
       },
       "Cosmos3OmniPipeline": {
-        "byteSize": 94394,
-        "sha256": "a98483d79b1f7bc232f5b13b39488e7c858e2536d0879df260bafa2a83492c9f"
+        "byteSize": 96173,
+        "sha256": "11b98eff235f954ec8531ed0b32143222d81fe595c012e1a34c22f62ed72dbd0"
+      },
+      "Cosmos3OmniModularPipeline": {
+        "byteSize": 5100,
+        "sha256": "c0b687c2dc96bd1fd93a53979073e2a99d2640fb00334e06eab16ff499851cec"
+      },
+      "Cosmos3Encoders": {
+        "byteSize": 47644,
+        "sha256": "6134b4ba0da172d6d8c15ab556d59f3349c2e12aa4839f9f249e93960e2e9c81"
+      },
+      "Cosmos3Decoders": {
+        "byteSize": 10594,
+        "sha256": "60c74e4eba9c89bfc13a0af98e044d4ea96c743815cdb2bdfbdd3ff1be06a6cc"
       }
     }
   }

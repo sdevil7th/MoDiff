@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
+
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from modiff.human_review_assets import approve_review_asset, reject_review_asset
+from modiff.human_review_assets import approve_review_asset, record_quality_review, reject_review_asset
 
 
 def parse_args(argv=None):
@@ -21,12 +22,15 @@ def parse_args(argv=None):
     parser.add_argument(
         "--approve-quality",
         action="store_true",
-        help="Required with --approve-rights. Confirms visual/listening quality.",
+        help=(
+            "Confirms visual/listening quality. Without --approve-rights this records quality only and "
+            "does not copy, bind, register, or publish the asset."
+        ),
     )
     parser.add_argument(
         "--approve-rights",
         action="store_true",
-        help="Required with --approve-quality. Confirms rights to keep the output as a template example.",
+        help="With --approve-quality, confirms rights to keep and bind the output as a template example.",
     )
     parser.add_argument("--reject", action="store_true", help="Reject the staged asset instead of approving it.")
     parser.add_argument("--reason", help="Required when rejecting.")
@@ -46,6 +50,20 @@ def main(argv=None) -> int:
         )
         print(f"Rejected {item['workflowId']}. It was not registered or stitched.")
         return 0
+    if args.approve_quality and not args.approve_rights:
+        item = record_quality_review(
+            ROOT,
+            workflow_id=args.workflow,
+            reviewer=args.reviewer,
+            approved=True,
+        )
+        print(
+            f"Quality-approved {item['workflowId']}; rights and publication remain pending. "
+            "No review-approved copy or Gallery binding was created."
+        )
+        return 0
+    if args.approve_rights and not args.approve_quality:
+        raise SystemExit("Rights approval alone cannot bind an asset; record quality first or pass both flags.")
     binding = approve_review_asset(
         ROOT,
         workflow_id=args.workflow,

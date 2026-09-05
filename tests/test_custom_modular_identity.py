@@ -16,6 +16,7 @@ from unittest.mock import Mock, patch
 import torch
 from huggingface_hub.errors import LocalEntryNotFoundError
 from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.custom_modular_inspection import inspect_installed_custom_modular_contract
 
 from modules.ModularDiffusers.custom_pipeline import (
     _BINDING_CACHE_LIMIT,
@@ -23,7 +24,9 @@ from modules.ModularDiffusers.custom_pipeline import (
     CUSTOM_PIPELINE_MODEL_TYPE,
     CustomPipelineContractError,
     CustomPipelineExecutionIdentity,
+    ReviewedComponentReference,
     _clear_custom_pipeline_binding_cache_for_tests,
+    _resolve_installed_official_component_type,
     resolve_custom_pipeline_binding,
     resolve_custom_pipeline_identity,
 )
@@ -46,7 +49,9 @@ from modules.ModularDiffusers.modular_utils import (
 )
 from modules.ModularDiffusers.pipeline_schema import (
     MAX_MODIFF_PIPELINE_CONFIG_BYTES,
+    MELLON_PIPELINE_CONFIG_FILENAME,
     MoDiffPipelineConfig,
+    inspect_cached_hub_pipeline_sidecar,
 )
 from modules.ModularDiffusers.route_state import bind_standalone_component_output
 
@@ -144,6 +149,68 @@ def _working_directory(path):
 
 
 class VerifiedPipelineSidecarTests(unittest.TestCase):
+    def test_inspector_translates_only_the_exact_cached_mellon_sidecar(self):
+        revision = "b" * 40
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot = Path(directory, "cache", "snapshots", revision)
+            snapshot.mkdir(parents=True)
+            mellon_path = snapshot / MELLON_PIPELINE_CONFIG_FILENAME
+            raw_bytes = _config_bytes("Official Mellon fixture")
+            mellon_path.write_bytes(raw_bytes)
+
+            def resolve(_repo_id, *, filename, revision, local_files_only):
+                self.assertEqual(revision, "b" * 40)
+                self.assertTrue(local_files_only)
+                if filename == MoDiffPipelineConfig.config_name:
+                    raise LocalEntryNotFoundError("MoDiff sidecar absent")
+                self.assertEqual(filename, MELLON_PIPELINE_CONFIG_FILENAME)
+                return str(mellon_path)
+
+            with patch(
+                "modules.ModularDiffusers.pipeline_schema.hf_hub_download",
+                side_effect=resolve,
+            ) as hub_download:
+                inspected = inspect_cached_hub_pipeline_sidecar("owner/pipeline", revision)
+
+        self.assertEqual(hub_download.call_count, 2)
+        self.assertEqual(inspected.filename, MELLON_PIPELINE_CONFIG_FILENAME)
+        self.assertEqual(inspected.source_format, "mellon")
+        self.assertEqual(inspected.raw_bytes, raw_bytes)
+        self.assertEqual(inspected.sha256, hashlib.sha256(raw_bytes).hexdigest())
+        self.assertEqual(inspected.config.label, "Official Mellon fixture")
+
+    def test_mellon_inspection_preview_exposes_hierarchy_but_never_remote_code_execution(self):
+        revision = "c" * 40
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot = Path(directory, "cache", "snapshots", revision)
+            snapshot.mkdir(parents=True)
+            mellon_path = snapshot / MELLON_PIPELINE_CONFIG_FILENAME
+            mellon_path.write_bytes(_config_bytes("Preview fixture", steps=7))
+            (snapshot / "prompt_expander.py").write_text(
+                "raise RuntimeError('must never import')\n",
+                encoding="utf-8",
+            )
+
+            def resolve(_repo_id, *, filename, revision, local_files_only):
+                if filename == MoDiffPipelineConfig.config_name:
+                    raise LocalEntryNotFoundError("MoDiff sidecar absent")
+                return str(mellon_path)
+
+            with patch(
+                "modules.ModularDiffusers.pipeline_schema.hf_hub_download",
+                side_effect=resolve,
+            ):
+                preview = inspect_installed_custom_modular_contract("owner/pipeline", revision)
+
+        self.assertTrue(preview["sidecar"]["translatedFromMellon"])
+        self.assertEqual(preview["definition"]["blockCount"], 1)
+        self.assertEqual(preview["definition"]["blocks"][0]["blockName"], "denoise")
+        self.assertEqual(preview["admission"]["status"], "preview_only")
+        self.assertFalse(preview["admission"]["executable"])
+        self.assertTrue(preview["remoteCode"]["repositoryPythonPresent"])
+        self.assertTrue(preview["remoteCode"]["requiredForExecution"])
+        self.assertIsNone(preview["runtimeNode"])
+
     def test_only_modiff_sidecar_filename_is_accepted_without_fallback(self):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
@@ -255,7 +322,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
         ) as hub_download:
             with self.assertRaisesRegex(EnvironmentError, "Install that exact revision"):
                 MoDiffPipelineConfig.load_verified("owner/pipeline", source="hub", revision="b" * 40)
-            hub_download.assert_called_once()
+            self.assertEqual(hub_download.call_count, 2)
 
     def test_sidecar_rejects_hostile_shapes_callbacks_and_excessive_nesting(self):
         valid = json.loads(_config_bytes())
@@ -265,18 +332,20 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
             ("non-empty 'node_params'", {"node_params": "denoise"}),
             ("JSON object or null", {**valid, "node_params": {"denoise": []}}),
             ("denoise.params", {**valid, "node_params": {"denoise": {"params": []}}}),
-            ("block_name", {
-                **valid,
-                "node_params": {
-                    "denoise": {**valid["node_params"]["denoise"], "block_name": ["denoise"]}
+            (
+                "block_name",
+                {
+                    **valid,
+                    "node_params": {"denoise": {**valid["node_params"]["denoise"], "block_name": ["denoise"]}},
                 },
-            }),
-            ("input_names", {
-                **valid,
-                "node_params": {
-                    "denoise": {**valid["node_params"]["denoise"], "input_names": "steps"}
+            ),
+            (
+                "input_names",
+                {
+                    **valid,
+                    "node_params": {"denoise": {**valid["node_params"]["denoise"], "input_names": "steps"}},
                 },
-            }),
+            ),
             ("at most 16 loader component", {**valid, "loader_component_outputs": "image_encoder"}),
             ("invalid or duplicate loader component", {**valid, "loader_component_outputs": [{}]}),
             (
@@ -434,10 +503,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 with real_scandir(path) as scanner:
                     entries = list(scanner)
                 if Path(path) == repository:
-                    return [
-                        _SymlinkDirEntryProxy(entry) if entry.name == "b.py" else entry
-                        for entry in entries
-                    ]
+                    return [_SymlinkDirEntryProxy(entry) if entry.name == "b.py" else entry for entry in entries]
                 return entries
 
             with patch("modules.ModularDiffusers.pipeline_schema.os.scandir", side_effect=linked_scandir):
@@ -469,8 +535,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                     entries = list(scanner)
                 if Path(path) == snapshot:
                     return [
-                        _SymlinkDirEntryProxy(entry) if entry.name == "pipeline.py" else entry
-                        for entry in entries
+                        _SymlinkDirEntryProxy(entry) if entry.name == "pipeline.py" else entry for entry in entries
                     ]
                 return entries
 
@@ -495,13 +560,12 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 patch.object(Path, "resolve", new=linked_resolve),
                 patch.object(Path, "is_symlink", new=linked_is_symlink),
             ):
-                verified = MoDiffPipelineConfig.load_verified(
-                    "owner/pipeline", source="hub", revision=revision
-                )
+                verified = MoDiffPipelineConfig.load_verified("owner/pipeline", source="hub", revision=revision)
             self.assertRegex(verified.executable_manifest_sha256, r"^[0-9a-f]{64}$")
 
             outside = Path(directory, "outside.py")
             outside.write_text("raise RuntimeError\n", encoding="utf-8")
+
             def escaping_resolve(path, strict=False):
                 candidate = Path(path)
                 if candidate == sidecar_path:
@@ -572,6 +636,36 @@ class CustomPipelineBindingTests(unittest.TestCase):
             "model_type": CUSTOM_PIPELINE_MODEL_TYPE,
             CUSTOM_PIPELINE_IDENTITY_FIELD: binding.identity.to_dict(),
         }
+
+    def test_installed_official_alias_resolves_to_its_canonical_runtime_class(self):
+        class UnifiedTokenizer:
+            pass
+
+        UnifiedTokenizer.__module__ = "transformers.models.qwen2.tokenization_qwen2"
+        reference = ReviewedComponentReference(
+            name="tokenizer",
+            library="transformers",
+            class_name="Qwen2TokenizerFast",
+            repository="owner/component",
+            revision="a" * 40,
+            subfolder="tokenizer",
+            variant=None,
+        )
+        with patch(
+            "modules.ModularDiffusers.custom_pipeline.importlib.import_module",
+            return_value=SimpleNamespace(Qwen2TokenizerFast=UnifiedTokenizer),
+        ):
+            self.assertIs(_resolve_installed_official_component_type(reference), UnifiedTokenizer)
+
+        UnifiedTokenizer.__module__ = "attacker_package.payload"
+        with (
+            patch(
+                "modules.ModularDiffusers.custom_pipeline.importlib.import_module",
+                return_value=SimpleNamespace(Qwen2TokenizerFast=UnifiedTokenizer),
+            ),
+            self.assertRaisesRegex(CustomPipelineContractError, "installed official"),
+        ):
+            _resolve_installed_official_component_type(reference)
 
     def test_binding_is_callable_immutable_and_config_reads_are_isolated(self):
         binding = self._resolve(self.pipeline_a)
@@ -1041,9 +1135,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
 
         published_values = node.set_field_value.call_args.args[0]
         self.assertEqual(published_values["revision"], "")
-        identity = CustomPipelineExecutionIdentity.from_value(
-            published_values[CUSTOM_PIPELINE_IDENTITY_FIELD]
-        )
+        identity = CustomPipelineExecutionIdentity.from_value(published_values[CUSTOM_PIPELINE_IDENTITY_FIELD])
         self.assertIsNone(identity.revision)
 
     def test_trust_true_field_actions_cannot_mint_or_advertise_a_contract(self):
@@ -1053,15 +1145,11 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 self._capture_node_messages(node)
                 values = self._values()
                 values["trust_remote_code"] = True
-                with patch(
-                    "modules.ModularDiffusers.loaders.resolve_custom_pipeline_binding"
-                ) as resolver:
+                with patch("modules.ModularDiffusers.loaders.resolve_custom_pipeline_binding") as resolver:
                     with self.assertRaisesRegex(ValueError, "(?i)repository code is disabled"):
                         node.refresh_pipeline_identity(values, {"key": ref_key})
                 resolver.assert_not_called()
-                self.assertIsNone(
-                    node.set_field_value.call_args.args[0][CUSTOM_PIPELINE_IDENTITY_FIELD]
-                )
+                self.assertIsNone(node.set_field_value.call_args.args[0][CUSTOM_PIPELINE_IDENTITY_FIELD])
                 signals = [
                     call.args[1]["signal"]["value"]
                     for call in node.set_field_params.call_args_list
@@ -1306,9 +1394,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             revision="a" * 40,
             trust_remote_code=False,
         )
-        self.assertTrue(
-            all(CUSTOM_PIPELINE_IDENTITY_FIELD not in value for value in outputs.values())
-        )
+        self.assertTrue(all(CUSTOM_PIPELINE_IDENTITY_FIELD not in value for value in outputs.values()))
 
     def test_standard_component_load_does_not_force_local_only(self):
         spec = SimpleNamespace(
@@ -1403,9 +1489,11 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                     with self.assertRaises((TypeError, ValueError)):
                         node(model_id=selector, **common)
             with self.assertRaisesRegex(ValueError, "requires a component type"):
-                node(model_type=[], model_id={"source": "hub", "value": "owner/component"}, **{
-                    key: value for key, value in common.items() if key != "model_type"
-                })
+                node(
+                    model_type=[],
+                    model_id={"source": "hub", "value": "owner/component"},
+                    **{key: value for key, value in common.items() if key != "model_type"},
+                )
         base_call.assert_not_called()
 
     def test_auto_model_derived_config_identity_participates_in_node_cache(self):
@@ -1547,6 +1635,63 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             None,
             revision,
         )
+
+    def test_sdxl_union_preflight_uses_only_the_exact_catalog_class_override(self):
+        from modules.ModularDiffusers.loaders import _preflight_reviewed_diffusers_component
+
+        revision = "801a4a3fa3d4c936f4feea95b98607bc6726f80c"
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_component_config",
+            return_value={"_class_name": "ControlNetModel"},
+        ) as load_config:
+            result = _preflight_reviewed_diffusers_component(
+                "controlnet",
+                {"source": "hub", "value": "xinsir/controlnet-union-sdxl-1.0"},
+                "",
+                "",
+                "ControlNetUnionModel",
+            )
+
+        self.assertEqual(
+            result[:5],
+            (
+                "hub",
+                "xinsir/controlnet-union-sdxl-1.0",
+                revision,
+                None,
+                "ControlNetUnionModel",
+            ),
+        )
+        load_config.assert_called_once_with(
+            "hub",
+            "xinsir/controlnet-union-sdxl-1.0",
+            None,
+            revision,
+        )
+
+    def test_component_class_override_fails_closed_outside_its_exact_catalog_pin(self):
+        from modules.ModularDiffusers.loaders import _preflight_reviewed_diffusers_component
+
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_component_config",
+            return_value={"_class_name": "ControlNetModel"},
+        ):
+            with self.assertRaisesRegex(ValueError, "exact reviewed repository"):
+                _preflight_reviewed_diffusers_component(
+                    "controlnet",
+                    {"source": "hub", "value": "owner/unreviewed-controlnet"},
+                    "",
+                    "a" * 40,
+                    "ControlNetUnionModel",
+                )
+            with self.assertRaisesRegex(ValueError, "exact reviewed repository"):
+                _preflight_reviewed_diffusers_component(
+                    "controlnet",
+                    {"source": "hub", "value": "xinsir/controlnet-union-sdxl-1.0"},
+                    "",
+                    "",
+                    "AttackerControlNetModel",
+                )
 
     def test_auto_model_local_root_mapping_cannot_select_an_installed_library(self):
         from diffusers import FluxTransformer2DModel
@@ -1706,6 +1851,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 )
 
         variants = (
+            ("QwenImageModularPipeline", "Qwen/Qwen-Image"),
             ("WanModularPipeline", "Wan-AI/Wan2.1-T2V-14B-Diffusers"),
             ("WanImage2VideoModularPipeline", "Wan-AI/Wan2.1-I2V-14B-720P-Diffusers"),
             ("WanImage2VideoModularPipeline", "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"),
@@ -1729,6 +1875,35 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                     ),
                     ("hub", repository, revision),
                 )
+
+    def test_qwen_same_pipeline_variant_resolves_atomically_and_rejects_edit_models(self):
+        base_revision = "75e0b4be04f60ec59a75f475837eced720f823b6"
+        self.assertEqual(
+            ModelsLoader._effective_builtin_selector(
+                model_type="QwenImageModularPipeline",
+                repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                revision="25468b98e3276ca6700de15c6628e51b7de54a26",
+                workflow_id="text2image",
+                reviewed_variant="Qwen/Qwen-Image",
+            ),
+            ({"source": "hub", "value": "Qwen/Qwen-Image"}, base_revision),
+        )
+        with self.assertRaisesRegex(ValueError, "does not admit model variant"):
+            ModelsLoader._effective_builtin_selector(
+                model_type="QwenImageModularPipeline",
+                repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                revision=None,
+                workflow_id="text2image",
+                reviewed_variant="Qwen/Qwen-Image-Edit-2511",
+            )
+        with self.assertRaisesRegex(ValueError, "does not admit model variant"):
+            ModelsLoader._effective_builtin_selector(
+                model_type="QwenImageModularPipeline",
+                repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                revision=None,
+                workflow_id="image2image",
+                reviewed_variant="Qwen/Qwen-Image",
+            )
 
     def test_builtin_pipeline_rejects_alternate_artifacts_before_node_cache_reuse(self):
         node = ModelsLoader("reviewed-builtin-cache-guard")
@@ -1796,9 +1971,12 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         )
         for repository, revision, processor_type in cases:
             document = {**base_document, "image_processor": processor_type}
-            with self.subTest(repository=repository), patch(
-                "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
-                return_value=("model_index.json", document),
+            with (
+                self.subTest(repository=repository),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("model_index.json", document),
+                ),
             ):
                 filename, validated = _validate_reviewed_pipeline_index(
                     "WanImage2VideoModularPipeline",
@@ -1817,27 +1995,251 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             "transformer": ["diffusers", "WanTransformer3DModel"],
             "vae": ["diffusers", "AutoencoderKLWan"],
         }
-        with patch(
-            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
-            return_value=("model_index.json", t2v_document),
-        ):
-            filename, validated = _validate_reviewed_pipeline_index(
-                "WanModularPipeline",
+        for repository, revision in (
+            (
+                "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+                "0fad780a534b6463e45facd96134c9f345acfa5b",
+            ),
+            (
                 "Wan-AI/Wan2.1-T2V-14B-Diffusers",
                 "38ec498cb3208fb688890f8cc7e94ede2cbd7f68",
-            )
-        self.assertEqual((filename, validated), ("model_index.json", t2v_document))
+            ),
+        ):
+            with (
+                self.subTest(repository=repository),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("model_index.json", t2v_document),
+                ),
+            ):
+                filename, validated = _validate_reviewed_pipeline_index(
+                    "WanModularPipeline",
+                    repository,
+                    revision,
+                )
+                self.assertEqual((filename, validated), ("model_index.json", t2v_document))
 
         tampered = {**base_document, "image_processor": ["transformers", "AutoProcessor"]}
-        with patch(
-            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
-            return_value=("model_index.json", tampered),
-        ), self.assertRaisesRegex(ValueError, "AutoProcessor"):
+        with (
+            patch(
+                "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                return_value=("model_index.json", tampered),
+            ),
+            self.assertRaisesRegex(ValueError, "AutoProcessor"),
+        ):
             _validate_reviewed_pipeline_index(
                 "WanImage2VideoModularPipeline",
                 "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
                 "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7",
             )
+
+    @requires_transformers
+    def test_wan_animate_2_modular_index_accepts_only_the_pinned_t5_tokenizer(self):
+        component = lambda library, class_name: [
+            library,
+            class_name,
+            {
+                "pretrained_model_name_or_path": "Wan-AI/reviewed",
+                "revision": None,
+                "subfolder": "component",
+                "type_hint": [library, class_name],
+                "variant": None,
+            },
+        ]
+        cases = (
+            (
+                "WanAnimate2ModularPipeline",
+                "WanAnimate2Blocks",
+                "Wan-AI/Wan2.2-Animate-2-14B-Diffusers",
+                "7d48412d7b903ff3a89f4f5a960d99e1899605a1",
+                "DPMSolverMultistepScheduler",
+            ),
+            (
+                "WanAnimate2DistilledModularPipeline",
+                "WanAnimate2DistilledBlocks",
+                "Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers",
+                "59e4141466bcb1bf9733eca1bc78be6891c9fbdf",
+                "FlowMatchEulerDiscreteScheduler",
+            ),
+        )
+        for model_type, blocks_class, repository, revision, scheduler_class in cases:
+            document = {
+                "_class_name": model_type,
+                "_blocks_class_name": blocks_class,
+                "_diffusers_version": "0.36.0.dev0",
+                "image_encoder": component("transformers", "CLIPVisionModel"),
+                "scheduler": component("diffusers", scheduler_class),
+                "text_encoder": component("transformers", "UMT5EncoderModel"),
+                "tokenizer": component("transformers", "T5TokenizerFast"),
+                "transformer": component("diffusers", "WanAnimate2Transformer3DModel"),
+                "vae": component("diffusers", "AutoencoderKLWan"),
+            }
+            with (
+                self.subTest(model_type=model_type),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("modular_model_index.json", document),
+                ),
+            ):
+                filename, validated = _validate_reviewed_pipeline_index(model_type, repository, revision)
+                self.assertEqual((filename, validated), ("modular_model_index.json", document))
+
+            tampered = {
+                **document,
+                "tokenizer": component("transformers", "PreTrainedTokenizerFast"),
+            }
+            with (
+                self.subTest(model_type=f"{model_type}-tampered"),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("modular_model_index.json", tampered),
+                ),
+                self.assertRaisesRegex(ValueError, "PreTrainedTokenizerFast"),
+            ):
+                _validate_reviewed_pipeline_index(model_type, repository, revision)
+
+            wrong_scheduler = {
+                **document,
+                "scheduler": component(
+                    "diffusers",
+                    "FlowMatchEulerDiscreteScheduler"
+                    if scheduler_class == "DPMSolverMultistepScheduler"
+                    else "DPMSolverMultistepScheduler",
+                ),
+            }
+            with (
+                self.subTest(model_type=f"{model_type}-wrong-scheduler"),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("modular_model_index.json", wrong_scheduler),
+                ),
+                self.assertRaisesRegex(ValueError, "scheduler"),
+            ):
+                _validate_reviewed_pipeline_index(model_type, repository, revision)
+
+    @requires_transformers
+    def test_qwen_edit_standard_index_accepts_only_reviewed_unused_tokenizer(self):
+        base_document = {
+            "_class_name": "QwenImageEditPipeline",
+            "_diffusers_version": "0.35.0.dev0",
+            "processor": ["transformers", "Qwen2VLProcessor"],
+            "scheduler": ["diffusers", "FlowMatchEulerDiscreteScheduler"],
+            "text_encoder": ["transformers", "Qwen2_5_VLForConditionalGeneration"],
+            "tokenizer": ["transformers", "Qwen2Tokenizer"],
+            "transformer": ["diffusers", "QwenImageTransformer2DModel"],
+            "vae": ["diffusers", "AutoencoderKLQwenImage"],
+        }
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+            return_value=("model_index.json", base_document),
+        ):
+            filename, validated = _validate_reviewed_pipeline_index(
+                "QwenImageEditModularPipeline",
+                "Qwen/Qwen-Image-Edit",
+                "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+            )
+        self.assertEqual((filename, validated), ("model_index.json", base_document))
+
+        tampered = {**base_document, "tokenizer": ["transformers", "AutoTokenizer"]}
+        with (
+            patch(
+                "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                return_value=("model_index.json", tampered),
+            ),
+            self.assertRaisesRegex(ValueError, "unexpected executable component 'tokenizer'"),
+        ):
+            _validate_reviewed_pipeline_index(
+                "QwenImageEditModularPipeline",
+                "Qwen/Qwen-Image-Edit",
+                "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+            )
+
+    @requires_transformers
+    def test_flux2_klein_accepts_only_the_pinned_transformers_v5_tokenizer_alias(self):
+        document = {
+            "_class_name": "Flux2KleinPipeline",
+            "_diffusers_version": "0.37.0.dev0",
+            "is_distilled": True,
+            "scheduler": ["diffusers", "FlowMatchEulerDiscreteScheduler"],
+            "text_encoder": ["transformers", "Qwen3ForCausalLM"],
+            "tokenizer": ["transformers", "Qwen2TokenizerFast"],
+            "transformer": ["diffusers", "Flux2Transformer2DModel"],
+            "vae": ["diffusers", "AutoencoderKLFlux2"],
+        }
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+            return_value=("model_index.json", document),
+        ):
+            filename, validated = _validate_reviewed_pipeline_index(
+                "Flux2KleinModularPipeline",
+                "black-forest-labs/FLUX.2-klein-4B",
+                "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            )
+        self.assertEqual((filename, validated), ("model_index.json", document))
+
+        tampered = {**document, "tokenizer": ["transformers", "AutoTokenizer"]}
+        with (
+            patch(
+                "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                return_value=("model_index.json", tampered),
+            ),
+            self.assertRaisesRegex(ValueError, "AutoTokenizer"),
+        ):
+            _validate_reviewed_pipeline_index(
+                "Flux2KleinModularPipeline",
+                "black-forest-labs/FLUX.2-klein-4B",
+                "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+            )
+
+    @requires_transformers
+    def test_flux1_accepts_only_the_pinned_transformers_v5_t5_tokenizer_alias(self):
+        base_document = {
+            "_class_name": "FluxPipeline",
+            "_diffusers_version": "0.30.0.dev0",
+            "scheduler": ["diffusers", "FlowMatchEulerDiscreteScheduler"],
+            "text_encoder": ["transformers", "CLIPTextModel"],
+            "text_encoder_2": ["transformers", "T5EncoderModel"],
+            "tokenizer": ["transformers", "CLIPTokenizer"],
+            "tokenizer_2": ["transformers", "T5TokenizerFast"],
+            "transformer": ["diffusers", "FluxTransformer2DModel"],
+            "vae": ["diffusers", "AutoencoderKL"],
+        }
+        cases = (
+            (
+                "FluxModularPipeline",
+                "black-forest-labs/FLUX.1-dev",
+                "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+                "FluxPipeline",
+            ),
+            (
+                "FluxKontextModularPipeline",
+                "black-forest-labs/FLUX.1-Kontext-dev",
+                "24e9dedc4ef646698dc8eb4e18ae2cec3c9fea0d",
+                "FluxKontextPipeline",
+            ),
+        )
+        for model_type, repository, revision, pipeline_class in cases:
+            document = {**base_document, "_class_name": pipeline_class}
+            with (
+                self.subTest(model_type=model_type),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("model_index.json", document),
+                ),
+            ):
+                filename, validated = _validate_reviewed_pipeline_index(model_type, repository, revision)
+                self.assertEqual((filename, validated), ("model_index.json", document))
+
+            tampered = {**document, "tokenizer_2": ["transformers", "AutoTokenizer"]}
+            with (
+                self.subTest(model_type=f"{model_type}-tampered"),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("model_index.json", tampered),
+                ),
+                self.assertRaisesRegex(ValueError, "AutoTokenizer"),
+            ):
+                _validate_reviewed_pipeline_index(model_type, repository, revision)
 
     @requires_transformers
     def test_wan_flf_loads_reviewed_image_only_processor_after_index_validation(self):

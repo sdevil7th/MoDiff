@@ -4,14 +4,22 @@ from __future__ import annotations
 
 import json
 import re
-import threading
 import time
+from collections import OrderedDict
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
 
-_LOCK = threading.RLock()
+
+_LOCK = STUDIO_PERSISTENCE_LOCK
 _ID = re.compile(r"^[A-Za-z0-9_-]{1,96}$")
+_SUMMARY_FIELDS = ("id", "title", "source", "sourceLabel", "createdAt", "updatedAt", "revision", "clientId")
+# Metadata only, never graph snapshots. File identity detects writes made by
+# migration/rollback or another local process without a separate invalidation API.
+_SUMMARY_CACHE_LIMIT = 8192
+_SUMMARY_CACHE: OrderedDict[Path, tuple[tuple[int, ...], dict[str, Any]]] = OrderedDict()
 
 
 def _root(data_dir: str | Path) -> Path:
@@ -50,11 +58,40 @@ def list_workflows(data_dir: str | Path) -> list[dict[str, Any]]:
     return sorted(records, key=lambda item: float(item.get("updatedAt") or 0), reverse=True)
 
 
+def list_workflow_summaries(data_dir: str | Path) -> list[dict[str, Any]]:
+    """List workflow metadata without returning multi-megabyte graph snapshots."""
+
+    root = _root(data_dir).resolve()
+    if not root.exists():
+        return []
+    with _LOCK:
+        summaries = []
+        for path in root.glob("*.json"):
+            try:
+                stat = path.stat()
+                identity = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+                cached = _SUMMARY_CACHE.get(path)
+                if cached is None or cached[0] != identity:
+                    record = _read(path)
+                    summary = {key: record.get(key) for key in _SUMMARY_FIELDS}
+                    _SUMMARY_CACHE[path] = (identity, summary)
+                    while len(_SUMMARY_CACHE) > _SUMMARY_CACHE_LIMIT:
+                        _SUMMARY_CACHE.popitem(last=False)
+                else:
+                    summary = cached[1]
+                _SUMMARY_CACHE.move_to_end(path)
+                summaries.append(deepcopy(summary))
+            except (OSError, ValueError, json.JSONDecodeError):
+                _SUMMARY_CACHE.pop(path, None)
+                continue
+    return sorted(summaries, key=lambda item: float(item.get("updatedAt") or 0), reverse=True)
+
+
 def get_workflow(data_dir: str | Path, workflow_id: Any) -> dict[str, Any] | None:
     path = _path(data_dir, workflow_id)
-    if not path.is_file():
-        return None
     with _LOCK:
+        if not path.is_file():
+            return None
         return _read(path)
 
 

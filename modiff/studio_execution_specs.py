@@ -154,6 +154,32 @@ FLUX_KONTEXT_DIFFUSERS_FILES = list(FLUX_DEV_DIFFUSERS_FILES)
 FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX_FILL_DIFFUSERS_FILES = list(FLUX_DEV_DIFFUSERS_FILES)
+FLUX2_DEV_REPO = "black-forest-labs/FLUX.2-dev"
+FLUX2_DEV_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE.md",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/generation_config.json",
+    *[f"text_encoder/model-{index:05d}-of-00010.safetensors" for index in range(1, 11)],
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/preprocessor_config.json",
+    "tokenizer/processor_config.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    *[
+        f"transformer/diffusion_pytorch_model-{index:05d}-of-00007.safetensors"
+        for index in range(1, 8)
+    ],
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
 FLUX2_KLEIN_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -178,6 +204,11 @@ FLUX2_KLEIN_DIFFUSERS_FILES = [
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
 ]
+FLUX2_KLEIN_BASE_REPO = "black-forest-labs/FLUX.2-klein-base-4B"
+# The Base and distilled repositories publish the same component-oriented
+# Diffusers layout. Keep a separate selection so revisions and capabilities
+# never alias merely because their current path sets overlap.
+FLUX2_KLEIN_BASE_DIFFUSERS_FILES = list(FLUX2_KLEIN_DIFFUSERS_FILES)
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
@@ -233,6 +264,17 @@ SDXL_CONTROLNET_CANNY_FP16_FILES = [
     "README.md",
     "config.json",
     "diffusion_pytorch_model.fp16.safetensors",
+]
+SDXL_CONTROLNET_UNION_REPO = "xinsir/controlnet-union-sdxl-1.0"
+SDXL_CONTROLNET_UNION_FILES = [
+    "config.json",
+    "diffusion_pytorch_model.safetensors",
+]
+SDXL_IP_ADAPTER_REPO = "h94/IP-Adapter"
+SDXL_IP_ADAPTER_FILES = [
+    "sdxl_models/ip-adapter_sdxl.safetensors",
+    "sdxl_models/image_encoder/config.json",
+    "sdxl_models/image_encoder/model.safetensors",
 ]
 SDXL_T2I_ADAPTER_CANNY_REPO = "TencentARC/t2i-adapter-canny-sdxl-1.0"
 SDXL_T2I_ADAPTER_CANNY_FP16_FILES = [
@@ -905,6 +947,18 @@ WHISPER_TINY_TRANSFORMERS_FILES = [
     "tokenizer_config.json",
     "vocab.json",
 ]
+WAV2VEC2_BASE_960H_REPO = "facebook/wav2vec2-base-960h"
+WAV2VEC2_BASE_960H_TRANSFORMERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "config.json",
+    "feature_extractor_config.json",
+    "model.safetensors",
+    "preprocessor_config.json",
+    "special_tokens_map.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
 WAN_22_I2V_A14B_REPO = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 WAN_22_I2V_A14B_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -978,6 +1032,31 @@ WAN_22_TI2V_5B_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 WAN_T2V_1_3B_REPO = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
+WAN_I2V_14B_480P_REPO = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
+WAN_I2V_14B_480P_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "image_encoder/config.json",
+    "image_encoder/model.safetensors",
+    "image_processor/preprocessor_config.json",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    *[f"text_encoder/model-{index:05d}-of-00005.safetensors" for index in range(1, 6)],
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    *[
+        f"transformer/diffusion_pytorch_model-{index:05d}-of-00014.safetensors"
+        for index in range(1, 15)
+    ],
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
 WAN_T2V_1_3B_DIFFUSERS_FILES = [
     ".gitattributes",
     "README.md",
@@ -1090,6 +1169,24 @@ LTX_VIDEO_DIFFUSERS_FILES = [
     "transformer/diffusion_pytorch_model.safetensors.index.json",
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
+    # Revision 7c64400 publishes the text encoder and transformer a second
+    # time below ``vae/``. The duplicate paths resolve to the same immutable
+    # Hub blobs as the primary components, so adding them costs no additional
+    # model storage. They are nevertheless part of Diffusers' requested
+    # safetensors closure, and huggingface_hub >= 1.28 correctly rejects an
+    # offline snapshot when these aliases are absent.
+    "vae/text_encoder/model-00001-of-00004.safetensors",
+    "vae/text_encoder/model-00002-of-00004.safetensors",
+    "vae/text_encoder/model-00003-of-00004.safetensors",
+    "vae/text_encoder/model-00004-of-00004.safetensors",
+    "vae/text_encoder/model.safetensors.index.json",
+    "vae/transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+    "vae/transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+    "vae/transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+    "vae/transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+    "vae/transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+    "vae/transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+    "vae/transformer/diffusion_pytorch_model.safetensors.index.json",
 ]
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
@@ -1136,6 +1233,229 @@ STABLE_AUDIO_DIFFUSERS_FILES = [
     "tokenizer/tokenizer_config.json",
     "transformer/config.json",
     "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+MINIMAX_MUSIC3_REPO = "MiniMaxAI/MiniMax-Music3"
+MINIMAX_MUSIC3_DIFFUSERS_FILES = [
+    "LICENSE",
+    "condition_encoder/config.json",
+    "condition_encoder/diffusion_pytorch_model.safetensors",
+    "language_model/config.json",
+    "language_model/generation_config.json",
+    "language_model/model-00001-of-00004.safetensors",
+    "language_model/model-00002-of-00004.safetensors",
+    "language_model/model-00003-of-00004.safetensors",
+    "language_model/model-00004-of-00004.safetensors",
+    "language_model/model.safetensors.index.json",
+    "modular_model_index.json",
+    "rvq_depth_decoder/config.json",
+    "rvq_depth_decoder/diffusion_pytorch_model.safetensors",
+    "scheduler/scheduler_config.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vocoder/config.json",
+    "vocoder/diffusion_pytorch_model.safetensors",
+]
+MINIMAX_H3_REPO = "MiniMaxAI/MiniMax-H3"
+MINIMAX_H3_WORKFLOW_WEIGHT_BYTES = 144016405316
+MINIMAX_H3_FULL_ROOT_WEIGHT_BYTES = 210296909532
+ANIMA_REPO = "circlestone-labs/Anima-Base-v1.0-Diffusers"
+ANIMA_DIFFUSERS_FILES = [
+    "LICENSE.md",
+    "modular_model_index.json",
+    "scheduler/scheduler_config.json",
+    "t5_tokenizer/tokenizer.json",
+    "t5_tokenizer/tokenizer_config.json",
+    "text_conditioner/config.json",
+    "text_conditioner/diffusion_pytorch_model.safetensors",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+HUNYUAN_VIDEO_15_T2V_REPO = "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v"
+HUNYUAN_VIDEO_15_I2V_REPO = (
+    "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v_step_distilled"
+)
+HUNYUAN_VIDEO_15_LICENSE_REPO = "tencent/HunyuanVideo-1.5"
+_HUNYUAN_VIDEO_15_COMMON_FILES = [
+    ".gitattributes",
+    "README.md",
+    "guider/guider_config.json",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    *[f"text_encoder/model-{index:05d}-of-00003.safetensors" for index in range(1, 4)],
+    "text_encoder/model.safetensors.index.json",
+    "text_encoder_2/config.json",
+    "text_encoder_2/model.safetensors",
+    "tokenizer/added_tokens.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "tokenizer_2/added_tokens.json",
+    "tokenizer_2/special_tokens_map.json",
+    "tokenizer_2/tokenizer_config.json",
+]
+HUNYUAN_VIDEO_15_T2V_DIFFUSERS_FILES = [
+    *_HUNYUAN_VIDEO_15_COMMON_FILES,
+    "transformer/config.json",
+    *[
+        f"transformer/diffusion_pytorch_model-{index:05d}-of-00007.safetensors"
+        for index in range(1, 8)
+    ],
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "vae/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "vae/diffusion_pytorch_model.safetensors.index.json",
+]
+HUNYUAN_VIDEO_15_I2V_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "README.md",
+    "feature_extractor/preprocessor_config.json",
+    "image_encoder/config.json",
+    "image_encoder/model.safetensors",
+    *[path for path in _HUNYUAN_VIDEO_15_COMMON_FILES if path not in {".gitattributes", "README.md"}],
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+COSMOS3_NANO_REPO = "nvidia/Cosmos3-Nano"
+COSMOS3_GUARDRAIL_REPO = "nvidia/Cosmos-Guardrail1"
+COSMOS3_DISTILLED_T2I_REPO = "nvidia/Cosmos3-Super-Text2Image-4Step"
+COSMOS3_DISTILLED_I2V_REPO = "nvidia/Cosmos3-Super-Image2Video-4Step"
+COSMOS3_NANO_DIFFUSERS_FILES = [
+    "README.md",
+    "SAFETY.md",
+    "modular_model_index.json",
+    "scheduler/scheduler_config.json",
+    "sound_tokenizer/config.json",
+    "sound_tokenizer/diffusion_pytorch_model.safetensors",
+    "text_tokenizer/added_tokens.json",
+    "text_tokenizer/chat_template.jinja",
+    "text_tokenizer/merges.txt",
+    "text_tokenizer/special_tokens_map.json",
+    "text_tokenizer/tokenizer.json",
+    "text_tokenizer/tokenizer_config.json",
+    "text_tokenizer/vocab.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+_COSMOS3_DISTILLED_COMMON_DIFFUSERS_FILES = [
+    "README.md",
+    "SAFETY.md",
+    "modular_model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_tokenizer/added_tokens.json",
+    "text_tokenizer/chat_template.jinja",
+    "text_tokenizer/merges.txt",
+    "text_tokenizer/special_tokens_map.json",
+    "text_tokenizer/tokenizer.json",
+    "text_tokenizer/tokenizer_config.json",
+    "text_tokenizer/vocab.json",
+    "transformer/config.json",
+    *[
+        f"transformer/diffusion_pytorch_model-{index:05d}-of-00027.safetensors"
+        for index in range(1, 28)
+    ],
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+COSMOS3_DISTILLED_T2I_DIFFUSERS_FILES = [
+    *_COSMOS3_DISTILLED_COMMON_DIFFUSERS_FILES[:4],
+    "sound_tokenizer/config.json",
+    "sound_tokenizer/diffusion_pytorch_model.safetensors",
+    *_COSMOS3_DISTILLED_COMMON_DIFFUSERS_FILES[4:],
+]
+COSMOS3_DISTILLED_I2V_DIFFUSERS_FILES = list(_COSMOS3_DISTILLED_COMMON_DIFFUSERS_FILES)
+HELIOS_BASE_REPO = "BestWishYsh/Helios-Base"
+HELIOS_PYRAMID_REPO = "BestWishYsh/Helios-Mid"
+HELIOS_DISTILLED_REPO = "BestWishYsh/Helios-Distilled"
+HELIOS_DIFFUSERS_FILES = [
+    "guider/guider_config.json",
+    "modular_model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00005.safetensors",
+    "text_encoder/model-00002-of-00005.safetensors",
+    "text_encoder/model-00003-of-00005.safetensors",
+    "text_encoder/model-00004-of-00005.safetensors",
+    "text_encoder/model-00005-of-00005.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+]
+WAN_ANIMATE_2_REPO = "Wan-AI/Wan2.2-Animate-2-14B-Diffusers"
+WAN_ANIMATE_2_DISTILLED_REPO = "Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers"
+WAN_ANIMATE_2_DIFFUSERS_FILES = [
+    "README.md",
+    "configuration.json",
+    "image_encoder/config.json",
+    "image_encoder/model.safetensors",
+    "image_processor/merges.txt",
+    "image_processor/preprocessor_config.json",
+    "image_processor/special_tokens_map.json",
+    "image_processor/tokenizer.json",
+    "image_processor/tokenizer_config.json",
+    "image_processor/vocab.json",
+    "model_index.json",
+    "modular_model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00003.safetensors",
+    "text_encoder/model-00002-of-00003.safetensors",
+    "text_encoder/model-00003-of-00003.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/spiece.model",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00004.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00004.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00004.safetensors",
+    "transformer/diffusion_pytorch_model-00004-of-00004.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
     "vae/config.json",
     "vae/diffusion_pytorch_model.safetensors",
 ]
@@ -1221,6 +1541,46 @@ WAN_22_T2V_A14B_REPO = "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
 WAN_ANIMATE_REPO = "Wan-AI/Wan2.2-Animate-14B-Diffusers"
 WAN_FLF_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
 LTX2_REPO = "Lightricks/LTX-2"
+LTX2_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "audio_vae/config.json",
+    "audio_vae/diffusion_pytorch_model.safetensors",
+    "connectors/config.json",
+    "connectors/diffusion_pytorch_model.safetensors",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/generation_config.json",
+    "text_encoder/model.safetensors.index.json",
+    *[f"text_encoder/model-{index:05d}-of-00011.safetensors" for index in range(1, 12)],
+    "tokenizer/added_tokens.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/preprocessor_config.json",
+    "tokenizer/processor_config.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    *[
+        f"transformer/diffusion_pytorch_model-{index:05d}-of-00008.safetensors"
+        for index in range(1, 9)
+    ],
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors",
+    "vocoder/config.json",
+    "vocoder/diffusion_pytorch_model.safetensors",
+]
+LTX2_IC_LORA_CANNY_REPO = "Lightricks/LTX-2-19b-IC-LoRA-Canny-Control"
+LTX2_IC_LORA_CANNY_WEIGHT_NAME = "ltx-2-19b-ic-lora-canny-control.safetensors"
+LTX2_IC_LORA_CANNY_FILES = [
+    ".gitattributes",
+    "README.md",
+    LTX2_IC_LORA_CANNY_WEIGHT_NAME,
+]
 FRAMEPACK_REPO = "lllyasviel/FramePackI2V_HY"
 FRAMEPACK_TRANSFORMER_DIFFUSERS_FILES = [
     ".gitattributes",
@@ -1585,7 +1945,58 @@ CONSISTENCY_IMAGENET64_DIFFUSERS_FILES = [
     "unet/diffusion_pytorch_model.safetensors",
 ]
 
+_COSMOS3_NANO_STRUCTURAL_MODES = (
+    "text_to_image",
+    "text_to_video",
+    "image_to_video",
+    "video_to_video",
+    "text_to_video_with_audio",
+    "image_to_video_with_audio",
+    "video_to_video_with_audio",
+)
+_COSMOS3_DISTILLED_STRUCTURAL_MODES = ("text_to_image", "image_to_video")
+
+
+def _cosmos3_guardrail_dependency(mode):
+    return (
+        {
+            "id": "cosmos3-mandatory-safety-guardrail",
+            "label": "NVIDIA Cosmos Guardrail 1",
+            "repo": COSMOS3_GUARDRAIL_REPO,
+            "revision": require_catalog_revision(COSMOS3_GUARDRAIL_REPO),
+            "kind": "safety_checker",
+            "requiredForModes": [mode],
+            "description": (
+                "Mandatory gated Cosmos text-and-video safety checker; access and the NVIDIA Open Model "
+                "License must be acknowledged before any execution qualification."
+            ),
+        },
+    )
+
+
 _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
+    **{
+        ("Cosmos3OmniModularPipeline", mode): _cosmos3_guardrail_dependency(mode)
+        for mode in _COSMOS3_NANO_STRUCTURAL_MODES
+    },
+    **{
+        ("Cosmos3DistilledModularPipeline", mode): _cosmos3_guardrail_dependency(mode)
+        for mode in _COSMOS3_DISTILLED_STRUCTURAL_MODES
+    },
+    ("LTX2ModularPipeline", "in_context_to_video"): (
+        {
+            "id": "ltx2-ic-lora-canny-control",
+            "label": "LTX-2 19B IC-LoRA Canny Control",
+            "repo": LTX2_IC_LORA_CANNY_REPO,
+            "revision": require_catalog_revision(LTX2_IC_LORA_CANNY_REPO),
+            "kind": "adapter",
+            "requiredForModes": ["in_context_to_video"],
+            "downloadFiles": LTX2_IC_LORA_CANNY_FILES,
+            "description": (
+                "Exact official Canny IC-LoRA used by the reviewed LTX-2 in-context reference-video workflow."
+            ),
+        },
+    ),
     ("HunyuanVideoFramepackPipeline", "image_to_video"): (
         {
             "id": "framepack-hunyuan-base-components",
@@ -1728,6 +2139,112 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageControlNetPipeline", "control_i
     for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageModularPipeline", "control_image")]
 )
 
+for _qwen_modular_control_mode in ("control_edit_image", "control_inpaint"):
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageModularPipeline", _qwen_modular_control_mode)] = tuple(
+        {
+            **deepcopy(requirement),
+            "requiredForModes": [_qwen_modular_control_mode],
+        }
+        for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("QwenImageModularPipeline", "control_image")]
+    )
+
+for _sdxl_standard_control_mode in ("control_edit_image", "control_inpaint"):
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLControlNetPipeline", _sdxl_standard_control_mode)] = (
+        tuple(
+            {
+                **deepcopy(requirement),
+                "requiredForModes": [_sdxl_standard_control_mode],
+            }
+            for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+                ("StableDiffusionXLControlNetPipeline", "control_image")
+            ]
+        )
+    )
+
+for _sdxl_modular_control_mode in ("control_image", "control_edit_image", "control_inpaint"):
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLModularPipeline", _sdxl_modular_control_mode)] = tuple(
+        {
+            **deepcopy(requirement),
+            "requiredForModes": [_sdxl_modular_control_mode],
+            "description": "Required by the pinned Modular Diffusers SDXL Canny ControlNet workflow.",
+        }
+        for requirement in _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[
+            ("StableDiffusionXLControlNetPipeline", _sdxl_modular_control_mode)
+        ]
+    )
+
+_SDXL_UNION_MODES = (
+    "control_union_image",
+    "control_union_edit_image",
+    "control_union_inpaint",
+)
+_SDXL_IP_ADAPTER_MODES = (
+    "ip_adapter_image",
+    "ip_adapter_edit_image",
+    "ip_adapter_inpaint",
+)
+_SDXL_IP_ADAPTER_CONTROL_MODES = (
+    "ip_adapter_control_image",
+    "ip_adapter_control_edit_image",
+    "ip_adapter_control_inpaint",
+)
+_SDXL_IP_ADAPTER_UNION_MODES = (
+    "ip_adapter_control_union_image",
+    "ip_adapter_control_union_edit_image",
+    "ip_adapter_control_union_inpaint",
+)
+
+
+def _sdxl_auxiliary_requirement(kind: str, mode: str) -> dict[str, Any]:
+    if kind == "controlnet_union":
+        return {
+            "id": "sdxl-controlnet-union",
+            "label": "Stable Diffusion XL ControlNet Union",
+            "repo": SDXL_CONTROLNET_UNION_REPO,
+            "revision": require_catalog_revision(SDXL_CONTROLNET_UNION_REPO),
+            "kind": "controlnet",
+            "requiredForModes": [mode],
+            "downloadFiles": SDXL_CONTROLNET_UNION_FILES,
+            "description": "Exact basic SDXL ControlNet Union artifact loaded through ControlNetUnionModel.",
+        }
+    if kind == "ip_adapter":
+        return {
+            "id": "sdxl-ip-adapter",
+            "label": "Stable Diffusion XL IP-Adapter",
+            "repo": SDXL_IP_ADAPTER_REPO,
+            "revision": require_catalog_revision(SDXL_IP_ADAPTER_REPO),
+            "kind": "adapter",
+            "requiredForModes": [mode],
+            "downloadFiles": SDXL_IP_ADAPTER_FILES,
+            "description": "Exact SDXL IP-Adapter weight and CLIP vision encoder used by the modular block.",
+        }
+    raise ValueError(f"Unknown SDXL auxiliary requirement {kind!r}.")
+
+
+for _mode in _SDXL_UNION_MODES:
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLModularPipeline", _mode)] = (
+        _sdxl_auxiliary_requirement("controlnet_union", _mode),
+    )
+for _mode in _SDXL_IP_ADAPTER_MODES:
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLModularPipeline", _mode)] = (
+        _sdxl_auxiliary_requirement("ip_adapter", _mode),
+    )
+for _mode in _SDXL_IP_ADAPTER_CONTROL_MODES:
+    _ordinary_mode = _mode.removeprefix("ip_adapter_")
+    _ordinary = deepcopy(
+        _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLModularPipeline", _ordinary_mode)][0]
+    )
+    _ordinary["requiredForModes"] = [_mode]
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLModularPipeline", _mode)] = (
+        _ordinary,
+        _sdxl_auxiliary_requirement("ip_adapter", _mode),
+    )
+for _mode in _SDXL_IP_ADAPTER_UNION_MODES:
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[("StableDiffusionXLModularPipeline", _mode)] = (
+        _sdxl_auxiliary_requirement("controlnet_union", _mode),
+        _sdxl_auxiliary_requirement("ip_adapter", _mode),
+    )
+
 for _animatediff_model_type, _animatediff_mode, _uses_controlnet in (
     ("AnimateDiffPAGPipeline", "text_to_video", False),
     ("AnimateDiffVideoToVideoPipeline", "video_to_video", False),
@@ -1815,6 +2332,47 @@ _HIGH_MEMORY_FULL_RESIDENCY = {
     "accelerator": "cuda",
     "vramBytes": 80 * _GIB,
     "systemRamBytes": 64 * _GIB,
+}
+
+# Wan 2.2 A14B contains two roughly 14B denoising experts. Keeping the full
+# BF16 pipeline resident in host memory while a component is placed on a
+# shared-memory ROCm accelerator exceeded a 121 GiB host during the reviewed
+# 2026-08-29 frontend qualification run (about 112 GiB process RSS before the
+# kernel OOM kill). Disk-group offload removes inactive groups from host RAM,
+# but needs enough free disk for the additional safetensors plus a useful
+# post-offload reserve. These are execution-admission limits, not model-card
+# quality recommendations.
+_WAN_22_A14B_EXPERT_RESOURCE_REQUIREMENTS = {
+    OFFLOAD_MODE_NONE: {
+        "accelerator": "cuda",
+        "vramBytes": 80 * _GIB,
+        "systemRamBytes": 96 * _GIB,
+        "diskFreeBytes": 140 * _GIB,
+    },
+    OFFLOAD_MODE_MODEL_CPU: {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 160 * _GIB,
+        "diskFreeBytes": 140 * _GIB,
+    },
+    OFFLOAD_MODE_SEQUENTIAL_CPU: {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 160 * _GIB,
+        "diskFreeBytes": 140 * _GIB,
+    },
+    OFFLOAD_MODE_GROUP_CPU: {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 160 * _GIB,
+        "diskFreeBytes": 140 * _GIB,
+    },
+    OFFLOAD_MODE_GROUP_DISK: {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 96 * _GIB,
+        "diskFreeBytes": 140 * _GIB,
+    },
 }
 _DIRECT_OFFLOAD_MODES = (
     OFFLOAD_MODE_NONE,
@@ -1923,6 +2481,8 @@ _SPEECH_GRAPH_EDGES = (
 )
 _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS = (
     ("speechModel", "model_id", "artifact"),
+    ("speechModel", "pipeline_class", "pipelineClass"),
+    ("speechModel", "execution_profile_id", "executionProfileId"),
     ("speechModel", "revision", "defaultRevision"),
     ("speechModel", "dtype", "dtype"),
     ("speechModel", "device", "device"),
@@ -1936,6 +2496,25 @@ _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS = (
 _SPEECH_TRANSLATION_GRAPH_BINDINGS = tuple(
     (role, param, "translate" if source == "transcribe" else source)
     for role, param, source in _SPEECH_TRANSCRIPTION_GRAPH_BINDINGS
+)
+_CTC_SPEECH_GRAPH_ROLES = (
+    ("speechModel", "modules.HuggingFaceSpeech.LoadCTCSpeechRecognitionModel", -720, -80),
+    ("loadAudio", "modules.Audio.Load", -720, 280),
+    ("transcribeAudio", "modules.HuggingFaceSpeech.TranscribeCTCAudio", -240, -80),
+    ("transcriptPreview", "modules.Primitive.DataViewer", 240, -80),
+)
+_CTC_SPEECH_GRAPH_EDGES = _SPEECH_GRAPH_EDGES
+_CTC_SPEECH_GRAPH_BINDINGS = (
+    ("speechModel", "model_id", "artifact"),
+    ("speechModel", "pipeline_class", "pipelineClass"),
+    ("speechModel", "execution_profile_id", "executionProfileId"),
+    ("speechModel", "revision", "defaultRevision"),
+    ("speechModel", "dtype", "dtype"),
+    ("speechModel", "device", "device"),
+    ("loadAudio", "file", "sourceAudio"),
+    ("transcribeAudio", "timestamps", "speechTimestamps"),
+    ("transcribeAudio", "chunk_length_seconds", "speechChunkSeconds"),
+    ("transcribeAudio", "stride_length_seconds", "speechStrideSeconds"),
 )
 _TRANSFORMERS_TEXT_GRAPH_ROLES = (
     (
@@ -1958,6 +2537,15 @@ _TRANSFORMERS_TEXT_GRAPH_BINDINGS = (
     ("transformersTextModel", "device", "device"),
     ("transformersTextModel", "quantization_mode", "quantizationMode"),
     ("transformersTextGenerate", "prompt", "prompt"),
+    ("transformersTextGenerate", "use_chat_template", "useChatTemplate"),
+    ("transformersTextGenerate", "max_new_tokens", "maxNewTokens"),
+    ("transformersTextGenerate", "min_new_tokens", "minNewTokens"),
+    ("transformersTextGenerate", "do_sample", "doSample"),
+    ("transformersTextGenerate", "temperature", "temperature"),
+    ("transformersTextGenerate", "top_p", "topP"),
+    ("transformersTextGenerate", "top_k", "topK"),
+    ("transformersTextGenerate", "num_beams", "numBeams"),
+    ("transformersTextGenerate", "repetition_penalty", "repetitionPenalty"),
 )
 _TRANSFORMERS_IMAGE_TEXT_GRAPH_ROLES = (
     (
@@ -1988,6 +2576,15 @@ _TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS = (
     ("loadImage", "file", "referenceImages"),
     ("loadImage", "alpha_channel", "alphaMode"),
     ("transformersImageTextGenerate", "prompt", "prompt"),
+    ("transformersImageTextGenerate", "use_chat_template", "useChatTemplate"),
+    ("transformersImageTextGenerate", "max_new_tokens", "maxNewTokens"),
+    ("transformersImageTextGenerate", "min_new_tokens", "minNewTokens"),
+    ("transformersImageTextGenerate", "do_sample", "doSample"),
+    ("transformersImageTextGenerate", "temperature", "temperature"),
+    ("transformersImageTextGenerate", "top_p", "topP"),
+    ("transformersImageTextGenerate", "top_k", "topK"),
+    ("transformersImageTextGenerate", "num_beams", "numBeams"),
+    ("transformersImageTextGenerate", "repetition_penalty", "repetitionPenalty"),
 )
 _TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_ROLES = (
     (
@@ -2015,6 +2612,14 @@ _TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_BINDINGS = (
     ("transformersAnyToAnyModel", "device", "device"),
     ("transformersAnyToAnyGenerate", "prompt", "prompt"),
     ("transformersAnyToAnyGenerate", "generation_mode", "anyToAnyText"),
+    ("transformersAnyToAnyGenerate", "max_new_tokens", "maxNewTokens"),
+    ("transformersAnyToAnyGenerate", "min_new_tokens", "minNewTokens"),
+    ("transformersAnyToAnyGenerate", "do_sample", "doSample"),
+    ("transformersAnyToAnyGenerate", "temperature", "temperature"),
+    ("transformersAnyToAnyGenerate", "top_p", "topP"),
+    ("transformersAnyToAnyGenerate", "top_k", "topK"),
+    ("transformersAnyToAnyGenerate", "num_beams", "numBeams"),
+    ("transformersAnyToAnyGenerate", "repetition_penalty", "repetitionPenalty"),
 )
 _TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_ROLES = (
     (
@@ -2046,6 +2651,14 @@ _TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_BINDINGS = (
     ("loadImage", "alpha_channel", "alphaMode"),
     ("transformersAnyToAnyGenerate", "prompt", "prompt"),
     ("transformersAnyToAnyGenerate", "generation_mode", "anyToAnyText"),
+    ("transformersAnyToAnyGenerate", "max_new_tokens", "maxNewTokens"),
+    ("transformersAnyToAnyGenerate", "min_new_tokens", "minNewTokens"),
+    ("transformersAnyToAnyGenerate", "do_sample", "doSample"),
+    ("transformersAnyToAnyGenerate", "temperature", "temperature"),
+    ("transformersAnyToAnyGenerate", "top_p", "topP"),
+    ("transformersAnyToAnyGenerate", "top_k", "topK"),
+    ("transformersAnyToAnyGenerate", "num_beams", "numBeams"),
+    ("transformersAnyToAnyGenerate", "repetition_penalty", "repetitionPenalty"),
 )
 _TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_ROLES = (
     (
@@ -2073,7 +2686,491 @@ _TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_BINDINGS = (
     ("transformersAnyToAnyModel", "device", "device"),
     ("transformersAnyToAnyGenerate", "prompt", "prompt"),
     ("transformersAnyToAnyGenerate", "generation_mode", "anyToAnyImage"),
+    # Janus image tokens are sampled autoregressively. The official
+    # Transformers recipe requires do_sample=True; leaving the generic node's
+    # text-oriented default in place silently turns this into greedy decoding.
+    ("transformersAnyToAnyGenerate", "do_sample", "true"),
+    ("transformersAnyToAnyGenerate", "max_new_tokens", "maxNewTokens"),
+    ("transformersAnyToAnyGenerate", "min_new_tokens", "minNewTokens"),
+    ("transformersAnyToAnyGenerate", "temperature", "temperature"),
+    ("transformersAnyToAnyGenerate", "top_p", "topP"),
+    ("transformersAnyToAnyGenerate", "top_k", "topK"),
+    ("transformersAnyToAnyGenerate", "num_beams", "numBeams"),
+    ("transformersAnyToAnyGenerate", "repetition_penalty", "repetitionPenalty"),
 )
+_MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
+    ("denoise", "modules.ModularDiffusers.Denoise", 80, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 440, -80),
+    ("preview", "modules.Image.Preview", 800, -80),
+)
+_MODULAR_TEXT_TO_IMAGE_GRAPH_EDGES = (
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+)
+_MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES = tuple(
+    edge
+    for edge in _MODULAR_TEXT_TO_IMAGE_GRAPH_EDGES
+    if edge
+    not in {
+        ("models", "vae_out", "denoise", "vae"),
+        ("denoise", "route_state_out", "decode", "route_state_in"),
+    }
+)
+_MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS = tuple(
+    binding
+    for binding in _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS
+    if binding != ("prompt", "negative_prompt", "negativePrompt")
+)
+_MODULAR_FLUX_DECODE_GEOMETRY_EDGES = (
+    ("denoise", "out_width", "decode", "width"),
+    ("denoise", "out_height", "decode", "height"),
+)
+_MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS = (
+    ("imageEncode", "width", "optionalWidth"),
+    ("imageEncode", "height", "optionalHeight"),
+)
+_MODULAR_SDXL_EDIT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
+    ("loadImage", "modules.Image.Load", -720, 320),
+    ("imageEncode", "modules.ModularDiffusers.ImageEncode", -360, 320),
+    ("denoise", "modules.ModularDiffusers.Denoise", 80, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 440, -80),
+    ("preview", "modules.Image.Preview", 800, -80),
+)
+_MODULAR_SDXL_EDIT_GRAPH_EDGES = (
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEncode", "image_latents", "denoise", "image_latents"),
+    ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_SDXL_EDIT_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("imageEncode", "seed", "seed"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "strength", "strength"),
+)
+_MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES = tuple(
+    edge
+    for edge in _MODULAR_SDXL_EDIT_GRAPH_EDGES
+    if edge
+    not in {
+        ("models", "vae_out", "denoise", "vae"),
+        ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+        ("denoise", "route_state_out", "decode", "route_state_in"),
+    }
+)
+_MODULAR_Z_IMAGE_TEXT_TO_IMAGE_GRAPH_EDGES = _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES
+_MODULAR_Z_IMAGE_TO_IMAGE_GRAPH_EDGES = _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES
+_MODULAR_SDXL_INPAINT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
+    ("loadImage", "modules.Image.Load", -720, 280),
+    ("loadMask", "modules.Image.Load", -720, 560),
+    ("imageEncode", "modules.ModularDiffusers.ImageEncode", -360, 360),
+    ("denoise", "modules.ModularDiffusers.Denoise", 80, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 440, -80),
+    ("preview", "modules.Image.Preview", 800, -80),
+)
+_MODULAR_SDXL_INPAINT_GRAPH_EDGES = (
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("loadMask", "image", "imageEncode", "mask_image"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEncode", "image_latents", "denoise", "image_latents"),
+    ("imageEncode", "mask", "denoise", "mask"),
+    ("imageEncode", "masked_image_latents", "denoise", "masked_image_latents"),
+    ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_SDXL_INPAINT_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadMask", "file", "maskImage"),
+    ("loadMask", "alpha_channel", "removeAlpha"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("imageEncode", "seed", "seed"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "strength", "strength"),
+)
+_MODULAR_SDXL_CONTROL_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
+    ("loadImage", "modules.Image.Load", -720, 320),
+    ("controlnetModel", "modules.ModularDiffusers.AutoModelLoader", -360, 520),
+    ("controlnet", "modules.ModularDiffusers.Controlnet", 80, 320),
+    ("denoise", "modules.ModularDiffusers.Denoise", 80, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 440, -80),
+    ("preview", "modules.Image.Preview", 800, -80),
+)
+_MODULAR_SDXL_CONTROL_GRAPH_EDGES = (
+    ("controlnetModel", "model", "models", "controlnet"),
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "controlnet", "control_image"),
+    ("controlnetModel", "model", "controlnet", "controlnet"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_SDXL_CONTROL_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "controlImage"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("controlnetModel", "model_type", "kind"),
+    ("controlnetModel", "model_id", "repo"),
+    ("controlnetModel", "dtype", "dtype"),
+    ("controlnetModel", "subfolder", "empty"),
+    ("controlnetModel", "variant", "fp16"),
+    ("controlnetModel", "trust_remote_code", "false"),
+    ("controlnetModel", "revision", "revision"),
+    ("controlnetModel", "device", "device"),
+    ("controlnetModel", "auto_offload", "autoOffload"),
+    ("controlnetModel", "offload_mode", "offloadMode"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("controlnet", "model_type", "pipelineClass"),
+    ("controlnet", "controlnet_variant", "ordinary"),
+    ("controlnet", "width", "width"),
+    ("controlnet", "height", "height"),
+    ("controlnet", "controlnet_conditioning_scale", "conditioningScale"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+)
+_MODULAR_SDXL_CONTROL_EDIT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -880, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -520, -240),
+    ("loadImage", "modules.Image.Load", -880, 240),
+    ("imageEncode", "modules.ModularDiffusers.ImageEncode", -520, 240),
+    ("loadControlImage", "modules.Image.Load", -880, 520),
+    ("controlnetModel", "modules.ModularDiffusers.AutoModelLoader", -520, 640),
+    ("controlnet", "modules.ModularDiffusers.Controlnet", -160, 440),
+    ("denoise", "modules.ModularDiffusers.Denoise", 160, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 520, -80),
+    ("preview", "modules.Image.Preview", 880, -80),
+)
+_MODULAR_SDXL_CONTROL_EDIT_GRAPH_EDGES = (
+    ("controlnetModel", "model", "models", "controlnet"),
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("loadControlImage", "image", "controlnet", "control_image"),
+    ("controlnetModel", "model", "controlnet", "controlnet"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEncode", "image_latents", "denoise", "image_latents"),
+    ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+    ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_SDXL_CONTROL_EDIT_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageEncode", "seed", "seed"),
+    ("loadControlImage", "file", "controlImage"),
+    ("loadControlImage", "alpha_channel", "alphaMode"),
+    ("controlnetModel", "model_type", "kind"),
+    ("controlnetModel", "model_id", "repo"),
+    ("controlnetModel", "dtype", "dtype"),
+    ("controlnetModel", "subfolder", "empty"),
+    ("controlnetModel", "variant", "fp16"),
+    ("controlnetModel", "trust_remote_code", "false"),
+    ("controlnetModel", "revision", "revision"),
+    ("controlnetModel", "device", "device"),
+    ("controlnetModel", "auto_offload", "autoOffload"),
+    ("controlnetModel", "offload_mode", "offloadMode"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("controlnet", "model_type", "pipelineClass"),
+    ("controlnet", "controlnet_variant", "ordinary"),
+    ("controlnet", "width", "width"),
+    ("controlnet", "height", "height"),
+    ("controlnet", "controlnet_conditioning_scale", "conditioningScale"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "strength", "strength"),
+)
+_MODULAR_SDXL_CONTROL_INPAINT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1040, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -680, -240),
+    ("loadImage", "modules.Image.Load", -1040, 200),
+    ("loadMask", "modules.Image.Load", -1040, 440),
+    ("imageEncode", "modules.ModularDiffusers.ImageEncode", -680, 320),
+    ("loadControlImage", "modules.Image.Load", -1040, 680),
+    ("controlnetModel", "modules.ModularDiffusers.AutoModelLoader", -680, 760),
+    ("controlnet", "modules.ModularDiffusers.Controlnet", -320, 560),
+    ("denoise", "modules.ModularDiffusers.Denoise", 80, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 440, -80),
+    ("preview", "modules.Image.Preview", 800, -80),
+)
+_MODULAR_SDXL_CONTROL_INPAINT_GRAPH_EDGES = (
+    ("controlnetModel", "model", "models", "controlnet"),
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "vae_out", "denoise", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("loadMask", "image", "imageEncode", "mask_image"),
+    ("loadControlImage", "image", "controlnet", "control_image"),
+    ("controlnetModel", "model", "controlnet", "controlnet"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEncode", "image_latents", "denoise", "image_latents"),
+    ("imageEncode", "mask", "denoise", "mask"),
+    ("imageEncode", "masked_image_latents", "denoise", "masked_image_latents"),
+    ("imageEncode", "route_state_out", "denoise", "route_state_in"),
+    ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_SDXL_CONTROL_INPAINT_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadMask", "file", "maskImage"),
+    ("loadMask", "alpha_channel", "removeAlpha"),
+    ("imageEncode", "seed", "seed"),
+    ("loadControlImage", "file", "controlImage"),
+    ("loadControlImage", "alpha_channel", "alphaMode"),
+    ("controlnetModel", "model_type", "kind"),
+    ("controlnetModel", "model_id", "repo"),
+    ("controlnetModel", "dtype", "dtype"),
+    ("controlnetModel", "subfolder", "empty"),
+    ("controlnetModel", "variant", "fp16"),
+    ("controlnetModel", "trust_remote_code", "false"),
+    ("controlnetModel", "revision", "revision"),
+    ("controlnetModel", "device", "device"),
+    ("controlnetModel", "auto_offload", "autoOffload"),
+    ("controlnetModel", "offload_mode", "offloadMode"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("controlnet", "model_type", "pipelineClass"),
+    ("controlnet", "controlnet_variant", "ordinary"),
+    ("controlnet", "width", "width"),
+    ("controlnet", "height", "height"),
+    ("controlnet", "controlnet_conditioning_scale", "conditioningScale"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "strength", "strength"),
+)
+
+
+def _modular_sdxl_conditioned_graph(*, route: str, control: str | None, ip_adapter: bool):
+    """Compose reviewed SDXL graph fragments without hiding upstream blocks."""
+
+    if route not in {"text2image", "image2image", "inpainting"}:
+        raise ValueError(f"Unknown SDXL route {route!r}.")
+    if control not in {None, "ordinary", "union"}:
+        raise ValueError(f"Unknown SDXL ControlNet route {control!r}.")
+    if control:
+        selected = {
+            "text2image": (
+                _MODULAR_SDXL_CONTROL_GRAPH_ROLES,
+                _MODULAR_SDXL_CONTROL_GRAPH_EDGES,
+                _MODULAR_SDXL_CONTROL_GRAPH_BINDINGS,
+            ),
+            "image2image": (
+                _MODULAR_SDXL_CONTROL_EDIT_GRAPH_ROLES,
+                _MODULAR_SDXL_CONTROL_EDIT_GRAPH_EDGES,
+                _MODULAR_SDXL_CONTROL_EDIT_GRAPH_BINDINGS,
+            ),
+            "inpainting": (
+                _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_ROLES,
+                _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_EDGES,
+                _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_BINDINGS,
+            ),
+        }[route]
+    else:
+        selected = {
+            "text2image": (
+                _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+                _MODULAR_TEXT_TO_IMAGE_GRAPH_EDGES,
+                _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+            ),
+            "image2image": (
+                _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+                _MODULAR_SDXL_EDIT_GRAPH_EDGES,
+                _MODULAR_SDXL_EDIT_GRAPH_BINDINGS,
+            ),
+            "inpainting": (
+                _MODULAR_SDXL_INPAINT_GRAPH_ROLES,
+                _MODULAR_SDXL_INPAINT_GRAPH_EDGES,
+                _MODULAR_SDXL_INPAINT_GRAPH_BINDINGS,
+            ),
+        }[route]
+    roles, edges, bindings = map(tuple, selected)
+    if control:
+        source_map = {
+            "kind": "controlnetKind",
+            "repo": "controlnetRepo",
+            "revision": "controlnetRevision",
+            "fp16": "controlnetWeightVariant",
+            "ordinary": "controlnetRouteVariant",
+        }
+        bindings = tuple((role, field, source_map.get(source, source)) for role, field, source in bindings)
+        bindings += (("controlnetModel", "component_class", "controlnetLoadClass"),)
+        if control == "union":
+            bindings += (("controlnet", "control_mode", "controlMode"),)
+    if ip_adapter:
+        roles += (
+            ("loadIPAdapterImage", "modules.Image.Load", -1040, 920),
+            ("guider", "modules.ModularDiffusers.Guider", -320, 920),
+            ("ipAdapter", "modules.ModularDiffusers.IPAdapter", 80, 720),
+        )
+        edges += (
+            ("loadIPAdapterImage", "image", "ipAdapter", "ip_adapter_image"),
+            ("models", "unet_out", "ipAdapter", "unet"),
+            ("guider", "guider_out", "ipAdapter", "guider"),
+            ("guider", "guider_out", "denoise", "guider"),
+            ("ipAdapter", "ip_adapter", "denoise", "ip_adapter"),
+        )
+        bindings += (
+            ("loadIPAdapterImage", "file", "ipAdapterImage"),
+            ("loadIPAdapterImage", "alpha_channel", "alphaMode"),
+            ("guider", "guider", "classifierFreeGuidance"),
+            ("guider", "guidance_scale", "guidanceScale"),
+            ("ipAdapter", "adapter_model", "ipAdapterRepo"),
+            ("ipAdapter", "adapter_revision", "ipAdapterRevision"),
+            ("ipAdapter", "adapter_weight_name", "ipAdapterWeightName"),
+            ("ipAdapter", "adapter_scale", "ipAdapterScale"),
+        )
+    return roles, edges, bindings
+
+
+_MODULAR_SDXL_REMAINING_GRAPHS = {
+    (route, control, ip_adapter): _modular_sdxl_conditioned_graph(
+        route=route,
+        control=control,
+        ip_adapter=ip_adapter,
+    )
+    for route, control, ip_adapter in (
+        ("text2image", "union", False),
+        ("image2image", "union", False),
+        ("inpainting", "union", False),
+        ("text2image", None, True),
+        ("image2image", None, True),
+        ("inpainting", None, True),
+        ("text2image", "ordinary", True),
+        ("image2image", "ordinary", True),
+        ("inpainting", "ordinary", True),
+        ("text2image", "union", True),
+        ("image2image", "union", True),
+        ("inpainting", "union", True),
+    )
+}
 _MODULAR_EDIT_GRAPH_ROLES = (
     ("models", "modules.ModularDiffusers.ModelsLoader", -720, -80),
     ("prompt", "modules.ModularDiffusers.EncodePrompt", -360, -240),
@@ -2101,6 +3198,7 @@ _MODULAR_EDIT_GRAPH_EDGES = (
 _MODULAR_EDIT_GRAPH_BINDINGS = (
     ("models", "model_type", "pipelineClass"),
     ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
     ("models", "dtype", "dtype"),
     ("models", "device", "device"),
     ("models", "auto_offload", "autoOffload"),
@@ -2119,6 +3217,7 @@ _MODULAR_LAYERED_GRAPH_EDGES = tuple(edge for edge in _MODULAR_EDIT_GRAPH_EDGES 
 _MODULAR_LAYERED_GRAPH_BINDINGS = (
     ("models", "model_type", "pipelineClass"),
     ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
     ("models", "dtype", "dtype"),
     ("models", "device", "device"),
     ("models", "auto_offload", "autoOffload"),
@@ -2128,7 +3227,13 @@ _MODULAR_LAYERED_GRAPH_BINDINGS = (
     ("loadImage", "alpha_channel", "addAlpha"),
     ("prompt", "prompt", "prompt"),
     ("prompt", "negative_prompt", "negativePrompt"),
+    # Upstream Qwen Image Layered consumes one shared source-resolution
+    # argument in both its text/image prompt preprocessing and VAE image
+    # encoder blocks. Keep both ordinary nodes synchronized from one public
+    # BlockDefinitionV2 value.
+    ("prompt", "resolution", "resolution"),
     ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("imageEncode", "resolution", "resolution"),
     ("imageEncode", "seed", "seed"),
     ("denoise", "seed", "seed"),
     ("denoise", "num_inference_steps", "steps"),
@@ -2146,6 +3251,7 @@ _MODULAR_CONTROL_GRAPH_ROLES = (
     ("preview", "modules.Image.Preview", 800, -80),
 )
 _MODULAR_CONTROL_GRAPH_EDGES = (
+    ("controlnetModel", "model", "models", "controlnet"),
     ("models", "text_encoders", "prompt", "text_encoders"),
     ("models", "unet_out", "denoise", "unet"),
     ("models", "scheduler", "denoise", "scheduler"),
@@ -2163,6 +3269,7 @@ _MODULAR_CONTROL_GRAPH_EDGES = (
 _MODULAR_CONTROL_GRAPH_BINDINGS = (
     ("models", "model_type", "pipelineClass"),
     ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
     ("models", "dtype", "dtype"),
     ("models", "device", "device"),
     ("models", "auto_offload", "autoOffload"),
@@ -2182,17 +3289,106 @@ _MODULAR_CONTROL_GRAPH_BINDINGS = (
     ("controlnetModel", "offload_mode", "offloadMode"),
     ("prompt", "prompt", "prompt"),
     ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
     ("controlnet", "model_type", "pipelineClass"),
     ("controlnet", "width", "width"),
     ("controlnet", "height", "height"),
     ("controlnet", "seed", "seed"),
     ("controlnet", "controlnet_conditioning_scale", "conditioningScale"),
+    ("controlnet", "control_guidance_start", "controlGuidanceStart"),
+    ("controlnet", "control_guidance_end", "controlGuidanceEnd"),
     ("denoise", "width", "width"),
     ("denoise", "height", "height"),
     ("denoise", "seed", "seed"),
     ("denoise", "num_inference_steps", "steps"),
     ("denoise", "guidance_scale", "guidanceScale"),
     ("denoise", "strength", "strength"),
+)
+_MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_EDGES = tuple(
+    edge for edge in _MODULAR_SDXL_EDIT_GRAPH_EDGES if edge != ("models", "vae_out", "denoise", "vae")
+)
+_MODULAR_QWEN_TEXT_TO_IMAGE_GRAPH_EDGES = tuple(
+    edge
+    for edge in _MODULAR_TEXT_TO_IMAGE_GRAPH_EDGES
+    if edge != ("models", "vae_out", "denoise", "vae")
+)
+_MODULAR_QWEN_TEXT_TO_IMAGE_GRAPH_BINDINGS = _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS + (
+    ("models", "reviewed_variant", "modelVariant"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+)
+_MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_BINDINGS = _MODULAR_SDXL_EDIT_GRAPH_BINDINGS + (
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("imageEncode", "height", "height"),
+    ("imageEncode", "width", "width"),
+)
+_MODULAR_QWEN_INPAINT_GRAPH_EDGES = tuple(
+    edge
+    for edge in _MODULAR_SDXL_INPAINT_GRAPH_EDGES
+    if edge
+    not in {
+        ("models", "vae_out", "denoise", "vae"),
+        ("imageEncode", "mask", "denoise", "mask"),
+        ("imageEncode", "masked_image_latents", "denoise", "masked_image_latents"),
+    }
+)
+_MODULAR_QWEN_EDIT_INPAINT_GRAPH_EDGES = _MODULAR_QWEN_INPAINT_GRAPH_EDGES + (
+    ("loadImage", "image", "prompt", "image"),
+)
+_MODULAR_QWEN_INPAINT_GRAPH_BINDINGS = _MODULAR_SDXL_INPAINT_GRAPH_BINDINGS + (
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("imageEncode", "height", "height"),
+    ("imageEncode", "width", "width"),
+    ("imageEncode", "padding_mask_crop", "paddingMaskCrop"),
+)
+_MODULAR_QWEN_EDIT_INPAINT_GRAPH_BINDINGS = tuple(
+    binding
+    for binding in _MODULAR_QWEN_INPAINT_GRAPH_BINDINGS
+    if binding
+    not in {
+        ("imageEncode", "height", "height"),
+        ("imageEncode", "width", "width"),
+        ("denoise", "height", "height"),
+        ("denoise", "width", "width"),
+        ("prompt", "max_sequence_length", "maxSequenceLength"),
+    }
+)
+_MODULAR_QWEN_CONTROL_EDIT_GRAPH_EDGES = (
+    ("controlnetModel", "model", "models", "controlnet"),
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "imageEncode", "vae"),
+    ("models", "vae_out", "controlnet", "vae"),
+    ("models", "vae_out", "decode", "vae"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("loadControlImage", "image", "controlnet", "control_image"),
+    ("controlnetModel", "model", "controlnet", "controlnet"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("imageEncode", "image_latents", "denoise", "image_latents"),
+    ("imageEncode", "route_state_out", "controlnet", "route_state_in"),
+    ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+    ("controlnet", "route_state_out", "denoise", "route_state_in"),
+    ("denoise", "latents", "decode", "latents"),
+    ("denoise", "route_state_out", "decode", "route_state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_QWEN_CONTROL_EDIT_GRAPH_BINDINGS = tuple(
+    ("loadControlImage" if role == "loadImage" else role, field, source)
+    for role, field, source in _MODULAR_CONTROL_GRAPH_BINDINGS
+) + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageEncode", "height", "height"),
+    ("imageEncode", "width", "width"),
+    ("imageEncode", "seed", "seed"),
+)
+_MODULAR_QWEN_CONTROL_INPAINT_GRAPH_EDGES = _MODULAR_QWEN_CONTROL_EDIT_GRAPH_EDGES + (
+    ("loadMask", "image", "imageEncode", "mask_image"),
+)
+_MODULAR_QWEN_CONTROL_INPAINT_GRAPH_BINDINGS = _MODULAR_QWEN_CONTROL_EDIT_GRAPH_BINDINGS + (
+    ("loadMask", "file", "maskImage"),
+    ("loadMask", "alpha_channel", "removeAlpha"),
+    ("imageEncode", "padding_mask_crop", "paddingMaskCrop"),
 )
 _CONTROL_GRAPH_ROLES = (
     ("diffusersQuantization", "modules.DiffusersRuntime.PipelineQuantizationConfigV2", -1280, -80),
@@ -2520,9 +3716,9 @@ _SD15_PAG_EDIT_GRAPH_BINDINGS = tuple(
         "output_type",
     }
 )
-_SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS = _SDXL_EDIT_GRAPH_BINDINGS + (
-    ("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),
-)
+_SDXL_INSTRUCT_EDIT_GRAPH_BINDINGS = tuple(
+    item for item in _SDXL_EDIT_GRAPH_BINDINGS if item[:2] != ("diffusersImageEdit", "reference_strength")
+) + (("diffusersImageEdit", "image_guidance_scale", "conditioningScale"),)
 _OMNIGEN_GRAPH_BINDINGS = tuple(
     item
     for item in _SDXL_GRAPH_BINDINGS
@@ -3149,6 +4345,30 @@ _LTX2_V2V_GRAPH_BINDINGS = _LTX2_GRAPH_BINDINGS + (
     ("normalizeVideo", "height", "height"),
     ("normalizeVideo", "num_frames", "numFrames"),
 )
+_LTX2_IN_CONTEXT_GRAPH_ROLES = _LTX2_GRAPH_ROLES + (
+    ("loadReferenceVideo", "modules.Video.Load", -720, 300),
+    ("normalizeReferenceVideo", "modules.VideoConditioning.Normalize", -360, 300),
+    ("referencePreprocessor", "modules.VideoConditioning.EdgePreprocessor", 0, 300),
+)
+_LTX2_IN_CONTEXT_GRAPH_EDGES = _LTX2_GRAPH_EDGES + (
+    ("loadReferenceVideo", "video", "normalizeReferenceVideo", "video"),
+    ("normalizeReferenceVideo", "output", "referencePreprocessor", "video"),
+    ("referencePreprocessor", "output", "wanGenerate", "reference_video"),
+)
+_LTX2_IN_CONTEXT_GRAPH_BINDINGS = tuple(
+    (role, param, "requiredNumFrames") if role == "wanGenerate" and param == "num_frames" else (role, param, source)
+    for role, param, source in _LTX2_GRAPH_BINDINGS
+) + (
+    ("wanPipeline", "ic_lora_id", "repo"),
+    ("wanPipeline", "ic_lora_revision", "revision"),
+    ("wanPipeline", "ic_lora_weight_name", "adapterWeightName"),
+    ("loadReferenceVideo", "file", "referenceVideos"),
+    ("normalizeReferenceVideo", "width", "width"),
+    ("normalizeReferenceVideo", "height", "height"),
+    ("normalizeReferenceVideo", "num_frames", "requiredNumFrames"),
+    ("wanGenerate", "reference_strength", "strength"),
+    ("wanGenerate", "conditioning_attention_strength", "conditioningScale"),
+)
 _FRAMEPACK_GRAPH_ROLES = _I2V_GRAPH_ROLES
 _FRAMEPACK_GRAPH_EDGES = _I2V_GRAPH_EDGES
 _FRAMEPACK_GRAPH_BINDINGS = _I2V_REVISION_GRAPH_BINDINGS + (
@@ -3203,6 +4423,7 @@ _WAN_FLF_GRAPH_BINDINGS = (
     ("loadLastImage", "alpha_channel", "alphaMode"),
     ("prompt", "prompt", "prompt"),
     ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
     ("imageEmbeddings", "width", "width"),
     ("imageEmbeddings", "height", "height"),
     ("imageEncode", "width", "width"),
@@ -3216,6 +4437,739 @@ _WAN_FLF_GRAPH_BINDINGS = (
     ("denoise", "num_inference_steps", "steps"),
     ("denoise", "guidance_scale", "guidanceScale"),
     ("decode", "output_type", "outputType"),
+    ("videoExport", "fps", "fps"),
+)
+_WAN_IMAGE_TO_VIDEO_GRAPH_ROLES = tuple(
+    role for role in _WAN_FLF_GRAPH_ROLES if role[0] != "loadLastImage"
+)
+_WAN_IMAGE_TO_VIDEO_GRAPH_EDGES = tuple(
+    edge
+    for edge in _WAN_FLF_GRAPH_EDGES
+    if edge[0] != "loadLastImage" and edge[2] != "loadLastImage"
+)
+_WAN_IMAGE_TO_VIDEO_GRAPH_BINDINGS = tuple(
+    binding for binding in _WAN_FLF_GRAPH_BINDINGS if binding[0] != "loadLastImage"
+)
+_WAN_TEXT_TO_VIDEO_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -900, -80),
+    ("prompt", "modules.ModularDiffusers.EncodePrompt", -520, -240),
+    ("denoise", "modules.ModularDiffusers.Denoise", -100, -80),
+    ("decode", "modules.ModularDiffusers.DecodeLatents", 320, -80),
+    ("videoExport", "modules.Video.Export", 720, -80),
+)
+_WAN_TEXT_TO_VIDEO_GRAPH_EDGES = (
+    ("models", "text_encoders", "prompt", "text_encoders"),
+    ("models", "unet_out", "denoise", "unet"),
+    ("models", "scheduler", "denoise", "scheduler"),
+    ("models", "vae_out", "decode", "vae"),
+    ("prompt", "embeddings", "denoise", "embeddings"),
+    ("denoise", "latents", "decode", "latents"),
+    ("decode", "videos", "videoExport", "video"),
+)
+_WAN_TEXT_TO_VIDEO_GRAPH_BINDINGS = tuple(
+    binding
+    for binding in _WAN_FLF_GRAPH_BINDINGS
+    if binding[0] in {"models", "prompt", "denoise", "decode", "videoExport"}
+)
+_MODULAR_WHOLE_AUDIO_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -900, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowSemanticGeneration", -500, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowDenoise", -100, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowDecodeAudio", 300, -80),
+    ("audioExport", "modules.Audio.Export", 700, -80),
+)
+_MODULAR_WHOLE_AUDIO_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "audio", "audioExport", "audio"),
+)
+_MODULAR_WHOLE_AUDIO_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "defaultWorkflow"),
+    ("prompt", "block_path", "semanticGeneratorBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "lyrics", "lyrics"),
+    ("prompt", "audio_duration", "audioDuration"),
+    ("prompt", "seed", "seed"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "defaultWorkflow"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "defaultWorkflow"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+    ("audioExport", "sample_rate", "sampleRate44100"),
+)
+_MODULAR_WHOLE_IMAGE_TEXT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -900, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowTextEncode", -500, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowImageDenoise", -100, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowDecodeImage", 300, -80),
+    ("preview", "modules.Image.Preview", 700, -80),
+)
+_MODULAR_WHOLE_IMAGE_TEXT_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_WHOLE_IMAGE_EDIT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1060, -80),
+    ("loadImage", "modules.Image.Load", -720, 260),
+    ("prompt", "modules.ModularDiffusers.WorkflowTextEncode", -660, -160),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowImageEncode", -240, 260),
+    ("denoise", "modules.ModularDiffusers.WorkflowImageDenoise", 180, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowDecodeImage", 580, -80),
+    ("preview", "modules.Image.Preview", 980, -80),
+)
+_MODULAR_WHOLE_IMAGE_EDIT_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_MODULAR_WHOLE_IMAGE_COMMON_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "strength", "strength"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+)
+_MODULAR_WHOLE_IMAGE_TEXT_GRAPH_BINDINGS = _MODULAR_WHOLE_IMAGE_COMMON_GRAPH_BINDINGS
+_MODULAR_WHOLE_IMAGE_EDIT_GRAPH_BINDINGS = _MODULAR_WHOLE_IMAGE_COMMON_GRAPH_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("imageEncode", "block_path", "workflowImageEncoderBlock"),
+    ("imageEncode", "width", "width"),
+    ("imageEncode", "height", "height"),
+    ("imageEncode", "seed", "seed"),
+)
+_MODULAR_WHOLE_VIDEO_TEXT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -900, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowTextEncode", -520, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowVideoDenoise", -120, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowDecodeVideo", 280, -80),
+    ("videoExport", "modules.Video.Export", 680, -80),
+)
+_MODULAR_WHOLE_VIDEO_TEXT_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1060, -80),
+    ("loadImage", "modules.Image.Load", -760, 280),
+    ("prompt", "modules.ModularDiffusers.WorkflowTextEncode", -680, -160),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowVideoImageEncode", -280, 260),
+    ("denoise", "modules.ModularDiffusers.WorkflowVideoDenoise", 140, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowDecodeVideo", 540, -80),
+    ("videoExport", "modules.Video.Export", 940, -80),
+)
+_MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_MODULAR_WHOLE_VIDEO_EDIT_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1060, -80),
+    ("loadVideo", "modules.Video.Load", -760, 280),
+    ("prompt", "modules.ModularDiffusers.WorkflowTextEncode", -680, -160),
+    ("videoEncode", "modules.ModularDiffusers.WorkflowVideoEncode", -280, 260),
+    ("denoise", "modules.ModularDiffusers.WorkflowVideoDenoise", 140, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowDecodeVideo", 540, -80),
+    ("videoExport", "modules.Video.Export", 940, -80),
+)
+_MODULAR_WHOLE_VIDEO_EDIT_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "videoEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("loadVideo", "video", "videoEncode", "video"),
+    ("prompt", "state_out", "videoEncode", "state_in"),
+    ("videoEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_MODULAR_WHOLE_VIDEO_COMMON_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "num_frames", "numFrames"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "pyramid_stage_1_steps", "steps"),
+    ("denoise", "pyramid_stage_2_steps", "steps"),
+    ("denoise", "pyramid_stage_3_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "seed", "seed"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+    ("videoExport", "fps", "fps"),
+)
+_MODULAR_WHOLE_VIDEO_TEXT_GRAPH_BINDINGS = _MODULAR_WHOLE_VIDEO_COMMON_GRAPH_BINDINGS
+_MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_BINDINGS = _MODULAR_WHOLE_VIDEO_COMMON_GRAPH_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("imageEncode", "block_path", "workflowImageEncoderBlock"),
+    ("imageEncode", "width", "width"),
+    ("imageEncode", "height", "height"),
+    ("imageEncode", "seed", "seed"),
+)
+_MODULAR_WHOLE_VIDEO_EDIT_GRAPH_BINDINGS = _MODULAR_WHOLE_VIDEO_COMMON_GRAPH_BINDINGS + (
+    ("loadVideo", "file", "sourceVideo"),
+    ("videoEncode", "pipeline_class", "pipelineClass"),
+    ("videoEncode", "workflow_id", "workflowId"),
+    ("videoEncode", "block_path", "workflowImageEncoderBlock"),
+    ("videoEncode", "width", "width"),
+    ("videoEncode", "height", "height"),
+    ("videoEncode", "seed", "seed"),
+)
+_HUNYUAN_VIDEO_15_T2V_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -900, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowHunyuanVideo15TextEncode", -500, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowHunyuanVideo15Denoise", -100, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowHunyuanVideo15Decode", 300, -80),
+    ("videoExport", "modules.Video.Export", 700, -80),
+)
+_HUNYUAN_VIDEO_15_T2V_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_HUNYUAN_VIDEO_15_COMMON_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "num_videos_per_prompt", "oneVideo"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "num_frames", "numFrames"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "seed", "seed"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+    ("videoExport", "fps", "fps"),
+)
+_HUNYUAN_VIDEO_15_T2V_GRAPH_BINDINGS = _HUNYUAN_VIDEO_15_COMMON_GRAPH_BINDINGS + (
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+)
+_HUNYUAN_VIDEO_15_I2V_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1120, -80),
+    ("loadImage", "modules.Image.Load", -820, 300),
+    ("prompt", "modules.ModularDiffusers.WorkflowHunyuanVideo15TextEncode", -720, -160),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowHunyuanVideo15VaeEncode", -320, 220),
+    ("imageEmbeddings", "modules.ModularDiffusers.WorkflowHunyuanVideo15ImageEncode", 80, 220),
+    ("denoise", "modules.ModularDiffusers.WorkflowHunyuanVideo15Denoise", 480, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowHunyuanVideo15Decode", 880, -80),
+    ("videoExport", "modules.Video.Export", 1280, -80),
+)
+_HUNYUAN_VIDEO_15_I2V_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "imageEmbeddings", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "imageEmbeddings", "state_in"),
+    ("imageEmbeddings", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_HUNYUAN_VIDEO_15_I2V_GRAPH_BINDINGS = _HUNYUAN_VIDEO_15_COMMON_GRAPH_BINDINGS + (
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("imageEncode", "block_path", "workflowVaeEncoderBlock"),
+    ("imageEncode", "width", "optionalWidth"),
+    ("imageEncode", "height", "optionalHeight"),
+    ("imageEmbeddings", "pipeline_class", "pipelineClass"),
+    ("imageEmbeddings", "workflow_id", "workflowId"),
+    ("imageEmbeddings", "block_path", "workflowImageEmbeddingsBlock"),
+)
+_MINIMAX_H3_T2VA_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -760, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowMiniMaxH3TextEncode", -400, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowMiniMaxH3Denoise", -40, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowMiniMaxH3Decode", 320, -80),
+    ("videoExport", "modules.Video.ExportWithAudio", 680, -80),
+)
+_MINIMAX_H3_T2VA_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+    ("decode", "audio", "videoExport", "audio"),
+)
+_MINIMAX_H3_CONDITIONED_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1080, -80),
+    ("beforeEncode", "modules.ModularDiffusers.WorkflowMiniMaxH3BeforeEncode", -720, 200),
+    ("prompt", "modules.ModularDiffusers.WorkflowMiniMaxH3TextEncode", -360, -80),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowMiniMaxH3VaeEncode", 0, 200),
+    ("denoise", "modules.ModularDiffusers.WorkflowMiniMaxH3Denoise", 360, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowMiniMaxH3Decode", 720, -80),
+    ("videoExport", "modules.Video.ExportWithAudio", 1080, -80),
+)
+_MINIMAX_H3_CONDITIONED_GRAPH_EDGES = (
+    ("models", "pipeline_components", "beforeEncode", "pipeline_components"),
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("beforeEncode", "state_out", "prompt", "state_in"),
+    ("prompt", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+    ("decode", "audio", "videoExport", "audio"),
+)
+_MINIMAX_H3_COMMON_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "workflow_id", "workflowId"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "seed", "seed"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+    ("videoExport", "fps", "fps"),
+)
+_MINIMAX_H3_T2VA_GRAPH_BINDINGS = _MINIMAX_H3_COMMON_GRAPH_BINDINGS + (
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "num_frames", "numFrames"),
+)
+_MINIMAX_H3_CONDITIONED_COMMON_GRAPH_BINDINGS = _MINIMAX_H3_COMMON_GRAPH_BINDINGS + (
+    ("beforeEncode", "pipeline_class", "pipelineClass"),
+    ("beforeEncode", "workflow_id", "workflowId"),
+    ("beforeEncode", "block_path", "workflowBeforeEncodeBlock"),
+    ("beforeEncode", "width", "width"),
+    ("beforeEncode", "height", "height"),
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("imageEncode", "block_path", "workflowVaeEncoderBlock"),
+)
+_MINIMAX_H3_FL2VA_GRAPH_BINDINGS = _MINIMAX_H3_CONDITIONED_COMMON_GRAPH_BINDINGS + (
+    ("beforeEncode", "num_frames", "numFrames"),
+    ("beforeEncode", "image", "referenceImages"),
+    ("beforeEncode", "last_image", "lastImage"),
+)
+_MINIMAX_H3_REF2VA_GRAPH_BINDINGS = _MINIMAX_H3_CONDITIONED_COMMON_GRAPH_BINDINGS + (
+    ("beforeEncode", "num_frames", "requiredNumFrames"),
+    ("beforeEncode", "references", "references"),
+)
+_COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -980, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode", -580, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise", -160, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowCosmos3OmniDecode", 260, -80),
+    ("afterDecode", "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode", 680, 240),
+    ("preview", "modules.Image.Preview", 680, -160),
+)
+_COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("models", "pipeline_components", "afterDecode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "state_out", "afterDecode", "state_in"),
+    ("decode", "image", "preview", "image"),
+)
+_COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -980, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode", -580, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise", -160, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowCosmos3OmniDecode", 260, -80),
+    ("afterDecode", "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode", 680, 240),
+    ("videoExport", "modules.Video.Export", 680, -160),
+)
+_COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("models", "pipeline_components", "afterDecode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "state_out", "afterDecode", "state_in"),
+    ("decode", "videos", "videoExport", "video"),
+)
+_COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1180, -80),
+    ("loadImage", "modules.Image.Load", -980, 300),
+    ("prompt", "modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode", -780, -160),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowCosmos3OmniVaeEncode", -360, 220),
+    ("denoise", "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise", 60, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowCosmos3OmniDecode", 480, -80),
+    ("afterDecode", "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode", 900, 240),
+    ("videoExport", "modules.Video.Export", 900, -160),
+)
+_COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("models", "pipeline_components", "afterDecode", "pipeline_components"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "state_out", "afterDecode", "state_in"),
+    ("decode", "videos", "videoExport", "video"),
+)
+_COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_ROLES = tuple(
+    (
+        role,
+        "modules.Video.Load" if role == "loadImage" else node_key,
+        x,
+        y,
+    )
+    for role, node_key, x, y in _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_ROLES
+)
+_COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_ROLES = tuple(
+    ("loadVideo" if role == "loadImage" else role, node_key, x, y)
+    for role, node_key, x, y in _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_ROLES
+)
+_COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_EDGES = tuple(
+    (
+        "loadVideo" if source_role == "loadImage" else source_role,
+        "video" if source_role == "loadImage" and source_output == "image" else source_output,
+        target_role,
+        "video" if target_role == "imageEncode" and target_input == "image" else target_input,
+    )
+    for source_role, source_output, target_role, target_input in _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_EDGES
+)
+
+
+def _cosmos3_sound_graph_roles(roles):
+    return tuple(
+        (
+            role,
+            "modules.Video.ExportWithAudio" if role == "videoExport" else node_key,
+            x,
+            y,
+        )
+        for role, node_key, x, y in roles
+    )
+
+
+def _cosmos3_sound_graph_edges(edges):
+    return (*edges, ("decode", "audio", "videoExport", "audio"))
+
+
+_COSMOS3_OMNI_TEXT_TO_VIDEO_WITH_AUDIO_GRAPH_ROLES = _cosmos3_sound_graph_roles(
+    _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_ROLES
+)
+_COSMOS3_OMNI_TEXT_TO_VIDEO_WITH_AUDIO_GRAPH_EDGES = _cosmos3_sound_graph_edges(
+    _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_EDGES
+)
+_COSMOS3_OMNI_IMAGE_TO_VIDEO_WITH_AUDIO_GRAPH_ROLES = _cosmos3_sound_graph_roles(
+    _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_ROLES
+)
+_COSMOS3_OMNI_IMAGE_TO_VIDEO_WITH_AUDIO_GRAPH_EDGES = _cosmos3_sound_graph_edges(
+    _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_EDGES
+)
+_COSMOS3_OMNI_VIDEO_TO_VIDEO_WITH_AUDIO_GRAPH_ROLES = _cosmos3_sound_graph_roles(
+    _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_ROLES
+)
+_COSMOS3_OMNI_VIDEO_TO_VIDEO_WITH_AUDIO_GRAPH_EDGES = _cosmos3_sound_graph_edges(
+    _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_EDGES
+)
+_COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "width", "width"),
+    ("prompt", "height", "height"),
+    ("prompt", "fps", "fps"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "seed", "seed"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+    ("afterDecode", "pipeline_class", "pipelineClass"),
+    ("afterDecode", "workflow_id", "workflowId"),
+    ("afterDecode", "block_path", "workflowAfterDecodeBlock"),
+)
+_COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
+    ("prompt", "num_frames", "oneFrame"),
+)
+_COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
+    ("prompt", "num_frames", "numFrames"),
+    ("videoExport", "fps", "fps"),
+)
+_COSMOS3_OMNI_CONDITIONED_GRAPH_BINDINGS = (
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("imageEncode", "block_path", "workflowVaeEncoderBlock"),
+)
+_COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_BINDINGS = (
+    *_COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    *_COSMOS3_OMNI_CONDITIONED_GRAPH_BINDINGS,
+)
+_COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_BINDINGS = (
+    *_COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+    ("loadVideo", "file", "sourceVideo"),
+    *_COSMOS3_OMNI_CONDITIONED_GRAPH_BINDINGS,
+)
+_COSMOS3_DISTILLED_T2I_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -900, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowCosmos3DistilledTextEncode", -500, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowCosmos3DistilledDenoise", -100, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowCosmos3DistilledDecode", 300, -80),
+    ("preview", "modules.Image.Preview", 700, -80),
+)
+_COSMOS3_DISTILLED_T2I_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "image", "preview", "image"),
+)
+_COSMOS3_DISTILLED_I2V_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1100, -80),
+    ("loadImage", "modules.Image.Load", -900, 280),
+    ("prompt", "modules.ModularDiffusers.WorkflowCosmos3DistilledTextEncode", -700, -160),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowCosmos3DistilledVaeEncode", -300, 200),
+    ("denoise", "modules.ModularDiffusers.WorkflowCosmos3DistilledDenoise", 100, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowCosmos3DistilledDecode", 500, -80),
+    ("videoExport", "modules.Video.Export", 900, -80),
+)
+_COSMOS3_DISTILLED_I2V_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("loadImage", "image", "imageEncode", "image"),
+    ("prompt", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_COSMOS3_DISTILLED_COMMON_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "width", "width"),
+    ("prompt", "height", "height"),
+    ("prompt", "fps", "fps"),
+    ("prompt", "use_system_prompt", "true"),
+    ("prompt", "add_resolution_template", "true"),
+    ("prompt", "add_duration_template", "true"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "num_inference_steps", "distilledSteps4"),
+    ("denoise", "guidance_scale", "distilledGuidance1"),
+    ("denoise", "seed", "seed"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+)
+_COSMOS3_DISTILLED_T2I_GRAPH_BINDINGS = _COSMOS3_DISTILLED_COMMON_GRAPH_BINDINGS + (
+    ("prompt", "num_frames", "oneFrame"),
+)
+_COSMOS3_DISTILLED_I2V_GRAPH_BINDINGS = _COSMOS3_DISTILLED_COMMON_GRAPH_BINDINGS + (
+    ("prompt", "num_frames", "numFrames"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("imageEncode", "block_path", "workflowVaeEncoderBlock"),
+    ("videoExport", "fps", "fps"),
+)
+_WAN_ANIMATE_2_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1300, -80),
+    ("loadImage", "modules.Image.Load", -1080, 280),
+    ("loadPoseVideo", "modules.Video.Load", -1080, 600),
+    ("prompt", "modules.ModularDiffusers.WorkflowWanAnimateTextEncode", -920, -120),
+    ("imageEmbeddings", "modules.ModularDiffusers.WorkflowWanAnimateImageEncode", -520, -120),
+    ("videoEncode", "modules.ModularDiffusers.WorkflowWanAnimateVideoEncode", -120, 180),
+    ("imageEncode", "modules.ModularDiffusers.WorkflowWanAnimateVaeEncode", 280, 180),
+    ("denoise", "modules.ModularDiffusers.WorkflowWanAnimateDenoise", 680, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowWanAnimateDecode", 1080, -80),
+    ("videoExport", "modules.Video.Export", 1480, -80),
+)
+_WAN_ANIMATE_2_GRAPH_EDGES = (
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "imageEmbeddings", "pipeline_components"),
+    ("models", "pipeline_components", "videoEncode", "pipeline_components"),
+    ("models", "pipeline_components", "imageEncode", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("loadImage", "image", "imageEmbeddings", "image"),
+    ("loadPoseVideo", "video", "videoEncode", "driving_video"),
+    ("loadPoseVideo", "fps", "videoEncode", "driving_video_fps"),
+    ("prompt", "state_out", "imageEmbeddings", "state_in"),
+    ("imageEmbeddings", "state_out", "videoEncode", "state_in"),
+    ("videoEncode", "state_out", "imageEncode", "state_in"),
+    ("imageEncode", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "video", "videoExport", "video"),
+)
+_WAN_ANIMATE_2_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("loadImage", "file", "referenceImages"),
+    ("loadImage", "alpha_channel", "alphaMode"),
+    ("loadPoseVideo", "file", "poseVideo"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "prompt", "prompt"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("prompt", "prompt_ref", "promptRef"),
+    ("prompt", "max_sequence_length", "maxSequenceLength"),
+    ("imageEmbeddings", "pipeline_class", "pipelineClass"),
+    ("imageEmbeddings", "workflow_id", "workflowId"),
+    ("imageEmbeddings", "width", "width"),
+    ("imageEmbeddings", "height", "height"),
+    ("videoEncode", "pipeline_class", "pipelineClass"),
+    ("videoEncode", "workflow_id", "workflowId"),
+    ("videoEncode", "fps", "fps"),
+    ("videoEncode", "segment_frame_length", "segmentFrameLength"),
+    ("videoEncode", "prev_segment_conditioning_frames", "previousConditioningFrames"),
+    ("imageEncode", "pipeline_class", "pipelineClass"),
+    ("imageEncode", "workflow_id", "workflowId"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("denoise", "guidance_scale", "guidanceScale"),
+    ("denoise", "seed", "seed"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
     ("videoExport", "fps", "fps"),
 )
 _AUDIO_GRAPH_ROLES = (
@@ -3436,9 +5390,7 @@ _THREE_D_GRAPH_BINDINGS = (
     ("diffusersThreeDGenerate", "frame_size", "width"),
     ("videoExport", "fps", "fps"),
 )
-_THREE_D_IMAGE_GRAPH_ROLES = _THREE_D_GRAPH_ROLES + (
-    ("loadImage", "modules.Image.Load", -520, 260),
-)
+_THREE_D_IMAGE_GRAPH_ROLES = _THREE_D_GRAPH_ROLES + (("loadImage", "modules.Image.Load", -520, 260),)
 _THREE_D_IMAGE_GRAPH_EDGES = _THREE_D_GRAPH_EDGES + (
     ("loadImage", "image", "diffusersThreeDGenerate", "reference_images"),
 )
@@ -3510,7 +5462,7 @@ _AUTO_FIELDS = (
     "layerwiseCasting",
     "channelsLast",
 )
-_BINDING_SOURCES = frozenset(
+_BINDING_SOURCES = frozenset({"executionProfileId"}) | frozenset(
     item[2]
     for item in (
         *_GRAPH_BINDINGS,
@@ -3519,15 +5471,33 @@ _BINDING_SOURCES = frozenset(
         *_PERCEPTION_GRAPH_BINDINGS,
         *_SPEECH_TRANSCRIPTION_GRAPH_BINDINGS,
         *_SPEECH_TRANSLATION_GRAPH_BINDINGS,
+        *_CTC_SPEECH_GRAPH_BINDINGS,
         *_TRANSFORMERS_TEXT_GRAPH_BINDINGS,
         *_TRANSFORMERS_IMAGE_TEXT_GRAPH_BINDINGS,
         *_TRANSFORMERS_ANY_TO_ANY_TEXT_GRAPH_BINDINGS,
         *_TRANSFORMERS_ANY_TO_ANY_IMAGE_TEXT_GRAPH_BINDINGS,
         *_TRANSFORMERS_ANY_TO_ANY_IMAGE_GRAPH_BINDINGS,
+        *_MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        *_MODULAR_SDXL_EDIT_GRAPH_BINDINGS,
+        *_MODULAR_SDXL_INPAINT_GRAPH_BINDINGS,
+        *_MODULAR_SDXL_CONTROL_GRAPH_BINDINGS,
+        *_MODULAR_SDXL_CONTROL_EDIT_GRAPH_BINDINGS,
+        *_MODULAR_SDXL_CONTROL_INPAINT_GRAPH_BINDINGS,
+        *(
+            binding
+            for _roles, _edges, conditioned_bindings in _MODULAR_SDXL_REMAINING_GRAPHS.values()
+            for binding in conditioned_bindings
+        ),
         *_SDXL_EDIT_GRAPH_BINDINGS,
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_INPAINT_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_EDIT_INPAINT_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_CONTROL_EDIT_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_CONTROL_INPAINT_GRAPH_BINDINGS,
         *_CONTROL_GRAPH_BINDINGS,
         *_CONDITIONED_CONTROL_GRAPH_BINDINGS,
         *_QWEN_DIRECT_CONTROL_GRAPH_BINDINGS,
@@ -3554,12 +5524,33 @@ _BINDING_SOURCES = frozenset(
         *_LTX_V2V_GRAPH_BINDINGS,
         *_WAN_ANIMATE_GRAPH_BINDINGS,
         *_WAN_REPLACE_GRAPH_BINDINGS,
+        *_WAN_ANIMATE_2_GRAPH_BINDINGS,
         *_LTX_LONG_GRAPH_BINDINGS,
         *_LTX2_GRAPH_BINDINGS,
         *_LTX2_I2V_GRAPH_BINDINGS,
         *_LTX2_V2V_GRAPH_BINDINGS,
+        *_LTX2_IN_CONTEXT_GRAPH_BINDINGS,
         *_FRAMEPACK_GRAPH_BINDINGS,
+        *_WAN_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+        *_WAN_IMAGE_TO_VIDEO_GRAPH_BINDINGS,
         *_WAN_FLF_GRAPH_BINDINGS,
+        *_MODULAR_WHOLE_AUDIO_GRAPH_BINDINGS,
+        *_MODULAR_WHOLE_IMAGE_TEXT_GRAPH_BINDINGS,
+        *_MODULAR_WHOLE_IMAGE_EDIT_GRAPH_BINDINGS,
+        *_MODULAR_WHOLE_VIDEO_TEXT_GRAPH_BINDINGS,
+        *_MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_BINDINGS,
+        *_MODULAR_WHOLE_VIDEO_EDIT_GRAPH_BINDINGS,
+        *_MINIMAX_H3_T2VA_GRAPH_BINDINGS,
+        *_MINIMAX_H3_FL2VA_GRAPH_BINDINGS,
+        *_MINIMAX_H3_REF2VA_GRAPH_BINDINGS,
+        *_HUNYUAN_VIDEO_15_T2V_GRAPH_BINDINGS,
+        *_HUNYUAN_VIDEO_15_I2V_GRAPH_BINDINGS,
+        *_COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        *_COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+        *_COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_BINDINGS,
+        *_COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_BINDINGS,
+        *_COSMOS3_DISTILLED_T2I_GRAPH_BINDINGS,
+        *_COSMOS3_DISTILLED_I2V_GRAPH_BINDINGS,
         *_STABLE_AUDIO_GRAPH_BINDINGS,
         *_LONGCAT_AUDIO_DIT_GRAPH_BINDINGS,
         *_AUDIO_LDM2_GRAPH_BINDINGS,
@@ -3570,7 +5561,7 @@ _BINDING_SOURCES = frozenset(
         *_THREE_D_GRAPH_BINDINGS,
         *_UNCONDITIONAL_GRAPH_BINDINGS,
     )
-) | {"referenceAudio", "referenceVideos"}
+) | {"conditionImages", "referenceAudio", "referenceVideos"}
 
 _MODULAR_EDIT_PLUS_PROFILE = {
     "id": "qwen-edit-plus:modular",
@@ -3596,6 +5587,621 @@ _MODULAR_EDIT_PLUS_PROFILE = {
     "live_proof": False,
     "compatible_repos": (),
     "expert_quantization_modes": ("bnb_4bit",),
+}
+_MODULAR_QWEN_EDIT_PROFILE = {
+    "id": "qwen-edit:modular",
+    "model_type": "QwenImageEditModularPipeline",
+    "modes": ("edit_image", "modular_inpainting"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "QwenImageEditModularPipeline",
+    "default_repo": "Qwen/Qwen-Image-Edit",
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": ("transformer", "text_encoder"),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 24,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_MODULAR_QWEN_EDIT_INPAINT_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["modular_inpainting"],
+    "defaultRepo": "Qwen/Qwen-Image-Edit",
+    "qualityDefaults": {
+        "width": 768,
+        "height": 768,
+        "steps": 24,
+        "guidanceScale": 4,
+        "strength": 0.9,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 40 * _GIB,
+        "diskFreeBytes": 30 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 32 * _GIB,
+        "systemRamBytes": 48 * _GIB,
+        "diskFreeBytes": 40 * _GIB,
+    },
+    "fullResidency": {
+        "accelerator": "cuda",
+        "vramBytes": 64 * _GIB,
+        "systemRamBytes": 64 * _GIB,
+    },
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "Qwen Image Edit Modular inpainting retains its mask and overlay continuation inside the sealed route state "
+        "and is planned independently for each Cluster instance."
+    ),
+}
+_MODULAR_SDXL_PROFILE = {
+    "id": "sdxl-base:modular",
+    "model_type": "StableDiffusionXLModularPipeline",
+    "modes": (
+        "text_to_image",
+        "edit_image",
+        "inpaint",
+        "control_image",
+        "control_edit_image",
+        "control_inpaint",
+        *_SDXL_UNION_MODES,
+        *_SDXL_IP_ADAPTER_MODES,
+        *_SDXL_IP_ADAPTER_CONTROL_MODES,
+        *_SDXL_IP_ADAPTER_UNION_MODES,
+    ),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "StableDiffusionXLModularPipeline",
+    "default_repo": SDXL_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
+    "default_quantized_components": (),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 30,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_MODULAR_FLUX_PROFILE = {
+    "id": "flux-dev:modular",
+    "model_type": "FluxModularPipeline",
+    "modes": ("text_to_image", "image_to_image"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "FluxModularPipeline",
+    "default_repo": FLUX_DEV_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder_2"),
+    "default_quantized_components": ("transformer",),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 20,
+    "live_proof": False,
+    "compatible_repos": (FLUX_DEV_FP8_REPO,),
+}
+_MODULAR_FLUX_KONTEXT_PROFILE = {
+    "id": "flux-kontext:modular",
+    "model_type": "FluxKontextModularPipeline",
+    "modes": ("text_to_image", "edit_image"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "FluxKontextModularPipeline",
+    "default_repo": FLUX_KONTEXT_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder_2"),
+    "default_quantized_components": ("transformer",),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 20,
+    "live_proof": False,
+    "compatible_repos": (FLUX_KONTEXT_NVFP4_REPO,),
+}
+_MODULAR_FLUX2_KLEIN_PROFILE = {
+    "id": "flux2-klein:modular",
+    "model_type": "Flux2KleinModularPipeline",
+    "modes": ("text_to_image", "edit_image"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "Flux2KleinModularPipeline",
+    "default_repo": FLUX2_KLEIN_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": ("transformer",),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 4,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_MODULAR_FLUX2_KLEIN_BASE_PROFILE = {
+    "id": "flux2-klein-base:modular",
+    "model_type": "Flux2KleinBaseModularPipeline",
+    "modes": ("text_to_image", "edit_image"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "Flux2KleinBaseModularPipeline",
+    "default_repo": FLUX2_KLEIN_BASE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": ("transformer",),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 24,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_MODULAR_Z_IMAGE_PROFILE = {
+    "id": "z-image:modular",
+    "model_type": "ZImageModularPipeline",
+    "modes": ("modular_text_to_image", "modular_image_to_image"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "ZImageModularPipeline",
+    "default_repo": Z_IMAGE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": (),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
+    "max_low_memory_side": 1024,
+    "max_low_memory_steps": 8,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_MODULAR_Z_IMAGE_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["modular_text_to_image", "modular_image_to_image"],
+    "defaultRepo": Z_IMAGE_REPO,
+    "qualityDefaults": {
+        "width": 1024,
+        "height": 1024,
+        "steps": 8,
+        "guidanceScale": 1,
+        "maxSequenceLength": 512,
+    },
+    "minimum": {
+        "accelerator": "gpu_or_cpu",
+        "vramBytes": 0,
+        "systemRamBytes": 8 * _GIB,
+        "diskFreeBytes": 12 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "gpu",
+        "vramBytes": 8 * _GIB,
+        "systemRamBytes": 16 * _GIB,
+        "diskFreeBytes": 20 * _GIB,
+    },
+    "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "Z-Image Modular workflows are planned per Cluster instance and remain unpublished until their "
+        "collapsed/expanded execution equivalence is reviewed."
+    ),
+}
+_MODULAR_FLUX_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["text_to_image", "image_to_image"],
+    "defaultRepo": FLUX_DEV_REPO,
+    "preferredLowerMemoryRepo": FLUX_DEV_FP8_REPO,
+    "qualityDefaults": {
+        "width": 1024,
+        "height": 1024,
+        "steps": 28,
+        "guidanceScale": 3.5,
+        "maxSequenceLength": 512,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 48 * _GIB,
+        "diskFreeBytes": 45 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 32 * _GIB,
+        "systemRamBytes": 64 * _GIB,
+        "diskFreeBytes": 60 * _GIB,
+    },
+    "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+    "lowerMemory": {
+        "accelerator": "cuda",
+        "vramBytes": 16 * _GIB,
+        "systemRamBytes": 32 * _GIB,
+        "diskFreeBytes": 45 * _GIB,
+        "quantizationMode": "quanto_float8",
+        "quantizedComponents": ["transformer", "text_encoder_2"],
+    },
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+        OFFLOAD_MODE_NONE,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "FLUX Modular Diffusers uses one independently planned Cluster instance; changing its workflow or "
+        "artifact invalidates that instance's component and resource receipts without affecting other Clusters."
+    ),
+}
+_MODULAR_FLUX_KONTEXT_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["text_to_image", "edit_image"],
+    "defaultRepo": FLUX_KONTEXT_REPO,
+    "qualityDefaults": {
+        "width": 1024,
+        "height": 1024,
+        "steps": 28,
+        "guidanceScale": 2.5,
+        "maxSequenceLength": 512,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 48 * _GIB,
+        "diskFreeBytes": 45 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 32 * _GIB,
+        "systemRamBytes": 64 * _GIB,
+        "diskFreeBytes": 60 * _GIB,
+    },
+    "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+        OFFLOAD_MODE_NONE,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "FLUX Kontext Modular workflows preserve the exact upstream optional image-latent dispatch inside one "
+        "independently planned Cluster instance."
+    ),
+}
+_MODULAR_FLUX2_KLEIN_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["text_to_image", "edit_image"],
+    "defaultRepo": FLUX2_KLEIN_REPO,
+    "qualityDefaults": {
+        "width": 1024,
+        "height": 1024,
+        "steps": 4,
+        "guidanceScale": 1,
+        "maxSequenceLength": 512,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 13 * _GIB,
+        "systemRamBytes": 24 * _GIB,
+        "diskFreeBytes": 25 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 20 * _GIB,
+        "systemRamBytes": 32 * _GIB,
+        "diskFreeBytes": 35 * _GIB,
+    },
+    "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "FLUX.2 Klein Modular workflows retain the pinned distilled constructor configuration and are planned "
+        "per Cluster instance."
+    ),
+}
+_MODULAR_FLUX2_KLEIN_BASE_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["text_to_image", "edit_image"],
+    "defaultRepo": FLUX2_KLEIN_BASE_REPO,
+    "qualityDefaults": {
+        "width": 1024,
+        "height": 1024,
+        "steps": 50,
+        "guidanceScale": 4,
+        "maxSequenceLength": 512,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 13 * _GIB,
+        "systemRamBytes": 24 * _GIB,
+        "diskFreeBytes": 25 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 20 * _GIB,
+        "systemRamBytes": 32 * _GIB,
+        "diskFreeBytes": 35 * _GIB,
+    },
+    "fullResidency": _HIGH_MEMORY_FULL_RESIDENCY,
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "FLUX.2 Klein Base keeps its non-distilled 50-step workflow and classifier-free guider configuration "
+        "inside one independently planned Cluster instance."
+    ),
+}
+_MODULAR_FLUX_CAPABILITY = {
+    "modelType": "FluxModularPipeline",
+    "label": "FLUX.1 dev (Modular Diffusers)",
+    "displayName": "FLUX.1-dev",
+    "family": "FLUX Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": FLUX_DEV_REPO,
+    "downloadFiles": FLUX_DEV_DIFFUSERS_FILES,
+    "artifactLabel": "Pinned native Diffusers repository",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 28,
+    "recommendedGuidance": 3.5,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_GROUP_DISK,
+        "lowVram": OFFLOAD_MODE_GROUP_DISK,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_MODULAR_FLUX_PROFILE["supported_offload_modes"]),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+        "steps": 20,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": list(_MODULAR_FLUX_PROFILE["modes"]),
+    "modeRequirements": {"image_to_image": {"requiredImages": ["referenceImages"]}},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(FLUX_DEV_REPO, model_type="FluxModularPipeline")],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "The two Cluster workflows share one loader profile and common visual roles while retaining their exact upstream state edges.",
+        "Public execution and Auto selection remain disabled pending collapsed/expanded visible-frontend qualification and manual review.",
+    ],
+}
+_MODULAR_FLUX_KONTEXT_CAPABILITY = {
+    "modelType": "FluxKontextModularPipeline",
+    "label": "FLUX.1 Kontext (Modular Diffusers)",
+    "displayName": "FLUX.1-Kontext-dev",
+    "family": "FLUX Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": FLUX_KONTEXT_REPO,
+    "downloadFiles": FLUX_KONTEXT_DIFFUSERS_FILES,
+    "artifactLabel": "Pinned native Diffusers repository",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 28,
+    "recommendedGuidance": 2.5,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_GROUP_DISK,
+        "lowVram": OFFLOAD_MODE_GROUP_DISK,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_MODULAR_FLUX_KONTEXT_PROFILE["supported_offload_modes"]),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+        "steps": 20,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": list(_MODULAR_FLUX_KONTEXT_PROFILE["modes"]),
+    "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(FLUX_KONTEXT_REPO, model_type="FluxKontextModularPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "The text and image-conditioned Cluster workflows use the exact upstream auto-block dispatch.",
+        "Public execution and Auto selection remain disabled pending visible-frontend qualification and review.",
+    ],
+}
+_MODULAR_FLUX2_KLEIN_CAPABILITY = {
+    "modelType": "Flux2KleinModularPipeline",
+    "label": "FLUX.2 Klein 4B (Modular Diffusers)",
+    "displayName": "FLUX.2-klein-4B",
+    "family": "FLUX Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": FLUX2_KLEIN_REPO,
+    "downloadFiles": FLUX2_KLEIN_DIFFUSERS_FILES,
+    "artifactLabel": "Pinned native Diffusers repository",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 4,
+    "recommendedGuidance": 1,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_MODULAR_FLUX2_KLEIN_PROFILE["supported_offload_modes"]),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+        "steps": 4,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": list(_MODULAR_FLUX2_KLEIN_PROFILE["modes"]),
+    "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(FLUX2_KLEIN_REPO, model_type="Flux2KleinModularPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "The Cluster loader seals the upstream is_distilled=true constructor configuration.",
+        "Public execution and Auto selection remain disabled pending visible-frontend qualification and review.",
+    ],
+}
+_MODULAR_FLUX2_KLEIN_BASE_CAPABILITY = {
+    "modelType": "Flux2KleinBaseModularPipeline",
+    "label": "FLUX.2 Klein Base 4B (Modular Diffusers)",
+    "displayName": "FLUX.2-klein-base-4B",
+    "family": "FLUX Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": FLUX2_KLEIN_BASE_REPO,
+    "downloadFiles": FLUX2_KLEIN_BASE_DIFFUSERS_FILES,
+    "artifactLabel": "Pinned native Diffusers repository",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 4,
+    "guidanceLabel": "Classifier-free guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_MODULAR_FLUX2_KLEIN_BASE_PROFILE["supported_offload_modes"]),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+        "steps": 24,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": list(_MODULAR_FLUX2_KLEIN_BASE_PROFILE["modes"]),
+    "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            FLUX2_KLEIN_BASE_REPO,
+            model_type="Flux2KleinBaseModularPipeline",
+        )
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "This is the official non-distilled Base workflow; it is not aliased to the 4-step distilled Klein model.",
+        "Public execution and Auto selection remain disabled pending visible-frontend qualification and review.",
+    ],
 }
 _MODULAR_LAYERED_PROFILE = {
     "id": "qwen-layered:modular",
@@ -3624,7 +6230,14 @@ _MODULAR_LAYERED_PROFILE = {
 _MODULAR_CONTROL_PROFILE = {
     "id": "qwen-image:modular",
     "model_type": "QwenImageModularPipeline",
-    "modes": ("control_image",),
+    "modes": (
+        "modular_text_to_image",
+        "control_image",
+        "image_to_image",
+        "inpainting",
+        "control_edit_image",
+        "control_inpaint",
+    ),
     "loader_module": "modules.ModularDiffusers",
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
@@ -3643,7 +6256,60 @@ _MODULAR_CONTROL_PROFILE = {
     "max_low_memory_side": 768,
     "max_low_memory_steps": 28,
     "live_proof": False,
-    "compatible_repos": (),
+    "compatible_repos": ("Qwen/Qwen-Image",),
+}
+_MODULAR_QWEN_IMAGE_AUTO_REQUIREMENTS = {
+    "supportedTasks": [
+        "modular_text_to_image",
+        "image_to_image",
+        "inpainting",
+        "control_edit_image",
+        "control_inpaint",
+    ],
+    "defaultRepo": "Qwen/Qwen-Image-2512",
+    "qualityDefaults": {
+        "width": 768,
+        "height": 768,
+        "steps": 28,
+        "guidanceScale": 4,
+        "maxSequenceLength": 512,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 16 * _GIB,
+        "systemRamBytes": 32 * _GIB,
+        "diskFreeBytes": 20 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 48 * _GIB,
+        "diskFreeBytes": 35 * _GIB,
+    },
+    "fullResidency": {
+        "accelerator": "cuda",
+        "vramBytes": 80 * _GIB,
+        "systemRamBytes": 64 * _GIB,
+    },
+    "onLoadQuantization": {
+        "accelerator": "cuda",
+        "vramBytes": 16 * _GIB,
+        "systemRamBytes": 32 * _GIB,
+        "diskFreeBytes": 20 * _GIB,
+        "quantizationMode": "bnb_4bit",
+        "quantizedComponents": ["transformer", "text_encoder"],
+    },
+    "supportedOffloadModes": [
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ],
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "bitsandbytes"],
+    "guardedReason": (
+        "Qwen Image Modular workflows use one isolated Cluster instance; ControlNet dependencies are joined only "
+        "for the exact selected control workflow."
+    ),
 }
 _QWEN_DIRECT_CONTROL_PROFILE = {
     "id": "qwen-image-controlnet:direct",
@@ -3808,6 +6474,969 @@ def _flux_redux_profile() -> dict[str, Any]:
     )
     profile["modes"] = ("edit_image", "multi_image_reference_edit")
     return profile
+
+
+_ANIMA_MODULAR_PROFILE = {
+    "id": "anima:official-modular-workflow",
+    "model_type": "AnimaModularPipeline",
+    "modes": ("text_to_image", "image_to_image"),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "AnimaModularPipeline",
+    "default_repo": ANIMA_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": (),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 30,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_ANIMA_MODULAR_CAPABILITY = {
+    "modelType": "AnimaModularPipeline",
+    "label": "Anima (Modular Diffusers)",
+    "displayName": "Anima Base v1.0",
+    "family": "Anima",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": ANIMA_REPO,
+    "downloadFiles": ANIMA_DIFFUSERS_FILES,
+    "artifactLabel": "Exact reviewed Modular Diffusers component snapshot",
+    "license": "CircleStone Labs Non-Commercial License v1.0",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 40,
+    "recommendedGuidance": 4.0,
+    "guidanceLabel": "Classifier-free guidance",
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": True,
+    "supportsAudioInput": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_GROUP_CPU,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": [
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ],
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_GROUP_CPU,
+        "steps": 30,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": ["text_to_image", "image_to_image"],
+    "modeRequirements": {
+        "image_to_image": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one source image.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [require_catalog_revision(ANIMA_REPO, model_type="AnimaModularPipeline")],
+    "autoEligible": False,
+    "templateEligible": False,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "Runs the official Anima text_encoder, optional vae_encoder, denoise, and decode Modular blocks.",
+        "The CircleStone Labs Non-Commercial License requires revision-bound acknowledgement before install and Run.",
+        "Auto and Gallery remain disabled until real execution and manual output review are complete.",
+    ],
+}
+
+
+def _hunyuan_video_15_profile(mode, repository, steps):
+    slug = "t2v" if mode == "text_to_video" else "i2v-step-distilled"
+    return {
+        "id": f"hunyuan-video15-{slug}:official-modular-workflow",
+        "model_type": "HunyuanVideo15ModularPipeline",
+        "modes": (mode,),
+        "loader_module": "modules.ModularDiffusers",
+        "loader_action": "ModelsLoader",
+        "execution_path": "modular-diffusers",
+        "pipeline_class": "HunyuanVideo15ModularPipeline",
+        "default_repo": repository,
+        "fallback_repo": None,
+        "quantizable_components": (),
+        "default_quantized_components": (),
+        # Publisher guidance documents model CPU offload. Other offload and
+        # full-residency modes remain closed until measured qualification.
+        "supported_offload_modes": (OFFLOAD_MODE_MODEL_CPU,),
+        "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU,),
+        "max_low_memory_side": None,
+        "max_low_memory_steps": steps,
+        "live_proof": False,
+        "compatible_repos": (),
+    }
+
+
+_HUNYUAN_VIDEO_15_CAPABILITY = {
+    "modelType": "HunyuanVideo15ModularPipeline",
+    "label": "HunyuanVideo 1.5 (Modular Diffusers)",
+    "displayName": "HunyuanVideo 1.5 480p",
+    "family": "HunyuanVideo 1.5",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": HUNYUAN_VIDEO_15_T2V_REPO,
+    "downloadFiles": HUNYUAN_VIDEO_15_T2V_DIFFUSERS_FILES,
+    "artifactSelections": [
+        {
+            "modes": ["text_to_video"],
+            "repo": HUNYUAN_VIDEO_15_T2V_REPO,
+            "revision": require_catalog_revision(
+                HUNYUAN_VIDEO_15_T2V_REPO,
+                model_type="HunyuanVideo15ModularPipeline",
+            ),
+            "downloadFiles": HUNYUAN_VIDEO_15_T2V_DIFFUSERS_FILES,
+            "label": "Exact reviewed 480p text-to-video snapshot",
+        },
+        {
+            "modes": ["image_to_video"],
+            "repo": HUNYUAN_VIDEO_15_I2V_REPO,
+            "revision": require_catalog_revision(
+                HUNYUAN_VIDEO_15_I2V_REPO,
+                model_type="HunyuanVideo15ModularPipeline",
+            ),
+            "downloadFiles": HUNYUAN_VIDEO_15_I2V_DIFFUSERS_FILES,
+            "label": "Exact reviewed 480p step-distilled image-to-video snapshot",
+        },
+    ],
+    "artifactLabel": "Exact reviewed immutable Modular Diffusers snapshot",
+    "license": "Tencent Hunyuan Community License Agreement",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 848, "height": 480, "aspectRatio": "custom"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 6.0,
+    "guidanceLabel": "Official HunyuanVideo 1.5 guidance",
+    "supportsImageInput": True,
+    "supportsVideoInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "supportsAudioInput": False,
+    "outputKind": "video",
+    "recommendedFrames": 121,
+    "recommendedFps": 24,
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU,
+        "lowVram": OFFLOAD_MODE_MODEL_CPU,
+        "emergency": OFFLOAD_MODE_MODEL_CPU,
+        "modes": [OFFLOAD_MODE_MODEL_CPU],
+    },
+    # These are publisher recipe values, not a measured low-memory receipt.
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+        "steps": 50,
+        "width": 848,
+        "height": 480,
+        "numFrames": 121,
+    },
+    "modes": ["text_to_video", "image_to_video"],
+    "modeDefaults": {
+        "text_to_video": {"steps": 50, "guidanceScale": 6.0},
+        "image_to_video": {"steps": 12, "guidanceScale": 1.0},
+    },
+    "modeRequirements": {
+        "image_to_video": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one source image; width and height are source-derived unless both are set explicitly.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            HUNYUAN_VIDEO_15_T2V_REPO,
+            model_type="HunyuanVideo15ModularPipeline",
+        ),
+        require_catalog_revision(
+            HUNYUAN_VIDEO_15_I2V_REPO,
+            model_type="HunyuanVideo15ModularPipeline",
+        ),
+    ],
+    "autoEligible": False,
+    "templateEligible": False,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "T2V materializes text_encoder, denoise, and decode at 848x480; I2V preserves distinct VAE and SigLIP encoders before MeanFlow denoising.",
+        "Both artifacts are immutable and safetensors-only; no quantization is selected or implied.",
+        "Install and Run remain closed pending revision-bound license/AUP acknowledgement, territory and MAU eligibility enforcement, and downstream notice/disclosure UX.",
+        "Resource floors, VAE-tiling behavior, real-weight execution, public promotion, Auto, templates, Gallery, and live proof remain unqualified.",
+    ],
+}
+
+_HUNYUAN_VIDEO_15_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
+    "hunyuan-video15:modular-text-to-video:v1": {
+        "modelType": "HunyuanVideo15ModularPipeline",
+        "mode": "text_to_video",
+        "profile": _hunyuan_video_15_profile("text_to_video", HUNYUAN_VIDEO_15_T2V_REPO, 50),
+        "capability": deepcopy(_HUNYUAN_VIDEO_15_CAPABILITY),
+        "roles": _HUNYUAN_VIDEO_15_T2V_GRAPH_ROLES,
+        "edges": _HUNYUAN_VIDEO_15_T2V_GRAPH_EDGES,
+        "bindings": _HUNYUAN_VIDEO_15_T2V_GRAPH_BINDINGS,
+    },
+    "hunyuan-video15:modular-image-to-video:v1": {
+        "modelType": "HunyuanVideo15ModularPipeline",
+        "mode": "image_to_video",
+        "profile": _hunyuan_video_15_profile("image_to_video", HUNYUAN_VIDEO_15_I2V_REPO, 12),
+        "capability": deepcopy(_HUNYUAN_VIDEO_15_CAPABILITY),
+        "roles": _HUNYUAN_VIDEO_15_I2V_GRAPH_ROLES,
+        "edges": _HUNYUAN_VIDEO_15_I2V_GRAPH_EDGES,
+        "bindings": _HUNYUAN_VIDEO_15_I2V_GRAPH_BINDINGS,
+    },
+}
+
+_MINIMAX_H3_MODULAR_PROFILE = {
+    "id": "minimax-h3:official-modular-workflow",
+    "model_type": "MiniMaxH3ModularPipeline",
+    "modes": (
+        "text_to_video_with_audio",
+        "first_last_frame_to_video_with_audio",
+        "reference_to_video_with_audio",
+    ),
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "MiniMaxH3ModularPipeline",
+    "default_repo": MINIMAX_H3_REPO,
+    "fallback_repo": None,
+    # No quantization or offload recipe is claimed by the reviewed receipt.
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+
+_MINIMAX_H3_MODULAR_CAPABILITY = {
+    "modelType": "MiniMaxH3ModularPipeline",
+    "label": "MiniMax H3 (Modular Diffusers)",
+    "displayName": "MiniMax-H3",
+    "family": "MiniMax H3",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": MINIMAX_H3_REPO,
+    # The reviewed receipt proves immutable weight partitions but not the
+    # complete selective metadata/tokenizer closure. Keep app download
+    # exposure closed instead of falling back to the 354 GB full repository.
+    "downloadFiles": [],
+    "artifactLabel": "Pinned safetensors repository with workflow-selected transformer partition",
+    "license": "MiniMax-H3 Community License Agreement",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1344, "height": 768, "aspectRatio": "16:9"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 1.0,
+    "guidanceLabel": "Guidance-distilled; no guidance control",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsVideoInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": True,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "supportsAudioInput": True,
+    "outputKind": "video",
+    "outputMedia": ["video", "audio"],
+    "recommendedFrames": 124,
+    "recommendedFps": 24,
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": None,
+    "modes": list(_MINIMAX_H3_MODULAR_PROFILE["modes"]),
+    "modeRequirements": {
+        "first_last_frame_to_video_with_audio": {
+            "note": "Requires at least one decoded first or last keyframe; either or both are valid.",
+        },
+        "reference_to_video_with_audio": {
+            "note": (
+                "Requires an ordered list of official MiniMax H3 image/video/audio reference dataclasses. "
+                "Audio-only lists are invalid; order is semantic."
+            ),
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(MINIMAX_H3_REPO, model_type="MiniMaxH3ModularPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": False,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "The loader seals t2va/fl2va to transformer and ref2va to transformer_ref; it never loads both partitions for one Cluster.",
+        "Creator defaults are 1344x768, 124 frames at fixed 24 FPS, 50 steps, and seed 0; no negative prompt or guidance input is invented.",
+        "Install and Run remain closed pending license/territory eligibility, an exact selective metadata closure, optional Transformers runtime, and measured 4-accelerator qualification.",
+        "The current estimate-only floor is 160 GiB selective disk, 256 GiB system RAM, 192 GiB aggregate accelerator memory, and four accelerators.",
+        "Public execution, Auto, templates, Gallery, and live proof remain disabled.",
+    ],
+}
+
+_MINIMAX_H3_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
+    "minimax-h3:modular-text-to-video-with-audio:v1": {
+        "modelType": "MiniMaxH3ModularPipeline",
+        "mode": "text_to_video_with_audio",
+        "profile": deepcopy(_MINIMAX_H3_MODULAR_PROFILE),
+        "capability": deepcopy(_MINIMAX_H3_MODULAR_CAPABILITY),
+        "roles": _MINIMAX_H3_T2VA_GRAPH_ROLES,
+        "edges": _MINIMAX_H3_T2VA_GRAPH_EDGES,
+        "bindings": _MINIMAX_H3_T2VA_GRAPH_BINDINGS,
+    },
+    "minimax-h3:modular-first-last-frame-to-video-with-audio:v1": {
+        "modelType": "MiniMaxH3ModularPipeline",
+        "mode": "first_last_frame_to_video_with_audio",
+        "profile": deepcopy(_MINIMAX_H3_MODULAR_PROFILE),
+        "capability": deepcopy(_MINIMAX_H3_MODULAR_CAPABILITY),
+        "roles": _MINIMAX_H3_CONDITIONED_GRAPH_ROLES,
+        "edges": _MINIMAX_H3_CONDITIONED_GRAPH_EDGES,
+        "bindings": _MINIMAX_H3_FL2VA_GRAPH_BINDINGS,
+    },
+    "minimax-h3:modular-reference-to-video-with-audio:v1": {
+        "modelType": "MiniMaxH3ModularPipeline",
+        "mode": "reference_to_video_with_audio",
+        "profile": deepcopy(_MINIMAX_H3_MODULAR_PROFILE),
+        "capability": deepcopy(_MINIMAX_H3_MODULAR_CAPABILITY),
+        "roles": _MINIMAX_H3_CONDITIONED_GRAPH_ROLES,
+        "edges": _MINIMAX_H3_CONDITIONED_GRAPH_EDGES,
+        "bindings": _MINIMAX_H3_REF2VA_GRAPH_BINDINGS,
+    },
+}
+
+_HELIOS_MODEL_VARIANTS = (
+    (
+        "HeliosModularPipeline",
+        "helios-base",
+        "Helios Base",
+        HELIOS_BASE_REPO,
+        50,
+        5.0,
+    ),
+    (
+        "HeliosPyramidModularPipeline",
+        "helios-pyramid",
+        "Helios Pyramid",
+        HELIOS_PYRAMID_REPO,
+        10,
+        5.0,
+    ),
+    (
+        "HeliosPyramidDistilledModularPipeline",
+        "helios-pyramid-distilled",
+        "Helios Pyramid Distilled",
+        HELIOS_DISTILLED_REPO,
+        2,
+        1.0,
+    ),
+)
+
+
+def _helios_modular_profile(model_type, slug, repository, steps):
+    return {
+        "id": f"{slug}:official-modular-workflow",
+        "model_type": model_type,
+        "modes": ("text_to_video", "image_to_video", "video_to_video"),
+        "loader_module": "modules.ModularDiffusers",
+        "loader_action": "ModelsLoader",
+        "execution_path": "modular-diffusers",
+        "pipeline_class": model_type,
+        "default_repo": repository,
+        "fallback_repo": None,
+        "quantizable_components": ("transformer", "text_encoder"),
+        "default_quantized_components": (),
+        "supported_offload_modes": (
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
+        "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        "max_low_memory_side": 640,
+        "max_low_memory_steps": steps,
+        "live_proof": False,
+        "compatible_repos": (),
+    }
+
+
+def _helios_modular_capability(model_type, label, repository, steps, guidance):
+    return {
+        "modelType": model_type,
+        "label": f"{label} (Modular Diffusers)",
+        "displayName": label,
+        "family": "Helios",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": repository,
+        "downloadFiles": HELIOS_DIFFUSERS_FILES,
+        "artifactLabel": "Exact reviewed 24-file Modular Diffusers component snapshot",
+        "license": "Apache-2.0",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 640, "height": 384, "aspectRatio": "5:3"},
+        "recommendedSteps": steps,
+        "recommendedGuidance": guidance,
+        "guidanceLabel": "Official Helios guidance",
+        "supportsImageInput": True,
+        "supportsVideoInput": True,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": True,
+        "supportsAudioInput": False,
+        "outputKind": "video",
+        "recommendedFrames": 132,
+        "recommendedFps": 24,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_GROUP_CPU,
+            "lowVram": OFFLOAD_MODE_GROUP_DISK,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": [
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ],
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+            "steps": steps,
+            "width": 640,
+            "height": 384,
+            "numFrames": 132,
+        },
+        "modes": ["text_to_video", "image_to_video", "video_to_video"],
+        "modeRequirements": {
+            "image_to_video": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires exactly one source image.",
+            },
+            "video_to_video": {
+                "requiredVideos": ["sourceVideo"],
+                "note": "Requires a decoded source video long enough for the selected latent chunk size.",
+            },
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(repository, model_type=model_type)],
+        "autoEligible": False,
+        "templateEligible": False,
+        "galleryEligible": False,
+        "liveProof": False,
+        "notes": [
+            "Runs the official Helios text encoder, conditional VAE encoder, denoise, and decode blocks.",
+            "The exact component repository revision is propagated into every upstream component descriptor.",
+            "Auto and Gallery remain disabled until remote heavy-hardware execution and output review are complete.",
+        ],
+    }
+
+
+_HELIOS_WORKFLOW_GRAPHS = {
+    "text_to_video": (
+        _MODULAR_WHOLE_VIDEO_TEXT_GRAPH_ROLES,
+        _MODULAR_WHOLE_VIDEO_TEXT_GRAPH_EDGES,
+        _MODULAR_WHOLE_VIDEO_TEXT_GRAPH_BINDINGS,
+    ),
+    "image_to_video": (
+        _MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_ROLES,
+        _MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_EDGES,
+        _MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_BINDINGS,
+    ),
+    "video_to_video": (
+        _MODULAR_WHOLE_VIDEO_EDIT_GRAPH_ROLES,
+        _MODULAR_WHOLE_VIDEO_EDIT_GRAPH_EDGES,
+        _MODULAR_WHOLE_VIDEO_EDIT_GRAPH_BINDINGS,
+    ),
+}
+_HELIOS_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
+    f"{slug}:modular-{mode.replace('_', '-')}:v1": {
+        "modelType": model_type,
+        "mode": mode,
+        "profile": _helios_modular_profile(model_type, slug, repository, steps),
+        "capability": _helios_modular_capability(model_type, label, repository, steps, guidance),
+        "roles": graph[0],
+        "edges": graph[1],
+        "bindings": graph[2],
+    }
+    for model_type, slug, label, repository, steps, guidance in _HELIOS_MODEL_VARIANTS
+    for mode, graph in _HELIOS_WORKFLOW_GRAPHS.items()
+}
+
+_WAN_ANIMATE_2_MODEL_VARIANTS = (
+    (
+        "WanAnimate2ModularPipeline",
+        "wan-animate-2",
+        "Wan Animate 2",
+        WAN_ANIMATE_2_REPO,
+        40,
+        3.0,
+    ),
+    (
+        "WanAnimate2DistilledModularPipeline",
+        "wan-animate-2-distilled",
+        "Wan Animate 2 Distilled",
+        WAN_ANIMATE_2_DISTILLED_REPO,
+        10,
+        1.0,
+    ),
+)
+
+
+def _wan_animate_2_profile(model_type, slug, repository, steps):
+    return {
+        "id": f"{slug}:official-modular-workflow",
+        "model_type": model_type,
+        "modes": ("character_animate",),
+        "loader_module": "modules.ModularDiffusers",
+        "loader_action": "ModelsLoader",
+        "execution_path": "modular-diffusers",
+        "pipeline_class": model_type,
+        "default_repo": repository,
+        "fallback_repo": None,
+        "quantizable_components": ("transformer", "text_encoder"),
+        "default_quantized_components": (),
+        "supported_offload_modes": (
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
+        "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        "max_low_memory_side": 640,
+        "max_low_memory_steps": steps,
+        "live_proof": False,
+        "compatible_repos": (),
+    }
+
+
+def _wan_animate_2_capability(model_type, label, repository, steps, guidance):
+    return {
+        "modelType": model_type,
+        "label": f"{label} (Modular Diffusers)",
+        "displayName": label,
+        "family": "Wan Animate 2",
+        "supportTier": "supported",
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "defaultRepo": repository,
+        "downloadFiles": WAN_ANIMATE_2_DIFFUSERS_FILES,
+        "artifactLabel": "Exact reviewed 30-file Modular Diffusers component snapshot",
+        "license": "Apache-2.0",
+        "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 640, "height": 800, "aspectRatio": "4:5"},
+        "recommendedSteps": steps,
+        "recommendedGuidance": guidance,
+        "guidanceLabel": "Official Wan Animate 2 guidance",
+        "supportsImageInput": True,
+        "supportsVideoInput": True,
+        "supportsMask": False,
+        "supportsMultiImage": False,
+        "supportsControlImage": False,
+        "supportsLayers": False,
+        "supportsLora": True,
+        "supportsAudioInput": False,
+        "outputKind": "video",
+        "recommendedFrames": 81,
+        "recommendedFps": 24,
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_GROUP_CPU,
+            "lowVram": OFFLOAD_MODE_GROUP_DISK,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": [
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ],
+        },
+        "lowVram": {
+            "dtype": "bfloat16",
+            "autoOffload": True,
+            "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+            "steps": steps,
+            "width": 640,
+            "height": 800,
+            "numFrames": 81,
+        },
+        "modes": ["character_animate"],
+        "modeRequirements": {
+            "character_animate": {
+                "requiredImages": ["referenceImages"],
+                "requiredVideos": ["poseVideo"],
+                "note": "Requires one reference-character image and one driving video; source FPS is preserved.",
+            }
+        },
+        "executionStatus": "expert_only",
+        "revisionCandidates": [require_catalog_revision(repository, model_type=model_type)],
+        "autoEligible": False,
+        "templateEligible": False,
+        "galleryEligible": False,
+        "liveProof": False,
+        "notes": [
+            "Runs the official text, reference-image CLIP, driving-video CLIP, reference VAE, segment denoise, and assembly blocks.",
+            "Every same-repository component descriptor is normalized to the exact reviewed top-level commit.",
+            "The Distilled definition fixes guidance to 1 and uses the official 10-step composed override.",
+            "Auto and Gallery remain disabled until compiled Flex Attention remote execution and output review complete.",
+        ],
+    }
+
+
+_WAN_ANIMATE_2_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
+    f"{slug}:modular-character-animate:v1": {
+        "modelType": model_type,
+        "mode": "character_animate",
+        "profile": _wan_animate_2_profile(model_type, slug, repository, steps),
+        "capability": _wan_animate_2_capability(model_type, label, repository, steps, guidance),
+        "roles": _WAN_ANIMATE_2_GRAPH_ROLES,
+        "edges": _WAN_ANIMATE_2_GRAPH_EDGES,
+        "bindings": _WAN_ANIMATE_2_GRAPH_BINDINGS,
+    }
+    for model_type, slug, label, repository, steps, guidance in _WAN_ANIMATE_2_MODEL_VARIANTS
+}
+
+
+_COSMOS3_NANO_MODULAR_PROFILE = {
+    "id": "cosmos3-nano:official-modular-workflow",
+    "model_type": "Cosmos3OmniModularPipeline",
+    "modes": _COSMOS3_NANO_STRUCTURAL_MODES,
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "Cosmos3OmniModularPipeline",
+    "default_repo": COSMOS3_NANO_REPO,
+    "fallback_repo": None,
+    # No quantization or offload recipe is claimed until the exact Nano
+    # snapshot and mandatory guardrail have completed a measured run.
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+
+_COSMOS3_NANO_MODULAR_CAPABILITY = {
+    "modelType": "Cosmos3OmniModularPipeline",
+    "label": "Cosmos 3 Nano (Modular Diffusers)",
+    "displayName": "Cosmos3-Nano",
+    "family": "Cosmos 3",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": COSMOS3_NANO_REPO,
+    "downloadFiles": COSMOS3_NANO_DIFFUSERS_FILES,
+    "artifactLabel": "Exact reviewed 24-file Cosmos 3 Nano Modular Diffusers snapshot",
+    "license": "OpenMDW-1.1",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1280, "height": 720, "aspectRatio": "16:9"},
+    "recommendedSteps": 35,
+    "recommendedGuidance": 6.0,
+    "guidanceLabel": "Official Cosmos 3 Nano guidance",
+    "supportsImageInput": True,
+    "supportsVideoInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "supportsAudioInput": False,
+    "outputKind": "video",
+    "modeOutputKinds": {
+        "text_to_image": "image",
+        "text_to_video": "video",
+        "image_to_video": "video",
+        "video_to_video": "video",
+        "text_to_video_with_audio": "video",
+        "image_to_video_with_audio": "video",
+        "video_to_video_with_audio": "video",
+    },
+    "recommendedFrames": 189,
+    "recommendedFps": 24,
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": None,
+    "modes": list(_COSMOS3_NANO_STRUCTURAL_MODES),
+    "modeRequirements": {
+        "text_to_image": {
+            "note": "The official text-to-image workflow seals num_frames to exactly 1.",
+        },
+        "text_to_video": {
+            "note": "The official Nano model-card recipe uses 189 frames at 24 FPS.",
+        },
+        "image_to_video": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one source image for the official Cosmos 3 VAE conditioning block.",
+        },
+        "video_to_video": {
+            "requiredVideos": ["sourceVideo"],
+            "note": "Requires one decoded source video for the official Cosmos 3 VAE conditioning block.",
+        },
+        "text_to_video_with_audio": {
+            "note": "The official sound workflow produces synchronized video and audio and is exported as one MP4.",
+        },
+        "image_to_video_with_audio": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one source image and exports synchronized generated video and audio.",
+        },
+        "video_to_video_with_audio": {
+            "requiredVideos": ["sourceVideo"],
+            "note": "Requires one decoded source video and exports synchronized generated video and audio.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(COSMOS3_NANO_REPO, model_type="Cosmos3OmniModularPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": False,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "Runs the official Cosmos 3 text encoder, denoise, safety-checked decode, and after-decode blocks.",
+        "The exact public Nano snapshot is graph-qualified only; no quantization or offload recipe is claimed.",
+        "Execution remains closed until the mandatory gated Cosmos Guardrail revision is acknowledged, installed, and qualified.",
+        "Auto, templates, Gallery, and public execution remain disabled until resource and output evidence is approved.",
+    ],
+}
+
+_COSMOS3_NANO_WORKFLOW_GRAPHS = {
+    "text_to_image": (
+        "cosmos3-nano:modular-text-to-image:v1",
+        _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_ROLES,
+        _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_EDGES,
+        _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+    ),
+    "text_to_video": (
+        "cosmos3-nano:modular-text-to-video:v1",
+        _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_ROLES,
+        _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_EDGES,
+        _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+    ),
+    "image_to_video": (
+        "cosmos3-nano:modular-image-to-video:v1",
+        _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_ROLES,
+        _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_EDGES,
+        _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_BINDINGS,
+    ),
+    "video_to_video": (
+        "cosmos3-nano:modular-video-to-video:v1",
+        _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_ROLES,
+        _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_EDGES,
+        _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_BINDINGS,
+    ),
+    "text_to_video_with_audio": (
+        "cosmos3-nano:modular-text-to-video-with-audio:v1",
+        _COSMOS3_OMNI_TEXT_TO_VIDEO_WITH_AUDIO_GRAPH_ROLES,
+        _COSMOS3_OMNI_TEXT_TO_VIDEO_WITH_AUDIO_GRAPH_EDGES,
+        _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+    ),
+    "image_to_video_with_audio": (
+        "cosmos3-nano:modular-image-to-video-with-audio:v1",
+        _COSMOS3_OMNI_IMAGE_TO_VIDEO_WITH_AUDIO_GRAPH_ROLES,
+        _COSMOS3_OMNI_IMAGE_TO_VIDEO_WITH_AUDIO_GRAPH_EDGES,
+        _COSMOS3_OMNI_IMAGE_TO_VIDEO_GRAPH_BINDINGS,
+    ),
+    "video_to_video_with_audio": (
+        "cosmos3-nano:modular-video-to-video-with-audio:v1",
+        _COSMOS3_OMNI_VIDEO_TO_VIDEO_WITH_AUDIO_GRAPH_ROLES,
+        _COSMOS3_OMNI_VIDEO_TO_VIDEO_WITH_AUDIO_GRAPH_EDGES,
+        _COSMOS3_OMNI_VIDEO_TO_VIDEO_GRAPH_BINDINGS,
+    ),
+}
+
+_COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
+    spec_id: {
+        "modelType": "Cosmos3OmniModularPipeline",
+        "mode": mode,
+        "profile": deepcopy(_COSMOS3_NANO_MODULAR_PROFILE),
+        "capability": deepcopy(_COSMOS3_NANO_MODULAR_CAPABILITY),
+        "roles": roles,
+        "edges": edges,
+        "bindings": bindings,
+        # The official workflow always runs ``after_decode``. Non-action
+        # routes return ``action=None`` from that side-output block, so it is
+        # an intentional terminal beside the user-facing media sink.
+        "auxiliaryTerminalRoles": ("afterDecode",),
+    }
+    for mode, (spec_id, roles, edges, bindings) in _COSMOS3_NANO_WORKFLOW_GRAPHS.items()
+}
+
+
+def _cosmos3_distilled_profile(mode, repository):
+    slug = "text-to-image" if mode == "text_to_image" else "image-to-video"
+    return {
+        "id": f"cosmos3-distilled-{slug}:official-modular-workflow",
+        "model_type": "Cosmos3DistilledModularPipeline",
+        "modes": (mode,),
+        "loader_module": "modules.ModularDiffusers",
+        "loader_action": "ModelsLoader",
+        "execution_path": "modular-diffusers",
+        "pipeline_class": "Cosmos3DistilledModularPipeline",
+        "default_repo": repository,
+        "fallback_repo": None,
+        "quantizable_components": (),
+        "default_quantized_components": (),
+        # This preserves the reviewed publisher recipe; it is not a measured
+        # resource qualification or permission to execute the 130 GB snapshot.
+        "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+        "retry_offload_modes": (),
+        "max_low_memory_side": None,
+        "max_low_memory_steps": None,
+        "live_proof": False,
+        "compatible_repos": (),
+    }
+
+
+_COSMOS3_DISTILLED_MODULAR_CAPABILITY = {
+    "modelType": "Cosmos3DistilledModularPipeline",
+    "label": "Cosmos 3 Distilled (Modular Diffusers)",
+    "displayName": "Cosmos3-Super 4-Step",
+    "family": "Cosmos 3",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": COSMOS3_DISTILLED_T2I_REPO,
+    "downloadFiles": COSMOS3_DISTILLED_T2I_DIFFUSERS_FILES,
+    "artifactSelections": [
+        {
+            "modes": ["text_to_image"],
+            "repo": COSMOS3_DISTILLED_T2I_REPO,
+            "revision": require_catalog_revision(
+                COSMOS3_DISTILLED_T2I_REPO,
+                model_type="Cosmos3DistilledModularPipeline",
+            ),
+            "downloadFiles": COSMOS3_DISTILLED_T2I_DIFFUSERS_FILES,
+            "label": "Exact reviewed Cosmos 3 Super text-to-image 4-step snapshot",
+        },
+        {
+            "modes": ["image_to_video"],
+            "repo": COSMOS3_DISTILLED_I2V_REPO,
+            "revision": require_catalog_revision(
+                COSMOS3_DISTILLED_I2V_REPO,
+                model_type="Cosmos3DistilledModularPipeline",
+            ),
+            "downloadFiles": COSMOS3_DISTILLED_I2V_DIFFUSERS_FILES,
+            "label": "Exact reviewed Cosmos 3 Super image-to-video 4-step snapshot",
+        },
+    ],
+    "artifactLabel": "Exact reviewed route-specific Cosmos 3 Super 4-step snapshot",
+    "license": "OpenMDW-1.1",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1280, "height": 720, "aspectRatio": "16:9"},
+    "recommendedSteps": 4,
+    "recommendedGuidance": 1.0,
+    "guidanceLabel": "Fixed distilled guidance",
+    "supportsImageInput": True,
+    "supportsVideoInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "supportsAudioInput": False,
+    "outputKind": "video",
+    "modeOutputKinds": {"text_to_image": "image", "image_to_video": "video"},
+    "recommendedFrames": 189,
+    "recommendedFps": 24,
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": None,
+    "modes": list(_COSMOS3_DISTILLED_STRUCTURAL_MODES),
+    "modeRequirements": {
+        "text_to_image": {
+            "note": "The exact upstream workflow seals num_frames to one and the distilled schedule to four steps.",
+        },
+        "image_to_video": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires exactly one source image and the route-specific image-to-video checkpoint.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            COSMOS3_DISTILLED_T2I_REPO,
+            model_type="Cosmos3DistilledModularPipeline",
+        ),
+        require_catalog_revision(
+            COSMOS3_DISTILLED_I2V_REPO,
+            model_type="Cosmos3DistilledModularPipeline",
+        ),
+    ],
+    "autoEligible": False,
+    "templateEligible": False,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "Runs the exact Distilled text encoder, optional image VAE encoder, fixed-schedule denoise, and decode blocks.",
+        "Negative prompts are unsupported; inference steps and guidance are sealed to the official four-step schedule and 1.0.",
+        "Execution remains closed until the mandatory gated Cosmos Guardrail, tensor-parallel resource recipe, and output are qualified.",
+        "Auto, templates, Gallery, and public execution remain disabled.",
+    ],
+}
+
+_COSMOS3_DISTILLED_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
+    "cosmos3-distilled:modular-text-to-image:v1": {
+        "modelType": "Cosmos3DistilledModularPipeline",
+        "mode": "text_to_image",
+        "profile": _cosmos3_distilled_profile("text_to_image", COSMOS3_DISTILLED_T2I_REPO),
+        "capability": deepcopy(_COSMOS3_DISTILLED_MODULAR_CAPABILITY),
+        "roles": _COSMOS3_DISTILLED_T2I_GRAPH_ROLES,
+        "edges": _COSMOS3_DISTILLED_T2I_GRAPH_EDGES,
+        "bindings": _COSMOS3_DISTILLED_T2I_GRAPH_BINDINGS,
+    },
+    "cosmos3-distilled:modular-image-to-video:v1": {
+        "modelType": "Cosmos3DistilledModularPipeline",
+        "mode": "image_to_video",
+        "profile": _cosmos3_distilled_profile("image_to_video", COSMOS3_DISTILLED_I2V_REPO),
+        "capability": deepcopy(_COSMOS3_DISTILLED_MODULAR_CAPABILITY),
+        "roles": _COSMOS3_DISTILLED_I2V_GRAPH_ROLES,
+        "edges": _COSMOS3_DISTILLED_I2V_GRAPH_EDGES,
+        "bindings": _COSMOS3_DISTILLED_I2V_GRAPH_BINDINGS,
+    },
+}
 
 
 STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
@@ -4881,6 +8510,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "qualificationStatus": "graph-qualified-execution-pending",
             "qualifiedModes": [],
             "defaultRepo": WAN_22_I2V_A14B_REPO,
+            "revisionCandidates": [require_catalog_revision(WAN_22_I2V_A14B_REPO)],
             "downloadFiles": WAN_22_I2V_A14B_DIFFUSERS_FILES,
             "artifactLabel": "Diffusers repo",
             "defaultDtype": "bfloat16",
@@ -4919,7 +8549,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "executionStatus": "supported_with_model",
             "notes": [
                 "Uses the generic Diffusers video facade with the official dual-expert WanImageToVideoPipeline.",
-                "The quality workflow quantizes both denoising experts to Quanto INT8 and runs five-second shots sequentially.",
+                "The native BF16 A14B artifact requires disk-group offload on hosts that cannot safely retain both experts in system RAM.",
                 "Human review remains required before generated examples are promoted to the gallery.",
             ],
             "modeRequirements": {
@@ -4960,9 +8590,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
                 OFFLOAD_MODE_GROUP_CPU,
                 OFFLOAD_MODE_GROUP_DISK,
             ],
+            "offloadRequirements": _WAN_22_A14B_EXPERT_RESOURCE_REQUIREMENTS,
             "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
             "guardedReason": "Wan 2.2 I2V A14B uses the generic Diffusers video graph with a dual-transformer execution contract.",
         },
+        "expertResourceRequirements": _WAN_22_A14B_EXPERT_RESOURCE_REQUIREMENTS,
         "roles": _I2V_GRAPH_ROLES,
         "edges": _I2V_GRAPH_EDGES,
         "bindings": _I2V_GRAPH_BINDINGS,
@@ -5002,6 +8634,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "qualificationStatus": "graph-qualified-execution-pending",
             "qualifiedModes": [],
             "defaultRepo": WAN_22_TI2V_5B_REPO,
+            "revisionCandidates": [require_catalog_revision(WAN_22_TI2V_5B_REPO)],
             "downloadFiles": WAN_22_TI2V_5B_DIFFUSERS_FILES,
             "artifactLabel": "Diffusers repo",
             "defaultDtype": "bfloat16",
@@ -5009,7 +8642,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "recommendedSteps": 50,
             "recommendedGuidance": 5.0,
             "guidanceLabel": "Guidance",
-            "supportsImageInput": True,
+            # Diffusers currently exposes this dense 5B checkpoint through
+            # ``WanPipeline.__call__`` as text-to-video.  The upstream model
+            # family name includes TI2V, but that must not be interpreted as
+            # an admitted image input on the standard Diffusers route.
+            "supportsImageInput": False,
             "supportsMask": False,
             "supportsMultiImage": False,
             "supportsControlImage": False,
@@ -5076,7 +8713,18 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _VIDEO_GRAPH_ROLES,
         "edges": _VIDEO_GRAPH_EDGES,
-        "bindings": _VIDEO_GRAPH_BINDINGS,
+        # The standard Cluster route seals the immutable artifact revision and
+        # execution profile on the loader itself.  A generic direct workflow
+        # must not silently fall back to a moving revision or a different
+        # loader profile after save/refresh.
+        "bindings": tuple(
+            (role, param, "defaultRevision")
+            if (role, param) == ("wanPipeline", "revision")
+            else item
+            for item in _VIDEO_GRAPH_BINDINGS
+            for role, param, _source in (item,)
+        )
+        + (("wanPipeline", "execution_profile_id", "executionProfileId"),),
     },
     "wan-21-t2v-1.3b:text-to-video:v1": {
         "modelType": "WanVideoPipeline",
@@ -5594,6 +9242,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "live_proof": False,
             "compatible_repos": (),
         },
+        "bindings": tuple(
+            (role, param, "nativeMath") if (role, param) == ("diffusersRecipe", "attention_backend") else item
+            for item in _GRAPH_BINDINGS
+            for role, param, _source in (item,)
+        ),
     },
     "z-image:edit-image:v1": {
         "modelType": "ZImageModularPipeline",
@@ -5624,7 +9277,12 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS + (("diffusersImagePipeline", "revision", "defaultRevision"),),
+        "bindings": tuple(
+            (role, param, "nativeMath") if (role, param) == ("diffusersRecipe", "attention_backend") else item
+            for item in _EDIT_GRAPH_BINDINGS
+            for role, param, _source in (item,)
+        )
+        + (("diffusersImagePipeline", "revision", "defaultRevision"),),
     },
     "qwen-image-2512:text-to-image:v1": {
         "modelType": "QwenImageModularPipeline",
@@ -5734,33 +9392,306 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     "qwen-image-edit:edit-image:v1": {
         "modelType": "QwenImageEditModularPipeline",
         "mode": "edit_image",
-        "profile": {
-            "id": "qwen-edit:modular",
-            "model_type": "QwenImageEditModularPipeline",
-            "modes": ("edit_image",),
-            "loader_module": "modules.ModularDiffusers",
-            "loader_action": "ModelsLoader",
-            "execution_path": "modular-diffusers",
-            "pipeline_class": "QwenImageEditModularPipeline",
-            "default_repo": "Qwen/Qwen-Image-Edit",
-            "fallback_repo": None,
-            "quantizable_components": ("transformer", "text_encoder"),
-            "default_quantized_components": ("transformer", "text_encoder"),
-            "supported_offload_modes": (
+        "profile": _MODULAR_QWEN_EDIT_PROFILE,
+        "roles": _MODULAR_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+    },
+    "qwen-image-edit:modular-inpainting:v1": {
+        "modelType": "QwenImageEditModularPipeline",
+        "mode": "modular_inpainting",
+        "profile": _MODULAR_QWEN_EDIT_PROFILE,
+        "roles": _MODULAR_SDXL_INPAINT_GRAPH_ROLES,
+        "edges": _MODULAR_QWEN_EDIT_INPAINT_GRAPH_EDGES,
+        "bindings": _MODULAR_QWEN_EDIT_INPAINT_GRAPH_BINDINGS,
+        "autoRequirementKey": "QwenImageEditModularPipeline:modular_inpainting",
+        "autoRequirements": _MODULAR_QWEN_EDIT_INPAINT_AUTO_REQUIREMENTS,
+    },
+    "flux-dev:modular-text-to-image:v1": {
+        "modelType": "FluxModularPipeline",
+        "mode": "text_to_image",
+        "profile": _MODULAR_FLUX_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "capability": _MODULAR_FLUX_CAPABILITY,
+        "autoRequirements": _MODULAR_FLUX_AUTO_REQUIREMENTS,
+    },
+    "flux-dev:modular-image-to-image:v1": {
+        "modelType": "FluxModularPipeline",
+        "mode": "image_to_image",
+        "profile": _MODULAR_FLUX_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
+        "bindings": tuple(
+            binding
+            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
+            if binding != ("prompt", "negative_prompt", "negativePrompt")
+        ) + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
+    },
+    "flux-kontext:modular-text-to-image:v1": {
+        "modelType": "FluxKontextModularPipeline",
+        "mode": "text_to_image",
+        "profile": _MODULAR_FLUX_KONTEXT_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "capability": _MODULAR_FLUX_KONTEXT_CAPABILITY,
+        "autoRequirements": _MODULAR_FLUX_KONTEXT_AUTO_REQUIREMENTS,
+    },
+    "flux-kontext:modular-edit-image:v1": {
+        "modelType": "FluxKontextModularPipeline",
+        "mode": "edit_image",
+        "profile": _MODULAR_FLUX_KONTEXT_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
+        "bindings": tuple(
+            binding
+            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
+            if binding
+            not in {
+                ("prompt", "negative_prompt", "negativePrompt"),
+                ("denoise", "strength", "strength"),
+            }
+        ),
+    },
+    "flux2-klein:modular-text-to-image:v1": {
+        "modelType": "Flux2KleinModularPipeline",
+        "mode": "text_to_image",
+        "profile": _MODULAR_FLUX2_KLEIN_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "capability": _MODULAR_FLUX2_KLEIN_CAPABILITY,
+        "autoRequirements": _MODULAR_FLUX2_KLEIN_AUTO_REQUIREMENTS,
+    },
+    "flux2-klein:modular-edit-image:v1": {
+        "modelType": "Flux2KleinModularPipeline",
+        "mode": "edit_image",
+        "profile": _MODULAR_FLUX2_KLEIN_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES,
+        "bindings": tuple(
+            binding
+            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
+            if binding
+            not in {
+                ("prompt", "negative_prompt", "negativePrompt"),
+                ("denoise", "strength", "strength"),
+            }
+        ),
+    },
+    "flux2-klein-base:modular-text-to-image:v1": {
+        "modelType": "Flux2KleinBaseModularPipeline",
+        "mode": "text_to_image",
+        "profile": _MODULAR_FLUX2_KLEIN_BASE_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "capability": _MODULAR_FLUX2_KLEIN_BASE_CAPABILITY,
+        "autoRequirements": _MODULAR_FLUX2_KLEIN_BASE_AUTO_REQUIREMENTS,
+    },
+    "flux2-klein-base:modular-edit-image:v1": {
+        "modelType": "Flux2KleinBaseModularPipeline",
+        "mode": "edit_image",
+        "profile": _MODULAR_FLUX2_KLEIN_BASE_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES,
+        "bindings": tuple(
+            binding
+            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
+            if binding
+            not in {
+                ("prompt", "negative_prompt", "negativePrompt"),
+                ("denoise", "strength", "strength"),
+            }
+        ),
+    },
+    "z-image:modular-text-to-image:v1": {
+        "modelType": "ZImageModularPipeline",
+        "mode": "modular_text_to_image",
+        "profile": _MODULAR_Z_IMAGE_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_Z_IMAGE_TEXT_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "autoRequirementKey": "ZImageModularPipeline:modular_text_to_image",
+        "autoRequirements": _MODULAR_Z_IMAGE_AUTO_REQUIREMENTS,
+    },
+    "z-image:modular-image-to-image:v1": {
+        "modelType": "ZImageModularPipeline",
+        "mode": "modular_image_to_image",
+        "profile": _MODULAR_Z_IMAGE_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_Z_IMAGE_TO_IMAGE_GRAPH_EDGES,
+        "bindings": tuple(
+            binding
+            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
+            if binding != ("prompt", "negative_prompt", "negativePrompt")
+        ) + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
+        "autoRequirementKey": "ZImageModularPipeline:modular_image_to_image",
+        "autoRequirements": _MODULAR_Z_IMAGE_AUTO_REQUIREMENTS,
+    },
+    "sdxl-base:modular-text-to-image:v1": {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": "text_to_image",
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_TEXT_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "capability": {
+            "modelType": "StableDiffusionXLModularPipeline",
+            "label": "Stable Diffusion XL 1.0 (Modular Diffusers)",
+            "displayName": "stable-diffusion-xl-base-1.0",
+            "family": "Stable Diffusion XL",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": SDXL_BASE_REPO,
+            "downloadFiles": SDXL_BASE_FP16_DIFFUSERS_FILES,
+            "artifactLabel": "Pinned Diffusers fp16 safetensors repository",
+            "defaultDtype": "float16",
+            "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+            "recommendedSteps": 30,
+            "recommendedGuidance": 5.0,
+            "guidanceLabel": "Guidance",
+            "supportsNegativePrompt": True,
+            "supportsImageInput": True,
+            "supportsMask": True,
+            "supportsMultiImage": False,
+            "supportsControlImage": True,
+            "supportsLayers": False,
+            "supportsLora": False,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_MODEL_CPU,
+                "lowVram": OFFLOAD_MODE_MODEL_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": list(_MODULAR_SDXL_PROFILE["supported_offload_modes"]),
+            },
+            "lowVram": {
+                "dtype": "float16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                "steps": 24,
+                "width": 768,
+                "height": 768,
+            },
+            "modes": list(_MODULAR_SDXL_PROFILE["modes"]),
+            "modeRequirements": {
+                "edit_image": {"requiredImages": ["referenceImages"]},
+                "inpaint": {"requiredImages": ["referenceImages", "maskImage"]},
+                "control_image": {
+                    "requiredImages": ["controlImage"],
+                    "modelRequirements": studio_model_requirements_for_pair(
+                        "StableDiffusionXLModularPipeline", "control_image"
+                    ),
+                    "note": "Requires one prepared Canny control image.",
+                },
+                "control_edit_image": {
+                    "requiredImages": ["referenceImages", "controlImage"],
+                    "modelRequirements": studio_model_requirements_for_pair(
+                        "StableDiffusionXLModularPipeline", "control_edit_image"
+                    ),
+                    "note": "Requires one source image and one prepared Canny control image.",
+                },
+                "control_inpaint": {
+                    "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+                    "modelRequirements": studio_model_requirements_for_pair(
+                        "StableDiffusionXLModularPipeline", "control_inpaint"
+                    ),
+                    "note": "Requires one source image, one mask image, and one prepared Canny control image.",
+                },
+            },
+            "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO)],
+            "executionStatus": "expert_only",
+            "autoEligible": True,
+            "templateEligible": True,
+            "galleryEligible": False,
+            "liveProof": False,
+            "notes": [
+                "This capability represents the admitted Modular Diffusers text-to-image Cluster route, not the separate standard Diffusers pipeline route.",
+                "Auto plans resources per exact Cluster instance; Gallery publication remains disabled until visible-output qualification is complete.",
+            ],
+        },
+        "autoRequirements": {
+            "supportedTasks": list(_MODULAR_SDXL_PROFILE["modes"]),
+            "defaultRepo": SDXL_BASE_REPO,
+            "qualityDefaults": {
+                "width": 1024,
+                "height": 1024,
+                "steps": 30,
+                "guidanceScale": 5,
+                "maxSequenceLength": 77,
+            },
+            "minimum": {
+                "accelerator": "gpu_or_cpu",
+                "vramBytes": 0,
+                "systemRamBytes": 16 * _GIB,
+                "diskFreeBytes": 15 * _GIB,
+            },
+            "recommended": {
+                "accelerator": "gpu",
+                "vramBytes": 24 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+                "diskFreeBytes": 25 * _GIB,
+            },
+            "fullResidency": {
+                "accelerator": "gpu",
+                "vramBytes": 32 * _GIB,
+                "systemRamBytes": 32 * _GIB,
+            },
+            "supportedOffloadModes": [
                 OFFLOAD_MODE_NONE,
                 OFFLOAD_MODE_MODEL_CPU,
                 OFFLOAD_MODE_GROUP_CPU,
                 OFFLOAD_MODE_GROUP_DISK,
+            ],
+            "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+            "guardedReason": (
+                "SDXL Modular Diffusers uses one independently planned Cluster instance; auxiliary ControlNet and "
+                "IP-Adapter dependencies are joined from the exact selected workflow without sharing mutable state "
+                "between Cluster Nodes."
             ),
-            "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
-            "max_low_memory_side": 768,
-            "max_low_memory_steps": 24,
-            "live_proof": False,
-            "compatible_repos": (),
         },
-        "roles": _MODULAR_EDIT_GRAPH_ROLES,
-        "edges": _MODULAR_EDIT_GRAPH_EDGES,
-        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+    },
+    "sdxl-base:modular-image-to-image:v1": {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": "edit_image",
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_SDXL_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_SDXL_EDIT_GRAPH_BINDINGS,
+    },
+    "sdxl-base:modular-inpainting:v1": {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": "inpaint",
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _MODULAR_SDXL_INPAINT_GRAPH_ROLES,
+        "edges": _MODULAR_SDXL_INPAINT_GRAPH_EDGES,
+        "bindings": _MODULAR_SDXL_INPAINT_GRAPH_BINDINGS,
+    },
+    "sdxl-base:modular-controlnet-text-to-image:v1": {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": "control_image",
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _MODULAR_SDXL_CONTROL_GRAPH_ROLES,
+        "edges": _MODULAR_SDXL_CONTROL_GRAPH_EDGES,
+        "bindings": _MODULAR_SDXL_CONTROL_GRAPH_BINDINGS,
+    },
+    "sdxl-base:modular-controlnet-image-to-image:v1": {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": "control_edit_image",
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _MODULAR_SDXL_CONTROL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_SDXL_CONTROL_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_SDXL_CONTROL_EDIT_GRAPH_BINDINGS,
+    },
+    "sdxl-base:modular-controlnet-inpainting:v1": {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": "control_inpaint",
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_ROLES,
+        "edges": _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_EDGES,
+        "bindings": _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_BINDINGS,
     },
     "qwen-image-edit-plus:edit-image:v1": {
         "modelType": "QwenImageEditPlusModularPipeline",
@@ -5793,6 +9724,55 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _MODULAR_CONTROL_GRAPH_ROLES,
         "edges": _MODULAR_CONTROL_GRAPH_EDGES,
         "bindings": _MODULAR_CONTROL_GRAPH_BINDINGS,
+    },
+    "qwen-image-2512:modular-image-to-image:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "image_to_image",
+        "profile": _MODULAR_CONTROL_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_BINDINGS,
+        "autoRequirementKey": "QwenImageModularPipeline:image_to_image",
+        "autoRequirements": _MODULAR_QWEN_IMAGE_AUTO_REQUIREMENTS,
+    },
+    "qwen-image-2512:modular-text-to-image:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "modular_text_to_image",
+        "profile": _MODULAR_CONTROL_PROFILE,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_QWEN_TEXT_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_QWEN_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "autoRequirements": _MODULAR_QWEN_IMAGE_AUTO_REQUIREMENTS,
+    },
+    "qwen-image-2512:modular-inpainting:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "inpainting",
+        "profile": _MODULAR_CONTROL_PROFILE,
+        "roles": _MODULAR_SDXL_INPAINT_GRAPH_ROLES,
+        "edges": _MODULAR_QWEN_INPAINT_GRAPH_EDGES,
+        "bindings": _MODULAR_QWEN_INPAINT_GRAPH_BINDINGS,
+        "autoRequirementKey": "QwenImageModularPipeline:inpainting",
+        "autoRequirements": _MODULAR_QWEN_IMAGE_AUTO_REQUIREMENTS,
+    },
+    "qwen-image-2512:modular-control-image-to-image:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "control_edit_image",
+        "profile": _MODULAR_CONTROL_PROFILE,
+        "roles": _MODULAR_SDXL_CONTROL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_QWEN_CONTROL_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_QWEN_CONTROL_EDIT_GRAPH_BINDINGS,
+        "autoRequirementKey": "QwenImageModularPipeline:control_edit_image",
+        "autoRequirements": _MODULAR_QWEN_IMAGE_AUTO_REQUIREMENTS,
+    },
+    "qwen-image-2512:modular-control-inpainting:v1": {
+        "modelType": "QwenImageModularPipeline",
+        "mode": "control_inpaint",
+        "profile": _MODULAR_CONTROL_PROFILE,
+        "roles": _MODULAR_SDXL_CONTROL_INPAINT_GRAPH_ROLES,
+        "edges": _MODULAR_QWEN_CONTROL_INPAINT_GRAPH_EDGES,
+        "bindings": _MODULAR_QWEN_CONTROL_INPAINT_GRAPH_BINDINGS,
+        "autoRequirementKey": "QwenImageModularPipeline:control_inpaint",
+        "autoRequirements": _MODULAR_QWEN_IMAGE_AUTO_REQUIREMENTS,
     },
     "qwen-image-controlnet-direct:control-image:v1": {
         "modelType": "QwenImageControlNetPipeline",
@@ -5999,6 +9979,120 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "roles": _AUDIO_GRAPH_ROLES,
         "edges": _AUDIO_GRAPH_EDGES,
         "bindings": _STABLE_AUDIO_GRAPH_BINDINGS,
+    },
+    **_HELIOS_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **_HUNYUAN_VIDEO_15_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **_MINIMAX_H3_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **_WAN_ANIMATE_2_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **_COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **_COSMOS3_DISTILLED_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    "anima:modular-text-to-image:v1": {
+        "modelType": "AnimaModularPipeline",
+        "mode": "text_to_image",
+        "profile": deepcopy(_ANIMA_MODULAR_PROFILE),
+        "capability": deepcopy(_ANIMA_MODULAR_CAPABILITY),
+        "roles": _MODULAR_WHOLE_IMAGE_TEXT_GRAPH_ROLES,
+        "edges": _MODULAR_WHOLE_IMAGE_TEXT_GRAPH_EDGES,
+        "bindings": _MODULAR_WHOLE_IMAGE_TEXT_GRAPH_BINDINGS,
+    },
+    "anima:modular-image-to-image:v1": {
+        "modelType": "AnimaModularPipeline",
+        "mode": "image_to_image",
+        "profile": deepcopy(_ANIMA_MODULAR_PROFILE),
+        "capability": deepcopy(_ANIMA_MODULAR_CAPABILITY),
+        "roles": _MODULAR_WHOLE_IMAGE_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_WHOLE_IMAGE_EDIT_GRAPH_EDGES,
+        "bindings": _MODULAR_WHOLE_IMAGE_EDIT_GRAPH_BINDINGS,
+    },
+    "minimax-music3:modular-text-to-audio:v1": {
+        "modelType": "MiniMaxMusic3ModularPipeline",
+        "mode": "text_to_audio",
+        "profile": {
+            "id": "minimax-music3:official-modular-workflow",
+            "model_type": "MiniMaxMusic3ModularPipeline",
+            "modes": ("text_to_audio",),
+            "loader_module": "modules.ModularDiffusers",
+            "loader_action": "ModelsLoader",
+            "execution_path": "modular-diffusers",
+            "pipeline_class": "MiniMaxMusic3ModularPipeline",
+            "default_repo": MINIMAX_MUSIC3_REPO,
+            "fallback_repo": None,
+            "quantizable_components": (),
+            "default_quantized_components": (),
+            "supported_offload_modes": (
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ),
+            "retry_offload_modes": (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+            "max_low_memory_side": None,
+            "max_low_memory_steps": 30,
+            "live_proof": False,
+            "compatible_repos": (),
+        },
+        "capability": {
+            "modelType": "MiniMaxMusic3ModularPipeline",
+            "label": "MiniMax Music 3 (Modular Diffusers)",
+            "displayName": "MiniMax-Music3",
+            "family": "MiniMax Music 3",
+            "supportTier": "supported",
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "defaultRepo": MINIMAX_MUSIC3_REPO,
+            "downloadFiles": MINIMAX_MUSIC3_DIFFUSERS_FILES,
+            "artifactLabel": "Exact reviewed Modular Diffusers component snapshot",
+            "license": "MiniMax-Music3 Community License",
+            "defaultDtype": "bfloat16",
+            "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
+            "recommendedSteps": 30,
+            "recommendedGuidance": 1.0,
+            "guidanceLabel": "Official workflow guidance",
+            "supportsImageInput": False,
+            "supportsMask": False,
+            "supportsMultiImage": False,
+            "supportsControlImage": False,
+            "supportsLayers": False,
+            "supportsLora": False,
+            "supportsAudioInput": False,
+            "outputKind": "audio",
+            "recommendedSampleRate": 44100,
+            "recommendedDuration": 60,
+            "offloadSupport": {
+                "default": OFFLOAD_MODE_GROUP_CPU,
+                "lowVram": OFFLOAD_MODE_GROUP_CPU,
+                "emergency": OFFLOAD_MODE_GROUP_DISK,
+                "modes": [
+                    OFFLOAD_MODE_NONE,
+                    OFFLOAD_MODE_MODEL_CPU,
+                    OFFLOAD_MODE_GROUP_CPU,
+                    OFFLOAD_MODE_GROUP_DISK,
+                ],
+            },
+            "lowVram": {
+                "dtype": "bfloat16",
+                "autoOffload": True,
+                "offloadMode": OFFLOAD_MODE_GROUP_CPU,
+                "steps": 30,
+            },
+            "modes": ["text_to_audio"],
+            "executionStatus": "expert_only",
+            "revisionCandidates": [
+                require_catalog_revision(MINIMAX_MUSIC3_REPO, model_type="MiniMaxMusic3ModularPipeline")
+            ],
+            "autoEligible": False,
+            "templateEligible": False,
+            "galleryEligible": False,
+            "liveProof": False,
+            "notes": [
+                "Runs the official semantic_generator, denoise, and decode Modular blocks without reimplementing upstream loops.",
+                "The MiniMax-Music3 Community License requires revision-bound acknowledgement before install and Run.",
+                "Auto and Gallery remain disabled until real CUDA execution and manual output review are complete.",
+            ],
+        },
+        "roles": _MODULAR_WHOLE_AUDIO_GRAPH_ROLES,
+        "edges": _MODULAR_WHOLE_AUDIO_GRAPH_EDGES,
+        "bindings": _MODULAR_WHOLE_AUDIO_GRAPH_BINDINGS,
     },
     "longcat-audio-dit-1b:text-to-audio:v1": {
         "modelType": "LongCatAudioDiTPipeline",
@@ -6315,9 +10409,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "modes": ["image_to_3d"],
             "modeRequirements": {"image_to_3d": {"requiredImages": ["referenceImages"]}},
             "executionStatus": "expert_only",
-            "revisionCandidates": [
-                require_catalog_revision(SHAP_E_IMG2IMG_REPO, model_type="ShapEImg2ImgPipeline")
-            ],
+            "revisionCandidates": [require_catalog_revision(SHAP_E_IMG2IMG_REPO, model_type="ShapEImg2ImgPipeline")],
             "autoEligible": False,
             "templateEligible": True,
             "galleryEligible": False,
@@ -6521,6 +10613,80 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "bindings": _SDXL_INPAINT_GRAPH_BINDINGS,
     },
 }
+
+_SDXL_MODULAR_CAPABILITY = STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-base:modular-text-to-image:v1"]["capability"]
+for _mode in _SDXL_UNION_MODES:
+    _route = _mode.removeprefix("control_union_")
+    _required = ["controlImage"]
+    if _route == "edit_image":
+        _required.insert(0, "referenceImages")
+    elif _route == "inpaint":
+        _required[0:0] = ["referenceImages", "maskImage"]
+    _SDXL_MODULAR_CAPABILITY["modeRequirements"][_mode] = {
+        "requiredImages": _required,
+        "modelRequirements": studio_model_requirements_for_pair("StableDiffusionXLModularPipeline", _mode),
+        "note": "Requires a prepared control image and an explicit ControlNet Union control mode.",
+    }
+for _mode in (*_SDXL_IP_ADAPTER_MODES, *_SDXL_IP_ADAPTER_CONTROL_MODES, *_SDXL_IP_ADAPTER_UNION_MODES):
+    _required = ["ipAdapterImage"]
+    if "edit_image" in _mode:
+        _required.insert(0, "referenceImages")
+    elif _mode.endswith("inpaint"):
+        _required[0:0] = ["referenceImages", "maskImage"]
+    if "control" in _mode:
+        _required.append("controlImage")
+    _SDXL_MODULAR_CAPABILITY["modeRequirements"][_mode] = {
+        "requiredImages": _required,
+        "modelRequirements": studio_model_requirements_for_pair("StableDiffusionXLModularPipeline", _mode),
+        "note": "Requires a separate IP-Adapter reference image; expanded adapter blocks remain independently editable.",
+    }
+
+STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-base:modular-text-to-image:v1"] = {
+    **STUDIO_EXECUTION_SPEC_DEFINITIONS["sdxl-base:modular-text-to-image:v1"],
+    "capability": _SDXL_MODULAR_CAPABILITY,
+}
+
+for _spec_name, _mode, _route, _control, _ip_adapter in (
+    ("controlnet-union-text-to-image", "control_union_image", "text2image", "union", False),
+    ("controlnet-union-image-to-image", "control_union_edit_image", "image2image", "union", False),
+    ("controlnet-union-inpainting", "control_union_inpaint", "inpainting", "union", False),
+    ("ip-adapter-text-to-image", "ip_adapter_image", "text2image", None, True),
+    ("ip-adapter-image-to-image", "ip_adapter_edit_image", "image2image", None, True),
+    ("ip-adapter-inpainting", "ip_adapter_inpaint", "inpainting", None, True),
+    ("ip-adapter-controlnet-text-to-image", "ip_adapter_control_image", "text2image", "ordinary", True),
+    ("ip-adapter-controlnet-image-to-image", "ip_adapter_control_edit_image", "image2image", "ordinary", True),
+    ("ip-adapter-controlnet-inpainting", "ip_adapter_control_inpaint", "inpainting", "ordinary", True),
+    (
+        "ip-adapter-controlnet-union-text-to-image",
+        "ip_adapter_control_union_image",
+        "text2image",
+        "union",
+        True,
+    ),
+    (
+        "ip-adapter-controlnet-union-image-to-image",
+        "ip_adapter_control_union_edit_image",
+        "image2image",
+        "union",
+        True,
+    ),
+    (
+        "ip-adapter-controlnet-union-inpainting",
+        "ip_adapter_control_union_inpaint",
+        "inpainting",
+        "union",
+        True,
+    ),
+):
+    _roles, _edges, _bindings = _MODULAR_SDXL_REMAINING_GRAPHS[(_route, _control, _ip_adapter)]
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"sdxl-base:modular-{_spec_name}:v1"] = {
+        "modelType": "StableDiffusionXLModularPipeline",
+        "mode": _mode,
+        "profile": _MODULAR_SDXL_PROFILE,
+        "roles": _roles,
+        "edges": _edges,
+        "bindings": _bindings,
+    }
 
 _FLUX_COMBINED_CONTROL_DEFINITIONS = {
     _spec_id: STUDIO_EXECUTION_SPEC_DEFINITIONS.pop(_spec_id)
@@ -7105,6 +11271,26 @@ def _sana_video_capability(*, image_conditioned: bool) -> dict[str, Any]:
 _WAN_ANIMATE_MODES = ("character_animate", "character_replace")
 _LTX2_MODES = ("text_to_video", "image_to_video", "video_to_video", "reference_to_video")
 _P2_VIDEO_PROFILES = {
+    "wan-1.3b-modular": _planning_video_profile(
+        "wan-1.3b:modular-text-to-video",
+        "WanModularPipeline",
+        ("text_to_video",),
+        "WanModularPipeline",
+        WAN_T2V_1_3B_REPO,
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
+    ),
+    "wan-i2v-480p-modular": _planning_video_profile(
+        "wan-i2v-480p:modular",
+        "WanImage2VideoModularPipeline",
+        ("single_image_to_video",),
+        "WanImage2VideoModularPipeline",
+        WAN_I2V_14B_480P_REPO,
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
+    ),
     "wan22": _planning_video_profile(
         "wan-22-a14b:direct", "Wan22Pipeline", ("text_to_video",), "Wan22Pipeline", WAN_22_T2V_A14B_REPO
     ),
@@ -7120,6 +11306,13 @@ _P2_VIDEO_PROFILES = {
     ),
     "ltx2": _planning_video_profile(
         "ltx2:direct", "LTX2ConditionPipeline", _LTX2_MODES, "LTX2ConditionPipeline", LTX2_REPO
+    ),
+    "ltx2-in-context": _planning_video_profile(
+        "ltx2-in-context:direct",
+        "LTX2InContextPipeline",
+        ("in_context_to_video",),
+        "LTX2InContextPipeline",
+        LTX2_REPO,
     ),
     "framepack": _planning_video_profile(
         "framepack:direct",
@@ -7252,6 +11445,130 @@ _LTX2_INPUTS = {
     "reference_to_video": {"requiredImages": ["referenceImages"]},
     "video_to_video": {"requiredVideos": ["sourceVideo"]},
 }
+_WAN_MODULAR_TEXT_CAPABILITY = _planning_video_capability(
+    "WanModularPipeline",
+    "Wan 2.1 1.3B Text to Video (Modular Diffusers)",
+    "Wan Video",
+    WAN_T2V_1_3B_REPO,
+    ("text_to_video",),
+    download_files=WAN_T2V_1_3B_DIFFUSERS_FILES,
+)
+_WAN_MODULAR_TEXT_CAPABILITY.update(
+    {
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "liveProof": False,
+    }
+)
+_WAN_MODULAR_I2V_CAPABILITY = _planning_video_capability(
+    "WanImage2VideoModularPipeline",
+    "Wan 2.1 Image to Video (Modular Diffusers)",
+    "Wan Video",
+    WAN_I2V_14B_480P_REPO,
+    ("single_image_to_video", "image_to_video"),
+    {
+        "single_image_to_video": {"requiredImages": ["referenceImages"]},
+        "image_to_video": {"requiredImages": ["referenceImages", "lastImage"]},
+    },
+    download_files=WAN_I2V_14B_480P_DIFFUSERS_FILES,
+)
+_WAN_MODULAR_I2V_CAPABILITY.update(
+    {
+        "revisionCandidates": [
+            require_catalog_revision(WAN_I2V_14B_480P_REPO),
+            require_catalog_revision(WAN_FLF_REPO),
+        ],
+        "artifactSelections": [
+            {
+                "modes": ["single_image_to_video"],
+                "repo": WAN_I2V_14B_480P_REPO,
+                "revision": require_catalog_revision(WAN_I2V_14B_480P_REPO),
+                "downloadFiles": WAN_I2V_14B_480P_DIFFUSERS_FILES,
+                "label": "Wan 2.1 I2V 14B 480P Diffusers repo",
+            },
+            {
+                "modes": ["image_to_video"],
+                "repo": WAN_FLF_REPO,
+                "revision": require_catalog_revision(WAN_FLF_REPO),
+                "downloadFiles": WAN_FLF_14B_DIFFUSERS_FILES,
+                "label": "Wan 2.1 FLF2V 14B 720P Diffusers repo",
+            },
+        ],
+        "autoEligible": False,
+        "templateEligible": True,
+        "galleryEligible": False,
+        "liveProof": False,
+        "notes": [
+            "The single-image and first/last-frame Cluster workflows share the exact Wan prompt, conditioning, denoise, and decode actions while retaining separate pinned repositories.",
+            "Public execution and Auto selection remain disabled pending collapsed/expanded visible-frontend qualification and manual review.",
+        ],
+    }
+)
+_WAN_MODULAR_TEXT_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["text_to_video"],
+    "defaultRepo": WAN_T2V_1_3B_REPO,
+    "qualityDefaults": {
+        "width": 832,
+        "height": 480,
+        "steps": 30,
+        "guidanceScale": 5,
+        "numFrames": 81,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 10 * _GIB,
+        "systemRamBytes": 24 * _GIB,
+        "diskFreeBytes": 20 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 13 * _GIB,
+        "systemRamBytes": 32 * _GIB,
+        "diskFreeBytes": 30 * _GIB,
+    },
+    "supportedOffloadModes": list(_DIRECT_OFFLOAD_MODES),
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "Wan Modular text-to-video is planned per Cluster instance; changing its artifact or workflow invalidates "
+        "only that Cluster's component and resource receipts."
+    ),
+}
+_WAN_MODULAR_I2V_AUTO_REQUIREMENTS = {
+    "supportedTasks": ["single_image_to_video"],
+    "defaultRepo": WAN_I2V_14B_480P_REPO,
+    "qualityDefaults": {
+        "width": 832,
+        "height": 480,
+        "steps": 40,
+        "guidanceScale": 5,
+        "numFrames": 81,
+    },
+    "minimum": {
+        "accelerator": "cuda",
+        "vramBytes": 24 * _GIB,
+        "systemRamBytes": 64 * _GIB,
+        "diskFreeBytes": 70 * _GIB,
+    },
+    "recommended": {
+        "accelerator": "cuda",
+        "vramBytes": 48 * _GIB,
+        "systemRamBytes": 96 * _GIB,
+        "diskFreeBytes": 90 * _GIB,
+    },
+    "fullResidency": {
+        "accelerator": "cuda",
+        "vramBytes": 80 * _GIB,
+        "systemRamBytes": 96 * _GIB,
+    },
+    "supportedOffloadModes": list(_DIRECT_OFFLOAD_MODES),
+    "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
+    "guardedReason": (
+        "Wan Modular image-to-video is a 14B workflow and is admitted conservatively until an exact live memory "
+        "receipt is reviewed for this pinned artifact."
+    ),
+}
+
 STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
     {
         "wan-22-a14b:text-to-video:v1": {
@@ -7269,6 +11586,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
             "bindings": _VIDEO_REVISION_GRAPH_BINDINGS,
+            "expertResourceRequirements": _WAN_22_A14B_EXPERT_RESOURCE_REQUIREMENTS,
         },
         "wan-animate:character-animate:v1": {
             "modelType": "WanAnimatePipeline",
@@ -7322,6 +11640,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
                 LTX2_REPO,
                 _LTX2_MODES,
                 _LTX2_INPUTS,
+                download_files=LTX2_DIFFUSERS_FILES,
             ),
             "roles": _LTX2_GRAPH_ROLES,
             "edges": _LTX2_GRAPH_EDGES,
@@ -7350,6 +11669,28 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "roles": _LTX2_V2V_GRAPH_ROLES,
             "edges": _LTX2_V2V_GRAPH_EDGES,
             "bindings": _LTX2_V2V_GRAPH_BINDINGS,
+        },
+        "ltx2:in-context-reference-to-video:v1": {
+            "modelType": "LTX2InContextPipeline",
+            "mode": "in_context_to_video",
+            "profile": _P2_VIDEO_PROFILES["ltx2-in-context"],
+            "capability": _planning_video_capability(
+                "LTX2InContextPipeline",
+                "LTX-2 in-context Canny video and audio",
+                "LTX Video",
+                LTX2_REPO,
+                ("in_context_to_video",),
+                {
+                    "in_context_to_video": {
+                        "requiredVideos": ["referenceVideos"],
+                        "note": "Requires one reference video preprocessed by the reviewed Canny IC-LoRA graph.",
+                    }
+                },
+                download_files=LTX2_DIFFUSERS_FILES,
+            ),
+            "roles": _LTX2_IN_CONTEXT_GRAPH_ROLES,
+            "edges": _LTX2_IN_CONTEXT_GRAPH_EDGES,
+            "bindings": _LTX2_IN_CONTEXT_GRAPH_BINDINGS,
         },
         "framepack:image-to-video:v1": {
             "modelType": "HunyuanVideoFramepackPipeline",
@@ -7561,19 +11902,30 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "edges": _I2V_GRAPH_EDGES,
             "bindings": _SANA_VIDEO_I2V_GRAPH_BINDINGS,
         },
+        "wan-1.3b:modular-text-to-video:v1": {
+            "modelType": "WanModularPipeline",
+            "mode": "text_to_video",
+            "profile": _P2_VIDEO_PROFILES["wan-1.3b-modular"],
+            "capability": _WAN_MODULAR_TEXT_CAPABILITY,
+            "roles": _WAN_TEXT_TO_VIDEO_GRAPH_ROLES,
+            "edges": _WAN_TEXT_TO_VIDEO_GRAPH_EDGES,
+            "bindings": _WAN_TEXT_TO_VIDEO_GRAPH_BINDINGS,
+            "autoRequirements": _WAN_MODULAR_TEXT_AUTO_REQUIREMENTS,
+        },
+        "wan-i2v-480p:modular-image-to-video:v1": {
+            "modelType": "WanImage2VideoModularPipeline",
+            "mode": "single_image_to_video",
+            "profile": _P2_VIDEO_PROFILES["wan-i2v-480p-modular"],
+            "capability": _WAN_MODULAR_I2V_CAPABILITY,
+            "roles": _WAN_IMAGE_TO_VIDEO_GRAPH_ROLES,
+            "edges": _WAN_IMAGE_TO_VIDEO_GRAPH_EDGES,
+            "bindings": _WAN_IMAGE_TO_VIDEO_GRAPH_BINDINGS,
+            "autoRequirements": _WAN_MODULAR_I2V_AUTO_REQUIREMENTS,
+        },
         "wan-flf:image-to-video:v1": {
             "modelType": "WanImage2VideoModularPipeline",
             "mode": "image_to_video",
             "profile": _P2_VIDEO_PROFILES["wan-flf"],
-            "capability": _planning_video_capability(
-                "WanImage2VideoModularPipeline",
-                "Wan first/last-frame video",
-                "Wan Video",
-                WAN_FLF_REPO,
-                ("image_to_video",),
-                {"image_to_video": {"requiredImages": ["referenceImages", "lastImage"]}},
-                download_files=WAN_FLF_14B_DIFFUSERS_FILES,
-            ),
             "roles": _WAN_FLF_GRAPH_ROLES,
             "edges": _WAN_FLF_GRAPH_EDGES,
             "bindings": _WAN_FLF_GRAPH_BINDINGS,
@@ -8346,9 +12698,10 @@ _HUNYUAN_DIT_PAG_CAPABILITY.update(
         "displayName": "Hunyuan-DiT v1.2 Distilled PAG",
         "recommendedPagScale": 3.0,
         "recommendedPagAdaptiveScale": 0.0,
+        "recommendedGuidance": 4.0,
         "notes": [
             "Perturbed-attention guidance reuses the immutable Hunyuan-DiT v1.2 distilled safetensors snapshot without an auxiliary artifact.",
-            "The exact generic recipe is fixed at 1024x1024, at most 25 steps, guidance 5, PAG scale 3, and adaptive scale 0; the reviewed PAG call fixes both encoder lengths internally.",
+            "The exact generic recipe is fixed at 1024x1024, at most 25 steps, guidance 4, PAG scale 3, adaptive scale 0, and official transformer layer 14; the reviewed PAG call fixes both encoder lengths internally.",
             "The Tencent community license and acceptable-use obligations require explicit acknowledgement; Auto and Gallery remain disabled pending live review.",
         ],
     }
@@ -8954,7 +13307,7 @@ _PIXART_SIGMA_CAPABILITY = {
     "defaultRepo": PIXART_SIGMA_REPO,
     "downloadFiles": PIXART_SIGMA_DIFFUSERS_FILES,
     "artifactLabel": "OpenRAIL++ Diffusers safetensors repo",
-    "defaultDtype": "float16",
+    "defaultDtype": "float32",
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
     "recommendedSteps": 20,
     "recommendedGuidance": 4.5,
@@ -8975,7 +13328,7 @@ _PIXART_SIGMA_CAPABILITY = {
         "modes": list(_DIRECT_OFFLOAD_MODES),
     },
     "lowVram": {
-        "dtype": "float16",
+        "dtype": "float32",
         "autoOffload": True,
         "offloadMode": OFFLOAD_MODE_SEQUENTIAL_CPU,
         "steps": 20,
@@ -8991,7 +13344,7 @@ _PIXART_SIGMA_CAPABILITY = {
     "galleryEligible": False,
     "notes": [
         "The immutable public snapshot contains four safetensors files and uses only package-owned Diffusers and Transformers classes.",
-        "The reviewed 1024px recipe uses 20 steps, guidance 4.5, at most 300 prompt tokens, and explicit model or sequential CPU offload.",
+        "The reviewed 1024px recipe uses FP32, 20 steps, guidance 4.5, at most 300 prompt tokens, and explicit model or sequential CPU offload. FP16/BF16 require separate platform qualification because the qualified ROCm APU produced non-finite denoising latents.",
         "The approximately 21.83 GB selected weight surface is remote-only; Auto and Gallery remain disabled pending live output review.",
     ],
 }
@@ -9017,11 +13370,12 @@ _PIXART_SIGMA_PAG_CAPABILITY.update(
         "modelType": "PixArtSigmaPAGPipeline",
         "label": "PixArt Sigma PAG",
         "displayName": "PixArt Sigma XL 1024px PAG",
-        "recommendedPagScale": 3.0,
+        "recommendedGuidance": 1.0,
+        "recommendedPagScale": 4.0,
         "recommendedPagAdaptiveScale": 0.0,
         "notes": [
-            "Perturbed-attention guidance reuses the immutable PixArt Sigma XL 1024px safetensors snapshot without an auxiliary artifact.",
-            "The reviewed generic recipe uses 1024x1024, 20 steps, guidance 4.5, at most 300 prompt tokens, PAG scale 3, and adaptive scale 0.",
+            "Perturbed-attention guidance reuses the immutable PixArt Sigma XL 1024px safetensors snapshot without an auxiliary artifact and applies PAG at the official block 14 surface.",
+            "The official PixArt PAG recipe uses 1024x1024, 20 steps, guidance 1, at most 300 prompt tokens, PAG scale 4, and adaptive scale 0.",
             "The approximately 21.83 GB selected weight surface is remote-only; Auto and Gallery remain disabled pending live output review.",
         ],
     }
@@ -11303,7 +15657,10 @@ _WHISPER_TINY_PROFILE = {
     "retry_offload_modes": (),
     "max_low_memory_side": None,
     "max_low_memory_steps": None,
-    "live_proof": True,
+    # Direct-node qualification predates the Cluster surface. Keep the
+    # immutable Cluster publication fail-closed until its own visible-frontend
+    # transcription/translation evidence receives manual review.
+    "live_proof": False,
     "compatible_repos": (),
 }
 _WHISPER_TINY_CAPABILITY = {
@@ -11385,6 +15742,95 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["whisper-tiny:speech-translation:v1"] = {
     "roles": _SPEECH_GRAPH_ROLES,
     "edges": _SPEECH_GRAPH_EDGES,
     "bindings": _SPEECH_TRANSLATION_GRAPH_BINDINGS,
+}
+_WAV2VEC2_BASE_960H_PROFILE = {
+    "id": "wav2vec2-base-960h:ctc-direct",
+    "model_type": "HuggingFaceCTCSpeechRecognitionModel",
+    "modes": ("speech_to_text",),
+    "loader_module": "modules.HuggingFaceSpeech",
+    "loader_action": "LoadCTCSpeechRecognitionModel",
+    "execution_path": "direct-huggingface-speech-ctc",
+    "pipeline_class": "AutoModelForCTC",
+    "default_repo": WAV2VEC2_BASE_960H_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": None,
+    "max_low_memory_steps": None,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_WAV2VEC2_BASE_960H_CAPABILITY = {
+    "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+    "label": "Wav2Vec2 Base 960h",
+    "displayName": "Wav2Vec2 Base 960h",
+    "family": "Wav2Vec2 CTC",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": WAV2VEC2_BASE_960H_REPO,
+    "artifactLabel": "Transformers safetensors repo",
+    "downloadFiles": WAV2VEC2_BASE_960H_TRANSFORMERS_FILES,
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 1, "height": 1, "aspectRatio": "audio"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": False,
+    "supportsAudioInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "json",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 1,
+        "height": 1,
+    },
+    "modes": ["speech_to_text"],
+    "modeRequirements": {
+        "speech_to_text": {
+            "requiredAudio": ["sourceAudio"],
+            "note": "Requires one bounded local audio source and returns an English CTC transcript.",
+        },
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(
+            WAV2VEC2_BASE_960H_REPO,
+            model_type="HuggingFaceCTCSpeechRecognitionModel",
+        )
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "notes": [
+        "The CTC route exposes transcription only; Whisper task/language generation controls are absent.",
+        "Auto, Gallery, and live execution claims remain disabled pending visible-frontend qualification review.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["wav2vec2-base-960h:speech-to-text:v1"] = {
+    "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+    "mode": "speech_to_text",
+    "profile": _WAV2VEC2_BASE_960H_PROFILE,
+    "capability": _WAV2VEC2_BASE_960H_CAPABILITY,
+    "roles": _CTC_SPEECH_GRAPH_ROLES,
+    "edges": _CTC_SPEECH_GRAPH_EDGES,
+    "bindings": _CTC_SPEECH_GRAPH_BINDINGS,
 }
 STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = {
     "modelType": "FluxReduxPipeline",
@@ -12640,7 +17086,7 @@ _SPANDREL_VIDEO_UPSCALE_PROFILE = {
     "retry_offload_modes": (),
     "max_low_memory_side": 2048,
     "max_low_memory_steps": None,
-    "live_proof": False,
+    "live_proof": True,
     "optional_runtime_profiles": (),
     "optional_runtime_delivery": "base",
     "optional_runtime_platform_deliveries": (),
@@ -12652,8 +17098,8 @@ _SPANDREL_VIDEO_UPSCALE_CAPABILITY = {
     "displayName": "Real-ESRGAN x2 Video Upscale",
     "family": "Real-ESRGAN",
     "supportTier": "supported",
-    "qualificationStatus": "graph-qualified-execution-pending",
-    "qualifiedModes": [],
+    "qualificationStatus": "execution-qualified-gallery-review-pending",
+    "qualifiedModes": [_SPANDREL_VIDEO_UPSCALE_MODE],
     "defaultRepo": _SPANDREL_VIDEO_UPSCALE_REPO,
     "downloadFiles": list(_SPANDREL_VIDEO_UPSCALE_FILES),
     "artifactLabel": "Reviewed BSD-3-Clause Real-ESRGAN x2 Spandrel weight",
@@ -12693,7 +17139,7 @@ _SPANDREL_VIDEO_UPSCALE_CAPABILITY = {
     "autoEligible": False,
     "templateEligible": True,
     "galleryEligible": False,
-    "liveProof": False,
+    "liveProof": True,
     "modeRequirements": {
         _SPANDREL_VIDEO_UPSCALE_MODE: {
             "requiredVideos": ["sourceVideo"],
@@ -12703,7 +17149,8 @@ _SPANDREL_VIDEO_UPSCALE_CAPABILITY = {
     "notes": [
         "The action processes one frame at a time and caps both input and output pixels.",
         "The exact single-file model is rehashed from the app-managed cache before execution.",
-        "Audio is not preserved; Gallery and Auto remain disabled pending an exact live receipt and quality review.",
+        "One exact native-2x ROCm execution preserves 81 frames, 16 fps, and 5.06 seconds with hash-bound quality evidence.",
+        "Audio is not preserved; Gallery and Auto remain disabled pending workspace-owner quality and rights approval.",
     ],
 }
 STUDIO_EXECUTION_SPEC_DEFINITIONS["real-esrgan-x2-video-upscale:v1"] = {
@@ -12726,6 +17173,220 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["real-esrgan-x2-video-upscale:v1"] = {
     ),
 }
 
+_SPANDREL_IMAGE_UPSCALE_MODEL_TYPE = "SpandrelImageUpscale"
+_SPANDREL_IMAGE_UPSCALE_MODE = "image_upscale"
+_SPANDREL_IMAGE_UPSCALE_PIPELINE_CLASS = "SpandrelImageUpscaleV1"
+_SPANDREL_IMAGE_UPSCALE_PROFILE = {
+    "id": "real-esrgan-x2-image-upscale:direct",
+    "model_type": _SPANDREL_IMAGE_UPSCALE_MODEL_TYPE,
+    "modes": (_SPANDREL_IMAGE_UPSCALE_MODE,),
+    "loader_module": "modules.Spandrel",
+    "loader_action": "Upscaler",
+    "execution_path": "spandrel-image-upscale",
+    "pipeline_class": _SPANDREL_IMAGE_UPSCALE_PIPELINE_CLASS,
+    "default_repo": _SPANDREL_VIDEO_UPSCALE_REPO,
+    "fallback_repo": None,
+    "quantizable_components": (),
+    "default_quantized_components": (),
+    "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+    "retry_offload_modes": (),
+    "max_low_memory_side": 2048,
+    "max_low_memory_steps": None,
+    "live_proof": True,
+    "optional_runtime_profiles": (),
+    "optional_runtime_delivery": "base",
+    "optional_runtime_platform_deliveries": (),
+    "compatible_repos": (),
+}
+_SPANDREL_IMAGE_UPSCALE_CAPABILITY = {
+    "modelType": _SPANDREL_IMAGE_UPSCALE_MODEL_TYPE,
+    "label": "Real-ESRGAN x2 Image Upscale",
+    "displayName": "Real-ESRGAN x2 Image Upscale",
+    "family": "Real-ESRGAN",
+    "supportTier": "supported",
+    "qualificationStatus": "execution-qualified-gallery-review-pending",
+    "qualifiedModes": [_SPANDREL_IMAGE_UPSCALE_MODE],
+    "defaultRepo": _SPANDREL_VIDEO_UPSCALE_REPO,
+    "downloadFiles": list(_SPANDREL_VIDEO_UPSCALE_FILES),
+    "artifactLabel": "Reviewed BSD-3-Clause Real-ESRGAN x2 Spandrel weight",
+    "artifactKind": "spandrel_upscaler",
+    "artifactInstallRequired": True,
+    "defaultDtype": "float32",
+    "defaultSize": {"width": 2048, "height": 2048, "aspectRatio": "source"},
+    "recommendedSteps": 1,
+    "recommendedGuidance": 0.0,
+    "guidanceLabel": "Not used",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsAudioInput": False,
+    "supportsMask": False,
+    "supportsMultiImage": False,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": False,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_NONE,
+        "lowVram": OFFLOAD_MODE_NONE,
+        "emergency": OFFLOAD_MODE_NONE,
+        "modes": [OFFLOAD_MODE_NONE],
+    },
+    "lowVram": {
+        "dtype": "float32",
+        "autoOffload": False,
+        "offloadMode": OFFLOAD_MODE_NONE,
+        "steps": 1,
+        "width": 2048,
+        "height": 2048,
+    },
+    "modes": [_SPANDREL_IMAGE_UPSCALE_MODE],
+    "executionStatus": "expert_only",
+    "revisionCandidates": [_SPANDREL_VIDEO_UPSCALE_REVISION],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": True,
+    "modeRequirements": {
+        _SPANDREL_IMAGE_UPSCALE_MODE: {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one local source image and applies the exact cached Real-ESRGAN x2 model with bounded tiled inference.",
+        }
+    },
+    "notes": [
+        "Uses the generic Spandrel loader rather than a model-named node.",
+        "The exact single-file x2 model is rehashed from the app-managed cache before execution.",
+        "Tiled inference preserves overlap context and rejects an invalid or inconsistent model scale.",
+        "One exact native-2x ROCm execution is recorded with a hash-bound comparison asset and runtime receipt.",
+        "Gallery publication remains disabled pending workspace-owner quality and rights approval.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS["real-esrgan-x2-image-upscale:v1"] = {
+    "modelType": _SPANDREL_IMAGE_UPSCALE_MODEL_TYPE,
+    "mode": _SPANDREL_IMAGE_UPSCALE_MODE,
+    "profile": _SPANDREL_IMAGE_UPSCALE_PROFILE,
+    "capability": _SPANDREL_IMAGE_UPSCALE_CAPABILITY,
+    "roles": (
+        ("loadImage", "modules.Image.Load", -620, -80),
+        ("imageUpscaler", "modules.Spandrel.Upscaler", -140, -80),
+        ("preview", "modules.Image.Preview", 340, -80),
+    ),
+    "edges": (
+        ("loadImage", "image", "imageUpscaler", "image"),
+        ("imageUpscaler", "output", "preview", "image"),
+    ),
+    "bindings": (
+        ("loadImage", "file", "referenceImages"),
+        ("loadImage", "alpha_channel", "alphaMode"),
+        ("imageUpscaler", "device", "device"),
+    ),
+}
+
+_FLUX2_DEV_DIRECT_PROFILE = {
+    "id": "flux2-dev:direct",
+    "model_type": "Flux2Pipeline",
+    "modes": ("text_to_image", "multi_image_reference_edit"),
+    "loader_module": "modules.DiffusersImage",
+    "loader_action": "LoadPipeline",
+    "execution_path": "direct-diffusers-image",
+    "pipeline_class": "Flux2Pipeline",
+    "default_repo": FLUX2_DEV_REPO,
+    "fallback_repo": None,
+    "quantizable_components": ("transformer", "text_encoder"),
+    "default_quantized_components": ("transformer", "text_encoder"),
+    "supported_offload_modes": (
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_SEQUENTIAL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+        OFFLOAD_MODE_NONE,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_GROUP_DISK,),
+    "max_low_memory_side": 768,
+    "max_low_memory_steps": 20,
+    "live_proof": False,
+    "compatible_repos": (),
+}
+_FLUX2_DEV_DIRECT_CAPABILITY = {
+    "modelType": "Flux2Pipeline",
+    "label": "FLUX.2 dev",
+    "displayName": "FLUX.2-dev",
+    "family": "FLUX Image",
+    "supportTier": "supported",
+    "qualificationStatus": "graph-qualified-execution-pending",
+    "qualifiedModes": [],
+    "defaultRepo": FLUX2_DEV_REPO,
+    "downloadFiles": FLUX2_DEV_DIFFUSERS_FILES,
+    "artifactLabel": "Pinned gated FLUX.2 Diffusers repository",
+    "defaultDtype": "bfloat16",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 4.0,
+    "guidanceLabel": "Guidance",
+    "supportsNegativePrompt": False,
+    "supportsImageInput": True,
+    "supportsMask": False,
+    "supportsMultiImage": True,
+    "supportsControlImage": False,
+    "supportsLayers": False,
+    "supportsLora": True,
+    "outputKind": "image",
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_GROUP_DISK,
+        "lowVram": OFFLOAD_MODE_GROUP_DISK,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_FLUX2_DEV_DIRECT_PROFILE["supported_offload_modes"]),
+    },
+    "lowVram": {
+        "dtype": "bfloat16",
+        "autoOffload": True,
+        "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+        "steps": 20,
+        "width": 768,
+        "height": 768,
+    },
+    "modes": list(_FLUX2_DEV_DIRECT_PROFILE["modes"]),
+    "modeRequirements": {
+        "multi_image_reference_edit": {
+            "requiredImages": ["referenceImages"],
+            "note": "Accepts one or more ordered reference images through the official FLUX.2 image-conditioned call.",
+        }
+    },
+    "executionStatus": "expert_only",
+    "revisionCandidates": [
+        require_catalog_revision(FLUX2_DEV_REPO, model_type="Flux2ModularPipeline")
+    ],
+    "autoEligible": False,
+    "templateEligible": True,
+    "galleryEligible": False,
+    "liveProof": False,
+    "notes": [
+        "The bounded Diffusers component closure is 112,823,045,100 bytes and remains gated by the FLUX non-commercial license.",
+        "Public execution remains disabled until exact license acceptance, installation, lifecycle evidence, and output review are recorded.",
+    ],
+}
+STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
+    {
+        "flux2-dev:text-to-image:v1": {
+            "modelType": "Flux2Pipeline",
+            "mode": "text_to_image",
+            "profile": _FLUX2_DEV_DIRECT_PROFILE,
+            "capability": _FLUX2_DEV_DIRECT_CAPABILITY,
+            "roles": _GRAPH_ROLES,
+            "edges": _GRAPH_EDGES,
+            "bindings": _GRAPH_BINDINGS,
+        },
+        "flux2-dev:multi-image-reference-edit:v1": {
+            "modelType": "Flux2Pipeline",
+            "mode": "multi_image_reference_edit",
+            "profile": _FLUX2_DEV_DIRECT_PROFILE,
+            "capability": _FLUX2_DEV_DIRECT_CAPABILITY,
+            "roles": _EDIT_GRAPH_ROLES,
+            "edges": _EDIT_GRAPH_EDGES,
+            "bindings": _EDIT_GRAPH_BINDINGS,
+        },
+    }
+)
+
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",
     "flux-canny:img2img-direct",
@@ -12736,6 +17397,8 @@ _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-dev:direct",
     "flux-dev:img2img-direct",
     "flux-dev:inpaint-direct",
+    "flux-dev:modular",
+    "flux-kontext:modular",
     "flux-fill:direct",
     "flux-kontext:direct",
     "flux-kontext-inpaint:direct",
@@ -12743,8 +17406,266 @@ _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-redux:direct",
     "flux-schnell:direct",
     "flux2-klein:direct",
+    "flux2-dev:direct",
+    "flux2-modular:equivalent-standard",
+    "flux2-klein:modular",
+    "flux2-klein-base:modular",
     "flux2-klein-inpaint:direct",
 }
+def _equivalent_standard_profile(
+    source_spec_id: str,
+    *,
+    profile_id: str,
+    model_type: str,
+    modes: tuple[str, ...],
+) -> dict[str, Any]:
+    profile = deepcopy(STUDIO_EXECUTION_SPEC_DEFINITIONS[source_spec_id]["profile"])
+    profile.update({"id": profile_id, "model_type": model_type, "modes": modes, "live_proof": False})
+    return profile
+
+
+def _equivalent_standard_capability(
+    source_spec_id: str,
+    *,
+    model_type: str,
+    label: str,
+    modes: tuple[str, ...],
+) -> dict[str, Any]:
+    capability = deepcopy(STUDIO_EXECUTION_SPEC_DEFINITIONS[source_spec_id]["capability"])
+    requirements = capability.get("modeRequirements") or {}
+    capability.update(
+        {
+            "modelType": model_type,
+            "label": label,
+            "displayName": label,
+            "qualificationStatus": "graph-qualified-execution-pending",
+            "qualifiedModes": [],
+            "modes": list(modes),
+            "modeRequirements": {mode: deepcopy(requirements.get(mode, {})) for mode in modes},
+            "executionStatus": "expert_only",
+            "autoEligible": False,
+            "galleryEligible": False,
+            "liveProof": False,
+        }
+    )
+    capability.setdefault("notes", []).append(
+        "This Cluster retains the exact Modular Diffusers block hierarchy while executing through the reviewed "
+        "equivalent standard Diffusers pipeline until a split-block runtime is separately qualified."
+    )
+    return capability
+
+
+def _with_exact_video_revision(bindings: tuple) -> tuple:
+    return tuple(
+        (role, param, "defaultRevision") if role == "wanPipeline" and param == "revision" else (role, param, source)
+        for role, param, source in bindings
+    )
+
+
+_LTX_EQUIVALENT_CAPABILITY = _planning_video_capability(
+    "LTXModularPipeline",
+    "LTX Modular — Equivalent Standard Execution",
+    "LTX Video",
+    LTX_VIDEO_REPO,
+    ("text_to_video", "image_to_video"),
+    {
+        "image_to_video": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for the selected upstream image2video workflow.",
+        }
+    },
+    download_files=LTX_VIDEO_DIFFUSERS_FILES,
+)
+_LTX_EQUIVALENT_CAPABILITY.update(
+    {
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "executionStatus": "expert_only",
+        "autoEligible": False,
+        "galleryEligible": False,
+        "liveProof": False,
+    }
+)
+_LTX_EQUIVALENT_CAPABILITY.setdefault("notes", []).append(
+    "The Cluster preserves the upstream LTX Modular block hierarchy and uses the reviewed LTXConditionPipeline "
+    "as its explicitly equivalent full-pipeline executor."
+)
+
+_LTX2_EQUIVALENT_CAPABILITY = _planning_video_capability(
+    "LTX2ModularPipeline",
+    "LTX-2 Modular — Equivalent Standard Execution",
+    "LTX Video",
+    LTX2_REPO,
+    ("text_to_video", "image_to_video", "reference_to_video", "in_context_to_video"),
+    {
+        "image_to_video": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image for the selected upstream image2video workflow.",
+        },
+        "reference_to_video": {
+            "requiredImages": ["conditionImages"],
+            "note": (
+                "Requires one or more ordered condition images. The execution adapter converts them to official "
+                "LTX2VideoCondition instances and distributes them from the first through last generated frame."
+            ),
+        },
+        "in_context_to_video": {
+            "requiredVideos": ["referenceVideos"],
+            "note": (
+                "Requires one reference video, the exact official Canny preprocessing graph, and the pinned "
+                "LTX-2 IC-LoRA dependency."
+            ),
+        },
+    },
+    download_files=LTX2_DIFFUSERS_FILES,
+)
+_LTX2_EQUIVALENT_CAPABILITY.update(
+    {
+        "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [],
+        "executionStatus": "expert_only",
+        "outputMedia": ["video", "audio"],
+        "autoEligible": False,
+        "galleryEligible": False,
+        "liveProof": False,
+    }
+)
+_LTX2_EQUIVALENT_CAPABILITY.setdefault("notes", []).append(
+    "The upstream text2video, image2video, ordered-image condition, and in-context workflows retain their exact "
+    "Modular block hierarchies. In-context uses its distinct LTX2InContextPipeline and pinned IC-LoRA executor."
+)
+
+_EQUIVALENT_STANDARD_STUDIO_SPECS = {
+    "flux2-modular:equivalent-standard-text-to-image:v1": {
+        "source": "flux2-dev:text-to-image:v1",
+        "modelType": "Flux2ModularPipeline",
+        "mode": "text_to_image",
+        "profileId": "flux2-modular:equivalent-standard",
+        "modes": ("text_to_image", "multi_image_reference_edit"),
+        "label": "FLUX.2 Modular — Equivalent Standard Execution",
+    },
+    "flux2-modular:equivalent-standard-image-conditioned:v1": {
+        "source": "flux2-dev:multi-image-reference-edit:v1",
+        "modelType": "Flux2ModularPipeline",
+        "mode": "multi_image_reference_edit",
+        "profileId": "flux2-modular:equivalent-standard",
+        "modes": ("text_to_image", "multi_image_reference_edit"),
+        "label": "FLUX.2 Modular — Equivalent Standard Execution",
+    },
+    "ernie-image:equivalent-standard-text-to-image:v1": {
+        "source": "ernie-image-turbo:text-to-image:v1",
+        "modelType": "ErnieImageModularPipeline",
+        "mode": "text_to_image",
+        "profileId": "ernie-image:equivalent-standard",
+        "modes": ("text_to_image",),
+        "label": "ERNIE Image Modular — Equivalent Standard Execution",
+    },
+    "ltx:equivalent-standard-text-to-video:v1": {
+        "source": "ltx-video-0.9.8-13b-distilled:text-to-video:v1",
+        "modelType": "LTXModularPipeline",
+        "mode": "text_to_video",
+        "profileId": "ltx:equivalent-standard",
+        "modes": ("text_to_video", "image_to_video"),
+    },
+    "ltx:equivalent-standard-image-to-video:v1": {
+        "source": "ltx-video-0.9.8-13b-distilled:image-to-video:v1",
+        "modelType": "LTXModularPipeline",
+        "mode": "image_to_video",
+        "profileId": "ltx:equivalent-standard",
+        "modes": ("text_to_video", "image_to_video"),
+    },
+    "wan22:equivalent-standard-text-to-video:v1": {
+        "source": "wan-22-a14b:text-to-video:v1",
+        "modelType": "Wan22ModularPipeline",
+        "mode": "text_to_video",
+        "profileId": "wan22:equivalent-standard",
+        "modes": ("text_to_video",),
+        "label": "Wan 2.2 Modular — Equivalent Standard Execution",
+    },
+    "wan22-i2v:equivalent-standard-image-to-video:v1": {
+        "source": "wan-22-i2v-a14b:image-to-video:v1",
+        "modelType": "Wan22Image2VideoModularPipeline",
+        "mode": "image_to_video",
+        "profileId": "wan22-i2v:equivalent-standard",
+        "modes": ("image_to_video",),
+        "label": "Wan 2.2 Image-to-Video Modular — Equivalent Standard Execution",
+    },
+    "ltx2-modular:equivalent-standard-text-to-video:v1": {
+        "source": "ltx2:text-to-video:v1",
+        "modelType": "LTX2ModularPipeline",
+        "mode": "text_to_video",
+        "profileId": "ltx2-modular:equivalent-standard",
+        "modes": ("text_to_video", "image_to_video", "reference_to_video"),
+    },
+    "ltx2-modular:equivalent-standard-image-to-video:v1": {
+        "source": "ltx2:image-to-video:v1",
+        "modelType": "LTX2ModularPipeline",
+        "mode": "image_to_video",
+        "profileId": "ltx2-modular:equivalent-standard",
+        "modes": ("text_to_video", "image_to_video", "reference_to_video"),
+    },
+    "ltx2-modular:equivalent-standard-condition-images:v1": {
+        "source": "ltx2:reference-to-video:v1",
+        "modelType": "LTX2ModularPipeline",
+        "mode": "reference_to_video",
+        "profileId": "ltx2-modular:equivalent-standard",
+        "modes": ("text_to_video", "image_to_video", "reference_to_video"),
+        "bindingSourceAliases": {"referenceImages": "conditionImages"},
+    },
+    "ltx2-modular:equivalent-standard-in-context-canny:v1": {
+        "source": "ltx2:in-context-reference-to-video:v1",
+        "modelType": "LTX2ModularPipeline",
+        "mode": "in_context_to_video",
+        "profileId": "ltx2-modular:equivalent-in-context",
+        "modes": ("in_context_to_video",),
+    },
+}
+for _spec_id, _equivalent in _EQUIVALENT_STANDARD_STUDIO_SPECS.items():
+    _source_definition = STUDIO_EXECUTION_SPEC_DEFINITIONS[_equivalent["source"]]
+    _loader_node_key = (
+        f"{_source_definition['profile']['loader_module']}.{_source_definition['profile']['loader_action']}"
+    )
+    _loader_roles = tuple(
+        role for role, node_key, _x, _y in _source_definition["roles"] if node_key == _loader_node_key
+    )
+    if len(_loader_roles) != 1:
+        raise ValueError(f"Equivalent Studio execution spec {_spec_id!r} has no unique loader role.")
+    _binding_source_aliases = _equivalent.get("bindingSourceAliases", {})
+    _equivalent_definition = {
+        "modelType": _equivalent["modelType"],
+        "mode": _equivalent["mode"],
+        "profile": _equivalent_standard_profile(
+            _equivalent["source"],
+            profile_id=_equivalent["profileId"],
+            model_type=_equivalent["modelType"],
+            modes=_equivalent["modes"],
+        ),
+        "roles": deepcopy(_source_definition["roles"]),
+        "edges": deepcopy(_source_definition["edges"]),
+        "bindings": tuple(
+            (role, field, _binding_source_aliases.get(source, source))
+            for role, field, source in _with_exact_video_revision(tuple(_source_definition["bindings"]))
+        )
+        + ((_loader_roles[0], "execution_profile_id", "executionProfileId"),),
+    }
+    if "expertResourceRequirements" in _source_definition:
+        _equivalent_definition["expertResourceRequirements"] = deepcopy(
+            _source_definition["expertResourceRequirements"]
+        )
+    if _equivalent["modelType"] == "LTXModularPipeline":
+        _equivalent_definition["capability"] = deepcopy(_LTX_EQUIVALENT_CAPABILITY)
+    elif _equivalent["modelType"] == "LTX2ModularPipeline":
+        _equivalent_definition["capability"] = deepcopy(_LTX2_EQUIVALENT_CAPABILITY)
+    elif "label" in _equivalent:
+        _equivalent_definition["capability"] = _equivalent_standard_capability(
+            _equivalent["source"],
+            model_type=_equivalent["modelType"],
+            label=_equivalent["label"],
+            modes=_equivalent["modes"],
+        )
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[_spec_id] = _equivalent_definition
+
+
 for _definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
     if _definition["profile"]["id"] in _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS:
         _definition["profile"]["expert_quantization_modes"] = _EXPERT_IMAGE_QUANTIZATION_MODES
@@ -12791,6 +17712,8 @@ def _public_spec(spec_id: str, definition: dict[str, Any]) -> dict[str, Any]:
         "autoFields": _AUTO_FIELDS,
         "actions": (),
     }
+    if "auxiliaryTerminalRoles" in definition:
+        payload["auxiliaryTerminalRoles"] = tuple(definition["auxiliaryTerminalRoles"])
     payload["contentHash"] = f"studio-spec-v1-{_hash_string(_stable_json(payload))}"
     return deepcopy(payload)
 
@@ -12808,6 +17731,29 @@ def studio_auto_model_requirements() -> dict[str, dict[str, Any]]:
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
         if "autoRequirements" in definition
     }
+
+
+def studio_expert_resource_requirements(
+    model_type: str,
+    mode: str,
+    offload_mode: str,
+) -> dict[str, Any] | None:
+    """Return a reviewed hard resource floor for one explicit Expert recipe.
+
+    Most execution profiles have no hard Expert floor beyond their ordinary
+    Auto recommendations. Large dual-expert routes can declare one after a
+    measured failure so the same unsafe recipe is rejected before model load.
+    """
+
+    matches = [
+        definition["expertResourceRequirements"].get(offload_mode)
+        for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+        if definition["modelType"] == model_type
+        and definition["mode"] == mode
+        and isinstance(definition.get("expertResourceRequirements"), dict)
+    ]
+    matches = [requirement for requirement in matches if isinstance(requirement, dict)]
+    return deepcopy(matches[0]) if len(matches) == 1 else None
 
 
 def studio_capability_definitions() -> dict[str, dict[str, Any]]:
@@ -12843,6 +17789,7 @@ _MODULAR_NODE_TYPES = {
     "modules.ModularDiffusers.Denoise": "denoise",
     "modules.ModularDiffusers.DecodeLatents": "decoder",
     "modules.ModularDiffusers.Controlnet": "controlnet",
+    "modules.ModularDiffusers.IPAdapter": "ip_adapter",
 }
 
 
@@ -12852,6 +17799,25 @@ def _execution_spec_role_params(
     node: dict[str, Any],
 ) -> dict[str, Any]:
     params = deepcopy(node["params"])
+    if node_key == "modules.ModularDiffusers.ModelsLoader":
+        loader_roles = {
+            role
+            for role, candidate_key, _x, _y in public["roles"]
+            if candidate_key == node_key
+        }
+        connected_optional_inputs = {
+            target_handle
+            for _source_role, _source_handle, target_role, target_handle in public["edges"]
+            if target_role in loader_roles
+        }
+        # Optional component override sockets are part of the ordinary loader
+        # node, but an exact registered Block exposes them only when its
+        # reviewed Studio graph actually connects that component. This avoids
+        # changing every unrelated immutable BlockDefinitionV2 when support
+        # for a new external component is added to ModelsLoader.
+        for field in ("controlnet",):
+            if field not in connected_optional_inputs:
+                params.pop(field, None)
     node_type = _MODULAR_NODE_TYPES.get(node_key)
     if public["executionPath"] != "modular-diffusers" or node_type is None:
         return params
@@ -12939,6 +17905,15 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
                 raise ValueError("Studio execution specification references an incompatible handle.")
             adjacency[source_role].add(target_role)
             adjacency[target_role].add(source_role)
+        auxiliary_terminal_roles = public.get("auxiliaryTerminalRoles", ())
+        outgoing_roles = {source_role for source_role, _source_handle, _target_role, _target_handle in connections}
+        if (
+            not isinstance(auxiliary_terminal_roles, (list, tuple))
+            or any(not isinstance(role, str) or not role for role in auxiliary_terminal_roles)
+            or len(auxiliary_terminal_roles) != len(set(auxiliary_terminal_roles))
+            or any(role not in roles or role in outgoing_roles for role in auxiliary_terminal_roles)
+        ):
+            raise ValueError("Studio execution specification auxiliary terminal roles are invalid.")
         visited = set()
         pending = [next(iter(roles))]
         while pending:
@@ -13022,6 +17997,15 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
     if not isinstance(nodes, dict) or not isinstance(paths, list):
         raise RuntimeError("Studio execution specification graph is invalid. Rebuild the managed graph.")
     executable_ids = {str(node_id) for path in paths if isinstance(path, list) for node_id in path}
+    controlled_contracts = runtime_hints.get("controlledGraphContracts")
+    controlled_contract_ids = (
+        tuple(controlled_contracts)
+        if isinstance(controlled_contracts, list)
+        and len(controlled_contracts) <= 16
+        and len(set(controlled_contracts)) == len(controlled_contracts)
+        and all(isinstance(item, str) and item for item in controlled_contracts)
+        else ()
+    )
     for role, node_key, _x, _y in spec["roles"]:
         node_id = node_ids.get(role)
         node = nodes.get(node_id) if isinstance(node_id, str) else None
@@ -13035,11 +18019,81 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
         source_id = node_ids[source_role]
         target = nodes[node_ids[target_role]]
         param = (target.get("params") or {}).get(target_handle)
-        if (
-            not isinstance(param, dict)
-            or param.get("sourceId") != source_id
-            or param.get("sourceKey") != source_handle
-        ):
+        direct_edge_matches = (
+            isinstance(param, dict) and param.get("sourceId") == source_id and param.get("sourceKey") == source_handle
+        )
+        controlled_video_upscale_matches = False
+        if not direct_edge_matches and "upscale.video.v1" in controlled_contract_ids and isinstance(param, dict):
+            upscalers = [
+                (node_id, node)
+                for node_id, node in nodes.items()
+                if str(node_id) in executable_ids
+                and isinstance(node, dict)
+                and node.get("module") == "modules.Spandrel"
+                and node.get("action") == "Upscaler"
+                and isinstance((node.get("params") or {}).get("image"), dict)
+                and (node.get("params") or {})["image"].get("sourceId") == source_id
+                and (node.get("params") or {})["image"].get("sourceKey") == source_handle
+            ]
+            controlled_video_upscale_matches = (
+                len(upscalers) == 1
+                and param.get("sourceId") == str(upscalers[0][0])
+                and param.get("sourceKey") == "output"
+            )
+        controlled_lora_matches = False
+        controlled_lora_module = next(
+            (
+                module_name
+                for contract_id, module_name in (
+                    ("lora.diffusers-image.v1", "modules.DiffusersImage"),
+                    ("lora.diffusers-audio.v1", "modules.DiffusersAudio"),
+                )
+                if contract_id in controlled_contract_ids
+            ),
+            None,
+        )
+        if not direct_edge_matches and controlled_lora_module and isinstance(param, dict):
+            adapters = [
+                (node_id, node)
+                for node_id, node in nodes.items()
+                if str(node_id) in executable_ids
+                and isinstance(node, dict)
+                and node.get("module") == controlled_lora_module
+                and node.get("action") == "LoadAdapter"
+                and isinstance((node.get("params") or {}).get("pipeline"), dict)
+                and (node.get("params") or {})["pipeline"].get("sourceId") == source_id
+                and (node.get("params") or {})["pipeline"].get("sourceKey") == source_handle
+            ]
+            all_adapters = {
+                str(node_id): node
+                for node_id, node in nodes.items()
+                if str(node_id) in executable_ids
+                and isinstance(node, dict)
+                and node.get("module") == controlled_lora_module
+                and node.get("action") == "LoadAdapter"
+                and isinstance((node.get("params") or {}).get("pipeline"), dict)
+            }
+            if len(adapters) == 1 and 1 <= len(all_adapters) <= 8:
+                current_id = str(adapters[0][0])
+                visited = {current_id}
+                while len(visited) < len(all_adapters):
+                    next_adapters = [
+                        adapter_id
+                        for adapter_id, adapter in all_adapters.items()
+                        if adapter_id not in visited
+                        and (adapter.get("params") or {})["pipeline"].get("sourceId") == current_id
+                        and (adapter.get("params") or {})["pipeline"].get("sourceKey") == "output"
+                    ]
+                    if len(next_adapters) != 1:
+                        break
+                    current_id = next_adapters[0]
+                    visited.add(current_id)
+                controlled_lora_matches = (
+                    len(visited) == len(all_adapters)
+                    and param.get("sourceId") == current_id
+                    and param.get("sourceKey") == "output"
+                )
+        if not direct_edge_matches and not controlled_video_upscale_matches and not controlled_lora_matches:
             raise RuntimeError("Studio execution specification edge does not match the executable graph.")
     for role, param, _source in spec["bindings"]:
         node = nodes[node_ids[role]]

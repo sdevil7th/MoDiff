@@ -134,7 +134,7 @@
         "module": "modules.Video",
         "params": {
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
             "label": "Device",
             "options": {
               "cpu": {
@@ -152,6 +152,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string",

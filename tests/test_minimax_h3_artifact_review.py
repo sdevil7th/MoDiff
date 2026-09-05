@@ -1,9 +1,10 @@
 import json
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
 
 
 REVIEW_PATH = Path(__file__).resolve().parents[1] / "data" / "minimax-h3-artifact-review.json"
@@ -14,16 +15,26 @@ class MiniMaxH3ArtifactReviewTests(unittest.TestCase):
     def setUp(self):
         self.review = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
 
-    def test_review_is_immutable_safe_and_not_exposed_as_a_downloadable_runtime_artifact(self):
+    def test_review_is_immutable_safe_and_remains_closed_for_download_and_execution(self):
         self.assertEqual(self.review["schemaVersion"], 1)
         self.assertRegex(self.review["revision"], r"^[0-9a-f]{40}$")
         self.assertEqual(self.review["format"], "safetensors")
         self.assertFalse(self.review["hub"]["gated"])
-        self.assertEqual(self.review["admission"]["status"], "contract_only")
+        self.assertEqual(self.review["admission"]["status"], "graph_qualified")
         self.assertFalse(self.review["admission"]["runtimeCatalogExposed"])
         self.assertFalse(self.review["admission"]["downloadCatalogExposed"])
         self.assertEqual(self.review["admission"]["executableModes"], [])
-        self.assertIsNone(catalog_repository_pin(self.review["repository"]))
+        self.assertEqual(
+            {route["workflowId"] for route in self.review["admission"]["graphQualifiedRoutes"]},
+            {"t2va", "fl2va", "ref2va"},
+        )
+        self.assertTrue(self.review["admission"]["unresolvedGates"])
+        # Structural V2 admission requires an exact backend-owned artifact
+        # identity, but does not itself publish Download or Run authority.
+        self.assertEqual(
+            catalog_repository_pin(self.review["repository"])["revision"],
+            self.review["revision"],
+        )
 
     def test_exact_partition_receipt_selects_one_transformer_per_workflow(self):
         selection = self.review["artifactSelection"]
@@ -70,6 +81,20 @@ class MiniMaxH3ArtifactReviewTests(unittest.TestCase):
             {"European Union", "Republic of Korea", "United Kingdom", "United States of America"},
         )
         self.assertEqual(self.review["remoteResourceEnvelope"]["status"], "estimate_only_qualification_pending")
+
+    def test_three_workflows_have_exact_top_level_modular_graph_adapters(self):
+        expected = {
+            "t2va": ["text_encoder", "denoise", "decode"],
+            "fl2va": ["before_encode", "text_encoder", "vae_encoder", "denoise", "decode"],
+            "ref2va": ["before_encode", "text_encoder", "vae_encoder", "denoise", "decode"],
+        }
+        for workflow_id, sequence in expected.items():
+            adapter = reviewed_whole_workflow_graph_adapter("MiniMaxH3ModularPipeline", workflow_id)
+            self.assertEqual(adapter["adapterId"], "official_top_level_blocks")
+            self.assertEqual(adapter["upstreamBlockSequence"], sequence)
+            self.assertEqual(len(adapter["stateEdges"]), len(sequence) - 1)
+        self.assertFalse(self.review["admission"]["runtimeCatalogExposed"])
+        self.assertFalse(self.review["admission"]["downloadCatalogExposed"])
 
 
 if __name__ == "__main__":

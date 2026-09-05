@@ -1,10 +1,11 @@
 import hashlib
 import json
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
 
@@ -40,7 +41,9 @@ class StableDiffusion3ArtifactReviewTests(unittest.TestCase):
         repository = self.review["repository"]
         weights = sorted(self.review["selectedWeightFiles"], key=lambda item: item["path"])
         canonical = json.dumps(weights, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        self.assertEqual(weights, sorted(self.control_review["selectedBaseWeightFiles"], key=lambda item: item["path"]))
+        self.assertEqual(
+            weights, sorted(self.control_review["selectedBaseWeightFiles"], key=lambda item: item["path"])
+        )
         self.assertEqual(len(weights), repository["selectedWeightFileCount"])
         self.assertEqual(sum(item["byteSize"] for item in weights), repository["selectedWeightBytes"])
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), repository["selectedWeightInventorySha256"])
@@ -81,6 +84,34 @@ class StableDiffusion3ArtifactReviewTests(unittest.TestCase):
         self.assertEqual(contract["packageUpperBounds"]["maxSequenceLength"], 512)
         self.assertIsNone(contract["packageUpperBounds"]["numInferenceSteps"])
         self.assertIsNone(contract["packageUpperBounds"]["outputPixels"])
+
+    def test_modular_graph_adapters_preserve_the_exact_top_level_stage_overlap(self):
+        text = reviewed_whole_workflow_graph_adapter("StableDiffusion3ModularPipeline", "text2image")
+        image = reviewed_whole_workflow_graph_adapter("StableDiffusion3ModularPipeline", "image2image")
+        self.assertEqual(text["requiredInputs"], ["prompt"])
+        self.assertEqual(text["upstreamBlockSequence"], ["text_encoder", "denoise", "decode"])
+        self.assertEqual(
+            text["actionSequence"],
+            [
+                "workflow_stable_diffusion3_text_encoder",
+                "workflow_stable_diffusion3_denoise",
+                "workflow_stable_diffusion3_decoder",
+            ],
+        )
+        self.assertEqual(image["requiredInputs"], ["image", "prompt"])
+        self.assertEqual(
+            image["upstreamBlockSequence"],
+            ["text_encoder", "vae_encoder", "denoise", "decode"],
+        )
+        self.assertEqual(
+            image["actionSequence"],
+            [
+                "workflow_stable_diffusion3_text_encoder",
+                "workflow_stable_diffusion3_vae_encoder",
+                "workflow_stable_diffusion3_denoise",
+                "workflow_stable_diffusion3_decoder",
+            ],
+        )
 
     def test_noncommercial_terms_remain_unaccepted_and_block_admission(self):
         license_review = self.review["licenseReview"]

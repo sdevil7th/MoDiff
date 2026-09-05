@@ -14,6 +14,7 @@ from .modular_utils import (
     require_modiff_node_contract,
 )
 from .route_state import (
+    ROUTE_RESERVED_PIPELINE_INPUTS,
     ROUTE_STATE_INPUT,
     ROUTE_STATE_OUTPUT,
     SDXL_UNION_CONTROL_MODE_LIMIT,
@@ -481,6 +482,13 @@ class Controlnet(NodeBase):
 
         controlnet_inputs = {}
         for name in denoise_blocks.input_names:
+            # Qwen's upstream control encoder returns the generator in its
+            # PipelineState even though the public block output is only the
+            # control latents.  The opaque route state below is the sole
+            # trusted carrier for that advanced generator (and other
+            # route-owned values); never duplicate it into a graph bundle.
+            if route_output_declared and name in ROUTE_RESERVED_PIPELINE_INPUTS:
+                continue
             if node_output and name in node_output and node_output[name] is not None:
                 controlnet_inputs.update({name: node_output[name]})
             elif name in kwargs and kwargs[name] is not None:

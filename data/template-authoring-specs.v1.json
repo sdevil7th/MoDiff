@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:977b348029f77bdef78ac67bc10f45549688f905d697183b65cd69b7c930a417",
+  "contentHash": "sha256:bb6e3a1327676489da461b83e089a298d35afc37055f2221852270876d863025",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:628ca7d68834966804dc1f9ba4ef917527c9b5da12ba98aa1243fc0fecf3d9b2",
+      "contentHash": "sha256:651bb2980f205818053d9e2a692ae6513a993700b8c9fe497119d65c7e467dfb",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:a08f236950e7f3d913cb072e3cbadc72e2f7814a93dfe706dacf28982196063a"
+      "sha256": "sha256:3dfaa4323bc63472b111cb17049e9707dd51984db2e0504ad5dc02ab0c563adf"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:8374e90d09fe839ff0c328e411b311f59477e90d92a2b3916fea9dfbfe169028"
+      "sha256": "sha256:626c3021870cc5bed82be7aa15272f95803459c52514cfe095ad044732a159a9"
     }
   },
   "specifications": [
@@ -7838,7 +7838,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/hugging-face-any-to-any-model/text-to-image.json",
-        "sha256": "845fb08f10968ea806325b448e1c41fba709c8515dbb665acdbdc56f88198a4f"
+        "sha256": "27877ccbec2b98f8e1d501aadefb7e14fe303382d2351b1ba66ed56fdacdd0b5"
       },
       "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_to_image",
       "claims": {
@@ -7858,7 +7858,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "845fb08f10968ea806325b448e1c41fba709c8515dbb665acdbdc56f88198a4f",
+        "sourceGraphSha256": "27877ccbec2b98f8e1d501aadefb7e14fe303382d2351b1ba66ed56fdacdd0b5",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12978,7 +12978,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/pix-art-sigma-pag-pipeline/text-to-image.json",
-        "sha256": "a3261130573d3e5ef2632c20999574c4a215de714f3c01603608220582b5603b"
+        "sha256": "3496b4217f23c25d2d75c7d3122186370c4189c626fa58c3f0252419160d18f9"
       },
       "canonicalWorkflowId": "PixArtSigmaPAGPipeline:text_to_image",
       "claims": {
@@ -12994,7 +12994,7 @@
           {
             "parameter": "guidance_scale",
             "role": "diffusersImageGenerate",
-            "value": 4.5
+            "value": 1
           },
           {
             "parameter": "height",
@@ -13019,7 +13019,7 @@
           {
             "parameter": "pag_scale",
             "role": "diffusersImageGenerate",
-            "value": 3
+            "value": 4
           },
           {
             "parameter": "seed",
@@ -13036,7 +13036,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "a3261130573d3e5ef2632c20999574c4a215de714f3c01603608220582b5603b",
+        "sourceGraphSha256": "3496b4217f23c25d2d75c7d3122186370c4189c626fa58c3f0252419160d18f9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13106,7 +13106,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/pix-art-sigma-pipeline/text-to-image.json",
-        "sha256": "8d52526a2c7c66a0d0416a128f13d3d3f61506ccb51fd89e7313e08e4906632b"
+        "sha256": "963d6a6c939ccb429d6b70bfee97d2821a761e5648afe1f36922eecef0f6027b"
       },
       "canonicalWorkflowId": "PixArtSigmaPipeline:text_to_image",
       "claims": {
@@ -13159,7 +13159,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8d52526a2c7c66a0d0416a128f13d3d3f61506ccb51fd89e7313e08e4906632b",
+        "sourceGraphSha256": "963d6a6c939ccb429d6b70bfee97d2821a761e5648afe1f36922eecef0f6027b",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15235,8 +15235,112 @@
       "assets": [],
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
+        "path": "studio/spandrel-image-upscale/image-upscale.json",
+        "sha256": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88"
+      },
+      "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:SpandrelImageUpscale:image_upscale",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "image_upscale",
+      "modelFamily": "Real-ESRGAN",
+      "modelType": "SpandrelImageUpscale",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact Real-ESRGAN image upscale workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Real-ESRGAN — Image Upscale [SpandrelImageUpscale]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "nateraw/real-esrgan"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
         "path": "studio/spandrel-video-upscale/video-upscale.json",
-        "sha256": "122023ff6db5233ee0f75ed2e0b6e253f77d84df2e66198fa5c5af71faca7ce5"
+        "sha256": "455230c2c0e6dfb16967f5168dd32080f77788a88ceebbfeb0c2b12f8d2ba167"
       },
       "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
       "claims": {
@@ -15261,7 +15365,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "122023ff6db5233ee0f75ed2e0b6e253f77d84df2e66198fa5c5af71faca7ce5",
+        "sourceGraphSha256": "455230c2c0e6dfb16967f5168dd32080f77788a88ceebbfeb0c2b12f8d2ba167",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -17980,7 +18084,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-diffusion-xl-instruct-pix2-pix-pipeline/edit-image.json",
-        "sha256": "f0eff156025a08290dcccd53e6a99ec8c112c74b7f58e7b8ec024481257200fb"
+        "sha256": "68029b3625d877d2235d41b188e8b68aa8172b87ba08024e1e6d917fb7a349a3"
       },
       "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
       "claims": {
@@ -18019,11 +18123,6 @@
             "value": 30
           },
           {
-            "parameter": "reference_strength",
-            "role": "diffusersImageEdit",
-            "value": 1.5
-          },
-          {
             "parameter": "seed",
             "role": "diffusersImageEdit",
             "value": {
@@ -18048,7 +18147,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f0eff156025a08290dcccd53e6a99ec8c112c74b7f58e7b8ec024481257200fb",
+        "sourceGraphSha256": "68029b3625d877d2235d41b188e8b68aa8172b87ba08024e1e6d917fb7a349a3",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -21180,16 +21279,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 147,
+    "authoringSpecCount": 148,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 55,
-      "draft_complete_input_selection_pending": 92
+      "draft_complete_input_selection_pending": 93
     },
-    "canonicalDefaultsCapturedCount": 147,
-    "generationPendingCount": 147,
-    "inputSelectionPendingCount": 92,
+    "canonicalDefaultsCapturedCount": 148,
+    "generationPendingCount": 148,
+    "inputSelectionPendingCount": 93,
     "promptDraftedCount": 123,
-    "promptNotApplicableCount": 24,
-    "rightsReviewPendingCount": 147
+    "promptNotApplicableCount": 25,
+    "rightsReviewPendingCount": 148
   }
 }

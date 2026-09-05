@@ -15,6 +15,7 @@ from modiff.studio_execution_specs import (
     STABLE_VIDEO_DIFFUSION_FP16_FILES,
     WAN_22_T2V_A14B_DIFFUSERS_FILES,
     WAN_FLF_14B_DIFFUSERS_FILES,
+    WAN_I2V_14B_480P_DIFFUSERS_FILES,
     studio_capability_definitions,
 )
 
@@ -36,7 +37,7 @@ class VideoDownloadSelectionTests(unittest.TestCase):
 
         self.assertEqual(
             unbounded,
-            {"LTX2ConditionPipeline", "LTX2Pipeline", "WanAnimatePipeline"},
+            {"LTX2Pipeline", "MiniMaxH3ModularPipeline", "WanAnimatePipeline"},
         )
 
         builtin = capabilities["BuiltinVideoOperation"]
@@ -60,10 +61,10 @@ class VideoDownloadSelectionTests(unittest.TestCase):
                 126_199_294_813,
             ),
             "WanImage2VideoModularPipeline": (
-                "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers",
-                WAN_FLF_14B_DIFFUSERS_FILES,
-                41,
-                90_104_408_960,
+                "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers",
+                WAN_I2V_14B_480P_DIFFUSERS_FILES,
+                36,
+                90_097_576_675,
             ),
         }
         for model_type, (repo, files, file_count, byte_size) in cases.items():
@@ -75,6 +76,17 @@ class VideoDownloadSelectionTests(unittest.TestCase):
                 self.assertEqual(receipts[repo]["selectedDownloadBytes"], byte_size)
                 self.assertFalse(any(path.startswith("assets/") for path in selected))
                 self.assertFalse(any(path.endswith((".bin", ".ckpt", ".pt", ".pth")) for path in selected))
+
+        modular = capabilities["WanImage2VideoModularPipeline"]
+        selections = {tuple(item["modes"]): item for item in modular["artifactSelections"]}
+        self.assertEqual(
+            selections[("image_to_video",)]["downloadFiles"],
+            WAN_FLF_14B_DIFFUSERS_FILES,
+        )
+        self.assertEqual(
+            selections[("single_image_to_video",)]["downloadFiles"],
+            WAN_I2V_14B_480P_DIFFUSERS_FILES,
+        )
 
     def test_framepack_selection_matches_the_three_repository_loader_composition(self):
         review = json.loads((ROOT / "data" / "framepack-artifact-review.json").read_text())

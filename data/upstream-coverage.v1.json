@@ -736,7 +736,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5b31d4ddbb5a845b15a320e4766c2e0397c63b238015f9981ac1070b1c0ed29e",
+      "graphHash": "7febbd05b10f0ed56c1c1e0717c0ed04d2c50df30d18c88d50fc042e5e8d8d2c",
       "graphPath": "studio/flux-dev-pipeline/text-to-image.json",
       "id": "FluxDevPipeline:text_to_image",
       "mode": "text_to_image",
@@ -749,7 +749,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "67797bd861475b482ef9ce92a14bc58020991729b2ecb0f482d456e4dd718675",
+      "graphHash": "d0f6916bc99ca5c16f0a143856f63a3c73f166d82d6719c40d93307b40b23aa8",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_cinematic_octane_3d",
       "mode": "text_to_image",
@@ -762,7 +762,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b28942b422253c4cedb37f53ad1d3986c77fd93b26003ac9f786cb4f29aeb48f",
+      "graphHash": "ca66c44152bf613277ff855177d6d2f57610ea831b150aab80119289847d0512",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-film-noir.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_film_noir",
       "mode": "text_to_image",
@@ -775,7 +775,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "39e20575b4482d571109dc0bd34d602aa095fba8537a8b2c696010dfa5da2bfb",
+      "graphHash": "7aa11fab6ea03f57e8d010fdcd8219ba5b863cc2512aaa8af0c3bbe1f1778ba8",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-ghibli-story.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_ghibli_story",
       "mode": "text_to_image",
@@ -788,7 +788,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "75e8a82481eb361d5b2ca2ddffa8c1a009a26dcd17a3743365e0e465390d8fea",
+      "graphHash": "aaeeca6dcb46f2a6c7c507ae59a88d55c2c6640747969b27c6591127f977fe6f",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-oil-painting.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_oil_painting",
       "mode": "text_to_image",
@@ -801,7 +801,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f3c3161a3f9476cc4f669a030e147d4e06e899bfb6c473d6f25cac00a6dea7a7",
+      "graphHash": "ddb42979471f0e86dbf45ffa873d08a7b772db0c6c10fbfad02b6fae2a9a6bcc",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-paper-cutout.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_paper_cutout",
       "mode": "text_to_image",
@@ -814,7 +814,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e3a9ddb6364ac2a6b68b89e322e3ba11e9ac49fe37f7d1551e12a11270fff41a",
+      "graphHash": "2f1d86a41641424ce6e5d9516e199cb72a0627508972337f3e87e47287193991",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-photoreal-documentary.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_photoreal_documentary",
       "mode": "text_to_image",
@@ -827,7 +827,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "bcf1ef2885233d9a9357cd3fcc8a2f44b60d9542a06698d828dd0f5df23b5129",
+      "graphHash": "5db7fc90973002f065e687e4f335ed2ea2aa4b1ea4fed93351a16fb00f20e252",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-retro-comic.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_retro_comic",
       "mode": "text_to_image",
@@ -840,7 +840,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7189173c29cca279366d5e5c141370258306b539c42ac7bc96e340bc4d50dfc6",
+      "graphHash": "161a5e6a0926d5cc943afd25055c26f811a5a092e81121f858b88244e969d0a4",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-watercolor.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_watercolor",
       "mode": "text_to_image",
@@ -1012,7 +1012,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "845fb08f10968ea806325b448e1c41fba709c8515dbb665acdbdc56f88198a4f",
+      "graphHash": "27877ccbec2b98f8e1d501aadefb7e14fe303382d2351b1ba66ed56fdacdd0b5",
       "graphPath": "studio/hugging-face-any-to-any-model/text-to-image.json",
       "id": "HuggingFaceAnyToAnyModel:text_to_image",
       "mode": "text_to_image",
@@ -1473,7 +1473,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a3261130573d3e5ef2632c20999574c4a215de714f3c01603608220582b5603b",
+      "graphHash": "3496b4217f23c25d2d75c7d3122186370c4189c626fa58c3f0252419160d18f9",
       "graphPath": "studio/pix-art-sigma-pag-pipeline/text-to-image.json",
       "id": "PixArtSigmaPAGPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1484,7 +1484,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8d52526a2c7c66a0d0416a128f13d3d3f61506ccb51fd89e7313e08e4906632b",
+      "graphHash": "963d6a6c939ccb429d6b70bfee97d2821a761e5648afe1f36922eecef0f6027b",
       "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
       "id": "PixArtSigmaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1770,13 +1770,24 @@
       "status": "executable"
     },
     {
-      "graphHash": "122023ff6db5233ee0f75ed2e0b6e253f77d84df2e66198fa5c5af71faca7ce5",
+      "graphHash": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88",
+      "graphPath": "studio/spandrel-image-upscale/image-upscale.json",
+      "id": "SpandrelImageUpscale:image_upscale",
+      "mode": "image_upscale",
+      "modelType": "SpandrelImageUpscale",
+      "publicTemplateIds": [],
+      "qualificationStatus": "execution-qualified-gallery-review-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "455230c2c0e6dfb16967f5168dd32080f77788a88ceebbfeb0c2b12f8d2ba167",
       "graphPath": "studio/spandrel-video-upscale/video-upscale.json",
       "id": "SpandrelVideoUpscale:video_upscale",
       "mode": "video_upscale",
       "modelType": "SpandrelVideoUpscale",
       "publicTemplateIds": [],
-      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualificationStatus": "execution-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
     },
@@ -1957,7 +1968,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f0eff156025a08290dcccd53e6a99ec8c112c74b7f58e7b8ec024481257200fb",
+      "graphHash": "68029b3625d877d2235d41b188e8b68aa8172b87ba08024e1e6d917fb7a349a3",
       "graphPath": "studio/stable-diffusion-xl-instruct-pix2-pix-pipeline/edit-image.json",
       "id": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
       "mode": "edit_image",
@@ -2315,7 +2326,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:a7deb78a8861c49f1e9ccf3031f6c4845ff997ada7760dbcb1d3de0ffd0f119a",
+  "contentHash": "sha256:d0a8aa7b53770391b285b375de480fead9504ccdac716a2c291d5d1e19296983",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -2417,17 +2428,30 @@
       "status": "intentionally-excluded"
     },
     {
-      "artifactReviews": [],
+      "artifactReviews": [
+        "data/anima-artifact-review.json"
+      ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "anima:modular-image-to-image:v1",
+          "mode": "image_to_image",
+          "modelType": "AnimaModularPipeline"
+        },
+        {
+          "id": "anima:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "AnimaModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_image",
         "text_to_image"
       ],
       "name": "AnimaModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -2905,7 +2929,18 @@
         "data/cosmos3-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "cosmos3-distilled:modular-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "Cosmos3DistilledModularPipeline"
+        },
+        {
+          "id": "cosmos3-distilled:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Cosmos3DistilledModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_video",
         "text_to_image",
@@ -2913,16 +2948,52 @@
         "video_to_video"
       ],
       "name": "Cosmos3DistilledModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
         "data/cosmos3-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "cosmos3-nano:modular-image-to-video-with-audio:v1",
+          "mode": "image_to_video_with_audio",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        {
+          "id": "cosmos3-nano:modular-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        {
+          "id": "cosmos3-nano:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        {
+          "id": "cosmos3-nano:modular-text-to-video-with-audio:v1",
+          "mode": "text_to_video_with_audio",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        {
+          "id": "cosmos3-nano:modular-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        {
+          "id": "cosmos3-nano:modular-video-to-video-with-audio:v1",
+          "mode": "video_to_video_with_audio",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        {
+          "id": "cosmos3-nano:modular-video-to-video:v1",
+          "mode": "video_to_video",
+          "modelType": "Cosmos3OmniModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "action_forward_dynamics",
         "action_inverse_dynamics",
@@ -2936,9 +3007,9 @@
         "video_to_video_with_audio"
       ],
       "name": "Cosmos3OmniModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -3168,6 +3239,11 @@
           "id": "ernie-image-turbo:text-to-image:v1",
           "mode": "text_to_image",
           "modelType": "ErnieImagePipeline"
+        },
+        {
+          "id": "ernie-image:equivalent-standard-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "ErnieImageModularPipeline"
         }
       ],
       "modularWorkflowIds": [],
@@ -3177,17 +3253,30 @@
       "status": "executable"
     },
     {
-      "artifactReviews": [],
+      "artifactReviews": [
+        "data/flux2-klein-base-4b-artifact-review.json"
+      ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux2-klein-base:modular-edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux2KleinBaseModularPipeline"
+        },
+        {
+          "id": "flux2-klein-base:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux2KleinBaseModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "Flux2KleinBaseModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3225,18 +3314,31 @@
       "equivalentTo": [
         "Flux2KleinPipeline"
       ],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux2-klein:modular-edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux2KleinModularPipeline"
+        },
+        {
+          "id": "flux2-klein:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux2KleinModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "Flux2KleinModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
-      "artifactReviews": [],
+      "artifactReviews": [
+        "data/flux2-klein-base-4b-artifact-review.json"
+      ],
       "equivalentTo": [],
       "exactExecutionSpecs": [
         {
@@ -3263,26 +3365,49 @@
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "Flux2Pipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "Flux2ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux2-dev:multi-image-reference-edit:v1",
+          "mode": "multi_image_reference_edit",
+          "modelType": "Flux2Pipeline"
+        },
+        {
+          "id": "flux2-dev:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux2Pipeline"
+        },
+        {
+          "id": "flux2-modular:equivalent-standard-image-conditioned:v1",
+          "mode": "multi_image_reference_edit",
+          "modelType": "Flux2ModularPipeline"
+        },
+        {
+          "id": "flux2-modular:equivalent-standard-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux2ModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "Flux2Pipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3458,15 +3583,26 @@
       "equivalentTo": [
         "FluxKontextPipeline"
       ],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-kontext:modular-edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "FluxKontextModularPipeline"
+        },
+        {
+          "id": "flux-kontext:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "FluxKontextModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "FluxKontextModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3495,15 +3631,26 @@
         "FluxPipeline",
         "FluxImg2ImgPipeline"
       ],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-dev:modular-image-to-image:v1",
+          "mode": "image_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        {
+          "id": "flux-dev:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_image",
         "text_to_image"
       ],
       "name": "FluxModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3566,16 +3713,32 @@
         "data/helios-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "helios-base:modular-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "HeliosModularPipeline"
+        },
+        {
+          "id": "helios-base:modular-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "HeliosModularPipeline"
+        },
+        {
+          "id": "helios-base:modular-video-to-video:v1",
+          "mode": "video_to_video",
+          "modelType": "HeliosModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_video",
         "text_to_video",
         "video_to_video"
       ],
       "name": "HeliosModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -3594,32 +3757,64 @@
         "data/helios-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "helios-pyramid-distilled:modular-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "HeliosPyramidDistilledModularPipeline"
+        },
+        {
+          "id": "helios-pyramid-distilled:modular-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "HeliosPyramidDistilledModularPipeline"
+        },
+        {
+          "id": "helios-pyramid-distilled:modular-video-to-video:v1",
+          "mode": "video_to_video",
+          "modelType": "HeliosPyramidDistilledModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_video",
         "text_to_video",
         "video_to_video"
       ],
       "name": "HeliosPyramidDistilledModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
         "data/helios-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "helios-pyramid:modular-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "HeliosPyramidModularPipeline"
+        },
+        {
+          "id": "helios-pyramid:modular-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "HeliosPyramidModularPipeline"
+        },
+        {
+          "id": "helios-pyramid:modular-video-to-video:v1",
+          "mode": "video_to_video",
+          "modelType": "HeliosPyramidModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_video",
         "text_to_video",
         "video_to_video"
       ],
       "name": "HeliosPyramidModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -3749,15 +3944,26 @@
         "data/hunyuanvideo-1.5-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "hunyuan-video15:modular-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "HunyuanVideo15ModularPipeline"
+        },
+        {
+          "id": "hunyuan-video15:modular-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "HunyuanVideo15ModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_video",
         "text_to_video"
       ],
       "name": "HunyuanVideo15ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -4384,6 +4590,21 @@
       "equivalentTo": [],
       "exactExecutionSpecs": [
         {
+          "id": "ltx2-modular:equivalent-standard-condition-images:v1",
+          "mode": "reference_to_video",
+          "modelType": "LTX2ModularPipeline"
+        },
+        {
+          "id": "ltx2-modular:equivalent-standard-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "LTX2ModularPipeline"
+        },
+        {
+          "id": "ltx2-modular:equivalent-standard-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "LTX2ModularPipeline"
+        },
+        {
           "id": "ltx2:image-to-video:v1",
           "mode": "image_to_video",
           "modelType": "LTX2ConditionPipeline"
@@ -4435,12 +4656,23 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "ltx2-modular:equivalent-standard-in-context-canny:v1",
+          "mode": "in_context_to_video",
+          "modelType": "LTX2ModularPipeline"
+        },
+        {
+          "id": "ltx2:in-context-reference-to-video:v1",
+          "mode": "in_context_to_video",
+          "modelType": "LTX2InContextPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "LTX2InContextPipeline",
-      "reason": "The pinned Modular inventory records IC-LoRA block truth, but this standard class still requires reference video conditions, an immutable IC-LoRA, and an exact runnable adapter/workflow.",
-      "reviewDecision": "pinned-diffusers-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -4454,7 +4686,10 @@
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [],
+      "equivalentTo": [
+        "LTX2ConditionPipeline",
+        "LTX2InContextPipeline"
+      ],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "condition_to_video_with_audio",
@@ -4463,9 +4698,9 @@
         "text_to_video_with_audio"
       ],
       "name": "LTX2ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "equivalent"
     },
     {
       "artifactReviews": [
@@ -4523,6 +4758,16 @@
           "id": "ltx-video-0.9.8-13b-distilled:video-to-video:v1",
           "mode": "video_to_video",
           "modelType": "LTXVideoPipeline"
+        },
+        {
+          "id": "ltx:equivalent-standard-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "LTXModularPipeline"
+        },
+        {
+          "id": "ltx:equivalent-standard-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "LTXModularPipeline"
         }
       ],
       "modularWorkflowIds": [],
@@ -4815,28 +5060,52 @@
         "data/minimax-h3-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "minimax-h3:modular-first-last-frame-to-video-with-audio:v1",
+          "mode": "first_last_frame_to_video_with_audio",
+          "modelType": "MiniMaxH3ModularPipeline"
+        },
+        {
+          "id": "minimax-h3:modular-reference-to-video-with-audio:v1",
+          "mode": "reference_to_video_with_audio",
+          "modelType": "MiniMaxH3ModularPipeline"
+        },
+        {
+          "id": "minimax-h3:modular-text-to-video-with-audio:v1",
+          "mode": "text_to_video_with_audio",
+          "modelType": "MiniMaxH3ModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "first_last_frame_to_video_with_audio",
         "reference_to_video_with_audio",
         "text_to_video_with_audio"
       ],
       "name": "MiniMaxH3ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
-      "artifactReviews": [],
+      "artifactReviews": [
+        "data/minimax-music3-artifact-review.json"
+      ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "minimax-music3:modular-text-to-audio:v1",
+          "mode": "text_to_audio",
+          "modelType": "MiniMaxMusic3ModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "text_to_audio"
       ],
       "name": "MiniMaxMusic3ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -5157,6 +5426,11 @@
           "id": "qwen-image-edit:edit-image:v1",
           "mode": "edit_image",
           "modelType": "QwenImageEditModularPipeline"
+        },
+        {
+          "id": "qwen-image-edit:modular-inpainting:v1",
+          "mode": "modular_inpainting",
+          "modelType": "QwenImageEditModularPipeline"
         }
       ],
       "modularWorkflowIds": [
@@ -5301,6 +5575,31 @@
         {
           "id": "qwen-image-2512:control-image:v1",
           "mode": "control_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        {
+          "id": "qwen-image-2512:modular-control-image-to-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        {
+          "id": "qwen-image-2512:modular-control-inpainting:v1",
+          "mode": "control_inpaint",
+          "modelType": "QwenImageModularPipeline"
+        },
+        {
+          "id": "qwen-image-2512:modular-image-to-image:v1",
+          "mode": "image_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        {
+          "id": "qwen-image-2512:modular-inpainting:v1",
+          "mode": "inpainting",
+          "modelType": "QwenImageModularPipeline"
+        },
+        {
+          "id": "qwen-image-2512:modular-text-to-image:v1",
+          "mode": "modular_text_to_image",
           "modelType": "QwenImageModularPipeline"
         }
       ],
@@ -5574,6 +5873,90 @@
       "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
       "reviewDecision": "pinned-diffusers-non-video-source-triage",
       "status": "intentionally-excluded"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "genericTaskContract": {
+        "mode": "audio_to_audio",
+        "optionalInputs": [
+          "durationSeconds",
+          "strength"
+        ],
+        "outputMediaKinds": [
+          "audio"
+        ],
+        "qualification": "contract-only-artifact-blocked",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "prompt",
+          "sourceAudio"
+        ]
+      },
+      "modularWorkflowIds": [],
+      "name": "StableAudio3AudioToAudioPipeline",
+      "reason": "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain float32 unless later exact evidence qualifies another dtype.",
+      "reviewDecision": "pinned-diffusers-stable-audio-3-source-triage",
+      "status": "research-blocked"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "genericTaskContract": {
+        "mode": "audio_inpaint",
+        "optionalInputs": [
+          "durationSeconds"
+        ],
+        "outputMediaKinds": [
+          "audio"
+        ],
+        "qualification": "contract-only-artifact-blocked",
+        "requiredInputAlternatives": [
+          [
+            "maskAudio"
+          ],
+          [
+            "maskStartSeconds",
+            "maskEndSeconds"
+          ]
+        ],
+        "requiredInputs": [
+          "prompt",
+          "sourceAudio"
+        ]
+      },
+      "modularWorkflowIds": [],
+      "name": "StableAudio3InpaintPipeline",
+      "reason": "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain float32 unless later exact evidence qualifies another dtype.",
+      "reviewDecision": "pinned-diffusers-stable-audio-3-source-triage",
+      "status": "research-blocked"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "genericTaskContract": {
+        "mode": "text_to_audio",
+        "optionalInputs": [
+          "durationSeconds",
+          "negativePrompt"
+        ],
+        "outputMediaKinds": [
+          "audio"
+        ],
+        "qualification": "contract-only-artifact-blocked",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "prompt"
+        ]
+      },
+      "modularWorkflowIds": [],
+      "name": "StableAudio3Pipeline",
+      "reason": "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain float32 unless later exact evidence qualifies another dtype.",
+      "reviewDecision": "pinned-diffusers-stable-audio-3-source-triage",
+      "status": "research-blocked"
     },
     {
       "artifactReviews": [],
@@ -6265,11 +6648,102 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "sdxl-base:modular-controlnet-image-to-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-controlnet-inpainting:v1",
+          "mode": "control_inpaint",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-controlnet-text-to-image:v1",
+          "mode": "control_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-controlnet-union-image-to-image:v1",
+          "mode": "control_union_edit_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-controlnet-union-inpainting:v1",
+          "mode": "control_union_inpaint",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-controlnet-union-text-to-image:v1",
+          "mode": "control_union_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-image-to-image:v1",
+          "mode": "edit_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-inpainting:v1",
+          "mode": "inpaint",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-controlnet-image-to-image:v1",
+          "mode": "ip_adapter_control_edit_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-controlnet-inpainting:v1",
+          "mode": "ip_adapter_control_inpaint",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-controlnet-text-to-image:v1",
+          "mode": "ip_adapter_control_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-controlnet-union-image-to-image:v1",
+          "mode": "ip_adapter_control_union_edit_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-controlnet-union-inpainting:v1",
+          "mode": "ip_adapter_control_union_inpaint",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-controlnet-union-text-to-image:v1",
+          "mode": "ip_adapter_control_union_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-image-to-image:v1",
+          "mode": "ip_adapter_edit_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-inpainting:v1",
+          "mode": "ip_adapter_inpaint",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-ip-adapter-text-to-image:v1",
+          "mode": "ip_adapter_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        },
+        {
+          "id": "sdxl-base:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "StableDiffusionXLModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
+        "control_edit_image",
         "control_image",
-        "controlnet_image2image",
-        "controlnet_inpainting",
+        "control_inpaint",
         "controlnet_union_image2image",
         "controlnet_union_inpainting",
         "controlnet_union_text2image",
@@ -6287,9 +6761,9 @@
         "text_to_image"
       ],
       "name": "StableDiffusionXLModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -6572,28 +7046,40 @@
         "data/wan-animate-2-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "wan-animate-2-distilled:modular-character-animate:v1",
+          "mode": "character_animate",
+          "modelType": "WanAnimate2DistilledModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "character_animate"
       ],
       "name": "WanAnimate2DistilledModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [
         "data/wan-animate-2-artifact-review.json"
       ],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "wan-animate-2:modular-character-animate:v1",
+          "mode": "character_animate",
+          "modelType": "WanAnimate2ModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "character_animate"
       ],
       "name": "WanAnimate2ModularPipeline",
-      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "contract-only"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -6624,6 +7110,11 @@
           "id": "wan-flf:image-to-video:v1",
           "mode": "image_to_video",
           "modelType": "WanImage2VideoModularPipeline"
+        },
+        {
+          "id": "wan-i2v-480p:modular-image-to-video:v1",
+          "mode": "single_image_to_video",
+          "modelType": "WanImage2VideoModularPipeline"
         }
       ],
       "modularWorkflowIds": [
@@ -6647,6 +7138,11 @@
           "id": "wan-22-i2v-a14b:image-to-video:v1",
           "mode": "image_to_video",
           "modelType": "WanImageToVideoPipeline"
+        },
+        {
+          "id": "wan22-i2v:equivalent-standard-image-to-video:v1",
+          "mode": "image_to_video",
+          "modelType": "Wan22Image2VideoModularPipeline"
         }
       ],
       "modularWorkflowIds": [],
@@ -6660,14 +7156,20 @@
       "equivalentTo": [
         "WanPipeline"
       ],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "wan-1.3b:modular-text-to-video:v1",
+          "mode": "text_to_video",
+          "modelType": "WanModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "text_to_video"
       ],
       "name": "WanModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -6833,15 +7335,26 @@
         "ZImagePipeline",
         "ZImageImg2ImgPipeline"
       ],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "z-image:modular-image-to-image:v1",
+          "mode": "modular_image_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        {
+          "id": "z-image:modular-text-to-image:v1",
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "image_to_image",
         "text_to_image"
       ],
       "name": "ZImageModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -8030,21 +8543,21 @@
   "schemaVersion": 1,
   "scope": {
     "diffusers": {
-      "exportModuleSha256": "f53f106e6741413a30fb3d55a894cc3bcb958093c2a7d8ee89d2365af26ebf56",
+      "exportModuleSha256": "a31b3d860c85b22f08976b00c81a00f36cd3986c702715954bb230882803493f",
       "inventoryRule": "Every static top-level Diffusers export ending in Pipeline is classified once.",
-      "revision": "90b4e34e79a86ec5e7f2437634fe95ecd2108796",
-      "verifiedSourceRevision": "90b4e34e79a86ec5e7f2437634fe95ecd2108796",
+      "revision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+      "verifiedSourceRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
       "version": "0.40.0.dev0"
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "b3492f3f5a8f5e441595e370bf78e38e55bf79e78777db571b9399e22b8b5377",
+    "templateBundleSha256": "4f458f26a17a4defbf8d471f284273ffbb2c5829b5ebc4f9f3d0e2da8af304c8",
     "transformers": {
       "productionRuntime": {
         "byteSize": 11625234,
         "filename": "transformers-5.14.1-py3-none-any.whl",
         "runtimeProfileId": "huggingface-transformers-peft-5.14.1-0.20.0",
-        "runtimeProfileSpecDigest": "sha256:897da20e9a99ad9493cd08df0432b3e7a0386dd2aaa62dcd4e4f9c2a84298d08",
+        "runtimeProfileSpecDigest": "sha256:b8a09a45113dd14c56688e4cae7592174b61683846f4b03da1117920125af5ee",
         "sha256": "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
         "version": "5.14.1"
       },
@@ -8057,16 +8570,16 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 198,
+    "canonicalWorkflowCount": 199,
     "canonicalWorkflowsWithPublicTemplates": 51,
-    "canonicalWorkflowsWithoutPublicTemplates": 147,
-    "diffusersPipelineSymbolCount": 327,
+    "canonicalWorkflowsWithoutPublicTemplates": 148,
+    "diffusersPipelineSymbolCount": 330,
     "pipelineStatusCounts": {
-      "contract-only": 20,
-      "equivalent": 15,
-      "executable": 117,
+      "contract-only": 5,
+      "equivalent": 12,
+      "executable": 137,
       "intentionally-excluded": 56,
-      "research-blocked": 119,
+      "research-blocked": 120,
       "unreviewed": 0
     },
     "publicTemplateCount": 77,
@@ -8092,7 +8605,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 198,
+      "executable": 199,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
@@ -8117,7 +8630,7 @@
             "TranscribeAudio"
           ],
           "path": "modules/HuggingFaceSpeech/main.py",
-          "sha256": "30d9788554398af533e9722aa238a5177b062ac34585fd94289ff4b102fa1494"
+          "sha256": "a4eccbecc687928292f52ef341aea5e3b185248cfa6ac98854c4d756d61df3d9"
         }
       ],
       "nodeKeys": [
@@ -8177,7 +8690,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "863124cae313b01b38a2f5e317551385220882607ed607662c9835de46805839"
+          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
         }
       ],
       "nodeKeys": [
@@ -8238,7 +8751,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "863124cae313b01b38a2f5e317551385220882607ed607662c9835de46805839"
+          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
         }
       ],
       "nodeKeys": [
@@ -8313,7 +8826,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "863124cae313b01b38a2f5e317551385220882607ed607662c9835de46805839"
+          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
         }
       ],
       "nodeKeys": [

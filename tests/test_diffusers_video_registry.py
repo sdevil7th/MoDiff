@@ -80,6 +80,12 @@ class FakeLTX2VideoCondition:
         self.strength = strength
 
 
+class FakeLTX2ReferenceCondition:
+    def __init__(self, frames=None, strength=1.0):
+        self.frames = frames
+        self.strength = strength
+
+
 class DiffusersVideoRegistryTests(unittest.TestCase):
     def test_quality_shot_jobs_pair_six_keyframes_with_six_five_second_shots(self):
         images = [object() for _ in range(6)]
@@ -1788,6 +1794,102 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertIs(loaded, pipeline)
         self.assertEqual(load_pipeline.call_args.kwargs["device_map"], "cuda")
 
+    def test_ltx2_hub_pipeline_loads_the_reviewed_bounded_snapshot_as_a_local_directory(self):
+        adapter = get_video_pipeline_adapter("LTX2ConditionPipeline")
+        revision = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
+        snapshot = Path("/managed/hub/models--Lightricks--LTX-2/snapshots") / revision
+        pipeline = SimpleNamespace()
+        node = LoadPipeline("ltx2-bounded-snapshot-test")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=snapshot) as resolve_snapshot,
+            patch("diffusers.LTX2ConditionPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+        ):
+            loaded = node._load_ltx2(
+                adapter,
+                {
+                    "model_id": {"source": "hub", "value": adapter.default_repo},
+                    "revision": revision,
+                    "dtype": "bfloat16",
+                    "device": "cuda:0",
+                    "auto_offload": True,
+                    "offload_mode": "model_cpu",
+                },
+            )
+
+        self.assertIs(loaded, pipeline)
+        resolve_snapshot.assert_called_once_with(adapter.default_repo, revision)
+        self.assertEqual(load_pipeline.call_args.args, (snapshot,))
+        self.assertTrue(load_pipeline.call_args.kwargs["local_files_only"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
+        self.assertNotIn("revision", load_pipeline.call_args.kwargs)
+        self.assertNotIn("cache_dir", load_pipeline.call_args.kwargs)
+
+    def test_ltx2_in_context_loader_pins_both_snapshots_and_named_safe_lora(self):
+        adapter = get_video_pipeline_adapter("LTX2InContextPipeline")
+        base_revision = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
+        lora_repo = "Lightricks/LTX-2-19b-IC-LoRA-Canny-Control"
+        lora_revision = "28be96236294914042a1605f37e3f7812b45f43f"
+        weight_name = "ltx-2-19b-ic-lora-canny-control.safetensors"
+        base_snapshot = Path("/managed/base") / base_revision
+        lora_snapshot = Path("/managed/lora") / lora_revision
+        pipeline = SimpleNamespace(load_lora_weights=MagicMock(), set_adapters=MagicMock())
+
+        class FakePipelineClass:
+            from_pretrained = MagicMock(return_value=pipeline)
+
+            def load_lora_weights(self, *_args, **_kwargs):
+                raise AssertionError("the pipeline instance owns LoRA loading")
+
+        def resolve_snapshot(repo, revision):
+            return base_snapshot if repo == adapter.default_repo else lora_snapshot
+
+        node = LoadPipeline("ltx2-in-context-loader-test")
+        with (
+            patch("diffusers.LTX2InContextPipeline", FakePipelineClass),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", side_effect=resolve_snapshot) as snapshots,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch.object(node, "progress"),
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            loaded = node._load_ltx2_in_context(
+                adapter,
+                {
+                    "model_id": {"source": "hub", "value": adapter.default_repo},
+                    "revision": base_revision,
+                    "ic_lora_id": {"source": "hub", "value": lora_repo},
+                    "ic_lora_revision": lora_revision,
+                    "ic_lora_weight_name": weight_name,
+                    "dtype": "bfloat16",
+                    "device": "cpu",
+                    "offload_mode": "sequential_cpu",
+                },
+            )
+
+        self.assertIs(loaded, pipeline)
+        self.assertEqual(snapshots.call_args_list, [call(adapter.default_repo, base_revision), call(lora_repo, lora_revision)])
+        FakePipelineClass.from_pretrained.assert_called_once()
+        self.assertEqual(FakePipelineClass.from_pretrained.call_args.args, (base_snapshot,))
+        self.assertTrue(FakePipelineClass.from_pretrained.call_args.kwargs["local_files_only"])
+        self.assertTrue(FakePipelineClass.from_pretrained.call_args.kwargs["use_safetensors"])
+        pipeline.load_lora_weights.assert_called_once_with(
+            lora_snapshot,
+            weight_name=weight_name,
+            adapter_name="ic_lora",
+            local_files_only=True,
+        )
+        pipeline.set_adapters.assert_called_once_with("ic_lora", 1.0)
+        apply_recipe.assert_called_once()
+        apply_offload.assert_called_once()
+        mm_add.assert_called_once_with(pipeline, priority=2)
+        self.assertEqual(pipeline._modiff_video_ic_lora_repo, lora_repo)
+        self.assertEqual(pipeline._modiff_video_ic_lora_revision, lora_revision)
+        self.assertEqual(pipeline._modiff_video_ic_lora_weight_name, weight_name)
+
     def test_ltx_long_adapter_uses_native_sliding_windows_instead_of_independent_clip_chaining(self):
         class Output:
             frames = [["frame-a", "frame-b"]]
@@ -1891,6 +1993,60 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(result["sample_rate_out"], 24000)
         self.assertEqual(result["audio"]["channels"], 2)
         self.assertEqual(len(pipeline.calls[0]["conditions"]), 1)
+
+    def test_ltx2_in_context_executes_reference_conditions_and_returns_video_audio(self):
+        class Output:
+            frames = [["frame-a", "frame-b", "frame-c"]]
+            audio = np.zeros((1, 2, 240), dtype=np.float32)
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "LTX2InContextPipeline"
+            _execution_device = "cpu"
+            vocoder = SimpleNamespace(config={"output_sampling_rate": 24000})
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        reference_frames = [object(), object()]
+        condition_module = SimpleNamespace(LTX2ReferenceCondition=FakeLTX2ReferenceCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx2.pipeline_ltx2_ic_lora": condition_module},
+        ):
+            result = GenerateVideoAudio().execute(
+                pipeline=pipeline,
+                mode="in_context_to_video",
+                reference_video=reference_frames,
+                reference_strength=0.8,
+                reference_downscale_factor=2,
+                conditioning_attention_strength=0.65,
+                prompt="A continuous walking shot with coherent motion and synchronized ambience",
+                negative_prompt="flicker",
+                width=768,
+                height=512,
+                num_frames=121,
+                frame_rate=24,
+                num_inference_steps=8,
+                guidance_scale=3.5,
+                seed=42,
+            )
+
+        self.assertEqual(result["video_out"], ["frame-a", "frame-b", "frame-c"])
+        self.assertEqual(result["frames_out"], 3)
+        self.assertEqual(result["sample_rate_out"], 24000)
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["reference_downscale_factor"], 2)
+        self.assertEqual(call_kwargs["conditioning_attention_strength"], 0.65)
+        self.assertEqual(call_kwargs["num_frames"], 121)
+        self.assertEqual(len(call_kwargs["reference_conditions"]), 1)
+        condition = call_kwargs["reference_conditions"][0]
+        self.assertEqual(condition.frames, reference_frames)
+        self.assertEqual(condition.strength, 0.8)
 
     def test_video_audio_node_rejects_video_only_pipeline_before_generation(self):
         class FakePipeline:

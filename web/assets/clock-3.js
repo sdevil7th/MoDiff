@@ -1,0 +1,1 @@
+import{Gt as r}from"./ui.js?v=d9b2f22583b65099";var c=r("clock-3",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"M12 6v6h4",key:"135r8i"}]]);export{c as t};

@@ -6,11 +6,33 @@ gaps. It is a durable product roadmap rather than a claim that every upstream
 pipeline is already runnable.
 
 The reviewed Diffusers installation is pinned to commit
-[`90b4e34e79a86ec5e7f2437634fe95ecd2108796`](https://github.com/huggingface/diffusers/commit/90b4e34e79a86ec5e7f2437634fe95ecd2108796),
-the verified `main` head on 2026-08-15. The reviewed comparison from the prior
-pin contains 14 commits. The comparison inventory and executable dependency use
+[`2f7e0154a9db246e95c9ede43edba7db5b130805`](https://github.com/huggingface/diffusers/commit/2f7e0154a9db246e95c9ede43edba7db5b130805),
+the verified `main` head on 2026-08-20. The reviewed comparison from the prior
+pin contains 23 commits. The comparison inventory and executable dependency use
 that immutable snapshot; re-run the inventory before changing the pin or
 marking a gap complete.
+
+### Pin delta admitted 2026-08-21
+
+The exact 23-commit delta from
+`90b4e34e79a86ec5e7f2437634fe95ecd2108796` adds the three Stable Audio 3
+exports: `StableAudio3Pipeline`, `StableAudio3AudioToAudioPipeline`, and
+`StableAudio3InpaintPipeline`. Each has an explicit task-generic contract for
+`text_to_audio`, `audio_to_audio`, or `audio_inpaint`, but remains
+`research-blocked`. Upstream documents that the gated Stability AI checkpoints
+are not published in Diffusers format and must be converted locally. MoDiff
+therefore does not publish a repository, app download, workflow, model node, or
+execution claim for this family. CPU and MPS remain float32-only pending exact
+contrary evidence.
+
+The source archive was reviewed at SHA-256
+`5b62d1dc5c6902ee6279e0debc6a240f0443f779d9bd95d128d844c07efa7ebf`
+(11,338,603 bytes). Diffusers' declared dependency requirements are unchanged.
+The delta also contains bounded fixes for DiffusionGemma adaptive stopping,
+Krea2 repeated-image preparation, Cosmos3 preprocessing, MiniMax-H3 LoRA,
+tensor parallelism, and Diffusers BnB/TorchAO quantizer handling; none widens a
+MoDiff model or quantization support claim without its existing exact profile
+and artifact gates.
 
 ### Pin delta admitted 2026-08-14
 
@@ -249,12 +271,17 @@ environment together in one compatibility segment. Do not remove either until
 registry discovery, preflight, existing Diffusers workflows, optional
 installation, restart, and rollback all pass from a clean base installation.
 
-### MoDiff-only dynamic configuration
+### Dynamic execution and safe import inspection are separate boundaries
 
-MoDiff does not read `mellon_pipeline_config.json` and will not add a fallback
-for it. Dynamic Modular configuration uses canonical upstream metadata such as
-`modular_model_index.json` and `modular_config.json`. Optional MoDiff UI fields
-and defaults use `modiff_pipeline_config.json` only.
+The executable Dynamic Modular path does not fall back from
+`modiff_pipeline_config.json` to `mellon_pipeline_config.json`. Dynamic Modular
+configuration uses canonical upstream metadata such as
+`modular_model_index.json` and `modular_config.json`; executable MoDiff UI fields
+and defaults use `modiff_pipeline_config.json` only. The User Node Hub importer
+may separately read and translate an exact cached
+`mellon_pipeline_config.json` for bounded visual preview. That inspector never
+imports repository Python, and a Mellon-only import remains disabled until a
+separately authorized sandbox exists.
 
 The currently curated `diffusers/FLUX.2-klein-4B-modular` example is not a
 valid MoDiff dynamic-block example because its reviewed revision does not
@@ -373,7 +400,9 @@ as proof of a runnable workflow.
 
 ### The curated DynamicBlock example is an incomplete Mellon-to-MoDiff migration
 
-MoDiff does not currently request or parse `mellon_pipeline_config.json`.
+The execution path still does not request or parse
+`mellon_pipeline_config.json`. The remote-code-disabled User Node import
+inspector now parses that sidecar only as declarative preview metadata.
 Commit `346c203` originally used Diffusers' inherited `MellonPipelineConfig`
 helper with `YiYiXu/FLUX.2-klein-4B-modular`. Commit `57b9bb` introduced
 `MoDiffPipelineConfig`, renamed the sidecar to `modiff_pipeline_config.json`,
@@ -382,10 +411,11 @@ the example. Commit `76bbafe` switched the curated option to the pinned
 `diffusers/FLUX.2-klein-4B-modular` repository, which still has Mellon UI
 metadata rather than a MoDiff sidecar.
 
-The current revision-forwarding unit test mocks the configuration loader, so it
-cannot discover that the real pinned repository lacks the requested file. This
-is fixed by removing/replacing the curated example and adding repository-layout
-contract coverage, not by restoring Mellon compatibility. Attribution in the
+The original revision-forwarding unit test mocked the configuration loader, so it
+could not discover that the real pinned repository lacked the requested file.
+Executable compatibility remains fixed by removing/replacing the curated
+example and adding repository-layout contract coverage, not by treating Mellon
+metadata as execution authority. Attribution in the
 source-provenance map remains unchanged because provenance is not a runtime
 compatibility promise.
 
@@ -1254,8 +1284,10 @@ Priority: immediate. Hardware: CPU only. Assets: none.
         `ba1002529e783604c5f326d49f0122025392d1d20ac8d573b3eeb3e6dea4ebb6`.
         Execution resolves and hashes that file from the local Hub cache only;
         it never installs or downloads. The pinned image encoder is likewise
-        local-only and must retain its exact CLIP ViT-H geometry and processor
-        contract.
+        local-only under `sdxl_models/image_encoder` and must retain its exact
+        `CLIPVisionModelWithProjection` contract: image size 224, patch size 14,
+        hidden size 1664, 48 layers, 16 attention heads, projection size 1280,
+        and the reviewed CLIP processor settings.
       - The adapter action mutates only the exact resident SDXL UNet, supports
         one standard projection and one bounded scale, and issues a
         nonserializable process-local receipt sealing loader/UNet/Guider,
@@ -1550,7 +1582,7 @@ Priority: immediate. Hardware: CPU only. Assets: none.
     - [x] `WanTI2VPipeline:text_to_video`: backend commit `276dd1f` moves its
       execution profile, capability, Auto resource contract, generic video
       quantization, execution-recipe, pipeline, generation, and export roles,
-      field bindings, and receipt hash `studio-spec-v1-da22e734` into the
+      field bindings, and receipt hash `studio-spec-v1-a83efd57` into the
       specification registry. Client commit `049addb` removes the TI2V model
       from the legacy video pipeline, artifact, native-flash, and scheduler
       switches and materializes the five-node recipe from the backend contract.

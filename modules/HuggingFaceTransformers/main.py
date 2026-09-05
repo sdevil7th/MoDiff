@@ -996,6 +996,93 @@ def _one_any_to_any_record(value: Any, *, output_key: str) -> dict[str, Any]:
     return record
 
 
+def _janus_image_static_cache(model: Any, *, input_tokens: int, image_tokens: int) -> Any:
+    """Build the cache that the reviewed Janus pin cannot currently build itself.
+
+    Transformers main added the required ``prefill_chunk_size`` argument to
+    ``GenerationMixin._prepare_static_cache`` without updating Janus' custom
+    image-generation override at the same revision. Passing a prebuilt cache
+    through the normal generation kwargs skips that stale internal call while
+    preserving the upstream cache implementation and fixed token geometry.
+    """
+
+    import inspect
+
+    prepare = getattr(model, "_prepare_static_cache", None)
+    if not callable(prepare):
+        raise RuntimeError("The reviewed Janus image runtime has no static-cache helper.")
+    try:
+        parameters = inspect.signature(prepare).parameters
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("The reviewed Janus static-cache signature is unavailable.") from exc
+    required = {
+        "cache_implementation",
+        "batch_size",
+        "max_cache_len",
+        "prefill_chunk_size",
+        "model_kwargs",
+    }
+    if not required.issubset(parameters):
+        raise RuntimeError("The reviewed Janus static-cache contract has changed.")
+    cache = prepare(
+        cache_implementation="static",
+        batch_size=2,
+        max_cache_len=input_tokens + image_tokens,
+        prefill_chunk_size=None,
+        model_kwargs={},
+    )
+    if cache is None:
+        raise RuntimeError("The reviewed Janus runtime returned no static cache.")
+    return cache
+
+
+def _generate_janus_image(
+    *, model: Any, processor: Any, model_inputs: dict[str, Any], controls: dict[str, Any], image_tokens: int
+):
+    """Use Janus' native image decode path and normalize exactly one image.
+
+    The reviewed Transformers development runtime currently asks ``BatchFeature``
+    for a non-existent ``PIL.Image.Image`` tensor type in
+    ``JanusProcessor.post_process_multimodal_output``.  The native model and
+    processor APIs underneath that convenience method remain valid, so keep the
+    compatibility boundary finite and fail closed if their schemas change.
+    """
+
+    generate = getattr(model, "generate", None)
+    decode = getattr(model, "decode_image_tokens", None)
+    postprocess = getattr(processor, "postprocess", None)
+    if not callable(generate) or not callable(decode) or not callable(postprocess):
+        raise RuntimeError("The reviewed Janus image-generation primitives are unavailable.")
+    generated = generate(**model_inputs, generation_mode="image", **controls)
+    generated_shape = _shape(generated)
+    if generated_shape != (1, image_tokens):
+        raise RuntimeError("The Janus adapter returned an invalid image-token sequence.")
+    decoded = decode(generated)
+    decoded_shape = _shape(decoded)
+    if decoded_shape is None or len(decoded_shape) != 4 or decoded_shape[0] != 1:
+        raise RuntimeError("The Janus adapter returned an invalid decoded image batch.")
+    float_converter = getattr(decoded, "float", None)
+    decoded_float = float_converter() if callable(float_converter) else decoded
+    detach = getattr(decoded_float, "detach", None)
+    decoded_float = detach() if callable(detach) else decoded_float
+    to_cpu = getattr(decoded_float, "cpu", None)
+    if not callable(to_cpu):
+        raise RuntimeError("The Janus decoded image batch cannot be copied to host memory.")
+    # BatchFeature's NumPy conversion cannot consume CUDA/ROCm tensors. Copy the
+    # small, already-decoded pixel batch to host memory before post-processing.
+    decoded_values = list(to_cpu())
+    processed = postprocess(decoded_values, return_tensors="np")
+    if not hasattr(processed, "items"):
+        raise RuntimeError("The Janus processor returned a non-mapping image batch.")
+    processed_values = dict(processed.items())
+    if set(processed_values) != {"pixel_values"}:
+        raise RuntimeError("The Janus processor returned an unexpected image schema.")
+    images = _media_items(processed_values["pixel_values"], field="generated image", maximum=1)
+    if len(images) != 1:
+        raise RuntimeError("The Janus processor must return exactly one generated image.")
+    return _normalized_media_item(images[0], field="generated image")
+
+
 def _generate_janus_any_to_any(
     *, model: Any, processor: Any, pipeline: Any, receipt: dict[str, Any], kwargs: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1027,12 +1114,17 @@ def _generate_janus_any_to_any(
     }
     if images:
         processor_kwargs["images"] = images
+    # JanusProcessor iterates a bare string as a batch of characters on the
+    # reviewed Transformers main pin.  The official processor contract accepts
+    # a list of text samples; wrap the single bounded prompt explicitly so the
+    # generic node always produces one token sequence.
+    processor_kwargs["text"] = [adapted_prompt]
     preview = _batch_to_device(processor(**processor_kwargs), device=receipt["runtime"]["device"])
     input_ids = preview["input_ids"]
     input_tokens = _shape(input_ids)[1]
     controls = _generation_controls(kwargs)
     controls["num_beams"] = 1
-    invocation: dict[str, Any] = {"text": adapted_prompt}
+    invocation: dict[str, Any] = {"text": [adapted_prompt]}
     if images:
         invocation["images"] = images
     call_kwargs: dict[str, Any] = {
@@ -1071,9 +1163,19 @@ def _generate_janus_any_to_any(
             "modelReceipt": receipt,
         }
         return {"text": text, "image": None, "result": result}
-    record = _one_any_to_any_record(pipeline(invocation, **call_kwargs), output_key="generated_image")
-    image, output_pixels = _normalized_media_item(record["generated_image"], field="generated image")
+    controls["past_key_values"] = _janus_image_static_cache(
+        model,
+        input_tokens=input_tokens,
+        image_tokens=receipt["adapter"]["imageGeneration"]["tokenCount"],
+    )
     geometry = receipt["adapter"]["imageGeneration"]
+    image, output_pixels = _generate_janus_image(
+        model=model,
+        processor=processor,
+        model_inputs=preview,
+        controls=controls,
+        image_tokens=geometry["tokenCount"],
+    )
     if image.size != (geometry["width"], geometry["height"]):
         raise RuntimeError("The Janus adapter returned an image outside its reviewed output geometry.")
     result = {

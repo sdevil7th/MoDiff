@@ -10,11 +10,42 @@
     "repositoryStoredBytes": 354016018214
   },
   "admission": {
-    "status": "contract_only",
+    "status": "graph_qualified",
     "runtimeCatalogExposed": false,
     "downloadCatalogExposed": false,
     "executableModes": [],
-    "reason": "Territory-restricted license and remote hardware qualification are unresolved."
+    "graphQualifiedRoutes": [
+      {
+        "pipelineClass": "MiniMaxH3ModularPipeline",
+        "workflowId": "t2va",
+        "studioMode": "text_to_video_with_audio",
+        "artifactRevision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+        "publicationExecutable": false
+      },
+      {
+        "pipelineClass": "MiniMaxH3ModularPipeline",
+        "workflowId": "fl2va",
+        "studioMode": "first_last_frame_to_video_with_audio",
+        "artifactRevision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+        "publicationExecutable": false
+      },
+      {
+        "pipelineClass": "MiniMaxH3ModularPipeline",
+        "workflowId": "ref2va",
+        "studioMode": "reference_to_video_with_audio",
+        "artifactRevision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+        "publicationExecutable": false
+      }
+    ],
+    "unresolvedGates": [
+      "community_license_acknowledgement_and_revenue_eligibility",
+      "excluded_territory_eligibility",
+      "optional_transformers_runtime_qualification",
+      "selective_workflow_artifact_installation",
+      "four_accelerator_resource_qualification",
+      "visible_frontend_live_output_review"
+    ],
+    "reason": "All three exact workflow-partitioned Modular routes are statically graph-qualified. Download, Run, Auto, templates, Gallery, and public execution remain closed pending the recorded license, territory, optional-runtime, selective-artifact, four-accelerator, and live-output gates."
   },
   "license": {
     "id": "minimax-h3-community-license-agreement",

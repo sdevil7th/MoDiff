@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import importlib
 import json
 import os
 import re
@@ -16,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from huggingface_hub import HfApi
 from huggingface_hub.utils import validate_repo_id
 
 from modiff.modular_workflow_discovery import (
@@ -25,13 +27,18 @@ from modiff.modular_workflow_discovery import (
 
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 from .pipeline_schema import MAX_CUSTOM_PIPELINE_REPOSITORY_CHARS
+from .pipeline_schema import MELLON_PIPELINE_CONFIG_FILENAME
 from .pipeline_schema import VerifiedMoDiffPipelineConfig
 
 
 CUSTOM_PIPELINE_MODEL_TYPE = "DummyCustomPipeline"
 CUSTOM_PIPELINE_EXECUTION_STATUS = "reviewed_official_components"
-CUSTOM_PIPELINE_IDENTITY_SCHEMA = "modiff.custom-pipeline-identity.v2"
+CUSTOM_PIPELINE_IDENTITY_SCHEMA_V2 = "modiff.custom-pipeline-identity.v2"
+CUSTOM_PIPELINE_IDENTITY_SCHEMA = "modiff.custom-pipeline-identity.v3"
 CUSTOM_PIPELINE_CONFIG_FILENAME = PipelineConfig.config_name
+CUSTOM_PIPELINE_CONFIG_FILENAMES = frozenset(
+    {CUSTOM_PIPELINE_CONFIG_FILENAME, MELLON_PIPELINE_CONFIG_FILENAME}
+)
 CUSTOM_PIPELINE_IDENTITY_FIELD = "modiff_pipeline_identity"
 
 _COMMIT_REVISION = re.compile(r"^[0-9a-f]{40}$")
@@ -48,7 +55,9 @@ _IDENTITY_KEYS = {
     "config_filename",
     "config_sha256",
     "executable_manifest_sha256",
+    "component_revisions",
 }
+_IDENTITY_KEYS_V2 = _IDENTITY_KEYS - {"component_revisions"}
 
 # Exact sidecars are individually capped at 1 MiB. Keep worst-case retained
 # sidecar bytes near 32 MiB; correctness never depends on cache residency.
@@ -108,6 +117,24 @@ class ReviewedCustomPipelineContract:
         )
 
 
+def _resolve_installed_official_component_type(component: ReviewedComponentReference) -> type:
+    try:
+        component_type = getattr(importlib.import_module(component.library), component.class_name)
+    except (AttributeError, ImportError) as error:
+        raise CustomPipelineContractError(
+            "custom_pipeline_component_unapproved",
+            f"Component {component.name!r} does not resolve to an installed official Hugging Face class.",
+            "Use the exact official library/class declared by the pinned blocks and active optional runtime.",
+        ) from error
+    if not isinstance(component_type, type) or not component_type.__module__.startswith(f"{component.library}."):
+        raise CustomPipelineContractError(
+            "custom_pipeline_component_unapproved",
+            f"Component {component.name!r} does not resolve to an installed official Hugging Face class.",
+            "Use the exact official library/class declared by the pinned blocks and active optional runtime.",
+        )
+    return component_type
+
+
 class PrivateExecutionSnapshot:
     """Task-private, content-addressed copy of the validated metadata bytes."""
 
@@ -124,7 +151,7 @@ class PrivateExecutionSnapshot:
         self.root = root
         self.path = path
         for filename, raw_bytes in (
-            (CUSTOM_PIPELINE_CONFIG_FILENAME, sidecar),
+            (identity.config_filename, sidecar),
             (_UPSTREAM_INDEX_FILENAME, index),
         ):
             target = path / filename
@@ -302,6 +329,9 @@ def _normalize_subfolder(value: Any, *, component_name: str) -> str:
 def _review_upstream_contract(
     verified: VerifiedMoDiffPipelineConfig,
     raw_index_bytes: bytes,
+    *,
+    auxiliary_revisions: Mapping[str, str] | None = None,
+    resolve_unpinned_auxiliary: bool = False,
 ) -> ReviewedCustomPipelineContract:
     document = _decode_upstream_index(raw_index_bytes, source_label=verified.repo_id)
     if "auto_map" in document:
@@ -379,6 +409,21 @@ def _review_upstream_contract(
             repository = verified.repo_id
         if revision in (None, "") and repository == verified.repo_id and verified.source == "hub":
             revision = verified.revision
+        if (
+            revision in (None, "")
+            and repository != verified.repo_id
+            and verified.source == "hub"
+        ):
+            revision = (auxiliary_revisions or {}).get(repository)
+            if revision in (None, "") and resolve_unpinned_auxiliary:
+                try:
+                    revision = HfApi().model_info(repository, files_metadata=False).sha
+                except Exception as error:
+                    raise CustomPipelineContractError(
+                        "custom_pipeline_unpinned_auxiliary",
+                        f"Could not resolve an immutable revision for auxiliary component repository {repository!r}.",
+                        "Install or make the auxiliary repository accessible, then inspect the exact custom pipeline again.",
+                    ) from error
         if not isinstance(repository, str) or not repository or len(repository) > 4096:
             raise CustomPipelineContractError(
                 "custom_pipeline_snapshot_invalid",
@@ -426,6 +471,18 @@ def _review_upstream_contract(
                 variant=variant,
             )
         )
+    admitted_auxiliary_repositories = {
+        reference.repository for reference in references if reference.repository != verified.repo_id
+    }
+    unexpected_auxiliary_pins = set(auxiliary_revisions or {}) - admitted_auxiliary_repositories
+    if unexpected_auxiliary_pins:
+        raise CustomPipelineContractError(
+            "custom_pipeline_snapshot_invalid",
+            "The persisted custom pipeline identity pins component repositories absent from the canonical index: "
+            + ", ".join(sorted(unexpected_auxiliary_pins))
+            + ".",
+            "Review and refresh the exact custom pipeline contract.",
+        )
     return ReviewedCustomPipelineContract(
         pipeline_class_name=pipeline_class_name,
         blocks_class_name=blocks_class_name,
@@ -441,24 +498,30 @@ def _canonical_json(value: Mapping[str, Any]) -> bytes:
 
 def _identity_body(
     *,
+    schema: str,
     source: str,
     repo_id: str,
     revision: str | None,
     trust_remote_code: bool,
+    config_filename: str,
     config_sha256: str,
     executable_manifest_sha256: str,
+    component_revisions: Mapping[str, str],
 ) -> dict[str, Any]:
-    return {
-        "schema": CUSTOM_PIPELINE_IDENTITY_SCHEMA,
+    body = {
+        "schema": schema,
         "model_type": CUSTOM_PIPELINE_MODEL_TYPE,
         "source": source,
         "repo_id": repo_id,
         "revision": revision,
         "trust_remote_code": trust_remote_code,
-        "config_filename": CUSTOM_PIPELINE_CONFIG_FILENAME,
+        "config_filename": config_filename,
         "config_sha256": config_sha256,
         "executable_manifest_sha256": executable_manifest_sha256,
     }
+    if schema == CUSTOM_PIPELINE_IDENTITY_SCHEMA:
+        body["component_revisions"] = dict(sorted(component_revisions.items()))
+    return body
 
 
 def _execution_id_for_body(body: Mapping[str, Any]) -> str:
@@ -469,25 +532,33 @@ def _execution_id_for_body(body: Mapping[str, Any]) -> str:
 class CustomPipelineExecutionIdentity:
     """A versioned, source-bound checksum; never an execution authorization."""
 
+    schema: str
     source: str
     repo_id: str
     revision: str | None
     trust_remote_code: bool
+    config_filename: str
     config_sha256: str
     executable_manifest_sha256: str
+    component_revisions: tuple[tuple[str, str], ...]
     execution_id: str
 
     @classmethod
     def create(
         cls,
         *,
+        schema: str = CUSTOM_PIPELINE_IDENTITY_SCHEMA,
         source: str,
         repo_id: str,
         revision: str | None,
         trust_remote_code: bool,
+        config_filename: str = CUSTOM_PIPELINE_CONFIG_FILENAME,
         config_sha256: str,
         executable_manifest_sha256: str,
+        component_revisions: Mapping[str, str] | None = None,
     ) -> "CustomPipelineExecutionIdentity":
+        if schema not in {CUSTOM_PIPELINE_IDENTITY_SCHEMA_V2, CUSTOM_PIPELINE_IDENTITY_SCHEMA}:
+            raise ValueError(f"Unsupported custom Modular Diffusers identity schema {schema!r}.")
         if not isinstance(source, str) or source not in {"hub", "local"}:
             raise ValueError("Custom Modular Diffusers identity source must be exactly 'hub' or 'local'.")
         if not isinstance(repo_id, str) or not repo_id or repo_id != repo_id.strip():
@@ -501,6 +572,26 @@ class CustomPipelineExecutionIdentity:
                 "Custom Modular Diffusers repository code is disabled until MoDiff provides a reviewed, "
                 "task-scoped authorization and isolated content-addressed execution path."
             )
+        if config_filename not in CUSTOM_PIPELINE_CONFIG_FILENAMES:
+            raise ValueError(
+                "Custom Modular Diffusers identity requires an admitted declarative sidecar filename."
+            )
+        normalized_component_revisions = dict(component_revisions or {})
+        if schema == CUSTOM_PIPELINE_IDENTITY_SCHEMA_V2 and normalized_component_revisions:
+            raise ValueError("Legacy custom pipeline identities cannot contain resolved component revisions.")
+        if len(normalized_component_revisions) > 128:
+            raise ValueError("Custom Modular Diffusers identity contains too many component revisions.")
+        for component_repository, component_revision in normalized_component_revisions.items():
+            try:
+                validate_repo_id(component_repository)
+            except ValueError as error:
+                raise ValueError(
+                    f"Custom Modular Diffusers identity has an invalid component repository {component_repository!r}."
+                ) from error
+            if not isinstance(component_revision, str) or _COMMIT_REVISION.fullmatch(component_revision) is None:
+                raise ValueError(
+                    f"Custom Modular Diffusers component {component_repository!r} requires an exact commit revision."
+                )
         if source == "hub":
             if not isinstance(revision, str) or _COMMIT_REVISION.fullmatch(revision) is None:
                 raise ValueError("Custom Hub pipeline identity requires a lowercase 40-character commit revision.")
@@ -518,21 +609,27 @@ class CustomPipelineExecutionIdentity:
             )
 
         body = _identity_body(
+            schema=schema,
             source=source,
             repo_id=repo_id,
             revision=revision,
             trust_remote_code=trust_remote_code,
+            config_filename=config_filename,
             config_sha256=config_sha256,
             executable_manifest_sha256=executable_manifest_sha256,
+            component_revisions=normalized_component_revisions,
         )
         execution_id = _execution_id_for_body(body)
         return cls(
+            schema=schema,
             source=source,
             repo_id=repo_id,
             revision=revision,
             trust_remote_code=trust_remote_code,
+            config_filename=config_filename,
             config_sha256=config_sha256,
             executable_manifest_sha256=executable_manifest_sha256,
+            component_revisions=tuple(sorted(normalized_component_revisions.items())),
             execution_id=execution_id,
         )
 
@@ -544,34 +641,37 @@ class CustomPipelineExecutionIdentity:
         if any(not isinstance(key, str) for key in raw_keys):
             raise ValueError("Custom Modular Diffusers contract identity keys must be JSON strings.")
         keys = set(raw_keys)
-        if keys != _IDENTITY_KEYS:
-            missing = sorted(_IDENTITY_KEYS - keys)
-            unknown = sorted(keys - _IDENTITY_KEYS)
+        schema = value.get("schema")
+        expected_keys = _IDENTITY_KEYS_V2 if schema == CUSTOM_PIPELINE_IDENTITY_SCHEMA_V2 else _IDENTITY_KEYS
+        if keys != expected_keys:
+            missing = sorted(expected_keys - keys)
+            unknown = sorted(keys - expected_keys)
             detail = []
             if missing:
                 detail.append("missing " + ", ".join(missing))
             if unknown:
                 detail.append("unknown " + ", ".join(unknown))
             raise ValueError("Malformed custom Modular Diffusers contract identity: " + "; ".join(detail))
-        if value.get("schema") != CUSTOM_PIPELINE_IDENTITY_SCHEMA:
+        if schema not in {CUSTOM_PIPELINE_IDENTITY_SCHEMA_V2, CUSTOM_PIPELINE_IDENTITY_SCHEMA}:
             raise ValueError(
                 f"Unsupported custom Modular Diffusers identity schema {value.get('schema')!r}; "
                 f"expected {CUSTOM_PIPELINE_IDENTITY_SCHEMA!r}."
             )
         if value.get("model_type") != CUSTOM_PIPELINE_MODEL_TYPE:
             raise ValueError("Custom Modular Diffusers identity has an incompatible model_type.")
-        if value.get("config_filename") != CUSTOM_PIPELINE_CONFIG_FILENAME:
-            raise ValueError(f"Custom Modular Diffusers identity must bind {CUSTOM_PIPELINE_CONFIG_FILENAME!r}.")
         execution_id = value.get("execution_id")
         if not isinstance(execution_id, str) or _EXECUTION_ID.fullmatch(execution_id) is None:
             raise ValueError("Custom Modular Diffusers identity has an invalid execution_id.")
         identity = cls.create(
+            schema=schema,
             source=value.get("source"),
             repo_id=value.get("repo_id"),
             revision=value.get("revision"),
             trust_remote_code=value.get("trust_remote_code"),
+            config_filename=value.get("config_filename"),
             config_sha256=value.get("config_sha256"),
             executable_manifest_sha256=value.get("executable_manifest_sha256"),
+            component_revisions=value.get("component_revisions", {}),
         )
         if not hmac.compare_digest(identity.execution_id, execution_id):
             raise ValueError("Custom Modular Diffusers contract checksum does not match its identity fields.")
@@ -580,12 +680,15 @@ class CustomPipelineExecutionIdentity:
     def to_dict(self) -> dict[str, Any]:
         return {
             **_identity_body(
+                schema=self.schema,
                 source=self.source,
                 repo_id=self.repo_id,
                 revision=self.revision,
                 trust_remote_code=self.trust_remote_code,
+                config_filename=self.config_filename,
                 config_sha256=self.config_sha256,
                 executable_manifest_sha256=self.executable_manifest_sha256,
+                component_revisions=dict(self.component_revisions),
             ),
             "execution_id": self.execution_id,
         }
@@ -630,7 +733,7 @@ class CustomPipelineBinding:
     def pipeline_config(self) -> PipelineConfig:
         return PipelineConfig.from_json_bytes(
             self._config_bytes,
-            source_label=f"{self.identity.execution_id}:{CUSTOM_PIPELINE_CONFIG_FILENAME}",
+            source_label=f"{self.identity.execution_id}:{self.identity.config_filename}",
         )
 
     @property
@@ -680,10 +783,14 @@ class CustomPipelineBinding:
                 for component in blocks.expected_components
                 if component.default_creation_method == "from_pretrained"
             }
-            observed = {
-                component.name: (component.library, component.class_name)
-                for component in contract.component_references
-            }
+            observed = {}
+            for component in contract.component_references:
+                component_type = _resolve_installed_official_component_type(component)
+                # Transformers 5 intentionally exposes legacy ``*Fast`` names
+                # as aliases of its unified tokenizer implementation. Compare
+                # resolved runtime class identity instead of the serialized
+                # alias spelling; genuinely different classes still fail.
+                observed[component.name] = tuple(_fetch_class_library_tuple(component_type))
             missing = sorted(set(expected) - set(observed))
             unexpected = sorted(set(observed) - set(expected))
             mismatched = sorted(
@@ -730,7 +837,7 @@ class CustomPipelineBinding:
         return self.instantiate()
 
 
-_binding_cache: "OrderedDict[tuple[str, str, str | None, bool, str, str], CustomPipelineBinding]" = OrderedDict()
+_binding_cache: "OrderedDict[str, CustomPipelineBinding]" = OrderedDict()
 _binding_cache_lock = threading.RLock()
 
 
@@ -742,25 +849,45 @@ def _binding_from_verified(
     expected_identity: Mapping[str, Any] | CustomPipelineExecutionIdentity | None = None,
     allow_selector_change: bool = False,
 ) -> CustomPipelineBinding:
+    expected = (
+        expected_identity
+        if isinstance(expected_identity, CustomPipelineExecutionIdentity)
+        else CustomPipelineExecutionIdentity.from_value(expected_identity)
+        if expected_identity is not None
+        else None
+    )
+    resolved_component_revisions: dict[str, str] = {}
+    for reference in execution_contract.component_references:
+        if reference.repository == verified.repo_id:
+            continue
+        previous = resolved_component_revisions.get(reference.repository)
+        if previous is not None and previous != reference.revision:
+            raise CustomPipelineContractError(
+                "custom_pipeline_snapshot_invalid",
+                f"Auxiliary repository {reference.repository!r} resolves to conflicting revisions.",
+                "Use one exact component revision throughout the canonical Modular index.",
+            )
+        resolved_component_revisions[reference.repository] = reference.revision or ""
+    identity_schema = expected.schema if expected is not None else CUSTOM_PIPELINE_IDENTITY_SCHEMA
+    if identity_schema == CUSTOM_PIPELINE_IDENTITY_SCHEMA_V2:
+        resolved_component_revisions = {}
     identity = CustomPipelineExecutionIdentity.create(
+        schema=identity_schema,
         source=verified.source,
         repo_id=verified.repo_id,
         revision=verified.revision,
         trust_remote_code=trust_remote_code,
+        config_filename=verified.config_filename,
         config_sha256=verified.sha256,
         executable_manifest_sha256=verified.executable_manifest_sha256,
+        component_revisions=resolved_component_revisions,
     )
-    if expected_identity is not None:
-        expected = (
-            expected_identity
-            if isinstance(expected_identity, CustomPipelineExecutionIdentity)
-            else CustomPipelineExecutionIdentity.from_value(expected_identity)
-        )
+    if expected is not None:
         selector_changed = expected.selector_tuple() != identity.selector_tuple()
         if expected != identity and not (allow_selector_change and selector_changed):
             if expected.config_sha256 != identity.config_sha256 and not selector_changed:
                 raise ValueError(
-                    f"Cached {CUSTOM_PIPELINE_CONFIG_FILENAME} no longer matches the persisted custom pipeline "
+                    f"Cached {identity.config_filename} no longer matches the persisted custom pipeline "
                     "identity. Review the exact sidecar and explicitly refresh the custom contract before running."
                 )
             if (
@@ -780,14 +907,7 @@ def _binding_from_verified(
     # isolates mutable ``node_params`` without making the binding depend on a
     # second serialization (or on cache residency).
     config_bytes = verified.raw_bytes
-    key = (
-        identity.source,
-        identity.repo_id,
-        identity.revision,
-        identity.trust_remote_code,
-        identity.config_sha256,
-        identity.executable_manifest_sha256,
-    )
+    key = identity.execution_id
     with _binding_cache_lock:
         existing = _binding_cache.get(key)
         if (
@@ -841,19 +961,43 @@ def resolve_custom_pipeline_binding(
         raise CustomPipelineContractError(
             "custom_pipeline_sidecar_missing",
             str(error),
-            f"Provide the exact declarative {CUSTOM_PIPELINE_CONFIG_FILENAME}; alternate filenames are not accepted.",
+            f"Provide the exact declarative {CUSTOM_PIPELINE_CONFIG_FILENAME} or official "
+            f"{MELLON_PIPELINE_CONFIG_FILENAME} sidecar.",
         ) from error
+    expected = (
+        expected_identity
+        if isinstance(expected_identity, CustomPipelineExecutionIdentity)
+        else CustomPipelineExecutionIdentity.from_value(expected_identity)
+        if expected_identity is not None
+        else None
+    )
+    selector_changed = bool(
+        expected
+        and expected.selector_tuple()
+        != (verified.source, verified.repo_id, verified.revision, trust_remote_code)
+    )
+    if selector_changed and not allow_selector_change:
+        raise ValueError(
+            "The selected custom Modular Diffusers source does not match its persisted contract identity. "
+            "Refresh the loader contract after changing repository, source, revision, or trust."
+        )
+    pinned_identity = None if selector_changed else expected
     index_path = _index_path_from_verified(verified)
     raw_index_bytes = _read_bounded_file(
         index_path.resolve(strict=True),
         description=f"canonical {_UPSTREAM_INDEX_FILENAME}",
     )
-    execution_contract = _review_upstream_contract(verified, raw_index_bytes)
+    execution_contract = _review_upstream_contract(
+        verified,
+        raw_index_bytes,
+        auxiliary_revisions=dict(pinned_identity.component_revisions) if pinned_identity else None,
+        resolve_unpinned_auxiliary=pinned_identity is None,
+    )
     return _binding_from_verified(
         verified,
         execution_contract=execution_contract,
         trust_remote_code=trust_remote_code,
-        expected_identity=expected_identity,
+        expected_identity=pinned_identity,
         allow_selector_change=allow_selector_change,
     )
 

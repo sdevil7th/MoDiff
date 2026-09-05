@@ -46,7 +46,7 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
         current = classify_public_template(
             _template(
                 "keep_me",
-                historical={"status": "legacy_node_contract_match", "reasons": [], "missingBackendNodes": []},
+                historical={"status": "current", "reasons": [], "missingBackendNodes": []},
                 last_run={"capturedAt": "2026-07-28T00:00:00Z", "verificationStatus": "reviewed"},
             )
         )
@@ -71,9 +71,17 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
 
     def test_current_without_a_real_run_is_rejected(self):
         with self.assertRaisesRegex(PublicTemplateReconciliationError, "without lastSuccessfulRealRun"):
-            classify_public_template(
-                _template("broken", historical={"status": "legacy_node_contract_match", "reasons": []})
+            classify_public_template(_template("broken", historical={"status": "current", "reasons": []}))
+
+    def test_legacy_current_status_remains_readable(self):
+        current = classify_public_template(
+            _template(
+                "legacy_keep",
+                historical={"status": "legacy_node_contract_match", "reasons": [], "missingBackendNodes": []},
+                last_run={"capturedAt": "2026-07-28T00:00:00Z", "verificationStatus": "reviewed"},
             )
+        )
+        self.assertEqual(current["bucket"], BUCKET_CURRENT)
 
     def test_ledger_counts_and_refuses_to_rerun(self):
         with TemporaryDirectory() as directory:
@@ -156,15 +164,15 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
 
 
 class PublicTemplateReconciliationLiveLedgerTests(unittest.TestCase):
-    def test_checked_in_release_contract_is_26_keep_44_stale_7_never(self):
+    def test_checked_in_release_contract_matches_current_24_keep_2_stale_51_never_ledger(self):
         path = ROOT / "data" / "release-contract.v1.json"
         if not path.is_file():
             self.skipTest("Local release-contract ledger is not present.")
         ledger = build_public_template_reconciliation(ROOT)
         self.assertEqual(ledger["summary"]["templateCount"], 77)
-        self.assertEqual(ledger["summary"]["currentKeepCount"], 26)
-        self.assertEqual(ledger["summary"]["staleCanaryCount"], 44)
-        self.assertEqual(ledger["summary"]["neverHadExampleCount"], 7)
+        self.assertEqual(ledger["summary"]["currentKeepCount"], 24)
+        self.assertEqual(ledger["summary"]["staleCanaryCount"], 2)
+        self.assertEqual(ledger["summary"]["neverHadExampleCount"], 51)
         self.assertEqual(ledger["summary"]["localTechnicalReceiptOverlapCount"], 0)
         self.assertTrue(ledger["policy"]["blanketRerunForbidden"])
         keep = {item["templateId"] for item in ledger["items"] if item["bucket"] == BUCKET_CURRENT}

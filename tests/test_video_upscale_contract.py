@@ -88,7 +88,8 @@ class VideoUpscaleContractTests(unittest.TestCase):
                 result = node.execute(video="source.mp4", device="cpu", fps=24, tile_size=256, tile_overlap=32)
 
         self.assertEqual(result["video_out"], str(destination))
-        self.assertEqual((result["width"], result["height"], result["frames"], result["fps"]), (4, 4, 2, 24.0))
+        self.assertEqual(set(result), {"video_out", "width", "height", "frames"})
+        self.assertEqual((result["width"], result["height"], result["frames"]), (4, 4, 2))
         self.assertEqual(model_node.execute.call_count, 2)
         for call in model_node.execute.call_args_list:
             self.assertIsInstance(call.kwargs["image"], Image.Image)

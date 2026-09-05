@@ -49,6 +49,9 @@ class JanusProcessor:
         self.input_ids = torch.tensor([[1, 2]]) if input_ids is None else input_ids
         self.calls = Mock()
         self.decode = Mock(return_value=decoded)
+        self.postprocess = Mock(
+            return_value={"pixel_values": np.ones((1, 8, 8, 3), dtype=np.float32)}
+        )
 
     def __call__(self, **kwargs):
         self.calls(**kwargs)
@@ -78,7 +81,35 @@ class JanusForConditionalGeneration:
         )
         self.to = Mock()
         self.eval = Mock()
-        self.generate = Mock()
+        self.generate = Mock(return_value=torch.tensor([[1, 2, 3, 4]]))
+        self.decode_image_tokens = Mock(return_value=torch.ones((1, 8, 8, 3)))
+        self.prepare_static_cache_calls = Mock()
+
+    def _prepare_static_cache(
+        self,
+        cache_implementation,
+        batch_size,
+        max_cache_len,
+        prefill_chunk_size,
+        model_kwargs,
+    ):
+        self.prepare_static_cache_calls(
+            cache_implementation=cache_implementation,
+            batch_size=batch_size,
+            max_cache_len=max_cache_len,
+            prefill_chunk_size=prefill_chunk_size,
+            model_kwargs=model_kwargs,
+        )
+        return SimpleNamespace(kind="static-cache")
+
+
+class DecodedDeviceBatch:
+    shape = (1, 8, 8, 3)
+
+    def __init__(self):
+        self.float = Mock(return_value=self)
+        self.detach = Mock(return_value=self)
+        self.cpu = Mock(return_value=torch.ones((1, 8, 8, 3)))
 
 
 class AnyToAnyPipeline:
@@ -757,12 +788,12 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
             do_sample=False,
         )
         preview = processor.calls.call_args.kwargs
-        self.assertEqual(preview["text"], "<image>describe")
+        self.assertEqual(preview["text"], ["<image>describe"])
         self.assertEqual(preview["generation_mode"], "text")
         self.assertEqual(preview["images"][0].mode, "RGB")
         invocation = pipeline.calls.call_args.args[0]
         call = pipeline.calls.call_args.kwargs
-        self.assertEqual(invocation["text"], "<image>describe")
+        self.assertEqual(invocation["text"], ["<image>describe"])
         self.assertTrue(call["return_tensors"])
         self.assertEqual(call["processor_kwargs"], {"generation_mode": "text"})
         self.assertEqual(call["generate_kwargs"]["max_new_tokens"], 4)
@@ -778,6 +809,8 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
 
     def test_any_to_any_janus_image_generation_is_fixed_token_and_geometry_bounded(self):
         loaded, _runtime, processor, _model, pipeline = _load_janus_handle()
+        decoded_device_batch = DecodedDeviceBatch()
+        _model.decode_image_tokens.return_value = decoded_device_batch
         result = GenerateAnyToAny("generate-any-image").execute(
             model=loaded["model"],
             prompt="an owl",
@@ -787,11 +820,33 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
             temperature=0.7,
         )
         self.assertEqual(processor.calls.call_args.kwargs["generation_mode"], "image")
-        call = pipeline.calls.call_args.kwargs
-        self.assertNotIn("return_tensors", call)
-        self.assertEqual(call["processor_kwargs"], {"generation_mode": "image"})
-        self.assertEqual(call["generate_kwargs"]["num_beams"], 1)
-        self.assertEqual(call["generate_kwargs"]["temperature"], 0.7)
+        pipeline.calls.assert_not_called()
+        model = loaded["model"]["model"]
+        call = model.generate.call_args.kwargs
+        self.assertEqual(call["generation_mode"], "image")
+        self.assertEqual(call["num_beams"], 1)
+        self.assertEqual(call["temperature"], 0.7)
+        self.assertEqual(call["past_key_values"].kind, "static-cache")
+        self.assertTrue(torch.equal(call["input_ids"].detach().cpu(), torch.tensor([[1, 2]])))
+        model.decode_image_tokens.assert_called_once()
+        self.assertTrue(
+            torch.equal(
+                model.decode_image_tokens.call_args.args[0].detach().cpu(),
+                torch.tensor([[1, 2, 3, 4]]),
+            )
+        )
+        processor.postprocess.assert_called_once()
+        self.assertEqual(processor.postprocess.call_args.kwargs, {"return_tensors": "np"})
+        decoded_device_batch.float.assert_called_once_with()
+        decoded_device_batch.detach.assert_called_once_with()
+        decoded_device_batch.cpu.assert_called_once_with()
+        model.prepare_static_cache_calls.assert_called_once_with(
+            cache_implementation="static",
+            batch_size=2,
+            max_cache_len=6,
+            prefill_chunk_size=None,
+            model_kwargs={},
+        )
         self.assertIsNone(result["text"])
         self.assertEqual(result["image"].size, (8, 8))
         self.assertEqual(result["result"]["generatedTokens"], 4)
@@ -824,7 +879,10 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
         pipeline.text_tokens = torch.tensor([1, 2, 3, 4])
         with self.assertRaisesRegex(RuntimeError, "exceeded max_new_tokens"):
             GenerateAnyToAny("oversized-any-text").execute(model=loaded["model"], prompt="prompt", max_new_tokens=1)
-        pipeline.image = Image.new("RGB", (7, 8))
+        loaded["model"]["model"].decode_image_tokens.return_value = torch.ones((1, 7, 8, 3))
+        _processor.postprocess.return_value = {
+            "pixel_values": np.ones((1, 7, 8, 3), dtype=np.float32)
+        }
         with self.assertRaisesRegex(RuntimeError, "reviewed output geometry"):
             GenerateAnyToAny("invalid-any-image").execute(
                 model=loaded["model"], prompt="prompt", generation_mode="image"

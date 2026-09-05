@@ -1,10 +1,11 @@
 import hashlib
 import json
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
 from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
@@ -93,6 +94,26 @@ class Krea2ArtifactReviewTests(unittest.TestCase):
         self.assertEqual(base_modular["blocksClass"], "Krea2AutoBlocks")
         self.assertEqual(turbo_modular["blocksClass"], "Krea2TurboAutoBlocks")
 
+    def test_base_and_turbo_graph_adapters_share_stages_but_preserve_distinct_actions(self):
+        base = reviewed_whole_workflow_graph_adapter("Krea2ModularPipeline", "text2image")
+        turbo = reviewed_whole_workflow_graph_adapter("Krea2TurboModularPipeline", "text2image")
+        self.assertEqual(base["requiredInputs"], ["prompt"])
+        self.assertEqual(turbo["requiredInputs"], ["prompt"])
+        self.assertEqual(base["upstreamBlockSequence"], ["text_encoder", "denoise", "decode"])
+        self.assertEqual(turbo["upstreamBlockSequence"], ["text_encoder", "denoise", "decode"])
+        self.assertEqual(
+            base["actionSequence"],
+            ["workflow_krea2_text_encoder", "workflow_krea2_denoise", "workflow_krea2_decoder"],
+        )
+        self.assertEqual(
+            turbo["actionSequence"],
+            [
+                "workflow_krea2_turbo_text_encoder",
+                "workflow_krea2_turbo_denoise",
+                "workflow_krea2_decoder",
+            ],
+        )
+
     def test_custom_terms_and_moving_use_policy_keep_standard_family_blocked(self):
         license_review = self.review["licenseReview"]
         self.assertEqual(license_review["modelCardLicenseTag"], "other")
@@ -146,8 +167,7 @@ class Krea2ArtifactReviewTests(unittest.TestCase):
         self.assertNotIn("Krea2Pipeline", IMAGE_PIPELINE_ADAPTERS)
         self.assertFalse(
             any(
-                definition["modelType"] == "Krea2Pipeline"
-                for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+                definition["modelType"] == "Krea2Pipeline" for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
             )
         )
 

@@ -1,13 +1,13 @@
 import builtins
 import hashlib
-from importlib import metadata
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from importlib import metadata
+from pathlib import Path
 from unittest.mock import patch
 
 from modiff.auto_resource import build_auto_resource_plan
@@ -20,8 +20,10 @@ from modiff.diffusers_profiles import (
 from modiff.optional_runtimes import (
     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
-    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID,
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_requirements,
     public_optional_runtime_profiles,
@@ -31,6 +33,7 @@ from modiff.server import WebServer
 
 GIB = 1024**3
 OPTIONAL_STAGE_IMPORTS = {
+    "bitsandbytes",
     "cv2",
     "transformers",
     "peft",
@@ -44,6 +47,7 @@ OPTIONAL_STAGE_IMPORTS = {
     "shellingham",
     "optimum",
     "ninja",
+    "gguf",
 }
 
 
@@ -92,6 +96,85 @@ def _cpu_hardware():
 
 
 class OptionalRuntimeContractTests(unittest.TestCase):
+    def test_transformers_runtime_declares_both_reviewed_speech_model_boundaries(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
+        transformers = next(package for package in profile.packages if package.distribution == "transformers")
+
+        self.assertIn("AutoModelForSpeechSeq2Seq", transformers.required_symbols)
+        self.assertIn("AutoModelForSpeechSeq2Seq", transformers.required_class_symbols)
+        self.assertIn("AutoModelForCTC", transformers.required_symbols)
+        self.assertIn("AutoModelForCTC", transformers.required_class_symbols)
+
+    def test_gguf_composite_is_exact_app_delivered_and_linux_x86_64_qualified(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID]
+        linux = profile.contract_for_target(platform_name="linux", machine="x86_64")
+        self.assertEqual(linux.contract_state, "qualified")
+        self.assertTrue(linux.install_action_available)
+        self.assertEqual(
+            (profile.packages[-1].distribution, profile.packages[-1].version),
+            ("gguf", "0.19.0"),
+        )
+        self.assertIn("GGUFQuantizationConfig", profile.required_diffusers_symbols)
+        gguf_locks = [artifact for artifact in profile.artifact_locks if artifact["distribution"] == "gguf"]
+        self.assertEqual(len(gguf_locks), 6)
+        self.assertEqual(
+            {artifact["sha256"] for artifact in gguf_locks},
+            {"70bcd10edfe697fb2dad6e40af2234b9d8ece9a41a99761405121ebda1c3c1cd"},
+        )
+        self.assertEqual(
+            profile.satisfies_profiles,
+            (
+                (
+                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                    OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest,
+                ),
+            ),
+        )
+        self.assertEqual(
+            profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
+            "candidate_unqualified",
+        )
+
+    def test_bitsandbytes_composite_is_exact_app_delivered_and_linux_x86_64_qualified(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID]
+        linux = profile.contract_for_target(platform_name="linux", machine="x86_64")
+        self.assertEqual(linux.contract_state, "qualified")
+        self.assertTrue(linux.install_action_available)
+        self.assertEqual(
+            (profile.packages[-1].distribution, profile.packages[-1].version),
+            ("bitsandbytes", "0.50.0"),
+        )
+        bnb_locks = [artifact for artifact in profile.artifact_locks if artifact["distribution"] == "bitsandbytes"]
+        self.assertEqual(
+            bnb_locks,
+            [
+                {
+                    "distribution": "bitsandbytes",
+                    "version": "0.50.0",
+                    "filename": "bitsandbytes-0.50.0-py3-none-manylinux_2_24_x86_64.whl",
+                    "url": "https://files.pythonhosted.org/packages/22/08/9501f4fc830448a6862bd5313df94a7dd1ae678f4f81087b96569d4a6f8b/bitsandbytes-0.50.0-py3-none-manylinux_2_24_x86_64.whl",
+                    "sha256": "173d137610468bec9cddbaa2e049254e97792657ab984e3e737bec1772c1668c",
+                    "byteSize": 40_860_117,
+                    "platform": "linux",
+                    "pythonTag": "cp312",
+                    "machine": "x86_64",
+                }
+            ],
+        )
+        self.assertEqual(
+            profile.satisfies_profiles,
+            (
+                (
+                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                    OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest,
+                ),
+            ),
+        )
+        self.assertEqual(
+            profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
+            "candidate_unqualified",
+        )
+
     def test_quanto_composite_is_exact_and_linux_x86_64_qualified(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID]
         linux = profile.contract_for_target(platform_name="linux", machine="x86_64")
@@ -108,8 +191,12 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         )
         self.assertEqual(
             profile.satisfies_profiles,
-            ((TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
-              OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest),),
+            (
+                (
+                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                    OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest,
+                ),
+            ),
         )
 
         self.assertEqual(
@@ -291,6 +378,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                             "builtin-data-operations:direct",
                             "builtin-image-operations:direct",
                             "builtin-video-operations:direct",
+                            "real-esrgan-x2-image-upscale:direct",
                             "real-esrgan-x2-video-upscale:direct",
                         },
                     )
@@ -589,6 +677,8 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
                 {
                     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+                    TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
+                    TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
                 },

@@ -122,7 +122,7 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
     def test_exact_pinned_upstream_sources_and_call_signatures_are_preserved(self):
         import diffusers
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "90b4e34e79a86ec5e7f2437634fe95ecd2108796")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
         cases = (
             (
                 "pipeline_qwenimage_layered.py",

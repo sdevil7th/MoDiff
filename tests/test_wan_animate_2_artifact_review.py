@@ -2,6 +2,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from types import SimpleNamespace
 import unittest
 
 import diffusers
@@ -9,6 +10,8 @@ import diffusers
 from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
+from modules.ModularDiffusers.loaders import ModelsLoader
+from modules.ModularDiffusers.modular_utils import pin_modular_component_revisions
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,16 +24,17 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
         self.review = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
         self.repositories = {item["role"]: item for item in self.review["repositories"]}
 
-    def test_family_remains_contract_only_and_uncataloged(self):
+    def test_family_is_graph_qualified_and_cataloged_without_claiming_live_proof(self):
         self.assertEqual(self.review["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
         self.assertEqual(self.review["format"], "safetensors")
         admission = self.review["admission"]
-        self.assertEqual(admission["status"], "contract_only")
-        self.assertFalse(admission["runtimeCatalogExposed"])
-        self.assertFalse(admission["downloadCatalogExposed"])
+        self.assertEqual(admission["status"], "graph_qualified")
+        self.assertTrue(admission["runtimeCatalogExposed"])
+        self.assertTrue(admission["downloadCatalogExposed"])
         self.assertFalse(admission["liveQualified"])
-        self.assertEqual(admission["executableModes"], [])
-        self.assertIn("immutable_component_descriptor_normalization", admission["unresolvedGates"])
+        self.assertEqual(admission["executableModes"], ["character_animate"])
+        self.assertNotIn("immutable_component_descriptor_normalization", admission["unresolvedGates"])
+        self.assertNotIn("distilled_composed_step_default_resolution", admission["unresolvedGates"])
         self.assertIn("compiled_flex_attention_remote_qualification", admission["unresolvedGates"])
 
         self.assertEqual(set(self.repositories), {"base", "distilled"})
@@ -39,7 +43,9 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
             self.assertFalse(repository["gated"])
             self.assertFalse(repository["private"])
             self.assertEqual(repository["pythonFileCount"], 0)
-            self.assertIsNone(catalog_repository_pin(repository["repository"]))
+            pin = catalog_repository_pin(repository["repository"])
+            self.assertIsNotNone(pin)
+            self.assertEqual(pin["revision"], repository["revision"])
 
         license_review = self.review["license"]
         self.assertEqual(license_review["id"], "apache-2.0")
@@ -115,6 +121,40 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
             self.assertRegex(model_index["sha256"], SHA256)
             self.assertRegex(modular_index["sha256"], SHA256)
 
+    def test_loader_and_component_specs_resolve_to_the_exact_reviewed_commit(self):
+        for role, repository in self.repositories.items():
+            pipeline_class = repository["modularIndex"]["pipelineClass"]
+            revision = repository["revision"]
+            repo_id = repository["repository"]
+            self.assertEqual(
+                ModelsLoader._reviewed_builtin_selection(
+                    model_type=pipeline_class,
+                    repo_id={"source": "hub", "value": repo_id},
+                    revision=None,
+                ),
+                ("hub", repo_id, revision),
+            )
+
+            component_specs = {
+                name: SimpleNamespace(
+                    pretrained_model_name_or_path=repo_id,
+                    revision=declared_revision,
+                )
+                for name, declared_revision in repository["modularIndex"][
+                    "componentRevisions"
+                ].items()
+            }
+            applied = pin_modular_component_revisions(
+                SimpleNamespace(_component_specs=component_specs),
+                repo_id,
+                revision,
+            )
+            self.assertEqual(applied, {name: revision for name in component_specs})
+            self.assertTrue(
+                all(spec.revision == revision for spec in component_specs.values()),
+                role,
+            )
+
     def test_exact_contracts_preserve_segment_defaults_and_distilled_mismatch(self):
         reviewed = {item["repositoryRole"]: item for item in self.review["reviewedContracts"]}
         for role, contract_review in reviewed.items():
@@ -153,11 +193,16 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
         self.assertEqual(reviewed["distilled"]["composedSchemaDefaultNumInferenceSteps"], 40)
         self.assertEqual(reviewed["distilled"]["defaultGuidanceScale"], 1.0)
 
-    def test_pinned_source_receipt_seals_flex_attention_and_segment_behavior(self):
+    def test_pinned_source_receipt_is_exact_while_live_qualification_stays_closed(self):
         diffusers_root = Path(diffusers.__file__).resolve().parent
+        current_hashes = []
+        reviewed_hashes = []
         for source in self.review["sourceReview"]["files"]:
             relative = Path(source["path"]).relative_to("src/diffusers")
-            self.assertEqual(hashlib.sha256((diffusers_root / relative).read_bytes()).hexdigest(), source["sha256"])
+            current_hashes.append(hashlib.sha256((diffusers_root / relative).read_bytes()).hexdigest())
+            reviewed_hashes.append(source["sha256"])
+        self.assertEqual(current_hashes, reviewed_hashes)
+        self.assertEqual(self.review["admission"]["status"], "graph_qualified")
 
         source_review = self.review["sourceReview"]
         self.assertEqual(source_review["generationAttentionBackend"], "flex")

@@ -22,7 +22,8 @@ LOCAL_RECEIPT_LEDGERS = (
     Path("data/qualification/local-review/technical-candidates.v1.json"),
     Path("data/qualification/local-review/image-stitch-candidate.v1.json"),
 )
-CURRENT_STATUS = "legacy_node_contract_match"
+CURRENT_STATUS = "current"
+LEGACY_CURRENT_STATUS = "legacy_node_contract_match"
 STALE_STATUS = "stale"
 BUCKET_CURRENT = "current_keep"
 BUCKET_STALE = "stale_canary_required"
@@ -100,7 +101,7 @@ def classify_public_template(template: dict) -> dict:
         )
     elif not isinstance(historical, dict) or not isinstance(historical.get("status"), str):
         raise PublicTemplateReconciliationError(f"Public template {template_id} has malformed historicalEvidence.")
-    elif historical["status"] == CURRENT_STATUS:
+    elif historical["status"] in {CURRENT_STATUS, LEGACY_CURRENT_STATUS}:
         if not isinstance(last_run, dict):
             raise PublicTemplateReconciliationError(
                 f"Public template {template_id} is marked current without lastSuccessfulRealRun."

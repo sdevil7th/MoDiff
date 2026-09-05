@@ -3,11 +3,14 @@
     "downloadCatalogExposed": false,
     "executableModes": [],
     "liveQualified": false,
-    "reason": "The Tencent Hunyuan community license has territory restrictions whose preamble and Territory definition are not identical, and remote heavy-hardware execution is unqualified.",
+    "reason": "The exact Tencent Hunyuan community license consistently excludes the European Union, United Kingdom, and South Korea. Revision-bound license/AUP acknowledgement, geographic eligibility and enforcement, MAU-threshold eligibility or a separate license, downstream notice/disclosure UX, and remote heavy-hardware execution remain unresolved.",
     "runtimeCatalogExposed": false,
     "status": "contract_only",
     "unresolvedGates": [
-      "legal_territory_review",
+      "revision_bound_license_and_aup_acknowledgement",
+      "territory_eligibility_and_enforcement",
+      "monthly_active_user_threshold_or_separate_license",
+      "distribution_notice_and_generated_content_disclosure",
       "remote_heavy_hardware_execution",
       "physical_macos_execution"
     ]
@@ -15,9 +18,11 @@
   "candidateRecipes": {
     "imageToVideo480pStepDistilled": {
       "attentionKernelOptional": true,
+      "dimensionPolicy": "auto_derive_from_source_image",
       "dtype": "bfloat16",
       "fps": 24,
       "guidanceScale": 1.0,
+      "height": null,
       "modelCpuOffload": true,
       "numFrames": 121,
       "pipelineClass": "HunyuanVideo15ImageToVideoPipeline",
@@ -30,13 +35,15 @@
       "schedulerClass": "FlowMatchEulerDiscreteScheduler",
       "schedulerShift": 7.0,
       "useMeanflow": true,
-      "vaeTiling": true
+      "vaeTiling": true,
+      "width": null
     },
     "textToVideo480p": {
       "attentionKernelOptional": true,
       "dtype": "bfloat16",
       "fps": 24,
       "guidanceScale": 6.0,
+      "height": 480,
       "modelCpuOffload": true,
       "numFrames": 121,
       "numInferenceSteps": 50,
@@ -44,15 +51,19 @@
       "repositoryRole": "diffusers480pTextToVideo",
       "schedulerClass": "FlowMatchEulerDiscreteScheduler",
       "schedulerShift": 5.0,
-      "vaeTiling": true
+      "vaeTiling": true,
+      "width": 848
     }
   },
   "format": "safetensors",
   "license": {
+    "acceptableUsePolicyIncorporated": true,
     "byteSize": 16424,
     "commercialLicenseThresholdMonthlyActiveUsers": 100000000,
     "definedTerritoryExcludes": [
-      "European Union"
+      "European Union",
+      "South Korea",
+      "United Kingdom"
     ],
     "distributionNoticeRequired": true,
     "generatedContentDisclosureRequired": true,
@@ -65,19 +76,31 @@
       "United Kingdom"
     ],
     "repository": "tencent/HunyuanVideo-1.5",
+    "revisionBoundAcknowledgementRequired": true,
     "revision": "9b49404b3f5df2a8f0b31df27a0c7ab872e7b038",
     "sha256": "c38236952096107a4adbc164f44cd1768745b0a20090ea858e0954c96a6b8391",
-    "territoryTextRequiresLegalReview": true
+    "territoryTextRequiresLegalReview": false
   },
   "modularContract": {
     "blocksClass": "HunyuanVideo15AutoBlocks",
     "defaultNumFrames": 121,
-    "defaultNumInferenceSteps": 50,
     "output": "videos",
     "pipelineClass": "HunyuanVideo15ModularPipeline",
     "promptRewriteDuringDiscoveryAllowed": false,
+    "publicOutputs": [
+      "videos"
+    ],
     "workflows": {
       "image2video": {
+        "defaults": {
+          "guidanceScale": 1.0,
+          "height": null,
+          "numFrames": 121,
+          "numInferenceSteps": 12,
+          "schedulerShift": 7.0,
+          "width": null
+        },
+        "dimensionPolicy": "auto_derive_from_source_image",
         "requiredInputs": [
           "image",
           "prompt"
@@ -85,6 +108,15 @@
         "taskId": "image_to_video"
       },
       "text2video": {
+        "defaults": {
+          "guidanceScale": 6.0,
+          "height": 480,
+          "numFrames": 121,
+          "numInferenceSteps": 50,
+          "schedulerShift": 5.0,
+          "width": 848
+        },
+        "dimensionPolicy": "fixed_reviewed_default",
         "requiredInputs": [
           "prompt"
         ],

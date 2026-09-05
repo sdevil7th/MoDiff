@@ -143,9 +143,9 @@ class JanusStudioContractTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(
                     specification["contentHash"],
                     {
-                        "text_generation": "studio-spec-v1-0bf9e37e",
-                        "image_to_text": "studio-spec-v1-85bef0e7",
-                        "text_to_image": "studio-spec-v1-09ac0dc8",
+                        "text_generation": "studio-spec-v1-e769a28b",
+                        "image_to_text": "studio-spec-v1-234664aa",
+                        "text_to_image": "studio-spec-v1-b484288e",
                     }[mode],
                 )
                 self.assertIn(
@@ -156,6 +156,16 @@ class JanusStudioContractTests(unittest.IsolatedAsyncioTestCase):
                     ),
                     specification["bindings"],
                 )
+                if mode == "text_to_image":
+                    self.assertIn(
+                        ("transformersAnyToAnyGenerate", "do_sample", "true"),
+                        specification["bindings"],
+                    )
+                else:
+                    self.assertNotIn(
+                        ("transformersAnyToAnyGenerate", "do_sample", "true"),
+                        specification["bindings"],
+                    )
                 self.assertEqual(
                     ("loadImage", "file", "referenceImages") in specification["bindings"],
                     expected["requiredImage"],

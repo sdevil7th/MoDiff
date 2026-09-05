@@ -192,7 +192,7 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _canonical_graph_hash(graph: dict) -> str:
+def canonical_graph_hash(graph: dict) -> str:
     encoded = json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()
 
@@ -382,7 +382,7 @@ def reconcile_local_review_graph_bindings(
             current_graph = json.loads(current_bytes)
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
             raise ValueError(f"Canonical review graph is not valid UTF-8 JSON: {graph_path}") from error
-        if _canonical_graph_hash(current_graph) != current_sha256:
+        if canonical_graph_hash(current_graph) != current_sha256:
             raise ValueError(f"Current canonical graph bytes do not match the candidate ledger: {graph_path}")
         if previous_sha256 == current_sha256:
             continue
@@ -391,7 +391,7 @@ def reconcile_local_review_graph_bindings(
             historical_graph = json.loads(historical_bytes)
         except (TypeError, UnicodeDecodeError, json.JSONDecodeError) as error:
             raise ValueError(f"Historical canonical graph is not valid UTF-8 JSON: {graph_path}") from error
-        if _canonical_graph_hash(historical_graph) != previous_sha256:
+        if canonical_graph_hash(historical_graph) != previous_sha256:
             raise ValueError(f"Historical canonical graph bytes do not match the retained receipt: {graph_path}")
         historical_semantic_hash = graph_execution_semantic_hash(historical_graph)
         current_semantic_hash = graph_execution_semantic_hash(current_graph)

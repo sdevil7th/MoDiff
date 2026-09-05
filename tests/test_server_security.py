@@ -1,10 +1,13 @@
 import base64
+import asyncio
 import json
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
@@ -417,6 +420,312 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(hostile_read_payload["code"], "untrusted_request_boundary")
         self.assertEqual(local.status, 200)
 
+    async def test_parallel_model_discovery_refreshes_share_one_background_scan(self):
+        actualizations = 0
+
+        def actualize():
+            nonlocal actualizations
+            actualizations += 1
+
+        with patch("modiff.server.modelstore.actualize", side_effect=actualize):
+            await asyncio.gather(
+                self.server._refresh_model_indexes(),
+                self.server._refresh_model_indexes(),
+                self.server._refresh_model_indexes(),
+            )
+
+        self.assertEqual(actualizations, 1)
+        self.assertIsNone(self.server.model_discovery_task)
+
+    async def test_parallel_cache_diagnostics_refreshes_coalesce_and_do_not_block_loop(self):
+        actualizations = 0
+        diagnostic_scans = 0
+        scan_started = threading.Event()
+        release_scan = threading.Event()
+
+        def actualize():
+            nonlocal actualizations
+            actualizations += 1
+            time.sleep(0.03)
+
+        def diagnostics():
+            nonlocal diagnostic_scans
+            diagnostic_scans += 1
+            scan_started.set()
+            if not release_scan.wait(timeout=1):
+                raise TimeoutError("The diagnostics test did not release its worker thread.")
+            return {"locations": [{"label": "test cache", "repo_count": 1}]}
+
+        requests = [JsonRequest({}) for _ in range(3)]
+        for request in requests:
+            request.query = {"refresh": "true"}
+
+        with (
+            patch("modiff.server.modelstore.actualize", side_effect=actualize),
+            patch("modiff.server.get_cache_diagnostics", side_effect=diagnostics),
+        ):
+            tasks = [asyncio.create_task(self.server.model_cache_diagnostics(request)) for request in requests]
+            started = await asyncio.wait_for(asyncio.to_thread(scan_started.wait, 0.5), timeout=0.75)
+            self.assertTrue(started)
+            heartbeat_started = time.monotonic()
+            await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.15)
+            self.assertLess(time.monotonic() - heartbeat_started, 0.1)
+            release_scan.set()
+            responses = await asyncio.gather(*tasks)
+
+            cached_request = JsonRequest({})
+            cached_request.query = {"refresh": "false"}
+            cached_response = await self.server.model_cache_diagnostics(cached_request)
+
+        self.assertEqual(actualizations, 1)
+        self.assertEqual(diagnostic_scans, 1)
+        self.assertEqual([json.loads(response.text) for response in responses], [json.loads(cached_response.text)] * 3)
+        self.assertIsNone(self.server.model_discovery_task)
+        self.assertEqual(self.server.model_discovery_snapshot_tasks, {})
+
+    async def test_hf_cache_validation_is_coalesced_off_loop_and_never_serves_stale_status_after_refresh(self):
+        actualizations = 0
+        inventory_scans = 0
+        scan_started = threading.Event()
+        release_scan = threading.Event()
+
+        def actualize():
+            nonlocal actualizations
+            actualizations += 1
+            time.sleep(0.03)
+
+        def inventory():
+            nonlocal inventory_scans
+            inventory_scans += 1
+            scan_started.set()
+            if not release_scan.wait(timeout=1):
+                raise TimeoutError("The inventory test did not release its worker thread.")
+            return [
+                {
+                    "id": "owner/model",
+                    "class_names": ["TestPipeline"],
+                    "cached": True,
+                    "installed": True,
+                    "complete": True,
+                    "repair_required": False,
+                    "install_reason": "Complete test snapshot.",
+                    "active_files": [],
+                    "missing_files": [],
+                    "corrupt_files": [],
+                    "planned_revision": "a" * 40,
+                    "planned_files": ["model.safetensors"],
+                }
+            ]
+
+        requests = [JsonRequest({}) for _ in range(2)]
+        for request in requests:
+            request.query = {"refresh": "true"}
+
+        with (
+            patch("modiff.server.modelstore.actualize", side_effect=actualize),
+            patch.object(self.server, "_build_hf_cache_inventory", side_effect=inventory) as build_inventory,
+        ):
+            tasks = [asyncio.create_task(self.server.hf_cache(request)) for request in requests]
+            started = await asyncio.wait_for(asyncio.to_thread(scan_started.wait, 0.5), timeout=0.75)
+            self.assertTrue(started)
+            heartbeat_started = time.monotonic()
+            await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.15)
+            self.assertLess(time.monotonic() - heartbeat_started, 0.1)
+            release_scan.set()
+            responses = await asyncio.gather(*tasks)
+
+            self.assertEqual(actualizations, 1)
+            self.assertEqual(inventory_scans, 1)
+            self.assertTrue(all(json.loads(response.text)[0]["installed"] for response in responses))
+
+            # A new refresh advances the generation. Failure to validate that
+            # generation must propagate; the older installed=True payload is
+            # never used as a fallback.
+            build_inventory.side_effect = RuntimeError("fresh validation failed")
+            failing_request = JsonRequest({})
+            failing_request.query = {"refresh": "true"}
+            with self.assertRaisesRegex(RuntimeError, "fresh validation failed"):
+                await self.server.hf_cache(failing_request)
+
+        self.assertEqual(actualizations, 2)
+        self.assertEqual(self.server.model_discovery_generation, 2)
+        self.assertEqual(self.server.model_discovery_snapshot_tasks, {})
+
+    async def test_local_model_post_refresh_filtering_does_not_block_loop(self):
+        filter_started = threading.Event()
+        release_filter = threading.Event()
+
+        def local_ids(_match):
+            filter_started.set()
+            if not release_filter.wait(timeout=1):
+                raise TimeoutError("The local-model test did not release its worker thread.")
+            return ["weights/example.safetensors"]
+
+        request = JsonRequest({})
+        request.query = {"refresh": "true", "match": "example"}
+        with (
+            patch("modiff.server.modelstore.actualize"),
+            patch("modiff.server.modelstore.get_local_ids", side_effect=local_ids),
+        ):
+            task = asyncio.create_task(self.server.local_models(request))
+            started = await asyncio.wait_for(asyncio.to_thread(filter_started.wait, 0.5), timeout=0.75)
+            self.assertTrue(started)
+            heartbeat_started = time.monotonic()
+            await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.15)
+            self.assertLess(time.monotonic() - heartbeat_started, 0.1)
+            release_filter.set()
+            response = await task
+
+        self.assertEqual(json.loads(response.text), ["weights/example.safetensors"])
+
+    async def test_slow_model_capabilities_build_does_not_block_health_and_coalesces(self):
+        capability_builds = 0
+        build_started = threading.Event()
+        release_build = threading.Event()
+
+        def build_capabilities(query):
+            nonlocal capability_builds
+            capability_builds += 1
+            build_started.set()
+            if not release_build.wait(timeout=1):
+                raise TimeoutError("The capability test did not release its worker thread.")
+            return {"error": False, "count": 0, "capabilities": [], "query": query}
+
+        capability_requests = [JsonRequest({}) for _ in range(2)]
+        for request in capability_requests:
+            request.query = {"q": "QWEN"}
+
+        with (
+            patch.object(
+                self.server,
+                "_build_model_capabilities_payload",
+                side_effect=build_capabilities,
+            ),
+            patch.object(
+                self.server,
+                "_build_runtime_status_payload",
+                return_value={"error": False, "ready": True},
+            ),
+        ):
+            capability_tasks = [
+                asyncio.create_task(self.server.model_capabilities(request))
+                for request in capability_requests
+            ]
+            started = await asyncio.wait_for(asyncio.to_thread(build_started.wait, 0.5), timeout=0.75)
+            self.assertTrue(started)
+
+            health_started = time.monotonic()
+            health_response = await asyncio.wait_for(
+                self.server.runtime_status(JsonRequest({})),
+                timeout=0.15,
+            )
+            self.assertLess(time.monotonic() - health_started, 0.1)
+            self.assertTrue(json.loads(health_response.text)["ready"])
+
+            release_build.set()
+            capability_responses = await asyncio.gather(*capability_tasks)
+
+        self.assertEqual(capability_builds, 1)
+        self.assertEqual(
+            [json.loads(response.text)["query"] for response in capability_responses],
+            ["qwen", "qwen"],
+        )
+        self.assertEqual(self.server.control_snapshot_tasks, {})
+
+    async def test_slow_health_probe_is_coalesced_off_loop(self):
+        health_builds = 0
+        build_started = threading.Event()
+        release_build = threading.Event()
+
+        def build_health():
+            nonlocal health_builds
+            health_builds += 1
+            build_started.set()
+            if not release_build.wait(timeout=1):
+                raise TimeoutError("The health test did not release its worker thread.")
+            return {"error": False, "ready": True}
+
+        with patch.object(self.server, "_build_runtime_status_payload", side_effect=build_health):
+            health_tasks = [
+                asyncio.create_task(self.server.runtime_status(JsonRequest({})))
+                for _ in range(3)
+            ]
+            started = await asyncio.wait_for(asyncio.to_thread(build_started.wait, 0.5), timeout=0.75)
+            self.assertTrue(started)
+            heartbeat_started = time.monotonic()
+            await asyncio.wait_for(asyncio.sleep(0.01), timeout=0.15)
+            self.assertLess(time.monotonic() - heartbeat_started, 0.1)
+            release_build.set()
+            responses = await asyncio.gather(*health_tasks)
+
+        self.assertEqual(health_builds, 1)
+        self.assertTrue(all(json.loads(response.text)["ready"] for response in responses))
+        self.assertEqual(self.server.control_snapshot_tasks, {})
+
+    async def test_primed_multi_megabyte_capability_response_never_serializes_during_health(self):
+        # Exercise the real serializer and a payload at the same scale as the
+        # production catalog. Priming happens before the listener is opened;
+        # request handlers must then reuse the immutable bytes directly.
+        large_payload = {
+            "error": False,
+            "schemaVersion": 2,
+            "capabilities": [],
+            "serializedContractFixture": "x" * (8 * 1024 * 1024),
+        }
+        with patch.object(
+            self.server,
+            "_build_model_capabilities_payload",
+            return_value=large_payload,
+        ) as build_capabilities:
+            primed = await self.server._model_capabilities_response("")
+
+        self.assertGreater(len(primed), 8 * 1024 * 1024)
+        build_capabilities.assert_called_once_with("")
+
+        request = JsonRequest({})
+        request.query = {}
+        with (
+            patch.object(
+                self.server,
+                "_build_model_capabilities_payload",
+                side_effect=AssertionError("A primed request must not rebuild or reserialize the catalog."),
+            ),
+            patch.object(
+                self.server,
+                "_build_runtime_status_payload",
+                return_value={"error": False, "ready": True},
+            ),
+        ):
+            capability_tasks = [
+                asyncio.create_task(self.server.model_capabilities(request))
+                for _ in range(2)
+            ]
+            health_started = time.monotonic()
+            health_response = await asyncio.wait_for(
+                self.server.runtime_status(JsonRequest({})),
+                timeout=0.15,
+            )
+            self.assertLess(time.monotonic() - health_started, 0.1)
+            capability_responses = await asyncio.gather(*capability_tasks)
+
+        self.assertTrue(json.loads(health_response.text)["ready"])
+        self.assertEqual([len(response.body) for response in capability_responses], [len(primed), len(primed)])
+        self.assertEqual(self.server.control_snapshot_tasks, {})
+
+    async def test_false_model_discovery_query_does_not_refresh(self):
+        request = JsonRequest({})
+        request.query = {"refresh": "false", "compact": "1"}
+        refresh = AsyncMock()
+
+        with (
+            patch.object(self.server, "_refresh_model_indexes", refresh),
+            patch("modiff.server.modelstore.get_hf_models", return_value=[]),
+        ):
+            response = await self.server.hf_cache(request)
+
+        self.assertEqual(response.status, 200)
+        refresh.assert_not_awaited()
+
     async def test_websocket_rejects_hostile_browser_origin_before_upgrade(self):
         with patch("modiff.server.web.WebSocketResponse") as websocket_factory:
             response = await self.server.websocket(WebSocketRequest(origin="https://attacker.example"))
@@ -479,6 +788,55 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(remote_response.status, 403)
         websocket_factory.assert_not_called()
+
+    async def test_signal_lookup_dispatches_directly_without_background_broadcast_backlog(self):
+        self.server.loop = asyncio.get_running_loop()
+        self.server.ws_sessions["signal-session"] = EmptyWebSocket()
+        broadcasts = []
+
+        async def direct_broadcast(message, sid):
+            broadcasts.append((message, sid))
+            self.server.pending_ws_requests[message["request_id"]].set_result("StableDiffusionXLModularPipeline")
+
+        def reject_queued_dispatch(*_args, **_kwargs):
+            raise AssertionError("Synchronous signal lookup must not use the background broadcast queue.")
+
+        self.server.broadcast = direct_broadcast
+        self.server.queue_message = reject_queued_dispatch
+
+        result = await asyncio.to_thread(
+            self.server.get_signal_value,
+            "guider-node",
+            "guider_out",
+            "signal-session",
+            1,
+        )
+
+        self.assertEqual(result, "StableDiffusionXLModularPipeline")
+        self.assertEqual(len(broadcasts), 1)
+        self.assertEqual(broadcasts[0][0]["type"], "get_signal_value")
+        self.assertEqual(broadcasts[0][1], "signal-session")
+        self.assertEqual(self.server.pending_ws_requests, {})
+
+    async def test_signal_lookup_timeout_cleans_loop_owned_pending_request(self):
+        self.server.loop = asyncio.get_running_loop()
+        self.server.ws_sessions["signal-session"] = EmptyWebSocket()
+
+        async def unanswered_broadcast(_message, _sid):
+            return None
+
+        self.server.broadcast = unanswered_broadcast
+        result = await asyncio.to_thread(
+            self.server.get_signal_value,
+            "guider-node",
+            "guider_out",
+            "signal-session",
+            0.01,
+        )
+        await asyncio.sleep(0)
+
+        self.assertEqual(result, {"__MODIFF_ERROR": "timeout"})
+        self.assertEqual(self.server.pending_ws_requests, {})
 
     async def test_public_workflow_share_does_not_expose_backend_paths(self):
         encoded = base64.b64encode(b"small-preview").decode("ascii")

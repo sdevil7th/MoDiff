@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T17:42:39.055Z",
+  "generatedAt": "2026-08-22T03:30:45.084Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 186,
-  "supportedPairCount": 198,
+  "supportedCanonicalPairCount": 188,
+  "supportedPairCount": 199,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -2110,7 +2110,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image.json",
-      "graphHash": "5b31d4ddbb5a845b15a320e4766c2e0397c63b238015f9981ac1070b1c0ed29e"
+      "graphHash": "7febbd05b10f0ed56c1c1e0717c0ed04d2c50df30d18c88d50fc042e5e8d8d2c"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_cinematic_octane_3d",
@@ -2141,7 +2141,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json",
-      "graphHash": "67797bd861475b482ef9ce92a14bc58020991729b2ecb0f482d456e4dd718675"
+      "graphHash": "d0f6916bc99ca5c16f0a143856f63a3c73f166d82d6719c40d93307b40b23aa8"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_film_noir",
@@ -2171,7 +2171,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-film-noir.json",
-      "graphHash": "b28942b422253c4cedb37f53ad1d3986c77fd93b26003ac9f786cb4f29aeb48f"
+      "graphHash": "ca66c44152bf613277ff855177d6d2f57610ea831b150aab80119289847d0512"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_ghibli_story",
@@ -2201,7 +2201,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-ghibli-story.json",
-      "graphHash": "39e20575b4482d571109dc0bd34d602aa095fba8537a8b2c696010dfa5da2bfb"
+      "graphHash": "7aa11fab6ea03f57e8d010fdcd8219ba5b863cc2512aaa8af0c3bbe1f1778ba8"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_oil_painting",
@@ -2231,7 +2231,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-oil-painting.json",
-      "graphHash": "75e8a82481eb361d5b2ca2ddffa8c1a009a26dcd17a3743365e0e465390d8fea"
+      "graphHash": "aaeeca6dcb46f2a6c7c507ae59a88d55c2c6640747969b27c6591127f977fe6f"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_paper_cutout",
@@ -2261,7 +2261,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-paper-cutout.json",
-      "graphHash": "f3c3161a3f9476cc4f669a030e147d4e06e899bfb6c473d6f25cac00a6dea7a7"
+      "graphHash": "ddb42979471f0e86dbf45ffa873d08a7b772db0c6c10fbfad02b6fae2a9a6bcc"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_photoreal_documentary",
@@ -2291,7 +2291,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-photoreal-documentary.json",
-      "graphHash": "e3a9ddb6364ac2a6b68b89e322e3ba11e9ac49fe37f7d1551e12a11270fff41a"
+      "graphHash": "2f1d86a41641424ce6e5d9516e199cb72a0627508972337f3e87e47287193991"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_retro_comic",
@@ -2321,7 +2321,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-retro-comic.json",
-      "graphHash": "bcf1ef2885233d9a9357cd3fcc8a2f44b60d9542a06698d828dd0f5df23b5129"
+      "graphHash": "5db7fc90973002f065e687e4f335ed2ea2aa4b1ea4fed93351a16fb00f20e252"
     },
     {
       "id": "FluxDevPipeline:text_to_image:flux_lora_watercolor",
@@ -2351,7 +2351,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-watercolor.json",
-      "graphHash": "7189173c29cca279366d5e5c141370258306b539c42ac7bc96e340bc4d50dfc6"
+      "graphHash": "161a5e6a0926d5cc943afd25055c26f811a5a092e81121f858b88244e969d0a4"
     },
     {
       "id": "FluxFillPipeline:inpaint",
@@ -2784,7 +2784,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hugging-face-any-to-any-model/text-to-image.json",
-      "graphHash": "845fb08f10968ea806325b448e1c41fba709c8515dbb665acdbdc56f88198a4f"
+      "graphHash": "27877ccbec2b98f8e1d501aadefb7e14fe303382d2351b1ba66ed56fdacdd0b5"
     },
     {
       "id": "HuggingFaceImageTextToTextModel:image_to_text",
@@ -4012,7 +4012,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/pix-art-sigma-pag-pipeline/text-to-image.json",
-      "graphHash": "a3261130573d3e5ef2632c20999574c4a215de714f3c01603608220582b5603b"
+      "graphHash": "3496b4217f23c25d2d75c7d3122186370c4189c626fa58c3f0252419160d18f9"
     },
     {
       "id": "PixArtSigmaPipeline:text_to_image",
@@ -4038,7 +4038,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
-      "graphHash": "8d52526a2c7c66a0d0416a128f13d3d3f61506ccb51fd89e7313e08e4906632b"
+      "graphHash": "963d6a6c939ccb429d6b70bfee97d2821a761e5648afe1f36922eecef0f6027b"
     },
     {
       "id": "PRXPipeline:text_to_image",
@@ -4762,15 +4762,46 @@
       "graphHash": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b"
     },
     {
+      "id": "SpandrelImageUpscale:image_upscale",
+      "modelType": "SpandrelImageUpscale",
+      "modelFamily": "Real-ESRGAN",
+      "mode": "image_upscale",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "execution-qualified-gallery-review-pending",
+      "graphQualificationStatus": "execution-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "observed-on-recorded-platform",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "nateraw/real-esrgan"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one local source image and applies the exact cached Real-ESRGAN x2 model with bounded tiled inference."
+      },
+      "pipelineClasses": [
+        "SpandrelImageUpscaleV1"
+      ],
+      "sourceTemplateId": "task-template:real-esrgan-x2-image-upscale:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/spandrel-image-upscale/image-upscale.json",
+      "graphHash": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88"
+    },
+    {
       "id": "SpandrelVideoUpscale:video_upscale",
       "modelType": "SpandrelVideoUpscale",
       "modelFamily": "Real-ESRGAN",
       "mode": "video_upscale",
       "mediaKind": "video",
       "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
+      "qualificationStatus": "execution-qualified-gallery-review-pending",
+      "graphQualificationStatus": "execution-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "observed-on-recorded-platform",
       "optimizationQualificationStatus": "unqualified",
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware",
@@ -4790,7 +4821,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/spandrel-video-upscale/video-upscale.json",
-      "graphHash": "122023ff6db5233ee0f75ed2e0b6e253f77d84df2e66198fa5c5af71faca7ce5"
+      "graphHash": "455230c2c0e6dfb16967f5168dd32080f77788a88ceebbfeb0c2b12f8d2ba167"
     },
     {
       "id": "StableAudioPipeline:text_to_audio",
@@ -5548,7 +5579,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-diffusion-xl-instruct-pix2-pix-pipeline/edit-image.json",
-      "graphHash": "f0eff156025a08290dcccd53e6a99ec8c112c74b7f58e7b8ec024481257200fb"
+      "graphHash": "68029b3625d877d2235d41b188e8b68aa8172b87ba08024e1e6d917fb7a349a3"
     },
     {
       "id": "StableDiffusionXLPAGPipeline:control_edit_image",

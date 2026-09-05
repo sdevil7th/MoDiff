@@ -34,6 +34,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.HuggingFaceSpeech",
                 "LoadSpeechRecognitionModel",
             ),
+            "direct-huggingface-speech-ctc": (
+                "modules.HuggingFaceSpeech",
+                "LoadCTCSpeechRecognitionModel",
+            ),
             "direct-huggingface-transformers-text": (
                 "modules.HuggingFaceTransformers",
                 "LoadTextGenerationModel",
@@ -66,6 +70,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.Video",
                 "UpscaleVideo",
             ),
+            "spandrel-image-upscale": (
+                "modules.Spandrel",
+                "Upscaler",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -86,6 +94,12 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
 
     def test_every_supported_studio_model_has_an_execution_profile(self):
         expected = {
+            "AnimaModularPipeline",
+            "HeliosModularPipeline",
+            "HeliosPyramidModularPipeline",
+            "HeliosPyramidDistilledModularPipeline",
+            "WanAnimate2ModularPipeline",
+            "WanAnimate2DistilledModularPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",
             "QwenImageEditModularPipeline",
@@ -105,9 +119,12 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "Wan22Pipeline",
             "WanAnimatePipeline",
             "WanImage2VideoModularPipeline",
+            "WanModularPipeline",
             "LTXVideoPipeline",
             "LTXI2VLongMultiPromptPipeline",
             "LTX2ConditionPipeline",
+            "LTX2InContextPipeline",
+            "LTX2ModularPipeline",
             "LTX2Pipeline",
             "HunyuanVideoFramepackPipeline",
             "StableVideoDiffusionPipeline",
@@ -132,6 +149,12 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "ShapEImg2ImgPipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
+            "FluxModularPipeline",
+            "FluxKontextModularPipeline",
+            "Flux2KleinModularPipeline",
+            "Flux2KleinBaseModularPipeline",
+            "Flux2ModularPipeline",
+            "Flux2Pipeline",
             "FluxKreaPipeline",
             "FluxKontextPipeline",
             "FluxKontextInpaintPipeline",
@@ -181,8 +204,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "StableDiffusionPipeline",
             "LatentConsistencyModelPipeline",
             "StableDiffusionPAGPipeline",
+            "StableDiffusionXLModularPipeline",
             "MarigoldDepthPipeline",
             "HuggingFaceSpeechRecognitionModel",
+            "HuggingFaceCTCSpeechRecognitionModel",
             "HuggingFaceTextGenerationModel",
             "HuggingFaceImageTextToTextModel",
             "HuggingFaceAnyToAnyModel",
@@ -191,6 +216,16 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "BuiltinImageOperation",
             "BuiltinVideoOperation",
             "SpandrelVideoUpscale",
+            "SpandrelImageUpscale",
+            "ErnieImageModularPipeline",
+            "LTXModularPipeline",
+            "Wan22ModularPipeline",
+            "Wan22Image2VideoModularPipeline",
+            "MiniMaxMusic3ModularPipeline",
+            "MiniMaxH3ModularPipeline",
+            "Cosmos3DistilledModularPipeline",
+            "Cosmos3OmniModularPipeline",
+            "HunyuanVideo15ModularPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

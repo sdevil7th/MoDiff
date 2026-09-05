@@ -269,7 +269,7 @@ Generated outputs, prompts, workflow packages, and shares are also local plainte
 Run preflight before investigating model-specific failures:
 
 ```bash
-./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
 On Windows, use `.\.venv\Scripts\python.exe` in place of `./.venv/bin/python`.

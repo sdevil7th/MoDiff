@@ -369,7 +369,7 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
         ):
             optimization_packages._artifact_install_plan(replace(profile, artifact_locks=tuple(malformed)))
 
-    def test_gallery_media_runtime_has_one_exact_linux_wheel(self):
+    def test_gallery_media_runtime_has_exact_opencv_and_pyav_linux_wheels(self):
         from packaging import tags
 
         profile = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
@@ -400,11 +400,18 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             mock.patch.object(tags, "sys_tags", return_value=iter(linux_tags)),
         ):
             selected = optimization_packages._artifact_install_plan(profile)
-        self.assertEqual(len(selected), 11)
-        self.assertEqual(selected[-1]["distribution"], "opencv-python-headless")
+        self.assertEqual(len(selected), 12)
+        self.assertEqual(
+            [item["distribution"] for item in selected[-2:]],
+            ["opencv-python-headless", "av"],
+        )
+        self.assertEqual(
+            selected[-2]["sha256"],
+            "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37",
+        )
         self.assertEqual(
             selected[-1]["sha256"],
-            "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37",
+            "8a032e8d8ebc73dec079364b9b4a6837638a2d106e8472314e685ffbf163e700",
         )
 
     def test_gallery_composite_alias_requires_both_current_exact_digests(self):

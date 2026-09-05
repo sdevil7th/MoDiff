@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from socket import gethostbyname, gethostname
 
+from modiff.secret_config import huggingface_token
+
 # Define color codes
 class ColorCodes:
     GREY = "\x1b[38;20m"
@@ -34,11 +36,13 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 class Config:
-    def __init__(self):
+    def __init__(self, config_path: str | os.PathLike | None = None, dotenv_path: str | os.PathLike | None = None):
+        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = Path(config_path) if config_path is not None else Path(app_root) / 'config.ini'
+        dotenv_path = Path(dotenv_path) if dotenv_path is not None else Path(app_root) / '.env'
         cfg = configparser.ConfigParser()
         cfg.optionxform = str  # disable lowercasing of keys
-        cfg.read('config.ini')
-        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cfg.read(config_path)
 
         self.server = {
             'host': cfg.get('server', 'host', fallback='127.0.0.1'),
@@ -67,13 +71,13 @@ class Config:
             'level': getattr(logging, cfg.get('logging', 'level', fallback='INFO').upper()),
         }
 
+        hf_token, hf_token_source = huggingface_token(cfg, dotenv_path)
         self.hf = {
-            'token': cfg.get('huggingface', 'token', fallback=None),
+            'token': hf_token,
+            'token_source': hf_token_source,
             'cache_dir': cfg.get('huggingface', 'cache_dir', fallback=None),
             'online_status': cfg.get('huggingface', 'online_status', fallback='Auto'),
         }
-        if self.hf['token'] == '':
-            self.hf['token'] = None
         if self.hf['cache_dir'] == '':
             self.hf['cache_dir'] = None
         if not self.hf['online_status'] in ['Auto', 'Online', 'Offline']:

@@ -320,43 +320,88 @@ def build_quantization_config_v2(
     return PipelineQuantizationConfig(quant_mapping=quant_mapping), summary
 
 
+def _restore_diffusers_attention_registry_default() -> str:
+    """Restore Diffusers' process-global dispatcher to its configured default.
+
+    Diffusers' pinned ``ModelMixin.set_attention_backend`` implementation sets
+    both the selected model's processors and a process-global registry.  The
+    processors are correctly model-scoped, but the registry is consulted by
+    every processor whose backend remains unset.  Without restoring it, one
+    pipeline's explicit backend can therefore affect an unrelated later run.
+
+    Keep the configured Diffusers default (``native`` unless
+    ``DIFFUSERS_ATTN_BACKEND`` was explicitly set) rather than imposing a
+    MoDiff-specific generation default.
+    """
+
+    from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
+    from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND
+
+    default_backend = AttentionBackendName(str(DIFFUSERS_ATTN_BACKEND))
+    _AttentionBackendRegistry.set_active_backend(default_backend)
+    return default_backend.value
+
+
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
     if requested not in ATTENTION_BACKENDS:
         raise ValueError(f"Unsupported attention backend {requested!r}.")
-    if requested == "auto":
-        return {"requested": "auto", "applied": [], "default_selection": True}
 
     requested_components = _string_list(components)
     candidate_names = requested_components or list(ATTENTION_COMPONENTS)
     applied = []
+    reset = []
     unsupported = []
     seen = set()
-    for name in candidate_names:
-        component = pipeline if name in ("pipeline", "self") else getattr(pipeline, name, None)
-        if component is None or id(component) in seen:
-            continue
-        seen.add(id(component))
-        setter = getattr(component, "set_attention_backend", None)
-        if not callable(setter):
-            unsupported.append(name)
-            continue
-        try:
-            setter(requested)
-        except Exception as exc:
-            raise RuntimeError(f"Could not apply attention backend {requested!r} to {name}: {exc}") from exc
-        applied.append(name)
+    registry_default = None
+    try:
+        for name in candidate_names:
+            component = pipeline if name in ("pipeline", "self") else getattr(pipeline, name, None)
+            if component is None or id(component) in seen:
+                continue
+            seen.add(id(component))
 
-    if not applied:
-        raise RuntimeError(
-            f"Attention backend {requested!r} could not be applied because the selected pipeline components "
-            "do not expose set_attention_backend()."
-        )
+            if requested == "auto":
+                resetter = getattr(component, "reset_attention_backend", None)
+                if not callable(resetter):
+                    unsupported.append(name)
+                    continue
+                try:
+                    resetter()
+                except Exception as exc:
+                    raise RuntimeError(f"Could not reset the attention backend for {name}: {exc}") from exc
+                reset.append(name)
+                continue
+
+            setter = getattr(component, "set_attention_backend", None)
+            if not callable(setter):
+                unsupported.append(name)
+                continue
+            try:
+                setter(requested)
+            except Exception as exc:
+                raise RuntimeError(f"Could not apply attention backend {requested!r} to {name}: {exc}") from exc
+            applied.append(name)
+
+        if requested != "auto" and not applied:
+            raise RuntimeError(
+                f"Attention backend {requested!r} could not be applied because the selected pipeline components "
+                "do not expose set_attention_backend()."
+            )
+    finally:
+        # ``reset_attention_backend`` in the pinned Diffusers revision clears
+        # model processors but does not restore the registry.  Explicit
+        # setters also leave that registry changed.  Always put it back so a
+        # later model with backend=None cannot inherit this run's choice.
+        registry_default = _restore_diffusers_attention_registry_default()
+
     return {
         "requested": requested,
         "applied": applied,
+        "reset": reset,
         "unsupported": unsupported,
-        "default_selection": False,
+        "default_selection": requested == "auto",
+        "registry_default": registry_default,
     }
 
 

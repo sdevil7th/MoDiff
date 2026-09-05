@@ -10,7 +10,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from modules.Image.main import Preview  # noqa: E402
+from modules.Image.main import Preview, flatten_pil_image_collection  # noqa: E402
 from modules.ModularDiffusers.latents import (  # noqa: E402
     ImageEncode,
     flatten_pil_images,
@@ -441,6 +441,19 @@ class ModularImageOutputTests(unittest.TestCase):
         second = Image.new("RGBA", (8, 8), "blue")
 
         self.assertEqual(flatten_pil_images([[first], (second,)]), [first, second])
+
+    def test_preview_flattens_nested_layered_diffusers_pil_batches(self):
+        first = Image.new("RGB", (8, 8), "red")
+        second = Image.new("RGBA", (8, 8), "blue")
+
+        self.assertEqual(flatten_pil_image_collection([[first], (second,)]), [first, second])
+        self.assertEqual(
+            Preview.execute(object(), image=[[first], (second,)], export="", vae=None, device="cpu"),
+            {"output": [first, second], "filtered": [first, second]},
+        )
+
+    def test_preview_does_not_relabel_mixed_nested_values_as_images(self):
+        self.assertIsNone(flatten_pil_image_collection([[Image.new("RGB", (8, 8))], object()]))
 
     def test_does_not_relabel_non_image_values_as_decoded_images(self):
         self.assertIsNone(flatten_pil_images([[Image.new("RGB", (8, 8))], object()]))

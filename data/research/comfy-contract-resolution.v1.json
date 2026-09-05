@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:aa03cd7728b4928f1271047f2ce2e7014a17ffbfbe59e020213b2d3e9ee8f8a7",
+  "contentHash": "sha256:0b6335f5d3b1faa4fe7e67d299dbfb93164662eeddcdaec47443b21cd9c8891d",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -11318,7 +11318,7 @@
       },
       "contractId": "comfy-research:template:utility_interpolation_image_upscale",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 1,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": false,
       "mappingMeaning": "source_reviewed_model_free_task_candidate_algorithm_parity_not_proven",
       "recognizedMoDiffFamilies": [],
@@ -11336,6 +11336,12 @@
           "modelFamily": "Built-in Media",
           "modelType": "BuiltinImageOperation",
           "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
+          "modelFamily": "Real-ESRGAN",
+          "modelType": "SpandrelImageUpscale",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_builtin_operation_review_required",
@@ -11652,7 +11658,7 @@
       },
       "contractId": "comfy-research:template:utility_seedvr2_3b_int8_upscale_image",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 1,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -11670,6 +11676,12 @@
           "modelFamily": "Built-in Media",
           "modelType": "BuiltinImageOperation",
           "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
+          "modelFamily": "Real-ESRGAN",
+          "modelType": "SpandrelImageUpscale",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
@@ -11744,14 +11756,14 @@
         "modelFamily": "Real-ESRGAN",
         "modelType": "SpandrelVideoUpscale",
         "publicTemplateIds": [],
-        "qualificationStatus": "graph-qualified-execution-pending"
+        "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
         {
           "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
           "modelFamily": "Real-ESRGAN",
           "modelType": "SpandrelVideoUpscale",
-          "qualificationStatus": "graph-qualified-execution-pending"
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
@@ -11816,7 +11828,7 @@
       },
       "contractId": "comfy-research:template:utility_seedvr2_7b_int8_upscale_image",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 1,
+      "currentTaskBoundaryOptionCount": 2,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -11834,6 +11846,12 @@
           "modelFamily": "Built-in Media",
           "modelType": "BuiltinImageOperation",
           "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
+          "modelFamily": "Real-ESRGAN",
+          "modelType": "SpandrelImageUpscale",
+          "qualificationStatus": "execution-qualified-gallery-review-pending"
         }
       ],
       "resolutionState": "existing_task_boundary_model_admission_required",
@@ -16475,18 +16493,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:977b348029f77bdef78ac67bc10f45549688f905d697183b65cd69b7c930a417",
+      "contentHash": "sha256:bb6e3a1327676489da461b83e089a298d35afc37055f2221852270876d863025",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:5a9a93d8f397e1fde691ea7b8942d19642cc9714b3cd6e324ecab2f6474d6fb9"
+      "sha256": "sha256:dfe094171c916cab6b43772f6d214cd947a82267566dddd82b665dccae1da784"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:a7deb78a8861c49f1e9ccf3031f6c4845ff997ada7760dbcb1d3de0ffd0f119a",
+      "contentHash": "sha256:d0a8aa7b53770391b285b375de480fead9504ccdac716a2c291d5d1e19296983",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:8a70afcebe03136dc4d1f1c18d4fcdd555239717df2513843da8f0cf2c62e001"
+      "sha256": "sha256:b9c700e6baf67b384759348264866e7be11f8e96df3340bb11c84254164378f0"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:8374e90d09fe839ff0c328e411b311f59477e90d92a2b3916fea9dfbfe169028"
+      "sha256": "sha256:626c3021870cc5bed82be7aa15272f95803459c52514cfe095ad044732a159a9"
     }
   },
   "summary": {

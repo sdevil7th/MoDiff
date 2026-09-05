@@ -92,6 +92,33 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "absent from the reviewed upstream workflow contract"):
             _custom_node_contract(config, workflow_contract)
 
+    def test_framework_owned_doc_output_is_allowed_outside_pipeline_state(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Documented fixture",
+                "node_params": {
+                    "custom": {
+                        "params": {
+                            "prompt": {"type": "string"},
+                            "images": {"type": "image", "display": "output"},
+                            "doc": {"type": "string", "display": "output"},
+                        },
+                        "model_input_names": [],
+                        "input_names": ["prompt"],
+                        "output_names": ["images", "doc"],
+                    }
+                },
+            }
+        )
+
+        contract = _custom_node_contract(
+            config,
+            reviewed_modular_workflow_contract("Flux2KleinModularPipeline"),
+        )
+
+        self.assertEqual(contract["output_names"], ["images", "doc"])
+        self.assertIn("doc", contract["params"])
+
     def test_imported_trust_and_non_boolean_values_fail_before_any_loader(self):
         node = DynamicBlockNode("dynamic-imported-trust")
 

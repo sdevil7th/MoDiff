@@ -106,6 +106,8 @@
       "revision": "b184e23a8a16b20f108f727c902e769e873ffc73",
       "gated": false,
       "private": false,
+      "selectedDownloadFileCount": 36,
+      "selectedDownloadBytes": 90097576675,
       "weightFileCount": 21,
       "weightBytes": 90075953948,
       "canonicalInventorySha256": "2c20389da7d8d38a4b550a50a54844b68e3f6d621d32acfcb534c86e384a8f5f",

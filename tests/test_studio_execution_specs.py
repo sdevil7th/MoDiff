@@ -50,6 +50,91 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_every_modular_models_loader_binds_the_exact_artifact_revision(self):
+        modular_specs = [
+            (spec_id, definition)
+            for spec_id, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+            if any(
+                role == "models" and node_key == "modules.ModularDiffusers.ModelsLoader"
+                for role, node_key, _x, _y in definition.get("roles", ())
+            )
+        ]
+
+        self.assertGreater(len(modular_specs), 0)
+        for spec_id, definition in modular_specs:
+            with self.subTest(spec_id=spec_id):
+                self.assertIn(("models", "revision", "defaultRevision"), definition["bindings"])
+
+    def test_modular_control_routes_inject_the_external_model_into_the_component_bundle(self):
+        """Every reviewed ControlNet route must feed both graph stages.
+
+        The control block consumes the model while constructing control inputs,
+        and the selected Modular pipeline also requires that same component in
+        the ModelsLoader bundle before ``init_pipeline()`` validates its
+        pretrained components.
+        """
+
+        control_specs = [
+            studio_execution_spec_for_pair("StableDiffusionXLModularPipeline", mode)
+            for mode in ("control_image", "control_edit_image", "control_inpaint")
+        ] + [
+            studio_execution_spec_for_pair("QwenImageModularPipeline", mode)
+            for mode in ("control_image", "control_edit_image", "control_inpaint")
+        ]
+        for spec in control_specs:
+            self.assertIsNotNone(spec)
+            with self.subTest(spec_id=spec["id"]):
+                self.assertIn(("controlnetModel", "model", "models", "controlnet"), spec["edges"])
+                self.assertIn(("controlnetModel", "model", "controlnet", "controlnet"), spec["edges"])
+                models_definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]
+                models_params = _execution_spec_role_params(
+                    spec,
+                    "modules.ModularDiffusers.ModelsLoader",
+                    models_definition,
+                )
+                self.assertEqual(models_params["controlnet"]["display"], "input")
+                self.assertEqual(models_params["controlnet"]["type"], "diffusers_auto_model")
+
+        text_to_image = studio_execution_spec_for_pair("QwenImageModularPipeline", "text_to_image")
+        models_definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]
+        self.assertNotIn(
+            "controlnet",
+            _execution_spec_role_params(
+                text_to_image,
+                "modules.ModularDiffusers.ModelsLoader",
+                models_definition,
+            ),
+        )
+
+    def test_real_esrgan_image_upscale_uses_the_generic_spandrel_node(self):
+        definition = STUDIO_EXECUTION_SPEC_DEFINITIONS["real-esrgan-x2-image-upscale:v1"]
+        spec = studio_execution_spec_for_pair("SpandrelImageUpscale", "image_upscale")
+
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["loaderModule"], "modules.Spandrel")
+        self.assertEqual(spec["loaderAction"], "Upscaler")
+        self.assertEqual(spec["pipelineClass"], "SpandrelImageUpscaleV1")
+        self.assertEqual(spec["defaultRepo"], "nateraw/real-esrgan")
+        self.assertEqual(
+            tuple((role, node_key) for role, node_key, _x, _y in spec["roles"]),
+            (
+                ("loadImage", "modules.Image.Load"),
+                ("imageUpscaler", "modules.Spandrel.Upscaler"),
+                ("preview", "modules.Image.Preview"),
+            ),
+        )
+        self.assertNotIn("modules.ImageOperations.ProcessImage", {item[1] for item in spec["roles"]})
+        self.assertEqual(definition["capability"]["artifactKind"], "spandrel_upscaler")
+        self.assertEqual(definition["capability"]["downloadFiles"], ["RealESRGAN_x2plus.pth"])
+        self.assertEqual(
+            definition["capability"]["modeRequirements"]["image_upscale"]["requiredImages"],
+            ["referenceImages"],
+        )
+        selection = module_registry.MODULE_MAP["modules.Spandrel"]["Upscaler"]["params"]["model_id"]["default"]
+        self.assertEqual(selection["value"], "nateraw/real-esrgan/RealESRGAN_x2plus.pth")
+        self.assertEqual(selection["revision"], "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094")
+        self.assertEqual(selection["sha256"], "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb")
+
     def test_model_dependencies_are_pair_specific_immutable_artifact_receipts(self):
         qwen = studio_model_dependencies_for_pair(
             "QwenImageModularPipeline",
@@ -77,6 +162,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "AnimateDiffPipeline",
             "text_to_video",
         )
+        cosmos_guardrail = [
+            {
+                "id": "cosmos3-mandatory-safety-guardrail",
+                "kind": "safety_checker",
+                "repo": "nvidia/Cosmos-Guardrail1",
+                "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+            }
+        ]
 
         self.assertEqual(
             qwen,
@@ -135,6 +228,22 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 }
             ],
         )
+        for mode in (
+            "text_to_image",
+            "text_to_video",
+            "image_to_video",
+            "video_to_video",
+            "text_to_video_with_audio",
+            "image_to_video_with_audio",
+            "video_to_video_with_audio",
+        ):
+            self.assertEqual(
+                studio_model_dependencies_for_pair("Cosmos3OmniModularPipeline", mode),
+                cosmos_guardrail,
+            )
+            requirement = studio_model_requirements_for_pair("Cosmos3OmniModularPipeline", mode)[0]
+            self.assertEqual(requirement["requiredForModes"], [mode])
+            self.assertIn("Mandatory gated Cosmos", requirement["description"])
         for model_type, mode, expected_dependencies in (
             ("AnimateDiffPAGPipeline", "text_to_video", animatediff_motion),
             (
@@ -174,6 +283,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
             ("StableDiffusionPAGPipeline", "control_inpaint", sd15_controlnet),
             ("StableDiffusionXLControlNetPipeline", "control_edit_image", sdxl_controlnet),
             ("StableDiffusionXLControlNetPipeline", "control_inpaint", sdxl_controlnet),
+            ("StableDiffusionXLModularPipeline", "control_inpaint", sdxl_controlnet),
             ("StableDiffusionXLPAGPipeline", "control_image", sdxl_controlnet),
             ("StableDiffusionXLPAGPipeline", "control_edit_image", sdxl_controlnet),
         ):
@@ -233,13 +343,66 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImageModularPipeline", "edit_image"),
                 ("QwenImageModularPipeline", "inpaint"),
                 ("QwenImageEditModularPipeline", "edit_image"),
+                ("QwenImageEditModularPipeline", "modular_inpainting"),
+                ("FluxModularPipeline", "text_to_image"),
+                ("FluxModularPipeline", "image_to_image"),
+                ("FluxKontextModularPipeline", "text_to_image"),
+                ("FluxKontextModularPipeline", "edit_image"),
+                ("Flux2KleinModularPipeline", "text_to_image"),
+                ("Flux2KleinModularPipeline", "edit_image"),
+                ("Flux2KleinBaseModularPipeline", "text_to_image"),
+                ("Flux2KleinBaseModularPipeline", "edit_image"),
+                ("ZImageModularPipeline", "modular_text_to_image"),
+                ("ZImageModularPipeline", "modular_image_to_image"),
+                ("StableDiffusionXLModularPipeline", "text_to_image"),
+                ("StableDiffusionXLModularPipeline", "edit_image"),
+                ("StableDiffusionXLModularPipeline", "inpaint"),
+                ("StableDiffusionXLModularPipeline", "control_image"),
+                ("StableDiffusionXLModularPipeline", "control_edit_image"),
+                ("StableDiffusionXLModularPipeline", "control_inpaint"),
                 ("QwenImageEditPlusModularPipeline", "edit_image"),
                 ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
                 ("QwenImageLayeredModularPipeline", "layer_decomposition"),
                 ("QwenImageModularPipeline", "control_image"),
+                ("QwenImageModularPipeline", "image_to_image"),
+                ("QwenImageModularPipeline", "modular_text_to_image"),
+                ("QwenImageModularPipeline", "inpainting"),
+                ("QwenImageModularPipeline", "control_edit_image"),
+                ("QwenImageModularPipeline", "control_inpaint"),
                 ("QwenImageControlNetPipeline", "control_image"),
                 ("QwenImageLayeredPipeline", "layer_decomposition"),
                 ("StableAudioPipeline", "text_to_audio"),
+                ("HeliosModularPipeline", "text_to_video"),
+                ("HeliosModularPipeline", "image_to_video"),
+                ("HeliosModularPipeline", "video_to_video"),
+                ("HeliosPyramidModularPipeline", "text_to_video"),
+                ("HeliosPyramidModularPipeline", "image_to_video"),
+                ("HeliosPyramidModularPipeline", "video_to_video"),
+                ("HeliosPyramidDistilledModularPipeline", "text_to_video"),
+                ("HeliosPyramidDistilledModularPipeline", "image_to_video"),
+                ("HeliosPyramidDistilledModularPipeline", "video_to_video"),
+                ("HunyuanVideo15ModularPipeline", "text_to_video"),
+                ("HunyuanVideo15ModularPipeline", "image_to_video"),
+                ("MiniMaxH3ModularPipeline", "text_to_video_with_audio"),
+                (
+                    "MiniMaxH3ModularPipeline",
+                    "first_last_frame_to_video_with_audio",
+                ),
+                ("MiniMaxH3ModularPipeline", "reference_to_video_with_audio"),
+                ("WanAnimate2ModularPipeline", "character_animate"),
+                ("WanAnimate2DistilledModularPipeline", "character_animate"),
+                ("Cosmos3OmniModularPipeline", "text_to_image"),
+                ("Cosmos3OmniModularPipeline", "text_to_video"),
+                ("Cosmos3OmniModularPipeline", "image_to_video"),
+                ("Cosmos3OmniModularPipeline", "video_to_video"),
+                ("Cosmos3OmniModularPipeline", "text_to_video_with_audio"),
+                ("Cosmos3OmniModularPipeline", "image_to_video_with_audio"),
+                ("Cosmos3OmniModularPipeline", "video_to_video_with_audio"),
+                ("Cosmos3DistilledModularPipeline", "text_to_image"),
+                ("Cosmos3DistilledModularPipeline", "image_to_video"),
+                ("AnimaModularPipeline", "text_to_image"),
+                ("AnimaModularPipeline", "image_to_image"),
+                ("MiniMaxMusic3ModularPipeline", "text_to_audio"),
                 ("LongCatAudioDiTPipeline", "text_to_audio"),
                 ("AudioLDM2Pipeline", "text_to_audio"),
                 ("ShapEPipeline", "text_to_3d"),
@@ -249,6 +412,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionXLPipeline", "text_to_image"),
                 ("StableDiffusionXLPipeline", "edit_image"),
                 ("StableDiffusionXLPipeline", "inpaint"),
+                ("StableDiffusionXLModularPipeline", "control_union_image"),
+                ("StableDiffusionXLModularPipeline", "control_union_edit_image"),
+                ("StableDiffusionXLModularPipeline", "control_union_inpaint"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_image"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_edit_image"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_inpaint"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_control_image"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_control_edit_image"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_control_inpaint"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_control_union_image"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_control_union_edit_image"),
+                ("StableDiffusionXLModularPipeline", "ip_adapter_control_union_inpaint"),
                 ("Wan22Pipeline", "text_to_video"),
                 ("WanAnimatePipeline", "character_animate"),
                 ("WanAnimatePipeline", "character_replace"),
@@ -257,6 +432,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTX2ConditionPipeline", "image_to_video"),
                 ("LTX2ConditionPipeline", "reference_to_video"),
                 ("LTX2ConditionPipeline", "video_to_video"),
+                ("LTX2InContextPipeline", "in_context_to_video"),
                 ("HunyuanVideoFramepackPipeline", "image_to_video"),
                 ("StableVideoDiffusionPipeline", "image_to_video"),
                 ("AnimateDiffPipeline", "text_to_video"),
@@ -275,6 +451,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("MochiPipeline", "text_to_video"),
                 ("SanaVideoPipeline", "text_to_video"),
                 ("SanaImageToVideoPipeline", "image_to_video"),
+                ("WanModularPipeline", "text_to_video"),
+                ("WanImage2VideoModularPipeline", "single_image_to_video"),
                 ("WanImage2VideoModularPipeline", "image_to_video"),
                 ("DDPMPipeline", "unconditional_image"),
                 ("DDIMPipeline", "unconditional_image"),
@@ -346,6 +524,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("HuggingFaceAnyToAnyModel", "text_to_image"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_to_text"),
                 ("HuggingFaceSpeechRecognitionModel", "speech_translation"),
+                ("HuggingFaceCTCSpeechRecognitionModel", "speech_to_text"),
                 ("FluxReduxPipeline", "multi_image_reference_edit"),
                 ("FluxDepthPipeline", "control_edit_image"),
                 ("FluxDepthPipeline", "control_inpaint"),
@@ -385,6 +564,20 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("BuiltinVideoOperation", "video_reverse"),
                 ("BuiltinVideoOperation", "video_tile"),
                 ("SpandrelVideoUpscale", "video_upscale"),
+                ("SpandrelImageUpscale", "image_upscale"),
+                ("Flux2Pipeline", "text_to_image"),
+                ("Flux2Pipeline", "multi_image_reference_edit"),
+                ("Flux2ModularPipeline", "text_to_image"),
+                ("Flux2ModularPipeline", "multi_image_reference_edit"),
+                ("ErnieImageModularPipeline", "text_to_image"),
+                ("LTXModularPipeline", "text_to_video"),
+                ("LTXModularPipeline", "image_to_video"),
+                ("Wan22ModularPipeline", "text_to_video"),
+                ("Wan22Image2VideoModularPipeline", "image_to_video"),
+                ("LTX2ModularPipeline", "text_to_video"),
+                ("LTX2ModularPipeline", "image_to_video"),
+                ("LTX2ModularPipeline", "reference_to_video"),
+                ("LTX2ModularPipeline", "in_context_to_video"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -489,6 +682,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(instruct["pipelineClass"], "StableDiffusionXLInstructPix2PixPipeline")
         self.assertEqual(instruct["defaultRepo"], "diffusers/sdxl-instructpix2pix-768")
         self.assertIn(("diffusersImageEdit", "image_guidance_scale", "conditioningScale"), instruct["bindings"])
+        self.assertNotIn(("diffusersImageEdit", "reference_strength", "conditioningScale"), instruct["bindings"])
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[instruct["executionProfileId"]].live_proof)
         sdxl_controlnet = by_id["sdxl-controlnet-canny:control-image:v1"]
         self.assertEqual(sdxl_controlnet["modelType"], "StableDiffusionXLControlNetPipeline")
@@ -923,7 +1117,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[15]["pipelineClass"], "WanPipeline")
         self.assertEqual(specs[15]["roles"], specs[14]["roles"])
         self.assertEqual(specs[15]["edges"], specs[14]["edges"])
-        self.assertEqual(specs[15]["bindings"], specs[14]["bindings"])
+        self.assertIn(("wanPipeline", "revision", "defaultRevision"), specs[14]["bindings"])
+        self.assertIn(("wanPipeline", "execution_profile_id", "executionProfileId"), specs[14]["bindings"])
+        self.assertIn(("wanPipeline", "revision", "empty"), specs[15]["bindings"])
+        self.assertNotIn(("wanPipeline", "execution_profile_id", "executionProfileId"), specs[15]["bindings"])
         self.assertEqual(
             [item[0] for item in specs[16]["roles"]],
             [
@@ -1325,6 +1522,105 @@ class StudioExecutionSpecTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "disconnected"):
                 validate_studio_execution_specs(module_registry.MODULE_MAP)
 
+    def test_cosmos3_nano_specs_use_exact_official_nodes_and_remain_unqualified(self):
+        expected = {
+            "text_to_image": (
+                "cosmos3-nano:modular-text-to-image:v1",
+                None,
+                "modules.Image.Preview",
+                ("prompt", "num_frames", "oneFrame"),
+            ),
+            "text_to_video": (
+                "cosmos3-nano:modular-text-to-video:v1",
+                None,
+                "modules.Video.Export",
+                ("prompt", "num_frames", "numFrames"),
+            ),
+            "image_to_video": (
+                "cosmos3-nano:modular-image-to-video:v1",
+                "modules.Image.Load",
+                "modules.Video.Export",
+                ("prompt", "num_frames", "numFrames"),
+            ),
+            "video_to_video": (
+                "cosmos3-nano:modular-video-to-video:v1",
+                "modules.Video.Load",
+                "modules.Video.Export",
+                ("prompt", "num_frames", "numFrames"),
+            ),
+            "text_to_video_with_audio": (
+                "cosmos3-nano:modular-text-to-video-with-audio:v1",
+                None,
+                "modules.Video.ExportWithAudio",
+                ("prompt", "num_frames", "numFrames"),
+            ),
+            "image_to_video_with_audio": (
+                "cosmos3-nano:modular-image-to-video-with-audio:v1",
+                "modules.Image.Load",
+                "modules.Video.ExportWithAudio",
+                ("prompt", "num_frames", "numFrames"),
+            ),
+            "video_to_video_with_audio": (
+                "cosmos3-nano:modular-video-to-video-with-audio:v1",
+                "modules.Video.Load",
+                "modules.Video.ExportWithAudio",
+                ("prompt", "num_frames", "numFrames"),
+            ),
+        }
+        for mode, (spec_id, source, sink, frame_binding) in expected.items():
+            with self.subTest(mode=mode):
+                spec = studio_execution_spec_for_pair("Cosmos3OmniModularPipeline", mode)
+                self.assertIsNotNone(spec)
+                self.assertEqual(spec["id"], spec_id)
+                self.assertEqual(spec["executionProfileId"], "cosmos3-nano:official-modular-workflow")
+                self.assertEqual(spec["defaultRepo"], "nvidia/Cosmos3-Nano")
+                self.assertEqual(spec["auxiliaryTerminalRoles"], ("afterDecode",))
+                node_keys = ["modules.ModularDiffusers.ModelsLoader"]
+                if source:
+                    node_keys.append(source)
+                node_keys.append("modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode")
+                if source:
+                    node_keys.append("modules.ModularDiffusers.WorkflowCosmos3OmniVaeEncode")
+                node_keys.extend(
+                    [
+                        "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise",
+                        "modules.ModularDiffusers.WorkflowCosmos3OmniDecode",
+                        "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
+                        sink,
+                    ]
+                )
+                self.assertEqual([node_key for _role, node_key, _x, _y in spec["roles"]], node_keys)
+                self.assertIn(frame_binding, spec["bindings"])
+                self.assertIn(
+                    ("decode", "state_out", "afterDecode", "state_in"),
+                    spec["edges"],
+                )
+                if source:
+                    self.assertIn(("prompt", "state_out", "imageEncode", "state_in"), spec["edges"])
+                    self.assertIn(("imageEncode", "state_out", "denoise", "state_in"), spec["edges"])
+                if mode.endswith("with_audio"):
+                    self.assertIn(("decode", "audio", "videoExport", "audio"), spec["edges"])
+                definition = STUDIO_EXECUTION_SPEC_DEFINITIONS[spec_id]
+                self.assertEqual(definition["capability"]["qualifiedModes"], [])
+                self.assertIs(definition["capability"]["autoEligible"], False)
+                self.assertIs(definition["capability"]["templateEligible"], False)
+                self.assertIs(definition["capability"]["galleryEligible"], False)
+                self.assertEqual(definition["profile"]["supported_offload_modes"], ("none",))
+                self.assertEqual(definition["profile"]["quantizable_components"], ())
+                graph, hints = executable_graph_for_spec(spec)
+                assert_studio_execution_graph(graph, hints)
+
+        import modiff.studio_execution_specs as specs_module
+
+        with patch.dict(
+            specs_module.STUDIO_EXECUTION_SPEC_DEFINITIONS[
+                "cosmos3-nano:modular-text-to-video:v1"
+            ],
+            {"auxiliaryTerminalRoles": ("denoise",)},
+        ):
+            with self.assertRaisesRegex(ValueError, "auxiliary terminal"):
+                validate_studio_execution_specs(module_registry.MODULE_MAP)
+
     def test_runtime_receipt_binds_graph_profile_and_topology(self):
         spec = studio_execution_spec_for_pair("FluxKreaPipeline", "text_to_image")
         self.assertIsNotNone(spec)
@@ -1365,6 +1661,134 @@ class StudioExecutionSpecTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
 
+    def test_runtime_receipt_accepts_only_the_exact_reviewed_video_upscale_edge_replacement(self):
+        spec = studio_execution_spec_for_pair("WanVideoPipeline", "text_to_video")
+        self.assertIsNotNone(spec)
+        graph, hints = executable_graph_for_spec(spec)
+        receipt_nodes = hints["studioExecutionSpec"]["nodes"]
+        source_role, source_handle, target_role, target_handle = next(
+            edge for edge in spec["edges"] if edge[2] == "videoExport"
+        )
+        source_id = receipt_nodes[source_role]
+        target = graph["nodes"][receipt_nodes[target_role]]
+        upscaler_id = "controlled-video-upscaler"
+        graph["nodes"][upscaler_id] = {
+            "module": "modules.Spandrel",
+            "action": "Upscaler",
+            "params": {
+                "image": {"sourceId": source_id, "sourceKey": source_handle},
+                "output": {},
+            },
+        }
+        graph["paths"][0].append(upscaler_id)
+        target["params"][target_handle].update({"sourceId": upscaler_id, "sourceKey": "output"})
+
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+        hints["controlledGraphContracts"] = ["upscale.video.v1"]
+        assert_studio_execution_graph(graph, hints)
+
+        graph["nodes"][upscaler_id]["params"]["image"]["sourceKey"] = "wrong_output"
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+    def test_runtime_receipt_accepts_only_the_exact_reviewed_diffusers_image_lora_edge_replacement(self):
+        spec = studio_execution_spec_for_pair("ZImageModularPipeline", "text_to_image")
+        self.assertIsNotNone(spec)
+        graph, hints = executable_graph_for_spec(spec)
+        receipt_nodes = hints["studioExecutionSpec"]["nodes"]
+        source_role, source_handle, target_role, target_handle = next(
+            edge for edge in spec["edges"] if edge[2] == "diffusersImageGenerate"
+        )
+        source_id = receipt_nodes[source_role]
+        target = graph["nodes"][receipt_nodes[target_role]]
+        adapter_id = "controlled-image-lora"
+        graph["nodes"][adapter_id] = {
+            "module": "modules.DiffusersImage",
+            "action": "LoadAdapter",
+            "params": {
+                "pipeline": {"sourceId": source_id, "sourceKey": source_handle},
+                "output": {},
+            },
+        }
+        graph["paths"][0].append(adapter_id)
+        target["params"][target_handle].update({"sourceId": adapter_id, "sourceKey": "output"})
+
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+        hints["controlledGraphContracts"] = ["lora.diffusers-image.v1"]
+        assert_studio_execution_graph(graph, hints)
+
+        target["params"][target_handle]["sourceKey"] = "wrong_output"
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+    def test_runtime_receipt_accepts_only_the_exact_reviewed_diffusers_audio_lora_edge_replacement(self):
+        spec = studio_execution_spec_for_pair("AceStepAudioPipeline", "text_to_audio")
+        self.assertIsNotNone(spec)
+        graph, hints = executable_graph_for_spec(spec)
+        receipt_nodes = hints["studioExecutionSpec"]["nodes"]
+        source_role, source_handle, target_role, target_handle = next(
+            edge for edge in spec["edges"] if edge[2] == "audioGenerate"
+        )
+        source_id = receipt_nodes[source_role]
+        target = graph["nodes"][receipt_nodes[target_role]]
+        adapter_id = "controlled-audio-lora"
+        graph["nodes"][adapter_id] = {
+            "module": "modules.DiffusersAudio",
+            "action": "LoadAdapter",
+            "params": {
+                "pipeline": {"sourceId": source_id, "sourceKey": source_handle},
+                "output": {},
+            },
+        }
+        graph["paths"][0].append(adapter_id)
+        target["params"][target_handle].update({"sourceId": adapter_id, "sourceKey": "output"})
+
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+        hints["controlledGraphContracts"] = ["lora.diffusers-audio.v1"]
+        assert_studio_execution_graph(graph, hints)
+
+        graph["nodes"][adapter_id]["params"]["pipeline"]["sourceKey"] = "wrong_output"
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
+    def test_runtime_receipt_accepts_an_exact_bounded_diffusers_image_lora_chain(self):
+        spec = studio_execution_spec_for_pair("FluxDevPipeline", "text_to_image")
+        self.assertIsNotNone(spec)
+        graph, hints = executable_graph_for_spec(spec)
+        receipt_nodes = hints["studioExecutionSpec"]["nodes"]
+        source_role, source_handle, target_role, target_handle = next(
+            edge for edge in spec["edges"] if edge[2] == "diffusersImageGenerate"
+        )
+        source_id = receipt_nodes[source_role]
+        target = graph["nodes"][receipt_nodes[target_role]]
+        for index in range(2):
+            adapter_id = f"controlled-image-lora-{index}"
+            graph["nodes"][adapter_id] = {
+                "module": "modules.DiffusersImage",
+                "action": "LoadAdapter",
+                "params": {
+                    "pipeline": {
+                        "sourceId": source_id if index == 0 else f"controlled-image-lora-{index - 1}",
+                        "sourceKey": source_handle if index == 0 else "output",
+                    },
+                    "output": {},
+                },
+            }
+            graph["paths"][0].append(adapter_id)
+        target["params"][target_handle].update({"sourceId": "controlled-image-lora-1", "sourceKey": "output"})
+        hints["controlledGraphContracts"] = ["lora.diffusers-image.v1"]
+        assert_studio_execution_graph(graph, hints)
+
+        graph["nodes"]["controlled-image-lora-1"]["params"]["pipeline"]["sourceId"] = source_id
+        with self.assertRaisesRegex(RuntimeError, "edge"):
+            assert_studio_execution_graph(graph, hints)
+
     def test_z_image_auto_seals_the_exact_direct_image_route(self):
         spec = studio_execution_spec_for_pair("ZImageModularPipeline", "text_to_image")
         self.assertIsNotNone(spec)
@@ -1375,9 +1799,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionPath"], "direct-diffusers-image")
         self.assertEqual(spec["pipelineClass"], "ZImagePipeline")
         self.assertEqual(spec["defaultRepo"], "Tongyi-MAI/Z-Image-Turbo")
+        self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
         self.assertEqual(spec["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["roles"])
         self.assertEqual(spec["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["edges"])
-        self.assertEqual(spec["bindings"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["bindings"])
+        registry_bindings = validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["bindings"]
+        self.assertEqual(
+            tuple(item for item in spec["bindings"] if item[:2] != ("diffusersRecipe", "attention_backend")),
+            tuple(item for item in registry_bindings if item[:2] != ("diffusersRecipe", "attention_backend")),
+        )
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
@@ -1400,6 +1829,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["executionProfileId"], "z-image:img2img-direct")
         self.assertEqual(edit["pipelineClass"], "ZImageImg2ImgPipeline")
         self.assertEqual(edit["defaultRepo"], "Tongyi-MAI/Z-Image-Turbo")
+        self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), edit["bindings"])
         self.assertEqual(edit["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["roles"])
         self.assertEqual(edit["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["edges"])
         self.assertIn(("loadImage", "file", "referenceImages"), edit["bindings"])
@@ -1429,7 +1859,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
         z_image = studio_execution_spec_for_pair("ZImageModularPipeline", "text_to_image")
         self.assertEqual(spec["roles"], z_image["roles"])
         self.assertEqual(spec["edges"], z_image["edges"])
-        self.assertEqual(spec["bindings"], z_image["bindings"])
+        self.assertEqual(
+            tuple(item for item in spec["bindings"] if item[:2] != ("diffusersRecipe", "attention_backend")),
+            tuple(item for item in z_image["bindings"] if item[:2] != ("diffusersRecipe", "attention_backend")),
+        )
+        self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), spec["bindings"])
+        self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), z_image["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
@@ -1574,6 +2009,56 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("audioGenerate", "stable_audio_guidance", "guidanceScale"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_minimax_music_seals_official_modular_workflow_route(self):
+        spec = studio_execution_spec_for_pair("MiniMaxMusic3ModularPipeline", "text_to_audio")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["executionProfileId"], "minimax-music3:official-modular-workflow")
+        self.assertEqual(spec["pipelineClass"], "MiniMaxMusic3ModularPipeline")
+        self.assertEqual(spec["defaultRepo"], "MiniMaxAI/MiniMax-Music3")
+        self.assertEqual(
+            [node_key for _role, node_key, _x, _y in spec["roles"]],
+            [
+                "modules.ModularDiffusers.ModelsLoader",
+                "modules.ModularDiffusers.WorkflowSemanticGeneration",
+                "modules.ModularDiffusers.WorkflowDenoise",
+                "modules.ModularDiffusers.WorkflowDecodeAudio",
+                "modules.Audio.Export",
+            ],
+        )
+        self.assertIn(("prompt", "state_out", "denoise", "state_in"), spec["edges"])
+        self.assertIn(("denoise", "state_out", "decode", "state_in"), spec["edges"])
+        self.assertIn(("audioExport", "sample_rate", "sampleRate44100"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_anima_seals_exact_official_modular_text_and_image_workflows(self):
+        text = studio_execution_spec_for_pair("AnimaModularPipeline", "text_to_image")
+        image = studio_execution_spec_for_pair("AnimaModularPipeline", "image_to_image")
+        self.assertIsNotNone(text)
+        self.assertIsNotNone(image)
+        for spec in (text, image):
+            self.assertEqual(spec["executionProfileId"], "anima:official-modular-workflow")
+            self.assertEqual(spec["pipelineClass"], "AnimaModularPipeline")
+            self.assertEqual(spec["defaultRepo"], "circlestone-labs/Anima-Base-v1.0-Diffusers")
+            self.assertIn(("denoise", "state_out", "decode", "state_in"), spec["edges"])
+            graph, hints = executable_graph_for_spec(spec)
+            assert_studio_execution_graph(graph, hints)
+        self.assertIn(("prompt", "state_out", "denoise", "state_in"), text["edges"])
+        self.assertEqual(
+            [node_key for _role, node_key, _x, _y in text["roles"]],
+            [
+                "modules.ModularDiffusers.ModelsLoader",
+                "modules.ModularDiffusers.WorkflowTextEncode",
+                "modules.ModularDiffusers.WorkflowImageDenoise",
+                "modules.ModularDiffusers.WorkflowDecodeImage",
+                "modules.Image.Preview",
+            ],
+        )
+        self.assertIn(("loadImage", "image", "imageEncode", "image"), image["edges"])
+        self.assertIn(("prompt", "state_out", "imageEncode", "state_in"), image["edges"])
+        self.assertIn(("imageEncode", "state_out", "denoise", "state_in"), image["edges"])
+        self.assertIn(("loadImage", "file", "referenceImages"), image["bindings"])
 
     def test_longcat_and_audioldm2_seal_exact_pinned_generic_audio_routes(self):
         cases = (
@@ -1889,6 +2374,115 @@ class StudioExecutionSpecTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)
 
+    def test_qwen_image_edit_modular_inpaint_conditions_prompt_on_the_source_image(self):
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "modular_inpainting")
+
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["id"], "qwen-image-edit:modular-inpainting:v1")
+        self.assertIn(("loadImage", "image", "prompt", "image"), spec["edges"])
+        self.assertNotIn(("denoise", "height", "height"), spec["bindings"])
+        self.assertNotIn(("denoise", "width", "width"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_sdxl_modular_inpainting_seals_all_mask_and_latent_routes(self):
+        spec = studio_execution_spec_for_pair("StableDiffusionXLModularPipeline", "inpaint")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["id"], "sdxl-base:modular-inpainting:v1")
+        self.assertEqual(spec["executionProfileId"], "sdxl-base:modular")
+        self.assertEqual(spec["executionPath"], "modular-diffusers")
+        self.assertEqual(
+            [item[0] for item in spec["roles"]],
+            ["models", "prompt", "loadImage", "loadMask", "imageEncode", "denoise", "decode", "preview"],
+        )
+        self.assertIn(("loadMask", "image", "imageEncode", "mask_image"), spec["edges"])
+        self.assertIn(("imageEncode", "image_latents", "denoise", "image_latents"), spec["edges"])
+        self.assertIn(("imageEncode", "mask", "denoise", "mask"), spec["edges"])
+        self.assertIn(
+            ("imageEncode", "masked_image_latents", "denoise", "masked_image_latents"),
+            spec["edges"],
+        )
+        self.assertIn(("loadMask", "file", "maskImage"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_sdxl_modular_controlnet_seals_the_ordinary_component_route(self):
+        spec = studio_execution_spec_for_pair("StableDiffusionXLModularPipeline", "control_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["id"], "sdxl-base:modular-controlnet-text-to-image:v1")
+        self.assertEqual(spec["executionProfileId"], "sdxl-base:modular")
+        self.assertEqual(spec["executionPath"], "modular-diffusers")
+        self.assertEqual(
+            [item[0] for item in spec["roles"]],
+            ["models", "prompt", "loadImage", "controlnetModel", "controlnet", "denoise", "decode", "preview"],
+        )
+        self.assertIn(("loadImage", "image", "controlnet", "control_image"), spec["edges"])
+        self.assertIn(("controlnetModel", "model", "models", "controlnet"), spec["edges"])
+        self.assertIn(("controlnetModel", "model", "controlnet", "controlnet"), spec["edges"])
+        self.assertIn(("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"), spec["edges"])
+        self.assertNotIn(("models", "vae_out", "controlnet", "vae"), spec["edges"])
+        self.assertIn(("models", "vae_out", "denoise", "vae"), spec["edges"])
+        self.assertIn(("controlnet", "controlnet_variant", "ordinary"), spec["bindings"])
+        self.assertIn(("controlnetModel", "variant", "fp16"), spec["bindings"])
+        self.assertEqual(
+            studio_model_dependencies_for_pair("StableDiffusionXLModularPipeline", "control_image"),
+            [
+                {
+                    "id": "sdxl-controlnet-canny",
+                    "kind": "controlnet",
+                    "repo": "diffusers/controlnet-canny-sdxl-1.0",
+                    "revision": "eb115a19a10d14909256db740ed109532ab1483c",
+                }
+            ],
+        )
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_sdxl_modular_controlnet_image_to_image_seals_both_input_routes(self):
+        spec = studio_execution_spec_for_pair("StableDiffusionXLModularPipeline", "control_edit_image")
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec["id"], "sdxl-base:modular-controlnet-image-to-image:v1")
+        self.assertEqual(spec["executionProfileId"], "sdxl-base:modular")
+        self.assertEqual(spec["executionPath"], "modular-diffusers")
+        self.assertEqual(
+            [item[0] for item in spec["roles"]],
+            [
+                "models",
+                "prompt",
+                "loadImage",
+                "imageEncode",
+                "loadControlImage",
+                "controlnetModel",
+                "controlnet",
+                "denoise",
+                "decode",
+                "preview",
+            ],
+        )
+        self.assertIn(("loadImage", "image", "imageEncode", "image"), spec["edges"])
+        self.assertIn(("loadControlImage", "image", "controlnet", "control_image"), spec["edges"])
+        self.assertIn(("controlnetModel", "model", "models", "controlnet"), spec["edges"])
+        self.assertIn(("imageEncode", "image_latents", "denoise", "image_latents"), spec["edges"])
+        self.assertIn(("imageEncode", "route_state_out", "denoise", "route_state_in"), spec["edges"])
+        self.assertIn(("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"), spec["edges"])
+        self.assertNotIn(("models", "vae_out", "controlnet", "vae"), spec["edges"])
+        self.assertIn(("controlnet", "controlnet_variant", "ordinary"), spec["bindings"])
+        self.assertIn(("controlnetModel", "variant", "fp16"), spec["bindings"])
+        self.assertIn(("denoise", "strength", "strength"), spec["bindings"])
+        self.assertEqual(
+            studio_model_dependencies_for_pair("StableDiffusionXLModularPipeline", "control_edit_image"),
+            [
+                {
+                    "id": "sdxl-controlnet-canny",
+                    "kind": "controlnet",
+                    "repo": "diffusers/controlnet-canny-sdxl-1.0",
+                    "revision": "eb115a19a10d14909256db740ed109532ab1483c",
+                }
+            ],
+        )
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
     def test_qwen_image_edit_plus_modes_seal_the_exact_dynamic_modular_route(self):
         specs = [
             studio_execution_spec_for_pair("QwenImageEditPlusModularPipeline", mode)
@@ -1916,9 +2510,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["pipelineClass"], "QwenImageLayeredModularPipeline")
         self.assertEqual(len(spec["roles"]), 7)
         self.assertEqual(len(spec["edges"]), 11)
-        self.assertEqual(len(spec["bindings"]), 17)
+        self.assertEqual(len(spec["bindings"]), 20)
+        self.assertIn(("models", "revision", "defaultRevision"), spec["bindings"])
         self.assertNotIn("route_state_out", [item[1] for item in spec["edges"]])
         self.assertIn(("loadImage", "alpha_channel", "addAlpha"), spec["bindings"])
+        self.assertIn(("prompt", "resolution", "resolution"), spec["bindings"])
+        self.assertIn(("imageEncode", "resolution", "resolution"), spec["bindings"])
         self.assertIn(("denoise", "layers", "layers"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
@@ -1930,11 +2527,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionPath"], "modular-diffusers")
         self.assertEqual(spec["pipelineClass"], "QwenImageModularPipeline")
         self.assertEqual(len(spec["roles"]), 8)
-        self.assertEqual(len(spec["edges"]), 13)
-        self.assertEqual(len(spec["bindings"]), 32)
+        self.assertEqual(len(spec["edges"]), 14)
+        self.assertEqual(len(spec["bindings"]), 36)
+        self.assertIn(("models", "revision", "defaultRevision"), spec["bindings"])
         self.assertIn(("controlnetModel", "model_id", "repo"), spec["bindings"])
         self.assertIn(("controlnetModel", "revision", "revision"), spec["bindings"])
+        self.assertIn(("prompt", "max_sequence_length", "maxSequenceLength"), spec["bindings"])
+        self.assertIn(("controlnet", "control_guidance_start", "controlGuidanceStart"), spec["bindings"])
+        self.assertIn(("controlnet", "control_guidance_end", "controlGuidanceEnd"), spec["bindings"])
         self.assertIn(("controlnet", "route_state_out", "denoise", "route_state_in"), spec["edges"])
+        self.assertIn(("controlnetModel", "model", "models", "controlnet"), spec["edges"])
         self.assertIn(("denoise", "route_state_out", "decode", "route_state_in"), spec["edges"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)

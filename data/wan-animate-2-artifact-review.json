@@ -1,15 +1,14 @@
 {
   "admission": {
-    "downloadCatalogExposed": false,
-    "executableModes": [],
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "character_animate"
+    ],
     "liveQualified": false,
-    "reason": "Both exact repositories are public, Python-free, and safetensors-only, but their standard model indexes name WanAnimate2Pipeline, which the pinned Diffusers package does not export. Their otherwise matching Modular indexes also bind components to null revisions and mutable refs/pr/1 or refs/pr/2 references. Repository-scoped execution therefore cannot be immutable at the current pin.",
-    "runtimeCatalogExposed": false,
-    "status": "contract_only",
+    "reason": "Both exact repositories are public, Python-free, safetensors-only, and expose package-owned Wan Animate 2 Modular pipelines at the pinned Diffusers revision. MoDiff normalizes every same-repository component descriptor to the reviewed top-level commit and supplies the Distilled 10-step override explicitly. The graph is insertable and runtime-cataloged; live generation and public promotion remain pending compiled Flex Attention qualification on remote heavy hardware.",
+    "runtimeCatalogExposed": true,
+    "status": "graph_qualified",
     "unresolvedGates": [
-      "package_owned_standard_pipeline_at_pin_or_reviewed_modular_only_loader",
-      "immutable_component_descriptor_normalization",
-      "distilled_composed_step_default_resolution",
       "compiled_flex_attention_remote_qualification",
       "remote_heavy_hardware_execution",
       "physical_macos_execution"
@@ -26,7 +25,7 @@
     "ordering": "ascending path",
     "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
   },
-  "diffusersRevision": "90b4e34e79a86ec5e7f2437634fe95ecd2108796",
+  "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
   "family": "Wan Animate 2 14B",
   "format": "safetensors",
   "license": {
@@ -268,7 +267,7 @@
       },
       {
         "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_pipeline.py",
-        "sha256": "3be57fb908553dfee6d2b48a05c1447776ee2ea6630b7f8f04b507da43f9e329"
+        "sha256": "d43c08be189805833efa14eee953cc5dbc1d9d5803b50af29713243a0623ef91"
       },
       {
         "path": "src/diffusers/modular_pipelines/wan_animate_2/video_processor.py",

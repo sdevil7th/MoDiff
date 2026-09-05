@@ -276,6 +276,82 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertIsNone(rolled_back["state"]["activeEnvironmentId"])
         self.assertTrue(rolled_back["restartRequired"])
 
+    def test_fresh_optional_environment_can_replace_stale_environment_of_same_trust_class(self):
+        current = "runtime-1-deadbeef"
+        target = "runtime-2-feedface"
+        state = optimizations._default_state()
+        state.update(
+            {
+                "activeEnvironmentId": current,
+                "activeTrustClass": "artifact_locked_optional",
+                "_storageStatus": "ok",
+            }
+        )
+
+        def inspect(environment_id, *, verify_integrity=True, **_kwargs):
+            if environment_id == target:
+                return {
+                    "status": "ready",
+                    "manifest": {"trustClass": "artifact_locked_optional"},
+                }
+            if environment_id == current:
+                return {"status": "repair_required"}
+            raise AssertionError(environment_id)
+
+        with (
+            mock.patch.object(optimizations, "reserve_install", side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, "release_install"),
+            mock.patch.object(optimizations, "_reconcile_promotion"),
+            mock.patch.object(optimizations, "read_state", return_value=state),
+            mock.patch.object(optimizations, "_environment_inspection", side_effect=inspect),
+            mock.patch.object(optimizations, "_fresh_validation_matches", return_value=True),
+            mock.patch.object(optimizations, "_write_state", side_effect=lambda value: value),
+        ):
+            result = optimizations._activate_environment_transaction(
+                target,
+                expected_trust_class="artifact_locked_optional",
+            )
+
+        self.assertEqual(result["state"]["activeEnvironmentId"], target)
+        self.assertEqual(result["state"]["previousEnvironmentId"], current)
+        self.assertTrue(result["restartRequired"])
+
+    def test_stale_environment_owned_by_another_trust_class_still_blocks_activation(self):
+        current = "runtime-1-deadbeef"
+        target = "runtime-2-feedface"
+        state = optimizations._default_state()
+        state.update(
+            {
+                "activeEnvironmentId": current,
+                "activeTrustClass": "legacy_optimization",
+                "_storageStatus": "ok",
+            }
+        )
+
+        def inspect(environment_id, *, verify_integrity=True, **_kwargs):
+            if environment_id == target:
+                return {
+                    "status": "ready",
+                    "manifest": {"trustClass": "artifact_locked_optional"},
+                }
+            if environment_id == current:
+                return {"status": "repair_required"}
+            raise AssertionError(environment_id)
+
+        with (
+            mock.patch.object(optimizations, "reserve_install", side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, "release_install"),
+            mock.patch.object(optimizations, "_reconcile_promotion"),
+            mock.patch.object(optimizations, "read_state", return_value=state),
+            mock.patch.object(optimizations, "_environment_inspection", side_effect=inspect),
+            mock.patch.object(optimizations, "_fresh_validation_matches", return_value=True),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "another class"):
+                optimizations._activate_environment_transaction(
+                    target,
+                    expected_trust_class="artifact_locked_optional",
+                )
+
     def test_startup_never_imports_or_inserts_a_legacy_overlay(self):
         self.set_active_environment("runtime-1-deadbeef")
         original_path = list(optimizations.sys.path)
